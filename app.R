@@ -1,50 +1,14 @@
-library(shiny)
-library(shinydashboard)
-library(markdown)
-library(readr)
-library(dplyr)
-library(jsonlite)
-library(shinyjs)
-library(shinythemes)
-library(DT)
+library(shinysurveys)
 
-ui <- dashboardPage(
-  dashboardHeader(title = "Survey Platform"),
-  dashboardSidebar(
-    sidebarMenu(
-      menuItem("Survey 1", tabName = "survey1"),
-      menuItem("Survey 2", tabName = "survey2")
-    )
-  ),
-  dashboardBody(
-    tabItems(
-      tabItem(
-        tabName = "survey1",
-        uiOutput("survey-1-ui")
-      ),
-      tabItem(
-        tabName = "survey2",
-        uiOutput("survey-2-ui")
-      )
-    )
-  )
+ui <- shiny::fluidPage(
+  shinysurveys::surveyOutput(
+    df = parse_survey_questions(file.path('example', 'questions.yml')),
+    survey_title = "A minimal title",
+    survey_description = "A minimal description")
 )
 
-server <- function(input, output) {
-
-  # Load survey data
-  survey_1_data <- read_file("survey-questions/survey-1.md")
-  survey_2_data <- read_file("survey-questions/survey-2.md")
-
-  # Render survey UI
-  output$survey1 <- renderUI({
-    markdownToHTML(survey_1_data)
-  })
-
-  output$survey2 <- renderUI({
-    markdownToHTML(survey_2_data)
-  })
-
+server <- function(input, output, session) {
+  shinysurveys::renderSurvey()
 }
 
-shinyApp(ui = ui, server = server)
+shiny::shinyApp(ui = ui, server = server)

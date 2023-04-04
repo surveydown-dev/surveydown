@@ -1,20 +1,40 @@
-questions:
-  name: color
+age:
+  type: numeric
+  required: true
+  text: "What's your age?"
+  option: 25
+
+gender:
   type: mc
-  text: "What is your favorite color?"
-  choices:
-    - "Red"
-    - "Green"
-    - "Blue"
-    - "Yellow"
-  name: animal
-  type: mc
-  text: "What is your favorite animal?"
-  choices:
-    - "Dog"
-    - "Cat"
-    - "Bird"
-    - "Fish"
-  name: fruit
+  required: true
+  text: "Which best describes your gender?"
+  option:
+    - "Female"
+    - "Male"
+    - "Prefer not to say"
+    - "Prefer to self describe"
+
+gender_self_describe:
   type: text
-  text: "What is your favorite fruit?"
+  text: "Which best describes your gender?"
+  dependence: gender
+  dependence_value: "Prefer to self describe"
+
+education:
+  type: select
+  text: "What is the highest level of education you have attained?"
+  option:
+    - hs_no: "Did not attend high school"
+    - hs_some:  "Some high school"
+    - hs_grad: "High school graduate"
+    - college_some: "Some college"
+    - college_grad: "College"
+    - grad: "Graduate Work"
+    - no_response: "Prefer not to say"
+
+rexper:
+  type: mc
+  text: "Have you ever learned to program in R?"
+  option:
+    - yes: "Yes"
+    - no: "No"
