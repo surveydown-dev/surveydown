@@ -1,0 +1,20 @@
+questions:
+  name: color
+  type: mc
+  text: "What is your favorite color?"
+  choices:
+    - "Red"
+    - "Green"
+    - "Blue"
+    - "Yellow"
+  name: animal
+  type: mc
+  text: "What is your favorite animal?"
+  choices:
+    - "Dog"
+    - "Cat"
+    - "Bird"
+    - "Fish"
+  name: fruit
+  type: text
+  text: "What is your favorite fruit?"
