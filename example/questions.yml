@@ -9,10 +9,10 @@ gender:
   required: true
   text: "Which best describes your gender?"
   option:
-    - "Female"
-    - "Male"
-    - "Prefer not to say"
-    - "Prefer to self describe"
+    - female: "Female"
+    - male: "Male"
+    - opt_out: "Prefer not to say"
+    - self_desc: "Prefer to self describe"
 
 gender_self_describe:
   type: text
