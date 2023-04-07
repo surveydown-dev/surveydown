@@ -1,10 +1,10 @@
 library(shinysurveys)
 
-source(file.path("R", "functions.R")) # Not yet a package
+source("functions.R")
 
 ui <- shiny::fluidPage(
   shinysurveys::surveyOutput(
-    df = parse_survey_questions(file.path('example', 'questions.yml')),
+    df = parse_survey_questions(file.path('survey', '_questions.yml')),
     survey_title = "A minimal title",
     survey_description = "A minimal description")
 )
