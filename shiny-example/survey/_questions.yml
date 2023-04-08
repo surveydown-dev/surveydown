@@ -1,12 +1,14 @@
 age:
   type: numeric
   required: true
+  page: 1
   text: "What's your age?"
   option: 25
 
 gender:
   type: mc
   required: true
+  page: 1
   text: "Which best describes your gender?"
   option:
     - female: "Female"
@@ -16,12 +18,14 @@ gender:
 
 gender_self_describe:
   type: text
+  page: 1
   text: "Which best describes your gender?"
   dependence: gender
   dependence_value: "Prefer to self describe"
 
 education:
   type: select
+  page: 2
   text: "What is the highest level of education you have attained?"
   option:
     - hs_no: "Did not attend high school"
@@ -34,6 +38,7 @@ education:
 
 rexper:
   type: mc
+  page: 2
   text: "Have you ever learned to program in R?"
   option:
     - yes: "Yes"
