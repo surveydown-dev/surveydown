@@ -1,0 +1,11 @@
+survey:
+  welcome.Rmd
+  screener.Rmd
+  skip:
+    condition: age > 40
+    distination: end_screen.Rmd
+  other.Rmd
+  end.Rmd
+  stop
+  end_sreen.Rmd
+  stop
