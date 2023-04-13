@@ -1,0 +1,96 @@
+---
+name: "surveydown demo"
+author: "John Paul Helveston"
+output:
+  surveydown::survey:
+    css:
+      - default
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(surveydown)
+```
+
+name: welcome
+
+# Welcome!
+
+This is a demo survey! Click the button below to go to the next page.
+
+---
+
+name: screener
+
+This is a screener.
+
+You must choose "Red" in the question below, otherwise you will be screened out (meaning you will be sent to the end of the survey)
+
+```{r}
+color <- q(
+  type     = 'mc',
+  required = TRUE,
+  label    = "Do you want to take the red pill or the blue pill?",
+  option   = c('Red', 'Blue')
+)
+```
+
+---
+
+name: other
+skip:
+  destination: end_screenout
+  condition: color == 'Red'
+
+Here are some more questions:
+
+```{r}
+age <- q(
+  type     = 'numeric',
+  required = TRUE,
+  label    = "What's your age?",
+  option   = 25
+)
+
+gender <- q(
+  type     = 'mc',
+  required = TRUE,
+  label    = "Which best describes your gender?",
+  option   = c(
+    female    = "Female",
+    male      = "Male",
+    opt_out   = "Prefer not to say",
+    self_desc = "Prefer to self describe"
+  )
+)
+
+gender_self_describe <- q(
+  type  = 'text',
+  depend = 'gender',
+  depend_val = "Prefer to self describe"
+  )
+)
+
+```
+
+---
+
+name: end
+stop: true
+
+# Fine
+
+Thank you for taking our survey!
+
+---
+
+name: end_screenout
+stop: true
+
+Sorry, but you do not qualify to continue in the survey.
