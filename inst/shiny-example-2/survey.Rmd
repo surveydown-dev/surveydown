@@ -53,7 +53,7 @@ This is a screener.
 You must choose "Red" in the question below, otherwise you will be screened out (meaning you will be sent to the end of the survey)
 
 ```{r}
-q(
+question(
   name     = 'color',
   type     = 'mc',
   required = TRUE,
@@ -69,7 +69,7 @@ name: other
 Here are some more questions:
 
 ```{r}
-q(
+question(
   name     = 'age',
   type     = 'numeric',
   required = TRUE,
