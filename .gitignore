@@ -9,3 +9,5 @@ doc
 Meta
 .idea
 .Rproj.user
+survey.Rmd
+questions.yml

@@ -7,17 +7,6 @@ output:
       - default
     lib_dir: libs
 questions: questions.yml
-control:
-  welcome
-  screener
-  skip:
-    condition: age > 40
-    distination: end_screen
-  other
-  end
-  stop
-  end_sreen
-  stop
 ---
 
 ```{r}
