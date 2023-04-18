@@ -6,14 +6,34 @@ output:
     css:
       - default
     lib_dir: libs
-    nature:
-      highlightStyle: github
-      highlightLines: true
+questions: questions.yml
+control:
+  welcome
+  screener
+  skip:
+    condition: age > 40
+    distination: end_screen
+  other
+  end
+  stop
+  end_sreen
+  stop
 ---
 
 ```{r}
 #| label: setup
 #| include: false
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.path = "figs/",
+  fig.width = 7.252,
+  fig.height = 4,
+  comment = "#>",
+  fig.retina = 3
+)
 
 library(surveydown)
 ```
@@ -33,7 +53,8 @@ This is a screener.
 You must choose "Red" in the question below, otherwise you will be screened out (meaning you will be sent to the end of the survey)
 
 ```{r}
-color <- q(
+q(
+  name     = 'color',
   type     = 'mc',
   required = TRUE,
   label    = "Do you want to take the red pill or the blue pill?",
@@ -44,45 +65,30 @@ color <- q(
 ---
 
 name: other
-skip:
-  destination: end_screenout
-  condition: color == 'Red'
 
 Here are some more questions:
 
 ```{r}
-age <- q(
+q(
+  name     = 'age',
   type     = 'numeric',
   required = TRUE,
   label    = "What's your age?",
   option   = 25
 )
-
-gender <- q(
-  type     = 'mc',
-  required = TRUE,
-  label    = "Which best describes your gender?",
-  option   = c(
-    female    = "Female",
-    male      = "Male",
-    opt_out   = "Prefer not to say",
-    self_desc = "Prefer to self describe"
-  )
-)
-
-gender_self_describe <- q(
-  type  = 'text',
-  depend = 'gender',
-  depend_val = "Prefer to self describe"
-  )
-)
-
 ```
+
+{{ question gender }}
+
+{{ question gender_self_describe }}
+
+{{ question education }}
+
+{{ question rexper }}
 
 ---
 
 name: end
-stop: true
 
 # Fine
 
@@ -91,6 +97,5 @@ Thank you for taking our survey!
 ---
 
 name: end_screenout
-stop: true
 
 Sorry, but you do not qualify to continue in the survey.

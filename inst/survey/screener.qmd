@@ -1,6 +1,0 @@
-
-This is a screener.
-
-You must choose "Red" in the question below, otherwise you will be screened out (meaning you will be sent to the end of the survey)
-
-{{ color }}
