@@ -1,5 +1,5 @@
 Package: surveydown
-Title: What the Package Does (One Line, Title Case)
+Title: RMarkdown For Surveys
 Version: 0.0.0.9000
 Authors@R: c(
     person(given   = "John",
@@ -7,7 +7,7 @@ Authors@R: c(
            role    = c("aut", "cre", "cph"),
            email   = "john.helveston@gmail.com",
            comment = c(ORCID = "0000-0002-2657-9191")))
-Description: What the package does (one paragraph).
+Description: Use RMarkdown to build surveys. Surveys are completely defined in a single .Rmd file and compiled to a Shiny app to collect data.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
