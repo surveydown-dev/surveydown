@@ -1,6 +1,50 @@
-# Load required libraries
-library(yaml)
-library(dplyr)
+#' Parse survey questions from an RMarkdown file
+#'
+#' This function reads an RMarkdown file containing YAML metadata, searches for the `questions` field,
+#' and if present, uses the `parse_survey_questions()` function to parse the questions in the specified .yml file.
+#'
+#' @param rmd_file The path to the RMarkdown file containing the survey YAML metadata.
+#' @return A list of parsed survey questions if the `questions` field is found, otherwise NULL.
+#' @importFrom yaml yaml.load
+#' @export
+parse_questions_yaml <- function(rmd_file) {
+  # Check if the file exists
+  if (!file.exists(rmd_file)) {
+    stop("The specified RMarkdown file does not exist.")
+  }
+
+  # Use the provided helper function to split the YAML and body contents
+  rmd_split <- split_yaml_body(rmd_file)
+
+  # Check if the YAML section is empty
+  if (length(rmd_split$yaml) == 0) {
+    stop("No YAML metadata found in the specified RMarkdown file.")
+  }
+
+  # Remove the YAML start and end delimiters from the extracted content
+  yaml_content <- rmd_split$yaml[-c(1, length(rmd_split$yaml))]
+
+  # Parse the YAML metadata
+  yaml_parsed <- yaml::yaml.load(paste(yaml_content, collapse = "\n"))
+
+  # Check if the `questions` field is present in the YAML metadata
+  if ("questions" %in% names(yaml_parsed)) {
+    questions_file <- yaml_parsed$questions
+
+    # Check if the questions file exists
+    if (!file.exists(questions_file)) {
+      stop("The specified questions file does not exist.")
+    }
+
+    # Parse the questions
+    survey_questions <- parse_questions_yml_file(questions_file)
+    return(survey_questions)
+  } else {
+    warning("The `questions` field was not found in the YAML metadata.")
+    return(NULL)
+  }
+}
+
 
 #' Parse survey questions from a YAML file and return a data frame
 #'
@@ -17,7 +61,7 @@ library(dplyr)
 #' @examples
 #' # Example usage:
 #' survey_questions <- parse_survey_questions("path/to/your/yml_file.yml")
-parse_survey_questions <- function(yml_file) {
+parse_questions_yml_file <- function(yml_file) {
   # Read the YAML file
   yml_content <- yaml::yaml.load_file(yml_file)
 
@@ -45,7 +89,7 @@ parse_survey_questions <- function(yml_file) {
   # Extract the labels and values of the options
     dplyr::mutate(
       option = purrr::map(option, function(opt) unlist(opt)),
-      option = purrr::map(option, function(opt) tibble(
+      option = purrr::map(option, function(opt) tibble::tibble(
         value = names(opt),
         option = as.character(unname(opt))
       ))

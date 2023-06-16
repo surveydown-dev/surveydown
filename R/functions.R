@@ -101,3 +101,32 @@ parse_questions_yml_file <- function(yml_file) {
   return(questions_df)
 }
 
+#' Parse survey questions from a YAML file and return a data frame
+#'
+#' This function takes a YAML file containing survey questions and
+#' returns a data frame with a row for each question and columns for
+#' question attributes.
+#'
+#' @param name Input name
+#' @param type Input name
+#' @param required Is question required? Defaults to `FALSE`
+#' @param label Label shown on question.
+#' @param option Question options (e.g. for multiple choice questions)
+#' @param dependence Defaults to `NULL`
+#' @param dependence_value Defaults to `NULL`
+#'
+#' @return A shiny input.
+#' @export
+question <- function(
+  name,
+  type,
+  required = FALSE,
+  label    = "label",
+  option   = NULL,
+  dependence = NULL,
+  dependence_value = NULL
+) {
+  # For now just a placeholder - will eventually replace with actual
+  # inputs based on args.
+  shiny::selectInput(inputId = name, label = label, choices = option)
+}
