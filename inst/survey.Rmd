@@ -1,0 +1,135 @@
+---
+name: "surveydown demo"
+author: "John Paul Helveston"
+output: html_document
+---
+
+<!--   surveydown::survey: -->
+<!--     css: -->
+<!--       - default -->
+<!--     lib_dir: libs -->
+<!--     control: -->
+<!--       skip: -->
+<!--         condition: color == "Blue" -->
+<!--         destination: end_screenout -->
+<!--       stop: end -->
+<!--       stop: end_screenout -->
+<!-- --- -->
+
+```{r}
+#| label: setup
+#| include: false
+
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.path = "figs/",
+  fig.width = 7.252,
+  fig.height = 4,
+  comment = "#>",
+  fig.retina = 3
+)
+
+library(surveydown)
+```
+
+name: welcome
+
+# Welcome!
+
+This is a demo survey! Click the button below to go to the next page.
+
+---
+
+name: screener
+
+This is a screener.
+
+You must choose "Red" in the question below, otherwise you will be screened out (meaning you will be sent to the end of the survey)
+
+```{r}
+question(
+  name     = 'color',
+  type     = 'mc',
+  required = TRUE,
+  label    = "Do you want to take the red pill or the blue pill?",
+  option   = c('Red', 'Blue')
+)
+```
+
+---
+
+name: other
+
+Here are some more questions:
+
+```{r}
+question(
+  name     = 'age',
+  type     = 'numeric',
+  required = TRUE,
+  label    = "What's your age?",
+  option   = NULL
+)
+
+question(
+  name     = 'gender',
+  type     = 'mc',
+  required = TRUE,
+  label    = "Which best describes your gender?",
+  option   = c(
+    female = "Female",
+    male = "Male",
+    opt_out = "Prefer not to say",
+    self_desc = "Prefer to self describe"
+  )
+)
+
+question(
+  name     = 'gender_self_describe',
+  type     = 'text',
+  required = FALSE,
+  label    = "Which best describes your gender?",
+  dependence = 'gender',
+  dependence_value = "Prefer to self describe"
+)
+
+question(
+  name     = 'education',
+  type     = 'select',
+  required = TRUE,
+  label    = "What is the highest level of education you have attained?",
+  option   = c(
+    hs_no        = "Did not attend high school",
+    hs_some      =  "Some high school",
+    hs_grad      = "High school graduate",
+    college_some = "Some college",
+    college_grad = "College",
+    grad         = "Graduate Work",
+    no_response  = "Prefer not to say"
+  )
+)
+
+question(
+  name     = 'rexper',
+  type     = 'mc',
+  required = TRUE,
+  label    = "Have you ever learned to program in R?",
+  option   = c(yes = "Yes", no = "No")
+)
+```
+
+---
+
+name: end
+
+# Fine
+
+Thank you for taking our survey!
+
+---
+
+name: end_screenout
+
+Sorry, but you do not qualify to continue in the survey.

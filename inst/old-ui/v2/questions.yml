@@ -1,0 +1,38 @@
+gender:
+  type: mc
+  required: true
+  page: 1
+  text: "Which best describes your gender?"
+  option:
+    - female: "Female"
+    - male: "Male"
+    - opt_out: "Prefer not to say"
+    - self_desc: "Prefer to self describe"
+
+gender_self_describe:
+  type: text
+  page: 1
+  text: "Which best describes your gender?"
+  dependence: gender
+  dependence_value: "Prefer to self describe"
+
+education:
+  type: select
+  page: 2
+  text: "What is the highest level of education you have attained?"
+  option:
+    - hs_no: "Did not attend high school"
+    - hs_some:  "Some high school"
+    - hs_grad: "High school graduate"
+    - college_some: "Some college"
+    - college_grad: "College"
+    - grad: "Graduate Work"
+    - no_response: "Prefer not to say"
+
+rexper:
+  type: mc
+  page: 2
+  text: "Have you ever learned to program in R?"
+  option:
+    - yes: "Yes"
+    - no: "No"
