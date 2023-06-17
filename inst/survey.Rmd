@@ -31,7 +31,8 @@ knitr::opts_chunk$set(
   fig.retina = 3
 )
 
-library(surveydown)
+# library(surveydown)
+devtools::load_all()
 ```
 
 name: welcome
