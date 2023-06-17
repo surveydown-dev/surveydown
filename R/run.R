@@ -60,16 +60,16 @@ preview <- function(ui) {
 #' @export
 host <- function(folder, data_url, api_key) {
 
-  # Authenticate with shinyapps.io
-  rsconnect::setAccountInfo(
-    name = "your_name",
-    token = "your_token",
-    secret = api_key
-  )
-
-  # Load data from Google Sheets
-  data <- googlesheets4::read_sheet(data_url)
-
-  # Deploy to shinyapps.io
-  rsconnect::deployApp(folder)
+  # # Authenticate with shinyapps.io
+  # rsconnect::setAccountInfo(
+  #   name = "your_name",
+  #   token = "your_token",
+  #   secret = api_key
+  # )
+  #
+  # # Load data from Google Sheets
+  # data <- googlesheets4::read_sheet(data_url)
+  #
+  # # Deploy to shinyapps.io
+  # rsconnect::deployApp(folder)
 }
