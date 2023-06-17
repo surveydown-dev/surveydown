@@ -1,7 +1,10 @@
+devtools::load_all()
 
-surveydown::render_survey(file = 'survey.Rmd')
+render(file = file.path('inst', 'survey.Rmd'))
 
-surveydown::host_survey(
+surveydown::preview(file = 'survey.Rmd')
+
+surveydown::host(
   folder = 'survey',
   data_url = 'path_to_googlesheet',
   api_key = 'api_key'
