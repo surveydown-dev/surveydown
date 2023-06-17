@@ -100,3 +100,66 @@ parse_questions_yml_file <- function(yml_file) {
 
   return(questions_df)
 }
+
+
+
+
+
+
+
+
+#
+# surveyOutput <- function(df, survey_title, survey_description, theme = "#63B8FF", ...) {
+#
+#   survey_env$theme <- theme
+#   survey_env$question_df <- df
+#   survey_env$unique_questions <- listUniqueQuestions(df)
+#   if (!missing(survey_title)) {
+#     survey_env$title <- survey_title
+#   }
+#   if (!missing(survey_description)) {
+#     survey_env$description <- survey_description
+#   }
+#
+#   if ("page" %in% names(df)) {
+#     main_ui <- multipaged_ui(df = df)
+#   } else if (!"page" %in% names(df)) {
+#     main_ui <- shiny::tagList(
+#       check_survey_metadata(survey_title = survey_title,
+#                             survey_description = survey_description),
+#       lapply(survey_env$unique_questions, surveyOutput_individual),
+#       shiny::div(class = "survey-buttons",
+#                  shiny::actionButton("submit",
+#                                      "Submit",
+#                                      ...)
+#       )
+#     )
+#   }
+#
+#   if (!is.null(survey_env$theme)) {
+#     survey_style <- sass::sass(list(
+#       list(color = survey_env$theme),
+#       readLines(
+#         system.file("render_survey.scss",
+#                     package = "shinysurveys")
+#       )
+#     ))
+#   } else if (is.null(survey_env$theme)) {
+#     survey_style <- NULL
+#   }
+#
+#
+#   shiny::tagList(shiny::includeScript(system.file("shinysurveys-js.js",
+#                                                   package = "shinysurveys")),
+#                  shiny::includeScript(system.file("save_data.js",
+#                                                   package = "shinysurveys")),
+#                  shiny::tags$style(shiny::HTML(survey_style)),
+#                  shiny::div(class = "survey",
+#                             shiny::div(style = "display: none !important;",
+#                                        shiny::textInput(inputId = "userID",
+#                                                         label = "Enter your username.",
+#                                                         value = "NO_USER_ID")),
+#                             main_ui))
+#
+# }
+#

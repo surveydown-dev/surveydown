@@ -774,60 +774,127 @@ page.</p>
 <p>This is a screener.</p>
 <p>You must choose “Red” in the question below, otherwise you will be
 screened out (meaning you will be sent to the end of the survey)</p>
-<div class="form-group shiny-input-container">
-<label class="control-label" id="color-label" for="color">Do you want to take the red pill or the blue pill?</label>
-<div>
-<select id="color"><option value="Red" selected>Red</option>
-<option value="Blue">Blue</option></select>
-<script type="application/json" data-for="color" data-nonempty>{"plugins":["selectize-plugin-a11y"]}</script>
+<div class="questions" id="color-question">
+<div class="question-input">
+<div id="color" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="color-label">
+<label class="control-label" id="color-label" for="color">
+Do you want to take the red pill or the blue pill?
+<span class="required">*</span>
+</label>
+<div class="shiny-options-group">
+<div class="radio">
+<label>
+<input type="radio" name="color" value="Red"></input>
+<span>Red</span>
+</label>
+</div>
+<div class="radio">
+<label>
+<input type="radio" name="color" value="Blue"></input>
+<span>Blue</span>
+</label>
+</div>
+</div>
+</div>
 </div>
 </div>
 <hr />
 <p>name: other</p>
 <p>Here are some more questions:</p>
-<div class="form-group shiny-input-container">
-<label class="control-label" id="age-label" for="age">What&#39;s your age?</label>
-<div>
-<select id="age"></select>
-<script type="application/json" data-for="age" data-nonempty>{"plugins":["selectize-plugin-a11y"]}</script>
+<div class="questions" id="age-question">
+<div class="question-input">
+<div class="surveyNumericInput form-group shiny-input-container">
+<label class="control-label" id="age-label" for="age">
+What&#39;s your age?
+<span class="required">*</span>
+</label>
+<input id="age" type="number" class="form-control"></input>
 </div>
 </div>
-<div class="form-group shiny-input-container">
-<label class="control-label" id="gender-label" for="gender">Which best describes your gender?</label>
-<div>
-<select id="gender"><option value="Female" selected>female</option>
-<option value="Male">male</option>
-<option value="Prefer not to say">opt_out</option>
-<option value="Prefer to self describe">self_desc</option></select>
-<script type="application/json" data-for="gender" data-nonempty>{"plugins":["selectize-plugin-a11y"]}</script>
+</div>
+<div class="questions" id="gender-question">
+<div class="question-input">
+<div id="gender" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="gender-label">
+<label class="control-label" id="gender-label" for="gender">
+Which best describes your gender?
+<span class="required">*</span>
+</label>
+<div class="shiny-options-group">
+<div class="radio">
+<label>
+<input type="radio" name="gender" value="Female"></input>
+<span>female</span>
+</label>
+</div>
+<div class="radio">
+<label>
+<input type="radio" name="gender" value="Male"></input>
+<span>male</span>
+</label>
+</div>
+<div class="radio">
+<label>
+<input type="radio" name="gender" value="Prefer not to say"></input>
+<span>opt_out</span>
+</label>
+</div>
+<div class="radio">
+<label>
+<input type="radio" name="gender" value="Prefer to self describe"></input>
+<span>self_desc</span>
+</label>
 </div>
 </div>
+</div>
+</div>
+</div>
+<div class="questions dependence" id="gender_self_describe-question">
+<div class="question-input">
 <div class="form-group shiny-input-container">
 <label class="control-label" id="gender_self_describe-label" for="gender_self_describe">Which best describes your gender?</label>
-<div>
-<select id="gender_self_describe"></select>
-<script type="application/json" data-for="gender_self_describe" data-nonempty>{"plugins":["selectize-plugin-a11y"]}</script>
+<input id="gender_self_describe" type="text" class="form-control" value></input>
 </div>
 </div>
+</div>
+<div class="questions" id="education-question">
+<div class="question-input">
 <div class="form-group shiny-input-container">
 <label class="control-label" id="education-label" for="education">What is the highest level of education you have attained?</label>
 <div>
-<select id="education"><option value="Did not attend high school" selected>hs_no</option>
+<select id="education" class="form-control"><option value="Did not attend high school" selected>hs_no</option>
 <option value="Some high school">hs_some</option>
 <option value="High school graduate">hs_grad</option>
 <option value="Some college">college_some</option>
 <option value="College">college_grad</option>
 <option value="Graduate Work">grad</option>
 <option value="Prefer not to say">no_response</option></select>
-<script type="application/json" data-for="education" data-nonempty>{"plugins":["selectize-plugin-a11y"]}</script>
+<script type="application/json" data-for="education" data-eval="[&quot;onInitialize&quot;]">{"placeholder":"","onInitialize":"function() { this.setValue(\"\"); }","plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div>
-<div class="form-group shiny-input-container">
-<label class="control-label" id="rexper-label" for="rexper">Have you ever learned to program in R?</label>
-<div>
-<select id="rexper"><option value="Yes" selected>yes</option>
-<option value="No">no</option></select>
-<script type="application/json" data-for="rexper" data-nonempty>{"plugins":["selectize-plugin-a11y"]}</script>
+</div>
+</div>
+<div class="questions" id="rexper-question">
+<div class="question-input">
+<div id="rexper" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="rexper-label">
+<label class="control-label" id="rexper-label" for="rexper">
+Have you ever learned to program in R?
+<span class="required">*</span>
+</label>
+<div class="shiny-options-group">
+<div class="radio">
+<label>
+<input type="radio" name="rexper" value="Yes"></input>
+<span>yes</span>
+</label>
+</div>
+<div class="radio">
+<label>
+<input type="radio" name="rexper" value="No"></input>
+<span>no</span>
+</label>
+</div>
+</div>
+</div>
 </div>
 </div>
 <hr />
