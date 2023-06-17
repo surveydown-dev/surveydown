@@ -17,6 +17,8 @@ render <- function(file) {
 
 #' Run a shiny app
 #'
+#' @param ui Path to the html file defining the ui.
+#'
 #' @return
 #' Runs a local instance of a Shiny app
 #'
@@ -25,8 +27,19 @@ render <- function(file) {
 #' preview()
 #' }
 #' @export
-preview <- function() {
-  shiny::runApp()
+preview <- function(ui) {
+
+  # Define UI for application
+  ui <- shinyUI(fluidPage(
+    includeHTML(ui)
+  ))
+
+  # Define server logic (empty for this example)
+  server <- function(input, output) {}
+
+  # Run the application
+  shinyApp(ui = ui, server = server)
+
 }
 
 
