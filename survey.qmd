@@ -1,0 +1,52 @@
+---
+title: "Survey App with Quarto and Shiny"
+output:
+  html_document:
+    keep_md: true
+runtime: shiny
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(shiny)
+library(knitr)
+library(shinyjs)
+
+source('functions.R')
+source('mySurvey.R')  # Source the module
+
+```
+
+## Welcome to the Survey!
+
+Answer the following questions:
+
+```{r, echo=FALSE}
+# Using the `question()` function to generate Shiny inputs.
+question("text", "age_input", "What is your age?")
+```
+
+---
+
+```{r, echo=FALSE}
+question("checkbox", "color_input", "Which color do you prefer?", choices = c("red", "blue"))
+```
+
+```{r, include=FALSE}
+ui <- fluidPage(
+  useShinyjs(),
+  surveyUI("mySurvey")
+)
+
+server <- function(input, output, session) {
+  survey <- callModule(surveyServer, "mySurvey")
+  
+  observe({
+    print(survey$getResponses())
+  })
+}
+```
+
+This is the end of the survey
