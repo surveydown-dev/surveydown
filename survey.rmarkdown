@@ -23,9 +23,13 @@ source('mySurvey.R')  # Source the module
 html_sections <- prep_survey("survey.qmd") # Using the name of the current file
 ```
 
+
+
 ## Welcome to the Survey!
 
 Answer the following questions:
+
+
 
 ```{r, echo=FALSE}
 # Using the `question()` function to generate Shiny inputs.
@@ -36,7 +40,11 @@ question("select", "gender_input", "Choose your gender:", choices = c("Male", "F
 question("text", "gender_other_input", "Please specify your gender:", conditional = reactive({input$gender_input == "Other"}))
 ```
 
+
+
 ---
+
+
 
 ```{r, echo=FALSE}
 color_choices <- get_color_choices_for_respondent(respondent_id)
@@ -80,4 +88,7 @@ server <- function(input, output, session) {
 shinyApp(ui, server)
 ```
 
+
+
 This is the end of the survey
+
