@@ -6,6 +6,8 @@ filters:
   - split_sections.lua
 ---
 
+<script src="nav.js"></script>
+
 ```{r}
 #| label: setup
 #| include: false
