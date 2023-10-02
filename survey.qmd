@@ -1,7 +1,9 @@
 ---
-title: "Survey App with Quarto and Shiny"
-format: html
-runtime: shiny
+format: 
+  html:
+    section-divs: false
+filters:
+  - split_sections.lua
 ---
 
 ```{r}
@@ -26,7 +28,21 @@ question("select", "gender_input", "Choose your gender:", choices = c("Male", "F
 ---
 
 ```{r, echo=FALSE}
-question("checkbox", "color_input", "Pick a color:", choices = c('Red', 'Blue'))
+question("select", "color_input", "Pick a color:", choices = c('Red', 'Blue'))
 ```
 
-This is the end of the survey
+---
+
+This is a section split.
+
+---
+
+Another section here.
+
+---
+
+Final section before ending.
+
+---
+
+Thanks for taking our survey!

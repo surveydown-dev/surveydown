@@ -1,26 +1,25 @@
--- Define a global table to store sections
-sections = {}
-current_section = {}
+-- Define a global variable to keep track of the section count
+section_count = 0
 
-function HorizontalRule(elem)
-  -- Add the current section to the sections table
-  table.insert(sections, current_section)
-  -- Reset the current section
-  current_section = {}
-  -- We return an empty table to effectively remove the HorizontalRule from the output
-  return {}
+-- Start with the first section before any content
+function DocStart()
+    section_count = section_count + 1
+    return pandoc.RawBlock('html', '<section id="pg' .. section_count .. '">')
 end
 
-function Block(element)
-  table.insert(current_section, element)
-  return element
+function HorizontalRule(elem)
+    -- Increment the section count
+    section_count = section_count + 1
+
+    -- Close the previous section and start a new one
+    return {
+        pandoc.RawBlock('html', '</section>'),
+        pandoc.RawBlock('html', '<section id="pg' .. section_count .. '">')
+    }
 end
 
 function Pandoc(doc)
-  -- Capture any remaining content after the last HorizontalRule
-  table.insert(sections, current_section)
-  -- We can then process the sections table as needed
-  -- For this example, we just return the original doc, but in real-world usage
-  -- you might modify and return parts of the sections as per your requirements
-  return doc
+    -- Add a closing section tag at the end of the document
+    table.insert(doc.blocks, pandoc.RawBlock('html', '</section>'))
+    return doc
 end
