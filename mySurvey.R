@@ -1,7 +1,7 @@
 surveyUI <- function(id) {
   ns <- NS(id)
   tagList(
-    tags$iframe(src = "survey.html", width="100%", height="800px", id = ns("survey_frame"), frameborder = "0", scrolling = "no"),
+    tags$iframe(src = "www/survey.html", width="100%", height="800px", id = ns("survey_frame"), frameborder = "0", scrolling = "no"),
 
     # Add navigation buttons below the iframe
     div(

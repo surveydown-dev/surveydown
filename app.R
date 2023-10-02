@@ -8,14 +8,14 @@ source("functions.R")
 
 # Render the survey.qmd file
 
-quarto::quarto_render("survey.qmd")
+# quarto::quarto_render("survey.qmd")
 
 # Add www resource
 shiny::addResourcePath(prefix = "www", directoryPath = "www")
 
 # Define UI
 ui <- fluidPage(
-  surveyPageUI("survey1"),
+  surveyUI("survey1"),
   tags$script(
     HTML(
       "$(document).on('shiny:custommessage', function(event) {

@@ -1,25 +1,12 @@
--- Define a global variable to keep track of the section count
-section_count = 0
+local count = 0
 
--- Start with the first section before any content
-function DocStart()
-    section_count = section_count + 1
-    return pandoc.RawBlock('html', '<section id="pg' .. section_count .. '">')
-end
-
-function HorizontalRule(elem)
-    -- Increment the section count
-    section_count = section_count + 1
-
-    -- Close the previous section and start a new one
-    return {
-        pandoc.RawBlock('html', '</section>'),
-        pandoc.RawBlock('html', '<section id="pg' .. section_count .. '">')
-    }
-end
-
-function Pandoc(doc)
-    -- Add a closing section tag at the end of the document
-    table.insert(doc.blocks, pandoc.RawBlock('html', '</section>'))
-    return doc
+function HorizontalRule()
+  count = count + 1
+  local section_start = '<section id="pg' .. count .. '">\n'
+  local nav_buttons = '</section>\n' ..
+                      '<div class="navigation-buttons">\n' ..
+                      '<button class="prev-btn">Previous</button>\n' ..
+                      '<button class="next-btn">Next</button>\n' ..
+                      '</div>\n'
+  return pandoc.RawBlock("html", section_start .. nav_buttons)
 end
