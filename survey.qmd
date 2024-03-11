@@ -23,9 +23,6 @@ source('functions.R')
 # drive_auth()
 # gs4_auth(token = drive_token())
 gs4_auth(email = "john.helveston@gmail.com", path = "key.json")
-
-# Initialize an empty list to store question IDs (do NOT change this)
-questionRegistry <- list()
 ```
 
 ::: {#page-1}
@@ -40,7 +37,10 @@ sd_question(
   type     = 'mc',
   required = TRUE,
   label    = "Do you want to take the red pill or the blue pill?",
-  option   = c('Blue', 'Red')
+  option   = c(
+    'Blue' = 'blue', 
+    'Red' = 'red'
+  )
 )
 
 sd_next(1)
@@ -67,9 +67,9 @@ sd_question(
   required = TRUE,
   label    = "Which best describes your gender?",
   option   = c(
-    female = "Female",
-    male = "Male",
-    opt_out = "Prefer not to say"
+    "Female" = "Female",
+    "Male" = "Male",
+    "Prefer not to say" = "opt_out"
   )
 )
 
@@ -122,7 +122,10 @@ sd_next(3)
 
 sd_server(
   db_url = 'https://docs.google.com/spreadsheets/d/1SDVM2RsQ_E83YlExo9wEodabdh9_kbKTAocawjUI2eE/edit?usp=sharing', 
-  questionRegistry = questionRegistry,
+  question_ids = list(
+    'color', 'age', 'gender', 'animal', 'education'
+  ),
+  n_pages = 4,
   input = input, 
   session = session
 )

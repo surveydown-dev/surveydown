@@ -4,16 +4,6 @@ library(shinyjs)
 
 # UI functions
 
-# Function to add a question ID to the registry
-registerQuestion <- function(id) {
-  questionRegistry[[id]] <<- TRUE
-}
-
-# Function to get all registered question IDs
-getRegisteredQuestions <- function(questionRegistry) {
-  return(names(questionRegistry))
-}
-
 # Modified version of sd_question to include a class assignment
 sd_question <- function(
   name,
@@ -46,9 +36,6 @@ sd_question <- function(
     )
   }
 
-  # Register the question ID
-  registerQuestion(name)
-
   return(output)
 }
 
@@ -58,10 +45,9 @@ sd_next <- function(pageId, label = 'Next') {
 
 # Server functions
 
-sd_server <- function(db_url, questionRegistry, input, session) {
+sd_server <- function(db_url, question_ids, n_pages, input, session) {
 
-  # Get all registered question IDs
-  question_ids <- getRegisteredQuestions(questionRegistry)
+  # DB operations ----
 
   # Define a reactive expression that combines all registered questions
   input_vals <- reactive({
@@ -71,18 +57,25 @@ sd_server <- function(db_url, questionRegistry, input, session) {
   })
 
   # Use observe to react whenever 'input_vals' changes
+  # If it changes, update the DB
   observe({
+
+    # Capture the current state of inputs
     vals <- input_vals()
-    update_google_sheet(db_url, input, session)
+
+    # Transform to data frame, handling uninitialized inputs appropriately
+    data <- transform_data(vals, question_ids, session)
+
+    # Update Google Sheet
+    update_google_sheet(db_url, data)
+
   })
 
   # Page Navigation ----
 
-  total_pages <- 4  # Update this based on your actual number of pages
-
   observe({
     # This loop creates an observer for each "next" button dynamically
-    for (i in 1:(total_pages - 1)) {
+    for (i in 1:(n_pages - 1)) {
       local({
         current_page <- i
         observeEvent(input[[paste0("next", current_page)]], {
@@ -95,27 +88,33 @@ sd_server <- function(db_url, questionRegistry, input, session) {
 
 }
 
-# Define a function to update Google Sheets
-update_google_sheet <- function(db_url, input, session) {
-  data <- get_data(input, session)
-  sheet <- read_sheet(db_url)
+transform_data <- function(vals, question_ids, session) {
 
-  # Update the sheet row based on the session ID
-  if (data$session_id %in% sheet$session_id) {
-    sheet[which(sheet$session_id == data$session_id),] <- data
-    write_sheet(ss = db_url, data = sheet, sheet = 'data')
-  } else {
-    # If session ID is missing, initialize the row
-    sheet_append(ss = db_url, data = data, sheet = 'data')
-  }
+  data <- data.frame(
+    session_id = session$token,
+    timestamp = Sys.time()
+  )
+
+  # Assuming vals is a list of inputs from input_vals()
+  names(vals) <- question_ids
+  responses <- as.data.frame(vals)
+
+  # Add session_id and timestamp
+  data <- cbind(data, responses)
+
+  return(data)
 }
 
-get_data <- function(input, session) {
-  return(data.frame(
-    session_id = session$token,
-    timestamp = Sys.time(),
-    color = ifelse(is.null(input$color), '', input$color),
-    animal = ifelse(is.null(input$animal) || input$animal == '', 'NA', input$animal),
-    education = ifelse(is.null(input$education), '', input$education)
-  ))
+# Define a function to update Google Sheets
+update_google_sheet <- function(db_url, data) {
+
+  sheet <- read_sheet(db_url)
+
+  if (data$session_id %in% sheet$session_id) {
+    sheet[which(sheet$session_id == data$session_id),] <- data
+    sheet_write(ss = db_url, data = sheet, sheet = 'data')
+  } else {
+    # Append the data if the session ID is not found (new user)
+    sheet_append(ss = db_url, data = data, sheet = "data")
+  }
 }
