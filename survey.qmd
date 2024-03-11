@@ -1,50 +1,129 @@
 ---
-format: 
-  html:
-    section-divs: false
-filters:
-  - split_sections.lua
+format: html
+server: shiny
+include-before-body: pagination.js
+execute: 
+  echo: false
 ---
-
-<script src="nav.js"></script>
 
 ```{r}
-#| label: setup
-#| include: false
+#| context: setup
+#| echo: false
+#| warning: false
+#| message: false
 
 library(shiny)
+library(shinyjs)
+
+useShinyjs(rmd = TRUE)
+
 source('functions.R')
+
+# Authenticate google account
+# drive_auth()
+# gs4_auth(token = drive_token())
+gs4_auth(email = "john.helveston@gmail.com", path = "key.json")
+
+# Initialize an empty list to store question IDs (do NOT change this)
+questionRegistry <- list()
 ```
 
-## Welcome to the Survey!
+::: {#page-1}
 
-Answer the following questions:
+# Welcome to my survey! 
 
-```{r, echo=FALSE}
-# Using the `question()` function to generate Shiny inputs.
-question("text", "age_input", "What is your age?")
+Here is a question to get started 
 
-question("select", "gender_input", "Choose your gender:", choices = c("Male", "Female", "Other"))
+```{r}
+sd_question(
+  name     = 'color',
+  type     = 'mc',
+  required = TRUE,
+  label    = "Do you want to take the red pill or the blue pill?",
+  option   = c('Blue', 'Red')
+)
+
+sd_next(1)
 ```
 
----
+:::
 
-```{r, echo=FALSE}
-question("select", "color_input", "Pick a color:", choices = c('Red', 'Blue'))
+::: {#page-2}
+
+## Tell us abour yourself!
+
+```{r}
+sd_question(
+  name     = 'age',
+  type     = 'text',
+  required = TRUE,
+  label    = "What's your age?",
+  option   = NULL
+)
+
+sd_question(
+  name     = 'gender',
+  type     = 'mc',
+  required = TRUE,
+  label    = "Which best describes your gender?",
+  option   = c(
+    female = "Female",
+    male = "Male",
+    opt_out = "Prefer not to say"
+  )
+)
+
+sd_next(2)
 ```
 
----
+:::
 
-This is a section split.
+::: {#page-3}
 
----
+Here are a few more questions to finish up! 
 
-Another section here.
+```{r}
+sd_question(
+  name     = 'animal',
+  type     = 'text',
+  required = FALSE,
+  label    = "What's your favorite animal?"
+)
 
----
+sd_question(
+  name     = 'education',
+  type     = 'select',
+  required = TRUE,
+  label    = "What is the highest level of education you have attained?",
+  option   = c(
+    "Did not attend high school" = "hs_no",
+    "Some high school"           = "hs_some",
+    "High school graduate"       = "hs_grad",
+    "Some college"               = "college_some",
+    "College"                    = "college_grad",
+    "Graduate Work"              = "grad",
+    "Prefer not to say"          = "no_response"
+  )
+)
 
-Final section before ending.
+sd_next(3)
+```
 
----
+:::
 
-Thanks for taking our survey!
+::: {#page-4}
+
+# Thanks for taking our survey!
+
+:::
+
+```{r}
+#| context: server
+
+sd_server(
+  db_url = 'https://docs.google.com/spreadsheets/d/1SDVM2RsQ_E83YlExo9wEodabdh9_kbKTAocawjUI2eE/edit?usp=sharing', 
+  questionRegistry = questionRegistry,
+  input = input, 
+  session = session
+)
+```

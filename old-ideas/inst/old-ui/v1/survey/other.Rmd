@@ -1,6 +1,0 @@
-
-Here are some more questions:
-
-{{ animal }}
-
-{{ fruit }}
