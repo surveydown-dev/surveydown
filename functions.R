@@ -67,7 +67,7 @@ sd_server <- function(db_url, question_ids, n_pages, input, session) {
     data <- transform_data(vals, question_ids, session)
 
     # Update Google Sheet
-    update_google_sheet(db_url, data)
+    # update_google_sheet(db_url, data)
 
   })
 
