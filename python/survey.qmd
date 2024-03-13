@@ -1,0 +1,47 @@
+---
+format: html
+server: shiny
+include-before-body: pagination.js
+execute: 
+  echo: false
+---
+
+```{python}
+from shiny import render, ui
+
+# Import the custom functions from functions.py
+from functions import sd_question, sd_next
+```
+
+
+
+# Welcome to my survey! 
+
+Here is a question to get started 
+
+```{python}
+ui.input_radio_buttons(  
+    "color",  
+    "Do you want to take the red pill or the blue pill?",  
+    {"blue": "Blue", "red": "Red"}
+) 
+
+ui.input_action_button("next1", "Next")  
+```
+
+
+## Tell us abour yourself!
+
+```{python}
+ui.input_radio_buttons( 
+    "gender",  
+    "Which best describes your gender?",
+    {"female": "Female", "male": "Male", "opt_out": "Prefer not to say"}  
+)  
+
+ui.input_numeric("age", "What's your age?", 18, min=18, max=100)  
+
+ui.input_action_button("next2", "Next")  
+```
+
+
