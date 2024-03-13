@@ -18,11 +18,6 @@ library(shinyjs)
 useShinyjs(rmd = TRUE)
 
 source('functions.R')
-
-# Authenticate google account
-# drive_auth()
-# gs4_auth(token = drive_token())
-gs4_auth(email = "john.helveston@gmail.com", path = "key.json")
 ```
 
 ::: {#page-1}
@@ -121,7 +116,6 @@ sd_next(3)
 #| context: server
 
 sd_server(
-  db_url = 'https://docs.google.com/spreadsheets/d/1SDVM2RsQ_E83YlExo9wEodabdh9_kbKTAocawjUI2eE/edit?usp=sharing', 
   question_ids = list(
     'color', 'age', 'gender', 'animal', 'education'
   ),

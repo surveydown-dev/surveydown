@@ -44,7 +44,7 @@ sd_next <- function(pageId, label = 'Next') {
 
 # Server functions ----
 
-sd_server <- function(db_url, question_ids, n_pages, input, session) {
+sd_server <- function(question_ids, n_pages, input, session) {
 
   # DB operations ----
 
@@ -65,8 +65,8 @@ sd_server <- function(db_url, question_ids, n_pages, input, session) {
     # Transform to data frame, handling uninitialized inputs appropriately
     data <- transform_data(vals, question_ids, session)
 
-    # Update database
-    # update_database(db_url, data)
+    # Save data
+    readr::write_csv(data, 'data.csv')
 
   })
 
@@ -103,18 +103,3 @@ transform_data <- function(vals, question_ids, session) {
 
   return(data)
 }
-
-# Define a function to update the database
-update_database <- function(db_url, data) {
-
-  sheet <- read_sheet(db_url)
-
-  if (data$session_id %in% sheet$session_id) {
-    sheet[which(sheet$session_id == data$session_id),] <- data
-    sheet_write(ss = db_url, data = sheet, sheet = 'data')
-  } else {
-    # Append the data if the session ID is not found (new user)
-    sheet_append(ss = db_url, data = data, sheet = "data")
-  }
-}
-

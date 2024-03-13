@@ -200,16 +200,10 @@ library(shinyjs)
 useShinyjs(rmd = TRUE)
 
 source('functions.R')
-
-# Authenticate google account
-# drive_auth()
-# gs4_auth(token = drive_token())
-gs4_auth(email = "john.helveston@gmail.com", path = "key.json")
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
 sd_server(
-  db_url = 'https://docs.google.com/spreadsheets/d/1SDVM2RsQ_E83YlExo9wEodabdh9_kbKTAocawjUI2eE/edit?usp=sharing', 
   question_ids = list(
     'color', 'age', 'gender', 'animal', 'education'
   ),
@@ -253,7 +247,7 @@ ojs_define <- function(..., .session = shiny::getDefaultReactiveDomain()) {
 <!--/html_preserve-->
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="execution_dependencies">
-{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59]}},"value":[{"type":"character","attributes":{},"value":["askpass","base","bslib","cachem","cellranger","cli","compiler","curl","datasets","digest","dplyr","ellipsis","evaluate","fansi","fastmap","fs","gargle","generics","glue","googledrive","googlesheets4","graphics","grDevices","htmltools","htmlwidgets","httpuv","httr","jquerylib","jsonlite","knitr","later","lifecycle","magrittr","memoise","methods","mime","openssl","pillar","pkgconfig","promises","purrr","R6","Rcpp","rlang","rmarkdown","rstudioapi","sass","shiny","shinyjs","stats","tibble","tidyselect","tools","utf8","utils","vctrs","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["1.2.0","4.3.1","0.6.0","1.0.8","1.1.0","3.6.1","4.3.1","5.0.2","4.3.1","0.6.33","1.1.4","0.3.2","0.23","1.0.5","1.1.1","1.6.3","1.5.2","0.1.3","1.6.2","2.1.1","1.1.1","4.3.1","4.3.1","0.5.7","1.6.2","1.6.12","1.4.7","0.1.4","1.8.7","1.45","1.3.1","1.0.4","2.0.3","2.0.1","4.3.1","0.12","2.1.0","1.9.0","2.0.3","1.2.1","1.0.2","2.5.1","1.0.11","1.1.2","2.25","0.15.0","0.4.7.9000","1.7.5","2.1.0","4.3.1","3.2.1","1.2.0","4.3.1","1.2.4","4.3.1","0.6.4","0.41","1.8-4","2.3.7"]}]}]}
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]}},"value":[{"type":"character","attributes":{},"value":["base","bslib","cachem","cli","compiler","datasets","digest","ellipsis","evaluate","fastmap","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","lifecycle","magrittr","memoise","methods","mime","promises","R6","Rcpp","rlang","rmarkdown","rstudioapi","sass","shiny","shinyjs","stats","tools","utils","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["4.3.1","0.6.0","1.0.8","3.6.1","4.3.1","4.3.1","0.6.33","0.3.2","0.23","1.1.1","4.3.1","4.3.1","0.5.7","1.6.2","1.6.12","0.1.4","1.8.7","1.45","1.3.1","1.0.4","2.0.3","2.0.1","4.3.1","0.12","1.2.1","2.5.1","1.0.11","1.1.2","2.25","0.15.0","0.4.7.9000","1.7.5","2.1.0","4.3.1","4.3.1","4.3.1","0.41","1.8-4","2.3.7"]}]}]}
 </script>
 <!--/html_preserve-->
 
