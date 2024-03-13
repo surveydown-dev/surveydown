@@ -1,8 +1,7 @@
 library(shiny)
-library(googlesheets4)
 library(shinyjs)
 
-# UI functions
+# UI functions ----
 
 # Modified version of sd_question to include a class assignment
 sd_question <- function(
@@ -43,7 +42,7 @@ sd_next <- function(pageId, label = 'Next') {
   actionButton(inputId = paste0("next", pageId), label)
 }
 
-# Server functions
+# Server functions ----
 
 sd_server <- function(db_url, question_ids, n_pages, input, session) {
 
@@ -66,8 +65,8 @@ sd_server <- function(db_url, question_ids, n_pages, input, session) {
     # Transform to data frame, handling uninitialized inputs appropriately
     data <- transform_data(vals, question_ids, session)
 
-    # Update Google Sheet
-    # update_google_sheet(db_url, data)
+    # Update database
+    # update_database(db_url, data)
 
   })
 
@@ -105,8 +104,8 @@ transform_data <- function(vals, question_ids, session) {
   return(data)
 }
 
-# Define a function to update Google Sheets
-update_google_sheet <- function(db_url, data) {
+# Define a function to update the database
+update_database <- function(db_url, data) {
 
   sheet <- read_sheet(db_url)
 
@@ -118,3 +117,4 @@ update_google_sheet <- function(db_url, data) {
     sheet_append(ss = db_url, data = data, sheet = "data")
   }
 }
+
