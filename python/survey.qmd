@@ -1,19 +1,16 @@
 ---
 format: html
 server: shiny
-include-before-body: pagination.js
+include-before-body: navigation.js
 execute: 
   echo: false
 ---
 
 ```{python}
-from shiny import render, ui
-
-# Import the custom functions from functions.py
-from functions import sd_question, sd_next
+from shiny import render, ui, reactive
 ```
 
-
+::: {#page-1}
 
 # Welcome to my survey! 
 
@@ -29,6 +26,9 @@ ui.input_radio_buttons(
 ui.input_action_button("next1", "Next")  
 ```
 
+:::
+
+::: {#page-2}
 
 ## Tell us abour yourself!
 
@@ -44,4 +44,21 @@ ui.input_numeric("age", "What's your age?", 18, min=18, max=100)
 ui.input_action_button("next2", "Next")  
 ```
 
+:::
 
+```{python}
+n_pages = 2
+
+for i in range(1, n_pages):
+    current_page = i
+    
+    @reactive.Effect
+    def _():
+        if input[f"next{current_page}"]:
+            # Construct the JavaScript to hide the current page and show the next one
+            js_code = f"""
+            document.getElementById('page-{current_page}').style.display = 'none';
+            document.getElementById('page-{current_page + 1}').style.display = 'block';
+            """
+            session.send_js(js_code)
+```
