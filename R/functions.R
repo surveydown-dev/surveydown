@@ -38,10 +38,6 @@ sd_question <- function(
   return(output)
 }
 
-sd_next <- function(pageId, label = 'Next') {
-  actionButton(inputId = paste0("next", pageId), label)
-}
-
 # Server functions ----
 
 sd_server <- function(question_ids, n_pages, input, session) {

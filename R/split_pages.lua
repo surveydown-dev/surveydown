@@ -6,17 +6,22 @@ local firstBlock = true
 function Pandoc(doc)
     local blocks = {}
 
-    for _, block in ipairs(doc.blocks) do
+    for i, block in ipairs(doc.blocks) do
         -- Check if we're processing the first content block
         if firstBlock then
             -- This is the first content block, start the first page
             pageCount = 1
-            local divStart = '<div id="page-1" class="page page-visible">'
+            local divStart = '<div id="page-' .. pageCount .. '" class="page page-visible">'
             table.insert(blocks, pandoc.RawBlock('html', divStart))
             firstBlock = false -- Reset the flag
         end
 
         if block.t == "HorizontalRule" then
+            -- Insert a "Next" button before closing the current page div
+            -- Note: Adjust the button's HTML to match your needs
+            local nextButtonHtml = string.format('<button onclick="Shiny.setInputValue(\'next%d\', true);">Next</button>', pageCount)
+            table.insert(blocks, pandoc.RawBlock('html', nextButtonHtml))
+
             -- Close the previous div and start a new one for subsequent pages
             table.insert(blocks, pandoc.RawBlock('html', '</div>')) -- Close the previous page div
             pageCount = pageCount + 1
@@ -29,6 +34,7 @@ function Pandoc(doc)
     end
 
     -- Close the last div if any pages were started
+    -- Note: No "Next" button for the last page, assuming a different action like "Submit"
     if pageCount > 0 then
         table.insert(blocks, pandoc.RawBlock('html', '</div>')) -- Close the last page div
     end

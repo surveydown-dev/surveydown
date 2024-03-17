@@ -37,8 +37,6 @@ sd_question(
     'Red' = 'red'
   )
 )
-
-sd_next(1)
 ```
 
 ---
@@ -65,8 +63,6 @@ sd_question(
     "Prefer not to say" = "opt_out"
   )
 )
-
-sd_next(2)
 ```
 
 ---
@@ -96,8 +92,6 @@ sd_question(
     "Prefer not to say"          = "no_response"
   )
 )
-
-sd_next(3)
 ```
 
 ---
