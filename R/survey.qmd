@@ -1,7 +1,9 @@
 ---
 format: html
 server: shiny
-include-before-body: pagination.js
+include-before-body: nav.js
+filters:
+  - split_pages.lua
 execute: 
   echo: false
 ---
@@ -19,8 +21,6 @@ useShinyjs(rmd = TRUE)
 
 source('functions.R')
 ```
-
-::: {#page-1}
 
 # Welcome to my survey! 
 
@@ -41,9 +41,7 @@ sd_question(
 sd_next(1)
 ```
 
-:::
-
-::: {#page-2}
+---
 
 ## Tell us abour yourself!
 
@@ -71,11 +69,9 @@ sd_question(
 sd_next(2)
 ```
 
-:::
+---
 
-::: {#page-3}
-
-Here are a few more questions to finish up! 
+## Here are a few more questions to finish up! 
 
 ```{r}
 sd_question(
@@ -104,13 +100,9 @@ sd_question(
 sd_next(3)
 ```
 
-:::
-
-::: {#page-4}
+---
 
 # Thanks for taking our survey!
-
-:::
 
 ```{r}
 #| context: server
