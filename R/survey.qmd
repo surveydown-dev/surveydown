@@ -35,7 +35,44 @@ sd_question(
 )
 ```
 
+Here is another question to test skip logic:
+
+```{r}
+sd_question(
+  name     = 'skip',
+  type     = 'mc',
+  required = TRUE,
+  label    = "Do you want to skip to another page?",
+  option   = c(
+    'No' = 'no', 
+    'Yes, take me to page 3!' = 'pg3'
+  )
+)
+```
+
+Here is a question to showcase conditional display logic. If you choose "Yes" to the question below, another question will appear below it:
+
+```{r}
+sd_question(
+  name = "have_pet",
+  type = "mc",
+  label = "Do you have a pet?",
+  option = c(
+    "No" = "no",
+    "Yes" = "yes"
+  )
+)
+
+sd_question(
+  name = "pet_name",
+  type = "text",
+  label = "What's your pet's name?"
+)
+```
+
+<center>
 Page: 1
+</center>
 
 ---
 
@@ -63,7 +100,9 @@ sd_question(
 )
 ```
 
+<center>
 Page: 2
+</center>
 
 ---
 
@@ -94,7 +133,9 @@ sd_question(
 )
 ```
 
+<center>
 Page: 3
+</center>
 
 ---
 
@@ -106,14 +147,23 @@ Page: 3
 sd_server(
   input = input, 
   session = session,
-  question_ids = list('color', 'age', 'gender', 'animal', 'education'),
+  question_ids = list(
+    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal', 
+    'education'
+  ),
   n_pages = 4,
   skip_logic = tibble::tribble(
     ~question_id, ~response_value, ~target_page,  
-    "color",      "blue",          3, 
+    "skip",       "pg3",          3, 
     "gender",     "male",          4
+  ), 
+  showif = tibble::tribble(
+    ~question_id, ~question_dependence, ~response_value,
+    "pet_name",   "have_pet",           "yes"
   )
 )
 ```
 
+<center>
 Page: 4
+</center>

@@ -9,38 +9,50 @@ sd_question <- function(
   type,
   required = FALSE,
   label    = "label",
-  option   = NULL,
-  dependence = NULL,
-  dependence_value = NULL
+  option   = NULL
 ) {
   output <- NULL
 
   if (type ==  "select") {
+
     output <- shiny::selectizeInput(
       inputId = name,
       label = label,
       choices = option
     )
+
   } else if (type == "mc") {
+
     output <- shiny::radioButtons(
       inputId = name,
       label = label,
       choices = option
     )
+
   } else if (type == "text") {
+
     output <- shiny::textInput(
       inputId = name,
       label = label,
       placeholder = option
     )
+
   }
 
   return(output)
+
 }
 
 # Server functions ----
 
-sd_server <- function(input, session, question_ids, n_pages, skip_logic = NULL) {
+sd_server <- function(
+  input,
+  session,
+  question_ids,
+  n_pages,
+  skip_logic = NULL,
+  showif = NULL
+) {
 
   # DB operations ----
 
@@ -111,6 +123,17 @@ sd_server <- function(input, session, question_ids, n_pages, skip_logic = NULL) 
     }
   })
 
+  # showif conditions ----
+
+  # Implement conditional display logic if 'showif' is provided
+  if (!is.null(showif)) {
+    observe({
+      for (i in 1:nrow(showif)) {
+        handle_showif_condition(showif[i,], input)
+      }
+    })
+  }
+
 }
 
 transform_data <- function(vals, question_ids, session) {
@@ -128,4 +151,21 @@ transform_data <- function(vals, question_ids, session) {
   data <- cbind(data, responses)
 
   return(data)
+}
+
+# Function to handle the showif conditional display of questions
+handle_showif_condition <- function(condition, input) {
+
+  # Listen for changes to the dependent question
+  observeEvent(input[[condition$question_dependence]], {
+
+    print(input[[condition$question_dependence]])
+
+    # Check if the response matches the condition for displaying the question
+    if (input[[condition$question_dependence]] == condition$response_value) {
+      shinyjs::show(condition$question_id)
+    } else {
+      shinyjs::hide(condition$question_id)
+    }
+  }, ignoreNULL = TRUE)
 }

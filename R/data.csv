@@ -1,2 +1,2 @@
-session_id,timestamp,color,age,gender,animal,education
-0e236b7eba6f928a77ee25c0f79e9802,2024-03-18T11:01:39Z,red,,male,,hs_no
+session_id,timestamp,color,skip,have_pet,pet_name,age,gender,animal,education
+1a80c485af5aad26e92303ea75501038,2024-03-18T19:06:00Z,blue,no,yes,riley,test,female,test,hs_no

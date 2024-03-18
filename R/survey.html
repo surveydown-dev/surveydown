@@ -112,7 +112,59 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<p>Page: 1</p>
+<p>Here is another question to test skip logic:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="skip" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="skip-label">
+<label class="control-label" id="skip-label" for="skip">Do you want to skip to another page?</label>
+<div class="shiny-options-group">
+<div class="radio">
+<label>
+<input type="radio" name="skip" value="no" checked="checked">
+<span>No</span>
+</label>
+</div>
+<div class="radio">
+<label>
+<input type="radio" name="skip" value="pg3">
+<span>Yes, take me to page 3!</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p>Here is a question to showcase conditional display logic. If you choose “Yes” to the question below, another question will appear below it:</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="have_pet" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="have_pet-label">
+<label class="control-label" id="have_pet-label" for="have_pet">Do you have a pet?</label>
+<div class="shiny-options-group">
+<div class="radio">
+<label>
+<input type="radio" name="have_pet" value="no" checked="checked">
+<span>No</span>
+</label>
+</div>
+<div class="radio">
+<label>
+<input type="radio" name="have_pet" value="yes">
+<span>Yes</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="form-group shiny-input-container">
+<label class="control-label" id="pet_name-label" for="pet_name">What's your pet's name?</label>
+<input id="pet_name" type="text" class="shiny-input-text form-control" value="">
+</div>
+</div>
+</div>
+<center>
+Page: 1
+</center>
 <button onclick="Shiny.setInputValue('next1', true);">Next</button>
 </section></div>
 <div id="page-2" class="page page-hidden" style="display: none;">
@@ -151,7 +203,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<p>Page: 2</p>
+<center>
+Page: 2
+</center>
 <button onclick="Shiny.setInputValue('next2', true);">Next</button>
 </section></div>
 <div id="page-3" class="page page-hidden" style="display: none;">
@@ -181,7 +235,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<p>Page: 3</p>
+<center>
+Page: 3
+</center>
 <button onclick="Shiny.setInputValue('next3', true);">Next</button>
 </section></div>
 <div id="page-4" class="page page-hidden" style="display: none;">
@@ -189,7 +245,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 
 <section id="thanks-for-taking-our-survey" class="level1">
 <h1>Thanks for taking our survey!</h1>
-<p>Page: 4</p>
+<center>
+Page: 4
+</center>
 <p>
 <script type="application/shiny-prerendered" data-context="server-start">
 source('functions.R')
@@ -200,12 +258,19 @@ useShinyjs(rmd = TRUE)
 sd_server(
   input = input, 
   session = session,
-  question_ids = list('color', 'age', 'gender', 'animal', 'education'),
+  question_ids = list(
+    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal', 
+    'education'
+  ),
   n_pages = 4,
   skip_logic = tibble::tribble(
     ~question_id, ~response_value, ~target_page,  
-    "color",      "blue",          3, 
+    "skip",       "pg3",          3, 
     "gender",     "male",          4
+  ), 
+  showif = tibble::tribble(
+    ~question_id, ~question_dependence, ~response_value,
+    "pet_name",   "have_pet",           "yes"
   )
 )
 </script>
