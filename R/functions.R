@@ -1,5 +1,6 @@
 library(shiny)
 library(shinyjs)
+library(tibble)
 
 # UI functions ----
 
@@ -19,7 +20,7 @@ sd_question <- function(
     output <- shiny::selectizeInput(
       inputId = name,
       label = label,
-      choices = option,
+      choices = option
     )
   } else if (type == "mc") {
     output <- shiny::radioButtons(
@@ -31,7 +32,7 @@ sd_question <- function(
     output <- shiny::textInput(
       inputId = name,
       label = label,
-      placeholder = option,
+      placeholder = option
     )
   }
 
@@ -40,15 +41,18 @@ sd_question <- function(
 
 # Server functions ----
 
-sd_server <- function(question_ids, n_pages, input, session) {
+sd_server <- function(input, session, question_ids, n_pages, skip_logic = NULL) {
 
   # DB operations ----
 
   # Define a reactive expression that combines all registered questions
   input_vals <- reactive({
-    sapply(
+    temp <- sapply(
       question_ids,
-      function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE)
+      function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
+    )
+    names(temp) <- question_ids
+    temp
   })
 
   # Use observe to react whenever 'input_vals' changes
@@ -69,13 +73,31 @@ sd_server <- function(question_ids, n_pages, input, session) {
   # Page Navigation ----
 
   observe({
-    # This loop creates an observer for each "next" button dynamically
+    # Loop creates an observer for each "next" button dynamically
     for (i in 1:(n_pages - 1)) {
       local({
         current_page <- i
         observeEvent(input[[paste0("next", current_page)]], {
+
+          # Default next page logic
+          next_page <- current_page + 1
+
+          # Check for skip logic
+          if (!is.null(skip_logic)) {
+            vals <- input_vals()
+            for (j in 1:nrow(skip_logic)) {
+              rule <- skip_logic[j,]
+              if (vals[[rule$question_id]] == rule$response_value) {
+                next_page <- rule$target_page
+                break # Skip logic applies, no need to check further rules
+              }
+            }
+          }
+
+          # Execute page navigation
           shinyjs::hide(paste0("page-", current_page))
-          shinyjs::show(paste0("page-", current_page + 1))
+          shinyjs::show(paste0("page-", next_page))
+
         })
       })
     }

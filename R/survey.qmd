@@ -14,12 +14,8 @@ execute:
 #| warning: false
 #| message: false
 
-library(shiny)
-library(shinyjs)
-
-useShinyjs(rmd = TRUE)
-
 source('functions.R')
+useShinyjs(rmd = TRUE)
 ```
 
 # Welcome to my survey! 
@@ -67,7 +63,7 @@ sd_question(
 
 ---
 
-## Here are a few more questions to finish up! 
+## Here are a few more questions to finish up!
 
 ```{r}
 sd_question(
@@ -102,11 +98,13 @@ sd_question(
 #| context: server
 
 sd_server(
-  question_ids = list(
-    'color', 'age', 'gender', 'animal', 'education'
-  ),
-  n_pages = 4,
   input = input, 
-  session = session
+  session = session,
+  question_ids = list('color', 'age', 'gender', 'animal', 'education'),
+  n_pages = 4,
+  skip_logic = tribble(
+    ~question_id, ~response_value, ~target_page,  
+    "color",      "blue",          3
+  )
 )
 ```
