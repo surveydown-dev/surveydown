@@ -3,7 +3,24 @@ library(shinyjs)
 
 # UI functions ----
 
-# Modified version of sd_question to include a class assignment
+updateSurveyStructure <- function(questionId) {
+  filePath <- "attr_question_ids.json"
+
+  # Check if the file exists and read it; if not, create a new structure
+  if (file.exists(filePath)) {
+    surveyStructure <- jsonlite::fromJSON(filePath)
+  } else {
+    surveyStructure <- list(questionIds = vector("list"))
+  }
+
+  # Add the new question ID to the list
+  surveyStructure$questionIds <- c(surveyStructure$questionIds, questionId)
+
+  # Save the updated structure back to the file
+  jsonlite::write_json(surveyStructure, filePath)
+}
+
+
 sd_question <- function(
   name,
   type,
@@ -11,6 +28,7 @@ sd_question <- function(
   label    = "label",
   option   = NULL
 ) {
+
   output <- NULL
 
   if (type ==  "select") {
@@ -39,6 +57,9 @@ sd_question <- function(
 
   }
 
+  # Update the survey structure JSON with the new question ID
+  updateSurveyStructure(name)
+
   return(output)
 
 }
@@ -48,11 +69,13 @@ sd_question <- function(
 sd_server <- function(
   input,
   session,
-  question_ids,
-  n_pages,
   skip_logic = NULL,
   showif = NULL
 ) {
+
+  # Get page_count and question_ids from json objects
+  page_count <- jsonlite::fromJSON("attr_page_count.json")$pageCount
+  question_ids <- jsonlite::fromJSON("attr_question_ids.json")$questionIds
 
   # DB operations ----
 
@@ -158,8 +181,6 @@ handle_showif_condition <- function(condition, input) {
 
   # Listen for changes to the dependent question
   observeEvent(input[[condition$question_dependence]], {
-
-    print(input[[condition$question_dependence]])
 
     # Check if the response matches the condition for displaying the question
     if (input[[condition$question_dependence]] == condition$response_value) {

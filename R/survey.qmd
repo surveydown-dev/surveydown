@@ -147,11 +147,6 @@ Page: 3
 sd_server(
   input = input, 
   session = session,
-  question_ids = list(
-    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal', 
-    'education'
-  ),
-  n_pages = 4,
   skip_logic = tibble::tribble(
     ~question_id, ~response_value, ~target_page,  
     "skip",       "pg3",          3, 
