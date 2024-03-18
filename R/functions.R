@@ -1,6 +1,5 @@
 library(shiny)
 library(shinyjs)
-library(tibble)
 
 # UI functions ----
 
@@ -79,22 +78,31 @@ sd_server <- function(input, session, question_ids, n_pages, skip_logic = NULL) 
         current_page <- i
         observeEvent(input[[paste0("next", current_page)]], {
 
-          # Default next page logic
+          # Assume default next page logic
           next_page <- current_page + 1
 
-          # Check for skip logic
+          # Apply skip logic if specified
           if (!is.null(skip_logic)) {
             vals <- input_vals()
+
+            # Iterate through each skip rule
             for (j in 1:nrow(skip_logic)) {
-              rule <- skip_logic[j,]
-              if (vals[[rule$question_id]] == rule$response_value) {
+              rule <- skip_logic[j, ]
+              question_response <- vals[[rule$question_id]]
+
+              # If a skip condition is met, update next_page accordingly
+              if (
+                !is.null(question_response) &
+                (question_response == rule$response_value) &
+                (current_page != rule$target_page)
+              ) {
                 next_page <- rule$target_page
-                break # Skip logic applies, no need to check further rules
+                break # Found a matching skip rule, no need to check further
               }
             }
           }
 
-          # Execute page navigation
+          # Execute page navigation, considering skip logic adjustments
           shinyjs::hide(paste0("page-", current_page))
           shinyjs::show(paste0("page-", next_page))
 

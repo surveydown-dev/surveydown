@@ -35,6 +35,8 @@ sd_question(
 )
 ```
 
+Page: 1
+
 ---
 
 ## Tell us abour yourself!
@@ -54,12 +56,14 @@ sd_question(
   required = TRUE,
   label    = "Which best describes your gender?",
   option   = c(
-    "Female" = "Female",
-    "Male" = "Male",
+    "Female" = "female",
+    "Male" = "male",
     "Prefer not to say" = "opt_out"
   )
 )
 ```
+
+Page: 2
 
 ---
 
@@ -90,6 +94,8 @@ sd_question(
 )
 ```
 
+Page: 3
+
 ---
 
 # Thanks for taking our survey!
@@ -102,9 +108,12 @@ sd_server(
   session = session,
   question_ids = list('color', 'age', 'gender', 'animal', 'education'),
   n_pages = 4,
-  skip_logic = tribble(
+  skip_logic = tibble::tribble(
     ~question_id, ~response_value, ~target_page,  
-    "color",      "blue",          3
+    "color",      "blue",          3, 
+    "gender",     "male",          4
   )
 )
 ```
+
+Page: 4
