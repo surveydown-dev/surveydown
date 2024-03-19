@@ -3,24 +3,6 @@ library(shinyjs)
 
 # UI functions ----
 
-updateSurveyStructure <- function(questionId) {
-  filePath <- ".attr_question_ids.json"
-
-  # Check if the file exists and read it; if not, create a new structure
-  if (file.exists(filePath)) {
-    surveyStructure <- jsonlite::fromJSON(filePath)
-  } else {
-    surveyStructure <- list(questionIds = vector("list"))
-  }
-
-  # Add the new question ID to the list
-  surveyStructure$questionIds <- c(surveyStructure$questionIds, questionId)
-
-  # Save the updated structure back to the file
-  jsonlite::write_json(surveyStructure, filePath)
-}
-
-
 sd_question <- function(
   name,
   type,
@@ -57,9 +39,6 @@ sd_question <- function(
 
   }
 
-  # Update the survey structure JSON with the new question ID
-  updateSurveyStructure(name)
-
   return(output)
 
 }
@@ -69,13 +48,10 @@ sd_question <- function(
 sd_server <- function(
   input,
   session,
+  question_ids = NULL,
   skip_logic = NULL,
   showif = NULL
 ) {
-
-  # Get page_count and question_ids from json objects
-  page_count <- jsonlite::fromJSON(".attr_page_count.json")$pageCount
-  question_ids <- jsonlite::fromJSON(".attr_question_ids.json")$questionIds
 
   # DB operations ----
 
@@ -106,45 +82,21 @@ sd_server <- function(
 
   # Page Navigation ----
 
-  observe({
-    # Loop creates an observer for each "next" button dynamically
-    for (i in 1:(page_count - 1)) {
-      local({
-        current_page <- i
-        observeEvent(input[[paste0("next", current_page)]], {
+  # Read the pages information into a data frame
+  page_df <- jsonlite::fromJSON(".survey_pages.json")$pages
 
-          # Assume default next page logic
-          next_page <- current_page + 1
+  # Use a for loop to create observers for each Next button
+  for (i in 1:(nrow(page_df)-1)) {
+    local({
+      current_page <- page_df$name[i]
+      next_page <- page_df$name[i + 1]
 
-          # Apply skip logic if specified
-          if (!is.null(skip_logic)) {
-            vals <- input_vals()
-
-            # Iterate through each skip rule
-            for (j in 1:nrow(skip_logic)) {
-              rule <- skip_logic[j, ]
-              question_response <- vals[[rule$question_id]]
-
-              # If a skip condition is met, update next_page accordingly
-              if (
-                !is.null(question_response) &
-                (question_response == rule$response_value) &
-                (current_page != rule$target_page)
-              ) {
-                next_page <- rule$target_page
-                break # Found a matching skip rule, no need to check further
-              }
-            }
-          }
-
-          # Execute page navigation, considering skip logic adjustments
-          shinyjs::hide(paste0("page-", current_page))
-          shinyjs::show(paste0("page-", next_page))
-
-        })
+      observeEvent(input[[paste0("next-", current_page)]], {
+        shinyjs::hide(current_page)
+        shinyjs::show(next_page)
       })
-    }
-  })
+    })
+  }
 
   # showif conditions ----
 

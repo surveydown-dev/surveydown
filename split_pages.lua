@@ -1,52 +1,44 @@
--- Initialize a counter for page numbering and a table to hold question IDs
-local pageCount = 0
--- Flag to indicate the first content block
-local firstBlock = true
+-- Initialize a table to hold page names and their numbers
+local pages = {}
+local currentPageNumber = 0
+
+-- Second pass to append Next buttons and collect page data
+function Div(elem)
+  if elem.classes:includes("sd-page") then
+    currentPageNumber = currentPageNumber + 1
+    local pageName = elem.identifier
+
+    -- Append page's information to the 'pages' table
+    table.insert(pages, {name = pageName, number = currentPageNumber})
+
+    -- Generate a Next button with an ID based on the page name, except for the last page
+
+    local nextButtonHtml = string.format('<button onclick="Shiny.setInputValue(\'next-%s\', true);">Next</button>', pageName)
+    table.insert(elem.content, pandoc.RawBlock('html', nextButtonHtml))
+  end
+  return elem
+end
 
 function Pandoc(doc)
-    local blocks = {}
+  local filePath = ".survey_pages.json"
 
-    for i, block in ipairs(doc.blocks) do
+  -- Open the file for writing
+  local file = io.open(filePath, "w")
+  if not file then
+    error("Could not open file " .. filePath)
+  end
 
-        -- Check if we're processing the first content block
-        if firstBlock then
-            -- This is the first content block, start the first page
-            pageCount = 1
-            local divStart = '<div id="page-' .. pageCount .. '" class="page page-visible">'
-            table.insert(blocks, pandoc.RawBlock('html', divStart))
-            firstBlock = false -- Reset the flag
-        end
-
-        if block.t == "HorizontalRule" then
-            -- Insert a "Next" button before closing the current page div
-            local nextButtonHtml = string.format('<button onclick="Shiny.setInputValue(\'next%d\', true);">Next</button>', pageCount)
-            table.insert(blocks, pandoc.RawBlock('html', nextButtonHtml))
-
-            -- Close the previous div and start a new one for subsequent pages
-            table.insert(blocks, pandoc.RawBlock('html', '</div>')) -- Close the previous page div
-            pageCount = pageCount + 1
-            local divStart = string.format('<div id="page-%d" class="page page-hidden" style="display: none;">', pageCount)
-            table.insert(blocks, pandoc.RawBlock('html', divStart))
-        else
-            -- For all other blocks, just add them to the blocks table
-            table.insert(blocks, block)
-        end
+  -- Write the table as a JSON string
+  file:write('{"pages":[')
+  for i, page in ipairs(pages) do
+    file:write('{"name":"' .. page.name .. '","number":' .. page.number .. '}')
+    if i ~= #pages then
+      file:write(',')
     end
+  end
+  file:write(']}')
 
-    -- Close the last div if any pages were started
-    if pageCount > 0 then
-        table.insert(blocks, pandoc.RawBlock('html', '</div>')) -- Close the last page div
-    end
+  file:close()
 
-    -- Write the page count to a new JSON file
-    local jsonStr = '{"pageCount": ' .. pageCount .. '}'
-    local file = io.open(".attr_page_count.json", "w")
-    if file then
-        file:write(jsonStr)
-        file:close()
-    else
-        print("Error: Unable to write to page_count.json.")
-    end
-
-    return pandoc.Pandoc(blocks, doc.meta)
+  return doc
 end

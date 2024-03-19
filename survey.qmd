@@ -1,7 +1,7 @@
 ---
 format: html
 server: shiny
-include-before-body: nav.js
+include-before-body: hide_pages.js
 filters:
   - split_pages.lua
 execute: 
@@ -17,6 +17,8 @@ execute:
 source('functions.R')
 useShinyjs(rmd = TRUE)
 ```
+
+::: {#welcome .sd-page}
 
 # Welcome to my survey! 
 
@@ -74,7 +76,9 @@ sd_question(
 Page: 1
 </center>
 
----
+:::
+
+::: {#demographics .sd-page}
 
 ## Tell us abour yourself!
 
@@ -104,7 +108,9 @@ sd_question(
 Page: 2
 </center>
 
----
+:::
+
+::: {#animals .sd-page}
 
 ## Here are a few more questions to finish up!
 
@@ -137,28 +143,38 @@ sd_question(
 Page: 3
 </center>
 
----
+:::
 
-# Thanks for taking our survey!
+::: {#end .sd-page}
+
+## Thanks for taking our survey!
+
+ST<center>
+Page: 4
+</center>
+
+:::
 
 ```{r}
 #| context: server
 
 sd_server(
-  input = input, 
+  input = input,
   session = session,
-  skip_logic = tibble::tribble(
-    ~question_id, ~response_value, ~target_page,  
-    "skip",       "pg3",          3, 
-    "gender",     "male",          4
-  ), 
-  showif = tibble::tribble(
-    ~question_id, ~question_dependence, ~response_value,
-    "pet_name",   "have_pet",           "yes"
+  question_ids = list(
+    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal',
+    'education'
   )
+  
+  # n_pages = 4,
+  # skip_logic = tibble::tribble(
+  #   ~question_id, ~response_value, ~target_page,
+  #   "skip",       "pg3",          3,
+  #   "gender",     "male",          4
+  # ),
+  # showif = tibble::tribble(
+  #   ~question_id, ~question_dependence, ~response_value,
+  #   "pet_name",   "have_pet",           "yes"
+  # )
 )
 ```
-
-<center>
-Page: 4
-</center>
