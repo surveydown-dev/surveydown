@@ -149,7 +149,7 @@ Page: 3
 
 ## Thanks for taking our survey!
 
-ST<center>
+<center>
 Page: 4
 </center>
 

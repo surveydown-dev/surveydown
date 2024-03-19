@@ -1,44 +1,43 @@
--- Initialize a table to hold page names and their numbers
+-- Initialize table to collect page identifiers
 local pages = {}
-local currentPageNumber = 0
 
--- Second pass to append Next buttons and collect page data
+-- Function to handle Div elements
 function Div(elem)
-  if elem.classes:includes("sd-page") then
-    currentPageNumber = currentPageNumber + 1
-    local pageName = elem.identifier
-
-    -- Append page's information to the 'pages' table
-    table.insert(pages, {name = pageName, number = currentPageNumber})
-
-    -- Generate a Next button with an ID based on the page name, except for the last page
-
-    local nextButtonHtml = string.format('<button onclick="Shiny.setInputValue(\'next-%s\', true);">Next</button>', pageName)
-    table.insert(elem.content, pandoc.RawBlock('html', nextButtonHtml))
-  end
-  return elem
+    if elem.classes:includes("sd-page") then
+        -- Collect page identifiers
+        table.insert(pages, elem.identifier)
+    end
 end
 
+-- After all Divs are processed, add Next buttons except for the last page
 function Pandoc(doc)
-  local filePath = ".survey_pages.json"
-
-  -- Open the file for writing
-  local file = io.open(filePath, "w")
-  if not file then
-    error("Could not open file " .. filePath)
-  end
-
-  -- Write the table as a JSON string
-  file:write('{"pages":[')
-  for i, page in ipairs(pages) do
-    file:write('{"name":"' .. page.name .. '","number":' .. page.number .. '}')
-    if i ~= #pages then
-      file:write(',')
+    for i, identifier in ipairs(pages) do
+        if i < #pages then
+            local nextButtonHtml = '<button onclick="Shiny.setInputValue(\'next-' .. pages[i] .. '\', true);">Next</button>'
+            -- Find the Div element and append the Next button
+            for _, block in ipairs(doc.blocks) do
+                if block.t == "Div" and block.identifier == identifier then
+                    table.insert(block.content, pandoc.RawBlock('html', nextButtonHtml))
+                    break
+                end
+            end
+        end
     end
-  end
-  file:write(']}')
 
-  file:close()
+    -- Prepare to write the JSON file with page information
+    local jsonStr = '{"pages":['
+    for i, page in ipairs(pages) do
+        jsonStr = jsonStr .. '{"name":"' .. page .. '","number":' .. i .. '}'
+        if i ~= #pages then
+            jsonStr = jsonStr .. ','
+        end
+    end
+    jsonStr = jsonStr .. ']}'
 
-  return doc
+    -- Write JSON file
+    local file = io.open(".survey_pages.json", "w")
+    file:write(jsonStr)
+    file:close()
+
+    return doc
 end
