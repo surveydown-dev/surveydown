@@ -40,7 +40,7 @@ function Pandoc(doc)
 
     -- Write the page count to a new JSON file
     local jsonStr = '{"pageCount": ' .. pageCount .. '}'
-    local file = io.open("attr_page_count.json", "w")
+    local file = io.open(".attr_page_count.json", "w")
     if file then
         file:write(jsonStr)
         file:close()

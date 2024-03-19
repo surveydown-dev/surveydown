@@ -4,7 +4,7 @@ library(shinyjs)
 # UI functions ----
 
 updateSurveyStructure <- function(questionId) {
-  filePath <- "attr_question_ids.json"
+  filePath <- ".attr_question_ids.json"
 
   # Check if the file exists and read it; if not, create a new structure
   if (file.exists(filePath)) {
@@ -74,8 +74,8 @@ sd_server <- function(
 ) {
 
   # Get page_count and question_ids from json objects
-  page_count <- jsonlite::fromJSON("attr_page_count.json")$pageCount
-  question_ids <- jsonlite::fromJSON("attr_question_ids.json")$questionIds
+  page_count <- jsonlite::fromJSON(".attr_page_count.json")$pageCount
+  question_ids <- jsonlite::fromJSON(".attr_question_ids.json")$questionIds
 
   # DB operations ----
 
@@ -108,7 +108,7 @@ sd_server <- function(
 
   observe({
     # Loop creates an observer for each "next" button dynamically
-    for (i in 1:(n_pages - 1)) {
+    for (i in 1:(page_count - 1)) {
       local({
         current_page <- i
         observeEvent(input[[paste0("next", current_page)]], {

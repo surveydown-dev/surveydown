@@ -1,0 +1,20 @@
+- [x] Question dependency (showif)
+- [x] Skip logic
+- [] Required questions
+- [] Form validation
+- [] Admin page w/password
+- [] Basic version working with Googlesheets as db
+- [] User tracking via url parameters: https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking
+- [] Add a getSurveyData() function so the survey designer can obtain the current survey results from inside the app: https://shinysurveys.jdtrat.com/articles/get-survey-data.html
+- [] Ability to embed markdown inside choice options
+- Question types:
+  - [x] Multiple choice (single)
+  - [] Multiple choice (multiple)
+  - [x] Multiple choice (button)
+  - [x] Select
+  - [x] Text
+  - [x] Text area
+  - [] Numeric
+  - [] Matrix
+  - [] Slider
+  - [] Date

@@ -92,22 +92,13 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <h1>Welcome to my survey!</h1>
 <p>Here is a question to get started</p>
 <div class="cell">
-<div class="cell-output-display">
-<div id="color" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="color-label">
+<div class="cell-output-display no-overflow-x">
+<div class="form-group shiny-input-container">
 <label class="control-label" id="color-label" for="color">Do you want to take the red pill or the blue pill?</label>
-<div class="shiny-options-group">
-<div class="radio">
-<label>
-<input type="radio" name="color" value="blue" checked="checked">
-<span>Blue</span>
-</label>
-</div>
-<div class="radio">
-<label>
-<input type="radio" name="color" value="red">
-<span>Red</span>
-</label>
-</div>
+<div>
+<select class="shiny-input-select form-control" id="color"><option value="blue" selected="">Blue</option>
+<option value="red">Red</option></select>
+<script type="application/json" data-for="color">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div>
 </div>
@@ -258,11 +249,6 @@ useShinyjs(rmd = TRUE)
 sd_server(
   input = input, 
   session = session,
-  question_ids = list(
-    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal', 
-    'education'
-  ),
-  n_pages = 4,
   skip_logic = tibble::tribble(
     ~question_id, ~response_value, ~target_page,  
     "skip",       "pg3",          3, 
@@ -304,7 +290,7 @@ ojs_define <- function(..., .session = shiny::getDefaultReactiveDomain()) {
 </p>
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="dependencies">
-{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["selectize"]},{"type":"character","attributes":{},"value":["0.12.4"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["www/shared/selectize"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/selectize.min.js","accessibility/js/selectize-plugin-a11y.min.js"]},{"type":"character","attributes":{},"value":["css/selectize.bootstrap3.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.5.1"]}]}]}
+{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["selectize"]},{"type":"character","attributes":{},"value":["0.12.4"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["www/shared/selectize"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/selectize.min.js","accessibility/js/selectize-plugin-a11y.min.js"]},{"type":"character","attributes":{},"value":["css/selectize.bootstrap3.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.5.1"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["selectize"]},{"type":"character","attributes":{},"value":["0.12.4"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["www/shared/selectize"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/selectize.min.js","accessibility/js/selectize-plugin-a11y.min.js"]},{"type":"character","attributes":{},"value":["css/selectize.bootstrap3.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.5.1"]}]}]}
 </script>
 <!--/html_preserve-->
 <!--html_preserve-->
