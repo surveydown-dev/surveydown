@@ -84,16 +84,43 @@ sd_server <- function(
 
   # Read the pages information into a data frame
   page_df <- jsonlite::fromJSON(".survey_pages.json")$pages
+  page_count <- nrow(page_df)
 
   # Use a for loop to create observers for each Next button
-  for (i in 1:(nrow(page_df)-1)) {
+  for (i in 1:(page_count - 1)) {
+
     local({
       current_page <- page_df$name[i]
-      next_page <- page_df$name[i + 1]
-
       observeEvent(input[[paste0("next-", current_page)]], {
+
+        # Assume default next page logic
+        next_page <- page_df$name[i + 1]
+
+        # Apply skip logic if specified
+        if (!is.null(skip_logic)) {
+          vals <- input_vals()
+
+          # Iterate through each skip rule
+          for (j in 1:nrow(skip_logic)) {
+            rule <- skip_logic[j, ]
+            question_response <- vals[[rule$question_id]]
+
+            # If a skip condition is met, update next_page accordingly
+            if (
+              !is.null(question_response) &
+              (question_response == rule$response_value) &
+              (current_page != rule$target_page)
+            ) {
+              next_page <- rule$target_page
+              break # Found a matching skip rule, no need to check further
+            }
+          }
+        }
+
+        # Execute page navigation, considering skip logic adjustments
         shinyjs::hide(current_page)
         shinyjs::show(next_page)
+
       })
     })
   }

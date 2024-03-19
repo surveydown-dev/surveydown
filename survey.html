@@ -129,6 +129,12 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <span>Yes, take me to page 3!</span>
 </label>
 </div>
+<div class="radio">
+<label>
+<input type="radio" name="skip" value="end">
+<span>Yes, take me to the end!</span>
+</label>
+</div>
 </div>
 </div>
 </div>
@@ -244,7 +250,6 @@ Page: 3
 <div id="end" class="sd-page">
 <section id="thanks-for-taking-our-survey" class="level2">
 <h2 class="anchored" data-anchor-id="thanks-for-taking-our-survey">Thanks for taking our survey!</h2>
-ST
 <center>
 Page: 4
 </center>
@@ -263,14 +268,12 @@ sd_server(
   question_ids = list(
     'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal',
     'education'
+  ),
+  skip_logic = tibble::tribble(
+    ~question_id, ~response_value, ~target_page,
+    "skip",       "pg3",           "animals",
+    "skip",       "end",           "end"
   )
-  
-  # n_pages = 4,
-  # skip_logic = tibble::tribble(
-  #   ~question_id, ~response_value, ~target_page,
-  #   "skip",       "pg3",          3,
-  #   "gender",     "male",          4
-  # ),
   # showif = tibble::tribble(
   #   ~question_id, ~question_dependence, ~response_value,
   #   "pet_name",   "have_pet",           "yes"

@@ -47,7 +47,8 @@ sd_question(
   label    = "Do you want to skip to another page?",
   option   = c(
     'No' = 'no', 
-    'Yes, take me to page 3!' = 'pg3'
+    'Yes, take me to page 3!' = 'pg3', 
+    'Yes, take me to the end!' = 'end'
   )
 )
 ```
@@ -164,14 +165,12 @@ sd_server(
   question_ids = list(
     'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal',
     'education'
+  ),
+  skip_logic = tibble::tribble(
+    ~question_id, ~response_value, ~target_page,
+    "skip",       "pg3",           "animals",
+    "skip",       "end",           "end"
   )
-  
-  # n_pages = 4,
-  # skip_logic = tibble::tribble(
-  #   ~question_id, ~response_value, ~target_page,
-  #   "skip",       "pg3",          3,
-  #   "gender",     "male",          4
-  # ),
   # showif = tibble::tribble(
   #   ~question_id, ~question_dependence, ~response_value,
   #   "pet_name",   "have_pet",           "yes"
