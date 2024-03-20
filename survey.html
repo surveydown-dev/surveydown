@@ -265,11 +265,11 @@ sd_server(
     ~question_id, ~response_value, ~target_page,
     "skip",       "pg3",           "animals",
     "skip",       "end",           "end"
+  ),
+  showif = tibble::tribble(
+    ~question_id, ~question_dependence, ~response_value,
+    "pet_name",   "have_pet",           "yes"
   )
-  # showif = tibble::tribble(
-  #   ~question_id, ~question_dependence, ~response_value,
-  #   "pet_name",   "have_pet",           "yes"
-  # )
 )
 </script>
  
