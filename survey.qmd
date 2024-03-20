@@ -1,5 +1,7 @@
 ---
-format: html
+format:
+  html:
+    section-divs: false
 server: shiny
 include-before-body: hide_pages.js
 filters:

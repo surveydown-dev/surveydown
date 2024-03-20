@@ -85,45 +85,41 @@ sd_server <- function(
   # Read the pages information into a data frame
   page_df <- jsonlite::fromJSON(".survey_pages.json")$pages
   page_count <- nrow(page_df)
+  observe({
+    for (i in 1:(page_count - 1)) {
+      local({
 
-  # Use a for loop to create observers for each Next button
-  for (i in 1:(page_count - 1)) {
-
-    local({
-      current_page <- page_df$name[i]
-      observeEvent(input[[paste0("next-", current_page)]], {
-
-        # Assume default next page logic
+        # Capture the current iteration's variables in a local environment
+        current_page <- page_df$name[i]
         next_page <- page_df$name[i + 1]
 
-        # Apply skip logic if specified
-        if (!is.null(skip_logic)) {
-          vals <- input_vals()
+        observeEvent(input[[paste0("next-", current_page)]], {
 
-          # Iterate through each skip rule
-          for (j in 1:nrow(skip_logic)) {
-            rule <- skip_logic[j, ]
-            question_response <- vals[[rule$question_id]]
+          # Logic to determine the correct next page, considering skip logic
+          actual_next_page <- next_page
+          if (!is.null(skip_logic)) {
+            vals <- input_vals()
 
-            # If a skip condition is met, update next_page accordingly
-            if (
-              !is.null(question_response) &
-              (question_response == rule$response_value) &
-              (current_page != rule$target_page)
-            ) {
-              next_page <- rule$target_page
-              break # Found a matching skip rule, no need to check further
+            for (j in 1:nrow(skip_logic)) {
+              rule <- skip_logic[j, ]
+              question_response <- vals[[rule$question_id]]
+
+              if (!is.null(question_response) &&
+                  question_response == rule$response_value &&
+                  current_page != rule$target_page) {
+                actual_next_page <- rule$target_page
+                break # Found a matching skip rule, no need to check further
+              }
             }
           }
-        }
 
-        # Execute page navigation, considering skip logic adjustments
-        shinyjs::hide(current_page)
-        shinyjs::show(next_page)
-
+          # Execute page navigation
+          shinyjs::hide(current_page)
+          shinyjs::show(actual_next_page)
+        })
       })
-    })
-  }
+    }
+  })
 
   # showif conditions ----
 

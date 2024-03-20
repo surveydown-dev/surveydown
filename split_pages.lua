@@ -13,7 +13,7 @@ end
 function Pandoc(doc)
     for i, identifier in ipairs(pages) do
         if i < #pages then
-            local nextButtonHtml = '<button onclick="Shiny.setInputValue(\'next-' .. pages[i] .. '\', true);">Next</button>'
+            local nextButtonHtml = string.format('<button onclick="Shiny.setInputValue(\'next-%s\', true);">Next</button>', pages[i])
             -- Find the Div element and append the Next button
             for _, block in ipairs(doc.blocks) do
                 if block.t == "Div" and block.identifier == identifier then

@@ -87,8 +87,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 <div id="welcome" class="sd-page">
-<section id="welcome-to-my-survey" class="level1">
-<h1>Welcome to my survey!</h1>
+<h1 id="welcome-to-my-survey">Welcome to my survey!</h1>
 <p>Here is a question to get started</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -171,11 +170,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 Page: 1
 </center>
 <button onclick="Shiny.setInputValue('next-welcome', true);">Next</button>
-</section>
 </div>
 <div id="demographics" class="sd-page">
-<section id="tell-us-abour-yourself" class="level2">
-<h2 class="anchored" data-anchor-id="tell-us-abour-yourself">Tell us abour yourself!</h2>
+<h2 id="tell-us-abour-yourself" class="anchored">Tell us abour yourself!</h2>
 <div class="cell">
 <div class="cell-output-display">
 <div class="form-group shiny-input-container">
@@ -213,11 +210,9 @@ Page: 1
 Page: 2
 </center>
 <button onclick="Shiny.setInputValue('next-demographics', true);">Next</button>
-</section>
 </div>
 <div id="animals" class="sd-page">
-<section id="here-are-a-few-more-questions-to-finish-up" class="level2">
-<h2 class="anchored" data-anchor-id="here-are-a-few-more-questions-to-finish-up">Here are a few more questions to finish up!</h2>
+<h2 id="here-are-a-few-more-questions-to-finish-up" class="anchored">Here are a few more questions to finish up!</h2>
 <div class="cell">
 <div class="cell-output-display">
 <div class="form-group shiny-input-container">
@@ -245,15 +240,12 @@ Page: 2
 Page: 3
 </center>
 <button onclick="Shiny.setInputValue('next-animals', true);">Next</button>
-</section>
 </div>
 <div id="end" class="sd-page">
-<section id="thanks-for-taking-our-survey" class="level2">
-<h2 class="anchored" data-anchor-id="thanks-for-taking-our-survey">Thanks for taking our survey!</h2>
+<h2 id="thanks-for-taking-our-survey" class="anchored">Thanks for taking our survey!</h2>
 <center>
 Page: 4
 </center>
-</section>
 </div>
 <p>
 <script type="application/shiny-prerendered" data-context="server-start">
