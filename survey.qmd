@@ -6,8 +6,9 @@ server: shiny
 include-before-body: hide_pages.js
 filters:
   - split_pages.lua
-execute: 
+execute:
   echo: false
+theme: surveydown.scss
 ---
 
 ```{r}
