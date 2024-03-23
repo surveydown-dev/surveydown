@@ -72,6 +72,36 @@ sd_server <- function(
   showif = NULL
 ) {
 
+  # showif conditions ----
+
+  # Implement conditional display logic if 'showif' is provided
+  if (!is.null(showif)) {
+
+    # By default, hide all conditional questions
+    for (i in 1:nrow(showif)) {
+      shinyjs::hide(showif[i,]$question_id)
+    }
+
+    # Then look for whether the showif condition is met to show the question
+    observe({
+      for (i in 1:nrow(showif)) {
+        row <- showif[i,]
+
+        # Listen for changes to the dependent question
+        observeEvent(input[[row$question_dependence]], {
+
+          # Check if the response matches the condition for displaying the question
+          if (input[[row$question_dependence]] == row$response_value) {
+            shinyjs::show(row$question_id)
+          } else {
+            shinyjs::hide(row$question_id)
+          }
+        }, ignoreNULL = TRUE)
+
+      }
+    })
+  }
+
   # DB operations ----
 
   # Define a reactive expression that combines all registered questions
@@ -141,17 +171,6 @@ sd_server <- function(
     }
   })
 
-  # showif conditions ----
-
-  # Implement conditional display logic if 'showif' is provided
-  if (!is.null(showif)) {
-    observe({
-      for (i in 1:nrow(showif)) {
-        handle_showif_condition(showif[i,], input)
-      }
-    })
-  }
-
 }
 
 transform_data <- function(vals, question_ids, session) {
@@ -169,19 +188,4 @@ transform_data <- function(vals, question_ids, session) {
   data <- cbind(data, responses)
 
   return(data)
-}
-
-# Function to handle the showif conditional display of questions
-handle_showif_condition <- function(condition, input) {
-
-  # Listen for changes to the dependent question
-  observeEvent(input[[condition$question_dependence]], {
-
-    # Check if the response matches the condition for displaying the question
-    if (input[[condition$question_dependence]] == condition$response_value) {
-      shinyjs::show(condition$question_id)
-    } else {
-      shinyjs::hide(condition$question_id)
-    }
-  }, ignoreNULL = TRUE)
 }
