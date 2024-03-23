@@ -106,6 +106,22 @@ sd_question(
     "Prefer not to say" = "opt_out"
   )
 )
+
+sd_question(
+  name     = 'ethnicity',
+  type     = 'mc_multiple',
+  required = TRUE,
+  label    = "Which best describes your ethnicity (select all that apply)?",
+  option   = c(
+    "Asian" = "asian",
+    "Black/African" = "black",
+    "White" = "white",
+    "Hispanic/Latinx" = "hispanic",
+    "Native American" = "native",
+    "Pacific Islander" = "pacific",
+    "Prefer not to say" = "opt_out"
+  )
+)
 ```
 
 <center>
@@ -166,8 +182,8 @@ sd_server(
   input = input,
   session = session,
   question_ids = list(
-    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal',
-    'education'
+    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'ethnicity',
+    'animal', 'education'
   ),
   skip_logic = tibble::tribble(
     ~question_id, ~response_value, ~target_page,

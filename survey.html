@@ -96,7 +96,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <div class="shiny-options-group">
 <div class="radio">
 <label>
-<input type="radio" name="color" value="blue" checked="checked">
+<input type="radio" name="color" value="blue">
 <span>Blue</span>
 </label>
 </div>
@@ -118,7 +118,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <div class="shiny-options-group">
 <div class="radio">
 <label>
-<input type="radio" name="skip" value="no" checked="checked">
+<input type="radio" name="skip" value="no">
 <span>No</span>
 </label>
 </div>
@@ -146,7 +146,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <div class="shiny-options-group">
 <div class="radio">
 <label>
-<input type="radio" name="have_pet" value="no" checked="checked">
+<input type="radio" name="have_pet" value="no">
 <span>No</span>
 </label>
 </div>
@@ -186,7 +186,7 @@ Page: 1
 <div class="shiny-options-group">
 <div class="radio">
 <label>
-<input type="radio" name="gender" value="female" checked="checked">
+<input type="radio" name="gender" value="female">
 <span>Female</span>
 </label>
 </div>
@@ -199,6 +199,55 @@ Page: 1
 <div class="radio">
 <label>
 <input type="radio" name="gender" value="opt_out">
+<span>Prefer not to say</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="cell-output-display">
+<div id="ethnicity" class="form-group shiny-input-checkboxgroup shiny-input-container" role="group" aria-labelledby="ethnicity-label">
+<label class="control-label" id="ethnicity-label" for="ethnicity">Which best describes your ethnicity (select all that apply)?</label>
+<div class="shiny-options-group">
+<div class="checkbox">
+<label>
+<input type="checkbox" name="ethnicity" value="asian">
+<span>Asian</span>
+</label>
+</div>
+<div class="checkbox">
+<label>
+<input type="checkbox" name="ethnicity" value="black">
+<span>Black/African</span>
+</label>
+</div>
+<div class="checkbox">
+<label>
+<input type="checkbox" name="ethnicity" value="white">
+<span>White</span>
+</label>
+</div>
+<div class="checkbox">
+<label>
+<input type="checkbox" name="ethnicity" value="hispanic">
+<span>Hispanic/Latinx</span>
+</label>
+</div>
+<div class="checkbox">
+<label>
+<input type="checkbox" name="ethnicity" value="native">
+<span>Native American</span>
+</label>
+</div>
+<div class="checkbox">
+<label>
+<input type="checkbox" name="ethnicity" value="pacific">
+<span>Pacific Islander</span>
+</label>
+</div>
+<div class="checkbox">
+<label>
+<input type="checkbox" name="ethnicity" value="opt_out">
 <span>Prefer not to say</span>
 </label>
 </div>
@@ -224,7 +273,8 @@ Page: 2
 <div class="form-group shiny-input-container">
 <label class="control-label" id="education-label" for="education">What is the highest level of education you have attained?</label>
 <div>
-<select class="shiny-input-select form-control" id="education"><option value="hs_no" selected="">Did not attend high school</option>
+<select id="education" class="shiny-input-select"><option value="" selected="">Choose an option...</option>
+<option value="hs_no">Did not attend high school</option>
 <option value="hs_some">Some high school</option>
 <option value="hs_grad">High school graduate</option>
 <option value="college_some">Some college</option>
@@ -258,8 +308,8 @@ sd_server(
   input = input,
   session = session,
   question_ids = list(
-    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'animal',
-    'education'
+    'color', 'skip', 'have_pet', 'pet_name','age', 'gender', 'ethnicity',
+    'animal', 'education'
   ),
   skip_logic = tibble::tribble(
     ~question_id, ~response_value, ~target_page,

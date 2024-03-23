@@ -8,17 +8,26 @@ sd_question <- function(
   type,
   required = FALSE,
   label    = "label",
-  option   = NULL
+  option   = NULL,
+  label_null = NULL
 ) {
 
   output <- NULL
 
-  if (type ==  "select") {
+  if (is.null(label_null)) {
+    label_null <- 'Choose an option...'
+  }
 
-    output <- shiny::selectizeInput(
+  if (type ==  "select") {
+    option <- c('', option)
+    names(option)[1] <- label_null
+
+    output <- shiny::selectInput(
       inputId = name,
       label = label,
-      choices = option
+      choices = option,
+      multiple = FALSE,
+      selected = NULL,
     )
 
   } else if (type == "mc") {
@@ -26,7 +35,17 @@ sd_question <- function(
     output <- shiny::radioButtons(
       inputId = name,
       label = label,
-      choices = option
+      choices = option,
+      selected = FALSE
+    )
+
+  } else if (type == "mc_multiple") {
+
+    output <- shiny::checkboxGroupInput(
+      inputId = name,
+      label = label,
+      choices = option,
+      selected = FALSE
     )
 
   } else if (type == "text") {
@@ -71,12 +90,13 @@ sd_server <- function(
 
     # Capture the current state of inputs
     vals <- input_vals()
+    print(vals)
 
     # Transform to data frame, handling uninitialized inputs appropriately
-    data <- transform_data(vals, question_ids, session)
+    # data <- transform_data(vals, question_ids, session)
 
     # Save data
-    readr::write_csv(data, 'data.csv')
+    # readr::write_csv(data, 'data.csv')
 
   })
 

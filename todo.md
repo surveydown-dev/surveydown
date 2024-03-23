@@ -1,6 +1,6 @@
 - [x] Question dependency (showif)
 - [x] Skip logic
-- [] Set defaults for questions to not have any choices selected on launch.
+- [x] Set defaults for questions to not have any choices selected on launch.
 - [] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button (need to solve the default no selection first - the one above this one).
 - [] Form validation: Make sure the user inputs the correct type depending on the question type.
 - [] Admin page w/password (see https://github.com/daattali/shinyforms)
@@ -11,8 +11,8 @@
 - [] Ability to embed markdown inside choice options (like mc buttons in formr)
 - [] Consider using formr forms (or other forms) instead of shiny widgets?
 - Question types:
-  - [x] Multiple choice (single)
-  - [] Multiple choice (multiple selection)
+  - [x] Multiple choice (single choice)
+  - [x] Multiple choice (multiple choices)
   - [] Multiple choice (button)
   - [x] Select
   - [x] Text
