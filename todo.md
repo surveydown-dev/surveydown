@@ -1,7 +1,7 @@
 - [x] Question dependency (showif)
 - [x] Skip logic
 - [x] Set defaults for questions to not have any choices selected on launch.
-- [] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button (need to solve the default no selection first - the one above this one).
+- [] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
 - [] Form validation: Make sure the user inputs the correct type depending on the question type.
 - [] Admin page w/password (see https://github.com/daattali/shinyforms)
 - [] Decide on db backend: googlesheets vs. supabase?
