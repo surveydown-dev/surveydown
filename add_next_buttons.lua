@@ -24,20 +24,5 @@ function Pandoc(doc)
         end
     end
 
-    -- Prepare to write the JSON file with page information
-    local jsonStr = '{"pages":['
-    for i, page in ipairs(pages) do
-        jsonStr = jsonStr .. '{"name":"' .. page .. '","number":' .. i .. '}'
-        if i ~= #pages then
-            jsonStr = jsonStr .. ','
-        end
-    end
-    jsonStr = jsonStr .. ']}'
-
-    -- Write JSON file
-    local file = io.open(".survey_pages.json", "w")
-    file:write(jsonStr)
-    file:close()
-
     return doc
 end

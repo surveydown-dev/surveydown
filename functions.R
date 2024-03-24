@@ -80,6 +80,13 @@ sd_server <- function(
   showif = NULL
 ) {
 
+  # Get survey metadata
+
+  pages <- get_page_nodes()
+  page_names <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
+  page_count <- length(page_names)
+  page_questions <- get_page_questions(pages, page_names, page_count)
+
   # showif conditions ----
 
   # Implement conditional display logic if 'showif' is provided
@@ -140,15 +147,14 @@ sd_server <- function(
   # Page Navigation ----
 
   # Read the pages information into a data frame
-  page_df <- jsonlite::fromJSON(".survey_pages.json")$pages
-  page_count <- nrow(page_df)
+
   observe({
     for (i in 1:(page_count - 1)) {
       local({
 
         # Capture the current iteration's variables in a local environment
-        current_page <- page_df$name[i]
-        next_page <- page_df$name[i + 1]
+        current_page <- page_names[i]
+        next_page <- page_names[i + 1]
 
         observeEvent(input[[paste0("next-", current_page)]], {
 
@@ -178,6 +184,64 @@ sd_server <- function(
     }
   })
 
+}
+
+get_page_nodes <- function() {
+
+  # Get the list of .qmd files in the current working directory
+  qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
+
+  # Check if there is exactly one .qmd file
+  if (length(qmd_files) == 1) {
+    qmd_file_name <- qmd_files[1]
+    html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
+
+    # Use the derived HTML file name to read the document with rvest
+    pages <- rvest::read_html(html_file_name) |>
+      rvest::html_nodes(".sd-page")
+    return(pages)
+  }
+
+  stop("Error: Expected exactly one .qmd file in the directory.")
+
+}
+
+get_page_questions <- function(pages, page_names, page_count) {
+
+  # Initialize a list to hold the results
+  page_questions <- list()
+
+  # Iterate over each page and extract the Shiny widget IDs
+  for (i in 1:page_count) {
+    # Extract the page ID
+    page_id <- page_names[i]
+
+    # Find all containers that might have an ID
+    containers <- pages[i] |> rvest::html_nodes(".shiny-input-container")
+
+    # Initialize a vector to store widget IDs for this page
+    widget_ids <- character()
+
+    # Iterate over containers to extract IDs
+    for (container in containers) {
+      # Direct ID from the container
+      container_id <- rvest::html_attr(container, "id")
+      if (!is.na(container_id)) {
+        widget_ids <- c(widget_ids, container_id)
+      }
+
+      # IDs from input/select/textarea elements within the container
+      input_ids <- container |>
+        rvest::html_nodes("input, select, textarea") |>
+        rvest::html_attr("id")
+      widget_ids <- c(widget_ids, input_ids[!is.na(input_ids)])
+    }
+
+    # Store the results
+    page_questions[[page_id]] <- unique(widget_ids)
+  }
+
+  return(page_questions)
 }
 
 transform_data <- function(vals, question_ids, session) {
