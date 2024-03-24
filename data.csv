@@ -1,2 +1,2 @@
 session_id,timestamp,color,skip,have_pet,pet_name,age,gender,ethnicity,animal,education
-7ea0fde849cc028fd14103ae98894281,2024-03-24T00:06:52Z,red,pg3,no,,,,,,
+01f5fcf0e1aee4f83bb4b35b59ec6df3,2024-03-24T00:09:47Z,,,yes,test,37,male,,,hs_grad

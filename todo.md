@@ -13,11 +13,11 @@
 - Question types:
   - [x] Multiple choice (single choice)
   - [x] Multiple choice (multiple choices)
-  - [] Multiple choice (button)
   - [x] Select
   - [x] Text
+  - [x] Numeric
+  - [] Multiple choice (button...like formr mc_button)
   - [] Text area
-  - [] Numeric
   - [] Matrix
   - [] Slider
   - [] Date

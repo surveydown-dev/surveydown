@@ -89,7 +89,7 @@ Page: 1
 ```{r}
 sd_question(
   name     = 'age',
-  type     = 'text',
+  type     = 'numeric',
   required = TRUE,
   label    = "What's your age?",
   option   = NULL

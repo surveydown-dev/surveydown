@@ -56,6 +56,14 @@ sd_question <- function(
       placeholder = option
     )
 
+  } else if (type == "numeric") {
+
+    output <- shiny::numericInput(
+      inputId = name,
+      label = label,
+      value = NULL
+    )
+
   }
 
   return(output)
