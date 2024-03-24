@@ -1,2 +1,2 @@
-session_id,timestamp,color,skip,have_pet,pet_name,age,gender,animal,education
-2131ff311d5aa703320f5d758d96d155,2024-03-23T23:13:08Z,blue,no,no,,,female,,no_response
+session_id,timestamp,color,skip,have_pet,pet_name,age,gender,ethnicity,animal,education
+7ea0fde849cc028fd14103ae98894281,2024-03-24T00:06:52Z,red,pg3,no,,,,,,

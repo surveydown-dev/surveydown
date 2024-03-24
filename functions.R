@@ -27,7 +27,7 @@ sd_question <- function(
       label = label,
       choices = option,
       multiple = FALSE,
-      selected = NULL,
+      selected = FALSE,
     )
 
   } else if (type == "mc") {
@@ -120,13 +120,12 @@ sd_server <- function(
 
     # Capture the current state of inputs
     vals <- input_vals()
-    print(vals)
 
     # Transform to data frame, handling uninitialized inputs appropriately
-    # data <- transform_data(vals, question_ids, session)
+    data <- transform_data(vals, question_ids, session)
 
     # Save data
-    # readr::write_csv(data, 'data.csv')
+    readr::write_csv(data, 'data.csv')
 
   })
 
@@ -179,6 +178,13 @@ transform_data <- function(vals, question_ids, session) {
     session_id = session$token,
     timestamp = Sys.time()
   )
+
+  # Replace any NULL values with ''
+  for (i in 1:length(vals)) {
+    if (is.null(vals[[i]])) {
+      vals[[i]] <- ''
+    }
+  }
 
   # Assuming vals is a list of inputs from input_vals()
   names(vals) <- question_ids
