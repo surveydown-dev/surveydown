@@ -70,6 +70,19 @@ sd_question <- function(
 
 }
 
+sd_next <- function(current_page = NULL, label = "Next") {
+  if (is.null(current_page)) {
+    stop("You must specify the current_page for the 'Next' button.")
+  }
+
+  shiny::actionButton(
+    # Sanitize target_page for use as an ID
+    inputId = paste0("next-", gsub("[^[:alnum:]]", "", current_page)),
+    label = label,
+    onclick = sprintf("Shiny.setInputValue('next_page', '%s');", current_page)
+  )
+}
+
 # Server functions ----
 
 sd_server <- function(
@@ -146,20 +159,20 @@ sd_server <- function(
 
   # Page Navigation ----
 
-  # Read the pages information into a data frame
-
   observe({
     for (i in 1:(page_count - 1)) {
       local({
 
-        # Capture the current iteration's variables in a local environment
+        # Define current and next page based on iteration
         current_page <- page_names[i]
         next_page <- page_names[i + 1]
 
-        observeEvent(input[[paste0("next-", current_page)]], {
+        # Generate the button ID expected for this navigation step
+        button_id <- paste0("next-", current_page)
+
+        observeEvent(input[[button_id]], {
 
           # Logic to determine the correct next page, considering skip logic
-          actual_next_page <- next_page
           if (!is.null(skip_logic)) {
             vals <- input_vals()
 
@@ -167,10 +180,12 @@ sd_server <- function(
               rule <- skip_logic[j, ]
               question_response <- vals[[rule$question_id]]
 
-              if (!is.null(question_response) &&
-                  question_response == rule$response_value &&
-                  current_page != rule$target_page) {
-                actual_next_page <- rule$target_page
+              if (
+                !is.null(question_response) &&
+                question_response == rule$response_value &&
+                current_page != rule$target_page
+              ) {
+                next_page <- rule$target_page
                 break # Found a matching skip rule, no need to check further
               }
             }
@@ -178,7 +193,7 @@ sd_server <- function(
 
           # Execute page navigation
           shinyjs::hide(current_page)
-          shinyjs::show(actual_next_page)
+          shinyjs::show(next_page)
         })
       })
     }

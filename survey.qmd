@@ -4,8 +4,6 @@ format:
     section-divs: false
 server: shiny
 include-before-body: hide_pages.js
-filters:
-  - add_next_buttons.lua
 execute:
   echo: false
 theme: surveydown.scss
@@ -74,6 +72,8 @@ sd_question(
   type = "text",
   label = "What's your pet's name?"
 )
+
+sd_next(current_page = 'welcome')
 ```
 
 <center>
@@ -122,6 +122,8 @@ sd_question(
     "Prefer not to say" = "opt_out"
   )
 )
+
+sd_next(current_page = 'demographics')
 ```
 
 <center>
@@ -157,6 +159,8 @@ sd_question(
     "Prefer not to say"          = "no_response"
   )
 )
+
+sd_next(current_page = 'animals')
 ```
 
 <center>

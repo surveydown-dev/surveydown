@@ -165,11 +165,13 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <input id="pet_name" type="text" class="shiny-input-text form-control" value="">
 </div>
 </div>
+<div class="cell-output-display">
+<button id="next-welcome" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'welcome');">Next</button>
+</div>
 </div>
 <center>
 Page: 1
 </center>
-<button onclick="Shiny.setInputValue('next-welcome', true);">Next</button>
 </div>
 <div id="demographics" class="sd-page">
 <h2 id="tell-us-abour-yourself" class="anchored">Tell us abour yourself!</h2>
@@ -254,11 +256,13 @@ Page: 1
 </div>
 </div>
 </div>
+<div class="cell-output-display">
+<button id="next-demographics" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'demographics');">Next</button>
+</div>
 </div>
 <center>
 Page: 2
 </center>
-<button onclick="Shiny.setInputValue('next-demographics', true);">Next</button>
 </div>
 <div id="animals" class="sd-page">
 <h2 id="here-are-a-few-more-questions-to-finish-up" class="anchored">Here are a few more questions to finish up!</h2>
@@ -285,11 +289,13 @@ Page: 2
 </div>
 </div>
 </div>
+<div class="cell-output-display">
+<button id="next-animals" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'animals');">Next</button>
+</div>
 </div>
 <center>
 Page: 3
 </center>
-<button onclick="Shiny.setInputValue('next-animals', true);">Next</button>
 </div>
 <div id="end" class="sd-page">
 <h2 id="thanks-for-taking-our-survey" class="anchored">Thanks for taking our survey!</h2>
