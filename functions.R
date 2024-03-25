@@ -70,17 +70,26 @@ sd_question <- function(
 
 }
 
-sd_next <- function(current_page = NULL, label = "Next") {
-  if (is.null(current_page)) {
-    stop("You must specify the current_page for the 'Next' button.")
+sd_next <- function(label = "Next", next_page = NULL) {
+
+  if (is.null(next_page)) {
+    stop("You must specify next_page as a character.")
   }
 
-  shiny::actionButton(
-    # Sanitize target_page for use as an ID
-    inputId = paste0("next-", gsub("[^[:alnum:]]", "", current_page)),
+  # Sanitize next_page for use as an ID
+  next_page <- gsub("[^[:alnum:]]", "", next_page)
+
+  next_button <- shiny::actionButton(
+    inputId = paste0("next-", next_page),
     label = label,
-    onclick = sprintf("Shiny.setInputValue('next_page', '%s');", current_page)
+    onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
   )
+
+  # Insert the start of a new page div
+  page_div <- shiny::HTML(paste0('</div><div id="', next_page, '" class="sd-page">'))
+
+  # Combine the button and the new page div start
+  return(shiny::tagList(next_button, page_div))
 }
 
 # Server functions ----

@@ -58,6 +58,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
+<div class="sd-page">
+
+</div>
 <div class="cell" data-context="setup">
 <div class="cell-output-display">
 <!--SHINY.SINGLETON[223eed69850a44625b94f39193177e317dbc7f92]-->
@@ -86,7 +89,6 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <!--/SHINY.SINGLETON[223eed69850a44625b94f39193177e317dbc7f92]-->
 </div>
 </div>
-<div id="welcome" class="sd-page">
 <h1 id="welcome-to-my-survey">Welcome to my survey!</h1>
 <p>Here is a question to get started. If you choose the Blue pill, you’ll skip to the end. If you choose the Red pill, you’ll see the rest of the pages.</p>
 <div class="cell">
@@ -137,15 +139,14 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <input id="pet_name" type="text" class="shiny-input-text form-control" value="">
 </div>
 </div>
+</div>
+<p>Click the button below to continue!</p>
+<div class="cell">
 <div class="cell-output-display">
-<button id="next-welcome" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'welcome');">Next</button>
+<button id="next-demographics" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'demographics');">Next</button>
+</div><div id="demographics" class="sd-page">
 </div>
 </div>
-<center>
-Page: 1
-</center>
-</div>
-<div id="demographics" class="sd-page">
 <h2 id="tell-us-abour-yourself" class="anchored">Tell us abour yourself!</h2>
 <div class="cell">
 <div class="cell-output-display">
@@ -229,14 +230,10 @@ Page: 1
 </div>
 </div>
 <div class="cell-output-display">
-<button id="next-demographics" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'demographics');">Next</button>
+<button id="next-animals" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'animals');">Next</button>
+</div><div id="animals" class="sd-page">
 </div>
 </div>
-<center>
-Page: 2
-</center>
-</div>
-<div id="animals" class="sd-page">
 <h2 id="here-are-a-few-more-questions-to-finish-up" class="anchored">Here are a few more questions to finish up!</h2>
 <div class="cell">
 <div class="cell-output-display">
@@ -262,19 +259,11 @@ Page: 2
 </div>
 </div>
 <div class="cell-output-display">
-<button id="next-animals" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'animals');">Next</button>
+<button id="next-end" type="button" class="btn btn-default action-button" onclick="Shiny.setInputValue('next_page', 'end');">Next</button>
+</div><div id="end" class="sd-page">
 </div>
 </div>
-<center>
-Page: 3
-</center>
-</div>
-<div id="end" class="sd-page">
 <h2 id="thanks-for-taking-our-survey" class="anchored">Thanks for taking our survey!</h2>
-<center>
-Page: 4
-</center>
-</div>
 <p>
 <script type="application/shiny-prerendered" data-context="server-start">
 source('functions.R')
@@ -338,6 +327,9 @@ ojs_define <- function(..., .session = shiny::getDefaultReactiveDomain()) {
 {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39]}},"value":[{"type":"character","attributes":{},"value":["base","bslib","cachem","cli","compiler","datasets","digest","ellipsis","evaluate","fastmap","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","lifecycle","magrittr","memoise","methods","mime","promises","R6","Rcpp","rlang","rmarkdown","rstudioapi","sass","shiny","shinyjs","stats","tools","utils","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["4.2.3","0.6.1","1.0.8","3.6.2","4.2.3","4.2.3","0.6.33","0.3.2","0.23","1.1.1","4.2.3","4.2.3","0.5.7","1.6.2","1.6.13","0.1.4","1.8.8","1.45","1.3.2","1.0.4","2.0.3","2.0.1","4.2.3","0.12","1.2.1","2.5.1","1.0.11","1.1.2","2.25","0.14","0.4.8.9000","1.7.5.1","2.1.0","4.2.3","4.2.3","4.2.3","0.41","1.8-4","2.3.8"]}]}]}
 </script>
 <!--/html_preserve-->
+<div class="sd-page">
+
+</div>
 
 </main>
 <!-- /main column -->

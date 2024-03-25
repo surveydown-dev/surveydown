@@ -4,6 +4,8 @@ format:
     section-divs: false
 server: shiny
 include-before-body: hide_pages.js
+filters:
+  - setup_pages.lua
 execute:
   echo: false
 theme: surveydown.scss
@@ -18,8 +20,6 @@ theme: surveydown.scss
 source('functions.R')
 useShinyjs(rmd = TRUE)
 ```
-
-::: {#welcome .sd-page}
 
 # Welcome to my survey! 
 
@@ -56,13 +56,14 @@ sd_question(
   type = "text",
   label = "What's your pet's name?"
 )
-
-sd_next(current_page = 'welcome')
 ```
 
-:::
+Click the button below to continue!
 
-::: {#demographics .sd-page}
+```{r}
+# Inserts a page break and determines name of current page (which is required)
+sd_next(next_page = 'demographics')
+```
 
 ## Tell us abour yourself!
 
@@ -103,12 +104,8 @@ sd_question(
   )
 )
 
-sd_next(current_page = 'demographics')
+sd_next(next_page = 'animals')
 ```
-
-:::
-
-::: {#animals .sd-page}
 
 ## Here are a few more questions to finish up!
 
@@ -136,16 +133,10 @@ sd_question(
   )
 )
 
-sd_next(current_page = 'animals')
+sd_next(next_page = 'end')
 ```
 
-:::
-
-::: {#end .sd-page}
-
 ## Thanks for taking our survey!
-
-:::
 
 ```{r}
 #| context: server
