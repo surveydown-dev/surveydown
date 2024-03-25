@@ -9,9 +9,9 @@ It may also be worth reading my [blog post](https://www.jhelvy.com/blog/2023-04-
 TODO List:
 
 - [x] Simple showif dependency (based on single question response)
-- [ ] Complex showif dependency (based on R expression)
+- [x] Complex showif dependency (based on R expression)
 - [x] Simple skip logic (based on single question response)
-- [ ] Complex skip logic (based on R expression)
+- [x] Complex skip logic (based on R expression)
 - [x] Set defaults for questions to not have any choices selected on launch.
 - [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type.

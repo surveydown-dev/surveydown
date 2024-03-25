@@ -101,33 +101,7 @@ sd_server <- function(
 
   # showif conditions ----
 
-  # Implement conditional display logic if 'showif' is provided
-  if (!is.null(showif)) {
-
-    # By default, hide all conditional questions
-    for (i in 1:nrow(showif)) {
-      shinyjs::hide(showif[i,]$question_id)
-    }
-
-    # Then look for whether the showif condition is met to show the question
-    observe({
-      for (i in 1:nrow(showif)) {
-        row <- showif[i,]
-
-        # Listen for changes to the dependent question
-        observeEvent(input[[row$question_dependence]], {
-
-          # Check if the response matches the condition for displaying the question
-          if (input[[row$question_dependence]] == row$response_value) {
-            shinyjs::show(row$question_id)
-          } else {
-            shinyjs::hide(row$question_id)
-          }
-        }, ignoreNULL = TRUE)
-
-      }
-    })
-  }
+  if (!is.null(showif)) { handle_showif_logic(input, showif) }
 
   # DB operations ----
 
@@ -245,6 +219,24 @@ get_page_nodes <- function() {
 
   stop("Error: Expected exactly one .qmd file in the directory.")
 
+}
+
+handle_showif_logic <- function(input, showif) {
+
+  # Initially hide all conditional questions
+  lapply(showif, function(x) shinyjs::hide(x$target_question))
+
+  # Iterate over each showif rule
+  lapply(showif, function(rule) {
+    observeEvent(input[[rule$dependent_question]], {
+      # Check if the condition is met to show/hide the question
+      if (rule$condition(input)) {
+        shinyjs::show(rule$target_question)
+      } else {
+        shinyjs::hide(rule$target_question)
+      }
+    }, ignoreNULL = TRUE)
+  })
 }
 
 handle_skip_logic <- function(input, skip_logic, current_page, next_page) {

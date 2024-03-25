@@ -88,7 +88,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 <div id="welcome" class="sd-page">
 <h1 id="welcome-to-my-survey">Welcome to my survey!</h1>
-<p>Here is a question to get started. If you choose the Red pill, you’ll skip to page 3</p>
+<p>Here is a question to get started. If you choose the Blue pill, you’ll skip to the end. If you choose the Red pill, you’ll see the rest of the pages.</p>
 <div class="cell">
 <div class="cell-output-display">
 <div id="color" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="color-label">
@@ -287,13 +287,16 @@ sd_server(
   session = session,
   skip_logic = list(
     list(
-      condition = function(input) input$color == 'red', 
-      target_page = 'animals'
+      condition = function(input) input$color == 'blue', 
+      target_page = 'end'
     )
   ),
-  showif = tibble::tribble(
-    ~question_id, ~question_dependence, ~response_value,
-    "pet_name",   "have_pet",           "yes"
+  showif = list(
+    list(
+      condition = function(input) input$have_pet == 'yes', 
+      dependent_question = 'have_pet',
+      target_question = 'pet_name'
+    )
   )
 )
 </script>

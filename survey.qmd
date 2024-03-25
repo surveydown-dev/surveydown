@@ -23,7 +23,7 @@ useShinyjs(rmd = TRUE)
 
 # Welcome to my survey! 
 
-Here is a question to get started. If you choose the Red pill, you'll skip to page 3
+Here is a question to get started. If you choose the Blue pill, you'll skip to the end. If you choose the Red pill, you'll see the rest of the pages.
 
 ```{r}
 sd_question(
@@ -171,13 +171,16 @@ sd_server(
   session = session,
   skip_logic = list(
     list(
-      condition = function(input) input$color == 'red', 
-      target_page = 'animals'
+      condition = function(input) input$color == 'blue', 
+      target_page = 'end'
     )
   ),
-  showif = tibble::tribble(
-    ~question_id, ~question_dependence, ~response_value,
-    "pet_name",   "have_pet",           "yes"
+  showif = list(
+    list(
+      condition = function(input) input$have_pet == 'yes', 
+      dependent_question = 'have_pet',
+      target_question = 'pet_name'
+    )
   )
 )
 ```
