@@ -70,17 +70,20 @@ sd_question <- function(
 
 }
 
-sd_next <- function(current_page = NULL, label = "Next") {
-  if (is.null(current_page)) {
+sd_next <- function(next_page = NULL, label = "Next") {
+  if (is.null(next_page)) {
     stop("You must specify the current_page for the 'Next' button.")
   }
 
   shiny::actionButton(
-    # Sanitize target_page for use as an ID
-    inputId = paste0("next-", gsub("[^[:alnum:]]", "", current_page)),
+    inputId = make_next_button_id(next_page),
     label = label,
-    onclick = sprintf("Shiny.setInputValue('next_page', '%s');", current_page)
+    onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
   )
+}
+
+make_next_button_id <- function(next_page) {
+  return(paste0("next-", next_page))
 }
 
 # Server functions ----
@@ -96,7 +99,6 @@ sd_server <- function(
 
   page_metadata <- get_page_metadata()
   page_names <- names(page_metadata)
-  page_count <- length(page_metadata)
   question_ids <- unname(unlist(page_metadata))
 
   # show_if conditions ----
@@ -133,25 +135,20 @@ sd_server <- function(
   # Page Navigation ----
 
   observe({
-    for (i in 1:(page_count - 1)) {
+    for (i in 2:length(page_metadata)) {
       local({
 
         # Define current and next page based on iteration
-        current_page <- page_names[i]
-        next_page <- page_names[i + 1]
+        next_page <- page_names[i]
 
-        # Generate the button ID expected for this navigation step
-        button_id <- paste0("next-", current_page)
-
-        observeEvent(input[[button_id]], {
+        observeEvent(input[[make_next_button_id(next_page)]], {
 
           # Update next page with any skip logic
-          next_page <- handle_skip_if_logic(
-            input, skip_if, current_page, next_page
-          )
+          next_page <- handle_skip_if_logic(input, skip_if, next_page)
+
           # Execute page navigation
-          shinyjs::hide(current_page)
-          shinyjs::show(next_page)
+          shinyjs::runjs('hideAllPages();') # Hide all pages
+          shinyjs::show(next_page) # Show next page
         })
       })
     }
@@ -239,18 +236,22 @@ handle_show_if_logic <- function(input, show_if) {
   })
 }
 
-handle_skip_if_logic <- function(input, skip_if, current_page, next_page) {
+handle_skip_if_logic <- function(input, skip_if, next_page) {
   if (is.null(skip_if)) { return(next_page) }
+
   # Loop through each skip logic condition
   for (j in 1:length(skip_if)) {
     rule <- skip_if[[j]]
-    condition_func <- rule$condition
-    target_page <- rule$target_page
-    # Check if the condition is met & and not already on the target page
-    if (condition_func(input) & current_page != target_page) {
-      return(target_page)
+
+    # Evaluate the condition
+    condition_result <- rule$condition(input)
+
+    # Check if the condition is met (and not logical(0))
+    if (length(condition_result) > 0 && condition_result) {
+      return(rule$target_page)
     }
   }
+
   return(next_page)
 }
 

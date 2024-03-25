@@ -57,7 +57,7 @@ sd_question(
   label = "What's your pet's name?"
 )
 
-sd_next(current_page = 'welcome')
+sd_next(next_page = 'demographics')
 ```
 
 :::
@@ -103,7 +103,7 @@ sd_question(
   )
 )
 
-sd_next(current_page = 'demographics')
+sd_next(next_page = 'animals')
 ```
 
 :::
@@ -136,7 +136,7 @@ sd_question(
   )
 )
 
-sd_next(current_page = 'animals')
+sd_next(next_page = 'end')
 ```
 
 :::
