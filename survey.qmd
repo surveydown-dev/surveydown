@@ -23,7 +23,7 @@ useShinyjs(rmd = TRUE)
 
 # Welcome to my survey! 
 
-Here is a question to get started 
+Here is a question to get started. If you choose the Red pill, you'll skip to page 3
 
 ```{r}
 sd_question(
@@ -34,22 +34,6 @@ sd_question(
   option   = c(
     'Blue' = 'blue', 
     'Red' = 'red'
-  )
-)
-```
-
-Here is another question to test skip logic:
-
-```{r}
-sd_question(
-  name     = 'skip',
-  type     = 'mc',
-  required = TRUE,
-  label    = "Do you want to skip to another page?",
-  option   = c(
-    'No' = 'no', 
-    'Yes, take me to page 3!' = 'pg3', 
-    'Yes, take me to the end!' = 'end'
   )
 )
 ```
@@ -185,10 +169,11 @@ Page: 4
 sd_server(
   input = input,
   session = session,
-  skip_logic = tibble::tribble(
-    ~question_id, ~response_value, ~target_page,
-    "skip",       "pg3",           "animals",
-    "skip",       "end",           "end"
+  skip_logic = list(
+    list(
+      condition = function(input) input$color == 'red', 
+      target_page = 'animals'
+    )
   ),
   showif = tibble::tribble(
     ~question_id, ~question_dependence, ~response_value,

@@ -171,25 +171,10 @@ sd_server <- function(
 
         observeEvent(input[[button_id]], {
 
-          # Logic to determine the correct next page, considering skip logic
-          if (!is.null(skip_logic)) {
-            vals <- input_vals()
-
-            for (j in 1:nrow(skip_logic)) {
-              rule <- skip_logic[j, ]
-              question_response <- vals[[rule$question_id]]
-
-              if (
-                !is.null(question_response) &&
-                question_response == rule$response_value &&
-                current_page != rule$target_page
-              ) {
-                next_page <- rule$target_page
-                break # Found a matching skip rule, no need to check further
-              }
-            }
-          }
-
+          # Update next page with any skip logic
+          next_page <- handle_skip_logic(
+            input, skip_logic, current_page, next_page
+          )
           # Execute page navigation
           shinyjs::hide(current_page)
           shinyjs::show(next_page)
@@ -260,6 +245,21 @@ get_page_nodes <- function() {
 
   stop("Error: Expected exactly one .qmd file in the directory.")
 
+}
+
+handle_skip_logic <- function(input, skip_logic, current_page, next_page) {
+  if (is.null(skip_logic)) { return(next_page) }
+  # Loop through each skip logic condition
+  for (j in 1:length(skip_logic)) {
+    rule <- skip_logic[[j]]
+    condition_func <- rule$condition
+    target_page <- rule$target_page
+    # Check if the condition is met & and not already on the target page
+    if (condition_func(input) & current_page != target_page) {
+      return(target_page)
+    }
+  }
+  return(next_page)
 }
 
 transform_data <- function(vals, question_ids, session) {

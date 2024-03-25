@@ -1,3 +1,2 @@
-session_id,timestamp,color,skip,have_pet,pet_name,age,gender,ethnicity,animal,education
-2944d62554dc991ea81717882b4701ef,2024-03-25T16:19:42Z,blue,no,yes,test,2,male,hispanic,test,college_some
-2944d62554dc991ea81717882b4701ef,2024-03-25T16:19:42Z,blue,no,yes,test,2,male,pacific,test,college_some
+session_id,timestamp,color,have_pet,pet_name,age,gender,ethnicity,animal,education
+daa768a5cf85a37a9c4096454af739f5,2024-03-25T18:26:46Z,red,,,NA,,,,
