@@ -14,9 +14,9 @@ TODO List:
 - [x] Complex skip logic (based on R expression)
 - [x] Set defaults for questions to not have any choices selected on launch.
 - [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
-- [ ] Form validation: Make sure the user inputs the correct type depending on the question type.
+- [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
 - [ ] Admin page w/password (see https://github.com/daattali/shinyforms)
-- [ ] Decide on db backend: googlesheets vs. supabase?
+- [ ] Decide on database backend: googlesheets vs. supabase?
 - [ ] Basic version working with a database
 - [ ] User tracking via url parameters: https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking
 - [ ] Add a getSurveyData() function so the survey designer can obtain the current survey results from inside the app: https://shinysurveys.jdtrat.com/articles/get-survey-data.html
