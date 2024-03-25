@@ -8,29 +8,31 @@ It may also be worth reading my [blog post](https://www.jhelvy.com/blog/2023-04-
 
 TODO List:
 
-- [x] Question dependency (showif)
-- [x] Skip logic
+- [x] Simple showif dependency (based on single question response)
+- [ ] Complex showif dependency (based on R expression)
+- [x] Simple skip logic (based on single question response)
+- [ ] Complex skip logic (based on R expression)
 - [x] Set defaults for questions to not have any choices selected on launch.
-- [] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
-- [] Form validation: Make sure the user inputs the correct type depending on the question type.
-- [] Admin page w/password (see https://github.com/daattali/shinyforms)
-- [] Decide on db backend: googlesheets vs. supabase?
-- [] Basic version working with a database
-- [] User tracking via url parameters: https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking
-- [] Add a getSurveyData() function so the survey designer can obtain the current survey results from inside the app: https://shinysurveys.jdtrat.com/articles/get-survey-data.html
-- [] Ability to embed markdown inside choice options (like mc buttons in formr)
-- [] Consider using formr forms (or other forms) instead of shiny widgets?
+- [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
+- [ ] Form validation: Make sure the user inputs the correct type depending on the question type.
+- [ ] Admin page w/password (see https://github.com/daattali/shinyforms)
+- [ ] Decide on db backend: googlesheets vs. supabase?
+- [ ] Basic version working with a database
+- [ ] User tracking via url parameters: https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking
+- [ ] Add a getSurveyData() function so the survey designer can obtain the current survey results from inside the app: https://shinysurveys.jdtrat.com/articles/get-survey-data.html
+- [ ] Ability to embed markdown inside choice options (like mc buttons in formr)
+- [ ] Consider using formr forms (or other forms) instead of shiny widgets?
 - Question types:
   - [x] Multiple choice (single choice)
   - [x] Multiple choice (multiple choices)
   - [x] Select
   - [x] Text
   - [x] Numeric
-  - [] Multiple choice (button...like formr mc_button)
-  - [] Text area
-  - [] Matrix
-  - [] Slider
-  - [] Date
+  - [ ] Multiple choice (button...like formr mc_button)
+  - [ ] Text area
+  - [ ] Matrix
+  - [ ] Slider
+  - [ ] Date
 
 Resources / examples:
 
