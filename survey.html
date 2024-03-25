@@ -285,13 +285,13 @@ useShinyjs(rmd = TRUE)
 sd_server(
   input = input,
   session = session,
-  skip_logic = list(
+  skip_if = list(
     list(
       condition = function(input) input$color == 'blue', 
       target_page = 'end'
     )
   ),
-  showif = list(
+  show_if = list(
     list(
       condition = function(input) input$have_pet == 'yes', 
       dependent_question = 'have_pet',

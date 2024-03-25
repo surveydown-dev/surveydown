@@ -88,8 +88,8 @@ sd_next <- function(current_page = NULL, label = "Next") {
 sd_server <- function(
   input,
   session,
-  skip_logic = NULL,
-  showif = NULL
+  skip_if = NULL,
+  show_if = NULL
 ) {
 
   # Get survey metadata
@@ -99,9 +99,9 @@ sd_server <- function(
   page_count <- length(page_metadata)
   question_ids <- unname(unlist(page_metadata))
 
-  # showif conditions ----
+  # show_if conditions ----
 
-  if (!is.null(showif)) { handle_showif_logic(input, showif) }
+  if (!is.null(show_if)) { handle_show_if_logic(input, show_if) }
 
   # DB operations ----
 
@@ -146,8 +146,8 @@ sd_server <- function(
         observeEvent(input[[button_id]], {
 
           # Update next page with any skip logic
-          next_page <- handle_skip_logic(
-            input, skip_logic, current_page, next_page
+          next_page <- handle_skip_if_logic(
+            input, skip_if, current_page, next_page
           )
           # Execute page navigation
           shinyjs::hide(current_page)
@@ -221,13 +221,13 @@ get_page_nodes <- function() {
 
 }
 
-handle_showif_logic <- function(input, showif) {
+handle_show_if_logic <- function(input, show_if) {
 
   # Initially hide all conditional questions
-  lapply(showif, function(x) shinyjs::hide(x$target_question))
+  lapply(show_if, function(x) shinyjs::hide(x$target_question))
 
-  # Iterate over each showif rule
-  lapply(showif, function(rule) {
+  # Iterate over each show_if rule
+  lapply(show_if, function(rule) {
     observeEvent(input[[rule$dependent_question]], {
       # Check if the condition is met to show/hide the question
       if (rule$condition(input)) {
@@ -239,11 +239,11 @@ handle_showif_logic <- function(input, showif) {
   })
 }
 
-handle_skip_logic <- function(input, skip_logic, current_page, next_page) {
-  if (is.null(skip_logic)) { return(next_page) }
+handle_skip_if_logic <- function(input, skip_if, current_page, next_page) {
+  if (is.null(skip_if)) { return(next_page) }
   # Loop through each skip logic condition
-  for (j in 1:length(skip_logic)) {
-    rule <- skip_logic[[j]]
+  for (j in 1:length(skip_if)) {
+    rule <- skip_if[[j]]
     condition_func <- rule$condition
     target_page <- rule$target_page
     # Check if the condition is met & and not already on the target page

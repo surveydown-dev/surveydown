@@ -60,10 +60,6 @@ sd_question(
 sd_next(current_page = 'welcome')
 ```
 
-<center>
-Page: 1
-</center>
-
 :::
 
 ::: {#demographics .sd-page}
@@ -110,10 +106,6 @@ sd_question(
 sd_next(current_page = 'demographics')
 ```
 
-<center>
-Page: 2
-</center>
-
 :::
 
 ::: {#animals .sd-page}
@@ -147,19 +139,11 @@ sd_question(
 sd_next(current_page = 'animals')
 ```
 
-<center>
-Page: 3
-</center>
-
 :::
 
 ::: {#end .sd-page}
 
 ## Thanks for taking our survey!
-
-<center>
-Page: 4
-</center>
 
 :::
 
@@ -169,13 +153,13 @@ Page: 4
 sd_server(
   input = input,
   session = session,
-  skip_logic = list(
+  skip_if = list(
     list(
       condition = function(input) input$color == 'blue', 
       target_page = 'end'
     )
   ),
-  showif = list(
+  show_if = list(
     list(
       condition = function(input) input$have_pet == 'yes', 
       dependent_question = 'have_pet',
