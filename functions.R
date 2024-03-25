@@ -88,17 +88,16 @@ sd_next <- function(current_page = NULL, label = "Next") {
 sd_server <- function(
   input,
   session,
-  question_ids = NULL,
   skip_logic = NULL,
   showif = NULL
 ) {
 
   # Get survey metadata
 
-  pages <- get_page_nodes()
-  page_names <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
-  page_count <- length(page_names)
-  page_questions <- get_page_questions(pages, page_names, page_count)
+  page_metadata <- get_page_metadata()
+  page_names <- names(page_metadata)
+  page_count <- length(page_metadata)
+  question_ids <- unname(unlist(page_metadata))
 
   # showif conditions ----
 
@@ -201,33 +200,17 @@ sd_server <- function(
 
 }
 
-get_page_nodes <- function() {
+get_page_metadata <- function() {
 
-  # Get the list of .qmd files in the current working directory
-  qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
-
-  # Check if there is exactly one .qmd file
-  if (length(qmd_files) == 1) {
-    qmd_file_name <- qmd_files[1]
-    html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
-
-    # Use the derived HTML file name to read the document with rvest
-    pages <- rvest::read_html(html_file_name) |>
-      rvest::html_nodes(".sd-page")
-    return(pages)
-  }
-
-  stop("Error: Expected exactly one .qmd file in the directory.")
-
-}
-
-get_page_questions <- function(pages, page_names, page_count) {
+  pages <- get_page_nodes()
+  page_names <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
 
   # Initialize a list to hold the results
-  page_questions <- list()
+  page_metadata <- list()
 
   # Iterate over each page and extract the Shiny widget IDs
-  for (i in 1:page_count) {
+  for (i in seq_len(length(page_names))) {
+
     # Extract the page ID
     page_id <- page_names[i]
 
@@ -253,10 +236,30 @@ get_page_questions <- function(pages, page_names, page_count) {
     }
 
     # Store the results
-    page_questions[[page_id]] <- unique(widget_ids)
+    page_metadata[[page_id]] <- unique(widget_ids)
   }
 
-  return(page_questions)
+  return(page_metadata)
+}
+
+get_page_nodes <- function() {
+
+  # Get the list of .qmd files in the current working directory
+  qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
+
+  # Check if there is exactly one .qmd file
+  if (length(qmd_files) == 1) {
+    qmd_file_name <- qmd_files[1]
+    html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
+
+    # Use the derived HTML file name to read the document with rvest
+    pages <- rvest::read_html(html_file_name) |>
+      rvest::html_nodes(".sd-page")
+    return(pages)
+  }
+
+  stop("Error: Expected exactly one .qmd file in the directory.")
+
 }
 
 transform_data <- function(vals, question_ids, session) {
