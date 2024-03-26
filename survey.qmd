@@ -23,48 +23,76 @@ useShinyjs(rmd = TRUE)
 
 # Welcome to my survey! 
 
-Here is a question to get started. If you choose the Blue pill, you'll skip to the end. If you choose the Red pill, you'll see the rest of the pages.
+Here is a question to get started. 
+
+This question showcases what a "multiple choice" question looks like, which is created using `type = 'mc'` inside the `sd_question()` function.
+
+It also is an example of the `show_if` feature (conditional display). If you choose the "Other" option, a second question pops up below asking to specify which other type of penguin is your favorite.
 
 ```{r}
 sd_question(
-  name     = 'color',
-  type     = 'mc',
-  required = TRUE,
-  label    = "Do you want to take the red pill or the blue pill?",
-  option   = c(
-    'Blue' = 'blue', 
-    'Red' = 'red'
-  )
-)
-```
-
-Here is a question to showcase conditional display logic. If you choose "Yes" to the question below, another question will appear below it:
-
-```{r}
-sd_question(
-  name = "have_pet",
-  type = "mc",
-  label = "Do you have a pet?",
+  name   = 'penguins',
+  type   = 'mc',
+  label  = "Which is your favorite type of penguin?",
   option = c(
-    "No" = "no",
-    "Yes" = "yes"
+    'Adélie' = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo' = 'gentoo',
+    'Other' = 'other'
   )
 )
 
 sd_question(
-  name = "pet_name",
-  type = "text",
-  label = "What's your pet's name?"
+  name  = "penguins_other",
+  type  = "text",
+  label = "Please specify the other penguin type:"
 )
 
-sd_next(next_page = 'demographics')
+sd_next(next_page = 'skipif')
 ```
 
 :::
 
-::: {#demographics .sd-page}
+::: {#skipif .sd-page}
 
-## Tell us abour yourself!
+# skip_if
+
+This page showcases the `skip_if` feature, which allows you to skip forward in the survey based on different conditions. Depending on your choice, you'll go to a different page in the survey when you press the "Next" button.
+
+```{r}
+sd_question(
+  name     = 'skip_question',
+  type     = 'mc',
+  required = TRUE,
+  label    = "Where do you want to skip to?",
+  option   = c(
+    'Take me to the page on Question Types (the next page)' = 'question_types',
+    'Skip to the end' = 'end'
+  )
+)
+
+sd_next(next_page = 'questionTypes')
+```
+
+:::
+
+::: {#questionTypes .sd-page}
+
+# Question types
+
+This page showcases some other question types.
+
+Use `type = 'text'` to specify a text input type question:
+
+```{r}
+sd_question(
+  name  = "silly_word",
+  type  = "text",
+  label = "Write a silly word:"
+)
+```
+
+Use `type = 'numeric'` to specify a numeric input type:
 
 ```{r}
 sd_question(
@@ -74,52 +102,54 @@ sd_question(
   label    = "What's your age?",
   option   = NULL
 )
-
-sd_question(
-  name     = 'gender',
-  type     = 'mc',
-  required = TRUE,
-  label    = "Which best describes your gender?",
-  option   = c(
-    "Female" = "female",
-    "Male" = "male",
-    "Prefer not to say" = "opt_out"
-  )
-)
-
-sd_question(
-  name     = 'ethnicity',
-  type     = 'mc_multiple',
-  required = TRUE,
-  label    = "Which best describes your ethnicity (select all that apply)?",
-  option   = c(
-    "Asian" = "asian",
-    "Black/African" = "black",
-    "White" = "white",
-    "Hispanic/Latinx" = "hispanic",
-    "Native American" = "native",
-    "Pacific Islander" = "pacific",
-    "Prefer not to say" = "opt_out"
-  )
-)
-
-sd_next(next_page = 'animals')
 ```
 
-:::
-
-::: {#animals .sd-page}
-
-## Here are a few more questions to finish up!
+Use `type = 'mc'` to specify a multiple choice type question with a single choice option:
 
 ```{r}
 sd_question(
-  name     = 'animal',
-  type     = 'text',
-  required = FALSE,
-  label    = "What's your favorite animal?"
+  name     = 'artist',
+  type     = 'mc',
+  required = TRUE,
+  label    = "Which artist do you prefer most from this list?",
+  option   = c(
+    "Taylor Swift" = "taylor_swift",
+    "Beyoncé"      = "beyonce",
+    "Adele"        = "adele",
+    "Rihanna"      = "rihanna",
+    "Lady Gaga"    = "ladygaga",
+    "Ed Sheeran"   = "ed_sheeran",
+    "Drake"        = "drake"
+  )
 )
+```
 
+Use `type = 'mc_multiple'` to specify a multiple choice type question with multiple selection enabled:
+
+```{r}
+sd_question(
+  name     = 'swift',
+  type     = 'mc_multiple',
+  required = TRUE,
+  label    = "Which are your favorite Taylor Swift albums (select all that apply)?",
+  option   = c(
+    "Taylor Swift (2006)" = "taylor_swift",
+    "Fearless (2008)"     = "fearless",
+    "Speak Now (2010)"    = "speak_now",
+    "Red (2012)"          = "red",
+    "1989 (2014)"         = "1989",
+    "Reputation (2017)"   = "reputation",
+    "Lover (2019)"        = "lover",
+    "Folklore (2020)"     = "folklore",
+    "Evermore (2020)"     = "evermore",
+    "Midnights (2022)"    = "midnights"
+  )
+)
+```
+
+Use `type = 'select'` to specify a drop down select type question:
+
+```{r}
 sd_question(
   name     = 'education',
   type     = 'select',
@@ -155,15 +185,15 @@ sd_server(
   session = session,
   skip_if = list(
     list(
-      condition = function(input) input$color == 'blue', 
+      condition = function(input) input$skip_question == 'end', 
       target_page = 'end'
     )
   ),
   show_if = list(
     list(
-      condition = function(input) input$have_pet == 'yes', 
-      dependent_question = 'have_pet',
-      target_question = 'pet_name'
+      condition = function(input) input$penguins == 'other', 
+      dependent_question = 'penguins',
+      target_question = 'penguins_other'
     )
   )
 )
