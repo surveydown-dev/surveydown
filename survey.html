@@ -142,18 +142,18 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <p>This page showcases the <code>skip_if</code> feature, which allows you to skip forward in the survey based on different conditions. Depending on your choice, you’ll go to a different page in the survey when you press the “Next” button.</p>
 <div class="cell">
 <div class="cell-output-display">
-<div id="skip_question" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="skip_question-label">
-<label class="control-label" id="skip_question-label" for="skip_question">Where do you want to skip to?</label>
+<div id="skip_to_end" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="skip_to_end-label">
+<label class="control-label" id="skip_to_end-label" for="skip_to_end">Where do you want to skip to?</label>
 <div class="shiny-options-group">
 <div class="radio">
 <label>
-<input type="radio" name="skip_question" value="question_types">
+<input type="radio" name="skip_to_end" value="question_types">
 <span>Take me to the page on Question Types (the next page)</span>
 </label>
 </div>
 <div class="radio">
 <label>
-<input type="radio" name="skip_question" value="end">
+<input type="radio" name="skip_to_end" value="end">
 <span>Skip to the end</span>
 </label>
 </div>
@@ -344,13 +344,15 @@ useShinyjs(rmd = TRUE)
 sd_server(
   input = input,
   session = session,
-  skip_if = list(
-    list(
-      condition = function(input) input$skip_question == 'end', 
-      target_page = 'end'
-    )
+  skip_if = tibble::tribble(
+    ~question_id,  ~target_value, ~target_page,
+    "skip_to_end", "end",         "end"
   ),
-  show_if = list(
+  # show_if = tibble::tribble(
+  #   ~question_id,  ~target_value, ~target_question,
+  #   "penguins",    "other",       "penguins_other"
+  # ), 
+  show_if_complex = list(
     list(
       condition = function(input) input$penguins == 'other', 
       dependent_question = 'penguins',
