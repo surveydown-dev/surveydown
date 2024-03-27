@@ -231,7 +231,7 @@ get_page_nodes <- function() {
     return(pages)
   }
 
-  stop("Error: Expected exactly one .qmd file in the directory.")
+  stop("Error: {surveydown} requires that only one .qmd file in the directory.")
 
 }
 
