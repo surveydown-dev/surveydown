@@ -92,6 +92,7 @@ sd_server <- function(
   input,
   session,
   skip_if = NULL,
+  skip_if_complex = NULL,
   show_if = NULL
 ) {
 
@@ -116,9 +117,14 @@ sd_server <- function(
 
         observeEvent(input[[make_next_button_id(next_page)]], {
 
-          # Update next page with any skip logic
+          # Update next page with any basic skip logic
           if (!is.null(skip_if)) {
-            next_page <- handle_skip_if_logic(input, skip_if, next_page)
+            next_page <- handle_basic_skip_logic(input, skip_if, next_page)
+          }
+
+          # Update next page with any complex skip logic
+          if (!is.null(skip_if_complex)) {
+            next_page <- handle_complex_skip_logic(input, skip_if_complex, next_page)
           }
 
           # Execute page navigation
@@ -238,7 +244,7 @@ handle_show_if_logic <- function(input, show_if) {
   })
 }
 
-handle_skip_if_logic <- function(input, skip_if, next_page) {
+handle_basic_skip_logic <- function(input, skip_if, next_page) {
 
   # Ensure skip_if is a tibble or data frame
   if (!is.data.frame(skip_if)) {
@@ -257,6 +263,25 @@ handle_skip_if_logic <- function(input, skip_if, next_page) {
 
   return(next_page)
 }
+
+handle_complex_skip_logic <- function(input, skip_if_complex, next_page) {
+
+  # Loop through each skip logic condition
+  for (j in 1:length(skip_if_complex)) {
+    rule <- skip_if_complex[[j]]
+
+    # Evaluate the condition
+    condition_result <- rule$condition(input)
+
+    # Check if the condition is met (and not logical(0))
+    if (length(condition_result) > 0 && condition_result) {
+      return(rule$target_page)
+    }
+  }
+
+  return(next_page)
+}
+
 
 transform_data <- function(vals, question_ids, session) {
 

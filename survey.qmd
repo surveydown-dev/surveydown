@@ -184,7 +184,7 @@ sd_server(
   input = input,
   session = session,
   skip_if = tibble::tribble(
-    ~question_id,    ~target_value, ~target_page,
+    ~question_id,  ~target_value, ~target_page,
     "skip_to_end", "end",         "end"
   ),
   show_if = list(
