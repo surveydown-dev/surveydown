@@ -92,7 +92,6 @@ sd_server <- function(
   input,
   session,
   skip_if = NULL,
-  functions = NULL,
   show_if = NULL
 ) {
 
@@ -119,7 +118,7 @@ sd_server <- function(
 
           # Update next page with any skip logic
           if (!is.null(skip_if)) {
-            next_page <- handle_skip_if_logic(input, skip_if, next_page, functions)
+            next_page <- handle_skip_if_logic(input, skip_if, next_page)
           }
 
           # Execute page navigation
@@ -239,39 +238,21 @@ handle_show_if_logic <- function(input, show_if) {
   })
 }
 
-handle_skip_if_logic <- function(input, skip_if, next_page, functions) {
+handle_skip_if_logic <- function(input, skip_if, next_page) {
 
   # Ensure skip_if is a tibble or data frame
   if (!is.data.frame(skip_if)) {
     stop("skip_if must be a data frame or tibble.")
   }
 
-  # Create a custom environment for condition evaluation
-  eval_env <- new.env()
-  eval_env$input <- input
-
-  # Add custom functions to environment
-  for (func_name in names(functions)) {
-    eval_env[[func_name]] <- functions[[func_name]]
-  }
-
   for (i in 1:nrow(skip_if)) {
-    condition <- skip_if$condition[i]
-    target_page <- skip_if$target_page[i]
-
-    # Safely parse and evaluate the condition
-    tryCatch({
-      condition_result <- eval(parse(text = condition), envir = eval_env)
-      if (
-        is.logical(condition_result) &
-        length(condition_result) == 1 &
-        condition_result
-      ) {
-        return(target_page)
+    rule <- skip_if[i,]
+    val <- input[[rule$question_id]]
+    if (!is.null(val)) {
+      if (val == rule$target_value) {
+        return(rule$target_page)
       }
-    }, error = function(e) {
-      message("Error evaluating skip condition: ", e$message)
-    })
+    }
   }
 
   return(next_page)

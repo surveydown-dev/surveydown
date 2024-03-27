@@ -1,2 +1,2 @@
-session_id,timestamp,penguins,penguins_other,skip_question,silly_word,age,artist,swift,education
-e1373e03d88499b5ba6b063e7f3d1afb,2024-03-27T13:45:07Z,,,,,NA,,,
+session_id,timestamp,penguins,penguins_other,skip_to_end,silly_word,age,artist,swift,education
+b47737e9485518a40b23e20991d895bd,2024-03-27T14:54:07Z,,,end,,NA,,,

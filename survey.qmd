@@ -61,7 +61,7 @@ This page showcases the `skip_if` feature, which allows you to skip forward in t
 
 ```{r}
 sd_question(
-  name     = 'skip_question',
+  name     = 'skip_to_end',
   type     = 'mc',
   required = TRUE,
   label    = "Where do you want to skip to?",
@@ -180,18 +180,13 @@ sd_next(next_page = 'end')
 ```{r}
 #| context: server
 
-custom_func <- function(input) {
-  return(input$skip_question == 'end')
-}
-
 sd_server(
   input = input,
   session = session,
   skip_if = tibble::tribble(
-    ~condition, ~target_page, 
-    "custom_func(input)",  "end"
+    ~question_id,    ~target_value, ~target_page,
+    "skip_to_end", "end",         "end"
   ),
-  functions = list(custom_func = custom_func),
   show_if = list(
     list(
       condition = function(input) input$penguins == 'other', 
