@@ -348,7 +348,11 @@ sd_server(
     ~question_id,  ~target_value, ~target_page,
     "skip_to_end", "end",         "end"
   ),
-  show_if = list(
+  # show_if = tibble::tribble(
+  #   ~question_id,  ~target_value, ~target_question,
+  #   "penguins",    "other",       "penguins_other"
+  # ), 
+  show_if_complex = list(
     list(
       condition = function(input) input$penguins == 'other', 
       dependent_question = 'penguins',

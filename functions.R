@@ -93,7 +93,8 @@ sd_server <- function(
   session,
   skip_if = NULL,
   skip_if_complex = NULL,
-  show_if = NULL
+  show_if = NULL,
+  show_if_complex = NULL
 ) {
 
   # Get survey metadata
@@ -104,7 +105,13 @@ sd_server <- function(
 
   # Conditional display (show_if conditions) ----
 
-  if (!is.null(show_if)) { handle_show_if_logic(input, show_if) }
+  if (!is.null(show_if)) {
+    handle_basic_show_if_logic(input, show_if)
+  }
+
+  if (!is.null(show_if_complex)) {
+    handle_complex_show_if_logic(input, show_if_complex)
+  }
 
   # Page Navigation ----
 
@@ -163,6 +170,8 @@ sd_server <- function(
   })
 
 }
+
+# Page metadata ----
 
 get_page_metadata <- function() {
 
@@ -226,13 +235,43 @@ get_page_nodes <- function() {
 
 }
 
-handle_show_if_logic <- function(input, show_if) {
+# show_if ----
+
+handle_basic_show_if_logic <- function(input, show_if) {
+
+  # Ensure skip_if is a tibble or data frame
+  if (!is.data.frame(show_if)) {
+    stop("skip_if must be a data frame or tibble.")
+  }
 
   # Initially hide all conditional questions
-  lapply(show_if, function(x) shinyjs::hide(x$target_question))
+  for (i in 1:nrow(show_if)) {
+    shinyjs::hide(show_if[i,]$target_question)
+  }
 
   # Iterate over each show_if rule
-  lapply(show_if, function(rule) {
+  for (i in 1:nrow(show_if)) {
+    rule <- show_if[i,]
+    observeEvent(input[[rule$question_id]], {
+      # Check if the condition is met to show/hide the question
+      val <- input[[rule$question_id]]
+      if (!is.null(val) & (val == rule$target_value)) {
+        shinyjs::show(rule$target_question)
+      } else {
+        shinyjs::hide(rule$target_question)
+      }
+    }, ignoreNULL = TRUE)
+  }
+
+}
+
+handle_complex_show_if_logic <- function(input, show_if_complex) {
+
+  # Initially hide all conditional questions
+  lapply(show_if_complex, function(x) shinyjs::hide(x$target_question))
+
+  # Iterate over each show_if rule
+  lapply(show_if_complex, function(rule) {
     observeEvent(input[[rule$dependent_question]], {
       # Check if the condition is met to show/hide the question
       if (rule$condition(input)) {
@@ -243,6 +282,8 @@ handle_show_if_logic <- function(input, show_if) {
     }, ignoreNULL = TRUE)
   })
 }
+
+# skip_if ----
 
 handle_basic_skip_logic <- function(input, skip_if, next_page) {
 
@@ -282,6 +323,7 @@ handle_complex_skip_logic <- function(input, skip_if_complex, next_page) {
   return(next_page)
 }
 
+# Database ----
 
 transform_data <- function(vals, question_ids, session) {
 
