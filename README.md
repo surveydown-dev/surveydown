@@ -8,10 +8,8 @@ It may also be worth reading my [blog post](https://www.jhelvy.com/blog/2023-04-
 
 TODO List:
 
-- [x] Simple showif dependency (based on single question response)
-- [x] Complex showif dependency (based on R expression)
-- [x] Simple skip logic (based on single question response)
-- [x] Complex skip logic (based on R expression)
+- [x] show_if (conditionally display question)
+- [x] skip_if (conditionally skip to page)
 - [x] Set defaults for questions to not have any choices selected on launch.
 - [ ] Option for preview = TRUE (database is ignored).
 - [ ] Option to start at a designated page.

@@ -101,9 +101,33 @@ sd_server <- function(
   page_names <- names(page_metadata)
   question_ids <- unname(unlist(page_metadata))
 
-  # show_if conditions ----
+  # Conditional display (show_if conditions) ----
 
   if (!is.null(show_if)) { handle_show_if_logic(input, show_if) }
+
+  # Page Navigation ----
+
+  observe({
+    for (i in 2:length(page_metadata)) {
+      local({
+
+        # Define current and next page based on iteration
+        next_page <- page_names[i]
+
+        observeEvent(input[[make_next_button_id(next_page)]], {
+
+          # Update next page with any skip logic
+          if (!is.null(skip_if)) {
+            next_page <- handle_skip_if_logic(input, skip_if, next_page)
+          }
+
+          # Execute page navigation
+          shinyjs::runjs('hideAllPages();') # Hide all pages
+          shinyjs::show(next_page) # Show next page
+        })
+      })
+    }
+  })
 
   # DB operations ----
 
@@ -130,28 +154,6 @@ sd_server <- function(
     # Save data
     readr::write_csv(data, 'data.csv')
 
-  })
-
-  # Page Navigation ----
-
-  observe({
-    for (i in 2:length(page_metadata)) {
-      local({
-
-        # Define current and next page based on iteration
-        next_page <- page_names[i]
-
-        observeEvent(input[[make_next_button_id(next_page)]], {
-
-          # Update next page with any skip logic
-          next_page <- handle_skip_if_logic(input, skip_if, next_page)
-
-          # Execute page navigation
-          shinyjs::runjs('hideAllPages();') # Hide all pages
-          shinyjs::show(next_page) # Show next page
-        })
-      })
-    }
   })
 
 }
@@ -237,19 +239,33 @@ handle_show_if_logic <- function(input, show_if) {
 }
 
 handle_skip_if_logic <- function(input, skip_if, next_page) {
-  if (is.null(skip_if)) { return(next_page) }
 
-  # Loop through each skip logic condition
-  for (j in 1:length(skip_if)) {
-    rule <- skip_if[[j]]
+  # Ensure skip_if is a tibble or data frame
+  if (!is.data.frame(skip_if)) {
+    stop("skip_if must be a data frame or tibble.")
+  }
 
-    # Evaluate the condition
-    condition_result <- rule$condition(input)
+  # Create a new environment for processing the skip conditions (for security)
+  env <- new.env()
+  env$input <- input
 
-    # Check if the condition is met (and not logical(0))
-    if (length(condition_result) > 0 && condition_result) {
-      return(rule$target_page)
-    }
+  for (i in 1:nrow(skip_if)) {
+    condition <- skip_if$condition[i]
+    target_page <- skip_if$target_page[i]
+
+    # Safely parse and evaluate the condition
+    tryCatch({
+      condition_result <- eval(parse(text = condition), envir = env)
+      if (
+        is.logical(condition_result) &
+        length(condition_result) == 1 &
+        condition_result
+      ) {
+        return(target_page)
+      }
+    }, error = function(e) {
+      message("Error evaluating skip condition: ", e$message)
+    })
   }
 
   return(next_page)

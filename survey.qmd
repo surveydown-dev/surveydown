@@ -183,11 +183,9 @@ sd_next(next_page = 'end')
 sd_server(
   input = input,
   session = session,
-  skip_if = list(
-    list(
-      condition = function(input) input$skip_question == 'end', 
-      target_page = 'end'
-    )
+  skip_if = tibble::tribble(
+    ~condition, ~target_page, 
+    "input$skip_question == 'end'",  "end"
   ),
   show_if = list(
     list(
