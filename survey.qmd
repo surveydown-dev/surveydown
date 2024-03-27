@@ -180,13 +180,18 @@ sd_next(next_page = 'end')
 ```{r}
 #| context: server
 
+custom_func <- function(input) {
+  return(input$skip_question == 'end')
+}
+
 sd_server(
   input = input,
   session = session,
   skip_if = tibble::tribble(
     ~condition, ~target_page, 
-    "input$skip_question == 'end'",  "end"
+    "custom_func(input)",  "end"
   ),
+  functions = list(custom_func = custom_func),
   show_if = list(
     list(
       condition = function(input) input$penguins == 'other', 
