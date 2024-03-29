@@ -14,6 +14,11 @@ df <- read_csv(here('surveydown', 'data.csv'))
 
 Spread1 <- gs4_create("Sheets1", sheets = df) #Creation 
 
-Spread1 %>% 
-  sheet_append(df) #Appends survey result
+Sheet <- read_sheet(Spread1)
+
+rows_to_delete <- which(Sheet$session_id %in% df$session_id)
+
+range_write(Spread1, data = df, range = paste0("A", as.character(rows_to_delete)))
+
+
 
