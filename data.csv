@@ -1,2 +1,11 @@
 session_id,timestamp,penguins,penguins_other,skip_to_end,silly_word,age,artist,swift,education
-bbb833e8e1c7724ccd1799cbb53e9cec,2024-03-31T18:53:51Z,chinstrap,,question_types,,NA,,,
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,taylor_swift,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,fearless,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,speak_now,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,red,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,1989,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,reputation,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,lover,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,folklore,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,evermore,hs_some
+d6c0a7e796075aa11f5a5d2a9ae91f0d,2024-03-31T20:06:16Z,adelie,,question_types,apple,8,beyonce,midnights,hs_some
