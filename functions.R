@@ -255,7 +255,7 @@ handle_basic_show_if_logic <- function(input, show_if) {
     observeEvent(input[[rule$question_id]], {
       # Check if the condition is met to show/hide the question
       val <- input[[rule$question_id]]
-      if (!is.null(val) & (val == rule$target_value)) {
+      if (!is.null(val) & (val == rule$question_value)) {
         shinyjs::show(rule$target_question)
       } else {
         shinyjs::hide(rule$target_question)
@@ -296,7 +296,7 @@ handle_basic_skip_logic <- function(input, skip_if, next_page) {
     rule <- skip_if[i,]
     val <- input[[rule$question_id]]
     if (!is.null(val)) {
-      if (val == rule$target_value) {
+      if (val == rule$question_value) {
         return(rule$target_page)
       }
     }
