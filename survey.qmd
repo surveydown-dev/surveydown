@@ -31,7 +31,7 @@ It also is an example of the `show_if` feature (conditional display). If you cho
 
 ```{r}
 sd_question(
-  name   = 'penguins',
+  name   = 'penguins_1',
   type   = 'mc',
   label  = "Which is your favorite type of penguin?",
   option = c(
@@ -43,9 +43,38 @@ sd_question(
 )
 
 sd_question(
-  name  = "penguins_other",
+  name  = "penguins_1_other",
   type  = "text",
   label = "Please specify the other penguin type:"
+)
+
+sd_question(
+  name   = 'penguins_2',
+  type   = 'mc_buttons',
+  label  = "Which is your favorite type of penguin?",
+  option = c(
+    'Adélie' = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo' = 'gentoo',
+    'Other' = 'other'
+  )
+)
+
+sd_question(
+  name  = "penguins_2_other",
+  type  = "text",
+  label = "Please specify the other penguin type:"
+)
+
+sd_question(
+  name   = 'penguins_3',
+  type   = 'mc_multiple_buttons',
+  label  = "(Multiple Choice) Select all your favorite penguin types:",
+  option = c(
+    'Adélie' = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo' = 'gentoo'
+  )
 )
 
 sd_next(next_page = 'skipif')
@@ -189,7 +218,8 @@ sd_server(
   ),
   show_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
-    "penguins",    "other",       "penguins_other"
+    "penguins_1",  "other",         "penguins_1_other",
+    "penguins_2",  "other",         "penguins_2_other"
   )
 )
 ```

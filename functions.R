@@ -64,6 +64,23 @@ sd_question <- function(
       value = NULL
     )
 
+  } else if (type == "mc_buttons") {
+
+    output <- shinyWidgets::radioGroupButtons(
+      inputId = name,
+      label = label,
+      choices = option,
+      selected = character(0)
+    )
+
+  } else if (type == "mc_multiple_buttons") {
+
+    output <- shinyWidgets::checkboxGroupButtons(
+      inputId = name,
+      label = label,
+      choices = option
+    )
+
   }
 
   return(output)
