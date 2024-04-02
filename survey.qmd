@@ -54,7 +54,6 @@ sd_question(
 ```{r}
 sd_next(next_page = 'skipif')
 ```
-
 :::
 
 ::: {#skipif .sd-page}
@@ -81,8 +80,6 @@ sd_question(
 ```{r}
 sd_next(next_page = 'questionTypes')
 ```
-
-
 :::
 
 ::: {#questionTypes .sd-page}
@@ -145,7 +142,7 @@ sd_question(
   label    = "**Which fruit do you prefer most from this list?**",
   width = '100%',
   option   = c(
-    "Apple"      = "apple",
+    "**Apple**"      = "apple",
     "Banana"     = "banana",
     "Pear"       = "pear",
     "Strawberry" = "strawberry",
@@ -229,7 +226,6 @@ sd_question(
 ```{r}
 sd_next(next_page = 'end')
 ```
-
 :::
 
 ::: {#end .sd-page}

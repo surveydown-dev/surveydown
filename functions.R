@@ -11,11 +11,15 @@ markdown_to_html <- function(text) {
 }
 
 # Convert list names from markdown to HTML ----
-# Unfortunately, this function only gives me raw HTML.
+# Only works for mc_buttons and mc_multiple_buttons.
 
 list_name_md_to_html <- function(list) {
   list_names_md <- names(list)
-  list_names_html <- lapply(list_names_md, markdown_to_html)
+  list_names_html <- lapply(list_names_md, function(name) {
+    html_name <- markdown_to_html(name)
+    plain_name <- gsub("<[/]?p>|\\n", "", html_name)
+    return(plain_name)
+  })
   names(list) <- unlist(list_names_html)
   return(list)
 }
@@ -75,6 +79,29 @@ sd_question <- function(
       width = width
     )
 
+  } else if (type == "mc_buttons") {
+
+    output <- shinyWidgets::radioGroupButtons(
+      inputId = name,
+      label = markdown_to_html(label),
+      choices = list_name_md_to_html(option),
+      selected = character(0),
+      width = width,
+      status = status
+    )
+
+  } else if (type == "mc_multiple_buttons") {
+
+    output <- shinyWidgets::checkboxGroupButtons(
+      inputId = name,
+      label = markdown_to_html(label),
+      choices = list_name_md_to_html(option),
+      direction = direction,
+      individual = individual,
+      justified = justified,
+      width = width
+    )
+
   } else if (type == "text") {
 
     output <- shiny::textInput(
@@ -90,29 +117,6 @@ sd_question <- function(
       inputId = name,
       label = markdown_to_html(label),
       value = NULL,
-      width = width
-    )
-
-  } else if (type == "mc_buttons") {
-
-    output <- shinyWidgets::radioGroupButtons(
-      inputId = name,
-      label = markdown_to_html(label),
-      choices = option,
-      selected = character(0),
-      width = width,
-      status = status
-    )
-
-  } else if (type == "mc_multiple_buttons") {
-
-    output <- shinyWidgets::checkboxGroupButtons(
-      inputId = name,
-      label = markdown_to_html(label),
-      choices = option,
-      direction = direction,
-      individual = individual,
-      justified = justified,
       width = width
     )
 

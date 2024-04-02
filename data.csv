@@ -1,3 +1,2 @@
 session_id,timestamp,penguins,penguins_other,skip_to_end,silly_word,age,artist,fruit1,fruit2,fruit3,fruit4,fruit5,fruit6,fruit7,swift,michael_jackson1,michael_jackson2,michael_jackson3,michael_jackson4,michael_jackson5,michael_jackson6,michael_jackson7,michael_jackson8,education
-190e869480662a8c5023d23792c9a7eb,2024-04-02T21:19:13Z,adelie,,question_types,,NA,,,,,,,,,taylor_swift,TRUE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,
-190e869480662a8c5023d23792c9a7eb,2024-04-02T21:19:13Z,adelie,,question_types,,NA,,,,,,,,,speak_now,TRUE,FALSE,TRUE,FALSE,FALSE,FALSE,FALSE,FALSE,
+cf8ad62de11316ac421ead82712c95e6,2024-04-02T22:35:24Z,adelie,,question_types,,NA,,,,,,,,,,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,
