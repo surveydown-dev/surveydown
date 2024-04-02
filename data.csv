@@ -1,2 +1,2 @@
-session_id,timestamp,penguins_1,penguins_1_other,penguins_2_other,skip_to_end,silly_word,age,artist,swift,education
-0d8b6d6d7b35f6795ef4f452615b2bad,2024-04-01T02:51:50Z,adelie,,,,,NA,,,
+session_id,timestamp,penguins,penguins_other,skip_to_end,silly_word,age,artist_1,swift_1,education
+39b44ab8fb3aefa1869b2b3997982dec,2024-04-02T03:54:10Z,adelie,,question_types,,NA,,,
