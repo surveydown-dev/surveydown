@@ -103,29 +103,25 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <div class="radio">
 <label>
 <input type="radio" name="penguins" value="adelie">
-<span>&lt;p&gt;Adélie&lt;/p&gt;
-</span>
+<span>Adélie</span>
 </label>
 </div>
 <div class="radio">
 <label>
 <input type="radio" name="penguins" value="chinstrap">
-<span>&lt;p&gt;Chinstrap&lt;/p&gt;
-</span>
+<span>Chinstrap</span>
 </label>
 </div>
 <div class="radio">
 <label>
 <input type="radio" name="penguins" value="gentoo">
-<span>&lt;p&gt;Gentoo&lt;/p&gt;
-</span>
+<span>Gentoo</span>
 </label>
 </div>
 <div class="radio">
 <label>
 <input type="radio" name="penguins" value="other">
-<span>&lt;p&gt;Other&lt;/p&gt;
-</span>
+<span>Other</span>
 </label>
 </div>
 </div>
@@ -138,9 +134,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <input id="penguins_other" type="text" class="shiny-input-text form-control" value="">
 </div>
 </div>
+</div>
+<p><br></p>
+<div class="cell">
 <div class="cell-output-display">
-<button id="next-skipif" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'skipif');"><p>Next</p>
-</button>
+<button id="next-skipif" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'skipif');">Next</button>
 </div>
 </div>
 </div>
@@ -156,23 +154,23 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <div class="radio">
 <label>
 <input type="radio" name="skip_to_end" value="question_types">
-<span>&lt;p&gt;Take me to the page on Question Types (the next page)&lt;/p&gt;
-</span>
+<span>Take me to the page on Question Types (the next page)</span>
 </label>
 </div>
 <div class="radio">
 <label>
 <input type="radio" name="skip_to_end" value="end">
-<span>&lt;p&gt;Skip to the end&lt;/p&gt;
-</span>
+<span>Skip to the end</span>
 </label>
 </div>
 </div>
 </div>
 </div>
+</div>
+<p><br></p>
+<div class="cell">
 <div class="cell-output-display">
-<button id="next-questionTypes" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'questionTypes');"><p>Next</p>
-</button>
+<button id="next-questionTypes" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'questionTypes');">Next</button>
 </div>
 </div>
 </div>
@@ -182,7 +180,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <h4 id="use-type-text-to-specify-a-text-input-type-question" class="anchored">Use <code>type = 'text'</code> to specify a text input type question:</h4>
 <div class="cell">
 <div class="cell-output-display">
-<div class="form-group shiny-input-container" style="width:100%;">
+<div class="form-group shiny-input-container" style="width:60%;">
 <label class="control-label" id="silly_word-label" for="silly_word"><p><strong>Write a silly word:</strong></p>
 </label>
 <input id="silly_word" type="text" class="shiny-input-text form-control" value="">
@@ -192,7 +190,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <h4 id="use-type-numeric-to-specify-a-numeric-input-type" class="anchored">Use <code>type = 'numeric'</code> to specify a numeric input type:</h4>
 <div class="cell">
 <div class="cell-output-display">
-<div class="form-group shiny-input-container" style="width:100%;">
+<div class="form-group shiny-input-container" style="width:60%;">
 <label class="control-label" id="age-label" for="age"><p><strong>What’s your age?</strong></p>
 </label>
 <input id="age" type="number" class="shiny-input-number form-control">
@@ -202,57 +200,50 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <h4 id="use-type-mc-to-specify-a-multiple-choice-type-question-with-a-single-choice-option" class="anchored">Use <code>type = 'mc'</code> to specify a multiple choice type question with a single choice option:</h4>
 <div class="cell">
 <div class="cell-output-display">
-<div id="artist_1" style="width:100%;" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="artist_1-label">
-<label class="control-label" id="artist_1-label" for="artist_1"><p><strong>Which artist do you prefer most from this list?</strong></p>
+<div id="artist" style="width:100%;" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="artist-label">
+<label class="control-label" id="artist-label" for="artist"><p><strong>Which artist do you prefer most from this list?</strong></p>
 </label>
 <div class="shiny-options-group">
 <div class="radio">
 <label>
-<input type="radio" name="artist_1" value="taylor_swift">
-<span>&lt;p&gt;Taylor Swift&lt;/p&gt;
-</span>
+<input type="radio" name="artist" value="taylor_swift">
+<span>Taylor Swift</span>
 </label>
 </div>
 <div class="radio">
 <label>
-<input type="radio" name="artist_1" value="beyonce">
-<span>&lt;p&gt;Beyoncé&lt;/p&gt;
-</span>
+<input type="radio" name="artist" value="beyonce">
+<span>Beyoncé</span>
 </label>
 </div>
 <div class="radio">
 <label>
-<input type="radio" name="artist_1" value="adele">
-<span>&lt;p&gt;Adele&lt;/p&gt;
-</span>
+<input type="radio" name="artist" value="adele">
+<span>Adele</span>
 </label>
 </div>
 <div class="radio">
 <label>
-<input type="radio" name="artist_1" value="rihanna">
-<span>&lt;p&gt;Rihanna&lt;/p&gt;
-</span>
+<input type="radio" name="artist" value="rihanna">
+<span>Rihanna</span>
 </label>
 </div>
 <div class="radio">
 <label>
-<input type="radio" name="artist_1" value="ladygaga">
-<span>&lt;p&gt;Lady Gaga&lt;/p&gt;
-</span>
+<input type="radio" name="artist" value="ladygaga">
+<span>Lady Gaga</span>
 </label>
 </div>
 <div class="radio">
 <label>
-<input type="radio" name="artist_1" value="ed_sheeran">
-<span>&lt;p&gt;Ed Sheeran&lt;/p&gt;
-</span>
+<input type="radio" name="artist" value="ed_sheeran">
+<span>Ed Sheeran</span>
 </label>
 </div>
 <div class="radio">
 <label>
-<input type="radio" name="artist_1" value="drake">
-<span>&lt;p&gt;Drake&lt;/p&gt;
-</span>
+<input type="radio" name="artist" value="drake">
+<span>Drake</span>
 </label>
 </div>
 </div>
@@ -263,60 +254,25 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <div class="cell">
 <div class="cell-output-display">
 <div class="form-group shiny-input-container shiny-input-radiogroup shiny-input-container-inline" style="width:100%;">
-<label class="control-label" id="artist_2-label" for="artist_2"><p><strong>Which artist do you prefer most from this list?</strong></p>
+<label class="control-label" id="fruit-label" for="fruit"><p><strong>Which fruit do you prefer most from this list?</strong></p>
 </label>
 <br>
-<div id="artist_2" class="radio-group-buttons">
-<div aria-labelledby="artist_2-label" class="btn-group btn-group-container-sw" data-toggle="buttons" role="group">
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn radiobtn btn-default">
-<input type="radio" autocomplete="off" name="artist_2" value="taylor_swift">
-<p>Taylor Swift</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn radiobtn btn-default">
-<input type="radio" autocomplete="off" name="artist_2" value="beyonce">
-<p>Beyoncé</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn radiobtn btn-default">
-<input type="radio" autocomplete="off" name="artist_2" value="adele">
-<p>Adele</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn radiobtn btn-default">
-<input type="radio" autocomplete="off" name="artist_2" value="rihanna">
-<p>Rihanna</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn radiobtn btn-default">
-<input type="radio" autocomplete="off" name="artist_2" value="ladygaga">
-<p>Lady Gaga</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn radiobtn btn-default">
-<input type="radio" autocomplete="off" name="artist_2" value="ed_sheeran">
-<p>Ed Sheeran</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn radiobtn btn-default">
-<input type="radio" autocomplete="off" name="artist_2" value="drake">
-<p>Drake</p>
-
-</button>
-</div>
+<div id="fruit" class="radio-group-buttons">
+<div aria-labelledby="fruit-label" class="btn-group btn-group-container-sw" data-toggle="buttons" role="group">
+<input type="radio" autocomplete="off" id="fruit1" name="fruit" value="apple" class="btn-check">
+<label class="btn radiobtn btn-outline-primary" for="fruit1">Apple</label>
+<input type="radio" autocomplete="off" id="fruit2" name="fruit" value="banana" class="btn-check">
+<label class="btn radiobtn btn-outline-primary" for="fruit2">Banana</label>
+<input type="radio" autocomplete="off" id="fruit3" name="fruit" value="pear" class="btn-check">
+<label class="btn radiobtn btn-outline-primary" for="fruit3">Pear</label>
+<input type="radio" autocomplete="off" id="fruit4" name="fruit" value="strawberry" class="btn-check">
+<label class="btn radiobtn btn-outline-primary" for="fruit4">Strawberry</label>
+<input type="radio" autocomplete="off" id="fruit5" name="fruit" value="grape" class="btn-check">
+<label class="btn radiobtn btn-outline-primary" for="fruit5">Grape</label>
+<input type="radio" autocomplete="off" id="fruit6" name="fruit" value="mango" class="btn-check">
+<label class="btn radiobtn btn-outline-primary" for="fruit6">Mango</label>
+<input type="radio" autocomplete="off" id="fruit7" name="fruit" value="watermelon" class="btn-check">
+<label class="btn radiobtn btn-outline-primary" for="fruit7">Watermelon</label>
 </div>
 </div>
 </div>
@@ -325,78 +281,68 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <h4 id="use-type-mc_multiple-to-specify-a-multiple-choice-type-question-with-multiple-selection-enabled" class="anchored">Use <code>type = 'mc_multiple'</code> to specify a multiple choice type question with multiple selection enabled:</h4>
 <div class="cell">
 <div class="cell-output-display">
-<div id="swift_1" style="width:100%;" class="form-group shiny-input-checkboxgroup shiny-input-container" role="group" aria-labelledby="swift_1-label">
-<label class="control-label" id="swift_1-label" for="swift_1"><p><strong>Which are your favorite Taylor Swift albums (select all that apply)?</strong></p>
+<div id="swift" style="width:100%;" class="form-group shiny-input-checkboxgroup shiny-input-container" role="group" aria-labelledby="swift-label">
+<label class="control-label" id="swift-label" for="swift"><p><strong>Which are your favorite Taylor Swift albums (select all that apply)?</strong></p>
 </label>
 <div class="shiny-options-group">
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="taylor_swift">
-<span>&lt;p&gt;Taylor Swift (2006)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="taylor_swift">
+<span>Taylor Swift (2006)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="fearless">
-<span>&lt;p&gt;Fearless (2008)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="fearless">
+<span>Fearless (2008)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="speak_now">
-<span>&lt;p&gt;Speak Now (2010)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="speak_now">
+<span>Speak Now (2010)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="red">
-<span>&lt;p&gt;Red (2012)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="red">
+<span>Red (2012)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="1989">
-<span>&lt;p&gt;1989 (2014)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="1989">
+<span>1989 (2014)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="reputation">
-<span>&lt;p&gt;Reputation (2017)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="reputation">
+<span>Reputation (2017)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="lover">
-<span>&lt;p&gt;Lover (2019)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="lover">
+<span>Lover (2019)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="folklore">
-<span>&lt;p&gt;Folklore (2020)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="folklore">
+<span>Folklore (2020)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="evermore">
-<span>&lt;p&gt;Evermore (2020)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="evermore">
+<span>Evermore (2020)</span>
 </label>
 </div>
 <div class="checkbox">
 <label>
-<input type="checkbox" name="swift_1" value="midnights">
-<span>&lt;p&gt;Midnights (2022)&lt;/p&gt;
-</span>
+<input type="checkbox" name="swift" value="midnights">
+<span>Midnights (2022)</span>
 </label>
 </div>
 </div>
@@ -407,81 +353,27 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <div class="cell">
 <div class="cell-output-display">
 <div class="form-group shiny-input-container shiny-input-checkboxgroup shiny-input-container-inline" style="width:100%;">
-<label class="control-label" id="swift_2-label" for="swift_2"><p><strong>Which are your favorite Taylor Swift albums (select all that apply)?</strong></p>
+<label class="control-label" id="michael_jackson-label" for="michael_jackson"><p><strong>Which are your favorite Michael Jackson songs (select all that apply)?</strong></p>
 </label>
 <br>
-<div id="swift_2" class="checkbox-group-buttons">
-<div aria-labelledby="swift_2-label" class=" btn-group-container-sw" data-toggle="buttons" role="group">
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="taylor_swift">
-<p>Taylor Swift (2006)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="fearless">
-<p>Fearless (2008)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="speak_now">
-<p>Speak Now (2010)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="red">
-<p>Red (2012)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="1989">
-<p>1989 (2014)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="reputation">
-<p>Reputation (2017)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="lover">
-<p>Lover (2019)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="folklore">
-<p>Folklore (2020)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="evermore">
-<p>Evermore (2020)</p>
-
-</button>
-</div>
-<div class="btn-group btn-group-toggle" role="group">
-<button class="btn checkbtn btn-default">
-<input type="checkbox" autocomplete="off" name="swift_2" value="midnights">
-<p>Midnights (2022)</p>
-
-</button>
-</div>
+<div id="michael_jackson" class="checkbox-group-buttons">
+<div aria-labelledby="michael_jackson-label" class=" btn-group-container-sw" data-toggle="buttons" role="group">
+<input type="checkbox" autocomplete="off" id="michael_jackson1" name="michael_jackson" value="thriller" class="btn-check">
+<label class="btn checkbtn btn-outline-primary" for="michael_jackson1">Thriller (1982)</label>
+<input type="checkbox" autocomplete="off" id="michael_jackson2" name="michael_jackson" value="billie_jean" class="btn-check">
+<label class="btn checkbtn btn-outline-primary" for="michael_jackson2">Billie Jean (1982)</label>
+<input type="checkbox" autocomplete="off" id="michael_jackson3" name="michael_jackson" value="beat_it" class="btn-check">
+<label class="btn checkbtn btn-outline-primary" for="michael_jackson3">Beat It (1982)</label>
+<input type="checkbox" autocomplete="off" id="michael_jackson4" name="michael_jackson" value="man_in_the_mirror" class="btn-check">
+<label class="btn checkbtn btn-outline-primary" for="michael_jackson4">Man in the Mirror (1987)</label>
+<input type="checkbox" autocomplete="off" id="michael_jackson5" name="michael_jackson" value="smooth_criminal" class="btn-check">
+<label class="btn checkbtn btn-outline-primary" for="michael_jackson5">Smooth Criminal (1987)</label>
+<input type="checkbox" autocomplete="off" id="michael_jackson6" name="michael_jackson" value="black_or_white" class="btn-check">
+<label class="btn checkbtn btn-outline-primary" for="michael_jackson6">Black or White (1991)</label>
+<input type="checkbox" autocomplete="off" id="michael_jackson7" name="michael_jackson" value="bad" class="btn-check">
+<label class="btn checkbtn btn-outline-primary" for="michael_jackson7">Bad (1987)</label>
+<input type="checkbox" autocomplete="off" id="michael_jackson8" name="michael_jackson" value="human_nature" class="btn-check">
+<label class="btn checkbtn btn-outline-primary" for="michael_jackson8">Human Nature (1982)</label>
 </div>
 </div>
 </div>
@@ -490,33 +382,27 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <h4 id="use-type-select-to-specify-a-drop-down-select-type-question" class="anchored">Use <code>type = 'select'</code> to specify a drop down select type question:</h4>
 <div class="cell">
 <div class="cell-output-display no-overflow-x">
-<div class="form-group shiny-input-container" style="width:100%;">
+<div class="form-group shiny-input-container" style="width:60%;">
 <label class="control-label" id="education-label" for="education"><p><strong>What is the highest level of education you have attained?</strong></p>
 </label>
 <div>
-<select id="education" class="shiny-input-select"><option value="">&lt;p&gt;Choose an option…&lt;/p&gt;
-</option>
-<option value="hs_no">&lt;p&gt;Did not attend high school&lt;/p&gt;
-</option>
-<option value="hs_some">&lt;p&gt;Some high school&lt;/p&gt;
-</option>
-<option value="hs_grad">&lt;p&gt;High school graduate&lt;/p&gt;
-</option>
-<option value="college_some">&lt;p&gt;Some college&lt;/p&gt;
-</option>
-<option value="college_grad">&lt;p&gt;College&lt;/p&gt;
-</option>
-<option value="grad">&lt;p&gt;Graduate Work&lt;/p&gt;
-</option>
-<option value="no_response">&lt;p&gt;Prefer not to say&lt;/p&gt;
-</option></select>
+<select id="education" class="shiny-input-select"><option value="">Choose an option...</option>
+<option value="hs_no">Did not attend high school</option>
+<option value="hs_some">Some high school</option>
+<option value="hs_grad">High school graduate</option>
+<option value="college_some">Some college</option>
+<option value="college_grad">College</option>
+<option value="grad">Graduate Work</option>
+<option value="no_response">Prefer not to say</option></select>
 <script type="application/json" data-for="education">{"plugins":["selectize-plugin-a11y"]}</script>
 </div>
 </div>
 </div>
+</div>
+<p><br></p>
+<div class="cell">
 <div class="cell-output-display">
-<button id="next-end" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'end');"><p>Next</p>
-</button>
+<button id="next-end" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'end');">Next</button>
 </div>
 </div>
 </div>

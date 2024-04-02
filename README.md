@@ -28,7 +28,7 @@ TODO List:
   - [x] Select
   - [x] Text
   - [x] Numeric
-  - [ ] Multiple choice (button...like formr mc_button)
+  - [x] Multiple choice (button...like formr mc_button)
   - [ ] Text area
   - [ ] Matrix
   - [ ] Slider

@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyjs)
-library(markdown)
+
+shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
 # Convert markdown to HTML ----
 
@@ -10,15 +11,12 @@ markdown_to_html <- function(text) {
 }
 
 # Convert list names from markdown to HTML ----
+# Unfortunately, this function only gives me raw HTML.
 
-list_names_to_html <- function(list) {
-  if (is.null(list)) return(list)
-  choice_names_md <- names(list)
-  choice_names_html <- lapply(choice_names_md, function(text) {
-    HTML(renderMarkdown(text = text))
-  })
-  names(list) <- unlist(choice_names_html)
-
+list_name_md_to_html <- function(list) {
+  list_names_md <- names(list)
+  list_names_html <- lapply(list_names_md, markdown_to_html)
+  names(list) <- unlist(list_names_html)
   return(list)
 }
 
@@ -27,14 +25,15 @@ list_names_to_html <- function(list) {
 sd_question <- function(
   name,
   type,
-  required = FALSE,
-  label    = "label",
-  option   = NULL,
+  required   = FALSE,
+  label      = "label",
+  option     = NULL,
   label_null = NULL,
-  direction = "horizontal",
+  direction  = "horizontal",
   individual = FALSE,
-  justified = FALSE,
-  width = '100%'
+  justified  = FALSE,
+  width      = '100%',
+  status     = "default"
 ) {
 
   output <- NULL
@@ -50,7 +49,7 @@ sd_question <- function(
     output <- shiny::selectInput(
       inputId = name,
       label = markdown_to_html(label),
-      choices = list_names_to_html(option),
+      choices = option,
       multiple = FALSE,
       selected = FALSE,
       width = width
@@ -61,7 +60,7 @@ sd_question <- function(
     output <- shiny::radioButtons(
       inputId = name,
       label = markdown_to_html(label),
-      choices = list_names_to_html(option),
+      choices = option,
       selected = FALSE,
       width = width
     )
@@ -71,7 +70,7 @@ sd_question <- function(
     output <- shiny::checkboxGroupInput(
       inputId = name,
       label = markdown_to_html(label),
-      choices = list_names_to_html(option),
+      choices = option,
       selected = FALSE,
       width = width
     )
@@ -99,9 +98,10 @@ sd_question <- function(
     output <- shinyWidgets::radioGroupButtons(
       inputId = name,
       label = markdown_to_html(label),
-      choices = list_names_to_html(option),
+      choices = option,
       selected = character(0),
-      width = width
+      width = width,
+      status = status
     )
 
   } else if (type == "mc_multiple_buttons") {
@@ -109,7 +109,7 @@ sd_question <- function(
     output <- shinyWidgets::checkboxGroupButtons(
       inputId = name,
       label = markdown_to_html(label),
-      choices = list_names_to_html(option),
+      choices = option,
       direction = direction,
       individual = individual,
       justified = justified,
@@ -129,7 +129,7 @@ sd_next <- function(next_page = NULL, label = "Next") {
 
   shiny::actionButton(
     inputId = make_next_button_id(next_page),
-    label = markdown_to_html(label),
+    label = label,
     style = "display: block; margin: auto;",
     onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
   )

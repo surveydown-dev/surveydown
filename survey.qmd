@@ -3,7 +3,6 @@ format:
   html:
     section-divs: false
 server: shiny
-runtime: shiny
 include-before-body: hide_pages.js
 execute:
   echo: false
@@ -48,7 +47,11 @@ sd_question(
   type  = "text",
   label = "**Please specify the other penguin type:**"
 )
+```
 
+<br>
+
+```{r}
 sd_next(next_page = 'skipif')
 ```
 
@@ -71,9 +74,15 @@ sd_question(
     'Skip to the end' = 'end'
   )
 )
+```
 
+<br>
+
+```{r}
 sd_next(next_page = 'questionTypes')
 ```
+
+
 :::
 
 ::: {#questionTypes .sd-page}
@@ -88,7 +97,7 @@ sd_question(
   name  = "silly_word",
   type  = "text",
   label = "**Write a silly word:**",
-  width = '100%'
+  width = '60%'
 )
 ```
 
@@ -101,7 +110,7 @@ sd_question(
   required = TRUE,
   label    = "**What's your age?**",
   option   = NULL,
-  width = '100%'
+  width = '60%'
 )
 ```
 
@@ -109,7 +118,7 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'artist_1',
+  name     = 'artist',
   type     = 'mc',
   required = TRUE,
   width = '100%',
@@ -130,19 +139,19 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'artist_2',
+  name     = 'fruit',
   type     = 'mc_buttons',
   required = TRUE,
-  label    = "**Which artist do you prefer most from this list?**",
+  label    = "**Which fruit do you prefer most from this list?**",
   width = '100%',
   option   = c(
-    "Taylor Swift" = "taylor_swift",
-    "Beyoncé"      = "beyonce",
-    "Adele"        = "adele",
-    "Rihanna"      = "rihanna",
-    "Lady Gaga"    = "ladygaga",
-    "Ed Sheeran"   = "ed_sheeran",
-    "Drake"        = "drake"
+    "Apple"      = "apple",
+    "Banana"     = "banana",
+    "Pear"       = "pear",
+    "Strawberry" = "strawberry",
+    "Grape"      = "grape",
+    "Mango"      = "mango",
+    "Watermelon" = "watermelon"
   )
 )
 ```
@@ -151,7 +160,7 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'swift_1',
+  name     = 'swift',
   type     = 'mc_multiple',
   required = TRUE,
   width = '100%',
@@ -175,23 +184,21 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'swift_2',
+  name     = 'michael_jackson',
   type     = 'mc_multiple_buttons',
   individual = TRUE,
   required = TRUE,
   width = '100%',
-  label    = "**Which are your favorite Taylor Swift albums (select all that apply)?**",
+  label    = "**Which are your favorite Michael Jackson songs (select all that apply)?**",
   option   = c(
-    "Taylor Swift (2006)" = "taylor_swift",
-    "Fearless (2008)"     = "fearless",
-    "Speak Now (2010)"    = "speak_now",
-    "Red (2012)"          = "red",
-    "1989 (2014)"         = "1989",
-    "Reputation (2017)"   = "reputation",
-    "Lover (2019)"        = "lover",
-    "Folklore (2020)"     = "folklore",
-    "Evermore (2020)"     = "evermore",
-    "Midnights (2022)"    = "midnights"
+    "Thriller (1982)"          = "thriller",
+    "Billie Jean (1982)"       = "billie_jean",
+    "Beat It (1982)"           = "beat_it",
+    "Man in the Mirror (1987)" = "man_in_the_mirror",
+    "Smooth Criminal (1987)"   = "smooth_criminal",
+    "Black or White (1991)"    = "black_or_white",
+    "Bad (1987)"               = "bad",
+    "Human Nature (1982)"      = "human_nature"
   )
 )
 ```
@@ -203,7 +210,7 @@ sd_question(
   name     = 'education',
   type     = 'select',
   required = TRUE,
-  width = '100%',
+  width = '60%',
   label    = "**What is the highest level of education you have attained?**",
   option   = c(
     "Did not attend high school" = "hs_no",
@@ -215,9 +222,14 @@ sd_question(
     "Prefer not to say"          = "no_response"
   )
 )
+```
 
+<br>
+
+```{r}
 sd_next(next_page = 'end')
 ```
+
 :::
 
 ::: {#end .sd-page}
