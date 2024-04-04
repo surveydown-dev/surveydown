@@ -2,7 +2,20 @@ library(tidyverse)
 library(here)
 library(googlesheets4)
 
-df <- read_csv(here('surveydown', 'data.csv'))
+df <- read_csv(here('data.csv'))
+
+(original_client <- gs4_oauth_client())
+
+(original_api_key <- gs4_api_key())
+
+path_to_json <- system.file(
+  "extdata", "secret.json",
+  package = "gargle"
+)
+gs4_auth_configure(path = path_to_json)
+
+
+
 
 sheet_url <- "https://docs.google.com/spreadsheets/d/19S2CJ73N7ISJz8HyO7oclxvKV_N_OAEl5wJE_yQ8VGg/edit#gid=339310633"
 
