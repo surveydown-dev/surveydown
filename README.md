@@ -11,8 +11,9 @@ TODO List:
 - [x] show_if (conditionally display question)
 - [x] skip_if (conditionally skip to page)
 - [x] Set defaults for questions to not have any choices selected on launch.
-- [ ] Option for preview = TRUE (database is ignored).
-- [ ] Option to start at a designated page.
+- [x] Ability to embed markdown inside choice options (like mc buttons in formr)
+- [ ] Option for `preview = TRUE` in `sd_server()` (database is ignored).
+- [ ] Option to start at a designated page, e.g. `start_at = 'skipif'`
 - [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
 - [ ] Admin page w/password (see https://github.com/daattali/shinyforms)
@@ -20,8 +21,6 @@ TODO List:
 - [ ] Basic version working with a database
 - [ ] User tracking via url parameters: https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking
 - [ ] Add a getSurveyData() function so the survey designer can obtain the current survey results from inside the app: https://shinysurveys.jdtrat.com/articles/get-survey-data.html
-- [ ] Ability to embed markdown inside choice options (like mc buttons in formr)
-- [ ] Consider using formr forms (or other forms) instead of shiny widgets?
 - Question types:
   - [x] Multiple choice (single choice)
   - [x] Multiple choice (multiple choices)
