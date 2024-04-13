@@ -157,27 +157,43 @@ sd_config <- function(
 
   # Get survey metadata
 
-  page_metadata <- get_page_metadata()
-  page_names <- names(page_metadata)
-  question_ids <- unname(unlist(page_metadata))
+  page_structure <- get_page_structure()
+  config <- list(
+    page_structure = page_structure,
+    page_ids = names(page_structure),
+    question_ids = unname(unlist(page_structure))
+  )
 
+  # Check skip_if and show_if inputs
+
+  check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
+
+  # Establish data base
+
+  db_url <- establish_database(config, db_key, db_url, db_create)
+
+  # Store database config data
+
+  config$db_url <- db_url
+
+  return(config)
 }
 
 ## Page metadata ----
 
-get_page_metadata <- function() {
+get_page_structure <- function() {
 
   pages <- get_page_nodes()
-  page_names <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
+  page_ids <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
 
   # Initialize a list to hold the results
   page_metadata <- list()
 
   # Iterate over each page and extract the Shiny widget IDs
-  for (i in seq_len(length(page_names))) {
+  for (i in seq_len(length(page_ids))) {
 
     # Extract the page ID
-    page_id <- page_names[i]
+    page_id <- page_ids[i]
 
     # Find all containers that might have an ID
     containers <- pages[i] |> rvest::html_nodes(".shiny-input-container")
@@ -227,15 +243,65 @@ get_page_nodes <- function() {
 
 }
 
+## Config checks ----
+
+check_skip_show <- function(
+    config, skip_if, skip_if_custom, show_if, show_if_custom
+) {
+  # Placeholder for now - need to check for:
+  # - That the skip_if and show_if arguments are data frames
+  # - If the names of skip_if and show_if are "question_id", "question_value", and "target"
+  # - That the "question_id" values in both show_if and skip_if are in config$question_ids
+  # - That the "target" values in show_if are in config$question_ids
+  # - That the "target" values in skip_if are in config$page_ids
+  return(TRUE)
+}
+
+## Establish database ----
+
+establish_database <- function(config, db_key, db_url = NULL, db_create = TRUE) {
+
+  # Authentication
+
+  if (is.null(db_key)) {
+    stop("You must provide a db_key to authenticate your Google account")
+  }
+
+  # < Code to handle google authentication here >
+
+  # Default behavior is to create a new google sheet
+  # If the user provides a url to an existing sheet, then don't create one
+
+  if (!is.null(db_url)) {
+    db_create <- FALSE
+  }
+
+  # Create a new google sheet if db_create is still TRUE
+
+  if (db_create) {
+
+    # < Code to create the new google sheet here>
+    # This should end with the url to the new sheet being stored
+
+    db_url <- "url_to_new_sheet" # Replace with url to new sheet
+
+  } else {
+
+    # < Code to run checks that the names of the google sheet match those in config$question_ids >
+
+  }
+
+  # We return the db_url because if the user didn't provide one,
+  # we need to use the url to the newly created sheet, otherwise
+  # just return the one that the user provided
+
+  return(db_url)
+
+}
+
 # Server ----
 
 sd_server <- function(input, session, config) {
-
-  # Get survey metadata
-
-  page_metadata <- get_page_metadata()
-  page_names <- names(page_metadata)
-  question_ids <- unname(unlist(page_metadata))
 
   # Conditional display (show_if conditions) ----
 
@@ -254,7 +320,7 @@ sd_server <- function(input, session, config) {
       local({
 
         # Define current and next page based on iteration
-        next_page <- page_names[i]
+        next_page <- page_ids[i]
 
         observeEvent(input[[make_next_button_id(next_page)]], {
 
