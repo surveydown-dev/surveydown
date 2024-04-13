@@ -244,8 +244,8 @@ sd_next(next_page = 'end')
 #| context: server
 
 config <- sd_config(
-  # db_key = "", 
-  # db_url = "",
+  db_key = "", 
+  db_url = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_end", "end",           "end"
@@ -253,7 +253,8 @@ config <- sd_config(
   show_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "penguins",    "other",         "penguins_other",
-  )
+  ), 
+  preview = TRUE
 )
 
 sd_server(

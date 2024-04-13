@@ -152,7 +152,8 @@ sd_config <- function(
     skip_if = NULL,
     skip_if_custom = NULL,
     show_if = NULL,
-    show_if_custom = NULL
+    show_if_custom = NULL,
+    preview = FALSE
 ) {
 
   # Get survey metadata
@@ -168,13 +169,20 @@ sd_config <- function(
 
   check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
 
-  # Establish data base
+  # Establish data base if not in preview mode
 
-  db_url <- establish_database(config, db_key, db_url, db_create)
+  if (!preview) {
+    db_url <- establish_database(config, db_key, db_url, db_create)
+  }
 
-  # Store database config data
+  # Store remaining config settings
 
   config$db_url <- db_url
+  config$skip_if <- skip_if
+  config$skip_if_custom <- skip_if_custom
+  config$show_if <- show_if
+  config$show_if_custom <- show_if_custom
+  config$preview <- preview
 
   return(config)
 }
@@ -187,7 +195,7 @@ get_page_structure <- function() {
   page_ids <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
 
   # Initialize a list to hold the results
-  page_metadata <- list()
+  page_structure <- list()
 
   # Iterate over each page and extract the Shiny widget IDs
   for (i in seq_len(length(page_ids))) {
@@ -217,10 +225,10 @@ get_page_structure <- function() {
     }
 
     # Store the results
-    page_metadata[[page_id]] <- unique(widget_ids)
+    page_structure[[page_id]] <- unique(widget_ids)
   }
 
-  return(page_metadata)
+  return(page_structure)
 }
 
 get_page_nodes <- function() {
@@ -303,6 +311,19 @@ establish_database <- function(config, db_key, db_url = NULL, db_create = TRUE) 
 
 sd_server <- function(input, session, config) {
 
+  # Create local objects from config file
+
+  page_structure <- config$page_structure
+  page_ids <- config$page_ids
+  question_ids <- config$question_ids
+  show_if <- config$show_if
+  db_url <- config$db_url
+  skip_if <- config$skip_if
+  skip_if_custom <- config$skip_if_custom
+  show_if <- config$show_if
+  show_if_custom <- config$show_if_custom
+  preview <- config$preview
+
   # Conditional display (show_if conditions) ----
 
   if (!is.null(show_if)) {
@@ -316,7 +337,7 @@ sd_server <- function(input, session, config) {
   # Page Navigation ----
 
   observe({
-    for (i in 2:length(page_metadata)) {
+    for (i in 2:length(page_structure)) {
       local({
 
         # Define current and next page based on iteration
@@ -344,30 +365,11 @@ sd_server <- function(input, session, config) {
 
   # DB operations ----
 
-  # Define a reactive expression that combines all registered questions
-  input_vals <- reactive({
-    temp <- sapply(
-      question_ids,
-      function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
-    )
-    names(temp) <- question_ids
-    temp
-  })
+  # Update data base if not in preview mode
 
-  # Use observe to react whenever 'input_vals' changes
-  # If it changes, update the DB
-  observe({
-
-    # Capture the current state of inputs
-    vals <- input_vals()
-
-    # Transform to data frame, handling uninitialized inputs appropriately
-    data <- transform_data(vals, question_ids, session)
-
-    # Save data
-    readr::write_csv(data, 'data.csv')
-
-  })
+  if (!preview) {
+    update_database(input, question_ids, db_url)
+  }
 
 }
 
@@ -460,6 +462,36 @@ handle_custom_skip_logic <- function(input, skip_if_custom, next_page) {
 }
 
 ## Database ----
+
+update_database <- function(input, question_ids, db_url) {
+
+  # Define a reactive expression for each question_id
+
+  input_vals <- reactive({
+    temp <- sapply(
+      question_ids,
+      function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
+    )
+    names(temp) <- question_ids
+    temp
+  })
+
+  # Use observe to react whenever 'input_vals' changes
+  # If it changes, update the database
+
+  observe({
+
+    # Capture the current state of inputs
+    vals <- input_vals()
+
+    # Transform to data frame, handling uninitialized inputs appropriately
+    data <- transform_data(vals, question_ids, session)
+
+    # Save data
+    readr::write_csv(data, 'data.csv')
+
+  })
+}
 
 transform_data <- function(vals, question_ids, session) {
 

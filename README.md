@@ -12,7 +12,7 @@ TODO List:
 - [x] skip_if (conditionally skip to page)
 - [x] Set defaults for questions to not have any choices selected on launch.
 - [x] Ability to embed markdown inside choice options (like mc buttons in formr)
-- [ ] Option for `preview = TRUE` in `sd_server()` (database is ignored).
+- [x] Option for `preview = TRUE` (database is ignored).
 - [ ] Option to start at a designated page, e.g. `start_at = 'skipif'`
 - [ ] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
 - [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
