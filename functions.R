@@ -3,28 +3,7 @@ library(shinyjs)
 
 shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
-# Convert markdown to HTML ----
-
-markdown_to_html <- function(text) {
-  if (is.null(text)) { return(text) }
-  return(shiny::HTML(markdown::renderMarkdown(text = text)))
-}
-
-# Convert list names from markdown to HTML ----
-# Only works for mc_buttons and mc_multiple_buttons.
-
-list_name_md_to_html <- function(list) {
-  list_names_md <- names(list)
-  list_names_html <- lapply(list_names_md, function(name) {
-    html_name <- markdown_to_html(name)
-    plain_name <- gsub("<[/]?p>|\\n", "", html_name)
-    return(plain_name)
-  })
-  names(list) <- unlist(list_names_html)
-  return(list)
-}
-
-# UI functions ----
+# UI ----
 
 sd_question <- function(
   name,
@@ -143,16 +122,114 @@ make_next_button_id <- function(next_page) {
   return(paste0("next-", next_page))
 }
 
-# Server functions ----
+# Convert markdown to HTML
 
-sd_server <- function(
-  input,
-  session,
-  skip_if = NULL,
-  skip_if_custom = NULL,
-  show_if = NULL,
-  show_if_custom = NULL
+markdown_to_html <- function(text) {
+  if (is.null(text)) { return(text) }
+  return(shiny::HTML(markdown::renderMarkdown(text = text)))
+}
+
+# Convert list names from markdown to HTML
+# Only works for mc_buttons and mc_multiple_buttons.
+
+list_name_md_to_html <- function(list) {
+  list_names_md <- names(list)
+  list_names_html <- lapply(list_names_md, function(name) {
+    html_name <- markdown_to_html(name)
+    plain_name <- gsub("<[/]?p>|\\n", "", html_name)
+    return(plain_name)
+  })
+  names(list) <- unlist(list_names_html)
+  return(list)
+}
+
+# Config ----
+
+sd_config <- function(
+    db_url = NULL,
+    db_key = NULL,
+    db_create = NULL,
+    skip_if = NULL,
+    skip_if_custom = NULL,
+    show_if = NULL,
+    show_if_custom = NULL
 ) {
+
+  # Get survey metadata
+
+  page_metadata <- get_page_metadata()
+  page_names <- names(page_metadata)
+  question_ids <- unname(unlist(page_metadata))
+
+}
+
+## Page metadata ----
+
+get_page_metadata <- function() {
+
+  pages <- get_page_nodes()
+  page_names <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
+
+  # Initialize a list to hold the results
+  page_metadata <- list()
+
+  # Iterate over each page and extract the Shiny widget IDs
+  for (i in seq_len(length(page_names))) {
+
+    # Extract the page ID
+    page_id <- page_names[i]
+
+    # Find all containers that might have an ID
+    containers <- pages[i] |> rvest::html_nodes(".shiny-input-container")
+
+    # Initialize a vector to store widget IDs for this page
+    widget_ids <- character()
+
+    # Iterate over containers to extract IDs
+    for (container in containers) {
+      # Direct ID from the container
+      container_id <- rvest::html_attr(container, "id")
+      if (!is.na(container_id)) {
+        widget_ids <- c(widget_ids, container_id)
+      }
+
+      # IDs from input/select/textarea elements within the container
+      input_ids <- container |>
+        rvest::html_nodes("input, select, textarea") |>
+        rvest::html_attr("id")
+      widget_ids <- c(widget_ids, input_ids[!is.na(input_ids)])
+    }
+
+    # Store the results
+    page_metadata[[page_id]] <- unique(widget_ids)
+  }
+
+  return(page_metadata)
+}
+
+get_page_nodes <- function() {
+
+  # Get the list of .qmd files in the current working directory
+  qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
+
+  # Check if there is exactly one .qmd file
+  if (length(qmd_files) == 1) {
+    qmd_file_name <- qmd_files[1]
+    html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
+
+    # Use the derived HTML file name to read the document with rvest
+    pages <- rvest::read_html(html_file_name) |>
+      rvest::html_nodes(".sd-page")
+    return(pages)
+  }
+
+  stop("Error: {surveydown} requires that only one .qmd file in the directory.")
+
+}
+
+# Server ----
+
+sd_server <- function(input, session, config) {
 
   # Get survey metadata
 
@@ -228,71 +305,7 @@ sd_server <- function(
 
 }
 
-# Page metadata ----
-
-get_page_metadata <- function() {
-
-  pages <- get_page_nodes()
-  page_names <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
-
-  # Initialize a list to hold the results
-  page_metadata <- list()
-
-  # Iterate over each page and extract the Shiny widget IDs
-  for (i in seq_len(length(page_names))) {
-
-    # Extract the page ID
-    page_id <- page_names[i]
-
-    # Find all containers that might have an ID
-    containers <- pages[i] |> rvest::html_nodes(".shiny-input-container")
-
-    # Initialize a vector to store widget IDs for this page
-    widget_ids <- character()
-
-    # Iterate over containers to extract IDs
-    for (container in containers) {
-      # Direct ID from the container
-      container_id <- rvest::html_attr(container, "id")
-      if (!is.na(container_id)) {
-        widget_ids <- c(widget_ids, container_id)
-      }
-
-      # IDs from input/select/textarea elements within the container
-      input_ids <- container |>
-        rvest::html_nodes("input, select, textarea") |>
-        rvest::html_attr("id")
-      widget_ids <- c(widget_ids, input_ids[!is.na(input_ids)])
-    }
-
-    # Store the results
-    page_metadata[[page_id]] <- unique(widget_ids)
-  }
-
-  return(page_metadata)
-}
-
-get_page_nodes <- function() {
-
-  # Get the list of .qmd files in the current working directory
-  qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
-
-  # Check if there is exactly one .qmd file
-  if (length(qmd_files) == 1) {
-    qmd_file_name <- qmd_files[1]
-    html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
-
-    # Use the derived HTML file name to read the document with rvest
-    pages <- rvest::read_html(html_file_name) |>
-      rvest::html_nodes(".sd-page")
-    return(pages)
-  }
-
-  stop("Error: {surveydown} requires that only one .qmd file in the directory.")
-
-}
-
-# show_if ----
+## show_if ----
 
 handle_basic_show_if_logic <- function(input, show_if) {
 
@@ -340,7 +353,7 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
   })
 }
 
-# skip_if ----
+## skip_if ----
 
 handle_basic_skip_logic <- function(input, skip_if, next_page) {
 
@@ -380,7 +393,7 @@ handle_custom_skip_logic <- function(input, skip_if_custom, next_page) {
   return(next_page)
 }
 
-# Database ----
+## Database ----
 
 transform_data <- function(vals, question_ids, session) {
 
