@@ -171,7 +171,7 @@ sd_config <- function(
   # Establish data base if not in preview mode
 
   if (!preview) {
-    db_url <- establish_database(config, db_key, db_url, db_create)
+    db_url <- establish_database(config, db_key, db_url)
   }
 
   # Store remaining config settings
@@ -324,6 +324,13 @@ sd_server <- function(input, session, config) {
   show_if_custom <- config$show_if_custom
   preview <- config$preview
 
+  # Create a local session_id variable
+  session_id <- session$token
+
+  # Initialize object for storing timestamps
+
+  timestamps <- reactiveValues(data = initialize_timestamps(page_ids))
+
   # Conditional display (show_if conditions) ----
 
   if (!is.null(show_if)) {
@@ -355,6 +362,9 @@ sd_server <- function(input, session, config) {
             next_page <- handle_custom_skip_logic(input, skip_if_custom, next_page)
           }
 
+          # Store the timestamp with the page_id as the key
+          timestamps$data[[make_page_ts_name(next_page)]] <- get_utc_timestamp()
+
           # Execute page navigation
           shinyjs::runjs('hideAllPages();') # Hide all pages
           shinyjs::show(next_page) # Show next page
@@ -369,9 +379,9 @@ sd_server <- function(input, session, config) {
 
   if (!preview) {
 
-    # Define a reactive expression for each question_id
+    # Define a reactive expression for each question_id value
 
-    input_vals <- reactive({
+    get_question_vals <- reactive({
       temp <- sapply(
         question_ids,
         function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
@@ -380,16 +390,21 @@ sd_server <- function(input, session, config) {
       temp
     })
 
+    # Define a reactive expression for the timestamp values
+
+    get_time_stamps <- reactive({ timestamps$data })
+
     # Use observe to react whenever 'input_vals' changes
     # If it changes, update the database
 
     observe({
 
-      # Capture the current state of inputs
-      vals <- input_vals()
+      # Capture the current state of question values and timestamps
+      question_vals <- get_question_vals()
+      timestamp_vals <- get_time_stamps()
 
       # Transform to data frame, handling uninitialized inputs appropriately
-      data <- transform_data(vals, question_ids, session)
+      data <- transform_data(question_vals, timestamp_vals, session_id)
 
       # Save data - need to update this with writing to the googlesheet
       readr::write_csv(data, 'data.csv')
@@ -490,26 +505,49 @@ handle_custom_skip_logic <- function(input, skip_if_custom, next_page) {
 
 ## Database ----
 
-transform_data <- function(vals, question_ids, session) {
+transform_data <- function(question_vals, timestamp_vals, session_id) {
 
-  data <- data.frame(
-    session_id = session$token,
-    timestamp = Sys.time()
-  )
-
-  # Replace any NULL values with ''
-  for (i in 1:length(vals)) {
-    if (is.null(vals[[i]])) {
-      vals[[i]] <- ''
+  # Replace NULLs with empty string, and
+  # convert vectors to comma-separated strings
+  for (i in 1:length(question_vals)) {
+    # Check for NULL and replace with an empty string
+    if (is.null(question_vals[[i]])) {
+      question_vals[[i]] <- ''
+    } else if (is.vector(question_vals[[i]])) {
+      # Convert vectors to comma-separated strings
+      question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
     }
   }
+  responses <- as.data.frame(question_vals)
 
-  # Assuming vals is a list of inputs from input_vals()
-  names(vals) <- question_ids
-  responses <- as.data.frame(vals)
-
-  # Add session_id and timestamp
-  data <- cbind(data, responses)
+  # Add session_id and timestamps
+  data <- cbind(session_id, responses, as.data.frame(timestamp_vals))
 
   return(data)
+}
+
+# Other helpers ----
+
+get_utc_timestamp <- function() {
+  return(format(Sys.time(), tz = "UTC", usetz = TRUE))
+}
+
+initialize_timestamps <- function(page_ids) {
+
+  timestamps <- list()
+
+  # Store the time of the start (first page)
+  timestamps[[make_page_ts_name(page_ids[1])]] <- get_utc_timestamp()
+
+  # Store "" values for all remaining pages
+  for (i in 2:length(page_ids)) {
+    timestamps[[make_page_ts_name(page_ids[i])]] <- ""
+  }
+
+  return(timestamps)
+
+}
+
+make_page_ts_name <- function(page_id) {
+  return(paste0('time_page_', page_id))
 }
