@@ -254,7 +254,6 @@ config <- sd_config(
     ~question_id,  ~question_value, ~target,
     "penguins",    "other",         "penguins_other",
   )
-  # preview = TRUE
 )
 
 sd_server(

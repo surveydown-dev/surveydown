@@ -161,7 +161,8 @@ sd_config <- function(
     skip_if_custom = NULL,
     show_if = NULL,
     show_if_custom = NULL,
-    preview = FALSE
+    preview = FALSE,
+    start_page = NULL
 ) {
 
   # Get survey metadata
@@ -183,6 +184,17 @@ sd_config <- function(
     db_url <- establish_database(config, db_key, db_url)
   }
 
+  # Check that start_page (if used) points to an actual page
+
+  if (!is.null(start_page)) {
+    if (! start_page %in% config$page_ids) {
+      stop(
+        'The specified start_page does not exist - check that you have ',
+        'not mis-spelled the name'
+      )
+    }
+  }
+
   # Store remaining config settings
 
   config$db_url <- db_url
@@ -191,6 +203,7 @@ sd_config <- function(
   config$show_if <- show_if
   config$show_if_custom <- show_if_custom
   config$preview <- preview
+  config$start_page <- start_page
 
   return(config)
 }
@@ -316,6 +329,7 @@ sd_server <- function(input, session, config) {
   show_if <- config$show_if
   show_if_custom <- config$show_if_custom
   preview <- config$preview
+  start_page <- config$start_page
 
   # Create a local session_id variable
   session_id <- session$token
@@ -335,6 +349,13 @@ sd_server <- function(input, session, config) {
   }
 
   # Page Navigation ----
+
+  # Start from start_page (if specified)
+
+  if (!is.null(start_page)) {
+    shinyjs::runjs('hideAllPages();')
+    shinyjs::show(start_page)
+  }
 
   observe({
     for (i in 2:length(page_structure)) {

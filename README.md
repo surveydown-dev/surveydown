@@ -14,8 +14,8 @@ TODO List:
 - [x] Ability to embed markdown inside choice options (like mc buttons in formr)
 - [x] Option for `preview = TRUE` (database is ignored).
 - [x] Export timestamps on each page in the data
+- [x] Option to start at a designated page, e.g. `start_page = 'skipif'`
 - [ ] Set up SCSS to be compatible with Quarto-supported bootstrap themes
-- [ ] Option to start at a designated page, e.g. `start_at = 'skipif'`
 - [ ] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
 - [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
