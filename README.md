@@ -15,6 +15,7 @@ TODO List:
 - [x] Option for `preview = TRUE` (database is ignored).
 - [x] Export timestamps on each page in the data
 - [x] Option to start at a designated page, e.g. `start_page = 'skipif'`
+- [ ] A `show_all = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text).
 - [ ] Set up SCSS to be compatible with Quarto-supported bootstrap themes
 - [ ] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
 - [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
