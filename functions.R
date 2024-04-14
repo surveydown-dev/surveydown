@@ -101,7 +101,16 @@ sd_question <- function(
 
   }
 
-  return(output)
+  # Wrap the output in a div with a custom data attribute to facilitate
+  # question_id scraping later
+  output_div <- shiny::tags$div(
+    id = paste("container-", name),
+    `data-question-id` = name,   # Custom attribute to identify the question_id
+    class = "question-container", # Additional CSS class for styling or scripts
+    output
+  )
+
+  return(output_div)
 
 }
 
@@ -186,45 +195,29 @@ sd_config <- function(
   return(config)
 }
 
-## Page metadata ----
+## Page structure ----
 
 get_page_structure <- function() {
 
-  pages <- get_page_nodes()
-  page_ids <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
+  # Get all page nodes
+  page_nodes <- get_page_nodes()
+  page_ids <- page_nodes |> rvest::html_attr("id")
 
   # Initialize a list to hold the results
   page_structure <- list()
 
-  # Iterate over each page and extract the Shiny widget IDs
-  for (i in seq_len(length(page_ids))) {
-
-    # Extract the page ID
+  # Iterate over each page node to get the question_ids
+  for (i in seq_along(page_nodes)) {
     page_id <- page_ids[i]
+    page_node <- page_nodes[i]
 
-    # Find all containers that might have an ID
-    containers <- pages[i] |> rvest::html_nodes(".shiny-input-container")
+    # Extract all question IDs within this page
+    question_ids <- page_node |>
+      rvest::html_nodes("[data-question-id]") |>
+      rvest::html_attr("data-question-id")
 
-    # Initialize a vector to store widget IDs for this page
-    widget_ids <- character()
-
-    # Iterate over containers to extract IDs
-    for (container in containers) {
-      # Direct ID from the container
-      container_id <- rvest::html_attr(container, "id")
-      if (!is.na(container_id)) {
-        widget_ids <- c(widget_ids, container_id)
-      }
-
-      # IDs from input/select/textarea elements within the container
-      input_ids <- container |>
-        rvest::html_nodes("input, select, textarea") |>
-        rvest::html_attr("id")
-      widget_ids <- c(widget_ids, input_ids[!is.na(input_ids)])
-    }
-
-    # Store the results
-    page_structure[[page_id]] <- unique(widget_ids)
+    # Store the question IDs for this page
+    page_structure[[page_id]] <- question_ids
   }
 
   return(page_structure)
