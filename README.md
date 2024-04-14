@@ -13,13 +13,14 @@ TODO List:
 - [x] Set defaults for questions to not have any choices selected on launch.
 - [x] Ability to embed markdown inside choice options (like mc buttons in formr)
 - [x] Option for `preview = TRUE` (database is ignored).
+- [x] Export timestamps on each page in the data
+- [ ] Set up SCSS to be compatible with Quarto-supported bootstrap themes
 - [ ] Option to start at a designated page, e.g. `start_at = 'skipif'`
 - [ ] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
 - [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
 - [ ] Admin page w/password (see https://github.com/daattali/shinyforms)
-- [ ] Decide on database backend: googlesheets vs. supabase?
-- [ ] Basic version working with a database
+- [ ] Basic version working with a googlesheets database
 - [ ] User tracking via url parameters: https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking
 - [ ] Add a getSurveyData() function so the survey designer can obtain the current survey results from inside the app: https://shinysurveys.jdtrat.com/articles/get-survey-data.html
 - Question types:
