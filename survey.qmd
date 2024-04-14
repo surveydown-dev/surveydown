@@ -20,6 +20,7 @@ useShinyjs(rmd = TRUE)
 ```
 
 ::: {#welcome .sd-page}
+
 # Welcome to my survey!
 
 Here is a question to get started.
@@ -54,9 +55,11 @@ sd_question(
 ```{r}
 sd_next(next_page = 'skipif')
 ```
+
 :::
 
 ::: {#skipif .sd-page}
+
 # skip_if
 
 This page showcases the `skip_if` feature, which allows you to skip forward in the survey based on different conditions. Depending on your choice, you'll go to a different page in the survey when you press the "Next" button.
@@ -80,9 +83,11 @@ sd_question(
 ```{r}
 sd_next(next_page = 'questionTypes')
 ```
+
 :::
 
 ::: {#questionTypes .sd-page}
+
 # Question types
 
 This page showcases some other question types.
@@ -226,18 +231,21 @@ sd_question(
 ```{r}
 sd_next(next_page = 'end')
 ```
+
 :::
 
 ::: {#end .sd-page}
+
 ## Thanks for taking our survey!
+
 :::
 
 ```{r}
 #| context: server
 
-sd_server(
-  input = input,
-  session = session,
+config <- sd_config(
+  db_key = "", 
+  db_url = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_end", "end",           "end"
@@ -246,5 +254,11 @@ sd_server(
     ~question_id,  ~question_value, ~target,
     "penguins",    "other",         "penguins_other",
   )
+)
+
+sd_server(
+  input = input,
+  session = session,
+  config = config
 )
 ```

@@ -3,28 +3,7 @@ library(shinyjs)
 
 shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
-# Convert markdown to HTML ----
-
-markdown_to_html <- function(text) {
-  if (is.null(text)) { return(text) }
-  return(shiny::HTML(markdown::renderMarkdown(text = text)))
-}
-
-# Convert list names from markdown to HTML ----
-# Only works for mc_buttons and mc_multiple_buttons.
-
-list_name_md_to_html <- function(list) {
-  list_names_md <- names(list)
-  list_names_html <- lapply(list_names_md, function(name) {
-    html_name <- markdown_to_html(name)
-    plain_name <- gsub("<[/]?p>|\\n", "", html_name)
-    return(plain_name)
-  })
-  names(list) <- unlist(list_names_html)
-  return(list)
-}
-
-# UI functions ----
+# UI ----
 
 sd_question <- function(
   name,
@@ -122,7 +101,16 @@ sd_question <- function(
 
   }
 
-  return(output)
+  # Wrap the output in a div with a custom data attribute to facilitate
+  # question_id scraping later
+  output_div <- shiny::tags$div(
+    id = paste("container-", name),
+    `data-question-id` = name,   # Custom attribute to identify the question_id
+    class = "question-container", # Additional CSS class for styling or scripts
+    output
+  )
+
+  return(output_div)
 
 }
 
@@ -143,133 +131,109 @@ make_next_button_id <- function(next_page) {
   return(paste0("next-", next_page))
 }
 
-# Server functions ----
+# Convert markdown to HTML
 
-sd_server <- function(
-  input,
-  session,
-  skip_if = NULL,
-  skip_if_custom = NULL,
-  show_if = NULL,
-  show_if_custom = NULL
+markdown_to_html <- function(text) {
+  if (is.null(text)) { return(text) }
+  return(shiny::HTML(markdown::renderMarkdown(text = text)))
+}
+
+# Convert list names from markdown to HTML
+# Only works for mc_buttons and mc_multiple_buttons.
+
+list_name_md_to_html <- function(list) {
+  list_names_md <- names(list)
+  list_names_html <- lapply(list_names_md, function(name) {
+    html_name <- markdown_to_html(name)
+    plain_name <- gsub("<[/]?p>|\\n", "", html_name)
+    return(plain_name)
+  })
+  names(list) <- unlist(list_names_html)
+  return(list)
+}
+
+# Config ----
+
+sd_config <- function(
+    db_url = NULL,
+    db_key = NULL,
+    skip_if = NULL,
+    skip_if_custom = NULL,
+    show_if = NULL,
+    show_if_custom = NULL,
+    preview = FALSE,
+    start_page = NULL
 ) {
 
   # Get survey metadata
 
-  page_metadata <- get_page_metadata()
-  page_names <- names(page_metadata)
-  question_ids <- unname(unlist(page_metadata))
+  page_structure <- get_page_structure()
+  config <- list(
+    page_structure = page_structure,
+    page_ids = names(page_structure),
+    question_ids = unname(unlist(page_structure))
+  )
 
-  # Conditional display (show_if conditions) ----
+  # Check skip_if and show_if inputs
 
-  if (!is.null(show_if)) {
-    handle_basic_show_if_logic(input, show_if)
+  check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
+
+  # Establish data base if not in preview mode
+
+  if (!preview) {
+    db_url <- establish_database(config, db_key, db_url)
   }
 
-  if (!is.null(show_if_custom)) {
-    handle_custom_show_if_logic(input, show_if_custom)
-  }
+  # Check that start_page (if used) points to an actual page
 
-  # Page Navigation ----
-
-  observe({
-    for (i in 2:length(page_metadata)) {
-      local({
-
-        # Define current and next page based on iteration
-        next_page <- page_names[i]
-
-        observeEvent(input[[make_next_button_id(next_page)]], {
-
-          # Update next page with any basic skip logic
-          if (!is.null(skip_if)) {
-            next_page <- handle_basic_skip_logic(input, skip_if, next_page)
-          }
-
-          # Update next page with any custom skip logic
-          if (!is.null(skip_if_custom)) {
-            next_page <- handle_custom_skip_logic(input, skip_if_custom, next_page)
-          }
-
-          # Execute page navigation
-          shinyjs::runjs('hideAllPages();') # Hide all pages
-          shinyjs::show(next_page) # Show next page
-        })
-      })
+  if (!is.null(start_page)) {
+    if (! start_page %in% config$page_ids) {
+      stop(
+        'The specified start_page does not exist - check that you have ',
+        'not mis-spelled the name'
+      )
     }
-  })
+  }
 
-  # DB operations ----
+  # Store remaining config settings
 
-  # Define a reactive expression that combines all registered questions
-  input_vals <- reactive({
-    temp <- sapply(
-      question_ids,
-      function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
-    )
-    names(temp) <- question_ids
-    temp
-  })
+  config$db_url <- db_url
+  config$skip_if <- skip_if
+  config$skip_if_custom <- skip_if_custom
+  config$show_if <- show_if
+  config$show_if_custom <- show_if_custom
+  config$preview <- preview
+  config$start_page <- start_page
 
-  # Use observe to react whenever 'input_vals' changes
-  # If it changes, update the DB
-  observe({
-
-    # Capture the current state of inputs
-    vals <- input_vals()
-
-    # Transform to data frame, handling uninitialized inputs appropriately
-    data <- transform_data(vals, question_ids, session)
-
-    # Save data
-    readr::write_csv(data, 'data.csv')
-
-  })
-
+  return(config)
 }
 
-# Page metadata ----
+## Page structure ----
 
-get_page_metadata <- function() {
+get_page_structure <- function() {
 
-  pages <- get_page_nodes()
-  page_names <- unlist(lapply(pages, function(x) rvest::html_attr(x, "id")))
+  # Get all page nodes
+  page_nodes <- get_page_nodes()
+  page_ids <- page_nodes |> rvest::html_attr("id")
 
   # Initialize a list to hold the results
-  page_metadata <- list()
+  page_structure <- list()
 
-  # Iterate over each page and extract the Shiny widget IDs
-  for (i in seq_len(length(page_names))) {
+  # Iterate over each page node to get the question_ids
+  for (i in seq_along(page_nodes)) {
+    page_id <- page_ids[i]
+    page_node <- page_nodes[i]
 
-    # Extract the page ID
-    page_id <- page_names[i]
+    # Extract all question IDs within this page
+    question_ids <- page_node |>
+      rvest::html_nodes("[data-question-id]") |>
+      rvest::html_attr("data-question-id")
 
-    # Find all containers that might have an ID
-    containers <- pages[i] |> rvest::html_nodes(".shiny-input-container")
-
-    # Initialize a vector to store widget IDs for this page
-    widget_ids <- character()
-
-    # Iterate over containers to extract IDs
-    for (container in containers) {
-      # Direct ID from the container
-      container_id <- rvest::html_attr(container, "id")
-      if (!is.na(container_id)) {
-        widget_ids <- c(widget_ids, container_id)
-      }
-
-      # IDs from input/select/textarea elements within the container
-      input_ids <- container |>
-        rvest::html_nodes("input, select, textarea") |>
-        rvest::html_attr("id")
-      widget_ids <- c(widget_ids, input_ids[!is.na(input_ids)])
-    }
-
-    # Store the results
-    page_metadata[[page_id]] <- unique(widget_ids)
+    # Store the question IDs for this page
+    page_structure[[page_id]] <- question_ids
   }
 
-  return(page_metadata)
+  return(page_structure)
 }
 
 get_page_nodes <- function() {
@@ -292,7 +256,180 @@ get_page_nodes <- function() {
 
 }
 
-# show_if ----
+## Config checks ----
+
+check_skip_show <- function(
+    config, skip_if, skip_if_custom, show_if, show_if_custom
+) {
+  # Placeholder for now - need to check for:
+  # - That the skip_if and show_if arguments are data frames
+  # - If the names of skip_if and show_if are "question_id", "question_value", and "target"
+  # - That the "question_id" values in both show_if and skip_if are in config$question_ids
+  # - That the "target" values in show_if are in config$question_ids
+  # - That the "target" values in skip_if are in config$page_ids
+  return(TRUE)
+}
+
+## Establish database ----
+
+establish_database <- function(config, db_key, db_url = NULL) {
+
+  # Authentication
+
+  if (is.null(db_key)) {
+    stop("You must provide a db_key to authenticate your Google account")
+  }
+
+  # < Code to handle google authentication here >
+
+  # Default behavior is to create a new google sheet if the user does not
+  # provide a db_url
+
+  if (is.null(db_url)) {
+
+    # < Code to create the new google sheet here>
+    # Will need to initialize the sheet with column names for
+    # every question_id in config$question_ids
+
+    # This should end with the url to the new sheet being stored
+
+    db_url <- "url_to_new_sheet" # Replace with url to new sheet
+
+  } else {
+
+    # < Code to run checks that the column names in the provided google sheet
+    # match those in config$question_ids >
+
+    # < Code to update the provided google sheet with any newly added
+    # question_ids if they are missing from the sheet >
+
+  }
+
+  # We return the db_url because if the user didn't provide one,
+  # we need to use the url to the newly created sheet, otherwise
+  # just return the one that the user provided
+
+  return(db_url)
+
+}
+
+# Server ----
+
+sd_server <- function(input, session, config) {
+
+  # Create local objects from config file
+
+  page_structure <- config$page_structure
+  page_ids <- config$page_ids
+  question_ids <- config$question_ids
+  show_if <- config$show_if
+  db_url <- config$db_url
+  skip_if <- config$skip_if
+  skip_if_custom <- config$skip_if_custom
+  show_if <- config$show_if
+  show_if_custom <- config$show_if_custom
+  preview <- config$preview
+  start_page <- config$start_page
+
+  # Create a local session_id variable
+  session_id <- session$token
+
+  # Initialize object for storing timestamps
+
+  timestamps <- reactiveValues(data = initialize_timestamps(page_ids))
+
+  # Conditional display (show_if conditions) ----
+
+  if (!is.null(show_if)) {
+    handle_basic_show_if_logic(input, show_if)
+  }
+
+  if (!is.null(show_if_custom)) {
+    handle_custom_show_if_logic(input, show_if_custom)
+  }
+
+  # Page Navigation ----
+
+  # Start from start_page (if specified)
+
+  if (!is.null(start_page)) {
+    shinyjs::runjs('hideAllPages();')
+    shinyjs::show(start_page)
+  }
+
+  observe({
+    for (i in 2:length(page_structure)) {
+      local({
+
+        # Define current and next page based on iteration
+        next_page <- page_ids[i]
+
+        observeEvent(input[[make_next_button_id(next_page)]], {
+
+          # Update next page with any basic skip logic
+          if (!is.null(skip_if)) {
+            next_page <- handle_basic_skip_logic(input, skip_if, next_page)
+          }
+
+          # Update next page with any custom skip logic
+          if (!is.null(skip_if_custom)) {
+            next_page <- handle_custom_skip_logic(input, skip_if_custom, next_page)
+          }
+
+          # Store the timestamp with the page_id as the key
+          timestamps$data[[make_page_ts_name(next_page)]] <- get_utc_timestamp()
+
+          # Execute page navigation
+          shinyjs::runjs('hideAllPages();') # Hide all pages
+          shinyjs::show(next_page) # Show next page
+        })
+      })
+    }
+  })
+
+  # Database operations ----
+
+  # Update data base if not in preview mode
+
+  if (!preview) {
+
+    # Define a reactive expression for each question_id value
+
+    get_question_vals <- reactive({
+      temp <- sapply(
+        question_ids,
+        function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
+      )
+      names(temp) <- question_ids
+      temp
+    })
+
+    # Define a reactive expression for the timestamp values
+
+    get_time_stamps <- reactive({ timestamps$data })
+
+    # Use observe to react whenever 'input_vals' changes
+    # If it changes, update the database
+
+    observe({
+
+      # Capture the current state of question values and timestamps
+      question_vals <- get_question_vals()
+      timestamp_vals <- get_time_stamps()
+
+      # Transform to data frame, handling uninitialized inputs appropriately
+      data <- transform_data(question_vals, timestamp_vals, session_id)
+
+      # Save data - need to update this with writing to the googlesheet
+      readr::write_csv(data, 'data.csv')
+
+    })
+
+  }
+
+}
+
+## show_if ----
 
 handle_basic_show_if_logic <- function(input, show_if) {
 
@@ -340,7 +477,7 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
   })
 }
 
-# skip_if ----
+## skip_if ----
 
 handle_basic_skip_logic <- function(input, skip_if, next_page) {
 
@@ -380,28 +517,51 @@ handle_custom_skip_logic <- function(input, skip_if_custom, next_page) {
   return(next_page)
 }
 
-# Database ----
+## Database ----
 
-transform_data <- function(vals, question_ids, session) {
+transform_data <- function(question_vals, timestamp_vals, session_id) {
 
-  data <- data.frame(
-    session_id = session$token,
-    timestamp = Sys.time()
-  )
-
-  # Replace any NULL values with ''
-  for (i in 1:length(vals)) {
-    if (is.null(vals[[i]])) {
-      vals[[i]] <- ''
+  # Replace NULLs with empty string, and
+  # convert vectors to comma-separated strings
+  for (i in 1:length(question_vals)) {
+    # Check for NULL and replace with an empty string
+    if (is.null(question_vals[[i]])) {
+      question_vals[[i]] <- ''
+    } else if (is.vector(question_vals[[i]])) {
+      # Convert vectors to comma-separated strings
+      question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
     }
   }
+  responses <- as.data.frame(question_vals)
 
-  # Assuming vals is a list of inputs from input_vals()
-  names(vals) <- question_ids
-  responses <- as.data.frame(vals)
-
-  # Add session_id and timestamp
-  data <- cbind(data, responses)
+  # Add session_id and timestamps
+  data <- cbind(session_id, responses, as.data.frame(timestamp_vals))
 
   return(data)
+}
+
+# Other helpers ----
+
+get_utc_timestamp <- function() {
+  return(format(Sys.time(), tz = "UTC", usetz = TRUE))
+}
+
+initialize_timestamps <- function(page_ids) {
+
+  timestamps <- list()
+
+  # Store the time of the start (first page)
+  timestamps[[make_page_ts_name(page_ids[1])]] <- get_utc_timestamp()
+
+  # Store "" values for all remaining pages
+  for (i in 2:length(page_ids)) {
+    timestamps[[make_page_ts_name(page_ids[i])]] <- ""
+  }
+
+  return(timestamps)
+
+}
+
+make_page_ts_name <- function(page_id) {
+  return(paste0('time_page_', page_id))
 }

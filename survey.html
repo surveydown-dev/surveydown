@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.549">
+<meta name="generator" content="quarto-1.4.550">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -96,6 +96,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <p>It also is an example of the <code>show_if</code> feature (conditional display). If you choose the “Other” option, a second question pops up below asking to specify which other type of penguin is your favorite.</p>
 <div class="cell">
 <div class="cell-output-display">
+<div id="container- penguins" data-question-id="penguins" class="question-container">
 <div id="penguins" style="width:100%;" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="penguins-label">
 <label class="control-label" id="penguins-label" for="penguins"><p><strong>Which is your favorite type of penguin?</strong></p>
 </label>
@@ -127,11 +128,14 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
+</div>
 <div class="cell-output-display">
+<div id="container- penguins_other" data-question-id="penguins_other" class="question-container">
 <div class="form-group shiny-input-container" style="width:100%;">
 <label class="control-label" id="penguins_other-label" for="penguins_other"><p><strong>Please specify the other penguin type:</strong></p>
 </label>
 <input id="penguins_other" type="text" class="shiny-input-text form-control" value="">
+</div>
 </div>
 </div>
 </div>
@@ -147,6 +151,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <p>This page showcases the <code>skip_if</code> feature, which allows you to skip forward in the survey based on different conditions. Depending on your choice, you’ll go to a different page in the survey when you press the “Next” button.</p>
 <div class="cell">
 <div class="cell-output-display">
+<div id="container- skip_to_end" data-question-id="skip_to_end" class="question-container">
 <div id="skip_to_end" style="width:100%;" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="skip_to_end-label">
 <label class="control-label" id="skip_to_end-label" for="skip_to_end"><p><strong>Where do you want to skip to?</strong></p>
 </label>
@@ -167,6 +172,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
+</div>
 <p><br></p>
 <div class="cell">
 <div class="cell-output-display">
@@ -180,6 +186,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <h4 id="use-type-text-to-specify-a-text-input-type-question" class="anchored">Use <code>type = 'text'</code> to specify a text input type question:</h4>
 <div class="cell">
 <div class="cell-output-display">
+<div id="container- silly_word" data-question-id="silly_word" class="question-container">
 <div class="form-group shiny-input-container" style="width:60%;">
 <label class="control-label" id="silly_word-label" for="silly_word"><p><strong>Write a silly word:</strong></p>
 </label>
@@ -187,9 +194,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
+</div>
 <h4 id="use-type-numeric-to-specify-a-numeric-input-type" class="anchored">Use <code>type = 'numeric'</code> to specify a numeric input type:</h4>
 <div class="cell">
 <div class="cell-output-display">
+<div id="container- age" data-question-id="age" class="question-container">
 <div class="form-group shiny-input-container" style="width:60%;">
 <label class="control-label" id="age-label" for="age"><p><strong>What’s your age?</strong></p>
 </label>
@@ -197,9 +206,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
+</div>
 <h4 id="use-type-mc-to-specify-a-multiple-choice-type-question-with-a-single-choice-option" class="anchored">Use <code>type = 'mc'</code> to specify a multiple choice type question with a single choice option:</h4>
 <div class="cell">
 <div class="cell-output-display">
+<div id="container- artist" data-question-id="artist" class="question-container">
 <div id="artist" style="width:100%;" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="artist-label">
 <label class="control-label" id="artist-label" for="artist"><p><strong>Which artist do you prefer most from this list?</strong></p>
 </label>
@@ -250,9 +261,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
+</div>
 <h4 id="use-type-mc_buttons-to-generate-the-button-version-of-mc" class="anchored">Use <code>type = 'mc_buttons'</code> to generate the button version of <code>mc</code>:</h4>
 <div class="cell">
 <div class="cell-output-display">
+<div id="container- fruit" data-question-id="fruit" class="question-container">
 <div class="form-group shiny-input-container shiny-input-radiogroup shiny-input-container-inline" style="width:100%;">
 <label class="control-label" id="fruit-label" for="fruit"><p><strong>Which fruit do you prefer most from this list?</strong></p>
 </label>
@@ -278,9 +291,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
+</div>
 <h4 id="use-type-mc_multiple-to-specify-a-multiple-choice-type-question-with-multiple-selection-enabled" class="anchored">Use <code>type = 'mc_multiple'</code> to specify a multiple choice type question with multiple selection enabled:</h4>
 <div class="cell">
 <div class="cell-output-display">
+<div id="container- swift" data-question-id="swift" class="question-container">
 <div id="swift" style="width:100%;" class="form-group shiny-input-checkboxgroup shiny-input-container" role="group" aria-labelledby="swift-label">
 <label class="control-label" id="swift-label" for="swift"><p><strong>Which are your favorite Taylor Swift albums (select all that apply)?</strong></p>
 </label>
@@ -349,9 +364,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
+</div>
 <h4 id="use-type-mc_multiple_buttons-to-generate-the-button-version-of-mc_multiple" class="anchored">Use <code>type = 'mc_multiple_buttons'</code> to generate the button version of <code>mc_multiple</code>:</h4>
 <div class="cell">
 <div class="cell-output-display">
+<div id="container- michael_jackson" data-question-id="michael_jackson" class="question-container">
 <div class="form-group shiny-input-container shiny-input-checkboxgroup shiny-input-container-inline" style="width:100%;">
 <label class="control-label" id="michael_jackson-label" for="michael_jackson"><p><strong>Which are your favorite Michael Jackson songs (select all that apply)?</strong></p>
 </label>
@@ -379,9 +396,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
+</div>
 <h4 id="use-type-select-to-specify-a-drop-down-select-type-question" class="anchored">Use <code>type = 'select'</code> to specify a drop down select type question:</h4>
 <div class="cell">
 <div class="cell-output-display no-overflow-x">
+<div id="container- education" data-question-id="education" class="question-container">
 <div class="form-group shiny-input-container" style="width:60%;">
 <label class="control-label" id="education-label" for="education"><p><strong>What is the highest level of education you have attained?</strong></p>
 </label>
@@ -395,6 +414,7 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <option value="grad">Graduate Work</option>
 <option value="no_response">Prefer not to say</option></select>
 <script type="application/json" data-for="education">{"plugins":["selectize-plugin-a11y"]}</script>
+</div>
 </div>
 </div>
 </div>
@@ -416,9 +436,9 @@ useShinyjs(rmd = TRUE)
 </script>
  
 <script type="application/shiny-prerendered" data-context="server">
-sd_server(
-  input = input,
-  session = session,
+config <- sd_config(
+  db_key = "", 
+  db_url = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_end", "end",           "end"
@@ -427,6 +447,12 @@ sd_server(
     ~question_id,  ~question_value, ~target,
     "penguins",    "other",         "penguins_other",
   )
+)
+
+sd_server(
+  input = input,
+  session = session,
+  config = config
 )
 </script>
  
@@ -459,12 +485,12 @@ ojs_define <- function(..., .session = shiny::getDefaultReactiveDomain()) {
 </p>
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="dependencies">
-{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["sw-buttons-group"]},{"type":"character","attributes":{},"value":["0.8.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["packer"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["buttons-group.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shinyWidgets"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.8.3"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["sw-buttons-group"]},{"type":"character","attributes":{},"value":["0.8.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["packer"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["buttons-group.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shinyWidgets"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.8.3"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["selectize"]},{"type":"character","attributes":{},"value":["0.15.2"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["www/shared/selectize"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/selectize.min.js","accessibility/js/selectize-plugin-a11y.min.js"]},{"type":"character","attributes":{},"value":["css/selectize.bootstrap3.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.8.0"]}]}]}
+{"type":"list","attributes":{},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["sw-buttons-group"]},{"type":"character","attributes":{},"value":["0.8.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["packer"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["buttons-group.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shinyWidgets"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.8.3"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["sw-buttons-group"]},{"type":"character","attributes":{},"value":["0.8.3"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["packer"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["buttons-group.js"]},{"type":"NULL"},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shinyWidgets"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["0.8.3"]}]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["name","version","src","meta","script","stylesheet","head","attachment","package","all_files","pkgVersion"]},"class":{"type":"character","attributes":{},"value":["html_dependency"]}},"value":[{"type":"character","attributes":{},"value":["selectize"]},{"type":"character","attributes":{},"value":["0.12.4"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["file"]}},"value":[{"type":"character","attributes":{},"value":["www/shared/selectize"]}]},{"type":"NULL"},{"type":"character","attributes":{},"value":["js/selectize.min.js","accessibility/js/selectize-plugin-a11y.min.js"]},{"type":"character","attributes":{},"value":["css/selectize.bootstrap3.css"]},{"type":"NULL"},{"type":"NULL"},{"type":"character","attributes":{},"value":["shiny"]},{"type":"logical","attributes":{},"value":[true]},{"type":"character","attributes":{},"value":["1.7.5.1"]}]}]}
 </script>
 <!--/html_preserve-->
 <!--html_preserve-->
 <script type="application/shiny-prerendered" data-context="execution_dependencies">
-{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42]}},"value":[{"type":"character","attributes":{},"value":["base","bslib","cachem","cli","commonmark","compiler","datasets","digest","ellipsis","evaluate","fastmap","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","lifecycle","magrittr","markdown","memoise","methods","mime","promises","R6","Rcpp","rlang","rmarkdown","rstudioapi","sass","shiny","shinyjs","shinyWidgets","stats","tools","utils","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["4.3.0","0.6.1","1.0.8","3.6.2","1.9.1","4.3.0","4.3.0","0.6.34","0.3.2","0.23","1.1.1","4.3.0","4.3.0","0.5.7","1.6.4","1.6.14","0.1.4","1.8.8","1.45","1.3.2","1.0.4","2.0.3","1.12","2.0.1","4.3.0","0.12","1.2.1","2.5.1","1.0.12","1.1.3","2.26","0.15.0","0.4.8.9000","1.8.0","2.1.0","0.8.3","4.3.0","4.3.0","4.3.0","0.42","1.8-4","2.3.8"]}]}]}
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["packages","version"]},"class":{"type":"character","attributes":{},"value":["data.frame"]},"row.names":{"type":"integer","attributes":{},"value":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42]}},"value":[{"type":"character","attributes":{},"value":["base","bslib","cachem","cli","commonmark","compiler","datasets","digest","ellipsis","evaluate","fastmap","graphics","grDevices","htmltools","htmlwidgets","httpuv","jquerylib","jsonlite","knitr","later","lifecycle","magrittr","markdown","memoise","methods","mime","promises","R6","Rcpp","rlang","rmarkdown","rstudioapi","sass","shiny","shinyjs","shinyWidgets","stats","tools","utils","xfun","xtable","yaml"]},{"type":"character","attributes":{},"value":["4.2.3","0.6.1","1.0.8","3.6.2","1.9.0","4.2.3","4.2.3","0.6.33","0.3.2","0.23","1.1.1","4.2.3","4.2.3","0.5.7","1.6.2","1.6.13","0.1.4","1.8.8","1.45","1.3.2","1.0.4","2.0.3","1.5","2.0.1","4.2.3","0.12","1.2.1","2.5.1","1.0.11","1.1.2","2.25","0.14","0.4.8.9000","1.7.5.1","2.1.0","0.8.3","4.2.3","4.2.3","4.2.3","0.41","1.8-4","2.3.8"]}]}]}
 </script>
 <!--/html_preserve-->
 
