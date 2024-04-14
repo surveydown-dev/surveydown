@@ -148,7 +148,6 @@ list_name_md_to_html <- function(list) {
 sd_config <- function(
     db_url = NULL,
     db_key = NULL,
-    db_create = NULL,
     skip_if = NULL,
     skip_if_custom = NULL,
     show_if = NULL,
@@ -267,7 +266,7 @@ check_skip_show <- function(
 
 ## Establish database ----
 
-establish_database <- function(config, db_key, db_url = NULL, db_create = TRUE) {
+establish_database <- function(config, db_key, db_url = NULL) {
 
   # Authentication
 
