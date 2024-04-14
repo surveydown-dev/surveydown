@@ -276,25 +276,26 @@ establish_database <- function(config, db_key, db_url = NULL) {
 
   # < Code to handle google authentication here >
 
-  # Default behavior is to create a new google sheet
-  # If the user provides a url to an existing sheet, then don't create one
+  # Default behavior is to create a new google sheet if the user does not
+  # provide a db_url
 
-  if (!is.null(db_url)) {
-    db_create <- FALSE
-  }
-
-  # Create a new google sheet if db_create is still TRUE
-
-  if (db_create) {
+  if (is.null(db_url)) {
 
     # < Code to create the new google sheet here>
+    # Will need to initialize the sheet with column names for
+    # every question_id in config$question_ids
+
     # This should end with the url to the new sheet being stored
 
     db_url <- "url_to_new_sheet" # Replace with url to new sheet
 
   } else {
 
-    # < Code to run checks that the names of the google sheet match those in config$question_ids >
+    # < Code to run checks that the column names in the provided google sheet
+    # match those in config$question_ids >
+
+    # < Code to update the provided google sheet with any newly added
+    # question_ids if they are missing from the sheet >
 
   }
 
@@ -362,12 +363,39 @@ sd_server <- function(input, session, config) {
     }
   })
 
-  # DB operations ----
+  # Database operations ----
 
   # Update data base if not in preview mode
 
   if (!preview) {
-    update_database(input, question_ids, db_url)
+
+    # Define a reactive expression for each question_id
+
+    input_vals <- reactive({
+      temp <- sapply(
+        question_ids,
+        function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
+      )
+      names(temp) <- question_ids
+      temp
+    })
+
+    # Use observe to react whenever 'input_vals' changes
+    # If it changes, update the database
+
+    observe({
+
+      # Capture the current state of inputs
+      vals <- input_vals()
+
+      # Transform to data frame, handling uninitialized inputs appropriately
+      data <- transform_data(vals, question_ids, session)
+
+      # Save data - need to update this with writing to the googlesheet
+      readr::write_csv(data, 'data.csv')
+
+    })
+
   }
 
 }
@@ -461,36 +489,6 @@ handle_custom_skip_logic <- function(input, skip_if_custom, next_page) {
 }
 
 ## Database ----
-
-update_database <- function(input, question_ids, db_url) {
-
-  # Define a reactive expression for each question_id
-
-  input_vals <- reactive({
-    temp <- sapply(
-      question_ids,
-      function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
-    )
-    names(temp) <- question_ids
-    temp
-  })
-
-  # Use observe to react whenever 'input_vals' changes
-  # If it changes, update the database
-
-  observe({
-
-    # Capture the current state of inputs
-    vals <- input_vals()
-
-    # Transform to data frame, handling uninitialized inputs appropriately
-    data <- transform_data(vals, question_ids, session)
-
-    # Save data
-    readr::write_csv(data, 'data.csv')
-
-  })
-}
 
 transform_data <- function(vals, question_ids, session) {
 
