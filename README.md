@@ -18,6 +18,7 @@ TODO List:
 - [ ] A `show_all = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text).
 - [ ] Set up SCSS to be compatible with Quarto-supported bootstrap themes
 - [ ] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
+- [ ] Add a progress bar option in `sd_config()`, maybe `progress = 'top'` or `progress = 'bottom'` as the argument.
 - [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
 - [ ] Admin page w/password (see https://github.com/daattali/shinyforms)
