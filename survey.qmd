@@ -34,12 +34,12 @@ sd_question(
   name   = 'penguins',
   type   = 'mc',
   label  = "**Which is your favorite type of penguin?**",
-  width = '100%',
+  width  = '100%',
   option = c(
-    'Adélie' = 'adelie',
+    'Adélie'    = 'adelie',
     'Chinstrap' = 'chinstrap',
-    'Gentoo' = 'gentoo',
-    'Other' = 'other'
+    'Gentoo'    = 'gentoo',
+    'Other'     = 'other'
   )
 )
 
@@ -66,12 +66,11 @@ This page showcases the `skip_if` feature, which allows you to skip forward in t
 
 ```{r}
 sd_question(
-  name     = 'skip_to_end',
-  type     = 'mc',
-  required = TRUE,
-  width = '100%',
-  label    = "**Where do you want to skip to?**",
-  option   = c(
+  name   = 'skip_to_end',
+  type   = 'mc',
+  width  = '100%',
+  label  = "**Where do you want to skip to?**",
+  option = c(
     'Take me to the page on Question Types (the next page)' = 'question_types',
     'Skip to the end' = 'end'
   )
@@ -118,12 +117,11 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'age',
-  type     = 'numeric',
-  required = TRUE,
-  label    = "**What's your age?**",
-  option   = NULL,
-  width = '60%'
+  name   = 'age',
+  type   = 'numeric',
+  label  = "**What's your age?**",
+  option = NULL,
+  width  = '60%'
 )
 ```
 
@@ -131,12 +129,11 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'artist',
-  type     = 'mc',
-  required = TRUE,
-  width = '100%',
-  label    = "**Which artist do you prefer most from this list?**",
-  option   = c(
+  name   = 'artist',
+  type   = 'mc',
+  width  = '100%',
+  label  = "**Which artist do you prefer most from this list?**",
+  option = c(
     "Taylor Swift" = "taylor_swift",
     "Beyoncé"      = "beyonce",
     "Adele"        = "adele",
@@ -152,12 +149,11 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'fruit',
-  type     = 'mc_buttons',
-  required = TRUE,
-  label    = "**Which fruit do you prefer most from this list?**",
-  width = '100%',
-  option   = c(
+  name   = 'fruit',
+  type   = 'mc_buttons',
+  label  = "**Which fruit do you prefer most from this list?**",
+  width  = '100%',
+  option = c(
     "**Apple**"      = "apple",
     "Banana"     = "banana",
     "Pear"       = "pear",
@@ -173,12 +169,11 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'swift',
-  type     = 'mc_multiple',
-  required = TRUE,
-  width = '100%',
-  label    = "**Which are your favorite Taylor Swift albums (select all that apply)?**",
-  option   = c(
+  name   = 'swift',
+  type   = 'mc_multiple',
+  width  = '100%',
+  label  = "**Which are your favorite Taylor Swift albums (select all that apply)?**",
+  option = c(
     "Taylor Swift (2006)" = "taylor_swift",
     "Fearless (2008)"     = "fearless",
     "Speak Now (2010)"    = "speak_now",
@@ -197,12 +192,10 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'michael_jackson',
-  type     = 'mc_multiple_buttons',
-  individual = TRUE,
-  required = TRUE,
-  width = '100%',
-  label    = "**Which are your favorite Michael Jackson songs (select all that apply)?**",
+  name       = 'michael_jackson',
+  type       = 'mc_multiple_buttons',
+  width      = '100%',
+  label      = "**Which are your favorite Michael Jackson songs (select all that apply)?**",
   option   = c(
     "Thriller (1982)"          = "thriller",
     "Billie Jean (1982)"       = "billie_jean",
@@ -220,12 +213,11 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'education',
-  type     = 'select',
-  required = TRUE,
-  width    = '60%',
-  label    = "**What is the highest level of education you have attained?**",
-  option   = c(
+  name   = 'education',
+  type   = 'select',
+  width  = '60%',
+  label  = "**What is the highest level of education you have attained?**",
+  option = c(
     "Did not attend high school" = "hs_no",
     "Some high school"           = "hs_some",
     "High school graduate"       = "hs_grad",
@@ -243,16 +235,17 @@ sd_question(
 sd_question(
   name        = 'climate_care',
   type        = 'slider',
-  required    = TRUE,
   label       = "**To what extent do you believe human-caused climate change is real?**",
-  option      = c("Don't Believe"    = "dont_believe",
-                  "Somewhat Believe" = "somewhat",
-                  "Neutral"          = "neutral",
-                  "Believe"          = "believe",
-                  "Strongly Believe" = "strongly_believe"),
   grid        = FALSE,
   force_edges = TRUE,
-  width       = "60%"
+  width       = "60%",
+  option = c(
+    "Don't Believe"    = "dont_believe",
+    "Somewhat Believe" = "somewhat",
+    "Neutral"          = "neutral",
+    "Believe"          = "believe",
+    "Strongly Believe" = "strongly_believe"
+  )
 )
 ```
 
@@ -262,7 +255,6 @@ sd_question(
 sd_question(
   name        = 'coldest_months',
   type        = 'slider',
-  required    = TRUE,
   label       = "**What months do you think are the coldest throughout a year?**",
   option      = month.abb,
   selected    = month.abb[c(4, 8)],
@@ -276,11 +268,10 @@ sd_question(
 
 ```{r}
 sd_question(
-  name        = 'dob',
-  type        = 'date',
-  required    = TRUE,
-  label       = "**What is your date of birth?**",
-  width       = "60%"
+  name  = 'dob',
+  type  = 'date',
+  label = "**What is your date of birth?**",
+  width = "60%"
 )
 ```
 
@@ -288,11 +279,10 @@ sd_question(
 
 ```{r}
 sd_question(
-  name        = 'college_date',
-  type        = 'daterange',
-  required    = TRUE,
-  label       = "**What are the starting and ending dates of your college?**",
-  width       = "60%"
+  name  = 'college_date',
+  type  = 'daterange',
+  label = "**When did you start and finish high school?**",
+  width = "60%"
 )
 ```
 

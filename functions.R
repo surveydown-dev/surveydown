@@ -8,40 +8,39 @@ shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 sd_question <- function(
   name,
   type,
-  class,
-  cols,
-  direction,
-  height,
-  force_edges,
-  grid,
-  individual  = FALSE,
-  justified   = FALSE,
   label,
-  label_null  = NULL,
-  option      = NULL,
-  placeholder = NULL,
-  required    = FALSE,
-  resize      = NULL,
-  selected    = NULL,
-  status      = "default",
-  width       = "100%"
+  cols         = "80",
+  direction    = "horizontal",
+  status       = "default",
+  width        = "100%",
+  height       = "100px",
+  selected     = NULL,
+  label_select = NULL,
+  grid         = FALSE,
+  individual   = TRUE,
+  justified    = FALSE,
+  force_edges  = FALSE,
+  option       = NULL,
+  placeholder  = NULL,
+  required     = FALSE,
+  resize       = NULL
 ) {
 
   output <- NULL
 
-  if (is.null(label_null)) {
-    label_null <- "Choose an option..."
+  if (is.null(label_select)) {
+    label_select <- "Choose an option..."
   }
 
   if (type ==  "select") {
     option <- c("", option)
-    names(option)[1] <- label_null
+    names(option)[1] <- label_select
 
     output <- shiny::selectInput(
-      inputId = name,
-      label = markdown_to_html(label),
-      width = width,
-      choices = option,
+      inputId  = name,
+      label    = markdown_to_html(label),
+      width    = width,
+      choices  = option,
       multiple = FALSE,
       selected = FALSE
     )
@@ -49,99 +48,99 @@ sd_question <- function(
   } else if (type == "mc") {
 
     output <- shiny::radioButtons(
-      inputId = name,
-      label = markdown_to_html(label),
-      width = width,
-      choices = option,
+      inputId  = name,
+      label    = markdown_to_html(label),
+      width    = width,
+      choices  = option,
       selected = FALSE
     )
 
   } else if (type == "mc_multiple") {
 
     output <- shiny::checkboxGroupInput(
-      inputId = name,
-      label = markdown_to_html(label),
-      width = width,
-      choices = option,
+      inputId  = name,
+      label    = markdown_to_html(label),
+      width    = width,
+      choices  = option,
       selected = FALSE
     )
 
   } else if (type == "mc_buttons") {
 
     output <- shinyWidgets::radioGroupButtons(
-      inputId = name,
-      label = markdown_to_html(label),
-      choices = list_name_md_to_html(option),
+      inputId  = name,
+      label    = markdown_to_html(label),
+      choices  = list_name_md_to_html(option),
       selected = character(0),
-      width = width,
-      status = status
+      width    = width,
+      status   = status
     )
 
   } else if (type == "mc_multiple_buttons") {
 
     output <- shinyWidgets::checkboxGroupButtons(
-      inputId = name,
-      label = markdown_to_html(label),
-      choices = list_name_md_to_html(option),
-      direction = "horizontal",
+      inputId    = name,
+      label      = markdown_to_html(label),
+      choices    = list_name_md_to_html(option),
+      direction  = direction,
       individual = individual,
-      justified = justified,
-      width = width
+      justified  = justified,
+      width      = width
     )
 
   } else if (type == "text") {
 
     output <- shiny::textInput(
-      inputId = name,
-      label = markdown_to_html(label),
-      width = width,
+      inputId     = name,
+      label       = markdown_to_html(label),
+      width       = width,
       placeholder = option
     )
 
   } else if (type == "textarea") {
 
     output <- shiny::textAreaInput(
-      inputId = name,
-      label = markdown_to_html(label),
-      width = width,
-      value = NULL,
-      height = "100px",
-      cols = "80",
-      rows = "6",
+      inputId     = name,
+      label       = markdown_to_html(label),
+      width       = width,
+      height      = height,
+      cols        = cols,
+      value       = NULL,
+      rows        = "6",
       placeholder = placeholder,
-      resize = resize
+      resize      = resize
     )
 
   } else if (type == "numeric") {
 
     output <- shiny::numericInput(
       inputId = name,
-      label = markdown_to_html(label),
-      width = width,
-      value = NULL
+      label   = markdown_to_html(label),
+      width   = width,
+      value   = NULL
     )
 
   } else if (type == "slider") {
 
     output <- shinyWidgets::sliderTextInput(
-      inputId  = name,
-      label    = markdown_to_html(label),
-      width    = width,
-      choices  = option,
-      selected = selected,
-      animate = FALSE,
-      grid = FALSE,
+      inputId      = name,
+      label        = markdown_to_html(label),
+      width        = width,
+      choices      = option,
+      selected     = selected,
+      force_edges  = force_edges,
+      grid         = grid,
+      animate      = FALSE,
       hide_min_max = FALSE,
-      from_fixed = FALSE,
-      to_fixed = FALSE,
-      from_min = NULL,
-      from_max = NULL,
-      to_min = NULL,
-      to_max = NULL,
-      force_edges = FALSE,
-      pre = NULL,
-      post = NULL,
-      dragRange = TRUE
+      from_fixed   = FALSE,
+      to_fixed     = FALSE,
+      from_min     = NULL,
+      from_max     = NULL,
+      to_min       = NULL,
+      to_max       = NULL,
+      pre          = NULL,
+      post         = NULL,
+      dragRange    = TRUE
     )
 
   } else if (type == "date") {
@@ -202,8 +201,8 @@ sd_next <- function(next_page = NULL, label = "Next") {
 
   shiny::actionButton(
     inputId = make_next_button_id(next_page),
-    label = label,
-    style = "display: block; margin: auto;",
+    label   = label,
+    style   = "display: block; margin: auto;",
     onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
   )
 }
