@@ -8,34 +8,42 @@ shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 sd_question <- function(
   name,
   type,
-  required   = FALSE,
-  label      = "label",
-  option     = NULL,
-  label_null = NULL,
-  direction  = "horizontal",
-  individual = FALSE,
-  justified  = FALSE,
-  width      = '100%',
-  status     = "default"
+  class,
+  cols,
+  direction,
+  height,
+  force_edges,
+  grid,
+  individual  = FALSE,
+  justified   = FALSE,
+  label,
+  label_null  = NULL,
+  option      = NULL,
+  placeholder = NULL,
+  required    = FALSE,
+  resize      = NULL,
+  selected    = NULL,
+  status      = "default",
+  width       = "100%"
 ) {
 
   output <- NULL
 
   if (is.null(label_null)) {
-    label_null <- 'Choose an option...'
+    label_null <- "Choose an option..."
   }
 
   if (type ==  "select") {
-    option <- c('', option)
+    option <- c("", option)
     names(option)[1] <- label_null
 
     output <- shiny::selectInput(
       inputId = name,
       label = markdown_to_html(label),
+      width = width,
       choices = option,
       multiple = FALSE,
-      selected = FALSE,
-      width = width
+      selected = FALSE
     )
 
   } else if (type == "mc") {
@@ -43,9 +51,9 @@ sd_question <- function(
     output <- shiny::radioButtons(
       inputId = name,
       label = markdown_to_html(label),
+      width = width,
       choices = option,
-      selected = FALSE,
-      width = width
+      selected = FALSE
     )
 
   } else if (type == "mc_multiple") {
@@ -53,9 +61,9 @@ sd_question <- function(
     output <- shiny::checkboxGroupInput(
       inputId = name,
       label = markdown_to_html(label),
+      width = width,
       choices = option,
-      selected = FALSE,
-      width = width
+      selected = FALSE
     )
 
   } else if (type == "mc_buttons") {
@@ -75,7 +83,7 @@ sd_question <- function(
       inputId = name,
       label = markdown_to_html(label),
       choices = list_name_md_to_html(option),
-      direction = direction,
+      direction = "horizontal",
       individual = individual,
       justified = justified,
       width = width
@@ -86,8 +94,22 @@ sd_question <- function(
     output <- shiny::textInput(
       inputId = name,
       label = markdown_to_html(label),
-      placeholder = option,
-      width = width
+      width = width,
+      placeholder = option
+    )
+
+  } else if (type == "textarea") {
+
+    output <- shiny::textAreaInput(
+      inputId = name,
+      label = markdown_to_html(label),
+      width = width,
+      value = NULL,
+      height = "100px",
+      cols = "80",
+      rows = "6",
+      placeholder = placeholder,
+      resize = resize
     )
 
   } else if (type == "numeric") {
@@ -95,8 +117,67 @@ sd_question <- function(
     output <- shiny::numericInput(
       inputId = name,
       label = markdown_to_html(label),
-      value = NULL,
-      width = width
+      width = width,
+      value = NULL
+    )
+
+  } else if (type == "slider") {
+
+    output <- shinyWidgets::sliderTextInput(
+      inputId  = name,
+      label    = markdown_to_html(label),
+      width    = width,
+      choices  = option,
+      selected = selected,
+      animate = FALSE,
+      grid = FALSE,
+      hide_min_max = FALSE,
+      from_fixed = FALSE,
+      to_fixed = FALSE,
+      from_min = NULL,
+      from_max = NULL,
+      to_min = NULL,
+      to_max = NULL,
+      force_edges = FALSE,
+      pre = NULL,
+      post = NULL,
+      dragRange = TRUE
+    )
+
+  } else if (type == "date") {
+
+    output <- shiny::dateInput(
+      inputId            = name,
+      label              = markdown_to_html(label),
+      width              = width,
+      value              = NULL,
+      min                = NULL,
+      max                = NULL,
+      format             = "mm/dd/yyyy",
+      startview          = "month",
+      weekstart          = 0,
+      language           = "en",
+      autoclose          = TRUE,
+      datesdisabled      = NULL,
+      daysofweekdisabled = NULL
+    )
+
+  } else if (type == "daterange") {
+
+    output <- shiny::dateRangeInput(
+      inputId   = name,
+      label     = markdown_to_html(label),
+      width     = width,
+      start     = NULL,
+      end       = NULL,
+      min       = NULL,
+      max       = NULL,
+      format    = "mm/dd/yyyy",
+      startview = "month",
+      weekstart = 0,
+      language  = "en",
+      separator = "-",
+      autoclose = TRUE
     )
 
   }
@@ -189,8 +270,8 @@ sd_config <- function(
   if (!is.null(start_page)) {
     if (! start_page %in% config$page_ids) {
       stop(
-        'The specified start_page does not exist - check that you have ',
-        'not mis-spelled the name'
+        "The specified start_page does not exist - check that you have ",
+        "not mis-spelled the name"
       )
     }
   }
@@ -353,7 +434,7 @@ sd_server <- function(input, session, config) {
   # Start from start_page (if specified)
 
   if (!is.null(start_page)) {
-    shinyjs::runjs('hideAllPages();')
+    shinyjs::runjs("hideAllPages();")
     shinyjs::show(start_page)
   }
 
@@ -380,7 +461,7 @@ sd_server <- function(input, session, config) {
           timestamps$data[[make_page_ts_name(next_page)]] <- get_utc_timestamp()
 
           # Execute page navigation
-          shinyjs::runjs('hideAllPages();') # Hide all pages
+          shinyjs::runjs("hideAllPages();") # Hide all pages
           shinyjs::show(next_page) # Show next page
         })
       })
@@ -408,7 +489,7 @@ sd_server <- function(input, session, config) {
 
     get_time_stamps <- reactive({ timestamps$data })
 
-    # Use observe to react whenever 'input_vals' changes
+    # Use observe to react whenever "input_vals" changes
     # If it changes, update the database
 
     observe({
@@ -421,7 +502,7 @@ sd_server <- function(input, session, config) {
       data <- transform_data(question_vals, timestamp_vals, session_id)
 
       # Save data - need to update this with writing to the googlesheet
-      readr::write_csv(data, 'data.csv')
+      readr::write_csv(data, "data.csv")
 
     })
 
@@ -526,7 +607,7 @@ transform_data <- function(question_vals, timestamp_vals, session_id) {
   for (i in 1:length(question_vals)) {
     # Check for NULL and replace with an empty string
     if (is.null(question_vals[[i]])) {
-      question_vals[[i]] <- ''
+      question_vals[[i]] <- ""
     } else if (is.vector(question_vals[[i]])) {
       # Convert vectors to comma-separated strings
       question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
@@ -563,5 +644,5 @@ initialize_timestamps <- function(page_ids) {
 }
 
 make_page_ts_name <- function(page_id) {
-  return(paste0('time_page_', page_id))
+  return(paste0("time_page_", page_id))
 }

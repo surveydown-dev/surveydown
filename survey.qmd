@@ -103,6 +103,17 @@ sd_question(
 )
 ```
 
+#### Use `type = 'textarea'` to specify a textarea input type question:
+
+```{r}
+sd_question(
+  name  = "silly_paragraph",
+  type  = "textarea",
+  label = "**Write a silly paragraph:**",
+  width = '60%'
+)
+```
+
 #### Use `type = 'numeric'` to specify a numeric input type:
 
 ```{r}
@@ -212,7 +223,7 @@ sd_question(
   name     = 'education',
   type     = 'select',
   required = TRUE,
-  width = '60%',
+  width    = '60%',
   label    = "**What is the highest level of education you have attained?**",
   option   = c(
     "Did not attend high school" = "hs_no",
@@ -223,6 +234,65 @@ sd_question(
     "Graduate Work"              = "grad",
     "Prefer not to say"          = "no_response"
   )
+)
+```
+
+#### Use `type = 'slider'` to specify a slider input type:
+
+```{r}
+sd_question(
+  name        = 'climate_care',
+  type        = 'slider',
+  required    = TRUE,
+  label       = "**To what extent do you believe human-caused climate change is real?**",
+  option      = c("Don't Believe"    = "dont_believe",
+                  "Somewhat Believe" = "somewhat",
+                  "Neutral"          = "neutral",
+                  "Believe"          = "believe",
+                  "Strongly Believe" = "strongly_believe"),
+  grid        = FALSE,
+  force_edges = TRUE,
+  width       = "60%"
+)
+```
+
+#### `type = 'slider'` can also be used to select a range:
+
+```{r}
+sd_question(
+  name        = 'coldest_months',
+  type        = 'slider',
+  required    = TRUE,
+  label       = "**What months do you think are the coldest throughout a year?**",
+  option      = month.abb,
+  selected    = month.abb[c(4, 8)],
+  grid        = FALSE,
+  force_edges = TRUE,
+  width       = "60%"
+)
+```
+
+#### Use `type = 'date'` to specify a date input type:
+
+```{r}
+sd_question(
+  name        = 'dob',
+  type        = 'date',
+  required    = TRUE,
+  label       = "**What is your date of birth?**",
+  width       = "60%"
+)
+```
+
+#### Use `type = 'daterange'` to specify a daterange input type:
+
+```{r}
+sd_question(
+  name        = 'college_date',
+  type        = 'daterange',
+  required    = TRUE,
+  label       = "**What are the starting and ending dates of your college?**",
+  width       = "60%"
 )
 ```
 
