@@ -1,10 +1,12 @@
 This is a prototype of a way to create surveys using [Quarto shiny documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
 
-Note that it is very much not production ready - it doesn't even save the survey data anywhere yet. For now it just writes to a local csv for purposes of testing and development.
+Note that it is very much not production ready. It doesn't even save the survey data to a database - for now it just writes to a local csv for purposes of testing and development. We are working on setting it up to save the data to a Google sheet, similar to how Google forms works.
 
-If you want to try running the demo, download / clone / fork the main branch, open the surveydown.Rproj file to open RStudio, then open the survey.qmd file. You should just be able to click the "Run Document" button at the top. You need to have the {shiny} and {shinyjs} packages installed. If you want to run it using just the command line, clone the fences branch then follow instructions [here](https://quarto.org/docs/interactive/shiny/running.html).
+Eventually, this will be compiled into a proper R package that will work in tandem with a Quarto extension. Keep an eye on the project as we hope to get to that stage sometime summer of 2024!
 
-It may also be worth reading my [blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/) on this idea from a while ago. The post is now outdated in terms of the UI I had in mind back then, but the motivation for developing something like this remains.
+If you want to try running the demo, download / clone / fork the main branch, open the surveydown.Rproj file to open RStudio, then open the survey.qmd file. You should just be able to click the "Run Document" button at the top. You need to have the {shiny} and {shinyjs} packages installed. If you want to run it using just the command line, follow the Quarto instructions [here](https://quarto.org/docs/interactive/shiny/running.html).
+
+It may also be worth reading my [blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/) on this idea to get a sense for what we're trying to accomplish. The post is now outdated in terms of the UI I had in mind back then, but the motivation for developing something like this remains.
 
 TODO List:
 
@@ -12,14 +14,15 @@ TODO List:
 - [x] skip_if (conditionally skip to page)
 - [x] Set defaults for questions to not have any choices selected on launch.
 - [x] Ability to embed markdown inside choice options (like mc buttons in formr)
-- [x] Option for `preview = TRUE` (database is ignored).
+- [x] Option for `preview = TRUE` (database is ignored)
 - [x] Export timestamps on each page in the data
+- [ ] Export timestamps on each question interaction (since this will increase the data size considerably, maybe add this as `question_times = FALSE` argument)
 - [x] Option to start at a designated page, e.g. `start_page = 'skipif'`
-- [ ] A `show_all = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text).
+- [ ] A `show_all = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be called `print_mode = TRUE`.
 - [ ] Set up SCSS to be compatible with Quarto-supported bootstrap themes
 - [ ] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
-- [ ] Add a progress bar option in `sd_config()`, maybe `progress = 'top'` or `progress = 'bottom'` as the argument.
-- [ ] Required questions (require = TRUE): check that a response is present for any required questions before allowing next button.
+- [ ] Add a progress bar option in `sd_config()`, maybe `progress_bar = 'top'` or `progress_bar = 'bottom'` as a default, and `progress_bar = 'none'` to turn it off.
+- [ ] Required questions (`required = TRUE`): post a popup if a question is required before allowing next button. Default should be `required = FALSE`.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
 - [ ] Admin page w/password (see https://github.com/daattali/shinyforms)
 - [ ] Basic version working with a googlesheets database
@@ -33,9 +36,9 @@ TODO List:
   - [x] Numeric
   - [x] Multiple choice (button...like formr mc_button)
   - [x] Text area
-  - [?] Matrix
-  - [?] Slider
   - [x] Date
+  - [ ] Matrix
+  - [ ] Slider
 
 Resources / examples:
 
