@@ -32,10 +32,10 @@ TODO List:
   - [x] Text
   - [x] Numeric
   - [x] Multiple choice (button...like formr mc_button)
-  - [ ] Text area
-  - [ ] Matrix
-  - [ ] Slider
-  - [ ] Date
+  - [x] Text area
+  - [?] Matrix
+  - [?] Slider
+  - [x] Date
 
 Resources / examples:
 
