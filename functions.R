@@ -15,11 +15,11 @@ sd_question <- function(
   width        = "100%",
   height       = "100px",
   selected     = NULL,
-  label_select = NULL,
-  grid         = FALSE,
+  label_select = "Choose an option...",
+  grid         = TRUE,
   individual   = TRUE,
   justified    = FALSE,
-  force_edges  = FALSE,
+  force_edges  = TRUE,
   option       = NULL,
   placeholder  = NULL,
   required     = FALSE,
@@ -27,10 +27,6 @@ sd_question <- function(
 ) {
 
   output <- NULL
-
-  if (is.null(label_select)) {
-    label_select <- "Choose an option..."
-  }
 
   if (type ==  "select") {
     option <- c("", option)

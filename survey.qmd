@@ -31,10 +31,10 @@ It also is an example of the `show_if` feature (conditional display). If you cho
 
 ```{r}
 sd_question(
-  name   = 'penguins',
-  type   = 'mc',
-  label  = "**Which is your favorite type of penguin?**",
-  width  = '100%',
+  name  = 'penguins',
+  type  = 'mc',
+  label = "Which is your favorite type of penguin?",
+  width = '100%',
   option = c(
     'Adélie'    = 'adelie',
     'Chinstrap' = 'chinstrap',
@@ -46,7 +46,7 @@ sd_question(
 sd_question(
   name  = "penguins_other",
   type  = "text",
-  label = "**Please specify the other penguin type:**"
+  label = "Please specify the other penguin type:"
 )
 ```
 
@@ -66,12 +66,13 @@ This page showcases the `skip_if` feature, which allows you to skip forward in t
 
 ```{r}
 sd_question(
-  name   = 'skip_to_end',
+  name   = 'skip_to_page',
   type   = 'mc',
   width  = '100%',
-  label  = "**Where do you want to skip to?**",
+  label  = "Where do you want to skip to?",
   option = c(
     'Take me to the page on Question Types (the next page)' = 'question_types',
+    'Take me to the page on Question Formatting' = 'question_formatting',
     'Skip to the end' = 'end'
   )
 )
@@ -97,8 +98,7 @@ This page showcases some other question types.
 sd_question(
   name  = "silly_word",
   type  = "text",
-  label = "**Write a silly word:**",
-  width = '60%'
+  label = "Write a silly word:"
 )
 ```
 
@@ -108,8 +108,7 @@ sd_question(
 sd_question(
   name  = "silly_paragraph",
   type  = "textarea",
-  label = "**Write a silly paragraph:**",
-  width = '60%'
+  label = "Write a silly paragraph:"
 )
 ```
 
@@ -117,11 +116,9 @@ sd_question(
 
 ```{r}
 sd_question(
-  name   = 'age',
-  type   = 'numeric',
-  label  = "**What's your age?**",
-  option = NULL,
-  width  = '60%'
+  name  = 'age',
+  type  = 'numeric',
+  label = "What's your age?"
 )
 ```
 
@@ -131,8 +128,7 @@ sd_question(
 sd_question(
   name   = 'artist',
   type   = 'mc',
-  width  = '100%',
-  label  = "**Which artist do you prefer most from this list?**",
+  label  = "Which artist do you prefer most from this list?",
   option = c(
     "Taylor Swift" = "taylor_swift",
     "Beyoncé"      = "beyonce",
@@ -151,10 +147,9 @@ sd_question(
 sd_question(
   name   = 'fruit',
   type   = 'mc_buttons',
-  label  = "**Which fruit do you prefer most from this list?**",
-  width  = '100%',
+  label  = "Which fruit do you prefer most from this list?",
   option = c(
-    "**Apple**"      = "apple",
+    "Apple"      = "apple",
     "Banana"     = "banana",
     "Pear"       = "pear",
     "Strawberry" = "strawberry",
@@ -171,8 +166,7 @@ sd_question(
 sd_question(
   name   = 'swift',
   type   = 'mc_multiple',
-  width  = '100%',
-  label  = "**Which are your favorite Taylor Swift albums (select all that apply)?**",
+  label  = "Which are your favorite Taylor Swift albums (select all that apply)?",
   option = c(
     "Taylor Swift (2006)" = "taylor_swift",
     "Fearless (2008)"     = "fearless",
@@ -192,11 +186,10 @@ sd_question(
 
 ```{r}
 sd_question(
-  name       = 'michael_jackson',
-  type       = 'mc_multiple_buttons',
-  width      = '100%',
-  label      = "**Which are your favorite Michael Jackson songs (select all that apply)?**",
-  option   = c(
+  name  = 'michael_jackson',
+  type  = 'mc_multiple_buttons',
+  label = "Which are your favorite Michael Jackson songs (select all that apply)?",
+  option = c(
     "Thriller (1982)"          = "thriller",
     "Billie Jean (1982)"       = "billie_jean",
     "Beat It (1982)"           = "beat_it",
@@ -215,8 +208,7 @@ sd_question(
 sd_question(
   name   = 'education',
   type   = 'select',
-  width  = '60%',
-  label  = "**What is the highest level of education you have attained?**",
+  label  = "What is the highest level of education you have attained?",
   option = c(
     "Did not attend high school" = "hs_no",
     "Some high school"           = "hs_some",
@@ -233,12 +225,9 @@ sd_question(
 
 ```{r}
 sd_question(
-  name        = 'climate_care',
-  type        = 'slider',
-  label       = "**To what extent do you believe human-caused climate change is real?**",
-  grid        = FALSE,
-  force_edges = TRUE,
-  width       = "60%",
+  name  = 'climate_care',
+  type  = 'slider',
+  label = "To what extent do you believe human-caused climate change is real?",
   option = c(
     "Don't Believe"    = "dont_believe",
     "Somewhat Believe" = "somewhat",
@@ -253,14 +242,11 @@ sd_question(
 
 ```{r}
 sd_question(
-  name        = 'coldest_months',
-  type        = 'slider',
-  label       = "**What months do you think are the coldest throughout a year?**",
-  option      = month.abb,
-  selected    = month.abb[c(4, 8)],
-  grid        = FALSE,
-  force_edges = TRUE,
-  width       = "60%"
+  name     = 'coldest_months',
+  type     = 'slider',
+  label    = "What months do you think are the coldest throughout a year?",
+  option   = month.abb,
+  selected = month.abb[c(4, 8)]
 )
 ```
 
@@ -270,8 +256,7 @@ sd_question(
 sd_question(
   name  = 'dob',
   type  = 'date',
-  label = "**What is your date of birth?**",
-  width = "60%"
+  label = "What is your date of birth?"
 )
 ```
 
@@ -279,12 +264,25 @@ sd_question(
 
 ```{r}
 sd_question(
-  name  = 'college_date',
+  name  = 'hs_date',
   type  = 'daterange',
-  label = "**When did you start and finish high school?**",
-  width = "60%"
+  label = "When did you start and finish high school?"
 )
 ```
+
+<br>
+
+```{r}
+sd_next(next_page = 'questionFormatting')
+```
+
+:::
+
+::: {#questionFormatting .sd-page}
+
+# Question formatting
+
+On this page, we'll demonstrate some of the formatting options for displaying questions.
 
 <br>
 
@@ -308,7 +306,8 @@ config <- sd_config(
   db_url = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
-    "skip_to_end", "end",           "end"
+    "skip_to_page", "end",           "end", 
+    "skip_to_page", "question_formatting",  "questionFormatting"
   ),
   show_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
@@ -317,8 +316,8 @@ config <- sd_config(
 )
 
 sd_server(
-  input = input,
+  input   = input,
   session = session,
-  config = config
+  config  = config
 )
 ```
