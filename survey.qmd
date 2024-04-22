@@ -336,27 +336,32 @@ sd_question(
 #### HTML is also supported for options of `mc_buttons` and `mc_multiple_buttons`, so that you can insert mixed content including plain text, markdown, and HTML images. For example, here is a question with some complex labels for a choice question:
 
 ```{r}
+# Define the option vector
+option <- c("option_1", "option_2", "option_3")
+
+# Change the names of each element to display markdown-formatted text 
+# and an embedded image using html
+names(option)[1] <- "**Option 1**<br>
+    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/fuji.jpg' width=100><br>
+    **Type**: Fuji<br>
+    **Price**: $ 2 / lb<br>
+    **Freshness**: Average"
+names(option)[2] <- "**Option 2**<br>
+    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/pinkLady.jpg' width=100><br>
+    **Type**: Pink Lady<br>
+    **Price**: $ 1.5 / lb<br>
+    **Freshness**: Excellent"
+names(option)[3] <- "**Option 3**<br>
+    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/honeycrisp.jpg' width=100><br>
+    **Type**: Honeycrisp<br>
+    **Price**: $ 2 / lb<br>
+    **Freshness**: Poor"
+
 sd_question(
   name   = 'html_buttons',
   type   = 'mc_buttons',
   label  = "A sample survey question using `mc_buttons`",
-  option = c(
-    "**Option 1**<br>
-    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/fuji.jpg' width=100><br>
-    **Type**: Fuji<br>
-    **Price**: $ 2 / lb<br>
-    **Freshness**: Average" = "option_1",
-    "**Option 2**<br>
-    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/pinkLady.jpg' width=100><br>
-    **Type**: Pink Lady<br>
-    **Price**: $ 1.5 / lb<br>
-    **Freshness**: Excellent" = "option_2",
-    "**Option 3**<br>
-    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/honeycrisp.jpg' width=100><br>
-    **Type**: Honeycrisp<br>
-    **Price**: $ 2 / lb<br>
-    **Freshness**: Poor" = "option_3"
-  )
+  option = option
 )
 ```
 
