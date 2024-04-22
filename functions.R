@@ -337,12 +337,25 @@ get_page_nodes <- function() {
 check_skip_show <- function(
     config, skip_if, skip_if_custom, show_if, show_if_custom
 ) {
+
   # Placeholder for now - need to check for:
-  # - That the skip_if and show_if arguments are data frames
   # - If the names of skip_if and show_if are "question_id", "question_value", and "target"
   # - That the "question_id" values in both show_if and skip_if are in config$question_ids
   # - That the "target" values in show_if are in config$question_ids
   # - That the "target" values in skip_if are in config$page_ids
+
+  # Ensure skip_if and show_if are each a tibble or data frame
+  if (!is.null(skip_if)) {
+    if (!is.data.frame(skip_if)) {
+      stop("skip_if must be a data frame or tibble.")
+    }
+  }
+  if (!is.null(show_if)) {
+    if (!is.data.frame(show_if)) {
+      stop("show_if must be a data frame or tibble.")
+    }
+  }
+
   return(TRUE)
 }
 
@@ -438,18 +451,19 @@ sd_server <- function(input, session, config) {
       local({
 
         # Define current and next page based on iteration
+        current_page <- page_ids[i-1]
         next_page <- page_ids[i]
 
         observeEvent(input[[make_next_button_id(next_page)]], {
 
           # Update next page with any basic skip logic
           if (!is.null(skip_if)) {
-            next_page <- handle_basic_skip_logic(input, skip_if, next_page)
+            next_page <- handle_basic_skip_logic(input, skip_if, current_page, next_page)
           }
 
           # Update next page with any custom skip logic
           if (!is.null(skip_if_custom)) {
-            next_page <- handle_custom_skip_logic(input, skip_if_custom, next_page)
+            next_page <- handle_custom_skip_logic(input, skip_if_custom, current_page, next_page)
           }
 
           # Store the timestamp with the page_id as the key
@@ -555,18 +569,15 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
 
 ## skip_if ----
 
-handle_basic_skip_logic <- function(input, skip_if, next_page) {
-
-  # Ensure skip_if is a tibble or data frame
-  if (!is.data.frame(skip_if)) {
-    stop("skip_if must be a data frame or tibble.")
-  }
+handle_basic_skip_logic <- function(
+  input, skip_if, current_page, next_page
+) {
 
   for (i in 1:nrow(skip_if)) {
     rule <- skip_if[i,]
     val <- input[[rule$question_id]]
     if (!is.null(val)) {
-      if (val == rule$question_value) {
+      if ((val == rule$question_value) & (current_page != rule$target)) {
         return(rule$target)
       }
     }
@@ -575,7 +586,9 @@ handle_basic_skip_logic <- function(input, skip_if, next_page) {
   return(next_page)
 }
 
-handle_custom_skip_logic <- function(input, skip_if_custom, next_page) {
+handle_custom_skip_logic <- function(
+  input, skip_if_custom, current_page, next_page
+) {
 
   # Loop through each skip logic condition
   for (j in 1:length(skip_if_custom)) {
@@ -585,7 +598,11 @@ handle_custom_skip_logic <- function(input, skip_if_custom, next_page) {
     condition_result <- rule$condition(input)
 
     # Check if the condition is met (and not logical(0))
-    if (length(condition_result) > 0 && condition_result) {
+    if (
+      (length(condition_result) > 0) &
+      (current_page != rule$target) &
+      condition_result
+    ) {
       return(rule$target)
     }
   }
