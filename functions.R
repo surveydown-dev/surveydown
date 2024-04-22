@@ -616,15 +616,17 @@ transform_data <- function(question_vals, timestamp_vals, session_id) {
 
   # Replace NULLs with empty string, and
   # convert vectors to comma-separated strings
-  for (i in 1:length(question_vals)) {
+  for (i in seq_len(length(question_vals))) {
     # Check for NULL and replace with an empty string
-    if (is.null(question_vals[[i]])) {
+    val <- question_vals[[i]]
+    if (is.null(val)) {
       question_vals[[i]] <- ""
-    } else if (is.vector(question_vals[[i]])) {
+    } else if (length(val) > 1) {
       # Convert vectors to comma-separated strings
       question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
     }
   }
+
   responses <- as.data.frame(question_vals)
 
   # Add session_id and timestamps
