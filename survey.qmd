@@ -282,7 +282,90 @@ sd_next(next_page = 'questionFormatting')
 
 # Question formatting
 
-On this page, we'll demonstrate some of the formatting options for displaying questions.
+> On this page, we'll demonstrate some of the formatting options for displaying questions.
+
+#### Markdown is supported for the question label:
+
+```{r}
+sd_question(
+  name   = 'markdown_label',
+  type   = 'mc',
+  label  = "**This** is a question *label* supporting ***markdown***:",
+  option = c(
+    "Option A" = "option_a",
+    "Option B" = "option_b",
+    "Option C" = "option_c"
+  )
+)
+```
+
+#### Markdown is supported for options of `mc_buttons`:
+
+```{r}
+sd_question(
+  name   = 'markdown_buttons',
+  type   = 'mc_buttons',
+  label  = "The 3 options below support markdown:",
+  option = c(
+    "*Option A*"     = "option_a",
+    "**Option B**"   = "option_b",
+    "***Option C***" = "option_c"
+  )
+)
+```
+
+#### Markdown is supported for options of `mc_multiple_buttons`:
+
+```{r}
+sd_question(
+  name   = 'markdown_multiple_buttons',
+  type   = 'mc_multiple_buttons',
+  label  = "The 3 options below support markdown:",
+  option = c(
+    "*Option A*"     = "option_a",
+    "**Option B**"   = "option_b",
+    "***Option C***" = "option_c"
+  )
+)
+```
+
+#### HTML is also supported for options of `mc_buttons` and `mc_multiple_buttons`, so that you can insert mixed content including plain texts, markdown, HTML images, etc.:
+
+```{r}
+sd_question(
+  name   = 'html_buttons',
+  type   = 'mc_buttons',
+  label  = "A sample survey question using `mc_buttons`",
+  option = c(
+    "**Option 1**<br>
+    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/fuji.jpg' width=100><br>
+    **Type**: Fuji<br>
+    **Price**: $ 2 / lb<br>
+    **Freshness**: Average"     = "option_1",
+    "**Option 2**<br>
+    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/pinkLady.jpg' width=100><br>
+    **Type**: Pink Lady<br>
+    **Price**: $ 1.5 / lb<br>
+    **Freshness**: Excellent"     = "option_2",
+    "**Option 3**<br>
+    <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/honeycrisp.jpg' width=100><br>
+    **Type**: Honeycrisp<br>
+    **Price**: $ 2 / lb<br>
+    **Freshness**: Poor"     = "option_3"
+  )
+)
+```
+
+#### Use the `width` argument to change the width for the question:
+
+```{r}
+sd_question(
+  name  = "change_width",
+  type  = "textarea",
+  label = "This text area has width set as 40%:",
+  width = "40%"
+)
+```
 
 <br>
 
