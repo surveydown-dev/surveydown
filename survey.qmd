@@ -284,7 +284,9 @@ sd_next(next_page = 'questionFormatting')
 
 > On this page, we'll demonstrate some of the formatting options for displaying questions.
 
-#### Markdown is supported for the question label:
+#### Markdown is supported for the question label
+
+The `label` argument for any question type can accept markdown formatting. For example, the question below uses the `**` symbols to make some works bold:
 
 ```{r}
 sd_question(
@@ -299,7 +301,9 @@ sd_question(
 )
 ```
 
-#### Markdown is supported for options of `mc_buttons`:
+#### Markdown is supported for options in `mc_buttons` questions
+
+For `mc_button` type questions, you can also use markdown to format the `option` labels:
 
 ```{r}
 sd_question(
@@ -314,7 +318,7 @@ sd_question(
 )
 ```
 
-#### Markdown is supported for options of `mc_multiple_buttons`:
+The same is true for `mc_multiple_buttons`:
 
 ```{r}
 sd_question(
@@ -329,7 +333,7 @@ sd_question(
 )
 ```
 
-#### HTML is also supported for options of `mc_buttons` and `mc_multiple_buttons`, so that you can insert mixed content including plain texts, markdown, HTML images, etc.:
+#### HTML is also supported for options of `mc_buttons` and `mc_multiple_buttons`, so that you can insert mixed content including plain text, markdown, and HTML images. For example, here is a question with some complex labels for a choice question:
 
 ```{r}
 sd_question(
@@ -341,17 +345,17 @@ sd_question(
     <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/fuji.jpg' width=100><br>
     **Type**: Fuji<br>
     **Price**: $ 2 / lb<br>
-    **Freshness**: Average"     = "option_1",
+    **Freshness**: Average" = "option_1",
     "**Option 2**<br>
     <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/pinkLady.jpg' width=100><br>
     **Type**: Pink Lady<br>
     **Price**: $ 1.5 / lb<br>
-    **Freshness**: Excellent"     = "option_2",
+    **Freshness**: Excellent" = "option_2",
     "**Option 3**<br>
     <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/honeycrisp.jpg' width=100><br>
     **Type**: Honeycrisp<br>
     **Price**: $ 2 / lb<br>
-    **Freshness**: Poor"     = "option_3"
+    **Freshness**: Poor" = "option_3"
   )
 )
 ```
@@ -389,12 +393,12 @@ config <- sd_config(
   db_url = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
-    "skip_to_page", "end",           "end", 
+    "skip_to_page", "end",           "end",
     "skip_to_page", "question_formatting",  "questionFormatting"
   ),
   show_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
-    "penguins",    "other",         "penguins_other",
+    "penguins",    "other",         "penguins_other"
   )
 )
 
