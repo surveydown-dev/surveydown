@@ -27,14 +27,13 @@ Here is a question to get started.
 
 This question showcases what a "multiple choice" question looks like, which is created using `type = 'mc'` inside the `sd_question()` function.
 
-It also is an example of the `show_if` feature (conditional display). If you choose the "Other" option, a second question pops up below asking to specify which other type of penguin is your favorite.
+It also is an example of the `show_if` feature (conditional display). If you choose the "Other" option, a second question pops up below asking to specify which other type of penguin is your favorite. This is controlled with the `show_if` argument to the `sd_config()` function defined in the server section at the bottom of the .qmd file.
 
 ```{r}
 sd_question(
   type  = 'mc',
-  id  = 'penguins',
+  id    = 'penguins',
   label = "Which is your favorite type of penguin?",
-  width = '100%',
   option = c(
     'Adélie'    = 'adelie',
     'Chinstrap' = 'chinstrap',
@@ -45,7 +44,7 @@ sd_question(
 
 sd_question(
   type  = "text",
-  id  = "penguins_other",
+  id    = "penguins_other",
   label = "Please specify the other penguin type:"
 )
 ```
@@ -62,14 +61,13 @@ sd_next(next_page = 'skipif')
 
 # skip_if
 
-This page showcases the `skip_if` feature, which allows you to skip forward in the survey based on different conditions. Depending on your choice, you'll go to a different page in the survey when you press the "Next" button.
+This page showcases the `skip_if` feature, which allows you to skip forward in the survey based on different conditions. Depending on your choice, you'll go to a different page in the survey when you press the "Next" button. This is controlled with the `skip_if` argument to the `sd_config()` function defined in the server section at the bottom of the .qmd file.
 
 ```{r}
 sd_question(
-  type   = 'mc',
-  id   = 'skip_to_page',
-  width  = '100%',
-  label  = "Where do you want to skip to?",
+  type  = 'mc',
+  id    = 'skip_to_page',
+  label = "Where do you want to skip to?",
   option = c(
     'Take me to the page on Question Types (the next page)' = 'question_types',
     'Take me to the page on Question Formatting' = 'question_formatting',
@@ -90,14 +88,30 @@ sd_next(next_page = 'questionTypes')
 
 # Question types
 
-This page showcases some other question types.
+This page showcases the different types of question supported by `{surveydown}`. Each question requires the user to define the following arguments to the `sd_question()` function:
+
+
+- `id`: A unique identifier for the question, which will be used as the variable name in the resulting survey data.
+- `label`: The label that will be displayed on the question in the survey.
+- `type`: The type of question, options include:
+    - `text`: Single line open text input.
+    - `textarea`: Multiple line open text input.
+    - `numeric`: Single line numeric text input.
+    - `mc`: Multiple choice with a single select option (radio buttons).
+    - `mc_buttons`: Same as `mc` but as a "button" style instead of radio buttons.
+    - `mc_multiple`: Multiple choice with mutliple select options (check boxes).
+    - `mc_multiple_buttons`: Same as `mc_multiple` but as a "button" style instead of check boxes.
+    - `select`: Select a choice from a dropdown menu.
+    - `slider`: Slider to select discrete categories or continuous numbers.
+    - `date`: Select a date from a calendar widget.
+    - `daterange`: Select two dates from calendar widgets (e.g. begin and end dates).
 
 #### Use `type = 'text'` to specify a text input type question:
 
 ```{r}
 sd_question(
   type  = "text",
-  id  = "silly_word",
+  id    = "silly_word",
   label = "Write a silly word:"
 )
 ```
@@ -107,7 +121,7 @@ sd_question(
 ```{r}
 sd_question(
   type  = "textarea",
-  id  = "silly_paragraph",
+  id    = "silly_paragraph",
   label = "Write a silly paragraph:"
 )
 ```
@@ -117,7 +131,7 @@ sd_question(
 ```{r}
 sd_question(
   type  = 'numeric',
-  id  = 'age',
+  id    = 'age',
   label = "What's your age?"
 )
 ```
@@ -127,7 +141,7 @@ sd_question(
 ```{r}
 sd_question(
   type   = 'mc',
-  id   = 'artist',
+  id     = 'artist',
   label  = "Which artist do you prefer most from this list?",
   option = c(
     "Taylor Swift" = "taylor_swift",
@@ -146,7 +160,7 @@ sd_question(
 ```{r}
 sd_question(
   type   = 'mc_buttons',
-  id   = 'fruit',
+  id     = 'fruit',
   label  = "Which fruit do you prefer most from this list?",
   option = c(
     "Apple"      = "apple",
@@ -164,9 +178,9 @@ sd_question(
 
 ```{r}
 sd_question(
-  type   = 'mc_multiple',
-  id   = 'swift',
-  label  = "Which are your favorite Taylor Swift albums (select all that apply)?",
+  type  = 'mc_multiple',
+  id    = 'swift',
+  label = "What are your favorite Taylor Swift albums (select all that apply)?",
   option = c(
     "Taylor Swift (2006)" = "taylor_swift",
     "Fearless (2008)"     = "fearless",
@@ -187,7 +201,7 @@ sd_question(
 ```{r}
 sd_question(
   type  = 'mc_multiple_buttons',
-  id  = 'michael_jackson',
+  id    = 'michael_jackson',
   label = "Which are your favorite Michael Jackson songs (select all that apply)?",
   option = c(
     "Thriller (1982)"          = "thriller",
@@ -206,9 +220,9 @@ sd_question(
 
 ```{r}
 sd_question(
-  type   = 'select',
-  id   = 'education',
-  label  = "What is the highest level of education you have attained?",
+  type  = 'select',
+  id    = 'education',
+  label = "What is the highest level of education you have attained?",
   option = c(
     "Did not attend high school" = "hs_no",
     "Some high school"           = "hs_some",
@@ -226,7 +240,7 @@ sd_question(
 ```{r}
 sd_question(
   type  = 'slider',
-  id  = 'climate_care',
+  id    = 'climate_care',
   label = "To what extent do you believe human-caused climate change is real?",
   option = c(
     "Don't Believe"    = "dont_believe",
@@ -243,7 +257,7 @@ sd_question(
 ```{r}
 sd_question(
   type     = 'slider',
-  id     = 'coldest_months',
+  id       = 'coldest_months',
   label    = "What months do you think are the coldest throughout a year?",
   option   = month.abb,
   selected = month.abb[c(4, 8)]
@@ -255,7 +269,7 @@ sd_question(
 ```{r}
 sd_question(
   type  = 'date',
-  id  = 'dob',
+  id    = 'dob',
   label = "What is your date of birth?"
 )
 ```
@@ -265,7 +279,7 @@ sd_question(
 ```{r}
 sd_question(
   type  = 'daterange',
-  id  = 'hs_date',
+  id    = 'hs_date',
   label = "When did you start and finish high school?"
 )
 ```
@@ -291,7 +305,7 @@ The `label` argument for any question type can accept markdown formatting. For e
 ```{r}
 sd_question(
   type   = 'mc',
-  id   = 'markdown_label',
+  id     = 'markdown_label',
   label  = "**This** is a question *label* supporting ***markdown***:",
   option = c(
     "Option A" = "option_a",
@@ -308,7 +322,7 @@ For `mc_button` type questions, you can also use markdown to format the `option`
 ```{r}
 sd_question(
   type   = 'mc_buttons',
-  id   = 'markdown_buttons',
+  id     = 'markdown_buttons',
   label  = "The 3 options below support markdown:",
   option = c(
     "*Option A*"     = "option_a",
@@ -323,7 +337,7 @@ The same is true for `mc_multiple_buttons`:
 ```{r}
 sd_question(
   type   = 'mc_multiple_buttons',
-  id   = 'markdown_multiple_buttons',
+  id     = 'markdown_multiple_buttons',
   label  = "The 3 options below support markdown:",
   option = c(
     "*Option A*"     = "option_a",
@@ -359,7 +373,7 @@ names(html_buttons_option)[3] <- "**Option 3**<br>
 
 sd_question(
   type   = 'mc_buttons',
-  id   = 'html_buttons',
+  id     = 'html_buttons',
   label  = "A sample survey question using `mc_buttons`",
   option = html_buttons_option
 )
@@ -370,7 +384,7 @@ sd_question(
 ```{r}
 sd_question(
   type  = "textarea",
-  id  = "change_width",
+  id    = "change_width",
   label = "This text area has width set as 40%:",
   width = "40%"
 )
@@ -394,8 +408,8 @@ sd_next(next_page = 'end')
 #| context: server
 
 config <- sd_config(
-  db_key = "", 
-  db_url = "",
+  db_key  = "",
+  db_url  = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_page", "end",           "end",
