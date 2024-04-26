@@ -6,8 +6,8 @@ shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 # UI ----
 
 sd_question <- function(
-  name,
   type,
+  id,
   label,
   cols         = "80",
   direction    = "horizontal",
@@ -33,7 +33,7 @@ sd_question <- function(
     names(option)[1] <- label_select
 
     output <- shiny::selectInput(
-      inputId  = name,
+      inputId  = id,
       label    = markdown_to_html(label),
       width    = width,
       choices  = option,
@@ -44,7 +44,7 @@ sd_question <- function(
   } else if (type == "mc") {
 
     output <- shiny::radioButtons(
-      inputId  = name,
+      inputId  = id,
       label    = markdown_to_html(label),
       width    = width,
       choices  = option,
@@ -54,7 +54,7 @@ sd_question <- function(
   } else if (type == "mc_multiple") {
 
     output <- shiny::checkboxGroupInput(
-      inputId  = name,
+      inputId  = id,
       label    = markdown_to_html(label),
       width    = width,
       choices  = option,
@@ -64,7 +64,7 @@ sd_question <- function(
   } else if (type == "mc_buttons") {
 
     output <- shinyWidgets::radioGroupButtons(
-      inputId  = name,
+      inputId  = id,
       label    = markdown_to_html(label),
       choices  = list_name_md_to_html(option),
       selected = character(0),
@@ -75,7 +75,7 @@ sd_question <- function(
   } else if (type == "mc_multiple_buttons") {
 
     output <- shinyWidgets::checkboxGroupButtons(
-      inputId    = name,
+      inputId    = id,
       label      = markdown_to_html(label),
       choices    = list_name_md_to_html(option),
       direction  = direction,
@@ -87,7 +87,7 @@ sd_question <- function(
   } else if (type == "text") {
 
     output <- shiny::textInput(
-      inputId     = name,
+      inputId     = id,
       label       = markdown_to_html(label),
       width       = width,
       placeholder = option
@@ -96,7 +96,7 @@ sd_question <- function(
   } else if (type == "textarea") {
 
     output <- shiny::textAreaInput(
-      inputId     = name,
+      inputId     = id,
       label       = markdown_to_html(label),
       width       = width,
       height      = height,
@@ -110,7 +110,7 @@ sd_question <- function(
   } else if (type == "numeric") {
 
     output <- shiny::numericInput(
-      inputId = name,
+      inputId = id,
       label   = markdown_to_html(label),
       width   = width,
       value   = NULL
@@ -119,7 +119,7 @@ sd_question <- function(
   } else if (type == "slider") {
 
     output <- shinyWidgets::sliderTextInput(
-      inputId      = name,
+      inputId      = id,
       label        = markdown_to_html(label),
       width        = width,
       choices      = option,
@@ -142,7 +142,7 @@ sd_question <- function(
   } else if (type == "date") {
 
     output <- shiny::dateInput(
-      inputId            = name,
+      inputId            = id,
       label              = markdown_to_html(label),
       width              = width,
       value              = NULL,
@@ -160,7 +160,7 @@ sd_question <- function(
   } else if (type == "daterange") {
 
     output <- shiny::dateRangeInput(
-      inputId   = name,
+      inputId   = id,
       label     = markdown_to_html(label),
       width     = width,
       start     = NULL,
@@ -180,8 +180,8 @@ sd_question <- function(
   # Wrap the output in a div with a custom data attribute to facilitate
   # question_id scraping later
   output_div <- shiny::tags$div(
-    id = paste("container-", name),
-    `data-question-id` = name,   # Custom attribute to identify the question_id
+    id = paste("container-", id),
+    `data-question-id` = id,   # Custom attribute to identify the question_id
     class = "question-container", # Additional CSS class for styling or scripts
     output
   )
@@ -266,7 +266,7 @@ sd_config <- function(
     if (! start_page %in% config$page_ids) {
       stop(
         "The specified start_page does not exist - check that you have ",
-        "not mis-spelled the name"
+        "not mis-spelled the id"
       )
     }
   }

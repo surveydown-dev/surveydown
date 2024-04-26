@@ -31,8 +31,8 @@ It also is an example of the `show_if` feature (conditional display). If you cho
 
 ```{r}
 sd_question(
-  name  = 'penguins',
   type  = 'mc',
+  id  = 'penguins',
   label = "Which is your favorite type of penguin?",
   width = '100%',
   option = c(
@@ -44,8 +44,8 @@ sd_question(
 )
 
 sd_question(
-  name  = "penguins_other",
   type  = "text",
+  id  = "penguins_other",
   label = "Please specify the other penguin type:"
 )
 ```
@@ -66,8 +66,8 @@ This page showcases the `skip_if` feature, which allows you to skip forward in t
 
 ```{r}
 sd_question(
-  name   = 'skip_to_page',
   type   = 'mc',
+  id   = 'skip_to_page',
   width  = '100%',
   label  = "Where do you want to skip to?",
   option = c(
@@ -96,8 +96,8 @@ This page showcases some other question types.
 
 ```{r}
 sd_question(
-  name  = "silly_word",
   type  = "text",
+  id  = "silly_word",
   label = "Write a silly word:"
 )
 ```
@@ -106,8 +106,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name  = "silly_paragraph",
   type  = "textarea",
+  id  = "silly_paragraph",
   label = "Write a silly paragraph:"
 )
 ```
@@ -116,8 +116,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name  = 'age',
   type  = 'numeric',
+  id  = 'age',
   label = "What's your age?"
 )
 ```
@@ -126,8 +126,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name   = 'artist',
   type   = 'mc',
+  id   = 'artist',
   label  = "Which artist do you prefer most from this list?",
   option = c(
     "Taylor Swift" = "taylor_swift",
@@ -145,8 +145,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name   = 'fruit',
   type   = 'mc_buttons',
+  id   = 'fruit',
   label  = "Which fruit do you prefer most from this list?",
   option = c(
     "Apple"      = "apple",
@@ -164,8 +164,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name   = 'swift',
   type   = 'mc_multiple',
+  id   = 'swift',
   label  = "Which are your favorite Taylor Swift albums (select all that apply)?",
   option = c(
     "Taylor Swift (2006)" = "taylor_swift",
@@ -186,8 +186,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name  = 'michael_jackson',
   type  = 'mc_multiple_buttons',
+  id  = 'michael_jackson',
   label = "Which are your favorite Michael Jackson songs (select all that apply)?",
   option = c(
     "Thriller (1982)"          = "thriller",
@@ -206,8 +206,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name   = 'education',
   type   = 'select',
+  id   = 'education',
   label  = "What is the highest level of education you have attained?",
   option = c(
     "Did not attend high school" = "hs_no",
@@ -225,8 +225,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name  = 'climate_care',
   type  = 'slider',
+  id  = 'climate_care',
   label = "To what extent do you believe human-caused climate change is real?",
   option = c(
     "Don't Believe"    = "dont_believe",
@@ -242,8 +242,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name     = 'coldest_months',
   type     = 'slider',
+  id     = 'coldest_months',
   label    = "What months do you think are the coldest throughout a year?",
   option   = month.abb,
   selected = month.abb[c(4, 8)]
@@ -254,8 +254,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name  = 'dob',
   type  = 'date',
+  id  = 'dob',
   label = "What is your date of birth?"
 )
 ```
@@ -264,8 +264,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name  = 'hs_date',
   type  = 'daterange',
+  id  = 'hs_date',
   label = "When did you start and finish high school?"
 )
 ```
@@ -290,8 +290,8 @@ The `label` argument for any question type can accept markdown formatting. For e
 
 ```{r}
 sd_question(
-  name   = 'markdown_label',
   type   = 'mc',
+  id   = 'markdown_label',
   label  = "**This** is a question *label* supporting ***markdown***:",
   option = c(
     "Option A" = "option_a",
@@ -307,8 +307,8 @@ For `mc_button` type questions, you can also use markdown to format the `option`
 
 ```{r}
 sd_question(
-  name   = 'markdown_buttons',
   type   = 'mc_buttons',
+  id   = 'markdown_buttons',
   label  = "The 3 options below support markdown:",
   option = c(
     "*Option A*"     = "option_a",
@@ -322,8 +322,8 @@ The same is true for `mc_multiple_buttons`:
 
 ```{r}
 sd_question(
-  name   = 'markdown_multiple_buttons',
   type   = 'mc_multiple_buttons',
+  id   = 'markdown_multiple_buttons',
   label  = "The 3 options below support markdown:",
   option = c(
     "*Option A*"     = "option_a",
@@ -337,31 +337,31 @@ sd_question(
 
 ```{r}
 # Define the option vector
-option <- c("option_1", "option_2", "option_3")
+html_buttons_option <- c("option_1", "option_2", "option_3")
 
 # Change the names of each element to display markdown-formatted text 
 # and an embedded image using html
-names(option)[1] <- "**Option 1**<br>
+names(html_buttons_option)[1] <- "**Option 1**<br>
     <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/fuji.jpg' width=100><br>
     **Type**: Fuji<br>
     **Price**: $ 2 / lb<br>
     **Freshness**: Average"
-names(option)[2] <- "**Option 2**<br>
+names(html_buttons_option)[2] <- "**Option 2**<br>
     <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/pinkLady.jpg' width=100><br>
     **Type**: Pink Lady<br>
     **Price**: $ 1.5 / lb<br>
     **Freshness**: Excellent"
-names(option)[3] <- "**Option 3**<br>
+names(html_buttons_option)[3] <- "**Option 3**<br>
     <img src='https://raw.githubusercontent.com/jhelvy/formr4conjoint/master/survey/images/honeycrisp.jpg' width=100><br>
     **Type**: Honeycrisp<br>
     **Price**: $ 2 / lb<br>
     **Freshness**: Poor"
 
 sd_question(
-  name   = 'html_buttons',
   type   = 'mc_buttons',
+  id   = 'html_buttons',
   label  = "A sample survey question using `mc_buttons`",
-  option = option
+  option = html_buttons_option
 )
 ```
 
@@ -369,8 +369,8 @@ sd_question(
 
 ```{r}
 sd_question(
-  name  = "change_width",
   type  = "textarea",
+  id  = "change_width",
   label = "This text area has width set as 40%:",
   width = "40%"
 )
