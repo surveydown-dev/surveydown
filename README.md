@@ -44,3 +44,4 @@ Resources / examples:
 
 - [shinysurveys](https://github.com/jdtrat/shinysurveys)
 - [shinyforms](https://github.com/daattali/shinyforms)
+- [Example](https://rtask.thinkr.fr/pimping-your-shiny-app-with-a-javascript-library-an-example-using-sweetalert2/) of adding JS modules to shiny app (pop up message) - could be useful for adding any number of JS-based features, like pop ups for required questions, JS-based progress bar, etc.
