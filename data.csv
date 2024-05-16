@@ -1,2 +1,2 @@
-session_id,timestamp,penguins,penguins_other,skip_to_end,silly_word,age,artist,swift,education
-25992d6996339134a18ea68f40cb8cb6,2024-03-27T15:16:33Z,other,,,,NA,,,
+session_id,penguins,penguins_other,skip_to_page,silly_word,silly_paragraph,age,artist,fruit,swift,michael_jackson,education,climate_care,coldest_months,dob,hs_date,markdown_label,markdown_buttons,markdown_multiple_buttons,html_buttons,change_width,time_page_welcome,time_page_skipif,time_page_questionTypes,time_page_questionFormatting,time_page_end
+a818e7b92f7da1043b6a4eba006b448a,,,question_types,,,NA,,,,,,10,"10, 10",2024-04-26,"2024-04-26, 2024-04-26",option_a,,,,,2024-04-26 14:42:27 UTC,2024-04-26 14:42:28 UTC,2024-04-26 14:42:31 UTC,2024-04-26 14:42:51 UTC,2024-04-26 14:42:58 UTC
