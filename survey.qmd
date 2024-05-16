@@ -1,12 +1,12 @@
 ---
-format:
+format: 
   html:
     section-divs: false
 server: shiny
 include-before-body: hide_pages.js
 execute:
   echo: false
-theme: surveydown.scss
+theme: ['cosmo', 'surveydown.scss']
 ---
 
 ```{r}
@@ -410,6 +410,7 @@ sd_next(next_page = 'end')
 config <- sd_config(
   db_key  = "",
   db_url  = "",
+  db_sheetname = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_page", "end",           "end",

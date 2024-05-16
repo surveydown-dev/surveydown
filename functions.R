@@ -233,6 +233,7 @@ list_name_md_to_html <- function(list) {
 sd_config <- function(
     db_url = NULL,
     db_key = NULL,
+    db_sheetname = NULL,
     skip_if = NULL,
     skip_if_custom = NULL,
     show_if = NULL,
@@ -257,7 +258,7 @@ sd_config <- function(
   # Establish data base if not in preview mode
 
   if (!preview) {
-    db_url <- establish_database(config, db_key, db_url)
+    db_url <- establish_database(config, db_key, db_url, db_sheetname)
   }
 
   # Check that start_page (if used) points to an actual page
@@ -361,7 +362,7 @@ check_skip_show <- function(
 
 ## Establish database ----
 
-establish_database <- function(config, db_key, db_url = NULL) {
+establish_database <- function(config, db_key, db_url = NULL, db_sheetname = NULL) {
 
   # Authentication
 
@@ -379,6 +380,9 @@ establish_database <- function(config, db_key, db_url = NULL) {
     # < Code to create the new google sheet here>
     # Will need to initialize the sheet with column names for
     # every question_id in config$question_ids
+
+    # and add the page timestamps at the end with this:
+    # names(initialize_timestamps(config$page_ids))
 
     # This should end with the url to the new sheet being stored
 
