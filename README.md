@@ -18,10 +18,10 @@ TODO List:
 - [x] Export timestamps on each page in the data
 - [ ] Export timestamps on each question interaction (since this will increase the data size considerably, maybe add this as `question_times = FALSE` argument)
 - [x] Option to start at a designated page, e.g. `start_page = 'skipif'`
-- [ ] A `show_all = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be called `print_mode = TRUE`.
+- [?] A `show_all = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be called `print_mode = TRUE`.
 - [x] Set up SCSS to be compatible with Quarto-supported bootstrap themes
 - [ ] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
-- [ ] Add a progress bar option in `sd_config()`, maybe `progress_bar = 'top'` or `progress_bar = 'bottom'` as a default, and `progress_bar = 'none'` to turn it off.
+- [?] Add a progress bar option in `sd_config()`, maybe `progress_bar = 'top'` or `progress_bar = 'bottom'` as a default, and `progress_bar = 'none'` to turn it off.
 - [ ] Required questions (`required = TRUE`): post a popup if a question is required before allowing next button. Default should be `required = FALSE`.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
 - [ ] Admin page w/password (see https://github.com/daattali/shinyforms)

@@ -239,7 +239,8 @@ sd_config <- function(
     show_if = NULL,
     show_if_custom = NULL,
     preview = FALSE,
-    start_page = NULL
+    start_page = NULL,
+    progress_bar = "top"
 ) {
 
   # Get survey metadata
@@ -248,7 +249,8 @@ sd_config <- function(
   config <- list(
     page_structure = page_structure,
     page_ids = names(page_structure),
-    question_ids = unname(unlist(page_structure))
+    question_ids = unname(unlist(page_structure)),
+    progress_bar = progress_bar
   )
 
   # Check skip_if and show_if inputs
