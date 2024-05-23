@@ -6,7 +6,7 @@ server: shiny
 include-before-body: hide_pages.js
 execute:
   echo: false
-theme: ['cosmo', 'surveydown.scss']
+theme: [united, theme.scss]
 ---
 
 ```{r}
