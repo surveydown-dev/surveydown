@@ -1,7 +1,7 @@
 /*-- Custom Fonts --*/
-// @import"https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800";
-// $headings-font-family: "Raleway";
-// $font-family-base: "Raleway";
+@import"https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800";
+$headings-font-family: "Raleway";
+$font-family-base: "Raleway";
 
 /*-- scss:defaults --*/
 $primary: royalblue; // Modify the color here to apply different theme colors.
