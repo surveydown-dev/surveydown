@@ -412,6 +412,7 @@ config <- sd_config(
   db_key  = "",
   db_url  = "",
   db_sheetname = "",
+  show_all_pages = FALSE,
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_page", "end",           "end",
