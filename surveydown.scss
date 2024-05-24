@@ -1,8 +1,10 @@
+/*-- Custom Fonts --*/
 @import"https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800";
+$headings-font-family: "Raleway";
+$font-family-base: "Raleway";
 
 /*-- scss:defaults --*/
-
-$primary: royalblue;
+$primary: royalblue; // Modify the color here to apply different theme colors.
 $primary-color: #5480a7;
 $secondary-color: #56A754;
 $tertiary-color: #A77B54;
@@ -10,14 +12,11 @@ $link-color: $primary-color;
 $body-bg: #f2f6f9;
 $footer-bg: $primary-color;
 $footer-fg: white;
-$headings-font-family: "Raleway";
 $headings-color: black;
-$font-family-base: "Raleway";
 $link-color: $primary-color;
 $link-hover-color: $secondary-color;
 
 /*-- scss:rules --*/
-
 #title-block-header {
   margin-block-end: 2rem;
 }
@@ -25,4 +24,3 @@ $link-hover-color: $secondary-color;
 h1, .h1, h2, .h2, h3, .h3 {
   font-weight: 800;
 }
-

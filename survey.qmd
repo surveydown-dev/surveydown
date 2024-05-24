@@ -2,11 +2,12 @@
 format: 
   html:
     section-divs: false
-server: shiny
-include-before-body: hide_pages.js
 execute:
   echo: false
-theme: ['cosmo', 'surveydown.scss']
+server: shiny
+include-before-body: hide_pages.js
+theme: [cosmo, surveydown.scss]
+css: styles.css
 ---
 
 ```{r}
