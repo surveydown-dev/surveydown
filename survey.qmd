@@ -6,14 +6,9 @@ execute:
   echo: false
 server: shiny
 include-before-body: hide_pages.js
-include-after-body: progress_bar.js
 theme: [cosmo, surveydown.scss]
 css: styles.css
 ---
-
-<div id="progress-container">
-  <div id="progress-bar"></div>
-</div>
 
 ```{r}
 #| context: setup
@@ -425,8 +420,7 @@ config <- sd_config(
   show_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "penguins",    "other",         "penguins_other"
-  ),
-  progress_bar = "top"
+  )
 )
 
 sd_server(
