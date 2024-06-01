@@ -30,7 +30,7 @@ function Pandoc(doc)
   table.insert(doc.blocks, 1, css_block)
 
   -- Get the progress bar position from the metadata
-  local position = pandoc.utils.stringify(doc.meta['progressbar-position'] or 'none')
+  local position = pandoc.utils.stringify(doc.meta['progressbar'] or 'none')
 
   -- Insert the progress bar at the specified position
   if position == "top" then
