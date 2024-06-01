@@ -7,7 +7,8 @@ execute:
 server: shiny
 include-before-body: hide_pages.js
 theme: [cosmo, surveydown.scss]
-css: styles.css
+filters: [progressbar.lua]
+progressbar-position: "top" # choose from "top", "bottom", or "none"
 ---
 
 ```{r}
