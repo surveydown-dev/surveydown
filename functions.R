@@ -240,7 +240,7 @@ sd_config <- function(
     show_if_custom = NULL,
     preview = FALSE,
     start_page = NULL,
-    show_all = FALSE
+    show_all_pages = FALSE
 ) {
 
   # Get survey metadata
@@ -273,7 +273,7 @@ sd_config <- function(
     }
   }
 
-  if (show_all) {
+  if (show_all_pages) {
     for (page in config$page_ids) {
       shinyjs::show(page)
     }
@@ -288,7 +288,7 @@ sd_config <- function(
   config$show_if_custom <- show_if_custom
   config$preview <- preview
   config$start_page <- start_page
-  config$show_all <- show_all
+  config$show_all_pages <- show_all_pages
 
   return(config)
 }

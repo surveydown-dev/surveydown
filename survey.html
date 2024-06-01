@@ -35,7 +35,6 @@ ul.task-list li input[type="checkbox"] {
 <link href="survey_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
 
-<link rel="stylesheet" href="styles.css">
 </head>
 
 <body class="fullcontent">
@@ -62,6 +61,24 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 
+  <style>
+  #progressbar {
+    background-color: black;
+    border-radius: 13px;
+    padding: 3px;
+  }
+  #progressbar > div {
+    background-color: orange;
+    width: 40%;
+    height: 20px;
+    border-radius: 10px;
+  }
+  </style>
+  
+  <div id="progressbar">
+    <div></div>
+  </div>
+  
 <div class="cell" data-context="setup">
 <div class="cell-output-display">
 <!--SHINY.SINGLETON[223eed69850a44625b94f39193177e317dbc7f92]-->
@@ -654,7 +671,7 @@ config <- sd_config(
   db_key  = "",
   db_url  = "",
   db_sheetname = "",
-  
+  show_all_pages = FALSE,
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_page", "end",           "end",
