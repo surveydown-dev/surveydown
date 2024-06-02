@@ -57,6 +57,18 @@ document.addEventListener("DOMContentLoaded", function() {
   document.querySelectorAll("div.sd-page")[0].style.display = 'block';
 });
 </script>
+<script>
+function updateProgressBar(progress) {
+  var progressBar = document.getElementById("progress");
+  if (progressBar) {
+    progressBar.style.width = progress + "%";
+  }
+}
+
+Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
+  updateProgressBar(progress);
+});
+</script>
 
 
 
@@ -66,17 +78,18 @@ document.addEventListener("DOMContentLoaded", function() {
     background-color: black;
     border-radius: 13px;
     padding: 3px;
+    width: 100%; /* Ensure the progress bar container spans the full width */
   }
   #progressbar > div {
     background-color: orange;
-    width: 40%;
-    height: 20px;
+    width: 0%; /* Start at 0% */
+    height: 20px; /* Define the height */
     border-radius: 10px;
   }
   </style>
   
   <div id="progressbar">
-    <div></div>
+    <div id="progress"></div>
   </div>
   
 <div class="cell" data-context="setup">
