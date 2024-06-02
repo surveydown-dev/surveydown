@@ -436,11 +436,9 @@ sd_server <- function(input, session, config) {
   session_id <- session$token
 
   # Initialize object for storing timestamps
-
   timestamps <- reactiveValues(data = initialize_timestamps(page_ids))
 
   # Conditional display (show_if conditions) ----
-
   if (!is.null(show_if)) {
     handle_basic_show_if_logic(input, show_if)
   }
@@ -448,6 +446,79 @@ sd_server <- function(input, session, config) {
   if (!is.null(show_if_custom)) {
     handle_custom_show_if_logic(input, show_if_custom)
   }
+
+  # Progress tracking ----
+
+  # Initialize reactive value to track the number of questions answered
+  answered_questions <- reactiveVal(0)
+
+  # Initialize reactiveValues to store status information
+  answer_status <- reactiveValues(
+    processing_question = NULL,
+    current_answers = NULL,
+    current_answers_length = NULL,
+    num_answered = NULL,
+    progress = NULL
+  )
+
+  # Observing the answering progress and progress bar change
+  observe({
+    for (id in question_ids) {
+      observeEvent(input[[id]], {
+        # Store the question ID and its value
+        answer_status$processing_question <- list(id = id, value = input[[id]])
+
+        # Ensure sapply returns a logical vector and handle NA values
+        current_answers <- sapply(question_ids, function(qid) {
+          value <- input[[qid]]
+          # Handle multiple values by only considering the first value
+          if (length(value) > 1) {
+            value <- value[1]
+          }
+          # Ensure the condition checks for NULL, NA, and empty strings
+          if (!is.null(value) && !is.na(value) && nzchar(as.character(value))) {
+            TRUE
+          } else {
+            FALSE
+          }
+        })
+
+        # Store the current answers and their length
+        answer_status$current_answers <- current_answers
+        answer_status$current_answers_length <- length(current_answers)
+
+        # Ensure we have no NA values in current_answers
+        current_answers <- ifelse(is.na(current_answers), FALSE, current_answers)
+
+        # Sum the logical vector to get the number of answered questions
+        num_answered <- sum(current_answers)
+        answered_questions(num_answered)
+
+        # Store the number of answered questions
+        answer_status$num_answered <- num_answered
+
+        # Calculate progress percentage
+        progress <- (num_answered / length(question_ids)) * 100
+
+        # Store the progress percentage
+        answer_status$progress <- progress
+
+        # Update progress bar using JavaScript
+        session$sendCustomMessage(type = 'updateProgressBar', progress)
+      }, ignoreNULL = FALSE)
+    }
+  })
+
+  # Example of accessing stored status values
+  # observe({
+  #   if (!is.null(answer_status$processing_question)) {
+  #     print(answer_status$processing_question)
+  #     print(answer_status$current_answers)
+  #     print(paste("Length of current_answers:", answer_status$current_answers_length))
+  #     print(paste("Number of answered questions:", answer_status$num_answered))
+  #     print(paste("Progress percentage:", answer_status$progress))
+  #   }
+  # })
 
   # Page Navigation ----
 

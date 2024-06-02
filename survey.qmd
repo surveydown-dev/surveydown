@@ -5,7 +5,9 @@ format:
 execute:
   echo: false
 server: shiny
-include-before-body: hide_pages.js
+include-before-body: 
+  - hide_pages.js
+  - update_progress.js
 theme: [cosmo, surveydown.scss]
 filters: [progressbar.lua]
 progressbar: "top" # choose from "top", "bottom", or "none"

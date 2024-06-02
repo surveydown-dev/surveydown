@@ -6,11 +6,12 @@ function Pandoc(doc)
     background-color: black;
     border-radius: 13px;
     padding: 3px;
+    width: 100%; /* Ensure the progress bar container spans the full width */
   }
   #progressbar > div {
     background-color: orange;
-    width: 40%;
-    height: 20px;
+    width: 0%; /* Start at 0% */
+    height: 20px; /* Define the height */
     border-radius: 10px;
   }
   </style>
@@ -19,7 +20,7 @@ function Pandoc(doc)
   -- Define the HTML for the progress bar
   local progressbar = [[
   <div id="progressbar">
-    <div></div>
+    <div id="progress"></div>
   </div>
   ]]
 
@@ -37,14 +38,6 @@ function Pandoc(doc)
     table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar))
   elseif position == "bottom" then
     table.insert(doc.blocks, pandoc.RawBlock('html', progressbar))
-  end
-
-  -- Remove the placeholder if present
-  for i, block in ipairs(doc.blocks) do
-    if block.t == "Para" and block.content[1].text == "{{progressbar}}" then
-      table.remove(doc.blocks, i)
-      break
-    end
   end
 
   return doc
