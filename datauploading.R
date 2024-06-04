@@ -1,48 +1,40 @@
 library(tidyverse)
 library(here)
 library(googlesheets4)
-
-df <- read_csv(here('surveydown/data.csv'))
-
+library(gargle)
 
 
 
-
-
+################################################################################
 
 #Primary Solution Service Key Auth - Needs Service Email and
 credentials_path <- "documents/GitHub/surveydown/Service.json"
 
+setup_auth <- function() {
+  gs4_auth(path = credentials_path)
+}
+
+setup_auth()
+
+# Sheet ID
+ssID <- "1cNZeKg_BjN6fTDPOZtSFk8kxt7hVDsSOCo84xu4eW_U"
 
 
+################################################################################
+
+#Secondary Solution DeAuth - Only Needs google Sheet URL, Must be public and able to edit.
+
+#gs4_deauth()
+#sheet_url <- "URL or Sheet ID goes here"
+
+################################################################################
 
 
-#URl reading/Sheet Editing
+# Sheet Reading/Editing/Checking Section
+df <- read_csv(here('documents/GitHub/surveydown/data.csv'))
 
-sheet_url <- "https://docs.google.com/spreadsheets/d/12f5iLaXlXqkWz3pWs6fLLPX6PfiiVxuQ_BzJqKfgacQ/edit#gid=798378927" #Delete this once I get the TryCatch working
-
-
-
-Sheet <- read_sheet(sheet_url, range = "A:A")
-
-#
-#create_object <- function() {
-#  stop()
-#}
-#
-#
-## Sheet ID
-#ssID <- "1cNZeKg_BjN6fTDPOZtSFk8kxt7hVDsSOCo84xu4eW_U"
-#tryCatch(
-#  {
-#    sheet_data <- read_sheet(NULL, range = "A:A") #I have to now replace this NULL with get_sheet_url
-#  },
-#  error = function(e) {
-#    Spread1 <- gs4_create("Sheets1", sheets = df)
-#  }
-#)
-#
-
+# Read the sheet
+Sheet <- read_sheet(ss = ssID, range = "A:A")
 
 
 
