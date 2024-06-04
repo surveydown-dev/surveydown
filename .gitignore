@@ -5,4 +5,6 @@
 key.json
 /.quarto/
 .Rproj.user
-secret.json
+secret.jsonService.jsonTest.json
+Service.json
+Test.json
