@@ -436,7 +436,7 @@ sd_server <- function(input, session, config) {
   session_id <- session$token
 
   # Initialize object for storing timestamps
-  timestamps <- reactiveValues(data = initialize_timestamps(page_ids))
+  timestamps <- reactiveValues(data = initialize_timestamps(page_ids, question_ids))
 
   # Conditional display (show_if conditions) ----
   if (!is.null(show_if)) {
@@ -463,62 +463,30 @@ sd_server <- function(input, session, config) {
 
   # Observing the answering progress and progress bar change
   observe({
-    for (id in question_ids) {
+    lapply(question_ids, function(id) {
       observeEvent(input[[id]], {
-        # Store the question ID and its value
+        # Processing the question input and updating timestamps
         answer_status$processing_question <- list(id = id, value = input[[id]])
+        if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
+          timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
+        }
 
-        # Ensure sapply returns a logical vector and handle NA values
+        # Calculating current answers and progress
         current_answers <- sapply(question_ids, function(qid) {
-          value <- input[[qid]]
-          # Handle multiple values by only considering the first value
-          if (length(value) > 1) {
-            value <- value[1]
-          }
-          # Ensure the condition checks for NULL, NA, and empty strings
-          if (!is.null(value) && !is.na(value) && nzchar(as.character(value))) {
-            TRUE
-          } else {
-            FALSE
-          }
+          ts <- timestamps$data[[make_ts_name("question", qid)]]
+          !is.na(ts)
         })
 
-        # Store the current answers and their length
-        answer_status$current_answers <- current_answers
-        answer_status$current_answers_length <- length(current_answers)
-
-        # Ensure we have no NA values in current_answers
-        current_answers <- ifelse(is.na(current_answers), FALSE, current_answers)
-
-        # Sum the logical vector to get the number of answered questions
         num_answered <- sum(current_answers)
-        answered_questions(num_answered)
-
-        # Store the number of answered questions
         answer_status$num_answered <- num_answered
+        answer_status$progress <- num_answered / length(question_ids)
 
-        # Calculate progress percentage
-        progress <- (num_answered / length(question_ids)) * 100
-
-        # Store the progress percentage
-        answer_status$progress <- progress
-
-        # Update progress bar using JavaScript
-        session$sendCustomMessage(type = 'updateProgressBar', progress)
-      }, ignoreNULL = FALSE)
-    }
+        # Update the progress bar
+        shinyjs::runjs(paste0("updateProgressBar(", answer_status$progress * 100, ");"))
+      }, ignoreInit = TRUE)
+    })
   })
 
-  # Example of accessing stored status values
-  # observe({
-  #   if (!is.null(answer_status$processing_question)) {
-  #     print(answer_status$processing_question)
-  #     print(answer_status$current_answers)
-  #     print(paste("Length of current_answers:", answer_status$current_answers_length))
-  #     print(paste("Number of answered questions:", answer_status$num_answered))
-  #     print(paste("Progress percentage:", answer_status$progress))
-  #   }
-  # })
 
   # Page Navigation ----
 
@@ -550,7 +518,7 @@ sd_server <- function(input, session, config) {
           }
 
           # Store the timestamp with the page_id as the key
-          timestamps$data[[make_page_ts_name(next_page)]] <- get_utc_timestamp()
+          timestamps$data[[make_ts_name("page", next_page)]] <- get_utc_timestamp()
 
           # Execute page navigation
           shinyjs::runjs("hideAllPages();") # Hide all pages
@@ -724,22 +692,27 @@ get_utc_timestamp <- function() {
   return(format(Sys.time(), tz = "UTC", usetz = TRUE))
 }
 
-initialize_timestamps <- function(page_ids) {
-
+initialize_timestamps <- function(page_ids, question_ids) {
   timestamps <- list()
 
-  # Store the time of the start (first page)
-  timestamps[[make_page_ts_name(page_ids[1])]] <- get_utc_timestamp()
-
-  # Store "" values for all remaining pages
+  # Initialize timestamps for pages
+  timestamps[[make_ts_name("page", page_ids[1])]] <- get_utc_timestamp()
   for (i in 2:length(page_ids)) {
-    timestamps[[make_page_ts_name(page_ids[i])]] <- ""
+    timestamps[[make_ts_name("page", page_ids[i])]] <- NA
+  }
+
+  # Initialize timestamps for questions
+  for (qid in question_ids) {
+    timestamps[[make_ts_name("question", qid)]] <- NA
   }
 
   return(timestamps)
-
 }
 
-make_page_ts_name <- function(page_id) {
-  return(paste0("time_page_", page_id))
+make_ts_name <- function(type, id) {
+  if (type == "page") {
+    return(paste0("time_p_", id))
+  } else if (type == "question") {
+    return(paste0("time_q_", id))
+  }
 }
