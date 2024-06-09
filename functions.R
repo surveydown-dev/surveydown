@@ -479,7 +479,13 @@ sd_server <- function(input, session, config) {
 
         num_answered <- sum(current_answers)
         answer_status$num_answered <- num_answered
-        answer_status$progress <- num_answered / length(question_ids)
+
+        # Check if the last question is answered
+        if (!is.na(timestamps$data[[make_ts_name("question", tail(question_ids, n = 1))]])) {
+          answer_status$progress <- 1
+        } else {
+          answer_status$progress <- num_answered / length(question_ids)
+        }
 
         # Update the progress bar
         shinyjs::runjs(paste0("updateProgressBar(", answer_status$progress * 100, ");"))
