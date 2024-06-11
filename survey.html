@@ -75,16 +75,22 @@ Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
 
   <style>
   #progressbar {
-    background-color: black;
-    border-radius: 13px;
+    background-color: #ECE8DF;
     padding: 3px;
-    width: 100%; /* Ensure the progress bar container spans the full width */
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
   }
   #progressbar > div {
-    background-color: orange;
-    width: 0%; /* Start at 0% */
-    height: 20px; /* Define the height */
-    border-radius: 10px;
+    background-color: #4CAF50;
+    width: 0%;
+    height: 10px;
+    border-radius: 0;
+  }
+  body {
+    padding-top: 20px;
   }
   </style>
   
