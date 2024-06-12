@@ -471,21 +471,11 @@ sd_server <- function(input, session, config) {
           timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
         }
 
-        # Calculating current answers and progress
-        current_answers <- sapply(question_ids, function(qid) {
-          ts <- timestamps$data[[make_ts_name("question", qid)]]
-          !is.na(ts)
-        })
+        # Find the position of the answered question
+        answered_position <- which(question_ids == id)
 
-        num_answered <- sum(current_answers)
-        answer_status$num_answered <- num_answered
-
-        # Check if the last question is answered
-        if (!is.na(timestamps$data[[make_ts_name("question", tail(question_ids, n = 1))]])) {
-          answer_status$progress <- 1
-        } else {
-          answer_status$progress <- num_answered / length(question_ids)
-        }
+        # Calculate the progress based on the position
+        answer_status$progress <- answered_position / length(question_ids)
 
         # Update the progress bar
         shinyjs::runjs(paste0("updateProgressBar(", answer_status$progress * 100, ");"))
