@@ -7,9 +7,14 @@ function Pandoc(doc)
     padding: 3px;
     width: 100%;
     position: fixed;
-    top: 0;
     left: 0;
     z-index: 1000;
+  }
+  #progressbar.top {
+    top: 0;
+  }
+  #progressbar.bottom {
+    bottom: 0;
   }
   #progressbar > div {
     background-color: #4CAF50;
@@ -24,8 +29,14 @@ function Pandoc(doc)
   ]]
 
   -- Define the HTML for the progress bar
-  local progressbar = [[
-  <div id="progressbar">
+  local progressbar_top = [[
+  <div id="progressbar" class="top">
+    <div id="progress"></div>
+  </div>
+  ]]
+
+  local progressbar_bottom = [[
+  <div id="progressbar" class="bottom">
     <div id="progress"></div>
   </div>
   ]]
@@ -41,9 +52,9 @@ function Pandoc(doc)
 
   -- Insert the progress bar at the specified position
   if position == "top" then
-    table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar))
+    table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar_top))
   elseif position == "bottom" then
-    table.insert(doc.blocks, pandoc.RawBlock('html', progressbar))
+    table.insert(doc.blocks, pandoc.RawBlock('html', progressbar_bottom))
   end
 
   return doc
