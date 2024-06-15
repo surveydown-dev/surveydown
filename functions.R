@@ -449,6 +449,9 @@ sd_server <- function(input, session, config) {
 
   # Progress tracking ----
 
+  # Initialize reactive value to track the maximum progress reached
+  max_progress <- reactiveVal(0)
+
   # Initialize reactive value to track the number of questions answered
   answered_questions <- reactiveVal(0)
 
@@ -461,31 +464,22 @@ sd_server <- function(input, session, config) {
     progress = NULL
   )
 
-  # Initialize reactive value to track the maximum progress reached
-  max_progress <- reactiveVal(0)
-
-  # Observing the answering progress and progress bar change
+  # Observing the question timestamps and progress bar
   observe({
     lapply(question_ids, function(id) {
       observeEvent(input[[id]], {
-        # Processing the question input and updating timestamps
+        # Updating question timestamps
         answer_status$processing_question <- list(id = id, value = input[[id]])
         if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
           timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
         }
-
-        # Find the position of the answered question
         answered_position <- which(question_ids == id)
-
-        # Calculate the progress based on the position
         current_progress <- answered_position / length(question_ids)
-
-        # Update the progress only if it is greater than the maximum progress reached
         if (current_progress > max_progress()) {
           max_progress(current_progress)
         }
 
-        # Update the progress bar based on the maximum progress reached
+        # Updating progress bar
         shinyjs::runjs(paste0("updateProgressBar(", max_progress() * 100, ");"))
       }, ignoreInit = TRUE)
     })
