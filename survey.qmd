@@ -11,7 +11,7 @@ include-before-body:
 theme: [cosmo, surveydown.scss]
 filters: [progressbar.lua]
 barposition: "top" # top (default), bottom, or none
-barcolor: "green" # green (default), blue, orange, or purple
+barcolor: "theme" # theme (default), green, blue, or orange
 ---
 
 ```{r}
