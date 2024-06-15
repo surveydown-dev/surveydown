@@ -461,6 +461,9 @@ sd_server <- function(input, session, config) {
     progress = NULL
   )
 
+  # Initialize reactive value to track the maximum progress reached
+  max_progress <- reactiveVal(0)
+
   # Observing the answering progress and progress bar change
   observe({
     lapply(question_ids, function(id) {
@@ -475,14 +478,18 @@ sd_server <- function(input, session, config) {
         answered_position <- which(question_ids == id)
 
         # Calculate the progress based on the position
-        answer_status$progress <- answered_position / length(question_ids)
+        current_progress <- answered_position / length(question_ids)
 
-        # Update the progress bar
-        shinyjs::runjs(paste0("updateProgressBar(", answer_status$progress * 100, ");"))
+        # Update the progress only if it is greater than the maximum progress reached
+        if (current_progress > max_progress()) {
+          max_progress(current_progress)
+        }
+
+        # Update the progress bar based on the maximum progress reached
+        shinyjs::runjs(paste0("updateProgressBar(", max_progress() * 100, ");"))
       }, ignoreInit = TRUE)
     })
   })
-
 
   # Page Navigation ----
 
