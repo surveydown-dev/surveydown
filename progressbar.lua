@@ -1,6 +1,6 @@
 function Pandoc(doc)
-  -- Define the CSS styles
-  local css = [[
+  -- Define the CSS template with placeholders for color and position
+  local css_template = [[
   <style>
   #progressbar {
     background-color: #ECE8DF;
@@ -10,14 +10,11 @@ function Pandoc(doc)
     left: 0;
     z-index: 1000;
   }
-  #progressbar.top {
-    top: 0;
-  }
-  #progressbar.bottom {
-    bottom: 0;
+  #progressbar.POSITION_PLACEHOLDER {
+    POSITION_PLACEHOLDER: 0;
   }
   #progressbar > div {
-    background-color: #4CAF50;
+    background-color: COLOR_PLACEHOLDER;
     width: 0%;
     height: 10px;
     border-radius: 0;
@@ -28,34 +25,35 @@ function Pandoc(doc)
   </style>
   ]]
 
+  -- Define available colors
+  local colors = {
+    green  = "#4CAF50",
+    orange = "#FFA500",
+    blue   = "#2196F3",
+    purple = "#5654A2"
+  }
+
+  -- Fetch metadata values with defaults
+  local barcolor = pandoc.utils.stringify(doc.meta['barcolor'] or 'green')
+  local barposition = pandoc.utils.stringify(doc.meta['barposition'] or 'top')
+
+  -- Ensure valid color and position
+  local color = colors[barcolor] or colors['green']
+  local position = barposition == 'bottom' and 'bottom' or 'top'
+
+  -- Replace placeholders in CSS template
+  local css = css_template:gsub("COLOR_PLACEHOLDER", color):gsub("POSITION_PLACEHOLDER", position)
+
   -- Define the HTML for the progress bar
-  local progressbar_top = [[
-  <div id="progressbar" class="top">
+  local progressbar = string.format([[
+  <div id="progressbar" class="%s">
     <div id="progress"></div>
   </div>
-  ]]
+  ]], position)
 
-  local progressbar_bottom = [[
-  <div id="progressbar" class="bottom">
-    <div id="progress"></div>
-  </div>
-  ]]
-
-  -- Convert the CSS to a pandoc element
-  local css_block = pandoc.RawBlock('html', css)
-
-  -- Insert the CSS at the beginning of the document
-  table.insert(doc.blocks, 1, css_block)
-
-  -- Get the progress bar position from the metadata
-  local position = pandoc.utils.stringify(doc.meta['progressbar'] or 'none')
-
-  -- Insert the progress bar at the specified position
-  if position == "top" then
-    table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar_top))
-  elseif position == "bottom" then
-    table.insert(doc.blocks, pandoc.RawBlock('html', progressbar_bottom))
-  end
+  -- Insert the CSS and progress bar HTML into the document
+  table.insert(doc.blocks, 1, pandoc.RawBlock('html', css))
+  table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar))
 
   return doc
 end

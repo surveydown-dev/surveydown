@@ -82,14 +82,11 @@ Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
     left: 0;
     z-index: 1000;
   }
-  #progressbar.top {
-    top: 0;
-  }
   #progressbar.bottom {
     bottom: 0;
   }
   #progressbar > div {
-    background-color: #4CAF50;
+    background-color: #2196F3;
     width: 0%;
     height: 10px;
     border-radius: 0;
@@ -99,7 +96,7 @@ Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
   }
   </style>
   
-  <div id="progressbar" class="top">
+  <div id="progressbar" class="bottom">
     <div id="progress"></div>
   </div>
   

@@ -10,7 +10,8 @@ include-before-body:
   - update_progress.js
 theme: [cosmo, surveydown.scss]
 filters: [progressbar.lua]
-progressbar: "top" # choose from "top", "bottom", or "none"
+barposition: "top" # top (default), bottom, or none
+barcolor: "green" # green (default), blue, orange, or purple
 ---
 
 ```{r}
