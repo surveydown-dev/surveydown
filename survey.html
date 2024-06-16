@@ -86,7 +86,6 @@ Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
     top: 0;
   }
   #progressbar > div {
-    background-color: #E95420;
     width: 0%;
     height: 10px;
     border-radius: 0;
@@ -97,7 +96,7 @@ Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
   </style>
   
   <div id="progressbar" class="top">
-    <div id="progress"></div>
+    <div id="progress" style="background-color: #E95420;"></div>
   </div>
   
 <div class="cell" data-context="setup">

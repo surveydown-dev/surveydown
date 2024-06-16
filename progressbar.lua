@@ -14,7 +14,6 @@ function Pandoc(doc)
     POSITION_PLACEHOLDER: 0;
   }
   #progressbar > div {
-    background-color: COLOR_PLACEHOLDER;
     width: 0%;
     height: 10px;
     border-radius: 0;
@@ -76,14 +75,14 @@ function Pandoc(doc)
   local position = barposition == 'bottom' and 'bottom' or 'top'
 
   -- Replace placeholders in CSS template
-  local css = css_template:gsub("COLOR_PLACEHOLDER", color):gsub("POSITION_PLACEHOLDER", position)
+  local css = css_template:gsub("POSITION_PLACEHOLDER", position)
 
   -- Define the HTML for the progress bar
   local progressbar = string.format([[
   <div id="progressbar" class="%s">
-    <div id="progress"></div>
+    <div id="progress" style="background-color: %s;"></div>
   </div>
-  ]], position)
+  ]], position, color)
 
   -- Insert the CSS and progress bar HTML into the document
   table.insert(doc.blocks, 1, pandoc.RawBlock('html', css))
