@@ -8,10 +8,10 @@ server: shiny
 include-before-body: 
   - hide_pages.js
   - update_progress.js
-theme: [cosmo, surveydown.scss]
+theme: [united, surveydown.scss]
 filters: [progressbar.lua]
 barposition: "top" # top (default), bottom, or none
-barcolor: "theme" # theme (default), green, blue, or orange
+barcolor: "theme" # theme (default) or a hex code
 ---
 
 ```{r}

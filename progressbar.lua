@@ -25,13 +25,6 @@ function Pandoc(doc)
   </style>
   ]]
 
-  -- Define available colors
-  local colors = {
-    green  = "#4CAF50",
-    orange = "#FFA500",
-    blue   = "#2196F3"
-  }
-
   -- Define Bootswatch theme primary colors
   local theme_colors = {
     cerulean  = "#2FA4E7",
@@ -66,8 +59,18 @@ function Pandoc(doc)
   local barposition = pandoc.utils.stringify(doc.meta['barposition'] or 'top')
   local theme = pandoc.utils.stringify(doc.meta['theme'] and doc.meta['theme'][1] or 'cosmo')
 
+  -- Function to check if a string is a valid hex color
+  local function is_hex_color(color)
+    return color:match("^#%x%x%x%x%x%x$") ~= nil
+  end
+
   -- Determine the color
-  local color = colors[barcolor] or (barcolor == 'theme' and theme_colors[theme]) or colors['green']
+  local color
+  if is_hex_color(barcolor) then
+    color = barcolor
+  else
+    color = barcolor == 'theme' and theme_colors[theme] or theme_colors['cosmo']
+  end
 
   -- Ensure valid position
   local position = barposition == 'bottom' and 'bottom' or 'top'
