@@ -36,7 +36,7 @@ ssID <- "1cNZeKg_BjN6fTDPOZtSFk8kxt7hVDsSOCo84xu4eW_U"
 
 
 # Sheet Reading/Editing/Checking Section
-df <- read_csv(here('github/surveydown/data.csv'))
+df <- read_csv(here('surveydown/data.csv'))
 
 # Read the sheet
 Sheet <- read_sheet(ss = ssID, range = "A:A")
@@ -83,23 +83,22 @@ db <-
 data <- dbReadTable(db, "Actual")
 
 # Check for non-matching session_id values
-non_matching_rows <- df[!df$session_id %in% data$session_id, ]
+matching_rows <- df[df$session_id %in% data$session_id, ]
 
-if (nrow(non_matching_rows) == 0) {
-  message("All session_id values in the CSV are already present in the database. No new data to upload.")
-} else {
+if (nrow(matching_rows) > 0) {
   # Delete existing rows in the database table with matching session_id values from df
-  dbExecute(db, paste0("DELETE FROM ", db_tableName, " WHERE session_id IN (", paste(shQuote(non_matching_rows$session_id), collapse = ", "), ")"))
+  dbExecute(db, paste0('DELETE FROM \"', db_tableName, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
 
   # Append the new non-matching rows to the database table
-  dbWriteTable(db, db_tableName, non_matching_rows, append = TRUE, row.names = FALSE)
-  message("Non-matching data successfully uploaded to the '", db_tableName, "' table.")
+  dbWriteTable(db, "Actual", matching_rows, append = TRUE, row.names = FALSE)
+} else {
+  dbWriteTable(db, "Actual", df, append = TRUE, row.names = FALSE)
 }
 
 # Disconnect from the database
 dbDisconnect(db)
 
-
+db_tableName <- "Actual"
 #Writing to SupaBase
 #dbWriteTable(db, "Actual", df, append = TRUE, row.names = FALSE)
 

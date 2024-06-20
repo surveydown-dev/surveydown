@@ -231,6 +231,7 @@ list_name_md_to_html <- function(list) {
 # Config ----
 
 sd_config <- function(
+    file_path = NULL,
     db_host = NULL,
     db_name = NULL,
     db_port = NULL,
@@ -259,7 +260,7 @@ sd_config <- function(
 
   # Establish data base if not in preview mode
 
-  if (!preview) {
+  if (!preview) { #Bogdan - I don't know what to do with this or how to change it
     db_url <- establish_database(config, db_host, db_name, db_port, db_user, db_tableName)
   }
 
@@ -362,11 +363,11 @@ check_skip_show <- function(
 }
 
 ## Establish database ----
-establish_database <- function(config, db_host, db_name, db_port, db_user, db_tableName) {
+establish_database <- function(config, db_host, db_name, db_port, db_user) {
 
   # Authentication/Checks for NULL Values
-  if (is.null(config) || is.null(db_host) || is.null(db_name) || is.null(db_port) || is.null(db_user) || is.null(db_tableName)) {
-    stop("Error: One or more required parameters (config, db_host, db_name, db_port, db_user, db_tableName) are NULL.")
+  if (is.null(config) || is.null(db_host) || is.null(db_name) || is.null(db_port) || is.null(db_user)) {
+    stop("Error: One or more required parameters (config, db_host, db_name, db_port, db_user) are NULL.")
   }
 
   if (nzchar(Sys.getenv("SupaPass"))) {
@@ -386,6 +387,7 @@ establish_database <- function(config, db_host, db_name, db_port, db_user, db_ta
           password = Sys.getenv("SupaPass")
         )
       message("Successfully connected to the database.")
+      return(db)
     }, error = function(e) {
       stop("Error: Failed to connect to the database. Please check your connection details.")
     })
@@ -630,16 +632,23 @@ database_uploading <- function(file_path, config, db_host, db_name, db_port, db_
   # Establish the database connection
   df <- read_csv(file_path)
   db <- establish_database(config, db_host, db_name, db_port, db_user, db_tableName)
-
   data <- dbReadTable(db, db_tableName)
 
+  #Checking For Matching Session_Id's
+  matching_rows <- df[df$session_id %in% data$session_id, ]
 
-  dbWriteTable(db, "Actual", df, append = TRUE, row.names = FALSE) # This is very basic row writing will have to do a matching check before this
+  if (nrow(matching_rows) > 0) {
+    # Delete existing rows in the database table with matching session_id values from df
+    dbExecute(db, paste0('DELETE FROM \"', db_tableName, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+
+    # Append the new non-matching rows to the database table
+    dbWriteTable(db, db_tableName, matching_rows, append = TRUE, row.names = FALSE)
+  } else { #If there are no matching rows we just append the new row.
+    dbWriteTable(db, db_tableName, df, append = TRUE, row.names = FALSE)
+  }
+
   dbDisconnect(db)
 }
-
-
-
 
 
 # Other helpers ----
