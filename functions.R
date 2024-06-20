@@ -231,9 +231,11 @@ list_name_md_to_html <- function(list) {
 # Config ----
 
 sd_config <- function(
-    db_url = NULL,
-    db_key = NULL,
-    db_sheetname = NULL,
+    db_host = NULL,
+    db_name = NULL,
+    db_port = NULL,
+    db_user = NULL,
+    db_tableName = NULL,
     skip_if = NULL,
     skip_if_custom = NULL,
     show_if = NULL,
@@ -258,7 +260,7 @@ sd_config <- function(
   # Establish data base if not in preview mode
 
   if (!preview) {
-    db_url <- establish_database(config, db_key, db_url, db_sheetname)
+    db_url <- establish_database(config, db_host, db_name, db_port, db_user, db_tableName)
   }
 
   # Check that start_page (if used) points to an actual page
@@ -274,7 +276,6 @@ sd_config <- function(
 
   # Store remaining config settings
 
-  config$db_url <- db_url
   config$skip_if <- skip_if
   config$skip_if_custom <- skip_if_custom
   config$show_if <- show_if
@@ -361,49 +362,33 @@ check_skip_show <- function(
 }
 
 ## Establish database ----
+establish_database <- function(config, db_host, db_name, db_port, db_user, db_tableName) {
 
-establish_database <- function(config, db_key, db_url = NULL, db_sheetname = NULL) {
-
-  # Authentication
-
-  if (is.null(db_key)) {
-    stop("You must provide a db_key to authenticate your Google account")
+  # Authentication/Checks for NULL Values
+  if (is.null(config) || is.null(db_host) || is.null(db_name) || is.null(db_port) || is.null(db_user) || is.null(db_tableName)) {
+    stop("Error: One or more required parameters (config, db_host, db_name, db_port, db_user, db_tableName) are NULL.")
   }
 
-  # < Code to handle google authentication here >
-
-  # Default behavior is to create a new google sheet if the user does not
-  # provide a db_url
-
-  if (is.null(db_url)) {
-
-    # < Code to create the new google sheet here>
-    # Will need to initialize the sheet with column names for
-    # every question_id in config$question_ids
-
-    # and add the page timestamps at the end with this:
-    # names(initialize_timestamps(config$page_ids))
-
-    # This should end with the url to the new sheet being stored
-
-    db_url <- "url_to_new_sheet" # Replace with url to new sheet
-
-  } else {
-
-    # < Code to run checks that the column names in the provided google sheet
-    # match those in config$question_ids >
-
-    # < Code to update the provided google sheet with any newly added
-    # question_ids if they are missing from the sheet >
-
+  if (nzchar(Sys.getenv("SupaPass"))) {
+    stop("You must provide your SupaBase password to access the database")
   }
 
-  # We return the db_url because if the user didn't provide one,
-  # we need to use the url to the newly created sheet, otherwise
-  # just return the one that the user provided
-
-  return(db_url)
-
+  # < Code to handle SupaBase authentication here >
+  #User Must create their own table inside of Supabase in order to make additions.
+  tryCatch(
+    {
+       db <-  dbConnect(
+          RPostgres::Postgres(),
+          host = db_host,
+          dbname = db_name,
+          port = db_port,
+          user = db_user,
+          password = Sys.getenv("SupaPass")
+        )
+      message("Successfully connected to the database.")
+    }, error = function(e) {
+      stop("Error: Failed to connect to the database. Please check your connection details.")
+    })
 }
 
 # Server ----
@@ -638,6 +623,24 @@ transform_data <- function(question_vals, timestamp_vals, session_id) {
 
   return(data)
 }
+
+### Database Uploading ----
+
+database_uploading <- function(file_path, config, db_host, db_name, db_port, db_user, db_tableName) { #I don't know what the file path will be here?
+  # Establish the database connection
+  df <- read_csv(file_path)
+  db <- establish_database(config, db_host, db_name, db_port, db_user, db_tableName)
+
+  data <- dbReadTable(db, db_tableName)
+
+
+  dbWriteTable(db, "Actual", df, append = TRUE, row.names = FALSE) # This is very basic row writing will have to do a matching check before this
+  dbDisconnect(db)
+}
+
+
+
+
 
 # Other helpers ----
 
