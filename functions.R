@@ -363,6 +363,8 @@ check_skip_show <- function(
 }
 
 ## Establish database ----
+#Note to self, call all needed librarys using name::function instead of loading it all at once
+
 establish_database <- function(config, db_host, db_name, db_port, db_user) {
 
   # Authentication/Checks for NULL Values
