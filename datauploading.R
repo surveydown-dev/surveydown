@@ -68,18 +68,37 @@ if(length(rows_to_delete) == 0) { #This is meant for first time addition of a ro
 #Command + Shift + 0 to restart R for changes to take effect if using a mac.
 
 
+db <-
+  dbConnect(
+    RPostgres::Postgres(),
+    host = "aws-0-us-west-1.pooler.supabase.com",
+    dbname = "postgres",
+    port = "6543",
+    user = "postgres.kjxxpyqplqvtqqxrxmzi",
+    password = Sys.getenv("SupaPass")
+  )
 
-db <- dbConnect(
-  RPostgres::Postgres(),
-  host = Sys.getenv("host"),
-  dbname = Sys.getenv("dbname"),
-  port = Sys.getenv("port"),
-  user = Sys.getenv("user"),
-  password = Sys.getenv("password")
-)
 
+# Attempt to connect to the database
 data <- dbReadTable(db, "Actual")
 
+# Check for non-matching session_id values
+matching_rows <- df[df$session_id %in% data$session_id, ]
+
+if (nrow(matching_rows) > 0) {
+  # Delete existing rows in the database table with matching session_id values from df
+  dbExecute(db, paste0('DELETE FROM \"', db_tableName, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+
+  # Append the new non-matching rows to the database table
+  dbWriteTable(db, "Actual", matching_rows, append = TRUE, row.names = FALSE)
+} else {
+  dbWriteTable(db, "Actual", df, append = TRUE, row.names = FALSE)
+}
+
+# Disconnect from the database
+dbDisconnect(db)
+
+db_tableName <- "Actual"
 #Writing to SupaBase
 #dbWriteTable(db, "Actual", df, append = TRUE, row.names = FALSE)
 

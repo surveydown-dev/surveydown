@@ -1,5 +1,7 @@
 library(shiny)
 library(shinyjs)
+library(DBI)
+library(RPostgreSQL)
 
 shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
@@ -231,9 +233,6 @@ list_name_md_to_html <- function(list) {
 # Config ----
 
 sd_config <- function(
-    db_url = NULL,
-    db_key = NULL,
-    db_sheetname = NULL,
     skip_if = NULL,
     skip_if_custom = NULL,
     show_if = NULL,
@@ -248,19 +247,13 @@ sd_config <- function(
   page_structure <- get_page_structure()
   config <- list(
     page_structure = page_structure,
-    page_ids = names(page_structure),
-    question_ids = unname(unlist(page_structure))
+    page_ids       = names(page_structure),
+    question_ids   = unname(unlist(page_structure))
   )
 
   # Check skip_if and show_if inputs
 
   check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
-
-  # Establish data base if not in preview mode
-
-  if (!preview) {
-    db_url <- establish_database(config, db_key, db_url, db_sheetname)
-  }
 
   # Check that start_page (if used) points to an actual page
 
@@ -281,7 +274,6 @@ sd_config <- function(
 
   # Store remaining config settings
 
-  config$db_url <- db_url
   config$skip_if <- skip_if
   config$skip_if_custom <- skip_if_custom
   config$show_if <- show_if
@@ -370,53 +362,39 @@ check_skip_show <- function(
 
 ## Establish database ----
 
-establish_database <- function(config, db_key, db_url = NULL, db_sheetname = NULL) {
+sd_database <- function(host, db_name, port, user, table_name, password) {
 
-  # Authentication
-
-  if (is.null(db_key)) {
-    stop("You must provide a db_key to authenticate your Google account")
+  # Authentication/Checks for NULL Values
+  if (is.null(host) || is.null(db_name) || is.null(port) || is.null(user)) {
+    stop("Error: One or more required parameters (config, host, db_name, port, user) are NULL.")
   }
 
-  # < Code to handle google authentication here >
-
-  # Default behavior is to create a new google sheet if the user does not
-  # provide a db_url
-
-  if (is.null(db_url)) {
-
-    # < Code to create the new google sheet here>
-    # Will need to initialize the sheet with column names for
-    # every question_id in config$question_ids
-
-    # and add the page timestamps at the end with this:
-    # names(initialize_timestamps(config$page_ids))
-
-    # This should end with the url to the new sheet being stored
-
-    db_url <- "url_to_new_sheet" # Replace with url to new sheet
-
-  } else {
-
-    # < Code to run checks that the column names in the provided google sheet
-    # match those in config$question_ids >
-
-    # < Code to update the provided google sheet with any newly added
-    # question_ids if they are missing from the sheet >
-
+  if (nzchar(password)) {
+    stop("You must provide your SupaBase password to access the database")
   }
 
-  # We return the db_url because if the user didn't provide one,
-  # we need to use the url to the newly created sheet, otherwise
-  # just return the one that the user provided
-
-  return(db_url)
-
+  # < Code to handle SupaBase authentication here >
+  #User Must create their own table inside of Supabase in order to make additions.
+  tryCatch(
+    {
+       db <-  dbConnect(
+          RPostgres::Postgres(),
+          host     = host,
+          dbname   = db_name,
+          port     = port,
+          user     = user,
+          password = password
+        )
+      message("Successfully connected to the database.")
+      return(list(db = db, table_name = table_name))
+    }, error = function(e) {
+      stop("Error: Failed to connect to the database. Please check your connection details.")
+    })
 }
 
 # Server ----
 
-sd_server <- function(input, session, config) {
+sd_server <- function(input, session, config, db = NULL) {
 
   # Create local objects from config file
 
@@ -424,7 +402,6 @@ sd_server <- function(input, session, config) {
   page_ids <- config$page_ids
   question_ids <- config$question_ids
   show_if <- config$show_if
-  db_url <- config$db_url
   skip_if <- config$skip_if
   skip_if_custom <- config$skip_if_custom
   show_if <- config$show_if
@@ -556,10 +533,13 @@ sd_server <- function(input, session, config) {
       timestamp_vals <- get_time_stamps()
 
       # Transform to data frame, handling uninitialized inputs appropriately
-      data <- transform_data(question_vals, timestamp_vals, session_id)
+      df_local <- transform_data(question_vals, timestamp_vals, session_id)
 
-      # Save data - need to update this with writing to the googlesheet
-      readr::write_csv(data, "data.csv")
+      # Update database
+      if (is.null(db)) {
+        warning('db is not connected, writing to local data.csv file instead')
+        readr::write_csv(df_local, "data.csv")
+      }
 
     })
 
@@ -682,6 +662,30 @@ transform_data <- function(question_vals, timestamp_vals, session_id) {
 
   return(data)
 }
+
+### Database Uploading ----
+
+database_uploading <- function(df, db, config, table_name) {
+
+  # Establish the database connection
+  data <- DBI::dbReadTable(db$db, db$table_name)
+
+  #Checking For Matching Session_Id's
+  matching_rows <- df[df$session_id %in% data$session_id, ]
+
+  if (nrow(matching_rows) > 0) {
+    # Delete existing rows in the database table with matching session_id values from df
+    dbExecute(db, paste0('DELETE FROM \"', table_name, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+
+    # Append the new non-matching rows to the database table
+    dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
+  } else { #If there are no matching rows we just append the new row.
+    dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
+  }
+
+  # dbDisconnect(db)
+}
+
 
 # Other helpers ----
 
