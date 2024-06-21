@@ -238,7 +238,8 @@ sd_config <- function(
     show_if = NULL,
     show_if_custom = NULL,
     preview = FALSE,
-    start_page = NULL
+    start_page = NULL,
+    show_all_pages = FALSE
 ) {
 
   # Get survey metadata
@@ -265,6 +266,12 @@ sd_config <- function(
     }
   }
 
+  if (show_all_pages) {
+    for (page in config$page_ids) {
+      shinyjs::show(page)
+    }
+  }
+
   # Store remaining config settings
 
   config$skip_if <- skip_if
@@ -273,6 +280,7 @@ sd_config <- function(
   config$show_if_custom <- show_if_custom
   config$preview <- preview
   config$start_page <- start_page
+  config$show_all_pages <- show_all_pages
 
   return(config)
 }
@@ -405,11 +413,9 @@ sd_server <- function(input, session, config, db = NULL) {
   session_id <- session$token
 
   # Initialize object for storing timestamps
-
-  timestamps <- reactiveValues(data = initialize_timestamps(page_ids))
+  timestamps <- reactiveValues(data = initialize_timestamps(page_ids, question_ids))
 
   # Conditional display (show_if conditions) ----
-
   if (!is.null(show_if)) {
     handle_basic_show_if_logic(input, show_if)
   }
@@ -417,6 +423,44 @@ sd_server <- function(input, session, config, db = NULL) {
   if (!is.null(show_if_custom)) {
     handle_custom_show_if_logic(input, show_if_custom)
   }
+
+  # Progress tracking ----
+
+  # Initialize reactive value to track the maximum progress reached
+  max_progress <- reactiveVal(0)
+
+  # Initialize reactive value to track the number of questions answered
+  answered_questions <- reactiveVal(0)
+
+  # Initialize reactiveValues to store status information
+  answer_status <- reactiveValues(
+    processing_question = NULL,
+    current_answers = NULL,
+    current_answers_length = NULL,
+    num_answered = NULL,
+    progress = NULL
+  )
+
+  # Observing the question timestamps and progress bar
+  observe({
+    lapply(question_ids, function(id) {
+      observeEvent(input[[id]], {
+        # Updating question timestamps
+        answer_status$processing_question <- list(id = id, value = input[[id]])
+        if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
+          timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
+        }
+        answered_position <- which(question_ids == id)
+        current_progress <- answered_position / length(question_ids)
+        if (current_progress > max_progress()) {
+          max_progress(current_progress)
+        }
+
+        # Updating progress bar
+        shinyjs::runjs(paste0("updateProgressBar(", max_progress() * 100, ");"))
+      }, ignoreInit = TRUE)
+    })
+  })
 
   # Page Navigation ----
 
@@ -448,7 +492,7 @@ sd_server <- function(input, session, config, db = NULL) {
           }
 
           # Store the timestamp with the page_id as the key
-          timestamps$data[[make_page_ts_name(next_page)]] <- get_utc_timestamp()
+          timestamps$data[[make_ts_name("page", next_page)]] <- get_utc_timestamp()
 
           # Execute page navigation
           shinyjs::runjs("hideAllPages();") # Hide all pages
@@ -649,22 +693,27 @@ get_utc_timestamp <- function() {
   return(format(Sys.time(), tz = "UTC", usetz = TRUE))
 }
 
-initialize_timestamps <- function(page_ids) {
-
+initialize_timestamps <- function(page_ids, question_ids) {
   timestamps <- list()
 
-  # Store the time of the start (first page)
-  timestamps[[make_page_ts_name(page_ids[1])]] <- get_utc_timestamp()
-
-  # Store "" values for all remaining pages
+  # Initialize timestamps for pages
+  timestamps[[make_ts_name("page", page_ids[1])]] <- get_utc_timestamp()
   for (i in 2:length(page_ids)) {
-    timestamps[[make_page_ts_name(page_ids[i])]] <- ""
+    timestamps[[make_ts_name("page", page_ids[i])]] <- NA
+  }
+
+  # Initialize timestamps for questions
+  for (qid in question_ids) {
+    timestamps[[make_ts_name("question", qid)]] <- NA
   }
 
   return(timestamps)
-
 }
 
-make_page_ts_name <- function(page_id) {
-  return(paste0("time_page_", page_id))
+make_ts_name <- function(type, id) {
+  if (type == "page") {
+    return(paste0("time_p_", id))
+  } else if (type == "question") {
+    return(paste0("time_q_", id))
+  }
 }

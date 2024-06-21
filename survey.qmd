@@ -2,11 +2,16 @@
 format: 
   html:
     section-divs: false
-server: shiny
-include-before-body: hide_pages.js
 execute:
   echo: false
-theme: ['cosmo', 'surveydown.scss']
+server: shiny
+include-before-body: 
+  - www/hide_pages.js
+  - www/update_progress.js
+theme: [united, www/surveydown.scss]
+filters: [www/progressbar.lua]
+barposition: "top" # top (default), bottom, or none
+barcolor: "theme" # theme (default) or a hex code
 ---
 
 ```{r}
