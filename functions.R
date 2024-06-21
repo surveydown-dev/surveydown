@@ -1,5 +1,7 @@
 library(shiny)
 library(shinyjs)
+library(DBI)
+library(RPostgreSQL)
 
 shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
@@ -363,10 +365,11 @@ check_skip_show <- function(
 }
 
 ## Establish database ----
-establish_database <- function(config, db_host, db_name, db_port, db_user) {
+
+sd_database <- function(host, db_name, port, user, table_name, password) {
 
   # Authentication/Checks for NULL Values
-  if (is.null(config) || is.null(db_host) || is.null(db_name) || is.null(db_port) || is.null(db_user)) {
+  if (is.null(db_host) || is.null(db_name) || is.null(db_port) || is.null(db_user)) {
     stop("Error: One or more required parameters (config, db_host, db_name, db_port, db_user) are NULL.")
   }
 
@@ -387,7 +390,7 @@ establish_database <- function(config, db_host, db_name, db_port, db_user) {
           password = Sys.getenv("SupaPass")
         )
       message("Successfully connected to the database.")
-      return(db)
+      return(list(db = db, table_name = table_name))
     }, error = function(e) {
       stop("Error: Failed to connect to the database. Please check your connection details.")
     })
@@ -395,7 +398,7 @@ establish_database <- function(config, db_host, db_name, db_port, db_user) {
 
 # Server ----
 
-sd_server <- function(input, session, config) {
+sd_server <- function(input, session, config, db = NULL) {
 
   # Create local objects from config file
 
@@ -499,10 +502,13 @@ sd_server <- function(input, session, config) {
       timestamp_vals <- get_time_stamps()
 
       # Transform to data frame, handling uninitialized inputs appropriately
-      data <- transform_data(question_vals, timestamp_vals, session_id)
+      df_local <- transform_data(question_vals, timestamp_vals, session_id)
 
-      # Save data - need to update this with writing to the googlesheet
-      readr::write_csv(data, "data.csv")
+      # Update database
+      if (is.null(db)) {
+        warning('db is not connected, writing to local data.csv file instead')
+        readr::write_csv(df_local, "data.csv")
+      }
 
     })
 
@@ -628,26 +634,25 @@ transform_data <- function(question_vals, timestamp_vals, session_id) {
 
 ### Database Uploading ----
 
-database_uploading <- function(file_path, config, db_host, db_name, db_port, db_user, db_tableName) { #I don't know what the file path will be here?
+database_uploading <- function(df, db, config, table_name) {
+
   # Establish the database connection
-  df <- read_csv(file_path)
-  db <- establish_database(config, db_host, db_name, db_port, db_user, db_tableName)
-  data <- dbReadTable(db, db_tableName)
+  data <- DBI::dbReadTable(db$db, db$table_name)
 
   #Checking For Matching Session_Id's
   matching_rows <- df[df$session_id %in% data$session_id, ]
 
   if (nrow(matching_rows) > 0) {
     # Delete existing rows in the database table with matching session_id values from df
-    dbExecute(db, paste0('DELETE FROM \"', db_tableName, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+    dbExecute(db, paste0('DELETE FROM \"', table_name, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
 
     # Append the new non-matching rows to the database table
-    dbWriteTable(db, db_tableName, matching_rows, append = TRUE, row.names = FALSE)
+    dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
   } else { #If there are no matching rows we just append the new row.
-    dbWriteTable(db, db_tableName, df, append = TRUE, row.names = FALSE)
+    dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
   }
 
-  dbDisconnect(db)
+  # dbDisconnect(db)
 }
 
 

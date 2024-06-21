@@ -407,6 +407,15 @@ sd_next(next_page = 'end')
 ```{r}
 #| context: server
 
+db <- sd_database(
+  host     = "host",
+  db_name   = "db_name",
+  port     = "port",
+  user      = "user",
+  table_name = "table_name",
+  password = Sys.getenv("SUPABASE_PASSWORD")
+)
+
 config <- sd_config(
   db_key  = "",
   db_url  = "",
@@ -425,6 +434,7 @@ config <- sd_config(
 sd_server(
   input   = input,
   session = session,
-  config  = config
+  config  = config,
+  db      = db
 )
 ```
