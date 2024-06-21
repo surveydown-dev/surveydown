@@ -408,18 +408,15 @@ sd_next(next_page = 'end')
 #| context: server
 
 db <- sd_database(
-  host     = "host",
-  db_name   = "db_name",
-  port     = "port",
-  user      = "user",
+  host       = "host",
+  db_name    = "db_name",
+  port       = "port",
+  user       = "user",
   table_name = "table_name",
-  password = Sys.getenv("SUPABASE_PASSWORD")
+  password   = Sys.getenv("SUPABASE_PASSWORD")
 )
 
 config <- sd_config(
-  db_key  = "",
-  db_url  = "",
-  db_sheetname = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_page", "end",           "end",

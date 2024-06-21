@@ -233,12 +233,6 @@ list_name_md_to_html <- function(list) {
 # Config ----
 
 sd_config <- function(
-    file_path = NULL,
-    db_host = NULL,
-    db_name = NULL,
-    db_port = NULL,
-    db_user = NULL,
-    db_tableName = NULL,
     skip_if = NULL,
     skip_if_custom = NULL,
     show_if = NULL,
@@ -252,19 +246,13 @@ sd_config <- function(
   page_structure <- get_page_structure()
   config <- list(
     page_structure = page_structure,
-    page_ids = names(page_structure),
-    question_ids = unname(unlist(page_structure))
+    page_ids       = names(page_structure),
+    question_ids   = unname(unlist(page_structure))
   )
 
   # Check skip_if and show_if inputs
 
   check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
-
-  # Establish data base if not in preview mode
-
-  if (!preview) { #Bogdan - I don't know what to do with this or how to change it
-    db_url <- establish_database(config, db_host, db_name, db_port, db_user, db_tableName)
-  }
 
   # Check that start_page (if used) points to an actual page
 
@@ -369,11 +357,11 @@ check_skip_show <- function(
 sd_database <- function(host, db_name, port, user, table_name, password) {
 
   # Authentication/Checks for NULL Values
-  if (is.null(db_host) || is.null(db_name) || is.null(db_port) || is.null(db_user)) {
-    stop("Error: One or more required parameters (config, db_host, db_name, db_port, db_user) are NULL.")
+  if (is.null(host) || is.null(db_name) || is.null(port) || is.null(user)) {
+    stop("Error: One or more required parameters (config, host, db_name, port, user) are NULL.")
   }
 
-  if (nzchar(Sys.getenv("SupaPass"))) {
+  if (nzchar(password)) {
     stop("You must provide your SupaBase password to access the database")
   }
 
@@ -383,11 +371,11 @@ sd_database <- function(host, db_name, port, user, table_name, password) {
     {
        db <-  dbConnect(
           RPostgres::Postgres(),
-          host = db_host,
-          dbname = db_name,
-          port = db_port,
-          user = db_user,
-          password = Sys.getenv("SupaPass")
+          host     = host,
+          dbname   = db_name,
+          port     = port,
+          user     = user,
+          password = password
         )
       message("Successfully connected to the database.")
       return(list(db = db, table_name = table_name))
@@ -406,7 +394,6 @@ sd_server <- function(input, session, config, db = NULL) {
   page_ids <- config$page_ids
   question_ids <- config$question_ids
   show_if <- config$show_if
-  db_url <- config$db_url
   skip_if <- config$skip_if
   skip_if_custom <- config$skip_if_custom
   show_if <- config$show_if
