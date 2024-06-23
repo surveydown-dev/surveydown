@@ -2,11 +2,16 @@
 format: 
   html:
     section-divs: false
-server: shiny
-include-before-body: hide_pages.js
 execute:
   echo: false
-theme: ['cosmo', 'surveydown.scss']
+server: shiny
+include-before-body: 
+  - www/hide_pages.js
+  - www/update_progress.js
+theme: [united, www/surveydown.scss]
+filters: [www/progressbar.lua]
+barposition: "top" # top (default), bottom, or none
+barcolor: "theme" # theme (default) or a hex code
 ---
 
 ```{r}
@@ -407,10 +412,16 @@ sd_next(next_page = 'end')
 ```{r}
 #| context: server
 
+db <- sd_database(
+  host       = "host",
+  db_name    = "db_name",
+  port       = "port",
+  user       = "user",
+  table_name = "table_name",
+  password   = Sys.getenv("SUPABASE_PASSWORD")
+)
+
 config <- sd_config(
-  db_key  = "",
-  db_url  = "",
-  db_sheetname = "",
   skip_if = tibble::tribble(
     ~question_id,  ~question_value, ~target,
     "skip_to_page", "end",           "end",
@@ -425,6 +436,7 @@ config <- sd_config(
 sd_server(
   input   = input,
   session = session,
-  config  = config
+  config  = config,
+  db      = db
 )
 ```

@@ -1,5 +1,7 @@
 library(shiny)
 library(shinyjs)
+library(DBI)
+library(RPostgreSQL)
 
 shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
@@ -231,18 +233,13 @@ list_name_md_to_html <- function(list) {
 # Config ----
 
 sd_config <- function(
-    file_path = NULL,
-    db_host = NULL,
-    db_name = NULL,
-    db_port = NULL,
-    db_user = NULL,
-    db_tableName = NULL,
     skip_if = NULL,
     skip_if_custom = NULL,
     show_if = NULL,
     show_if_custom = NULL,
     preview = FALSE,
-    start_page = NULL
+    start_page = NULL,
+    show_all_pages = FALSE
 ) {
 
   # Get survey metadata
@@ -250,19 +247,13 @@ sd_config <- function(
   page_structure <- get_page_structure()
   config <- list(
     page_structure = page_structure,
-    page_ids = names(page_structure),
-    question_ids = unname(unlist(page_structure))
+    page_ids       = names(page_structure),
+    question_ids   = unname(unlist(page_structure))
   )
 
   # Check skip_if and show_if inputs
 
   check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
-
-  # Establish data base if not in preview mode
-
-  if (!preview) { #Bogdan - I don't know what to do with this or how to change it
-    db_url <- establish_database(config, db_host, db_name, db_port, db_user, db_tableName)
-  }
 
   # Check that start_page (if used) points to an actual page
 
@@ -275,6 +266,12 @@ sd_config <- function(
     }
   }
 
+  if (show_all_pages) {
+    for (page in config$page_ids) {
+      shinyjs::show(page)
+    }
+  }
+
   # Store remaining config settings
 
   config$skip_if <- skip_if
@@ -283,6 +280,7 @@ sd_config <- function(
   config$show_if_custom <- show_if_custom
   config$preview <- preview
   config$start_page <- start_page
+  config$show_all_pages <- show_all_pages
 
   return(config)
 }
@@ -363,16 +361,20 @@ check_skip_show <- function(
 }
 
 ## Establish database ----
+
 #Note to self, call all needed librarys using name::function instead of loading it all at once
 
-establish_database <- function(config, db_host, db_name, db_port, db_user) {
+establish_database <- function(config, db_host, db_name, db_port, db_user) {}
+
+sd_database <- function(host, db_name, port, user, table_name, password) {
+
 
   # Authentication/Checks for NULL Values
-  if (is.null(config) || is.null(db_host) || is.null(db_name) || is.null(db_port) || is.null(db_user)) {
-    stop("Error: One or more required parameters (config, db_host, db_name, db_port, db_user) are NULL.")
+  if (is.null(host) || is.null(db_name) || is.null(port) || is.null(user)) {
+    stop("Error: One or more required parameters (config, host, db_name, port, user) are NULL.")
   }
 
-  if (nzchar(Sys.getenv("SupaPass"))) {
+  if (nzchar(password)) {
     stop("You must provide your SupaBase password to access the database")
   }
 
@@ -382,14 +384,14 @@ establish_database <- function(config, db_host, db_name, db_port, db_user) {
     {
        db <-  dbConnect(
           RPostgres::Postgres(),
-          host = db_host,
-          dbname = db_name,
-          port = db_port,
-          user = db_user,
-          password = Sys.getenv("SupaPass")
+          host     = host,
+          dbname   = db_name,
+          port     = port,
+          user     = user,
+          password = password
         )
       message("Successfully connected to the database.")
-      return(db)
+      return(list(db = db, table_name = table_name))
     }, error = function(e) {
       stop("Error: Failed to connect to the database. Please check your connection details.")
     })
@@ -397,7 +399,7 @@ establish_database <- function(config, db_host, db_name, db_port, db_user) {
 
 # Server ----
 
-sd_server <- function(input, session, config) {
+sd_server <- function(input, session, config, db = NULL) {
 
   # Create local objects from config file
 
@@ -405,7 +407,6 @@ sd_server <- function(input, session, config) {
   page_ids <- config$page_ids
   question_ids <- config$question_ids
   show_if <- config$show_if
-  db_url <- config$db_url
   skip_if <- config$skip_if
   skip_if_custom <- config$skip_if_custom
   show_if <- config$show_if
@@ -417,11 +418,9 @@ sd_server <- function(input, session, config) {
   session_id <- session$token
 
   # Initialize object for storing timestamps
-
-  timestamps <- reactiveValues(data = initialize_timestamps(page_ids))
+  timestamps <- reactiveValues(data = initialize_timestamps(page_ids, question_ids))
 
   # Conditional display (show_if conditions) ----
-
   if (!is.null(show_if)) {
     handle_basic_show_if_logic(input, show_if)
   }
@@ -429,6 +428,44 @@ sd_server <- function(input, session, config) {
   if (!is.null(show_if_custom)) {
     handle_custom_show_if_logic(input, show_if_custom)
   }
+
+  # Progress tracking ----
+
+  # Initialize reactive value to track the maximum progress reached
+  max_progress <- reactiveVal(0)
+
+  # Initialize reactive value to track the number of questions answered
+  answered_questions <- reactiveVal(0)
+
+  # Initialize reactiveValues to store status information
+  answer_status <- reactiveValues(
+    processing_question = NULL,
+    current_answers = NULL,
+    current_answers_length = NULL,
+    num_answered = NULL,
+    progress = NULL
+  )
+
+  # Observing the question timestamps and progress bar
+  observe({
+    lapply(question_ids, function(id) {
+      observeEvent(input[[id]], {
+        # Updating question timestamps
+        answer_status$processing_question <- list(id = id, value = input[[id]])
+        if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
+          timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
+        }
+        answered_position <- which(question_ids == id)
+        current_progress <- answered_position / length(question_ids)
+        if (current_progress > max_progress()) {
+          max_progress(current_progress)
+        }
+
+        # Updating progress bar
+        shinyjs::runjs(paste0("updateProgressBar(", max_progress() * 100, ");"))
+      }, ignoreInit = TRUE)
+    })
+  })
 
   # Page Navigation ----
 
@@ -460,7 +497,7 @@ sd_server <- function(input, session, config) {
           }
 
           # Store the timestamp with the page_id as the key
-          timestamps$data[[make_page_ts_name(next_page)]] <- get_utc_timestamp()
+          timestamps$data[[make_ts_name("page", next_page)]] <- get_utc_timestamp()
 
           # Execute page navigation
           shinyjs::runjs("hideAllPages();") # Hide all pages
@@ -501,10 +538,13 @@ sd_server <- function(input, session, config) {
       timestamp_vals <- get_time_stamps()
 
       # Transform to data frame, handling uninitialized inputs appropriately
-      data <- transform_data(question_vals, timestamp_vals, session_id)
+      df_local <- transform_data(question_vals, timestamp_vals, session_id)
 
-      # Save data - need to update this with writing to the googlesheet
-      readr::write_csv(data, "data.csv")
+      # Update database
+      if (is.null(db)) {
+        warning('db is not connected, writing to local data.csv file instead')
+        readr::write_csv(df_local, "data.csv")
+      }
 
     })
 
@@ -630,26 +670,25 @@ transform_data <- function(question_vals, timestamp_vals, session_id) {
 
 ### Database Uploading ----
 
-database_uploading <- function(file_path, config, db_host, db_name, db_port, db_user, db_tableName) { #I don't know what the file path will be here?
+database_uploading <- function(df, db, config, table_name) {
+
   # Establish the database connection
-  df <- read_csv(file_path)
-  db <- establish_database(config, db_host, db_name, db_port, db_user, db_tableName)
-  data <- dbReadTable(db, db_tableName)
+  data <- DBI::dbReadTable(db$db, db$table_name)
 
   #Checking For Matching Session_Id's
   matching_rows <- df[df$session_id %in% data$session_id, ]
 
   if (nrow(matching_rows) > 0) {
     # Delete existing rows in the database table with matching session_id values from df
-    dbExecute(db, paste0('DELETE FROM \"', db_tableName, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+    dbExecute(db, paste0('DELETE FROM \"', table_name, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
 
     # Append the new non-matching rows to the database table
-    dbWriteTable(db, db_tableName, matching_rows, append = TRUE, row.names = FALSE)
+    dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
   } else { #If there are no matching rows we just append the new row.
-    dbWriteTable(db, db_tableName, df, append = TRUE, row.names = FALSE)
+    dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
   }
 
-  dbDisconnect(db)
+  # dbDisconnect(db)
 }
 
 
@@ -659,22 +698,27 @@ get_utc_timestamp <- function() {
   return(format(Sys.time(), tz = "UTC", usetz = TRUE))
 }
 
-initialize_timestamps <- function(page_ids) {
-
+initialize_timestamps <- function(page_ids, question_ids) {
   timestamps <- list()
 
-  # Store the time of the start (first page)
-  timestamps[[make_page_ts_name(page_ids[1])]] <- get_utc_timestamp()
-
-  # Store "" values for all remaining pages
+  # Initialize timestamps for pages
+  timestamps[[make_ts_name("page", page_ids[1])]] <- get_utc_timestamp()
   for (i in 2:length(page_ids)) {
-    timestamps[[make_page_ts_name(page_ids[i])]] <- ""
+    timestamps[[make_ts_name("page", page_ids[i])]] <- NA
+  }
+
+  # Initialize timestamps for questions
+  for (qid in question_ids) {
+    timestamps[[make_ts_name("question", qid)]] <- NA
   }
 
   return(timestamps)
-
 }
 
-make_page_ts_name <- function(page_id) {
-  return(paste0("time_page_", page_id))
+make_ts_name <- function(type, id) {
+  if (type == "page") {
+    return(paste0("time_p_", id))
+  } else if (type == "question") {
+    return(paste0("time_q_", id))
+  }
 }
