@@ -689,7 +689,8 @@ create_table <- function(db, table_name, column_definitions) {
   DBI::dbExecute(db, create_table_query)
   DBI::dbExecute(db, paste0("ALTER TABLE ", table_name, " ENABLE ROW LEVEL SECURITY;"))
 }
-
+#The next step here is to add an alter queuery that checks if the type of a column
+#has been changed and if so change it.
 
 database_uploading <- function(df, db, config, table_name) {
   if(is.null(db)) {
@@ -708,7 +709,7 @@ database_uploading <- function(df, db, config, table_name) {
   }
 
   # Remove the trailing comma and space
-  col_def <- substr(col_def, 1, length(col_def) - 2)
+  col_def <- substr(col_def, 2, stringr::str_length(col_def) - 2)
 
   # Establish the database connection
   data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
