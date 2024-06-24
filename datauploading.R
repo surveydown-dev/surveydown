@@ -36,7 +36,7 @@ ssID <- "1cNZeKg_BjN6fTDPOZtSFk8kxt7hVDsSOCo84xu4eW_U"
 
 
 # Sheet Reading/Editing/Checking Section
-df <- read_csv(here('surveydown/data.csv'))
+df <- read_csv(here('data.csv'))
 
 # Read the sheet
 Sheet <- read_sheet(ss = ssID, range = "A:A")
@@ -80,7 +80,56 @@ db <-
 
 
 # Attempt to connect to the database
-data <- dbReadTable(db, "Actual")
+data1 <- dbReadTable(db, "scratch")
+
+column_names <- c("session_id", "user_id", "timestamp", "event_type", "event_details")
+
+# Create an empty tibble (data frame) with the specified column names
+column_definitions <- "
+  session_id TEXT,
+  user_id TEXT,
+  timestamp TIMESTAMP,
+  event_type TEXT,
+  event_details TEXT
+"
+
+
+r_to_sql_type <- function(r_type) {
+  switch(str_to_upper(r_type),
+         CHARACTER = "TEXT",
+         INTEGER = "INTEGER",
+         DOUBLE = "REAL",
+         LOGICAL = "BOOLEAN",
+         FACTOR = "TEXT",
+        )
+}
+
+
+# Loop through the column names
+# Initialize an empty string to hold the column definitions
+col_def <- ""
+
+
+for (col_name in colnames(df)) {
+  r_type <- typeof(df[[col_name]])
+  sql_type <- r_to_sql_type(r_type)
+  col_def <- paste0(col_def, col_name, " ", sql_type, ", ")
+}
+
+# Remove the trailing comma and space
+col_def <- substr(col_def, 1, nzchar(col_def) - 2)
+
+
+
+
+# Define the function to create the table
+create_table <- function(db, table_name, column_definitions) {
+  create_table_query <- paste0(
+    "CREATE TABLE ", table_name, " (", column_definitions, ")"
+  )
+  dbExecute(db, create_table_query)
+  dbExecute(db, paste0("ALTER TABLE ", table_name, " ENABLE ROW LEVEL SECURITY;"))
+}
 
 # Check for non-matching session_id values
 matching_rows <- df[df$session_id %in% data$session_id, ]
