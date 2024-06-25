@@ -13,7 +13,7 @@ library(RPostgreSQL)
 ################################################################################
 
 #Primary Solution Service Key Auth - Needs Service Email and
-credentials_path <- "surveydown/Service.json"
+credentials_path <- "Service.json"
 
 setup_auth <- function() {
   gs4_auth(path = credentials_path)
@@ -36,7 +36,6 @@ ssID <- "1cNZeKg_BjN6fTDPOZtSFk8kxt7hVDsSOCo84xu4eW_U"
 
 
 # Sheet Reading/Editing/Checking Section
-df <- read_csv(here('data.csv'))
 
 # Read the sheet
 Sheet <- read_sheet(ss = ssID, range = "A:A")
@@ -67,6 +66,9 @@ if(length(rows_to_delete) == 0) { #This is meant for first time addition of a ro
 
 #Command + Shift + 0 to restart R for changes to take effect if using a mac.
 
+df <- read_csv(here('data.csv'))
+
+colnames(df) <- tolower(colnames(df))
 
 db <-
   dbConnect(
@@ -75,82 +77,105 @@ db <-
     dbname = "postgres",
     port = "6543",
     user = "postgres.kjxxpyqplqvtqqxrxmzi",
-    password = Sys.getenv("SupaPass")
+    password = Sys.getenv("SUPABASE_PASSWORD")
   )
 
-
-# Attempt to connect to the database
-data1 <- dbReadTable(db, "scratch")
-
-column_names <- c("session_id", "user_id", "timestamp", "event_type", "event_details")
-
-# Create an empty tibble (data frame) with the specified column names
-column_definitions <- "
-  session_id TEXT,
-  user_id TEXT,
-  timestamp TIMESTAMP,
-  event_type TEXT,
-  event_details TEXT
-"
-
-
 r_to_sql_type <- function(r_type) {
-  switch(str_to_upper(r_type),
+  switch(toupper(r_type),
          CHARACTER = "TEXT",
-         INTEGER = "INTEGER",
-         DOUBLE = "REAL",
-         LOGICAL = "BOOLEAN",
+         INTEGER = "TEXT",
+         DOUBLE = "TEXT",
+         LOGICAL = "TEXT",
          FACTOR = "TEXT",
-        )
+         "TEXT")
 }
 
-
-# Loop through the column names
-# Initialize an empty string to hold the column definitions
-col_def <- ""
-
-
-for (col_name in colnames(df)) {
-  r_type <- typeof(df[[col_name]])
-  sql_type <- r_to_sql_type(r_type)
-  col_def <- paste0(col_def, col_name, " ", sql_type, ", ")
-}
-
-# Remove the trailing comma and space
-col_def <- substr(col_def, 2, str_length(col_def) - 2)
-
-
-
-
-# Define the function to create the table
 create_table <- function(db, table_name, column_definitions) {
   create_table_query <- paste0(
     "CREATE TABLE ", table_name, " (", column_definitions, ")"
   )
-  dbExecute(db, create_table_query)
-  dbExecute(db, paste0("ALTER TABLE ", table_name, " ENABLE ROW LEVEL SECURITY;"))
+  DBI::dbExecute(db, create_table_query)
+  DBI::dbExecute(db, paste0("ALTER TABLE ", table_name, " ENABLE ROW LEVEL SECURITY;"))
+  return(message("Database should appear on your SupaBase Account."))
 }
 
-# Check for non-matching session_id values
-matching_rows <- df[df$session_id %in% data$session_id, ]
+database_uploading <- function(df, db, table_name) {
+  db <- sd_database()
 
-if (nrow(matching_rows) > 0) {
-  # Delete existing rows in the database table with matching session_id values from df
-  dbExecute(db, paste0('DELETE FROM \"', db_tableName, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+  if(is.null(db$db)) {
+    return(warning("Databasing is not in use"))
+  }
 
-  # Append the new non-matching rows to the database table
-  dbWriteTable(db, "Actual", matching_rows, append = TRUE, row.names = FALSE)
-} else {
-  dbWriteTable(db, "Actual", df, append = TRUE, row.names = FALSE)
+  # Loop through the column names
+  col_def <- ""
+
+  #Create the col_definitions based on the type
+  for (col_name in colnames(df)) {
+    r_type <- typeof(df[[col_name]])
+    sql_type <- r_to_sql_type(r_type)
+    col_def <- paste0(col_def, col_name, " ", sql_type, ", ")
+  }
+
+  # Remove the trailing comma and space
+  col_def <- substr(col_def, 1, stringr::str_length(col_def) - 2)
+
+  # Establish the database connection
+  data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
+
+  #This actually checks if its empty and will create a brand new table name of your choice
+  if(is.null(data)) {
+    create_table(db, table_name, col_def)
+  }
+
+  #Table Editing Section
+  #Checking For Matching Session_Id's
+  matching_rows <- df[df$session_id %in% data$session_id, ]
+
+  if (nrow(matching_rows) > 0) {
+    # Delete existing rows in the database table with matching session_id values from df
+    DBI::dbExecute(db, paste0('DELETE FROM \"', table_name, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+
+    # Append the new non-matching rows to the database table
+    DBI::dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
+  } else { #If there are no matching rows we just append the new row.
+    DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
+  }
+}
+#New section that works to modify the table based on column changes.
+#This will be split into 3 sections, additions-deletions-type changes.
+
+
+sd_database <- function(host, db_name, port, user, table_name, password) {
+
+
+  # Authentication/Checks for NULL Values
+  if (is.null(host) || is.null(db_name) || is.null(port) || is.null(user)) {
+    stop("Error: One or more required parameters (config, host, db_name, port, user) are NULL.")
+  }
+
+  if (!nzchar(password)) {
+    stop("You must provide your SupaBase password to access the database")
+  }
+
+  # < Code to handle SupaBase authentication here >
+  #User Must create their own table inside of Supabase in order to make additions.
+  tryCatch(
+    {
+      db <-  dbConnect(
+        RPostgres::Postgres(),
+        host     = host,
+        dbname   = db_name,
+        port     = port,
+        user     = user,
+        password = password
+      )
+      message("Successfully connected to the database.")
+      return(list(db = db, table_name = table_name))
+    }, error = function(e) {
+      stop("Error: Failed to connect to the database. Please check your connection details.")
+    })
 }
 
-# Disconnect from the database
-dbDisconnect(db)
 
-db_tableName <- "Actual"
-#Writing to SupaBase
-#dbWriteTable(db, "Actual", df, append = TRUE, row.names = FALSE)
 
-#Disconnect the database right after the .csv is sent
-dbDisconnect(db)
 

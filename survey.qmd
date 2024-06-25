@@ -412,12 +412,13 @@ sd_next(next_page = 'end')
 ```{r}
 #| context: server
 
+#This is what the user has to input
 db <- sd_database(
-  host       = "host",
-  db_name    = "db_name",
-  port       = "port",
-  user       = "user",
-  table_name = "table_name",
+  host = "aws-0-us-west-1.pooler.supabase.com",
+  db_name = "postgres",
+  port = "6543",
+  user = "postgres.kjxxpyqplqvtqqxrxmzi",
+  table_name = "Testing1",
   password   = Sys.getenv("SUPABASE_PASSWORD")
 )
 

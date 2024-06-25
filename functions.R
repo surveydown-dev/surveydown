@@ -3,6 +3,7 @@ library(shinyjs)
 library(DBI)
 library(RPostgreSQL)
 
+
 shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
 # UI ----
@@ -362,10 +363,6 @@ check_skip_show <- function(
 
 ## Establish database ----
 
-#Note to self, call all needed librarys using name::function instead of loading it all at once
-
-establish_database <- function(config, db_host, db_name, db_port, db_user) {}
-
 sd_database <- function(host, db_name, port, user, table_name, password) {
 
 
@@ -374,7 +371,7 @@ sd_database <- function(host, db_name, port, user, table_name, password) {
     stop("Error: One or more required parameters (config, host, db_name, port, user) are NULL.")
   }
 
-  if (nzchar(password)) {
+  if (!nzchar(password)) {
     stop("You must provide your SupaBase password to access the database")
   }
 
@@ -539,13 +536,17 @@ sd_server <- function(input, session, config, db = NULL) {
 
       # Transform to data frame, handling uninitialized inputs appropriately
       df_local <- transform_data(question_vals, timestamp_vals, session_id)
+      # Making everything a string because the db poops itself
+      df_local[] <- lapply(df_local, as.character)
+
 
       # Update database
       if (is.null(db)) {
         warning('db is not connected, writing to local data.csv file instead')
         readr::write_csv(df_local, "data.csv")
+      } else{
+        database_uploading(df_local, db$db, db$table_name)
       }
-
     })
 
   }
@@ -670,34 +671,34 @@ transform_data <- function(question_vals, timestamp_vals, session_id) {
 
 ### Database Uploading ----
 
-#needed to change from R type to SQL type
+
+#Database Creation Section
+
+#Needed to change from R type to SQL type
 r_to_sql_type <- function(r_type) {
-  switch(str_to_upper(r_type),
+  switch(toupper(r_type),
          CHARACTER = "TEXT",
-         INTEGER = "INTEGER",
-         DOUBLE = "REAL",
-         LOGICAL = "BOOLEAN",
+         INTEGER = "TEXT",
+         DOUBLE = "TEXT",
+         LOGICAL = "TEXT",
          FACTOR = "TEXT",
-         stop("Unknown R type: ", r_type))
+         "TEXT")
 }
 
-#Uploading column names to empty table
 create_table <- function(db, table_name, column_definitions) {
   create_table_query <- paste0(
     "CREATE TABLE ", table_name, " (", column_definitions, ")"
   )
   DBI::dbExecute(db, create_table_query)
+  #A precaution to enable RLS
   DBI::dbExecute(db, paste0("ALTER TABLE ", table_name, " ENABLE ROW LEVEL SECURITY;"))
+  return(message("Database should appear on your SupaBase Account (Can take up to a minute.)"))
 }
-#The next step here is to add an alter queuery that checks if the type of a column
-#has been changed and if so change it.
 
-database_uploading <- function(df, db, config, table_name) {
+database_uploading <- function(df, db, table_name) {
   if(is.null(db)) {
     return(warning("Databasing is not in use"))
   }
-
-
   # Loop through the column names
   col_def <- ""
 
@@ -709,16 +710,17 @@ database_uploading <- function(df, db, config, table_name) {
   }
 
   # Remove the trailing comma and space
-  col_def <- substr(col_def, 2, stringr::str_length(col_def) - 2)
+  col_def <- substr(col_def, 1, nzchar(col_def) - 2)
 
   # Establish the database connection
   data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
 
   #This actually checks if its empty and will create a brand new table name of your choice
-  if(ncol(data) == 0) {
+  if(is.null(data)) {
     create_table(db, table_name, col_def)
   }
 
+  #Table Editing Section
   #Checking For Matching Session_Id's
   matching_rows <- df[df$session_id %in% data$session_id, ]
 
@@ -731,8 +733,25 @@ database_uploading <- function(df, db, config, table_name) {
   } else { #If there are no matching rows we just append the new row.
     DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
   }
-
 }
+#Database Editing Section based on a change in column parameters
+
+  #So here I will have to write a loop so see what variables changed and from here we add and delete whats necessary
+
+  #For this loop we will check the datatypes for each var and change accordingly. Instead of using the col_def for table_query
+  #We might be able to use it for the alter table command
+
+  # ALTER TABLE table_name
+  # ALTER TABLE column_name datatype;
+
+  # Addition
+  # ALTER TABLE table_name
+  # ADD column_name datatype;
+  #
+  #
+  # Deletion
+  # ALTER TABLE table_name
+  # DROP COLUMN column_name;
 
 
 # Other helpers ----
