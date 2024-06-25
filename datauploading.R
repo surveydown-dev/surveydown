@@ -117,7 +117,7 @@ for (col_name in colnames(df)) {
 }
 
 # Remove the trailing comma and space
-col_def <- substr(col_def, 1, nzchar(col_def) - 2)
+col_def <- substr(col_def, 2, str_length(col_def) - 2)
 
 
 
