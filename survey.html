@@ -42,33 +42,6 @@ ul.task-list li input[type="checkbox"] {
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
 
 <main class="content" id="quarto-document-content">
-<script>
-// Define a global function to hide all pages
-window.hideAllPages = function() {
-  var pages = document.querySelectorAll("div.sd-page");
-  pages.forEach(function(page) {
-    page.style.display = 'none';
-  });
-};
-
-// Call the function on initial load to hide all pages except the first
-document.addEventListener("DOMContentLoaded", function() {
-  window.hideAllPages();
-  document.querySelectorAll("div.sd-page")[0].style.display = 'block';
-});
-</script>
-<script>
-function updateProgressBar(progress) {
-  var progressBar = document.getElementById("progress");
-  if (progressBar) {
-    progressBar.style.width = progress + "%";
-  }
-}
-
-Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
-  updateProgressBar(progress);
-});
-</script>
 
 
 
@@ -94,6 +67,35 @@ Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
     padding-top: 20px;
   }
   </style>
+  
+  <script>
+  // Define a global function to hide all pages
+  window.hideAllPages = function() {
+    var pages = document.querySelectorAll("div.sd-page");
+    pages.forEach(function(page) {
+      page.style.display = 'none';
+    });
+  };
+
+  // Call the function on initial load to hide all pages except the first
+  document.addEventListener("DOMContentLoaded", function() {
+    window.hideAllPages();
+    document.querySelectorAll("div.sd-page")[0].style.display = 'block';
+  });
+  </script>
+  
+  <script>
+  function updateProgressBar(progress) {
+    var progressBar = document.getElementById("progress");
+    if (progressBar) {
+      progressBar.style.width = progress + "%";
+    }
+  }
+
+  Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
+    updateProgressBar(progress);
+  });
+  </script>
   
   <div id="progressbar" class="top">
     <div id="progress" style="background-color: #2780E3;"></div>

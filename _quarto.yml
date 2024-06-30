@@ -3,11 +3,8 @@ format:
     section-divs: false
 execute:
   echo: false
-include-before-body:
-  - assets/hide_pages.js
-  - assets/update_progress.js
 filters:
-  - assets/progressbar.lua
+  - surveydown.lua
 theme:
   - cosmos
   - themes/surveydown.scss
