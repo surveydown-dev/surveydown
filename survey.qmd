@@ -1,7 +1,6 @@
 ---
+filters: [surveydown.lua]
 server: shiny
-barposition: "top" # top (default), bottom, or none
-barcolor: "theme" # theme (default) or a hex code
 ---
 
 ```{r}

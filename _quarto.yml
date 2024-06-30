@@ -3,8 +3,6 @@ format:
     section-divs: false
 execute:
   echo: false
-filters:
-  - surveydown.lua
 theme:
   - cosmos
   - themes/surveydown.scss
