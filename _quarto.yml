@@ -1,0 +1,15 @@
+format:
+  html:
+    section-divs: false
+execute:
+  echo: false
+include-before-body:
+  - assets/hide_pages.js
+  - assets/update_progress.js
+filters:
+  - assets/progressbar.lua
+theme:
+  - cosmos
+  - themes/surveydown.scss
+barposition: "top" # top (default), bottom, or none
+barcolor: "theme" # theme (default) or a hex code
