@@ -46,61 +46,6 @@ ul.task-list li input[type="checkbox"] {
 
 
 
-  <style>
-  #progressbar {
-    background-color: #ECE8DF;
-    padding: 3px;
-    width: 100%;
-    position: fixed;
-    left: 0;
-    z-index: 1000;
-  }
-  #progressbar.top {
-    top: 0;
-  }
-  #progressbar > div {
-    width: 0%;
-    height: 10px;
-    border-radius: 0;
-  }
-  body {
-    padding-top: 20px;
-  }
-  </style>
-  
-  <script>
-  // Define a global function to hide all pages
-  window.hideAllPages = function() {
-    var pages = document.querySelectorAll("div.sd-page");
-    pages.forEach(function(page) {
-      page.style.display = 'none';
-    });
-  };
-
-  // Call the function on initial load to hide all pages except the first
-  document.addEventListener("DOMContentLoaded", function() {
-    window.hideAllPages();
-    document.querySelectorAll("div.sd-page")[0].style.display = 'block';
-  });
-  </script>
-  
-  <script>
-  function updateProgressBar(progress) {
-    var progressBar = document.getElementById("progress");
-    if (progressBar) {
-      progressBar.style.width = progress + "%";
-    }
-  }
-
-  Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
-    updateProgressBar(progress);
-  });
-  </script>
-  
-  <div id="progressbar" class="top">
-    <div id="progress" style="background-color: #2780E3;"></div>
-  </div>
-  
 <div class="cell" data-context="setup">
 <div class="cell-output-display">
 <!--SHINY.SINGLETON[223eed69850a44625b94f39193177e317dbc7f92]-->
@@ -130,7 +75,8 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 <div id="welcome" class="sd-page">
-<h1 id="welcome-to-my-survey">Welcome to my survey!</h1>
+<section id="welcome-to-my-survey" class="level1">
+<h1>Welcome to my survey!</h1>
 <p>Here is a question to get started.</p>
 <p>This question showcases what a “multiple choice” question looks like, which is created using <code>type = 'mc'</code> inside the <code>sd_question()</code> function.</p>
 <p>It also is an example of the <code>show_if</code> feature (conditional display). If you choose the “Other” option, a second question pops up below asking to specify which other type of penguin is your favorite. This is controlled with the <code>show_if</code> argument to the <code>sd_config()</code> function defined in the server section at the bottom of the .qmd file.</p>
@@ -185,9 +131,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <button id="next-skipif" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'skipif');">Next</button>
 </div>
 </div>
+</section>
 </div>
 <div id="skipif" class="sd-page">
-<h1 id="skip_if">skip_if</h1>
+<section id="skip_if" class="level1">
+<h1>skip_if</h1>
 <p>This page showcases the <code>skip_if</code> feature, which allows you to skip forward in the survey based on different conditions. Depending on your choice, you’ll go to a different page in the survey when you press the “Next” button. This is controlled with the <code>skip_if</code> argument to the <code>sd_config()</code> function defined in the server section at the bottom of the .qmd file.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -225,9 +173,11 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <button id="next-questionTypes" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'questionTypes');">Next</button>
 </div>
 </div>
+</section>
 </div>
 <div id="questionTypes" class="sd-page">
-<h1 id="question-types">Question types</h1>
+<section id="question-types" class="level1">
+<h1>Question types</h1>
 <p>This page showcases the different types of question supported by <code>{surveydown}</code>. Each question requires the user to define the following arguments to the <code>sd_question()</code> function:</p>
 <ul>
 <li><code>id</code>: A unique identifier for the question, which will be used as the variable name in the resulting survey data.</li>
@@ -247,7 +197,8 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <li><code>daterange</code>: Select two dates from calendar widgets (e.g.&nbsp;begin and end dates).</li>
 </ul></li>
 </ul>
-<h4 id="use-type-text-to-specify-a-text-input-type-question" class="anchored">Use <code>type = 'text'</code> to specify a text input type question:</h4>
+<section id="use-type-text-to-specify-a-text-input-type-question" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-text-to-specify-a-text-input-type-question">Use <code>type = 'text'</code> to specify a text input type question:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- silly_word" data-question-id="silly_word" class="question-container">
@@ -259,7 +210,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-textarea-to-specify-a-textarea-input-type-question" class="anchored">Use <code>type = 'textarea'</code> to specify a textarea input type question:</h4>
+</section>
+<section id="use-type-textarea-to-specify-a-textarea-input-type-question" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-textarea-to-specify-a-textarea-input-type-question">Use <code>type = 'textarea'</code> to specify a textarea input type question:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- silly_paragraph" data-question-id="silly_paragraph" class="question-container">
@@ -271,7 +224,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-numeric-to-specify-a-numeric-input-type" class="anchored">Use <code>type = 'numeric'</code> to specify a numeric input type:</h4>
+</section>
+<section id="use-type-numeric-to-specify-a-numeric-input-type" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-numeric-to-specify-a-numeric-input-type">Use <code>type = 'numeric'</code> to specify a numeric input type:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- age" data-question-id="age" class="question-container">
@@ -283,7 +238,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-mc-to-specify-a-multiple-choice-type-question-with-a-single-choice-option" class="anchored">Use <code>type = 'mc'</code> to specify a multiple choice type question with a single choice option:</h4>
+</section>
+<section id="use-type-mc-to-specify-a-multiple-choice-type-question-with-a-single-choice-option" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-mc-to-specify-a-multiple-choice-type-question-with-a-single-choice-option">Use <code>type = 'mc'</code> to specify a multiple choice type question with a single choice option:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- artist" data-question-id="artist" class="question-container">
@@ -338,7 +295,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-mc_buttons-to-generate-the-button-version-of-mc" class="anchored">Use <code>type = 'mc_buttons'</code> to generate the button version of <code>mc</code>:</h4>
+</section>
+<section id="use-type-mc_buttons-to-generate-the-button-version-of-mc" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-mc_buttons-to-generate-the-button-version-of-mc">Use <code>type = 'mc_buttons'</code> to generate the button version of <code>mc</code>:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- fruit" data-question-id="fruit" class="question-container">
@@ -368,7 +327,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-mc_multiple-to-specify-a-multiple-choice-type-question-with-multiple-selection-enabled" class="anchored">Use <code>type = 'mc_multiple'</code> to specify a multiple choice type question with multiple selection enabled:</h4>
+</section>
+<section id="use-type-mc_multiple-to-specify-a-multiple-choice-type-question-with-multiple-selection-enabled" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-mc_multiple-to-specify-a-multiple-choice-type-question-with-multiple-selection-enabled">Use <code>type = 'mc_multiple'</code> to specify a multiple choice type question with multiple selection enabled:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- swift" data-question-id="swift" class="question-container">
@@ -441,7 +402,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-mc_multiple_buttons-to-generate-the-button-version-of-mc_multiple" class="anchored">Use <code>type = 'mc_multiple_buttons'</code> to generate the button version of <code>mc_multiple</code>:</h4>
+</section>
+<section id="use-type-mc_multiple_buttons-to-generate-the-button-version-of-mc_multiple" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-mc_multiple_buttons-to-generate-the-button-version-of-mc_multiple">Use <code>type = 'mc_multiple_buttons'</code> to generate the button version of <code>mc_multiple</code>:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- michael_jackson" data-question-id="michael_jackson" class="question-container">
@@ -473,7 +436,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-select-to-specify-a-drop-down-select-type-question" class="anchored">Use <code>type = 'select'</code> to specify a drop down select type question:</h4>
+</section>
+<section id="use-type-select-to-specify-a-drop-down-select-type-question" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-select-to-specify-a-drop-down-select-type-question">Use <code>type = 'select'</code> to specify a drop down select type question:</h4>
 <div class="cell">
 <div class="cell-output-display no-overflow-x">
 <div id="container- education" data-question-id="education" class="question-container">
@@ -495,7 +460,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-slider-to-specify-a-slider-input-type" class="anchored">Use <code>type = 'slider'</code> to specify a slider input type:</h4>
+</section>
+<section id="use-type-slider-to-specify-a-slider-input-type" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-slider-to-specify-a-slider-input-type">Use <code>type = 'slider'</code> to specify a slider input type:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- climate_care" data-question-id="climate_care" class="question-container">
@@ -507,7 +474,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="type-slider-can-also-be-used-to-select-a-range" class="anchored"><code>type = 'slider'</code> can also be used to select a range:</h4>
+</section>
+<section id="type-slider-can-also-be-used-to-select-a-range" class="level4">
+<h4 class="anchored" data-anchor-id="type-slider-can-also-be-used-to-select-a-range"><code>type = 'slider'</code> can also be used to select a range:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- coldest_months" data-question-id="coldest_months" class="question-container">
@@ -519,7 +488,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-date-to-specify-a-date-input-type" class="anchored">Use <code>type = 'date'</code> to specify a date input type:</h4>
+</section>
+<section id="use-type-date-to-specify-a-date-input-type" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-date-to-specify-a-date-input-type">Use <code>type = 'date'</code> to specify a date input type:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- dob" data-question-id="dob" class="question-container">
@@ -531,7 +502,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-type-daterange-to-specify-a-daterange-input-type" class="anchored">Use <code>type = 'daterange'</code> to specify a daterange input type:</h4>
+</section>
+<section id="use-type-daterange-to-specify-a-daterange-input-type" class="level4">
+<h4 class="anchored" data-anchor-id="use-type-daterange-to-specify-a-daterange-input-type">Use <code>type = 'daterange'</code> to specify a daterange input type:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- hs_date" data-question-id="hs_date" class="question-container">
@@ -555,13 +528,17 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <button id="next-questionFormatting" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'questionFormatting');">Next</button>
 </div>
 </div>
+</section>
+</section>
 </div>
 <div id="questionFormatting" class="sd-page">
-<h1 id="question-formatting">Question formatting</h1>
+<section id="question-formatting" class="level1">
+<h1>Question formatting</h1>
 <blockquote class="blockquote">
 <p>On this page, we’ll demonstrate some of the formatting options for displaying questions.</p>
 </blockquote>
-<h4 id="markdown-is-supported-for-the-question-label" class="anchored">Markdown is supported for the question label</h4>
+<section id="markdown-is-supported-for-the-question-label" class="level4">
+<h4 class="anchored" data-anchor-id="markdown-is-supported-for-the-question-label">Markdown is supported for the question label</h4>
 <p>The <code>label</code> argument for any question type can accept markdown formatting. For example, the question below uses the <code>**</code> symbols to make some works bold:</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -593,7 +570,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="markdown-is-supported-for-options-in-mc_buttons-questions" class="anchored">Markdown is supported for options in <code>mc_buttons</code> questions</h4>
+</section>
+<section id="markdown-is-supported-for-options-in-mc_buttons-questions" class="level4">
+<h4 class="anchored" data-anchor-id="markdown-is-supported-for-options-in-mc_buttons-questions">Markdown is supported for options in <code>mc_buttons</code> questions</h4>
 <p>For <code>mc_button</code> type questions, you can also use markdown to format the <code>option</code> labels:</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -638,7 +617,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="html-is-also-supported-for-options-of-mc_buttons-and-mc_multiple_buttons-so-that-you-can-insert-mixed-content-including-plain-text-markdown-and-html-images.-for-example-here-is-a-question-with-some-complex-labels-for-a-choice-question" class="anchored">HTML is also supported for options of <code>mc_buttons</code> and <code>mc_multiple_buttons</code>, so that you can insert mixed content including plain text, markdown, and HTML images. For example, here is a question with some complex labels for a choice question:</h4>
+</section>
+<section id="html-is-also-supported-for-options-of-mc_buttons-and-mc_multiple_buttons-so-that-you-can-insert-mixed-content-including-plain-text-markdown-and-html-images.-for-example-here-is-a-question-with-some-complex-labels-for-a-choice-question" class="level4">
+<h4 class="anchored" data-anchor-id="html-is-also-supported-for-options-of-mc_buttons-and-mc_multiple_buttons-so-that-you-can-insert-mixed-content-including-plain-text-markdown-and-html-images.-for-example-here-is-a-question-with-some-complex-labels-for-a-choice-question">HTML is also supported for options of <code>mc_buttons</code> and <code>mc_multiple_buttons</code>, so that you can insert mixed content including plain text, markdown, and HTML images. For example, here is a question with some complex labels for a choice question:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- html_buttons" data-question-id="html_buttons" class="question-container">
@@ -660,7 +641,9 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 </div>
 </div>
 </div>
-<h4 id="use-the-width-argument-to-change-the-width-for-the-question" class="anchored">Use the <code>width</code> argument to change the width for the question:</h4>
+</section>
+<section id="use-the-width-argument-to-change-the-width-for-the-question" class="level4">
+<h4 class="anchored" data-anchor-id="use-the-width-argument-to-change-the-width-for-the-question">Use the <code>width</code> argument to change the width for the question:</h4>
 <div class="cell">
 <div class="cell-output-display">
 <div id="container- change_width" data-question-id="change_width" class="question-container">
@@ -678,9 +661,13 @@ Shiny.addCustomMessageHandler('shinyjs-refresh', function(params) { shinyjs.debu
 <button id="next-end" type="button" class="btn btn-default action-button" style="display: block; margin: auto;" onclick="Shiny.setInputValue('next_page', 'end');">Next</button>
 </div>
 </div>
+</section>
+</section>
 </div>
 <div id="end" class="sd-page">
-<h2 id="thanks-for-taking-our-survey" class="anchored">Thanks for taking our survey!</h2>
+<section id="thanks-for-taking-our-survey" class="level2">
+<h2 class="anchored" data-anchor-id="thanks-for-taking-our-survey">Thanks for taking our survey!</h2>
+</section>
 </div>
 <p>
 <script type="application/shiny-prerendered" data-context="server-start">

@@ -1,10 +1,12 @@
+filters:
+    - surveydown.lua
 format:
   html:
     section-divs: false
-execute:
-  echo: false
-theme:
-  - cosmos
-  - themes/surveydown.scss
-barposition: "top" # top (default), bottom, or none
-barcolor: "theme" # theme (default) or a hex code
+    execute:
+      echo: false
+    theme:
+      - cosmos
+      - themes/surveydown.scss
+    barposition: "top" # top (default), bottom, or none
+    barcolor: "theme" # theme (default) or a hex code

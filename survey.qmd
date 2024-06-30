@@ -1,5 +1,4 @@
 ---
-filters: [surveydown.lua]
 server: shiny
 ---
 
