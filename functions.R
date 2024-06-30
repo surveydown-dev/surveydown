@@ -3,7 +3,6 @@ library(shinyjs)
 library(DBI)
 library(RPostgreSQL)
 
-
 shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
 # UI ----

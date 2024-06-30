@@ -84,9 +84,46 @@ function Pandoc(doc)
   </div>
   ]], position, color)
 
-  -- Insert the CSS and progress bar HTML into the document
+  -- Define the JavaScript for hide_pages.js
+  local hide_pages_js = [[
+  <script>
+  // Define a global function to hide all pages
+  window.hideAllPages = function() {
+    var pages = document.querySelectorAll("div.sd-page");
+    pages.forEach(function(page) {
+      page.style.display = 'none';
+    });
+  };
+
+  // Call the function on initial load to hide all pages except the first
+  document.addEventListener("DOMContentLoaded", function() {
+    window.hideAllPages();
+    document.querySelectorAll("div.sd-page")[0].style.display = 'block';
+  });
+  </script>
+  ]]
+
+  -- Define the JavaScript for update_progress.js
+  local update_progress_js = [[
+  <script>
+  function updateProgressBar(progress) {
+    var progressBar = document.getElementById("progress");
+    if (progressBar) {
+      progressBar.style.width = progress + "%";
+    }
+  }
+
+  Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
+    updateProgressBar(progress);
+  });
+  </script>
+  ]]
+
+  -- Insert the CSS, JavaScript, and progress bar HTML into the document
   table.insert(doc.blocks, 1, pandoc.RawBlock('html', css))
-  table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar))
+  table.insert(doc.blocks, 2, pandoc.RawBlock('html', hide_pages_js))
+  table.insert(doc.blocks, 3, pandoc.RawBlock('html', update_progress_js))
+  table.insert(doc.blocks, 4, pandoc.RawBlock('html', progressbar))
 
   return doc
 end
