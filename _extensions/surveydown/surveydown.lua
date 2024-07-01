@@ -1,28 +1,22 @@
+local function ensure_html_deps()
+  quarto.doc.add_html_dependency({
+    name = 'hidepagesjs',
+    scripts = {"hide_pages.js"}
+  })
+
+  quarto.doc.add_html_dependency({
+    name = 'updateprogressjs',
+    scripts = {"update_progress.js"}
+  })
+
+  quarto.doc.add_html_dependency({
+    name = 'surveydowncss',
+    stylesheets = {"surveydown.css"}
+  })
+end
+
 function Pandoc(doc)
-  -- Define the CSS template with placeholders for color and position
-  local css_template = [[
-  <style>
-  #progressbar {
-    background-color: #ECE8DF;
-    padding: 3px;
-    width: 100%;
-    position: fixed;
-    left: 0;
-    z-index: 1000;
-  }
-  #progressbar.POSITION_PLACEHOLDER {
-    POSITION_PLACEHOLDER: 0;
-  }
-  #progressbar > div {
-    width: 0%;
-    height: 10px;
-    border-radius: 0;
-  }
-  body {
-    padding-top: 20px;
-  }
-  </style>
-  ]]
+  ensure_html_deps()
 
   -- Define Bootswatch theme primary colors
   local theme_colors = {
@@ -75,7 +69,13 @@ function Pandoc(doc)
   local position = barposition == 'bottom' and 'bottom' or 'top'
 
   -- Replace placeholders in CSS template
-  local css = css_template:gsub("POSITION_PLACEHOLDER", position)
+  local css = [[
+  <style>
+  #progressbar.]] .. position .. [[ {
+    ]] .. position .. [[: 0;
+  }
+  </style>
+  ]]
 
   -- Define the HTML for the progress bar
   local progressbar = string.format([[
@@ -84,46 +84,9 @@ function Pandoc(doc)
   </div>
   ]], position, color)
 
-  -- Define the JavaScript for hide_pages.js
-  local hide_pages_js = [[
-  <script>
-  // Define a global function to hide all pages
-  window.hideAllPages = function() {
-    var pages = document.querySelectorAll("div.sd-page");
-    pages.forEach(function(page) {
-      page.style.display = 'none';
-    });
-  };
-
-  // Call the function on initial load to hide all pages except the first
-  document.addEventListener("DOMContentLoaded", function() {
-    window.hideAllPages();
-    document.querySelectorAll("div.sd-page")[0].style.display = 'block';
-  });
-  </script>
-  ]]
-
-  -- Define the JavaScript for update_progress.js
-  local update_progress_js = [[
-  <script>
-  function updateProgressBar(progress) {
-    var progressBar = document.getElementById("progress");
-    if (progressBar) {
-      progressBar.style.width = progress + "%";
-    }
-  }
-
-  Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
-    updateProgressBar(progress);
-  });
-  </script>
-  ]]
-
-  -- Insert the CSS, JavaScript, and progress bar HTML into the document
+  -- Insert the CSS and progress bar HTML into the document
   table.insert(doc.blocks, 1, pandoc.RawBlock('html', css))
-  table.insert(doc.blocks, 2, pandoc.RawBlock('html', hide_pages_js))
-  table.insert(doc.blocks, 3, pandoc.RawBlock('html', update_progress_js))
-  table.insert(doc.blocks, 4, pandoc.RawBlock('html', progressbar))
+  table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar))
 
   return doc
 end
