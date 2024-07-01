@@ -8,35 +8,15 @@ local function ensure_html_deps()
     name = 'updateprogressjs',
     scripts = {"update_progress.js"}
   })
+
+  quarto.doc.add_html_dependency({
+    name = 'surveydowncss',
+    stylesheets = {"surveydown.css"}
+  })
 end
 
 function Pandoc(doc)
   ensure_html_deps()
-
-  -- Define the CSS template with placeholders for color and position
-  local css_template = [[
-  <style>
-  #progressbar {
-    background-color: #ECE8DF;
-    padding: 3px;
-    width: 100%;
-    position: fixed;
-    left: 0;
-    z-index: 1000;
-  }
-  #progressbar.POSITION_PLACEHOLDER {
-    POSITION_PLACEHOLDER: 0;
-  }
-  #progressbar > div {
-    width: 0%;
-    height: 10px;
-    border-radius: 0;
-  }
-  body {
-    padding-top: 20px;
-  }
-  </style>
-  ]]
 
   -- Define Bootswatch theme primary colors
   local theme_colors = {
@@ -89,7 +69,13 @@ function Pandoc(doc)
   local position = barposition == 'bottom' and 'bottom' or 'top'
 
   -- Replace placeholders in CSS template
-  local css = css_template:gsub("POSITION_PLACEHOLDER", position)
+  local css = [[
+  <style>
+  #progressbar.]] .. position .. [[ {
+    ]] .. position .. [[: 0;
+  }
+  </style>
+  ]]
 
   -- Define the HTML for the progress bar
   local progressbar = string.format([[

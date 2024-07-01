@@ -1,6 +1,7 @@
 ---
 server: shiny
 filters: [surveydown]
+theme: surveydown.scss
 ---
 
 ```{r}
