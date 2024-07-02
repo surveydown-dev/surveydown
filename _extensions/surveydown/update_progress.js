@@ -1,4 +1,3 @@
-<script>
 function updateProgressBar(progress) {
   var progressBar = document.getElementById("progress");
   if (progressBar) {
@@ -9,4 +8,3 @@ function updateProgressBar(progress) {
 Shiny.addCustomMessageHandler('updateProgressBar', function(progress) {
   updateProgressBar(progress);
 });
-</script>

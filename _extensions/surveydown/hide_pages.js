@@ -1,4 +1,3 @@
-<script>
 // Define a global function to hide all pages
 window.hideAllPages = function() {
   var pages = document.querySelectorAll("div.sd-page");
@@ -12,4 +11,3 @@ document.addEventListener("DOMContentLoaded", function() {
   window.hideAllPages();
   document.querySelectorAll("div.sd-page")[0].style.display = 'block';
 });
-</script>

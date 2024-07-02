@@ -3,7 +3,6 @@ library(shinyjs)
 library(DBI)
 library(RPostgreSQL)
 
-
 shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
 
 # UI ----
@@ -246,8 +245,10 @@ sd_config <- function(
   # Get survey metadata
 
   page_structure <- get_page_structure()
+  question_structure <- get_question_structure()
   config <- list(
     page_structure = page_structure,
+    question_structure = question_structure,
     page_ids       = names(page_structure),
     question_ids   = unname(unlist(page_structure))
   )
@@ -331,6 +332,30 @@ get_page_nodes <- function() {
   }
 
   stop("Error: {surveydown} requires that only one .qmd file in the directory.")
+
+}
+
+get_question_structure <- function() {
+
+  # Should return a list where each item name is a question_id and
+  # each item value is the set of question values (options), e.g.:
+  # list(
+  #   penguins = c('adelie', 'chinstrap', 'gentoo', 'other'),
+  #   penguins_other = "",
+  #   ...
+  # )
+
+  # This can be parsed out of the rendered html file
+
+  question_nodes <- get_question_nodes()
+
+}
+
+get_question_nodes <- function() {
+
+  # similar to get_page_nodes(), but the nodes should be the question_ids
+  # also can update get_page_nodes() to find the html file directly rather than
+  # the qmd file.
 
 }
 
