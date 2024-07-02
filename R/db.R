@@ -1,5 +1,33 @@
 ## Establish database ----
 
+#' Connect to a SupaBase Database
+#'
+#' Establishes a connection to a SupaBase database and if successful returns a list containing
+#' the database connection object and the table name (db$db, db$table_name).
+#'
+#' The parameters' host, db_name, port, and user are derived from the "connect"
+#' option on the SupaBase Option.
+#'
+#' @param host Character. The host address of the SupaBase database.
+#' @param db_name Character. Always "postgres".
+#' @param port Character. The port number to connect to the database.
+#' @param user Character. The username to connect to the database.
+#' @param table_name Character. The name of the table to connect to.
+#' @param password Character. Your SupaBase account password.
+#' @return A list containing the database connection object and the table name.
+#' @export
+#' @examples
+#' \dontrun{
+#' db <- sd_database(
+#'   host = "aws-0-example-server.pooler.supabase.com",
+#'   db_name = "postgres",
+#'   port = "6543",
+#'   user = "postgres.example",
+#'   table_name = "Example_Name",
+#'   password = Sys.getenv("SUPABASE_PASSWORD")
+#' )
+#' }
+#'
 sd_database <- function(host, db_name, port, user, table_name, password) {
 
     # Authentication/Checks for NULL Values
