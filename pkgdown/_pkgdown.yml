@@ -1,0 +1,43 @@
+url: https://jhelvy.github.io/surveydown/
+
+home:
+  title: Package title
+  description: Package description
+
+template:
+  params:
+    bootswatch: cosmo
+  opengraph:
+    image:
+      src: https://jhelvy.github.io/surveydown/reference/figures/logo.png
+      alt: "Logo for the surveydown package"
+
+navbar:
+  title: "surveydown"
+  left:
+    - icon: fa-home fa-lg
+      href: index.html
+    - text: "Reference"
+      href: reference/index.html
+    - text: "Basic Usage"
+      href: articles/template.html
+    - text: "Articles"
+      menu:
+        - text: "Template"
+          href: articles/template.html
+    - text: "Changelog"
+      href: news/index.html
+
+reference:
+- title: "Viewing Results"
+  desc: "Functions for viewing the results of estimated models."
+  contents:
+  - summary.surveydown
+  - coef.surveydown
+  - se.surveydown
+  - se
+  - logLik.surveydown
+  - vcov.surveydown
+  - fitted.surveydown
+  - residuals.surveydown
+  - statusCodes

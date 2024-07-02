@@ -1,0 +1,37 @@
+Package: surveydown
+Title: Markdown-Based Surveys With Shiny and Quarto
+Version: 0.0.1
+Authors@R: c(
+    person(given   = "John",
+           family  = "Helveston",
+           role    = c("aut", "cre", "cph"),
+           email   = "john.helveston@gmail.com",
+           comment = c(ORCID = "0000-0002-2657-9191")),
+    person(given   = "Pingfan",
+           family  = "Hu",
+           role    = c("aut", "cre", "cph"),
+           email   = "pingfan0727@gmail.com",
+           comment = c(ORCID = "0009-0001-4877-4844")),
+    person(given   = "Bogdan",
+           family  = "Bunea",
+           role    = c("aut", "cre", "cph"),
+           email   = "buneabt@yahoo.com",
+           comment = c(ORCID = "0009-0006-2942-0588"))
+Description: Paragraph description (update).
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+VignetteBuilder: knitr
+Depends:
+    R (>= 4.0.0)
+Suggests:
+    knitr
+Imports:
+    shiny,
+    shinyjs,
+    DBI,
+    RPostgreSQL
+URL: https://github.com/jhelvy/surveydown
+BugReports: https://github.com/jhelvy/surveydown/issues

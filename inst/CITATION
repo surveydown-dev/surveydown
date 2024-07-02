@@ -1,0 +1,13 @@
+bibentry(bibtype = "Article",
+  title        = "{logitr}: Fast Estimation of Multinomial and Mixed Logit Models with Preference Space and Willingness-to-Pay Space Utility Parameterizations",
+  author       = person(given = c("John", "Paul"), family = "Helveston", email = "john.helveston@gmail.com"),
+  journal      = "Journal of Statistical Software",
+  year         = "2023",
+  volume       = "105",
+  number       = "10",
+  pages        = "1--37",
+  doi          = "10.18637/jss.v105.i10",
+  header       = "To cite logitr in publications use:"
+)
+
+
