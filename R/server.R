@@ -73,10 +73,10 @@ sd_server <- function(input, session, config, db = NULL) {
   # Progress tracking ----
 
   # Initialize reactive value to track the maximum progress reached
-  max_progress <- reactiveVal(0)
+  max_progress <- shiny::reactiveVal(0)
 
   # Initialize reactive value to track the number of questions answered
-  answered_questions <- reactiveVal(0)
+  answered_questions <- shiny::reactiveVal(0)
 
   # Initialize reactiveValues to store status information
   answer_status <- shiny::reactiveValues(
@@ -88,7 +88,7 @@ sd_server <- function(input, session, config, db = NULL) {
   )
 
   # Observing the question timestamps and progress bar
-  observe({
+  shiny::observe({
     lapply(question_ids, function(id) {
       shiny::observeEvent(input[[id]], {
         # Updating question timestamps
@@ -117,7 +117,7 @@ sd_server <- function(input, session, config, db = NULL) {
     shinyjs::show(start_page)
   }
 
-  observe({
+  shiny::observe({
     for (i in 2:length(page_structure)) {
       local({
 
@@ -167,7 +167,7 @@ sd_server <- function(input, session, config, db = NULL) {
 
     # Define a reactive expression for the timestamp values
 
-    get_time_stamps <- reactive({ timestamps$data })
+    get_time_stamps <- shiny::reactive({ timestamps$data })
 
     # Use observe to react whenever "input_vals" changes
     # If it changes, update the database
@@ -214,7 +214,7 @@ handle_basic_show_if_logic <- function(input, show_if) {
   # Iterate over each show_if rule
   for (i in 1:nrow(show_if)) {
     rule <- show_if[i,]
-    observeEvent(input[[rule$question_id]], {
+    shiny::observeEvent(input[[rule$question_id]], {
       # Check if the condition is met to show/hide the question
       val <- input[[rule$question_id]]
       if (!is.null(val) & (val == rule$question_value)) {
@@ -234,7 +234,7 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
 
   # Iterate over each show_if rule
   lapply(show_if_custom, function(rule) {
-    observeEvent(input[[rule$dependent_question]], {
+    shiny::observeEvent(input[[rule$dependent_question]], {
       # Check if the condition is met to show/hide the question
       if (rule$condition(input)) {
         shinyjs::show(rule$target)

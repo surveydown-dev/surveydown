@@ -2,6 +2,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^docs$
+^notes$
 ^pkgdown$
 ^\.github$
 ^README\.Rmd$
