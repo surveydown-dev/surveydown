@@ -1,3 +1,45 @@
+#' Server Logic for a surveydown survey
+#'
+#' This function defines the server-side logic for a Shiny application, handling various
+#' operations such as conditional display, progress tracking, page navigation, and database
+#' updates.
+#'
+#' @param input The Shiny input object.
+#' @param session The Shiny session object.
+#' @param config A list containing configuration settings for the application. Expected
+#'        elements include `page_structure`, `page_ids`, `question_ids`, `show_if`, `skip_if`,
+#'        `skip_if_custom`, `show_if_custom`, `preview`, and `start_page`.
+#' @param db An optional list containing database connection information. Expected elements
+#'        include `db` and `table_name`. Defaults to NULL.
+#'
+#' @details The function performs the following tasks:
+#'   - Initializes local variables based on the provided configuration.
+#'   - Sets up reactive values to track timestamps and progress.
+#'   - Implements conditional display logic for UI elements based on `show_if` and `show_if_custom` conditions.
+#'   - Tracks the progress of answered questions and updates the progress bar accordingly.
+#'   - Handles page navigation within the Shiny application, including basic and custom skip logic.
+#'   - Performs database operations to store responses, either to a specified database or a local CSV file if in preview mode.
+#'
+#' @examples
+#' \dontrun{
+#'   server <- function(input, output, session) {
+#'     config <- list(
+#'       page_structure = list(),
+#'       page_ids = c("page1", "page2"),
+#'       question_ids = c("q1", "q2"),
+#'       show_if = NULL,
+#'       skip_if = NULL,
+#'       skip_if_custom = NULL,
+#'       show_if_custom = NULL,
+#'       preview = FALSE,
+#'       start_page = "page1"
+#'     )
+#'     sd_server(input, session, config)
+#'   }
+#'   shinyApp(ui = ui, server = server)
+#' }
+#'
+#' @export
 sd_server <- function(input, session, config, db = NULL) {
 
   # Create local objects from config file
@@ -17,7 +59,7 @@ sd_server <- function(input, session, config, db = NULL) {
   session_id <- session$token
 
   # Initialize object for storing timestamps
-  timestamps <- reactiveValues(data = initialize_timestamps(page_ids, question_ids))
+  timestamps <- shiny::reactiveValues(data = initialize_timestamps(page_ids, question_ids))
 
   # Conditional display (show_if conditions) ----
   if (!is.null(show_if)) {
@@ -37,7 +79,7 @@ sd_server <- function(input, session, config, db = NULL) {
   answered_questions <- reactiveVal(0)
 
   # Initialize reactiveValues to store status information
-  answer_status <- reactiveValues(
+  answer_status <- shiny::reactiveValues(
     processing_question = NULL,
     current_answers = NULL,
     current_answers_length = NULL,
@@ -48,7 +90,7 @@ sd_server <- function(input, session, config, db = NULL) {
   # Observing the question timestamps and progress bar
   observe({
     lapply(question_ids, function(id) {
-      observeEvent(input[[id]], {
+      shiny::observeEvent(input[[id]], {
         # Updating question timestamps
         answer_status$processing_question <- list(id = id, value = input[[id]])
         if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
@@ -83,7 +125,7 @@ sd_server <- function(input, session, config, db = NULL) {
         current_page <- page_ids[i-1]
         next_page <- page_ids[i]
 
-        observeEvent(input[[make_next_button_id(next_page)]], {
+        shiny::observeEvent(input[[make_next_button_id(next_page)]], {
 
           # Update next page with any basic skip logic
           if (!is.null(skip_if)) {
@@ -114,7 +156,7 @@ sd_server <- function(input, session, config, db = NULL) {
 
     # Define a reactive expression for each question_id value
 
-    get_question_vals <- reactive({
+    get_question_vals <- shiny::reactive({
       temp <- sapply(
         question_ids,
         function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
@@ -130,7 +172,7 @@ sd_server <- function(input, session, config, db = NULL) {
     # Use observe to react whenever "input_vals" changes
     # If it changes, update the database
 
-    observe({
+    shiny::observe({
 
       # Capture the current state of question values and timestamps
       question_vals <- get_question_vals()

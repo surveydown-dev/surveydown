@@ -1,5 +1,37 @@
-## Establish database ----
-
+#' Connect to a SupaBase Database
+#'
+#' This function establishes a connection to a SupaBase database using the provided
+#' connection details.
+#'
+#' @param host Character string. The host address of the SupaBase database.
+#' @param db_name Character string. The name of the SupaBase database.
+#' @param port Integer. The port number for the SupaBase database connection.
+#' @param user Character string. The username for the SupaBase database connection.
+#' @param table_name Character string. The name of the table to interact with in the SupaBase database.
+#' @param password Character string. The password for the SupaBase database connection.
+#'
+#' @details The function checks for the presence of all required parameters and attempts to
+#'   establish a connection to the SupaBase database. If successful, it returns a list containing
+#'   the database connection object and the table name. The user must have created the specified
+#'   table in SupaBase beforehand.
+#'
+#' @return A list containing the database connection object (`db`) and the table name (`table_name`).
+#'
+#' @note The user must create their own table inside SupaBase in order to make additions.
+#'
+#' @examples
+#' \dontrun{
+#'   db_connection <- sd_database(
+#'     host = "your-host",
+#'     db_name = "your-db-name",
+#'     port = 5432,
+#'     user = "your-username",
+#'     table_name = "your-table-name",
+#'     password = "your-password"
+#'   )
+#' }
+#'
+#' @export
 sd_database <- function(host, db_name, port, user, table_name, password) {
 
   # Authentication/Checks for NULL Values
@@ -15,7 +47,7 @@ sd_database <- function(host, db_name, port, user, table_name, password) {
   #User Must create their own table inside of Supabase in order to make additions.
   tryCatch(
     {
-       db <-  dbConnect(
+       db <-  DBI::dbConnect(
           RPostgres::Postgres(),
           host     = host,
           dbname   = db_name,

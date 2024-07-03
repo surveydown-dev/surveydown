@@ -69,8 +69,8 @@ A Shiny UI element wrapped in a div with a custom data attribute for question ID
 This function creates various types of survey questions.
 }
 \details{
-# Foo
+Insert any detailed information here, such as more details on the types of questions
 }
 \examples{
-# Foo
+# Insert examples here
 }
