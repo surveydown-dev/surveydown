@@ -19,7 +19,7 @@ idea to get a sense for what we’re trying to accomplish. The post is now
 outdated in terms of the UI I had in mind back then, but the motivation
 for developing something like this remains.
 
-TODO List:
+# TODO List:
 
 - [x] show_if (conditionally display question)
 - [x] skip_if (conditionally skip to page)
