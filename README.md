@@ -19,7 +19,7 @@ idea to get a sense for what we’re trying to accomplish. The post is now
 outdated in terms of the UI I had in mind back then, but the motivation
 for developing something like this remains.
 
-# TODO List:
+# TODO List
 
 - [x] show_if (conditionally display question)
 - [x] skip_if (conditionally skip to page)
@@ -77,6 +77,16 @@ Resources / examples:
   of adding JS modules to shiny app (pop up message) - could be useful
   for adding any number of JS-based features, like pop ups for required
   questions, JS-based progress bar, etc.
+
+# Documentation TODO
+
+Vignettes for each of the following:
+
+- Quick overview / basic usage
+- List of question types and examples
+- Question formatting options
+- Flow control (conditional skipping and conditional display)
+- Setting up the database with supabase
 
 ## [License Information](https://github.com/jhelvy/surveydown/blob/master/LICENSE.md)
 
