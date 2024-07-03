@@ -1,0 +1,125 @@
+---
+title: "Basic Usage"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Basic Usage}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.retina = 3,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+The `surveydown` R package works together with the `surveydown` Quarto extension. As a simplification, we call them together as "`surveydown`" in this article.
+
+`surveydown` is a handy tool for survey construction, release, and data collection. It is constructed using [Quarto](https://quarto.org). Its UI is supported by the [Shiny](https://www.rstudio.com/products/shiny/) server and its database is served by [Supabase](https://supabase.com). With `surveydown`, you can create HTML survey pages by constructing a Quarto doc with extension of `qmd`.
+
+[Quarto](https://quarto.org) is a revolutionary publication tool. A Quarto doc accepts markdown texts, R scripts, Python scripts, and more. [Shiny](https://www.rstudio.com/products/shiny/) is an R web app development platform, but in `surveydown`, we only utilized its server. [Supabase](https://supabase.com) is an open-source database supplier that delivers input-output services and exports our survey results. For more information about their basic usage, please proceed to their official websites.
+
+### Why Use `surveydown`
+
+There are already plenty of mature survey platforms, including Google Form, Prolific, Dynata, etc., so how is surveydown different? The primary reason is that it is R language supported
+
+## Preparation
+
+`surveydown` works with Quarto. Make sure you have the latest version of [Quarto](https://quarto.org) installed. Quarto works best with [RStudio](https://www.rstudio.com/categories/rstudio-ide/), but you can also have it on [VS Code](https://code.visualstudio.com) or [Positron](https://github.com/posit-dev/positron) (a novel IDE made by Posit), so please install Quarto together with any IDE of your preference.
+
+**(Instructions here for installing `surveydown`)**
+
+## Basic Use
+
+Our HTML survey page is constructed using a `.qmd` file (aka a Quarto Doc file). This file consists of **4 parts: a YAML header, a setup code chunk, the survey body, and a server code chunk in the end**. Please see explanation below.
+
+### 1. The YAML Header
+
+YAML (Yet Another Markup Language) is an essential part for all `.qmd` files. It regulates the basic settings, including page layout, themes, add-on `css` or `js` files, etc., of your HTML page. These settings are called **keys**.
+
+Below are the **essential** YAML scripts for the surveydown project. It contains two keys: `server`, and `filters`.
+
+``` yaml
+---
+server: shiny
+filters: [surveydown]
+---
+```
+
+The `server: shiny` key designates the Shiny server to our page, and `filters: [surveydown]` applies the surveydown Quarto extension.
+
+Below are the **optional** YAML scripts that you may use:
+
+``` yaml
+---
+theme: united # Any bootswatch theme or a customized scss file
+barcolor: theme # "theme" (default) or a customized hex code
+barposition: top # "top" (default), "bottom", or "none" 
+---
+```
+
+There are [25 bootswatch themes](https://bootswatch.com) to choose from. You can also use our customized `scss` theme file, or even combine these two. An example combination is shown below:
+
+``` yaml
+---
+theme: [united, custom.scss]
+---
+```
+
+It means to use the [united bootswatch theme](https://bootswatch.com/united/), and overwrite with the `custom.scss` file. For example, if you don't like the orange primary color of this theme, you can define `$primary` as something else in your own `scss` file. We've prepared a `custom.scss` file in our [surveydown demo repo](https://github.com/jhelvy/surveydown_demo) on GitHub.
+
+The `barcolor` key defines the color of the progress bar. It's default to "`theme`", meaning it will reflect any primary color that the theme defines. You may also use any hex codes to overwrite this color as you wish.
+
+The `barposition` key defines the position of the progress bar. It's default to "`top`", meaning the bar will be on the top of the page. You can change to "`bottom`" or "`none`".
+
+You may define other YAML scripts if you want to further customize the layout of your HTML page.
+
+### 2. The Setup Code Chunk
+
+After the YAML header, you'll need to load the `surveydown` package and run the `sd_setup()` function:
+
+```{r eval=FALSE}
+library(surveydown)
+sd_setup()
+```
+
+### 3. The Survey Body
+
+Now you are ready to start writing your survey contents. You can write markdown texts for explanations and instructions, and insert R code chunks to present survey questions.
+
+Here is a question to get started.
+
+This question showcases what a "multiple choice" question looks like, which is created using `type = 'mc'` inside the `sd_question()` function.
+
+It also is an example of the `show_if` feature (conditional display). If you choose the "Other" option, a second question pops up below asking to specify which other type of penguin is your favorite. This is controlled with the `show_if` argument to the `sd_config()` function defined in the server section at the bottom of the `.qmd` file.
+
+```{r eval=FALSE}
+# A multiple choice question with an "Other" option
+sd_question(
+  type  = 'mc',
+  id    = 'penguins',
+  label = "Which is your favorite type of penguin?",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo',
+    
+    # This "Other" option triggers the "penguins_other" question
+    'Other'     = 'other'
+  )
+)
+
+sd_question(
+  type  = "text",
+  id    = "penguins_other",
+  label = "Please specify the other penguin type:"
+)
+```
+
+### 4. 
