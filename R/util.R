@@ -1,3 +1,25 @@
+#' Required Set Up Function
+#'
+#' This function is required for any surveydown survey. It sets up a Shiny application with Bootstrap 5 and initializes Shinyjs for JavaScript functionalities.
+#'
+#' @details The function configures the Shiny application to use Bootstrap 5 for styling and enables
+#'   Shinyjs for JavaScript functionalities within the application.
+#'
+#' @return This function does not return a value. It is called for its side effects of setting up the Shiny application.
+#'
+#' @examples
+#' \dontrun{
+#'   ui <- fluidPage(
+#'     sd_setup(),
+#'     # Your UI elements here
+#'   )
+#'   server <- function(input, output, session) {
+#'     # Your server logic here
+#'   }
+#'   shinyApp(ui, server)
+#' }
+#'
+#' @export
 sd_setup <- function() {
   shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
   shinyjs::useShinyjs(rmd = TRUE)
@@ -60,55 +82,7 @@ make_ts_name <- function(type, id) {
     "Version:  ", desc$Version, "\n",
     "Author:   ", "John Paul Helveston (George Washington University)", "\n\n",
     "Consider submitting praise at\n",
-    "https://github.com/jhelvy/surveydown/issues/8.\n\n",
+    "https://github.com/jhelvy/surveydown/issues/41.\n\n",
     "Please cite our package in your publications, see:\ncitation(\"surveydown\")"
   )
-}
-
-
-
-
-
-
-
-
-
-# Including this as an example of how to document a function
-
-
-
-#' Predict probabilities and / or outcomes
-#'
-#' This function is a faster implementation of the "type 7" `quantile()`
-#' algorithm and is modified from this gist:
-#' https://gist.github.com/sikli/f1775feb9736073cefee97ec81f6b193
-#' It returns sample quantiles corresponding to the given probabilities.
-#' The smallest observation corresponds to a probability of 0 and the largest
-#' to a probability of 1. For speed, output quantile names are removed as are
-#' error handling such as checking if x are factors, or if probs lie outside
-#' the `[0,1]` range.
-#' @param x numeric vector whose sample quantiles are wanted. `NA` and `NaN`
-#' values are not allowed in numeric vectors unless `na.rm` is `TRUE`.
-#' @param probs numeric vector of probabilities with values in `[0,1]`.
-#' (Values up to `2e-14` outside that range are accepted and moved to the
-#' nearby endpoint.)
-#' @param na.rm logical; if `TRUE`, any `NA` and `NaN`'s are removed from `x`
-#' before the quantiles are computed.
-#' @return A vector of length `length(probs)` is returned;
-#' @export
-#' @examples
-#' library(logitr)
-#'
-fquantile <- function(x, probs = seq(0, 1, 0.25), na.rm = FALSE) {
-  if (na.rm) x <- x[!is.na(x)]
-  n <- length(x)
-  index <- 1 + (n - 1) * probs
-  lo <- floor(index)
-  hi <- ceiling(index)
-  x  <- sort(x, partial = unique(c(lo, hi)))
-  qs <- x[lo]
-  i  <- 1:length(probs)
-  h  <- index - lo
-  qs <- (1 - h) * qs + h * x[hi]
-  return(qs)
 }

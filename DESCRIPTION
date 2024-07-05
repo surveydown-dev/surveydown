@@ -1,23 +1,23 @@
 Package: surveydown
-Title: Markdown-Based Surveys With Shiny and Quarto
+Title: Markdown-Based Surveys Using Quarto Shiny Documents
 Version: 0.0.1
 Authors@R: c(
-    person(given   = "John",
+    person(given   = "John Paul",
            family  = "Helveston",
            role    = c("aut", "cre", "cph"),
            email   = "john.helveston@gmail.com",
            comment = c(ORCID = "0000-0002-2657-9191")),
     person(given   = "Pingfan",
            family  = "Hu",
-           role    = c("aut", "cre", "cph"),
+           role    = c("aut", "cph"),
            email   = "pingfan0727@gmail.com",
            comment = c(ORCID = "0009-0001-4877-4844")),
     person(given   = "Bogdan",
            family  = "Bunea",
-           role    = c("aut", "cre", "cph"),
+           role    = c("aut", "cph"),
            email   = "buneabt@yahoo.com",
-           comment = c(ORCID = "0009-0006-2942-0588"))
-Description: Paragraph description (update).
+           comment = c(ORCID = "0009-0006-2942-0588")))
+Description: Generate surveys using markdown and R code chunks. Surveys are defined as Quarto shiny documents that render to shiny apps. Survey data collected from respondents is stored in a supabase database. Features include controls for conditional skip logic (skip to a page based on an answer to a question), conditional display logic (display a question based on an answer to a question), the ability to export time stamps (both for each page and each question interaction), a customizable progress bar, and a wide variety of question types, including multiple choice (single choice and multiple choices), select, text, numeric, multiple choice buttons, text area, and dates.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -29,9 +29,14 @@ Depends:
 Suggests:
     knitr
 Imports:
+    bslib,
+    DBI,
+    markdown,
+    readr,
+    RPostgres,
+    rvest,
     shiny,
     shinyjs,
-    DBI,
-    RPostgreSQL
+    shinyWidgets
 URL: https://github.com/jhelvy/surveydown
 BugReports: https://github.com/jhelvy/surveydown/issues

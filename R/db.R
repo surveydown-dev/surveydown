@@ -1,33 +1,38 @@
-## Establish database ----
-
 #' Connect to a SupaBase Database
 #'
-#' Establishes a connection to a SupaBase database and if successful returns a list containing
-#' the database connection object and the table name (db$db, db$table_name).
+#' This function establishes a connection to a SupaBase database using the provided
+#' connection details.
 #'
-#' The parameters' host, db_name, port, and user are derived from the "connect"
-#' option on the SupaBase Option.
+#' @param host Character string. The host address of the SupaBase database.
+#' @param db_name Character string. The name of the SupaBase database.
+#' @param port Integer. The port number for the SupaBase database connection.
+#' @param user Character string. The username for the SupaBase database connection.
+#' @param table_name Character string. The name of the table to interact with in the SupaBase database.
+#' @param password Character string. The password for the SupaBase database connection.
 #'
-#' @param host Character. The host address of the SupaBase database.
-#' @param db_name Character. Always "postgres".
-#' @param port Character. The port number to connect to the database.
-#' @param user Character. The username to connect to the database.
-#' @param table_name Character. The name of the table to connect to.
-#' @param password Character. Your SupaBase account password.
-#' @return A list containing the database connection object and the table name.
-#' @export
+#' @details The function checks for the presence of all required parameters and attempts to
+#'   establish a connection to the SupaBase database. If successful, it returns a list containing
+#'   the database connection object and the table name. The user must have created the specified
+#'   table in SupaBase beforehand.
+#'
+#' @return A list containing the database connection object (`db`) and the table name (`table_name`).
+#'
+#' @note The user must create their own table inside SupaBase in order to make additions.
+#'
 #' @examples
 #' \dontrun{
-#' db <- sd_database(
-#'   host = "aws-0-example-server.pooler.supabase.com",
-#'   db_name = "postgres",
-#'   port = "6543",
-#'   user = "postgres.example",
-#'   table_name = "Example_Name",
-#'   password = Sys.getenv("SUPABASE_PASSWORD")
-#' )
+#'   db_connection <- sd_database(
+#'     host = "your-host",
+#'     db_name = "your-db-name",
+#'     port = 5432,
+#'     user = "your-username",
+#'     table_name = "your-table-name",
+#'     password = "your-password"
+#'   )
 #' }
 #'
+#' @export
+
 sd_database <- function(host, db_name, port, user, table_name, password) {
 
     # Authentication/Checks for NULL Values
@@ -38,6 +43,7 @@ sd_database <- function(host, db_name, port, user, table_name, password) {
     if (!nchar(password)) {
         stop("You must provide your SupaBase password to access the database")
     }
+
 
     tryCatch(
         {
@@ -54,6 +60,23 @@ sd_database <- function(host, db_name, port, user, table_name, password) {
         }, error = function(e) {
             stop("Error: Failed to connect to the database. Please check your connection details.")
         })
+  # < Code to handle SupaBase authentication here >
+  #User Must create their own table inside of Supabase in order to make additions.
+  tryCatch(
+    {
+       db <-  DBI::dbConnect(
+          RPostgres::Postgres(),
+          host     = host,
+          dbname   = db_name,
+          port     = port,
+          user     = user,
+          password = password
+        )
+      message("Successfully connected to the database.")
+      return(list(db = db, table_name = table_name))
+    }, error = function(e) {
+      stop("Error: Failed to connect to the database. Please check your connection details.")
+    })
 }
 
 ## Updating Database ----

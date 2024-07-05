@@ -1,13 +1,8 @@
-bibentry(bibtype = "Article",
-  title        = "{logitr}: Fast Estimation of Multinomial and Mixed Logit Models with Preference Space and Willingness-to-Pay Space Utility Parameterizations",
-  author       = person(given = c("John", "Paul"), family = "Helveston", email = "john.helveston@gmail.com"),
-  journal      = "Journal of Statistical Software",
-  year         = "2023",
-  volume       = "105",
-  number       = "10",
-  pages        = "1--37",
-  doi          = "10.18637/jss.v105.i10",
-  header       = "To cite logitr in publications use:"
+bibentry(bibtype = "Manual",
+  title = "{surveydown}: Markdown-Based Surveys Using Quarto Shiny Documents",
+  author = c(person(given = "John Paul", family = "Helveston", role = c("aut", "cre", "cph")), person(given = "Pingfan", family = "Hu", role = c("aut", "cph")), person(given = "Bogdan", family = "Bunea", role = c("aut", "cph"))),
+  year = "2024",
+  note = "R package",
+  url = "https://jhelvy.github.io/surveydown/",
+  header = "To cite surveydown in publications use:"
 )
-
-

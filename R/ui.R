@@ -21,11 +21,12 @@
 #' @param required Logical. Whether the input is required. Defaults to FALSE.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
 #' @details
-#' # Foo
+#' Insert any detailed information here, such as more details on the types of questions
+#'
 #' @return A Shiny UI element wrapped in a div with a custom data attribute for question ID.
 #'
 #' @examples
-#' # Foo
+#' # Insert examples here
 #' @export
 sd_question <- function(
   type,
@@ -212,6 +213,34 @@ sd_question <- function(
 
 }
 
+#' Create a 'Next' Button for Page Navigation
+#'
+#' This function creates a 'Next' button for navigating to the specified next page in a surveydown survey.
+#'
+#' @param next_page Character string. The ID of the next page to navigate to. This parameter is required.
+#' @param label Character string. The label of the 'Next' button. Defaults to "Next".
+#'
+#' @details The function generates a Shiny action button that, when clicked, sets the input value
+#'   to the specified next page ID, facilitating page navigation within the Shiny application.
+#'
+#' @return A Shiny action button UI element.
+#'
+#' @examples
+#' \dontrun{
+#'   ui <- fluidPage(
+#'     sd_next(next_page = "page2", label = "Next Page")
+#'   )
+#'   server <- function(input, output, session) {
+#'     observeEvent(input$next_page, {
+#'       # Navigate to the next page
+#'       shinyjs::hide("page1")
+#'       shinyjs::show("page2")
+#'     })
+#'   }
+#'   shinyApp(ui, server)
+#' }
+#'
+#' @export
 sd_next <- function(next_page = NULL, label = "Next") {
   if (is.null(next_page)) {
     stop("You must specify the current_page for the 'Next' button.")
