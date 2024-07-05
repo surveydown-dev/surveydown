@@ -17,17 +17,17 @@ knitr::opts_chunk$set(
 )
 ```
 
+> The `surveydown` R package works together with the `surveydown` Quarto extension. As a simplification, we call them together as "`surveydown`" in this article.
+
 ## Introduction
 
-The `surveydown` R package works together with the `surveydown` Quarto extension. As a simplification, we call them together as "`surveydown`" in this article.
+`surveydown` is a handy tool for survey construction, release, and data collection by creating **Quarto Shiny documents**: It designs survey using [Quarto](https://quarto.org), renders the UI with [Shiny](https://www.rstudio.com/products/shiny/), and stores data on [Supabase](https://supabase.com). With `surveydown`, you can create HTML survey pages by constructing a Quarto doc with extension of `qmd`.
 
-`surveydown` is a handy tool for survey construction, release, and data collection. It is constructed using [Quarto](https://quarto.org). Its UI is supported by the [Shiny](https://www.rstudio.com/products/shiny/) server and its database is served by [Supabase](https://supabase.com). With `surveydown`, you can create HTML survey pages by constructing a Quarto doc with extension of `qmd`.
+[Quarto](https://quarto.org) is a revolutionary publication tool. A Quarto doc accepts markdown texts, R scripts, Python scripts, and more. [Shiny](https://www.rstudio.com/products/shiny/) is an R web app development platform. It provides interactive UI that responds to users' toggling. [Supabase](https://supabase.com) is an open-source database supplier that delivers input-output services and exports our survey results. For more information about their basic usage, please proceed to their official websites.
 
-[Quarto](https://quarto.org) is a revolutionary publication tool. A Quarto doc accepts markdown texts, R scripts, Python scripts, and more. [Shiny](https://www.rstudio.com/products/shiny/) is an R web app development platform, but in `surveydown`, we only utilized its server. [Supabase](https://supabase.com) is an open-source database supplier that delivers input-output services and exports our survey results. For more information about their basic usage, please proceed to their official websites.
+## Why Use `surveydown`
 
-### Why Use `surveydown`
-
-There are already plenty of mature survey platforms, including Google Form, Prolific, Dynata, etc., so how is surveydown different? The primary reason is that it is R language supported
+`surveydown` is a very good alternative of Google Forms, formr, Qualtrics, Survey Monkey, etc. It is markdown based, supports R code chunks. It is free to use, highly reproducible and totally sharable.
 
 ## Preparation
 
@@ -39,7 +39,7 @@ There are already plenty of mature survey platforms, including Google Form, Prol
 
 Our HTML survey page is constructed using a `.qmd` file (aka a Quarto Doc file). This file consists of **4 parts: a YAML header, a setup code chunk, the survey body, and a server code chunk in the end**. Please see explanation below.
 
-### 1. The YAML Header
+### 1. YAML Header
 
 YAML (Yet Another Markup Language) is an essential part for all `.qmd` files. It regulates the basic settings, including page layout, themes, add-on `css` or `js` files, etc., of your HTML page. These settings are called **keys**.
 
@@ -80,7 +80,7 @@ The `barposition` key defines the position of the progress bar. It's default to 
 
 You may define other YAML scripts if you want to further customize the layout of your HTML page.
 
-### 2. The Setup Code Chunk
+### 2. Setup Codes
 
 After the YAML header, you'll need to load the `surveydown` package and run the `sd_setup()` function:
 
@@ -89,15 +89,13 @@ library(surveydown)
 sd_setup()
 ```
 
-### 3. The Survey Body
+### 3. Survey Body
 
 Now you are ready to start writing your survey contents. You can write markdown texts for explanations and instructions, and insert R code chunks to present survey questions.
 
-Here is a question to get started.
+Here is a question to get started. This question showcases what a "multiple choice" question looks like, which is created using `type = 'mc'` inside the `sd_question()` function.
 
-This question showcases what a "multiple choice" question looks like, which is created using `type = 'mc'` inside the `sd_question()` function.
-
-It also is an example of the `show_if` feature (conditional display). If you choose the "Other" option, a second question pops up below asking to specify which other type of penguin is your favorite. This is controlled with the `show_if` argument to the `sd_config()` function defined in the server section at the bottom of the `.qmd` file.
+It also is an example of the `show_if` feature (conditional display). If you choose the "Other" option, a second question pops up below asking to specify which other type of penguin is your favorite. This is a **conditional question** and is controlled with the `show_if` argument to the `sd_config()` function defined in the server section at the bottom of the `.qmd` file, which will be described in [4. Server Codes].
 
 ```{r eval=FALSE}
 # A multiple choice question with an "Other" option
@@ -115,6 +113,7 @@ sd_question(
   )
 )
 
+# Controlled by the show_if argument of sd_config()
 sd_question(
   type  = "text",
   id    = "penguins_other",
@@ -122,4 +121,74 @@ sd_question(
 )
 ```
 
-### 4. 
+Screenshot for an ordinary option being chosen:
+
+::: {style="margin: auto; max-width: 600px;"}
+![**Figure 1**: *Multiple Choice Question Example - Ordinary Option Chosen*](images/01_mc_question.jpg){width="400"}
+:::
+
+Screenshot for the "Other" option being chosen:
+
+::: {style="margin: auto; max-width: 600px;"}
+![**Figure 2**: *Multiple Choice Question Example - "Other" Option Chosen*](images/02_mc_question_other.jpg){width="400"}
+:::
+
+### 4. Server Codes
+
+The server codes are at the very bottom of the `qmd` file. It consists of 3 parts:
+
+1.  A `db` variable, short for "database", defined by the `sd_database()` function.
+2.  A `config` variable, defined by the `sd_config()` function. It takes in arguments of `show_if` and `skip_if`. In `show_if`, you can define an option to trigger an conditional question; in `skip_if`, you define the option to jump over to a designated page.
+3.  Calling the `sd_server()` function with fixed arguments. This part is essential and has to be the same for every survey project.
+
+Below is the template for the server codes:
+
+```{r eval=FALSE}
+#| context: server
+
+# See instructions in supabase setup
+db <- sd_database(
+  host       = "your_supabase_host",
+  db_name    = "your_supabase_db_name",
+  port       = "your_supabase_port",
+  user       = "your_supabase_user",
+  table_name = "your_customed_table",
+  password   = Sys.getenv("your_supabase_password")
+)
+
+# Define skip_if and show_if
+config <- sd_config(
+  skip_if = tibble::tribble(
+    ~question_id,  ~question_value, ~target,
+    "skip_to_page", "end",           "end",
+    "skip_to_page", "question_formatting",  "questionFormatting"
+  ),
+  show_if = tibble::tribble(
+    ~question_id,  ~question_value, ~target,
+    "penguins",    "other",         "penguins_other"
+  )
+)
+
+# The scripts below are essential
+sd_server(
+  input   = input,
+  session = session,
+  config  = config,
+  db      = db
+)
+```
+
+Back to our example: in order for the conditional question to show once the "Other" option is selected, you'll need to define it in the `show_if` argument under the `sd_config()` function.
+
+```{r eval=FALSE}
+config <- sd_config(
+  show_if = tibble::tribble(
+    ~question_id,  ~question_value, ~target,
+    "penguins",    "other",         "penguins_other"
+    )
+)
+```
+
+In the scripts above, we use a `tribble` to define the `show_if` algorithm. We have `question_id` being "`penguins`", indicating the `show_if` algorithm takes effect for the question with id being "`penguins`". The `question_value` is "`other`", and the revealed question has id of "`penguins_other`".
+
+By doing this, we successfully triggered the "`penguins_other`" question upon selection of "`other`" in the question "`penguins`". This is essentially important if you want participants to type in their personalized answers that are not listed in your options.
