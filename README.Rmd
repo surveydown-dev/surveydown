@@ -19,11 +19,27 @@ knitr::opts_chunk$set(
 
 surveydown: Markdown-Based Surveys With [Quarto Shiny Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
 
-This is still a very early-stage project and not quite production ready. The general concept is to leverage Quarto shiny documents and the {surveydown} package (along with a Quarto extension we've developed) to create surveys using markdown and R code chunks. Surveys are defined as Quarto documents that render to shiny apps. Survey data collected from respondents is stored in a [supabase](https://supabase.com/) database.
+> Note: This is still a very early-stage project and not quite production ready, though we're happy if you'd like to try it out and give us feedback!
 
-It may also be worth reading my [blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/) on this idea to get a sense for what we're trying to accomplish. The post is now outdated in terms of the UI I had in mind back then, but the motivation for developing something like this remains.
+This project is a marriage of three open source technologies ([Quarto](https://quarto.org/), [shiny](https://shiny.posit.co/), and [supabase](https://supabase.com/)) to create dynamic, markdown-based surveys:
+
+<br>
+<center>
+<img src='man/figures/technologies.png' align="center" style="height:250px;"/>
+</center>
+<br>
+
+The general concept is to use a [Quarto shiny document](https://quarto.org/docs/dashboards/interactivity/shiny-r.html) to design your survey, which renders to a shiny app that can be hosted online and sent to survey respondents. The survey data collected from respondents is stored in a [supabase](https://supabase.com/) database that can easily be imported into R for analysis. 
+
+The {surveydown} R package provides the core set of functions needed to make key survey features work, like defining survey questions and controlling pagination and skip logic, etc. Our [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) works in tandem with the {surveydown} R package to make it all work. You can see more details on the R package [documentation page](https://jhelvy.github.io/surveydown).
+
+# Background
+
+If you're curious where this whole idea came from, check out this [blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/), which outlines more on the general idea and the motivation for it. The post is now outdated in terms of the overall design, but it provides something of an origin story and some of the motivation for developing this project.
 
 # TODO List
+
+This is a running list of things we're working on adding to the project:
 
 - [x] show_if (conditionally display question)
 - [x] skip_if (conditionally skip to page)
@@ -65,11 +81,11 @@ Resources / examples:
 
 Vignettes for each of the following:
 
-- Quick overview / basic usage
-- List of question types and examples
-- Question formatting options
-- Flow control (conditional skipping and conditional display)
-- Setting up the database with supabase
+- [ ] Quick overview / basic usage
+- [ ] List of question types and examples
+- [ ] Question formatting options
+- [ ] Flow control (conditional skipping and conditional display)
+- [ ] Setting up the database with supabase
 
 ## [License Information](https://github.com/jhelvy/surveydown/blob/master/LICENSE.md)
 
