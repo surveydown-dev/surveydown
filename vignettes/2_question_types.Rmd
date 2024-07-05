@@ -1,0 +1,341 @@
+---
+title: "Question Types"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Question Types}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.retina = 3,
+  comment = "#>"
+)
+```
+
+> Use the `sd_question()` function to specify the question types.
+
+## Introduction of Arguments
+
+This article showcases the different types of question supported by `{surveydown}`. Each question requires the user to define the following arguments to the `sd_question()` function:
+
+- `id`: A unique identifier for the question, which will be used as the variable name in the resulting survey data.
+- `label`: The label that will be displayed on the question in the survey.
+- `type`: The type of question, options include:
+    - `text`: Single line open text input.
+    - `textarea`: Multiple line open text input.
+    - `numeric`: Single line numeric text input.
+    - `mc`: Multiple choice with a single select option (radio buttons).
+    - `mc_buttons`: Same as `mc` but as a "button" style instead of radio buttons.
+    - `mc_multiple`: Multiple choice with mutliple select options (check boxes).
+    - `mc_multiple_buttons`: Same as `mc_multiple` but as a "button" style instead of check boxes.
+    - `select`: Select a choice from a drop down menu.
+    - `slider`: (Under construction) Slider to select discrete categories or continuous numbers.
+    - `date`: Select a date from a calendar widget.
+    - `daterange`: Select two dates from calendar widgets (e.g. begin and end dates).
+
+## Question Types
+
+### 1. `text`
+
+Use `type = 'text'` to specify a text input type question.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = "text",
+  id    = "silly_word",
+  label = "Write a silly word:"
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 1**: *`text` Question Type*](images/2_1_text.jpg){width="600"}
+:::
+
+### 2. `textarea`
+
+Use `type = 'textarea'` to specify a text area input type question.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = "textarea",
+  id    = "silly_paragraph",
+  label = "Write a silly paragraph:"
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 2**: *`textarea` Question Type*](images/2_2_textarea.jpg){width="600"}
+:::
+
+### 3. `numeric`
+
+Use `type = 'numeric'` to specify a numeric input type.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = 'numeric',
+  id    = 'age',
+  label = "What's your age?"
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 3**: *`numeric` Question Type (Note there is a set of arrows on the right)*](images/2_3_numeric.jpg){width="600"}
+:::
+
+### 4. `mc`
+
+Use `type = 'mc'` to specify a multiple choice type question with a single choice option.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type   = 'mc',
+  id     = 'artist',
+  label  = "Which artist do you prefer most from this list?",
+  option = c(
+    "Taylor Swift" = "taylor_swift",
+    "Beyoncé"      = "beyonce",
+    "Adele"        = "adele",
+    "Rihanna"      = "rihanna",
+    "Lady Gaga"    = "ladygaga",
+    "Ed Sheeran"   = "ed_sheeran",
+    "Drake"        = "drake"
+  )
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 4**: *`mc` Question Type*](images/2_4_mc.jpg){width="600"}
+:::
+
+### 5. `mc_buttons`
+
+Use `type = 'mc_buttons'` to generate the button version of `mc`.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type   = 'mc_buttons',
+  id     = 'fruit',
+  label  = "Which fruit do you prefer most from this list?",
+  option = c(
+    "Apple"      = "apple",
+    "Banana"     = "banana",
+    "Pear"       = "pear",
+    "Strawberry" = "strawberry",
+    "Grape"      = "grape",
+    "Mango"      = "mango",
+    "Watermelon" = "watermelon"
+  )
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 500px;"}
+![**Figure 5**: *`mc_buttons` Question Type*](images/2_5_mc_buttons.jpg){width="500"}
+:::
+
+### 6. `mc_multiple`
+
+Use `type = 'mc_multiple'` to specify a multiple choice type question with multiple selection enabled.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = 'mc_multiple',
+  id    = 'swift',
+  label = "What are your favorite Taylor Swift albums (select all that apply)?",
+  option = c(
+    "Taylor Swift (2006)" = "taylor_swift",
+    "Fearless (2008)"     = "fearless",
+    "Speak Now (2010)"    = "speak_now",
+    "Red (2012)"          = "red",
+    "1989 (2014)"         = "1989",
+    "Reputation (2017)"   = "reputation",
+    "Lover (2019)"        = "lover",
+    "Folklore (2020)"     = "folklore",
+    "Evermore (2020)"     = "evermore",
+    "Midnights (2022)"    = "midnights"
+  )
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 500px;"}
+![**Figure 6**: *`mc_multiple` Question Type*](images/2_6_mc_multiple.jpg){width="500"}
+:::
+
+### 7. `mc_multiple_buttons`
+
+Use `type = 'mc_multiple_buttons'` to generate the button version of `mc_multiple`.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = 'mc_multiple_buttons',
+  id    = 'michael_jackson',
+  label = "Which are your favorite Michael Jackson songs (select all that apply)?",
+  option = c(
+    "Thriller (1982)"          = "thriller",
+    "Billie Jean (1982)"       = "billie_jean",
+    "Beat It (1982)"           = "beat_it",
+    "Man in the Mirror (1987)" = "man_in_the_mirror",
+    "Smooth Criminal (1987)"   = "smooth_criminal",
+    "Black or White (1991)"    = "black_or_white",
+    "Bad (1987)"               = "bad",
+    "Human Nature (1982)"      = "human_nature"
+  )
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 500px;"}
+![**Figure 7**: *`mc_multiple_buttons` Question Type*](images/2_7_mc_multiple_buttons.jpg){width="500"}
+:::
+
+### 8. `select`
+
+Use `type = 'select'` to specify a drop down select type question.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = 'select',
+  id    = 'education',
+  label = "What is the highest level of education you have attained?",
+  option = c(
+    "Did not attend high school" = "hs_no",
+    "Some high school"           = "hs_some",
+    "High school graduate"       = "hs_grad",
+    "Some college"               = "college_some",
+    "College"                    = "college_grad",
+    "Graduate Work"              = "grad",
+    "Prefer not to say"          = "no_response"
+  )
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 8**: *`select` Question Type*](images/2_8_select.jpg){width="600"}
+:::
+
+### 9. `slider` (Under Construction)
+
+> Due to compatibility issues, the `slider` type is still under construction. Now the slider axis will only show numeric values ranging from 10 to 100. We will solve this problem in our future releases.
+
+Use `type = 'slider'` to specify a slider input type.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = 'slider',
+  id    = 'climate_care',
+  label = "To what extent do you believe human-caused climate change is real?",
+  option = c(
+    "Don't Believe"    = "dont_believe",
+    "Somewhat Believe" = "somewhat",
+    "Neutral"          = "neutral",
+    "Believe"          = "believe",
+    "Strongly Believe" = "strongly_believe"
+  )
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 9**: *`slider` Question Type for Single Slider*](images/2_9_slider_1.jpg){width="600"}
+:::
+
+`type = 'slider'` can also be used to select a range.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type     = 'slider',
+  id       = 'coldest_months',
+  label    = "What months do you think are the coldest throughout a year?",
+  option   = month.abb,
+  selected = month.abb[c(4, 8)]
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 10**: *`slider` Question Type for Two Sliders*](images/2_9_slider_2.jpg){width="600"}
+:::
+
+### 10. `date`
+
+Use `type = 'date'` to specify a date input type.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = 'date',
+  id    = 'dob',
+  label = "What is your date of birth?"
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 11**: *`date` Question Type*](images/2_10_date.jpg){width="600"}
+:::
+
+The date value will be today's date by default. Upon clicking on the text box, you are provided with a date dialog box to choose date from.
+
+### 11. `daterange`
+
+Use `type = 'daterange'` to specify a date range input type.
+
+Scripts:
+
+```{r eval=FALSE}
+sd_question(
+  type  = 'daterange',
+  id    = 'hs_date',
+  label = "When did you start and finish high school?"
+)
+```
+
+Output:
+
+::: {style="text-align: left; max-width: 600px;"}
+![**Figure 12**: *`daterange` Question Type*](images/2_11_daterange.jpg){width="600"}
+:::
