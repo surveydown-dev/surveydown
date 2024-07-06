@@ -19,25 +19,26 @@ navbar:
       href: index.html
     - text: "Reference"
       href: reference/index.html
-    - text: "Basic Usage"
-      href: articles/template.html
     - text: "Articles"
       menu:
-        - text: "Template"
-          href: articles/template.html
+        - text: "Overview"
+          href: articles/1_overview.html
+        - text: "Question types"
+          href: articles/2_question_types.html
+        - text: "Formatting options"
+          href: articles/3_formatting_options.html
+        - text: "Database setup"
+          href: articles/4_database_setup.html
     - text: "Changelog"
       href: news/index.html
 
 reference:
-- title: "Viewing Results"
-  desc: "Functions for viewing the results of estimated models."
+- title: "Package Functions"
+  desc: "All the functions exported by the surveydown package."
   contents:
-  - summary.surveydown
-  - coef.surveydown
-  - se.surveydown
-  - se
-  - logLik.surveydown
-  - vcov.surveydown
-  - fitted.surveydown
-  - residuals.surveydown
-  - statusCodes
+  - sd_setup
+  - sd_question
+  - sd_next
+  - sd_config
+  - sd_database
+  - sd_server
