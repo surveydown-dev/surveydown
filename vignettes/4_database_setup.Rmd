@@ -1,0 +1,22 @@
+---
+title: "4. Database Setup"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{4. Database Setup}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.retina = 3,
+  comment = "#>"
+)
+```
+
+> On this page, we’ll demonstrate the necessary steps to set up your surveydown database using supabase.
+
+Blah...

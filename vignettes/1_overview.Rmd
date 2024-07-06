@@ -1,8 +1,8 @@
 ---
-title: "Overview"
+title: "1. Overview"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Overview}
+  %\VignetteIndexEntry{1. Overview}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 ## Introduction
 
-`surveydown` is a handy tool for survey construction, release, and data collection by creating **Quarto Shiny documents**: It designs survey using [Quarto](https://quarto.org), renders the UI with [Shiny](https://www.rstudio.com/products/shiny/), and stores data on [Supabase](https://supabase.com). With `surveydown`, you can create HTML survey pages by constructing a Quarto doc with extension of `qmd`.
+`surveydown` is a handy tool for survey construction, release, and data collection by creating [**Quarto Shiny documents**](https://quarto.org/docs/dashboards/interactivity/shiny-r.html). It designs survey using [Quarto](https://quarto.org), renders the UI with [Shiny](https://www.rstudio.com/products/shiny/), and stores data on [Supabase](https://supabase.com). With `surveydown`, you can create HTML survey pages by constructing a Quarto doc with extension of `qmd`.
 
 [Quarto](https://quarto.org) is a revolutionary publication tool. A Quarto doc accepts markdown texts, R scripts, Python scripts, and more. [Shiny](https://www.rstudio.com/products/shiny/) is an R web app development platform. It provides interactive UI that responds to users' toggling. [Supabase](https://supabase.com) is an open-source database supplier that delivers input-output services and exports our survey results. For more information about their basic usage, please proceed to their official websites.
 
