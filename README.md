@@ -69,7 +69,7 @@ This is a running list of things we’re working on adding to the project:
   themes
 - [ ] Include input checks for `skip_if` and `show_if` (`question_id`
   exists, and data frame names are correct)
-- \[?\] Add a progress bar option in `sd_config()`, maybe
+- [x] Add a progress bar option in `sd_config()`, maybe
   `progress_bar = 'top'` or `progress_bar = 'bottom'` as a default, and
   `progress_bar = 'none'` to turn it off.
 - [ ] Required questions (`required = TRUE`): post a popup if a question
@@ -83,7 +83,7 @@ This is a running list of things we’re working on adding to the project:
 - [ ] Basic version working with a googlesheets database
 - [ ] User tracking via url parameters:
   <https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking>
-- [ ] Add a getSurveyData() function so the survey designer can obtain
+- [ ] Add a `getSurveyData()` function so the survey designer can obtain
   the current survey results from inside the app:
   <https://shinysurveys.jdtrat.com/articles/get-survey-data.html>
 - Question types:
