@@ -17,7 +17,7 @@ surveys:
 
 <br>
 <center>
-<img src='man/figures/technologies.png' align="center" style="height:250px;"/>
+<img src='man/figures/technologies.png' align="center" style="max-height:250px;"/>
 </center>
 
 <br>
