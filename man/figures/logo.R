@@ -89,8 +89,7 @@ ggsave(
   logo, height = dim, width = dim,
   bg = "transparent", device = cairo_pdf
 )
-renderthis::to_png(
-  'man/figures/logo.pdf',
+ggsave(
   'man/figures/logo.png',
-  density = 300
+  logo, height = dim, width = dim
 )
