@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png">
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
 <script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -27,7 +27,7 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
-    
+
 
     <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -50,24 +50,30 @@
 <li>
   <a href="index.html">
     <span class="fa fa-home fa-lg"></span>
-     
+
   </a>
 </li>
 <li>
   <a href="reference/index.html">Reference</a>
 </li>
-<li>
-  <a href="articles/template.html">Basic Usage</a>
-</li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
-     
+
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/template.html">Template</a>
+      <a href="articles/1_overview.html">Overview</a>
+    </li>
+    <li>
+      <a href="articles/2_question_types.html">Question types</a>
+    </li>
+    <li>
+      <a href="articles/3_formatting_options.html">Formatting options</a>
+    </li>
+    <li>
+      <a href="articles/4_database_setup.html">Database setup</a>
     </li>
   </ul>
 </li>
@@ -79,7 +85,7 @@
 <li>
   <a href="https://github.com/jhelvy/surveydown/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
-     
+
   </a>
 </li>
       </ul>
@@ -90,7 +96,7 @@
 </div>
 <!--/.navbar -->
 
-      
+
 
       </header><div class="row">
   <div class="contents col-md-9">
@@ -121,66 +127,36 @@
 </h1>
 <p>This is a running list of things we’re working on adding to the project:</p>
 <ul>
-<li>
-<input type="checkbox" checked>show_if (conditionally display question)</li>
-<li>
-<input type="checkbox" checked>skip_if (conditionally skip to page)</li>
-<li>
-<input type="checkbox" checked>Set defaults for questions to not have any choices selected on launch.</li>
-<li>
-<input type="checkbox" checked>Ability to embed markdown inside choice options (like mc buttons in formr)</li>
-<li>
-<input type="checkbox" checked>Option for <code>preview = TRUE</code> (database is ignored)</li>
-<li>
-<input type="checkbox" checked>Export timestamps on each page in the data</li>
-<li>
-<input type="checkbox" checked>Export timestamps on each question interaction (since this will increase the data size considerably, maybe add this as <code>question_times = FALSE</code> argument)</li>
-<li>
-<input type="checkbox" checked>Option to start at a designated page, e.g. <code>start_page = 'skipif'</code>
-</li>
-<li>
-<input type="checkbox" checked>A <code>show_all = TRUE</code> argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be called <code>print_mode = TRUE</code>.</li>
-<li>
-<input type="checkbox" checked>Set up SCSS to be compatible with Quarto-supported bootstrap themes</li>
-<li>
-<input type="checkbox">Include input checks for <code>skip_if</code> and <code>show_if</code> (<code>question_id</code> exists, and data frame names are correct)</li>
+<li><label><input type="checkbox" checked>show_if (conditionally display question)</label></li>
+<li><label><input type="checkbox" checked>skip_if (conditionally skip to page)</label></li>
+<li><label><input type="checkbox" checked>Set defaults for questions to not have any choices selected on launch.</label></li>
+<li><label><input type="checkbox" checked>Ability to embed markdown inside choice options (like mc buttons in formr)</label></li>
+<li><label><input type="checkbox" checked>Option for <code>preview = TRUE</code> (database is ignored)</label></li>
+<li><label><input type="checkbox" checked>Export timestamps on each page in the data</label></li>
+<li><label><input type="checkbox" checked>Export timestamps on each question interaction (since this will increase the data size considerably, maybe add this as <code>question_times = FALSE</code> argument)</label></li>
+<li><label><input type="checkbox" checked>Option to start at a designated page, e.g. <code>start_page = 'skipif'</code></label></li>
+<li><label><input type="checkbox" checked>A <code>show_all = TRUE</code> argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be called <code>print_mode = TRUE</code>.</label></li>
+<li><label><input type="checkbox" checked>Set up SCSS to be compatible with Quarto-supported bootstrap themes</label></li>
+<li><label><input type="checkbox">Include input checks for <code>skip_if</code> and <code>show_if</code> (<code>question_id</code> exists, and data frame names are correct)</label></li>
 <li>[?] Add a progress bar option in <code><a href="reference/sd_config.html">sd_config()</a></code>, maybe <code>progress_bar = 'top'</code> or <code>progress_bar = 'bottom'</code> as a default, and <code>progress_bar = 'none'</code> to turn it off.</li>
-<li>
-<input type="checkbox">Required questions (<code>required = TRUE</code>): post a popup if a question is required before allowing next button. Default should be <code>required = FALSE</code>.</li>
-<li>
-<input type="checkbox">Form validation: Make sure the user inputs the correct type depending on the question type. (see <a href="https://shiny.posit.co/r/reference/shiny/0.14/validate.html" class="external-link uri">https://shiny.posit.co/r/reference/shiny/0.14/validate.html</a>)</li>
-<li>
-<input type="checkbox">Admin page w/password (see <a href="https://github.com/daattali/shinyforms" class="external-link uri">https://github.com/daattali/shinyforms</a>)</li>
-<li>
-<input type="checkbox">Basic version working with a googlesheets database</li>
-<li>
-<input type="checkbox">User tracking via url parameters: <a href="https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking" class="external-link uri">https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking</a>
-</li>
-<li>
-<input type="checkbox">Add a getSurveyData() function so the survey designer can obtain the current survey results from inside the app: <a href="https://shinysurveys.jdtrat.com/articles/get-survey-data.html" class="external-link uri">https://shinysurveys.jdtrat.com/articles/get-survey-data.html</a>
-</li>
+<li><label><input type="checkbox">Required questions (<code>required = TRUE</code>): post a popup if a question is required before allowing next button. Default should be <code>required = FALSE</code>.</label></li>
+<li><label><input type="checkbox">Form validation: Make sure the user inputs the correct type depending on the question type. (see <a href="https://shiny.posit.co/r/reference/shiny/0.14/validate.html" class="external-link uri">https://shiny.posit.co/r/reference/shiny/0.14/validate.html</a>)</label></li>
+<li><label><input type="checkbox">Admin page w/password (see <a href="https://github.com/daattali/shinyforms" class="external-link uri">https://github.com/daattali/shinyforms</a>)</label></li>
+<li><label><input type="checkbox">Basic version working with a googlesheets database</label></li>
+<li><label><input type="checkbox">User tracking via url parameters: <a href="https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking" class="external-link uri">https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking</a></label></li>
+<li><label><input type="checkbox">Add a getSurveyData() function so the survey designer can obtain the current survey results from inside the app: <a href="https://shinysurveys.jdtrat.com/articles/get-survey-data.html" class="external-link uri">https://shinysurveys.jdtrat.com/articles/get-survey-data.html</a></label></li>
 <li>Question types:
 <ul class="task-list">
-<li>
-<input type="checkbox" checked>Multiple choice (single choice)</li>
-<li>
-<input type="checkbox" checked>Multiple choice (multiple choices)</li>
-<li>
-<input type="checkbox" checked>Select</li>
-<li>
-<input type="checkbox" checked>Text</li>
-<li>
-<input type="checkbox" checked>Numeric</li>
-<li>
-<input type="checkbox" checked>Multiple choice (button…like formr mc_button)</li>
-<li>
-<input type="checkbox" checked>Text area</li>
-<li>
-<input type="checkbox" checked>Date</li>
-<li>
-<input type="checkbox">Matrix</li>
-<li>
-<input type="checkbox">Slider</li>
+<li><label><input type="checkbox" checked>Multiple choice (single choice)</label></li>
+<li><label><input type="checkbox" checked>Multiple choice (multiple choices)</label></li>
+<li><label><input type="checkbox" checked>Select</label></li>
+<li><label><input type="checkbox" checked>Text</label></li>
+<li><label><input type="checkbox" checked>Numeric</label></li>
+<li><label><input type="checkbox" checked>Multiple choice (button…like formr mc_button)</label></li>
+<li><label><input type="checkbox" checked>Text area</label></li>
+<li><label><input type="checkbox" checked>Date</label></li>
+<li><label><input type="checkbox">Matrix</label></li>
+<li><label><input type="checkbox">Slider</label></li>
 </ul>
 </li>
 </ul>
@@ -197,16 +173,11 @@
 </h1>
 <p>Vignettes for each of the following:</p>
 <ul class="task-list">
-<li>
-<input type="checkbox">Quick overview / basic usage</li>
-<li>
-<input type="checkbox">List of question types and examples</li>
-<li>
-<input type="checkbox">Question formatting options</li>
-<li>
-<input type="checkbox">Flow control (conditional skipping and conditional display)</li>
-<li>
-<input type="checkbox">Setting up the database with supabase</li>
+<li><label><input type="checkbox">Quick overview / basic usage</label></li>
+<li><label><input type="checkbox">List of question types and examples</label></li>
+<li><label><input type="checkbox">Question formatting options</label></li>
+<li><label><input type="checkbox">Flow control (conditional skipping and conditional display)</label></li>
+<li><label><input type="checkbox">Setting up the database with supabase</label></li>
 </ul>
 <div class="section level2">
 <h2 id="license-information">
@@ -271,16 +242,16 @@
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
 </div>
 
       </footer>
 </div>
 
-  
 
 
-  
+
+
 
   </body>
 </html>
