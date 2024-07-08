@@ -1,7 +1,6 @@
 # Load the required packages
 library(ggplot2)
 library(grid)
-library(ggtext)
 library(Cairo)
 
 # Define the coordinates of the hexagon vertices
@@ -11,53 +10,87 @@ hexagon_coor <- data.frame(
 )
 
 # Function to create the rounded rectangle
-rounded_rect <- roundrectGrob(x = 0.5, y = 0.55,
-                              width = 0.55, height = 0.3,
-                              r = unit(0.1, "snpc"),
-                              gp = gpar(fill = "white", col = "black",
-                                        lwd = 5))
+rounded_rect <- roundrectGrob(
+  x = 0.5, y = 0.55,
+  width = 0.55, height = 0.3,
+  r = unit(0.1, "snpc"),
+  gp = gpar(fill = "white", col = "black", lwd = 10)
+)
 
 # Function to draw the down arrow
 down_arrow <- function() {
   polygonGrob(
-    x = 0.5 + (c(0, 0.2, 0.08, 0.08, -0.08, -0.08, -0.2) * 0.5),
-    y = 0.45 + (c(-0.25, -0.05, -0.05, 0.25, 0.25, -0.05, -0.05) * 0.5),
+    x = 0.5 + (c(0, 0.2, 0.06, 0.06, -0.06, -0.06, -0.2) * 0.5),
+    y = 0.45 + (c(-0.25, -0.05, -0.05, 0.2, 0.2, -0.05, -0.05) * 0.5),
     gp = gpar(fill = "black", col = NA)
   )
 }
 
 # Create the hexagon plot
 logo <- ggplot() +
-  geom_polygon(data = hexagon_coor,
-               aes(x = x, y = y),
-               fill = "slategrey",
-               color = "black",
-               linewidth = 2) +
+  geom_polygon(
+    data = hexagon_coor,
+    aes(x = x, y = y),
+    fill = "slategray",
+    color = "black",
+    linewidth = 4
+  ) +
   coord_fixed() +
   theme_void() +
-  annotation_custom(grobTree(rounded_rect),
-                    xmin = -1, xmax = 1,
-                    ymin = -1, ymax = 1) +
-  geom_text(aes(x = -0.2, y = 0.1),
-            label = "S", color = "black",
-            size = 26, fontface = "bold") +
-  annotation_custom(grobTree(down_arrow()),
-                    xmin = -0.6, xmax = 1.05,
-                    ymin = -0.7, ymax = 1.05) +
-  geom_richtext(aes(x = 0.015, y = -0.395),
-                label = "<span style='color:black;'>survey</span><span style='color:white;'>down</span>",
-                size = 12, family = "Verdana",
-                fill = NA, label.color = NA) +
-  geom_richtext(aes(x = 0, y = -0.38),
-                label = "<span style='color:white;'>survey</span><span style='color:black;'>down</span>",
-                size = 12, family = "Verdana",
-                fill = NA, label.color = NA)
+  annotation_custom(
+    grobTree(rounded_rect),
+    xmin = -0.9, xmax = 0.9,
+    ymin = -1, ymax = 1
+  ) +
+  geom_text(
+    aes(x = -0.19, y = 0.1),
+    label = "S", color = "black",
+    size = 35, fontface = "bold",
+    family = "Roboto"
+  ) +
+  annotation_custom(
+    grobTree(down_arrow()),
+    xmin = -0.62, xmax = 1.05,
+    ymin = -0.64, ymax = 1.05
+  ) +
+  geom_text(
+    aes(x = 0.01, y = -0.41, label = "surveydown"),
+    color = "black",
+    size = 13,
+    family = "Verdana"
+  ) +
+  geom_text(
+    aes(x = 0, y = -0.4, label = "surveydown"),
+    color = "white",
+    size = 13,
+    family = "Verdana"
+  )
+
+  # geom_richtext(
+  #   aes(x = 0.015, y = -0.395),
+  #   label = "<span style='color:black;'>survey</span><span style='color:white;'>down</span>",
+  #   size = 12, family = "Verdana",
+  #   fill = NA, label.color = NA
+  # ) +
+  # geom_richtext(
+  #   aes(x = 0, y = -0.38),
+  #   label = "<span style='color:white;'>survey</span><span style='color:black;'>down</span>",
+  #   size = 12, family = "Verdana",
+  #   fill = NA, label.color = NA
+  # )
+
 # Call the plot
 logo
 
 # Save
-ggsave('man/figures/logo.pdf',
-       logo, height = 4, width = 4,
-       bg = "transparent", device = cairo_pdf)
-renderthis::to_png('man/figures/logo.pdf',
-                   'man/figures/logo.png', density = 300)
+dim <- 5.6
+ggsave(
+  'man/figures/logo.pdf',
+  logo, height = dim, width = dim,
+  bg = "transparent", device = cairo_pdf
+)
+renderthis::to_png(
+  'man/figures/logo.pdf',
+  'man/figures/logo.png',
+  density = 300
+)
