@@ -1,0 +1,107 @@
+---
+server: shiny
+filters: [surveydown]
+---
+
+```{r}
+#| context: setup
+#| echo: false
+#| warning: false
+#| message: false
+
+library(surveydown)
+
+# Initial setup function (required)
+sd_setup()
+```
+
+::: {#welcome .sd-page}
+
+# Welcome to my survey!
+
+Here is a question to get started.
+
+This question showcases what a "multiple choice" question looks like, which is created using `type = 'mc'` inside the `sd_question()` function.
+
+It also is an example of the `show_if` feature (conditional display). If you choose the "Other" option, a second question pops up below asking to specify which other type of penguin is your favorite. This is controlled with the `show_if` argument to the `sd_config()` function defined in the server section at the bottom of the .qmd file.
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'penguins',
+  label = "Which is your favorite type of penguin?",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo',
+    'Other'     = 'other'
+  )
+)
+
+sd_question(
+  type  = "text",
+  id    = "penguins_other",
+  label = "Please specify the other penguin type:"
+)
+```
+
+<br>
+
+```{r}
+sd_next(next_page = 'page2')
+```
+
+:::
+
+::: {#page2 .sd-page}
+
+This is another page in your survey.
+
+{surveydown} supports many types of questions. For example, here is a simple `text` type question:
+
+```{r}
+sd_question(
+  type  = "text",
+  id    = "silly_word",
+  label = "Write a silly word here:"
+)
+```
+ 
+<br>
+
+```{r}
+sd_next(next_page = 'end')
+```
+
+:::
+
+::: {#end .sd-page}
+
+This it the last page in the survey
+
+:::
+
+```{r}
+#| context: server
+
+# To connect to a database to store the survey data, update this:
+# db <- sd_database(
+#   host = "",
+#   db_name = "",
+#   port = "",
+#   user = "",
+#   table_name = "Table1",
+#   password   = Sys.getenv("SUPABASE_PASSWORD")
+# )
+
+config <- sd_config(
+  # Use this function to customize features, like skip logic inside the survey.
+)
+
+sd_server(
+  input   = input,
+  session = session,
+  config  = config
+  # db      = db
+)
+```
