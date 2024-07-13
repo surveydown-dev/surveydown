@@ -44,22 +44,6 @@ sd_database <- function(host, db_name, port, user, table_name, password) {
         stop("You must provide your SupaBase password to access the database")
     }
 
-
-    tryCatch(
-        {
-            db <-  DBI::dbConnect(
-                RPostgres::Postgres(),
-                host     = host,
-                dbname   = db_name,
-                port     = port,
-                user     = user,
-                password = password
-            )
-            message("Successfully connected to the database.")
-            return(list(db = db, table_name = table_name))
-        }, error = function(e) {
-            stop("Error: Failed to connect to the database. Please check your connection details.")
-        })
   # < Code to handle SupaBase authentication here >
   #User Must create their own table inside of Supabase in order to make additions.
   tryCatch(
