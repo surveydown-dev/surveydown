@@ -2,11 +2,11 @@ pandoc: 3.1.11
 pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
-  1_overview: 1_overview.html
-  2_question_types: 2_question_types.html
-  3_formatting_options: 3_formatting_options.html
-  4_database_setup: 4_database_setup.html
-last_built: 2024-07-10T18:47Z
+  database_setup: database_setup.html
+  formatting_options: formatting_options.html
+  overview: overview.html
+  question_types: question_types.html
+last_built: 2024-07-15T13:38Z
 urls:
   reference: https://jhelvy.github.io/surveydown/reference
   article: https://jhelvy.github.io/surveydown/articles
