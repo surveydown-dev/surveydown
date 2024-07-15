@@ -17,11 +17,9 @@ knitr::opts_chunk$set(
 
 # surveydown <a href='https://jhelvy.github.io/surveydown/'><img src='man/figures/logo.png' align="right" style="height:139px;"/></a>
 
-surveydown: Markdown-Based Surveys With [Quarto Shiny Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
+### Markdown-Based Surveys With [Quarto Shiny Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
 
 > Note: This is still a very early-stage project and not quite production ready, though we're happy if you'd like to try it out and give us feedback!
-
-This project is a marriage of three open source technologies ([Quarto](https://quarto.org/), [shiny](https://shiny.posit.co/), and [supabase](https://supabase.com/)) to create dynamic, markdown-based surveys:
 
 <br>
 <center>
@@ -29,9 +27,13 @@ This project is a marriage of three open source technologies ([Quarto](https://q
 </center>
 <br>
 
-The general concept is to use a [Quarto shiny document](https://quarto.org/docs/dashboards/interactivity/shiny-r.html) to design your survey, which renders to a shiny app that can be hosted online and sent to survey respondents. The survey data collected from respondents is stored in a [supabase](https://supabase.com/) database that can easily be imported into R for analysis. 
+This project brings together three open source technologies ([Quarto](https://quarto.org/), [shiny](https://shiny.posit.co/), and [supabase](https://supabase.com/)) to create dynamic, markdown-based surveys.
 
-The {surveydown} R package provides the core set of functions needed to make key survey features work, like defining survey questions and controlling pagination and skip logic, etc. Our [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) works in tandem with the {surveydown} R package to make it all work. You can see more details on the R package [documentation page](https://jhelvy.github.io/surveydown).
+The general concept is to design your survey as a [Quarto shiny document](https://quarto.org/docs/dashboards/interactivity/shiny-r.html), which with the help of the {surveydown} package renders into a shiny app that can be hosted online and sent to survey respondents. The survey data collected from respondents is then. stored in a [supabase](https://supabase.com/) database that can easily be imported into R for analysis.
+
+The {surveydown} R package provides the core set of functions needed to make key survey features work, like defining survey questions and controlling pagination and skip logic, etc. Our [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) works in tandem with the {surveydown} R package to make it all work. 
+
+**See the [documentation page](https://jhelvy.github.io/surveydown/) to get started making your own surveydown survey!**
 
 # Background
 
