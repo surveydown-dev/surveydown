@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Database Setup • surveydown</title>
+<title>Survey Control Logic • surveydown</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -17,7 +17,7 @@
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Database Setup">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Survey Control Logic">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
@@ -101,21 +101,54 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>Database Setup</h1>
+      <h1 data-toc-skip>Survey Control Logic</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/jhelvy/surveydown/blob/main/vignettes/database_setup.Rmd" class="external-link"><code>vignettes/database_setup.Rmd</code></a></small>
-      <div class="hidden name"><code>database_setup.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/jhelvy/surveydown/blob/main/vignettes/survey_control_logic.Rmd" class="external-link"><code>vignettes/survey_control_logic.Rmd</code></a></small>
+      <div class="hidden name"><code>survey_control_logic.Rmd</code></div>
 
     </div>
 
     
     
 <blockquote>
-<p>On this page, we’ll demonstrate the necessary steps to set up your
-surveydown database using supabase.</p>
+<p>On this page, we’ll demonstrate the control logic options currently
+supported by surveydown</p>
 </blockquote>
-<p>Blah…</p>
+<p>In general, all control logic in the survey is defined with the
+<code><a href="../reference/sd_config.html">sd_config()</a></code> function.</p>
+<div class="section level2">
+<h2 id="page-skipping">Page skipping<a class="anchor" aria-label="anchor" href="#page-skipping"></a>
+</h2>
+<div class="section level3">
+<h3 id="basic-skipping">Basic skipping<a class="anchor" aria-label="anchor" href="#basic-skipping"></a>
+</h3>
+<p>Use the <code>skip_if</code> argument to control basic skipping
+logic.</p>
+</div>
+<div class="section level3">
+<h3 id="custom-skipping">Custom skipping<a class="anchor" aria-label="anchor" href="#custom-skipping"></a>
+</h3>
+<p>Use the <code>skip_if_custom</code> argument to control custom
+skipping logic.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="conditional-display">Conditional display<a class="anchor" aria-label="anchor" href="#conditional-display"></a>
+</h2>
+<div class="section level3">
+<h3 id="basic-conditional-display">Basic conditional display<a class="anchor" aria-label="anchor" href="#basic-conditional-display"></a>
+</h3>
+<p>Use the <code>show_if</code> argument to control basic conditional
+display logic.</p>
+</div>
+<div class="section level3">
+<h3 id="custom-conditional-display">Custom conditional display<a class="anchor" aria-label="anchor" href="#custom-conditional-display"></a>
+</h3>
+<p>Use the <code>show_if_custom</code> argument to control custom
+conditional display logic.</p>
+</div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
