@@ -1,8 +1,8 @@
 ---
-title: "2. Question Types"
+title: "Question Types"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{2. Question Types}
+  %\VignetteIndexEntry{Question Types}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

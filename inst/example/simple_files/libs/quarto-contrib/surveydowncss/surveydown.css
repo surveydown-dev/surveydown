@@ -1,0 +1,28 @@
+#progressbar {
+  background-color: #ECE8DF;
+  padding: 3px;
+  width: 100%;
+  position: fixed;
+  left: 0;
+  z-index: 1000;
+}
+#progressbar.POSITION_PLACEHOLDER {
+  POSITION_PLACEHOLDER: 0;
+}
+#progressbar > div {
+  width: 0%;
+  height: 10px;
+  border-radius: 0;
+}
+
+#title-block-header {
+  margin-block-end: 2rem;
+}
+
+h1, .h1, h2, .h2, h3, .h3 {
+  font-weight: 800;
+}
+
+body {
+  padding-top: 20px;
+}

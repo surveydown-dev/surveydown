@@ -4,7 +4,14 @@
 \alias{sd_database}
 \title{Connect to a SupaBase Database}
 \usage{
-sd_database(host, db_name, port, user, table_name, password)
+sd_database(
+  host = NULL,
+  db_name = NULL,
+  port = NULL,
+  user = NULL,
+  table_name = NULL,
+  password = NULL
+)
 }
 \arguments{
 \item{host}{Character string. The host address of the SupaBase database.}

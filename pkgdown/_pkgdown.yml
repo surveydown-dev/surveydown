@@ -22,13 +22,13 @@ navbar:
     - text: "Articles"
       menu:
         - text: "Overview"
-          href: articles/1_overview.html
+          href: articles/overview.html
         - text: "Question types"
-          href: articles/2_question_types.html
+          href: articles/question_types.html
         - text: "Formatting options"
-          href: articles/3_formatting_options.html
+          href: articles/formatting_options.html
         - text: "Database setup"
-          href: articles/4_database_setup.html
+          href: articles/database_setup.html
     - text: "Changelog"
       href: news/index.html
 
