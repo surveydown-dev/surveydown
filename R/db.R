@@ -33,12 +33,30 @@
 #'
 #' @export
 
-sd_database <- function(host, db_name, port, user, table_name, password) {
+sd_database <- function(
+        host       = NULL,
+        db_name    = NULL,
+        port       = NULL,
+        user       = NULL,
+        table_name = NULL,
+        password   = NULL
+    ) {
 
     # Authentication/Checks for NULL Values
-    if (is.null(host) || is.null(db_name) || is.null(port) || is.null(user)) {
-        stop("Error: One or more required parameters (config, host, db_name, port, user) are NULL.")
+    if (
+        is.null(host) |
+        is.null(db_name) |
+        is.null(port) |
+        is.null(user) |
+        is.null(table_name) |
+        is.null(password)
+    ) {
+        message(
+            "One or more of the required parameters are NULL, so the database is NOT connected; writing to local data.csv file instead."
+        )
+        return(NULL)
     }
+
 
     if (!nchar(password)) {
         stop("You must provide your SupaBase password to access the database")
@@ -46,21 +64,21 @@ sd_database <- function(host, db_name, port, user, table_name, password) {
 
   # < Code to handle SupaBase authentication here >
   #User Must create their own table inside of Supabase in order to make additions.
-  tryCatch(
-    {
-       db <-  DBI::dbConnect(
-          RPostgres::Postgres(),
-          host     = host,
-          dbname   = db_name,
-          port     = port,
-          user     = user,
-          password = password
-        )
-      message("Successfully connected to the database.")
-      return(list(db = db, table_name = table_name))
-    }, error = function(e) {
-      stop("Error: Failed to connect to the database. Please check your connection details.")
-    })
+    tryCatch(
+        {
+            db <-  DBI::dbConnect(
+                RPostgres::Postgres(),
+                host     = host,
+                dbname   = db_name,
+                port     = port,
+                user     = user,
+                password = password
+            )
+            message("Successfully connected to the database.")
+            return(list(db = db, table_name = table_name))
+        }, error = function(e) {
+            stop("Error: Failed to connect to the database. Please check your connection details.")
+        })
 }
 
 ## Updating Database ----

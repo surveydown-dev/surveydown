@@ -15,8 +15,9 @@ sd_server(input, session, config, db = NULL)
 elements include \code{page_structure}, \code{page_ids}, \code{question_ids}, \code{show_if}, \code{skip_if},
 \code{skip_if_custom}, \code{show_if_custom}, \code{preview}, and \code{start_page}.}
 
-\item{db}{An optional list containing database connection information. Expected elements
-include \code{db} and \code{table_name}. Defaults to NULL.}
+\item{db}{A list containing database connection information created using
+sd_database() function. Expected elements include \code{db} and \code{table_name}.
+Defaults to \code{NULL}.}
 }
 \description{
 This function defines the server-side logic for a Shiny application, handling various

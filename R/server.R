@@ -9,8 +9,9 @@
 #' @param config A list containing configuration settings for the application. Expected
 #'        elements include `page_structure`, `page_ids`, `question_ids`, `show_if`, `skip_if`,
 #'        `skip_if_custom`, `show_if_custom`, `preview`, and `start_page`.
-#' @param db An optional list containing database connection information. Expected elements
-#'        include `db` and `table_name`. Defaults to NULL.
+#' @param db A list containing database connection information created using
+#' sd_database() function. Expected elements include `db` and `table_name`.
+#' Defaults to `NULL`.
 #'
 #' @details The function performs the following tasks:
 #'   - Initializes local variables based on the provided configuration.
