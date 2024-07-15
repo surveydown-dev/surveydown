@@ -105,17 +105,21 @@
 <div class="page-header"><h1 id="surveydown-">surveydown <a href="https://jhelvy.github.io/surveydown/"><img src="reference/figures/logo.png" align="right" style="height:139px;"></a>
 <a class="anchor" aria-label="anchor" href="#surveydown-"></a>
 </h1></div>
-<p>surveydown: Markdown-Based Surveys With <a href="https://quarto.org/docs/dashboards/interactivity/shiny-r.html" class="external-link">Quarto Shiny Documents</a>.</p>
+<div class="section level3">
+<h3 id="markdown-based-surveys-with-quarto-shiny-documents">Markdown-Based Surveys With <a href="https://quarto.org/docs/dashboards/interactivity/shiny-r.html" class="external-link">Quarto Shiny Documents</a>.<a class="anchor" aria-label="anchor" href="#markdown-based-surveys-with-quarto-shiny-documents"></a>
+</h3>
 <blockquote>
 <p>Note: This is still a very early-stage project and not quite production ready, though we’re happy if you’d like to try it out and give us feedback!</p>
 </blockquote>
-<p>This project is a marriage of three open source technologies (<a href="https://quarto.org/" class="external-link">Quarto</a>, <a href="https://shiny.posit.co/" class="external-link">shiny</a>, and <a href="https://supabase.com/" class="external-link">supabase</a>) to create dynamic, markdown-based surveys:</p>
 <br><center>
 <img src="reference/figures/technologies.png" align="center" style="max-height:250px;">
 </center>
 <p><br></p>
-<p>The general concept is to use a <a href="https://quarto.org/docs/dashboards/interactivity/shiny-r.html" class="external-link">Quarto shiny document</a> to design your survey, which renders to a shiny app that can be hosted online and sent to survey respondents. The survey data collected from respondents is stored in a <a href="https://supabase.com/" class="external-link">supabase</a> database that can easily be imported into R for analysis.</p>
-<p>The {surveydown} R package provides the core set of functions needed to make key survey features work, like defining survey questions and controlling pagination and skip logic, etc. Our <a href="https://github.com/jhelvy/surveydown-ext" class="external-link">surveydown Quarto extension</a> works in tandem with the {surveydown} R package to make it all work. You can see more details on the R package <a href="https://jhelvy.github.io/surveydown">documentation page</a>.</p>
+<p>This project brings together three open source technologies (<a href="https://quarto.org/" class="external-link">Quarto</a>, <a href="https://shiny.posit.co/" class="external-link">shiny</a>, and <a href="https://supabase.com/" class="external-link">supabase</a>) to create dynamic, markdown-based surveys.</p>
+<p>The general concept is to design your survey as a <a href="https://quarto.org/docs/dashboards/interactivity/shiny-r.html" class="external-link">Quarto shiny document</a>, which with the help of the {surveydown} package renders into a shiny app that can be hosted online and sent to survey respondents. The survey data collected from respondents is then. stored in a <a href="https://supabase.com/" class="external-link">supabase</a> database that can easily be imported into R for analysis.</p>
+<p>The {surveydown} R package provides the core set of functions needed to make key survey features work, like defining survey questions and controlling pagination and skip logic, etc. Our <a href="https://github.com/jhelvy/surveydown-ext" class="external-link">surveydown Quarto extension</a> works in tandem with the {surveydown} R package to make it all work.</p>
+<p><strong>See the <a href="https://jhelvy.github.io/surveydown/">documentation page</a> to get started making your own surveydown survey!</strong></p>
+</div>
 </div>
 <div class="section level1">
 <h1 id="background">Background<a class="anchor" aria-label="anchor" href="#background"></a>
