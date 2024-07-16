@@ -34,11 +34,11 @@
 #' @export
 
 sd_database <- function(
-        host       ,
-        db_name    ,
-        port       ,
-        user       ,
-        table_name ,
+        host       = NULL,
+        db_name    = NULL,
+        port       = NULL,
+        user       = NULL,
+        table_name = NULL,
         password
     ) {
 
