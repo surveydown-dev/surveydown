@@ -39,7 +39,7 @@ sd_database <- function(
         port       = NULL,
         user       = NULL,
         table_name = NULL,
-        password
+        password = NULL
     ) {
 
     # Authentication/Checks for NULL Values
