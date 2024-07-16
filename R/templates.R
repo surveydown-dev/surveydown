@@ -3,7 +3,7 @@
 #' This function creates a survey template in a specified directory. It can use
 #' different templates, with `"simple"` being the default. The function prompts
 #' the user to confirm the use of the current working directory if no path is
-#' specified. It also opens the new project in RStudio.
+#' specified.
 #'
 #' @param path A character string specifying the directory in which to create
 #' the survey template. Defaults to the current working directory.
@@ -52,12 +52,4 @@ create_survey <- function(path = getwd(), template = "simple") {
   file.copy(list.files(source_dir, full.names = TRUE), path, recursive = TRUE)
 
   usethis::ui_done(paste("Survey template created at", path))
-
-  # Change to the new project if running in RStudio
-  if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-    proj_file <- file.path(path, "survey.Rproj")
-    if (file.exists(proj_file)) {
-      rstudioapi::openProject(proj_file)
-    }
-  }
 }

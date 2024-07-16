@@ -20,7 +20,7 @@ A message indicating the successful creation of the survey template.
 This function creates a survey template in a specified directory. It can use
 different templates, with \code{"simple"} being the default. The function prompts
 the user to confirm the use of the current working directory if no path is
-specified. It also opens the new project in RStudio.
+specified.
 }
 \examples{
 \dontrun{
