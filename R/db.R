@@ -41,12 +41,6 @@
 #'     table_name = "your-table-name",
 #'     password = "your-password"
 #'   )
-#'
-#'
-#'
-#'
-#'
-#'
 #' }
 #'
 #' @export
