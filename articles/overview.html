@@ -61,6 +61,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/installation.html">Installation</a>
+    </li>
+    <li>
       <a href="../articles/overview.html">Overview</a>
     </li>
     <li>
@@ -111,49 +114,36 @@
 
     
     
+<div class="section level2">
+<h2 id="introduction-installation">Introduction &amp; installation<a class="anchor" aria-label="anchor" href="#introduction-installation"></a>
+</h2>
+<p>surveydown is a tool for building and deploying surveys using <a href="https://quarto.org/docs/dashboards/interactivity/shiny-r.html" class="external-link"><strong>Quarto
+Shiny documents</strong></a>.</p>
+<p>Before jumping in, check out the <a href="https://jhelvy.github.io/surveydown/articles/installation.html">installation
+instructions</a> to make sure you have everything installed and set up
+properly.</p>
+</div>
+<div class="section level2">
+<h2 id="start-with-a-template">Start with a template<a class="anchor" aria-label="anchor" href="#start-with-a-template"></a>
+</h2>
+<p>We recommend using the <code><a href="../reference/create_survey.html">surveydown::create_survey()</a></code>
+function to start with a template:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/create_survey.html">create_survey</a></span><span class="op">(</span><span class="st">"path/to/folder"</span><span class="op">)</span></span></code></pre></div>
+<p>replacing <code>"path/to/folder"</code> with the path where you want
+to create your template surveydown project. You can also provide a
+<code>template</code> argument to specify which template to use (for now
+there is only one template: <code>"simple"</code>).</p>
 <blockquote>
-<p>The <code>surveydown</code> R package works together with the
-<code>surveydown</code> Quarto extension. As a simplification, we call
-them together as “<code>surveydown</code>” in this article.</p>
+<p>Every survey created with {surveydown} should be in it’s own separate
+project folder.</p>
 </blockquote>
-<div class="section level2">
-<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
-</h2>
-<p><code>surveydown</code> is a handy tool for survey construction,
-release, and data collection by creating <a href="https://quarto.org/docs/dashboards/interactivity/shiny-r.html" class="external-link"><strong>Quarto
-Shiny documents</strong></a>. It designs survey using <a href="https://quarto.org" class="external-link">Quarto</a>, renders the UI with <a href="https://www.rstudio.com/products/shiny/" class="external-link">Shiny</a>, and stores
-data on <a href="https://supabase.com" class="external-link">Supabase</a>. With
-<code>surveydown</code>, you can create HTML survey pages by
-constructing a Quarto doc with extension of <code>qmd</code>.</p>
-<p><a href="https://quarto.org" class="external-link">Quarto</a> is a revolutionary
-publication tool. A Quarto doc accepts markdown texts, R scripts, Python
-scripts, and more. <a href="https://www.rstudio.com/products/shiny/" class="external-link">Shiny</a> is an R web app
-development platform. It provides interactive UI that responds to users’
-toggling. <a href="https://supabase.com" class="external-link">Supabase</a> is an open-source
-database supplier that delivers input-output services and exports our
-survey results. For more information about their basic usage, please
-proceed to their official websites.</p>
-</div>
-<div class="section level2">
-<h2 id="why-use-surveydown">Why Use <code>surveydown</code><a class="anchor" aria-label="anchor" href="#why-use-surveydown"></a>
-</h2>
-<p><code>surveydown</code> is a very good alternative of Google Forms,
-formr, Qualtrics, Survey Monkey, etc. It is markdown based, supports R
-code chunks. It is free to use, highly reproducible and totally
-sharable.</p>
-</div>
-<div class="section level2">
-<h2 id="preparation">Preparation<a class="anchor" aria-label="anchor" href="#preparation"></a>
-</h2>
-<p><code>surveydown</code> works with Quarto. Make sure you have the
-latest version of <a href="https://quarto.org" class="external-link">Quarto</a> installed.
-Quarto works best with <a href="https://www.rstudio.com/categories/rstudio-ide/" class="external-link">RStudio</a>, but
-you can also have it on <a href="https://code.visualstudio.com" class="external-link">VS
-Code</a> or <a href="https://github.com/posit-dev/positron" class="external-link">Positron</a>
-(a novel IDE made by Posit), so please install Quarto together with any
-IDE of your preference.</p>
-<p><strong>(Instructions here for installing
-<code>surveydown</code>)</strong></p>
+<p>Once you’ve created a template survey to work with, you’ll notice a
+<code>_extensions</code> folder. Inside that folder, there is a
+<code>surveydown</code> folder containing the <a href="https://github.com/jhelvy/surveydown-ext" class="external-link">surveydown Quarto
+extension</a>, which is required to make everything work. <strong>Make
+sure you keep that folder in the root of your project</strong> to keep
+everything working properly :)</p>
 </div>
 <div class="section level2">
 <h2 id="basic-use">Basic Use<a class="anchor" aria-label="anchor" href="#basic-use"></a>
@@ -172,27 +162,27 @@ of your HTML page. These settings are called <strong>keys</strong>.</p>
 <p>Below are the <strong>essential</strong> YAML scripts for the
 surveydown project. It contains two keys: <code>server</code>, and
 <code>filters</code>.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="pp">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">server</span><span class="kw">:</span><span class="at"> shiny</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">filters</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">surveydown</span><span class="kw">]</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">server</span><span class="kw">:</span><span class="at"> shiny</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">filters</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">surveydown</span><span class="kw">]</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
 <p>The <code>server: shiny</code> key designates the Shiny server to our
 page, and <code>filters: [surveydown]</code> applies the surveydown
 Quarto extension.</p>
 <p>Below are the <strong>optional</strong> YAML scripts that you may
 use:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="pp">---</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">theme</span><span class="kw">:</span><span class="at"> united</span><span class="co"> # Any bootswatch theme or a customized scss file</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">barcolor</span><span class="kw">:</span><span class="at"> theme</span><span class="co"> # "theme" (default) or a customized hex code</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">barposition</span><span class="kw">:</span><span class="at"> top</span><span class="co"> # "top" (default), "bottom", or "none" </span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">theme</span><span class="kw">:</span><span class="at"> united</span><span class="co"> # Any bootswatch theme or a customized scss file</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="fu">barcolor</span><span class="kw">:</span><span class="at"> theme</span><span class="co"> # "theme" (default) or a customized hex code</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">barposition</span><span class="kw">:</span><span class="at"> top</span><span class="co"> # "top" (default), "bottom", or "none" </span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
 <p>There are <a href="https://bootswatch.com" class="external-link">25 bootswatch themes</a>
 to choose from. You can also use our customized <code>scss</code> theme
 file, or even combine these two. An example combination is shown
 below:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="pp">---</span></span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">theme</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">united</span><span class="kw">,</span><span class="at"> custom.scss</span><span class="kw">]</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="pp">---</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">theme</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">united</span><span class="kw">,</span><span class="at"> custom.scss</span><span class="kw">]</span></span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="pp">---</span></span></code></pre></div>
 <p>It means to use the <a href="https://bootswatch.com/united/" class="external-link">united
 bootswatch theme</a>, and overwrite with the <code>custom.scss</code>
 file. For example, if you don’t like the orange primary color of this
@@ -217,7 +207,7 @@ the layout of your HTML page.</p>
 <p>After the YAML header, you’ll need to load the
 <code>surveydown</code> package and run the <code><a href="../reference/sd_setup.html">sd_setup()</a></code>
 function:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/jhelvy/surveydown" class="external-link">surveydown</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/sd_setup.html">sd_setup</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -238,7 +228,7 @@ your favorite. This is a <strong>conditional question</strong> and is
 controlled with the <code>show_if</code> argument to the
 <code><a href="../reference/sd_config.html">sd_config()</a></code> function defined in the server section at the
 bottom of the <code>.qmd</code> file, which will be described in <a href="#server-codes">4. Server Codes</a>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># A multiple choice question with an "Other" option</span></span>
 <span><span class="fu"><a href="../reference/sd_question.html">sd_question</a></span><span class="op">(</span></span>
 <span>  type  <span class="op">=</span> <span class="st">'mc'</span>,</span>
@@ -287,11 +277,12 @@ page.</li>
 This part is essential and has to be the same for every survey
 project.</li>
 </ol>
-<div class="section level4">
-<h4 id="template">4.1 Template<a class="anchor" aria-label="anchor" href="#template"></a>
-</h4>
+</div>
+<div class="section level3">
+<h3 id="template">4.1 Template<a class="anchor" aria-label="anchor" href="#template"></a>
+</h3>
 <p>Below is a template for the server codes:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># See instructions in supabase setup</span></span>
 <span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
 <span>  host       <span class="op">=</span> <span class="st">"your_supabase_host"</span>,</span>
@@ -323,14 +314,14 @@ project.</li>
 <span>  db      <span class="op">=</span> <span class="va">db</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level4">
-<h4 id="show_if">4.2 <code>show_if</code><a class="anchor" aria-label="anchor" href="#show_if"></a>
-</h4>
+<div class="section level3">
+<h3 id="show_if">4.2 <code>show_if</code><a class="anchor" aria-label="anchor" href="#show_if"></a>
+</h3>
 <p>Back to our example: in order for the conditional question to show
 once the “Other” option is selected, you’ll need to define it in the
 <code>show_if</code> argument under the <code><a href="../reference/sd_config.html">sd_config()</a></code>
 function.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_config.html">sd_config</a></span><span class="op">(</span></span>
 <span>  show_if <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span></span>
 <span>    <span class="op">~</span><span class="va">question_id</span>,  <span class="op">~</span><span class="va">question_value</span>, <span class="op">~</span><span class="va">target</span>,</span>
@@ -349,15 +340,15 @@ question has id of “<code>penguins_other</code>”.</p>
 essentially important if you want participants to type in their
 personalized answers that are not listed in your options.</p>
 </div>
-<div class="section level4">
-<h4 id="skip_if">4.3 <code>skip_if</code><a class="anchor" aria-label="anchor" href="#skip_if"></a>
-</h4>
+<div class="section level3">
+<h3 id="skip_if">4.3 <code>skip_if</code><a class="anchor" aria-label="anchor" href="#skip_if"></a>
+</h3>
 <p>The <code>skip_if</code> argument works similarly as
 <code>show_if</code>. You indicate its functional
 <code>question_id</code>, set the <code>question_value</code> (aka the
 option) to trigger the page jump, and set the <code>target</code> value
 as the landing page.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_config.html">sd_config</a></span><span class="op">(</span></span>
 <span>  show_if <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span></span>
 <span>    <span class="op">~</span><span class="va">question_id</span>,  <span class="op">~</span><span class="va">question_value</span>, <span class="op">~</span><span class="va">target</span>,</span>
@@ -375,7 +366,6 @@ clicking on it, you’ll be directed to the page with ID of
 </div>
 </div>
 </div>
-</div>
 <div class="section level2">
 <h2 id="page-arrangement">Page Arrangement<a class="anchor" aria-label="anchor" href="#page-arrangement"></a>
 </h2>
@@ -384,40 +374,40 @@ clicking on it, you’ll be directed to the page with ID of
 </h3>
 <p><code>surveydown</code> utilizes Shiny to arrange the pages. See the
 example below as a template for page setup.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="sc">:::</span> {<span class="co">#page_1 .sd-page}</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co"># Page 1</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>Sample question</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="fu">sd_question</span>(</span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">type  =</span> <span class="st">'mc'</span>,</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">id    =</span> <span class="st">'mc_question'</span>,</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">label =</span> <span class="st">"What's your favorite color?"</span>,</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">option =</span> <span class="fu">c</span>(</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>    <span class="st">'Red'</span>    <span class="ot">=</span> <span class="st">'red'</span>,</span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>    <span class="st">'Blue'</span>   <span class="ot">=</span> <span class="st">'blue'</span>,</span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>    <span class="st">'Orange'</span> <span class="ot">=</span> <span class="st">'orange'</span></span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  )</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>)</span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="sc">&lt;</span>br<span class="sc">&gt;</span></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a></span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="fu">sd_next</span>(<span class="at">next_page =</span> <span class="st">'page_2'</span>)</span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="sc">:::</span></span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a></span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="er">:::</span> {<span class="co">#page_2 .sd-page}</span></span>
-<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co"># Page 2</span></span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a></span>
-<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a>This is page <span class="dv">2</span></span>
-<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a></span>
-<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="sc">&lt;</span>br<span class="sc">&gt;</span></span>
-<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a></span>
-<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="fu">sd_next</span>(<span class="at">next_page =</span> <span class="st">'end'</span>)</span>
-<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="sc">:::</span></span>
-<span id="cb9-31"><a href="#cb9-31" tabindex="-1"></a></span>
-<span id="cb9-32"><a href="#cb9-32" tabindex="-1"></a><span class="er">:::</span> {<span class="co">#end .sd-page}</span></span>
-<span id="cb9-33"><a href="#cb9-33" tabindex="-1"></a><span class="do">## Thanks for taking our survey!</span></span>
-<span id="cb9-34"><a href="#cb9-34" tabindex="-1"></a><span class="sc">:::</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="sc">:::</span> {<span class="co">#page_1 .sd-page}</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co"># Page 1</span></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>Sample question</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="fu">sd_question</span>(</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">type  =</span> <span class="st">'mc'</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  <span class="at">id    =</span> <span class="st">'mc_question'</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  <span class="at">label =</span> <span class="st">"What's your favorite color?"</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  <span class="at">option =</span> <span class="fu">c</span>(</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>    <span class="st">'Red'</span>    <span class="ot">=</span> <span class="st">'red'</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>    <span class="st">'Blue'</span>   <span class="ot">=</span> <span class="st">'blue'</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>    <span class="st">'Orange'</span> <span class="ot">=</span> <span class="st">'orange'</span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  )</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>)</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="sc">&lt;</span>br<span class="sc">&gt;</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="fu">sd_next</span>(<span class="at">next_page =</span> <span class="st">'page_2'</span>)</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="sc">:::</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="er">:::</span> {<span class="co">#page_2 .sd-page}</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="co"># Page 2</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a>This is page <span class="dv">2</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="sc">&lt;</span>br<span class="sc">&gt;</span></span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="fu">sd_next</span>(<span class="at">next_page =</span> <span class="st">'end'</span>)</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="sc">:::</span></span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a></span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="er">:::</span> {<span class="co">#end .sd-page}</span></span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a><span class="do">## Thanks for taking our survey!</span></span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="sc">:::</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="quarto-fences">2. Quarto Fences<a class="anchor" aria-label="anchor" href="#quarto-fences"></a>
@@ -428,14 +418,14 @@ colons <code>:::</code>, to regulate elements in a page, similar to the
 followed by the opening set of <code>:::</code> regulates the css
 settings of this fence. Therefore, a basic framework of a surveydown
 page is like this:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="sc">:::</span> {<span class="co">#page_1 .sd-page}</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>Some contents</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="sc">&lt;</span>br<span class="sc">&gt;</span></span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="fu">sd_next</span>(<span class="at">next_page =</span> <span class="st">'page_2'</span>)</span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="sc">:::</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="sc">:::</span> {<span class="co">#page_1 .sd-page}</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>Some contents</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="sc">&lt;</span>br<span class="sc">&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="fu">sd_next</span>(<span class="at">next_page =</span> <span class="st">'page_2'</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="sc">:::</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="css-settings">3. css Settings<a class="anchor" aria-label="anchor" href="#css-settings"></a>
