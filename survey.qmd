@@ -82,16 +82,14 @@ This it the last page in the survey
 # For security, we recommend storing your supabase password in your R
 # environment instead of hard-coding it here, which you can open and edit with
 # usethis::edit_r_environ()
-
  db <- sd_database(
-   host       = NULL,
-   db_name    = NULL,
-   port       = NULL,
-   user       = NULL,
-   table_name = NULL,
+   host       = "aws-0-us-west-1.pooler.supabase.com",
+   db_name    = "postgres",
+   port       = "6543",
+   user       = "postgres.kjxxpyqplqvtqqxrxmzi",
+   table_name = "NEWEST_TABLE",
    password   = Sys.getenv("SUPABASE_PASSWORD")
  )
-
 # If you don't have a database setup you can just leave the function blank.
 
 db <- sd_database()

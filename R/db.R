@@ -34,12 +34,12 @@
 #' @export
 
 sd_database <- function(
-        host       = NULL,
-        db_name    = NULL,
-        port       = NULL,
-        user       = NULL,
-        table_name = NULL,
-        password   = NULL
+        host       ,
+        db_name    ,
+        port       ,
+        user       ,
+        table_name ,
+        password
     ) {
 
     # Authentication/Checks for NULL Values
@@ -48,8 +48,7 @@ sd_database <- function(
         is.null(db_name) |
         is.null(port) |
         is.null(user) |
-        is.null(table_name) |
-        is.null(password)
+        is.null(table_name)
     ) {
         message(
             "One or more of the required parameters are NULL, so the database is NOT connected; writing to local data.csv file instead."
