@@ -21,6 +21,8 @@ navbar:
       href: reference/index.html
     - text: "Articles"
       menu:
+        - text: "Installation"
+          href: articles/installation.html
         - text: "Overview"
           href: articles/overview.html
         - text: "Question types"
@@ -44,3 +46,4 @@ reference:
   - sd_config
   - sd_database
   - sd_server
+  - create_survey

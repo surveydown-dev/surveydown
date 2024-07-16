@@ -37,7 +37,18 @@ template example surveys to design your own.
 **See the [documentation page](https://jhelvy.github.io/surveydown/) to
 get started making your own surveydown survey!**
 
-# Background
+# Background & Motivation
+
+`surveydown` was created as a markdown-based alternative to platforms
+like Google Forms, Qualtrics, Survey Monkey, etc. Unlike every other
+platform, it allows the user to define their entire survey content using
+markdown and R code, making the survey itself fully reproducible and
+easy to share and collaborate with others. The resulting shiny app for
+each survey can be hosted on a number of platforms, like
+[shinyapps.io](https://shinyapps.io/) or
+[huggingface](https://huggingface.co/), and the survey data collected is
+owned by the survey designer in their supabase account. Best of all,
+everything is open source and free :)
 
 If you’re curious where this whole idea came from, check out this [blog
 post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/), which

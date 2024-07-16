@@ -1,0 +1,43 @@
+---
+title: "Installation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Installation}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.retina = 3,
+  comment = "#>"
+)
+```
+
+# Install R
+
+It kind of goes without saying, but you need to [install R](https://cloud.r-project.org/) for this R package to work.
+
+# Install Quarto
+
+{surveydown} works with [Quarto](https://quarto.org), so make sure you have the [latest version installed](https://quarto.org/docs/get-started/).
+
+Also, Quarto works great with an IDE. We recommend [RStudio](https://www.rstudio.com/categories/rstudio-ide/), but you can also use it with [VS Code](https://code.visualstudio.com) or [Positron](https://github.com/posit-dev/positron) (a novel IDE made by Posit).
+
+# Install the package
+
+For now, {surveydown} is not get on CRAN, but you can install the development version from [GitHub](https://github.com/jhelvy/surveydown) by running the following command in R:
+
+```{r}
+#| eval: false
+
+# install.packages("remotes")
+remotes::install_github("jhelvy/surveydown")
+```
+
+# Quarto extension
+
+Finally, the {surveydown} package works in tandem with our [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext), which is required to make everything work. The extension is needed in the root directory folder of every survey project you create, so don't worry about installing it now - just know that you'll need it eventually.

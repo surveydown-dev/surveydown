@@ -34,9 +34,11 @@ Imports:
     markdown,
     readr,
     RPostgres,
+    rstudioapi,
     rvest,
     shiny,
     shinyjs,
-    shinyWidgets
+    shinyWidgets, 
+    usethis
 URL: https://github.com/jhelvy/surveydown
 BugReports: https://github.com/jhelvy/surveydown/issues
