@@ -1,5 +1,5 @@
 ---
-title: "Database Setup"
+title: "Database Setup using SupaBase"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Database Setup}
@@ -17,6 +17,30 @@ knitr::opts_chunk$set(
 )
 ```
 
-> On this page, we’ll demonstrate the necessary steps to set up your surveydown database using supabase.
+> This guide will help users set up a Supabase account to work inside of SurveyDown 
+for quick & live server updates
 
-Blah...
+# Step 1:
+
+<p style="font-size: 18px;"> To begin your database setup that involves creating an account on the [SupaBase](https://supabase.com/) website.
+</p>
+
+# Step 2: 
+
+<p style="font-size: 18px;"> 
+From the Main page, select "Start your Project" underlined in <span style="color:red; text-decoration:underline;"> red</span>.
+</p>
+
+![](images/main_pageS2.png)
+
+
+# Step 3:
+
+After creating your new account proceed to your dashboard, and select "New Project"
+
+![](images/main_pageS3.png)
+# Step 4
+
+
+
+
