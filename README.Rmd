@@ -58,7 +58,7 @@ This is a running list of things we're working on adding to the project:
 - [x] A `show_all = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be called `print_mode = TRUE`.
 - [x] Set up SCSS to be compatible with Quarto-supported bootstrap themes
 - [x] Add an optional progress bar
-- [ ] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
+- [x] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
 - [ ] Required questions (`required = TRUE`): post a popup if a question is required before allowing next button. Default should be `required = FALSE`.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
 - [ ] Admin page w/password to preview / download data (see https://github.com/daattali/shinyforms)
