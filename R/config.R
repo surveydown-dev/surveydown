@@ -46,10 +46,11 @@ sd_config <- function(
   page_structure <- get_page_structure()
   question_structure <- get_question_structure()
   config <- list(
-    page_structure = page_structure,
+    page_structure     = page_structure,
     question_structure = question_structure,
-    page_ids       = names(page_structure),
-    question_ids   = unname(unlist(page_structure))
+    page_ids           = names(page_structure),
+    question_ids       = names(question_structure),
+    question_values    = unname(unlist(question_structure))
   )
 
   # Check skip_if and show_if inputs
@@ -143,15 +144,16 @@ get_question_structure <- function() {
 
         # Extract the options for the question
         option_nodes <- question_node |>
-            rvest::html_nodes("[data-option-value]")
+            rvest::html_nodes("input[type='radio']")
 
         options <- sapply(option_nodes, function(opt) {
-            rvest::html_attr(opt, "data-option-value")
+            rvest::html_attr(opt, "value")
         })
 
         # Store the options for this question
         question_structure[[question_id]] <- options
     }
+
     return(question_structure)
 }
 
@@ -194,6 +196,9 @@ check_skip_show <- function(config, skip_if, skip_if_custom,
         if (!all(skip_if$target %in% config$page_ids)) {
             stop("All target values in skip_if must be valid page IDs.")
         }
+        if (!all(skip_if$question_value %in% config$question_values)) {
+            stop("All question_value values in skip_if must be valid question values.")
+        }
     }
 
     if (!is.null(show_if)) {
@@ -208,6 +213,9 @@ check_skip_show <- function(config, skip_if, skip_if_custom,
         }
         if (!all(show_if$target %in% config$question_ids)) {
             stop("All target values in show_if must be valid question IDs.")
+        }
+        if (!all(show_if$question_value %in% config$question_values)) {
+            stop("All question_value values in show_if must be valid question values.")
         }
     }
 
