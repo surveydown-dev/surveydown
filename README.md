@@ -80,7 +80,7 @@ This is a running list of things we’re working on adding to the project:
 - [x] Set up SCSS to be compatible with Quarto-supported bootstrap
   themes
 - [x] Add an optional progress bar
-- [ ] Include input checks for `skip_if` and `show_if` (`question_id`
+- [x] Include input checks for `skip_if` and `show_if` (`question_id`
   exists, and data frame names are correct)
 - [ ] Required questions (`required = TRUE`): post a popup if a question
   is required before allowing next button. Default should be
