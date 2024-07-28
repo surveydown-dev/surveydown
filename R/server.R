@@ -76,21 +76,11 @@ sd_server <- function(input, session, config, db = NULL) {
   # Initialize reactive value to track the maximum progress reached
   max_progress <- shiny::reactiveVal(0)
 
-  # Initialize reactiveValues to store status information
-  answer_status <- shiny::reactiveValues(
-    processing_question = NULL,
-    current_answers = NULL,
-    current_answers_length = NULL,
-    num_answered = NULL,
-    progress = NULL
-  )
-
   # Observing the question timestamps and progress bar
   shiny::observe({
     lapply(question_ids, function(id) {
       shiny::observeEvent(input[[id]], {
         # Updating question timestamps
-        answer_status$processing_question <- list(id = id, value = input[[id]])
         if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
           timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
         }
