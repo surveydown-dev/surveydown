@@ -51,6 +51,11 @@ sd_question <- function(
 
   output <- NULL
 
+  # Add a red asterisk to the label if the question is required
+  if (required) {
+      label <- paste(label, "<span style='color: red;'>*</span>")
+  }
+
   if (type ==  "select") {
     option <- c("", option)
     names(option)[1] <- label_select
@@ -200,17 +205,16 @@ sd_question <- function(
 
   }
 
-  # Wrap the output in a div with a custom data attribute to facilitate
-  # question_id scraping later
+  # Wrap the output in a div with custom data attributes
   output_div <- shiny::tags$div(
-    id = paste("container-", id),
-    `data-question-id` = id,   # Custom attribute to identify the question_id
-    class = "question-container", # Additional CSS class for styling or scripts
-    output
+      id = paste("container-", id),
+      `data-question-id` = id,
+      `data-required` = if(required) "true" else "false",
+      class = "question-container",
+      output
   )
 
   return(output_div)
-
 }
 
 #' Create a 'Next' Button for Page Navigation

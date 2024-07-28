@@ -76,9 +76,6 @@ sd_server <- function(input, session, config, db = NULL) {
   # Initialize reactive value to track the maximum progress reached
   max_progress <- shiny::reactiveVal(0)
 
-  # Initialize reactive value to track the number of questions answered
-  answered_questions <- shiny::reactiveVal(0)
-
   # Initialize reactiveValues to store status information
   answer_status <- shiny::reactiveValues(
     processing_question = NULL,
