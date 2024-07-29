@@ -41,6 +41,9 @@
 #' }
 #'
 #' @export
+
+# Server Function ----
+
 sd_server <- function(input, session, config, db = NULL) {
 
     # Create local objects from config file
@@ -102,20 +105,15 @@ sd_server <- function(input, session, config, db = NULL) {
 
             shiny::observeEvent(input[[make_next_button_id(next_page)]], {
 
-                # Update next page
-                if (!is.null(skip_if)) {
-                    next_page <- handle_basic_skip_logic(input, skip_if, current_page, next_page)
-                }
+                # Update next page based on skip logic
+                next_page <- handle_skip_logic(input, skip_if, skip_if_custom, current_page, next_page)
 
-                if (!is.null(skip_if_custom)) {
-                    next_page <- handle_custom_skip_logic(input, skip_if_custom, current_page, next_page)
-                }
-
+                # Update timestamp for the next page
                 timestamps$data[[make_ts_name("page", next_page)]] <- get_utc_timestamp()
+
+                # Check if all required questions are answered
                 current_page_questions <- page_structure[[current_page]]
-                all_required_answered <- all(sapply(current_page_questions, function(q) {
-                    !config$question_required[[q]] || (!is.null(input[[q]]) && input[[q]] != "")
-                }))
+                all_required_answered <- check_all_required(current_page_questions, config, input)
                 if (all_required_answered) {
                     shinyjs::runjs("hideAllPages();")
                     shinyjs::show(next_page)
@@ -129,7 +127,6 @@ sd_server <- function(input, session, config, db = NULL) {
     # Database Operations ----
 
     # Update data base if not in preview mode
-
     if (!preview) {
 
         # Define a reactive expression for each question_id value
@@ -171,8 +168,9 @@ sd_server <- function(input, session, config, db = NULL) {
     }
 }
 
-## show_if ----
+# Helper Functions ----
 
+# show_if
 handle_basic_show_if_logic <- function(input, show_if) {
 
     # Ensure skip_if is a tibble or data frame
@@ -219,8 +217,7 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
     })
 }
 
-## skip_if ----
-
+# skip_if
 handle_basic_skip_logic <- function(
         input, skip_if, current_page, next_page
 ) {
@@ -260,4 +257,33 @@ handle_custom_skip_logic <- function(
     }
 
     return(next_page)
+}
+
+handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next_page) {
+    if (!is.null(skip_if)) {
+        next_page <- handle_basic_skip_logic(input, skip_if, current_page, next_page)
+    }
+    if (!is.null(skip_if_custom)) {
+        next_page <- handle_custom_skip_logic(input, skip_if_custom, current_page, next_page)
+    }
+    return(next_page)
+}
+
+# Answering progress of required questions
+check_all_required <- function(questions, config, input) {
+    all(vapply(questions, function(q) check_answer(q, config, input), logical(1)))
+}
+
+check_answer <- function(q, config, input) {
+    if (!config$question_required[[q]]) return(TRUE)
+
+    answer <- input[[q]]
+    if (is.null(answer)) return(FALSE)
+
+    if (is.character(answer)) return(any(nzchar(answer)))
+    if (is.numeric(answer)) return(any(!is.na(answer)))
+    if (inherits(answer, "Date")) return(any(!is.na(answer)))
+    if (is.list(answer)) return(any(!sapply(answer, is.null)))
+
+    return(TRUE)  # Default to true for unknown types
 }

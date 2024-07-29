@@ -51,9 +51,9 @@ sd_question <- function(
 
   output <- NULL
 
-  # Add a red asterisk to the label if the question is required
+  # Add a large red asterisk to the label if the question is required
   if (required) {
-      label <- paste(label, "<span style='color: red;'>*</span>")
+      label <- paste(label, "<span style='color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;'>*</span>")
   }
 
   if (type ==  "select") {
