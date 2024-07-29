@@ -41,45 +41,32 @@
 #' }
 #'
 #' @export
+
+# Server Function ----
+
 sd_server <- function(input, session, config, db = NULL) {
 
     # Create local objects from config file
-
     page_structure <- config$page_structure
-    page_ids <- config$page_ids
-    question_ids <- config$question_ids
-    show_if <- config$show_if
-    skip_if <- config$skip_if
+    page_ids       <- config$page_ids
+    question_ids   <- config$question_ids
+    show_if        <- config$show_if
+    skip_if        <- config$skip_if
     skip_if_custom <- config$skip_if_custom
-    show_if <- config$show_if
+    show_if        <- config$show_if
     show_if_custom <- config$show_if_custom
-    preview <- config$preview
-    start_page <- config$start_page
+    preview        <- config$preview
+    start_page     <- config$start_page
 
-    # Create a local session_id variable
+    # Create a local session_id variable for Data Operations use
     session_id <- session$token
 
-    # Set up question_required in session$userData
-    session$userData$question_required <- shiny::reactiveVal(list())
-
-    # Initialize question_required based on UI elements
-    shiny::observe({
-        req_list <- lapply(question_ids, function(id) {
-            req_status <- input[[paste0("container-", id, "-required")]]
-            if (!is.null(req_status)) {
-                as.logical(req_status)
-            } else {
-                FALSE  # default to not required if status is not found
-            }
-        })
-        names(req_list) <- question_ids
-        session$userData$question_required(req_list)
-    })
+    # Progress Tracking ----
 
     # Initialize object for storing timestamps
     timestamps <- shiny::reactiveValues(data = initialize_timestamps(page_ids, question_ids))
 
-    # Conditional display (show_if conditions) ----
+    # Conditional display (show_if conditions)
     if (!is.null(show_if)) {
         handle_basic_show_if_logic(input, show_if)
     }
@@ -88,44 +75,17 @@ sd_server <- function(input, session, config, db = NULL) {
         handle_custom_show_if_logic(input, show_if_custom)
     }
 
-    # Progress Tracking ----
-
-    # Initialize reactive value to track the maximum progress reached
+    # Track the progress
     max_progress <- shiny::reactiveVal(0)
-
-    # Initialize reactive value to track answered required questions
-    answered_required <- shiny::reactiveValues()
-
-    # Observing the question timestamps and progress bar
     shiny::observe({
         lapply(question_ids, function(id) {
             shiny::observeEvent(input[[id]], {
-                # Updating question timestamps
                 if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
                     timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
                 }
-                answered_position <- which(question_ids == id)
-                current_progress <- answered_position / length(question_ids)
-                if (current_progress > max_progress()) {
-                    max_progress(current_progress)
-                }
-
-                # Updating progress bar
-                shinyjs::runjs(paste0("updateProgressBar(", max_progress() * 100, ");"))
-
-                # Check if the question is required
-                is_required <- session$userData$question_required()[[id]]
-
-                # Track answered required questions
-                if (is_required) {
-                    answer <- input[[id]]
-                    answered_required[[id]] <- if (is.null(answer)) FALSE
-                    else if (is.character(answer)) nzchar(trimws(answer))
-                    else if (is.numeric(answer)) !is.na(answer)
-                    else if (is.logical(answer)) !is.na(answer)
-                    else if (is.list(answer)) length(answer) > 0  # For checkbox groups
-                    else FALSE
-                }
+                current_progress <- which(question_ids == id) / length(question_ids)
+                max_progress(max(max_progress(), current_progress))
+                shinyjs::runjs(sprintf("updateProgressBar(%f);", max_progress() * 100))
             }, ignoreInit = TRUE, ignoreNULL = FALSE)
         })
     })
@@ -139,71 +99,37 @@ sd_server <- function(input, session, config, db = NULL) {
     }
 
     shiny::observe({
-        for (i in 2:length(page_structure)) {
-            local({
-                # Define current and next page based on iteration
-                current_page <- page_ids[i-1]
-                next_page <- page_ids[i]
+        lapply(2:length(page_structure), function(i) {
+            current_page <- page_ids[i-1]
+            next_page <- page_ids[i]
 
-                shiny::observeEvent(input[[make_next_button_id(next_page)]], {
-                    # Update next page with any basic skip logic
-                    if (!is.null(skip_if)) {
-                        next_page <- handle_basic_skip_logic(input, skip_if, current_page, next_page)
-                    }
+            shiny::observeEvent(input[[make_next_button_id(next_page)]], {
 
-                    # Update next page with any custom skip logic
-                    if (!is.null(skip_if_custom)) {
-                        next_page <- handle_custom_skip_logic(input, skip_if_custom, current_page, next_page)
-                    }
+                # Update next page based on skip logic
+                next_page <- handle_skip_logic(input, skip_if, skip_if_custom, current_page, next_page)
 
-                    # Store the timestamp with the page_id as the key
-                    timestamps$data[[make_ts_name("page", next_page)]] <- get_utc_timestamp()
+                # Update timestamp for the next page
+                timestamps$data[[make_ts_name("page", next_page)]] <- get_utc_timestamp()
 
-                    # Check if all required questions on the current page are answered
-                    current_page_questions <- page_structure[[current_page]]
-
-                    # Required questions
-                    required_questions <- current_page_questions[sapply(current_page_questions, function(q) {
-                        config$question_required[[q]]
-                    })]
-
-                    all_required_answered <- all(sapply(current_page_questions, function(q) {
-                        is_required <- config$question_required[[q]]
-
-                        if (!is_required) return(TRUE)  # If not required, consider it "answered"
-
-                        # If required, check if it's answered
-                        answer <- input[[q]]
-                        is_answered <- if (is.null(answer)) FALSE
-                        else if (is.character(answer)) nzchar(trimws(answer))
-                        else if (is.numeric(answer)) !is.na(answer)
-                        else if (is.logical(answer)) !is.na(answer)
-                        else if (is.list(answer)) length(answer) > 0  # For checkbox groups
-                        else FALSE
-                        return(is_answered)
-                    }))
-
-                    if (isTRUE(all_required_answered)) {
-                        # Execute page navigation
-                        shinyjs::runjs("hideAllPages();") # Hide all pages
-                        shinyjs::show(next_page) # Show next page
-                    } else {
-                        # Show error message
-                        shinyjs::alert("Please answer all required questions before proceeding.")
-                    }
-                })
+                # Check if all required questions are answered
+                current_page_questions <- page_structure[[current_page]]
+                all_required_answered <- check_all_required(current_page_questions, config, input)
+                if (all_required_answered) {
+                    shinyjs::runjs("hideAllPages();")
+                    shinyjs::show(next_page)
+                } else {
+                    shinyjs::alert("Please answer all required questions before proceeding.")
+                }
             })
-        }
+        })
     })
 
-    # Database operations ----
+    # Database Operations ----
 
     # Update data base if not in preview mode
-
     if (!preview) {
 
         # Define a reactive expression for each question_id value
-
         get_question_vals <- shiny::reactive({
             temp <- sapply(
                 question_ids,
@@ -213,8 +139,7 @@ sd_server <- function(input, session, config, db = NULL) {
             temp
         })
 
-        # Define a reactive expression for the timestamp values
-
+        # Define a reactive expression for the time stamp values
         get_time_stamps <- shiny::reactive({ timestamps$data })
 
         # Use observe to react whenever "input_vals" changes
@@ -228,9 +153,9 @@ sd_server <- function(input, session, config, db = NULL) {
 
             # Transform to data frame, handling uninitialized inputs appropriately
             df_local <- transform_data(question_vals, timestamp_vals, session_id)
+
             # Making everything a string because the db poops itself
             df_local[] <- lapply(df_local, as.character)
-
 
             # Update database
             if (is.null(db)) {
@@ -240,13 +165,12 @@ sd_server <- function(input, session, config, db = NULL) {
                 database_uploading(df_local, db$db, db$table_name)
             }
         })
-
     }
-
 }
 
-## show_if ----
+# Helper Functions ----
 
+# show_if
 handle_basic_show_if_logic <- function(input, show_if) {
 
     # Ensure skip_if is a tibble or data frame
@@ -293,8 +217,7 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
     })
 }
 
-## skip_if ----
-
+# skip_if
 handle_basic_skip_logic <- function(
         input, skip_if, current_page, next_page
 ) {
@@ -334,4 +257,33 @@ handle_custom_skip_logic <- function(
     }
 
     return(next_page)
+}
+
+handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next_page) {
+    if (!is.null(skip_if)) {
+        next_page <- handle_basic_skip_logic(input, skip_if, current_page, next_page)
+    }
+    if (!is.null(skip_if_custom)) {
+        next_page <- handle_custom_skip_logic(input, skip_if_custom, current_page, next_page)
+    }
+    return(next_page)
+}
+
+# Answering progress of required questions
+check_all_required <- function(questions, config, input) {
+    all(vapply(questions, function(q) check_answer(q, config, input), logical(1)))
+}
+
+check_answer <- function(q, config, input) {
+    if (!config$question_required[[q]]) return(TRUE)
+
+    answer <- input[[q]]
+    if (is.null(answer)) return(FALSE)
+
+    if (is.character(answer)) return(any(nzchar(answer)))
+    if (is.numeric(answer)) return(any(!is.na(answer)))
+    if (inherits(answer, "Date")) return(any(!is.na(answer)))
+    if (is.list(answer)) return(any(!sapply(answer, is.null)))
+
+    return(TRUE)  # Default to true for unknown types
 }
