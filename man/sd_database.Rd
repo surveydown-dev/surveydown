@@ -47,8 +47,20 @@ The user must create their own table inside SupaBase in order to make additions.
   db_connection <- sd_database(
     host = "your-host",
     db_name = "your-db-name",
-    port = 5432,
+    port = "port",
     user = "your-username",
+    table_name = "your-table-name",
+    password = "your-password"
+  )
+
+  #'Supabase Example PSQL Connect String
+  psql -h aws-0-us-west-1.pooler.supabase.com -p 6--- -d postgres -U postgres.k----------i
+
+  db_connection <- sd_database(
+    host = "aws-0-us-west-1.pooler.supabase.com ",
+    db_name = "postgres",
+    port = "6---",
+    user = "postgres.k----------i",
     table_name = "your-table-name",
     password = "your-password"
   )
