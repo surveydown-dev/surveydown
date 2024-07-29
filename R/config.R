@@ -33,25 +33,26 @@
 #'
 #' @export
 sd_config <- function(
-    skip_if = NULL,
-    skip_if_custom = NULL,
-    show_if = NULL,
-    show_if_custom = NULL,
-    preview = FALSE,
-    start_page = NULL,
-    show_all_pages = FALSE
+        skip_if = NULL,
+        skip_if_custom = NULL,
+        show_if = NULL,
+        show_if_custom = NULL,
+        preview = FALSE,
+        start_page = NULL,
+        show_all_pages = FALSE
 ) {
 
-  # Get survey metadata
-  page_structure <- get_page_structure()
-  question_structure <- get_question_structure()
-  config <- list(
-    page_structure     = page_structure,
-    question_structure = question_structure,
-    page_ids           = names(page_structure),
-    question_ids       = names(question_structure),
-    question_values    = unname(unlist(question_structure))
-  )
+    # Get survey metadata
+    page_structure <- get_page_structure()
+    question_structure <- get_question_structure()
+    config <- list(
+        page_structure     = page_structure,
+        question_structure = question_structure,
+        page_ids           = names(page_structure),
+        question_ids       = names(question_structure),
+        question_values    = unname(unlist(lapply(question_structure, `[[`, "options"))),
+        question_required  = sapply(question_structure, `[[`, "required")
+    )
 
   # Check skip_if and show_if inputs
   check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
@@ -150,8 +151,14 @@ get_question_structure <- function() {
             rvest::html_attr(opt, "value")
         })
 
-        # Store the options for this question
-        question_structure[[question_id]] <- options
+        # Get the required status
+        is_required <- rvest::html_attr(question_node, "data-required")
+
+        # Store the options and required status for this question
+        question_structure[[question_id]] <- list(
+            options = options,
+            required = as.logical(is_required)
+        )
     }
 
     return(question_structure)
