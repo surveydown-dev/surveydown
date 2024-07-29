@@ -82,7 +82,7 @@ This is a running list of things we’re working on adding to the project:
 - [x] Add an optional progress bar
 - [x] Include input checks for `skip_if` and `show_if` (`question_id`
   exists, and data frame names are correct)
-- [ ] Required questions (`required = TRUE`): post a popup if a question
+- [x] Required questions (`required = TRUE`): post a popup if a question
   is required before allowing next button. Default should be
   `required = FALSE`.
 - [ ] Form validation: Make sure the user inputs the correct type
@@ -107,7 +107,7 @@ This is a running list of things we’re working on adding to the project:
   - [x] Text area
   - [x] Date
   - [ ] Matrix
-  - [ ] Slider
+  - \[?\] Slider
 
 Resources / examples:
 
