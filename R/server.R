@@ -118,13 +118,7 @@ sd_server <- function(input, session, config, db = NULL) {
 
                 # Track answered required questions
                 if (is_required) {
-                    answer <- input[[id]]
-                    answered_required[[id]] <- if (is.null(answer)) FALSE
-                    else if (is.character(answer)) nzchar(trimws(answer))
-                    else if (is.numeric(answer)) !is.na(answer)
-                    else if (is.logical(answer)) !is.na(answer)
-                    else if (is.list(answer)) length(answer) > 0  # For checkbox groups
-                    else FALSE
+                    answered_required[[id]] <- !is.null(input[[id]]) && input[[id]] != ""
                 }
             }, ignoreInit = TRUE, ignoreNULL = FALSE)
         })
@@ -170,25 +164,16 @@ sd_server <- function(input, session, config, db = NULL) {
                     all_required_answered <- all(sapply(current_page_questions, function(q) {
                         is_required <- config$question_required[[q]]
 
-                        if (!is_required) return(TRUE)  # If not required, consider it "answered"
-
-                        # If required, check if it's answered
+                        if (!is_required) return(TRUE)
                         answer <- input[[q]]
-                        is_answered <- if (is.null(answer)) FALSE
-                        else if (is.character(answer)) nzchar(trimws(answer))
-                        else if (is.numeric(answer)) !is.na(answer)
-                        else if (is.logical(answer)) !is.na(answer)
-                        else if (is.list(answer)) length(answer) > 0  # For checkbox groups
-                        else FALSE
+                        is_answered <- !is.null(input[[q]]) && input[[q]] != ""
                         return(is_answered)
                     }))
 
                     if (isTRUE(all_required_answered)) {
-                        # Execute page navigation
-                        shinyjs::runjs("hideAllPages();") # Hide all pages
-                        shinyjs::show(next_page) # Show next page
+                        shinyjs::runjs("hideAllPages();")
+                        shinyjs::show(next_page)
                     } else {
-                        # Show error message
                         shinyjs::alert("Please answer all required questions before proceeding.")
                     }
                 })

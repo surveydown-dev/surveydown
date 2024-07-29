@@ -214,11 +214,6 @@ sd_question <- function(
       output
   )
 
-  output_div <- shiny::tagAppendChild(output_div,
-                                      shiny::tags$input(type = "hidden",
-                                                        id = paste0("container-", id, "-required"),
-                                                        value = if(required) "true" else "false"))
-
   return(output_div)
 }
 
