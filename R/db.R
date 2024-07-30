@@ -165,7 +165,16 @@ database_uploading <- function(df, db, table_name) {
     #This actually checks if its empty and will create a brand new table name of your choice
     if (is.null(data)) {
         create_table(db, table_name, df)
+    } else {
+        db_columns <- colnames(data)
+        df_columns <- colnames(df)
+
+        # Check if column names are different
+        if (!all(df_columns == db_columns)) {
+            stop("A survey change has been detected, whether it is a question name or the number of questions. Please either set 'db' to NULL when editing your survey or use a new 'table_name'.")
+        }
     }
+
     #Table Editing Section
     #Checking For Matching Session_Id's
     matching_rows <- df[df$session_id %in% data$session_id, ]
