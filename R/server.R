@@ -98,13 +98,15 @@ sd_server <- function(input, session, config, db = NULL) {
         shinyjs::show(start_page)
     }
 
+    # Create a reactive value for show_if
+    show_if_reactive <- shiny::reactiveVal(show_if)
+
     shiny::observe({
         lapply(2:length(page_structure), function(i) {
             current_page <- page_ids[i-1]
             next_page <- page_ids[i]
 
             shiny::observeEvent(input[[make_next_button_id(next_page)]], {
-
                 # Update next page based on skip logic
                 next_page <- handle_skip_logic(input, skip_if, skip_if_custom, current_page, next_page)
 
@@ -113,7 +115,15 @@ sd_server <- function(input, session, config, db = NULL) {
 
                 # Check if all required questions are answered
                 current_page_questions <- page_structure[[current_page]]
-                all_required_answered <- check_all_required(current_page_questions, config, input)
+
+                # Debug: Print current page questions
+                print(paste("Current page questions:", paste(current_page_questions, collapse = ", ")))
+
+                all_required_answered <- check_all_required(current_page_questions, config, input, show_if)
+
+                # Debug: Print result of check_all_required
+                print(paste("All required answered:", all_required_answered))
+
                 if (all_required_answered) {
                     shinyjs::runjs("hideAllPages();")
                     shinyjs::show(next_page)
@@ -297,8 +307,17 @@ handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next
 }
 
 # Answering progress of required questions
-check_all_required <- function(questions, config, input) {
-    all(vapply(questions, function(q) check_answer(q, config, input), logical(1)))
+check_all_required <- function(questions, config, input, show_if) {
+    all(vapply(questions, function(q) {
+        tryCatch({
+            if (!config$question_required[[q]]) return(TRUE)
+            if (!is_question_visible(q, show_if, input)) return(TRUE)
+            check_answer(q, config, input)
+        }, error = function(e) {
+            message("Error checking question ", q, ": ", e$message)
+            return(FALSE)
+        })
+    }, logical(1)))
 }
 
 check_answer <- function(q, config, input) {
@@ -313,4 +332,31 @@ check_answer <- function(q, config, input) {
     if (is.list(answer)) return(any(!sapply(answer, is.null)))
 
     return(TRUE)  # Default to true for unknown types
+}
+
+# Check if a question is visible
+is_question_visible <- function(q, show_if, input) {
+    if (is.null(show_if) || nrow(show_if) == 0) return(TRUE)
+
+    # Check if the question is a target in show_if
+    is_target <- q %in% show_if$target
+    if (!is_target) return(TRUE)
+
+    # Get all corresponding rules for this target
+    rules <- show_if[show_if$target == q, ]
+
+    # Check if any condition is met
+    any(sapply(1:nrow(rules), function(i) {
+        input_value <- input[[rules$question_id[i]]]
+        expected_value <- rules$question_value[i]
+
+        # Handle different input types
+        if (is.null(input_value)) {
+            return(FALSE)
+        } else if (is.list(input_value)) {
+            return(expected_value %in% unlist(input_value))
+        } else {
+            return(input_value == expected_value)
+        }
+    }))
 }
