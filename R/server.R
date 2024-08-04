@@ -172,49 +172,76 @@ sd_server <- function(input, session, config, db = NULL) {
 
 # show_if
 handle_basic_show_if_logic <- function(input, show_if) {
-
-    # Ensure skip_if is a tibble or data frame
+    # Ensure show_if is a tibble or data frame
     if (!is.data.frame(show_if)) {
-        stop("skip_if must be a data frame or tibble.")
+        stop("show_if must be a data frame or tibble.")
     }
 
     # Initially hide all conditional questions
-    for (i in 1:nrow(show_if)) {
-        shinyjs::hide(show_if[i,]$target)
+    unique_targets <- unique(show_if$target)
+    for (target in unique_targets) {
+        shinyjs::hide(target)
     }
 
-    # Iterate over each show_if rule
-    for (i in 1:nrow(show_if)) {
-        rule <- show_if[i,]
-        shiny::observeEvent(input[[rule$question_id]], {
+    # Group show_if rules by question_id and target
+    show_if_grouped <- split(show_if, list(show_if$question_id, show_if$target))
+
+    # Iterate over each group of show_if rules
+    for (group in show_if_grouped) {
+        question_id <- group$question_id[1]
+        target <- group$target[1]
+        question_values <- group$question_value
+
+        shiny::observeEvent(input[[question_id]], {
             # Check if the condition is met to show/hide the question
-            val <- input[[rule$question_id]]
-            if (!is.null(val) & (val == rule$question_value)) {
-                shinyjs::show(rule$target)
+            val <- input[[question_id]]
+            if (!is.null(val) && val %in% question_values) {
+                shinyjs::show(target)
             } else {
-                shinyjs::hide(rule$target)
+                shinyjs::hide(target)
             }
         }, ignoreNULL = TRUE)
     }
-
 }
 
 handle_custom_show_if_logic <- function(input, show_if_custom) {
+    # Group show_if_custom rules by target
+    show_if_custom_grouped <- split(show_if_custom, sapply(show_if_custom, function(x) x$target))
 
     # Initially hide all conditional questions
-    lapply(show_if_custom, function(x) shinyjs::hide(x$target))
+    unique_targets <- names(show_if_custom_grouped)
+    for (target in unique_targets) {
+        shinyjs::hide(target)
+    }
 
-    # Iterate over each show_if rule
-    lapply(show_if_custom, function(rule) {
-        shiny::observeEvent(input[[rule$dependent_question]], {
-            # Check if the condition is met to show/hide the question
-            if (rule$condition(input)) {
-                shinyjs::show(rule$target)
-            } else {
-                shinyjs::hide(rule$target)
+    # Iterate over each group of show_if_custom rules
+    for (group in show_if_custom_grouped) {
+        target <- group[[1]]$target
+
+        # Collect all dependent questions and conditions for this target
+        dependent_questions <- unique(sapply(group, function(x) x$dependent_question))
+        conditions <- lapply(group, function(x) x$condition)
+
+        # Create a reactive expression to check all conditions
+        check_conditions <- shiny::reactive({
+            any(sapply(conditions, function(condition) condition(input)))
+        })
+
+        # Observe changes in any of the dependent questions
+        shiny::observe({
+            # Trigger the observer for changes in any dependent question
+            for (question in dependent_questions) {
+                input[[question]]
             }
-        }, ignoreNULL = TRUE)
-    })
+
+            # Check if any condition is met to show/hide the question
+            if (check_conditions()) {
+                shinyjs::show(target)
+            } else {
+                shinyjs::hide(target)
+            }
+        })
+    }
 }
 
 # skip_if
