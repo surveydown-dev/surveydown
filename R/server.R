@@ -116,13 +116,7 @@ sd_server <- function(input, session, config, db = NULL) {
                 # Check if all required questions are answered
                 current_page_questions <- page_structure[[current_page]]
 
-                # Debug: Print current page questions
-                print(paste("Current page questions:", paste(current_page_questions, collapse = ", ")))
-
                 all_required_answered <- check_all_required(current_page_questions, config, input, show_if)
-
-                # Debug: Print result of check_all_required
-                print(paste("All required answered:", all_required_answered))
 
                 if (all_required_answered) {
                     shinyjs::runjs("hideAllPages();")
