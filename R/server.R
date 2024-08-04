@@ -98,13 +98,15 @@ sd_server <- function(input, session, config, db = NULL) {
         shinyjs::show(start_page)
     }
 
+    # Create a reactive value for show_if
+    show_if_reactive <- shiny::reactiveVal(show_if)
+
     shiny::observe({
         lapply(2:length(page_structure), function(i) {
             current_page <- page_ids[i-1]
             next_page <- page_ids[i]
 
             shiny::observeEvent(input[[make_next_button_id(next_page)]], {
-
                 # Update next page based on skip logic
                 next_page <- handle_skip_logic(input, skip_if, skip_if_custom, current_page, next_page)
 
@@ -113,7 +115,9 @@ sd_server <- function(input, session, config, db = NULL) {
 
                 # Check if all required questions are answered
                 current_page_questions <- page_structure[[current_page]]
-                all_required_answered <- check_all_required(current_page_questions, config, input)
+
+                all_required_answered <- check_all_required(current_page_questions, config, input, show_if)
+
                 if (all_required_answered) {
                     shinyjs::runjs("hideAllPages();")
                     shinyjs::show(next_page)
@@ -172,49 +176,76 @@ sd_server <- function(input, session, config, db = NULL) {
 
 # show_if
 handle_basic_show_if_logic <- function(input, show_if) {
-
-    # Ensure skip_if is a tibble or data frame
+    # Ensure show_if is a tibble or data frame
     if (!is.data.frame(show_if)) {
-        stop("skip_if must be a data frame or tibble.")
+        stop("show_if must be a data frame or tibble.")
     }
 
     # Initially hide all conditional questions
-    for (i in 1:nrow(show_if)) {
-        shinyjs::hide(show_if[i,]$target)
+    unique_targets <- unique(show_if$target)
+    for (target in unique_targets) {
+        shinyjs::hide(target)
     }
 
-    # Iterate over each show_if rule
-    for (i in 1:nrow(show_if)) {
-        rule <- show_if[i,]
-        shiny::observeEvent(input[[rule$question_id]], {
+    # Group show_if rules by question_id and target
+    show_if_grouped <- split(show_if, list(show_if$question_id, show_if$target))
+
+    # Iterate over each group of show_if rules
+    for (group in show_if_grouped) {
+        question_id <- group$question_id[1]
+        target <- group$target[1]
+        question_values <- group$question_value
+
+        shiny::observeEvent(input[[question_id]], {
             # Check if the condition is met to show/hide the question
-            val <- input[[rule$question_id]]
-            if (!is.null(val) & (val == rule$question_value)) {
-                shinyjs::show(rule$target)
+            val <- input[[question_id]]
+            if (!is.null(val) && val %in% question_values) {
+                shinyjs::show(target)
             } else {
-                shinyjs::hide(rule$target)
+                shinyjs::hide(target)
             }
         }, ignoreNULL = TRUE)
     }
-
 }
 
 handle_custom_show_if_logic <- function(input, show_if_custom) {
+    # Group show_if_custom rules by target
+    show_if_custom_grouped <- split(show_if_custom, sapply(show_if_custom, function(x) x$target))
 
     # Initially hide all conditional questions
-    lapply(show_if_custom, function(x) shinyjs::hide(x$target))
+    unique_targets <- names(show_if_custom_grouped)
+    for (target in unique_targets) {
+        shinyjs::hide(target)
+    }
 
-    # Iterate over each show_if rule
-    lapply(show_if_custom, function(rule) {
-        shiny::observeEvent(input[[rule$dependent_question]], {
-            # Check if the condition is met to show/hide the question
-            if (rule$condition(input)) {
-                shinyjs::show(rule$target)
-            } else {
-                shinyjs::hide(rule$target)
+    # Iterate over each group of show_if_custom rules
+    for (group in show_if_custom_grouped) {
+        target <- group[[1]]$target
+
+        # Collect all dependent questions and conditions for this target
+        dependent_questions <- unique(sapply(group, function(x) x$dependent_question))
+        conditions <- lapply(group, function(x) x$condition)
+
+        # Create a reactive expression to check all conditions
+        check_conditions <- shiny::reactive({
+            any(sapply(conditions, function(condition) condition(input)))
+        })
+
+        # Observe changes in any of the dependent questions
+        shiny::observe({
+            # Trigger the observer for changes in any dependent question
+            for (question in dependent_questions) {
+                input[[question]]
             }
-        }, ignoreNULL = TRUE)
-    })
+
+            # Check if any condition is met to show/hide the question
+            if (check_conditions()) {
+                shinyjs::show(target)
+            } else {
+                shinyjs::hide(target)
+            }
+        })
+    }
 }
 
 # skip_if
@@ -270,8 +301,17 @@ handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next
 }
 
 # Answering progress of required questions
-check_all_required <- function(questions, config, input) {
-    all(vapply(questions, function(q) check_answer(q, config, input), logical(1)))
+check_all_required <- function(questions, config, input, show_if) {
+    all(vapply(questions, function(q) {
+        tryCatch({
+            if (!config$question_required[[q]]) return(TRUE)
+            if (!is_question_visible(q, show_if, input)) return(TRUE)
+            check_answer(q, config, input)
+        }, error = function(e) {
+            message("Error checking question ", q, ": ", e$message)
+            return(FALSE)
+        })
+    }, logical(1)))
 }
 
 check_answer <- function(q, config, input) {
@@ -286,4 +326,31 @@ check_answer <- function(q, config, input) {
     if (is.list(answer)) return(any(!sapply(answer, is.null)))
 
     return(TRUE)  # Default to true for unknown types
+}
+
+# Check if a question is visible
+is_question_visible <- function(q, show_if, input) {
+    if (is.null(show_if) || nrow(show_if) == 0) return(TRUE)
+
+    # Check if the question is a target in show_if
+    is_target <- q %in% show_if$target
+    if (!is_target) return(TRUE)
+
+    # Get all corresponding rules for this target
+    rules <- show_if[show_if$target == q, ]
+
+    # Check if any condition is met
+    any(sapply(1:nrow(rules), function(i) {
+        input_value <- input[[rules$question_id[i]]]
+        expected_value <- rules$question_value[i]
+
+        # Handle different input types
+        if (is.null(input_value)) {
+            return(FALSE)
+        } else if (is.list(input_value)) {
+            return(expected_value %in% unlist(input_value))
+        } else {
+            return(input_value == expected_value)
+        }
+    }))
 }
