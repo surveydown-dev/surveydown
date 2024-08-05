@@ -18,51 +18,38 @@
 #' create_survey()
 #' create_survey(path = "path/to/package", template = "simple")
 #' }
-create_survey <- function(path = getwd()) {
-    # Use the usethis ui_ask_yes_no function for confirmation
-    if (path == getwd()) {
-        if (
-            !usethis::ui_yeah(paste(
-                "Do you want to use the current working directory (",
-                path, ") as the path?"
-            ))
-        ) {
-            stop("Operation aborted by the user.")
-        }
+create_survey <- function(path = getwd(), template = "simple") {
+
+  # Use the usethis ui_ask_yes_no function for confirmation
+  if (path == getwd()) {
+    if (
+      !usethis::ui_yeah(paste(
+        "Do you want to use the current working directory (",
+        path, ") as the path?"
+      ))
+    ) {
+      stop("Operation aborted by the user.")
     }
+  }
 
-    # Define the URL for the GitHub repository
-    repo_url <- "https://github.com/jhelvy/surveydown-ext/archive/refs/heads/main.zip"
+  # Ensure the path is valid and create the directory
+  if (!dir.exists(path)) {
+    dir.create(path, recursive = TRUE)
+  }
 
-    # Create a temporary file to store the downloaded zip
-    temp_file <- tempfile(fileext = ".zip")
+  # Define the source directory within surveydown package
+  source_dir <- system.file(
+    file.path("example", template),
+    package = "surveydown"
+  )
 
-    # Download the zip file
-    utils::download.file(repo_url, temp_file, mode = "wb")
+  # Check if the source directory exists
+  if (source_dir == "") {
+    stop("Source directory not found in the package for the specified template.")
+  }
 
-    # Create a temporary directory to unzip the contents
-    temp_dir <- tempfile()
-    dir.create(temp_dir)
+  # Copy files and directories recursively from the source to the target path
+  file.copy(list.files(source_dir, full.names = TRUE), path, recursive = TRUE)
 
-    # Unzip the file
-    utils::unzip(temp_file, exdir = temp_dir)
-
-    # Get the path of the unzipped "surveydown-ext-main" directory
-    unzipped_dir <- file.path(temp_dir, "surveydown-ext-main")
-
-    # Ensure the target path exists
-    dir.create(path, recursive = TRUE, showWarnings = FALSE)
-
-    # Get list of files to move, excluding "." and ".."
-    files_to_move <- list.files(unzipped_dir, all.files = TRUE, full.names = TRUE, no.. = TRUE)
-
-    # Move all contents from unzipped_dir to the target path
-    file.rename(files_to_move,
-                file.path(path, basename(files_to_move)))
-
-    # Clean up temporary files
-    unlink(temp_file)
-    unlink(temp_dir, recursive = TRUE)
-
-    usethis::ui_done(paste("Survey template created at", path))
+  usethis::ui_done(paste("Survey template created at", path))
 }
