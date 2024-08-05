@@ -1,10 +1,18 @@
 # surveydown (development version)
 
+# surveydown 0.0.4
+
+- (extension) [Raleway Font](https://fonts.google.com/specimen/Raleway) is set as the default font of the survey pages. Can be overwritten in the YAML header with the `theme` command using the [bootswatch themes](https://bootswatch.com) or a custom `scss` file.
+- (extension) Default page background is set as "#f2f6f9" (a light blue color). Can be overwritten in the YAML header with the `backgroundcolor`.
+- (extension) Questions are now encapsulated in a container that distinguishes from the descriptive texts.
+- (extension) Options of `mc_button` and `mu_multiple_buttons` types of questions are now centered.
+
+
 # surveydown 0.0.3
 
 - Now `show_if` can be applied to multiple options of the same question, which allows users to have more than one option in a question that triggers the revealing of a hidden question.
 - Now if the "required" question is hidden, it will not trigger the page warning of "not all questions are answered".
-- (In the extension) Now users can have a page with the same name of its ID and its header, regardless of capitalization. For example, users can now have a page ID being "#educational", and its header being "#Educational". This sounds as it should be, but in previous versions, the page hiding logic will show bug if page ID is the same as page header.
+- (extension) Now users can have a page with the same name of its ID and its header, regardless of capitalization. For example, users can now have a page ID being "#educational", and its header being "#Educational". This sounds as it should be, but in previous versions, the page hiding logic will show bug if page ID is the same as page header.
 
 # surveydown 0.0.2
 

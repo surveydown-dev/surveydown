@@ -3,12 +3,10 @@ local function ensure_html_deps()
     name = 'hidepagesjs',
     scripts = {"hide_pages.js"}
   })
-
   quarto.doc.add_html_dependency({
     name = 'updateprogressjs',
     scripts = {"update_progress.js"}
   })
-
   quarto.doc.add_html_dependency({
     name = 'surveydowncss',
     stylesheets = {"surveydown.css"}
@@ -17,7 +15,6 @@ end
 
 function Pandoc(doc)
   ensure_html_deps()
-
   -- Define Bootswatch theme primary colors
   local theme_colors = {
     cerulean  = "#2FA4E7",
@@ -46,17 +43,15 @@ function Pandoc(doc)
     vapor     = "#9B59B6",
     yeti      = "#008CBA"
   }
-
   -- Fetch metadata values with defaults
   local barcolor = pandoc.utils.stringify(doc.meta['barcolor'] or 'theme')
   local barposition = pandoc.utils.stringify(doc.meta['barposition'] or 'top')
-  local theme = pandoc.utils.stringify(doc.meta['theme'] and doc.meta['theme'][1] or 'cosmo')
-
+  local theme = pandoc.utils.stringify(doc.meta['theme'] and doc.meta['theme'][1] or 'raleway')
+  local backgroundcolor = pandoc.utils.stringify(doc.meta['backgroundcolor'] or '#f2f6f9')
   -- Function to check if a string is a valid hex color
   local function is_hex_color(color)
     return color:match("^#%x%x%x%x%x%x$") ~= nil
   end
-
   -- Determine the color
   local color
   if is_hex_color(barcolor) then
@@ -64,29 +59,40 @@ function Pandoc(doc)
   else
     color = barcolor == 'theme' and theme_colors[theme] or theme_colors['cosmo']
   end
-
   -- Ensure valid position
   local position = barposition == 'bottom' and 'bottom' or 'top'
-
   -- Replace placeholders in CSS template
   local css = [[
   <style>
   #progressbar.]] .. position .. [[ {
     ]] .. position .. [[: 0;
   }
+  body {
+    background-color: ]] .. backgroundcolor .. [[;
+  }
   </style>
   ]]
-
   -- Define the HTML for the progress bar
   local progressbar = string.format([[
   <div id="progressbar" class="%s">
     <div id="progress" style="background-color: %s;"></div>
   </div>
   ]], position, color)
-
+  -- Define CSS for Raleway font and link to Google Fonts
+  local raleway_html = [[
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800&display=swap" rel="stylesheet">
+  <style>
+  body, .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    font-family: 'Raleway', sans-serif;
+  }
+  </style>
+  ]]
   -- Insert the CSS and progress bar HTML into the document
   table.insert(doc.blocks, 1, pandoc.RawBlock('html', css))
   table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar))
-
+  -- Insert Raleway CSS if no theme is specified or if theme is 'raleway'
+  if theme == 'raleway' then
+    table.insert(doc.blocks, 3, pandoc.RawBlock('html', raleway_html))
+  end
   return doc
 end
