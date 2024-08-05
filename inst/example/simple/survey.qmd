@@ -15,17 +15,10 @@ filters: [surveydown]
 # Run this in your Console to install the R package:
 # remotes::install_github("jhelvy/surveydown", force = TRUE)
 
-# Load the package locally:
-# devtools::load_all("../surveydown")
-
 # Load the package from library:
 library(surveydown)
 
-# Load other necessary packages:
-library(tidyverse)
-library(glue)
-
-# This is essential to the survey:
+# Run initial setup function (essential - do not delete)
 sd_setup()
 ```
 
@@ -98,14 +91,14 @@ This it the last page in the survey
 # environment instead of hard-coding it here, which you can open and edit with
 # usethis::edit_r_environ()
 
- db <- sd_database(
-   host       = NULL,
-   db_name    = NULL,
-   port       = NULL,
-   user       = NULL,
-   table_name = NULL,
-   password   = Sys.getenv("SUPABASE_PASSWORD")
- )
+# db <- sd_database(
+#   host       = "",
+#   db_name    = "",
+#   port       = "",
+#   user       = "",
+#   table_name = "",
+#   password   = Sys.getenv("SUPABASE_PASSWORD")
+# )
 
 # If you don't have a database setup you can just leave the function blank.
 
