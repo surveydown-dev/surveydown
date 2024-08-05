@@ -9,9 +9,24 @@ filters: [surveydown]
 #| warning: false
 #| message: false
 
+# Run this in your Terminal to install the Quarto extension:
+# quarto install extension jhelvy/surveydown-ext
+
+# Run this in your Console to install the R package:
+# remotes::install_github("jhelvy/surveydown", force = TRUE)
+
+# Load the package locally:
+# devtools::load_all("../surveydown")
+
+# Load the package from library:
 library(surveydown)
 
-sd_setup() # Required initial setup - don't change this
+# Load other necessary packages:
+library(tidyverse)
+library(glue)
+
+# This is essential to the survey:
+sd_setup()
 ```
 
 ::: {#welcome .sd-page}

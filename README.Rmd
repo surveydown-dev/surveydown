@@ -87,11 +87,11 @@ Resources / examples:
 
 Vignettes for each of the following:
 
-- [ ] Quick overview / basic usage
-- [ ] List of question types and examples
-- [ ] Question formatting options
-- [ ] Flow control (conditional skipping and conditional display)
-- [ ] Setting up the database with supabase
+- [x] Quick overview / basic usage
+- [x] List of question types and examples
+- [x] Question formatting options
+- [x] Flow control (conditional skipping and conditional display)
+- [x] Setting up the database with supabase
 
 ## [License Information](https://github.com/jhelvy/surveydown/blob/master/LICENSE.md)
 
