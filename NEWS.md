@@ -6,6 +6,7 @@
 - (extension) Default page background is set as "#f2f6f9" (a light blue color). Can be overwritten in the YAML header with the `backgroundcolor`.
 - (extension) Questions are now encapsulated in a container that distinguishes from the descriptive texts.
 - (extension) Options of `mc_button` and `mu_multiple_buttons` types of questions are now centered.
+- Now the `surveydown::create_survey()` function will download the whole [extension repo](https://github.com/jhelvy/surveydown-ext/tree/main), containing the extension, an example survey, and an RStudio project.
 
 
 # surveydown 0.0.3
