@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.3</span>
       </span>
     </div>
 
@@ -81,6 +81,12 @@
     <div class="section level2">
 <h2 class="page-header" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.0.3" id="surveydown-003">surveydown 0.0.3<a class="anchor" aria-label="anchor" href="#surveydown-003"></a></h2>
+<ul><li>Now <code>show_if</code> can be applied to multiple options of the same question, which allows users to have more than one option in a question that triggers the revealing of a hidden question.</li>
+<li>Now if the “required” question is hidden, it will not trigger the page warning of “not all questions are answered”.</li>
+<li>Now users can have a page with the same name of its ID and its header, regardless of capitalization. For example, users can now have a page ID being “#educational”, and its header being “#Educational”. This sounds as it should be, but in previous versions, the page hiding logic will show bug if page ID is the same as page header.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.0.2" id="surveydown-002">surveydown 0.0.2<a class="anchor" aria-label="anchor" href="#surveydown-002"></a></h2>
 <ul><li>Support added for the <code>required</code> argument in <code><a href="../reference/sd_question.html">sd_question()</a></code>, which allows users to force a question to be required. If not answered, a popup window blocks the user from continuing to the next page.</li>
