@@ -31,8 +31,13 @@ update_surveydown <- function(force = FALSE) {
     }
 
     if (force) {
-        message("Updating surveydown R package...")
-        remotes::install_github("jhelvy/surveydown", force = TRUE)
+        message("Updating surveydown R package and all dependencies...")
+        remotes::install_github(
+            "jhelvy/surveydown",
+            force = TRUE,
+            dependencies = TRUE,
+            upgrade = "always"
+        )
 
         message("Updating surveydown Quarto extension...")
         surveydown::update_extension()
