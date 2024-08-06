@@ -47,3 +47,6 @@ reference:
   - sd_database
   - sd_server
   - create_survey
+  - check_surveydown_versions
+  - update_extension
+  - update_surveydown
