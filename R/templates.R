@@ -66,16 +66,97 @@ create_survey <- function(path = getwd()) {
         }
     }
 
-    # Get list of files to move, excluding "." and ".."
-    files_to_move <- list.files(unzipped_dir, all.files = TRUE, full.names = TRUE, no.. = TRUE)
+    # Delete existing surveydown folder if it exists
+    target_surveydown_path <- file.path(path, "_extensions", "jhelvy", "surveydown")
+    if (dir.exists(target_surveydown_path)) {
+        unlink(target_surveydown_path, recursive = TRUE)
+    }
 
-    # Move all contents from unzipped_dir to the target path
-    file.rename(files_to_move,
-                file.path(path, basename(files_to_move)))
+    # Create _extensions/jhelvy folder if it doesn't exist
+    target_jhelvy_path <- file.path(path, "_extensions", "jhelvy")
+    dir.create(target_jhelvy_path, recursive = TRUE, showWarnings = FALSE)
+
+    # Copy the surveydown folder from the downloaded files
+    source_surveydown_path <- file.path(unzipped_dir, "_extensions", "jhelvy", "surveydown")
+    file.copy(source_surveydown_path, target_jhelvy_path, recursive = TRUE)
+
+    # Get list of other files and directories to move, excluding _extensions folder
+    items_to_move <- list.files(unzipped_dir, all.files = TRUE, full.names = TRUE, no.. = TRUE)
+    items_to_move <- items_to_move[!grepl("_extensions", items_to_move)]
+
+    # Move other contents from unzipped_dir to the target path
+    for (item in items_to_move) {
+        if (dir.exists(item)) {
+            # If it's a directory, use recursive copy
+            file.copy(item, path, recursive = TRUE)
+        } else {
+            # If it's a file, use simple copy
+            file.copy(item, file.path(path, basename(item)), overwrite = TRUE)
+        }
+    }
 
     # Clean up temporary files
     unlink(temp_file)
     unlink(temp_dir, recursive = TRUE)
 
     usethis::ui_done(paste("Survey template created at", path))
+}
+
+#' Update Survey Extension
+#'
+#' This function updates or creates the _extensions/jhelvy/surveydown folder
+#' with the latest contents from the surveydown-ext repository.
+#'
+#' @param path A character string specifying the directory in which to update
+#' or create the extension. Defaults to the current working directory.
+#'
+#' @return A message indicating the successful update of the extension.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' update_extension()
+#' update_extension(path = "path/to/project")
+#' }
+update_extension <- function(path = getwd()) {
+    # Define the URL for the GitHub repository
+    repo_url <- "https://github.com/jhelvy/surveydown-ext/archive/refs/heads/main.zip"
+
+    # Create a temporary file to store the downloaded zip
+    temp_file <- tempfile(fileext = ".zip")
+
+    # Download the zip file
+    utils::download.file(repo_url, temp_file, mode = "wb")
+
+    # Create a temporary directory to unzip the contents
+    temp_dir <- tempfile()
+    dir.create(temp_dir)
+
+    # Unzip the file
+    utils::unzip(temp_file, exdir = temp_dir)
+
+    # Get the path of the unzipped "surveydown-ext-main" directory
+    unzipped_dir <- file.path(temp_dir, "surveydown-ext-main")
+
+    # Define the source and target paths
+    source_path <- file.path(unzipped_dir, "_extensions", "jhelvy", "surveydown")
+    target_path <- file.path(path, "_extensions", "jhelvy", "surveydown")
+
+    # Check if the target path exists
+    if (dir.exists(target_path)) {
+        # If it exists, delete all contents
+        unlink(list.files(target_path, full.names = TRUE), recursive = TRUE)
+    } else {
+        # If it doesn't exist, create the directory
+        dir.create(target_path, recursive = TRUE, showWarnings = FALSE)
+    }
+
+    # Copy all contents from source_path to target_path
+    file.copy(list.files(source_path, full.names = TRUE), target_path, recursive = TRUE)
+
+    # Clean up temporary files
+    unlink(temp_file)
+    unlink(temp_dir, recursive = TRUE)
+
+    usethis::ui_done(paste("Survey extension updated at", target_path))
 }
