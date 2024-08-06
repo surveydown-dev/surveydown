@@ -20,7 +20,8 @@
 #' }
 create_survey <- function(path = getwd()) {
     # Use the usethis ui_ask_yes_no function for confirmation
-    if (path == getwd()) {
+    using_current_dir <- path == getwd()
+    if (using_current_dir) {
         if (
             !usethis::ui_yeah(paste(
                 "Do you want to use the current working directory (",
@@ -52,6 +53,18 @@ create_survey <- function(path = getwd()) {
 
     # Ensure the target path exists
     dir.create(path, recursive = TRUE, showWarnings = FALSE)
+
+    # Check if there's an .Rproj file in the current directory when using current directory
+    if (using_current_dir) {
+        existing_rproj <- list.files(path, pattern = "\\.Rproj$", full.names = TRUE)
+        if (length(existing_rproj) > 0) {
+            # Delete example.Rproj from the downloaded files
+            example_rproj <- file.path(unzipped_dir, "example.Rproj")
+            if (file.exists(example_rproj)) {
+                file.remove(example_rproj)
+            }
+        }
+    }
 
     # Get list of files to move, excluding "." and ".."
     files_to_move <- list.files(unzipped_dir, all.files = TRUE, full.names = TRUE, no.. = TRUE)
