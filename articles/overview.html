@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.5</span>
       </span>
     </div>
 
@@ -126,16 +126,19 @@ properly.</p>
 <div class="section level2">
 <h2 id="start-with-a-template">Start with a template<a class="anchor" aria-label="anchor" href="#start-with-a-template"></a>
 </h2>
-<p>We recommend using the <code><a href="../reference/create_survey.html">surveydown::create_survey()</a></code>
-function to start with a template:</p>
+<p>We recommend using the <code><a href="../reference/sd_create_survey.html">surveydown::sd_create_survey()</a></code>
+function to start with a template (including the extension):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/create_survey.html">create_survey</a></span><span class="op">(</span><span class="st">"path/to/folder"</span><span class="op">)</span></span></code></pre></div>
-<p>replacing <code>"path/to/folder"</code> with the path where you want
-to create your template surveydown project. You can also provide a
-<code>template</code> argument to specify which template to use (for now
-there is only one template: <code>"simple"</code>).</p>
+<code class="sourceCode R"><span><span class="co"># To install the survey under your current path</span></span>
+<span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_create_survey.html">sd_create_survey</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># To designate a path inside your current path</span></span>
+<span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_create_survey.html">sd_create_survey</a></span><span class="op">(</span><span class="st">"path/to/folder"</span><span class="op">)</span></span></code></pre></div>
+<p>You can either leave the argument blank to install the template in
+your current directory, or replace <code>"path/to/folder"</code> with
+the path where you want to create your template surveydown project.</p>
 <blockquote>
-<p>Every survey created with {surveydown} should be in it’s own separate
+<p>Every survey created with {surveydown} should be in its own separate
 project folder.</p>
 </blockquote>
 <p>Once you’ve created a template survey to work with, you’ll notice a

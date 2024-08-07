@@ -41,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.5</span>
       </span>
     </div>
 
@@ -118,7 +118,7 @@
 <p>Note: This is still a very early-stage project and not quite production ready, though we’re happy if you’d like to try it out and give us feedback!</p>
 </blockquote>
 <br><center>
-<img src="reference/figures/technologies.png" align="center" style="max-height:250px;">
+<img src="reference/figures/technologies.png" align="center" style="max-height:200px;">
 </center>
 <p><br></p>
 <p>This project brings together three open source technologies (<a href="https://quarto.org/" class="external-link">Quarto</a>, <a href="https://shiny.posit.co/" class="external-link">shiny</a>, and <a href="https://supabase.com/" class="external-link">supabase</a>) to create dynamic, markdown-based surveys. Here’s the basic concept:</p>
@@ -136,6 +136,39 @@
 </h1>
 <p><code>surveydown</code> was created as a markdown-based alternative to platforms like Google Forms, Qualtrics, Survey Monkey, etc. Unlike every other platform, it allows the user to define their entire survey content using markdown and R code, making the survey itself fully reproducible and easy to share and collaborate with others. The resulting shiny app for each survey can be hosted on a number of platforms, like <a href="https://shinyapps.io/" class="external-link">shinyapps.io</a> or <a href="https://huggingface.co/" class="external-link">huggingface</a>, and the survey data collected is owned by the survey designer in their supabase account. Best of all, everything is open source and free :)</p>
 <p>If you’re curious where this whole idea came from, check out this <a href="https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/" class="external-link">blog post</a>, which outlines more on the general idea and the motivation for it. The post is now outdated in terms of the overall design, but it provides something of an origin story and some of the motivation for developing this project.</p>
+</div>
+<div class="section level1">
+<h1 id="quick-use-guide">Quick Use Guide<a class="anchor" aria-label="anchor" href="#quick-use-guide"></a>
+</h1>
+<p>To install the {surveydown} <strong>R package</strong> (not available on CRAN yet):</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"jhelvy/surveydown"</span><span class="op">)</span></span></code></pre></div>
+<p>To install the surveydown <strong>Quarto extension</strong>, your can either do so using the <em>Terminal</em>, or using the {surveydown} <em>R package</em>:</p>
+<ol style="list-style-type: decimal">
+<li>Using <em>Terminal</em> (next to the “Console” panel in your RStudio), run:</li>
+</ol>
+<!-- --><div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Make sure you have Quarto installed.</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>quarto install extension jhelvy<span class="sc">/</span>surveydown<span class="sc">-</span>ext</span></code></pre></div>
+<ol start="2" style="list-style-type: decimal">
+<li>Using the {surveydown} <em>R package</em>, run:</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Make sure you have the {surveydown} R package installed.</span></span>
+<span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_update_extension.html">sd_update_extension</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>To start with an <strong>example survey</strong> (which includes the extension), run:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># To install the survey under your current path</span></span>
+<span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_create_survey.html">sd_create_survey</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># To designate a path inside your current path</span></span>
+<span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_create_survey.html">sd_create_survey</a></span><span class="op">(</span><span class="st">"path/to/folder"</span><span class="op">)</span></span></code></pre></div>
+<p>To check if the R package and Quarto extension versions are up to date, run:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_check_versions.html">sd_check_versions</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>To update the R package and Quarto extension to the latest version, run:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_update_surveydown.html">sd_update_surveydown</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level1">
 <h1 id="todo-list">TODO List<a class="anchor" aria-label="anchor" href="#todo-list"></a>
@@ -203,7 +236,7 @@
 <h2 id="citation-information">Citation Information<a class="anchor" aria-label="anchor" href="#citation-information"></a>
 </h2>
 <p>If you use this package for in a publication, please cite it! You can get the citation by typing <code>citation("surveydown")</code> into R:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"surveydown"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>

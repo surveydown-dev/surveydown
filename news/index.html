@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.5</span>
       </span>
     </div>
 
@@ -82,12 +82,23 @@
 <h2 class="page-header" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
     <div class="section level2">
+<h2 class="page-header" data-toc-text="0.0.5" id="surveydown-005">surveydown 0.0.5<a class="anchor" aria-label="anchor" href="#surveydown-005"></a></h2>
+<ul><li>
+<code>create_survey()</code> changed to <code><a href="../reference/sd_create_survey.html">sd_create_survey()</a></code> for function name consistency.</li>
+<li>
+<code><a href="../reference/sd_update_extension.html">sd_update_extension()</a></code> function to update the surveydown Quarto extension.</li>
+<li>
+<code><a href="../reference/sd_check_versions.html">sd_check_versions()</a></code> function to check the version of both the R package and the Quarto extension. If any of them don’t match with the latest version, there will be a suggestion to run the <code><a href="../reference/sd_update_surveydown.html">sd_update_surveydown()</a></code> function.</li>
+<li>
+<code><a href="../reference/sd_update_surveydown.html">sd_update_surveydown()</a></code> function to update both the R package and the Quarto extension.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="page-header" data-toc-text="0.0.4" id="surveydown-004">surveydown 0.0.4<a class="anchor" aria-label="anchor" href="#surveydown-004"></a></h2>
 <ul><li>(extension) <a href="https://fonts.google.com/specimen/Raleway" class="external-link">Raleway Font</a> is set as the default font of the survey pages. Can be overwritten in the YAML header with the <code>theme</code> command using the <a href="https://bootswatch.com" class="external-link">bootswatch themes</a> or a custom <code>scss</code> file.</li>
 <li>(extension) Default page background is set as “#f2f6f9” (a light blue color). Can be overwritten in the YAML header with the <code>backgroundcolor</code>.</li>
 <li>(extension) Questions are now encapsulated in a container that distinguishes from the descriptive texts.</li>
 <li>(extension) Options of <code>mc_button</code> and <code>mu_multiple_buttons</code> types of questions are now centered.</li>
-<li>Now the <code><a href="../reference/create_survey.html">surveydown::create_survey()</a></code> function will download the whole <a href="https://github.com/jhelvy/surveydown-ext/tree/main" class="external-link">extension repo</a>, containing the extension, an example survey, and an RStudio project.</li>
+<li>Now the <code>surveydown::create_survey()</code> function will download the whole <a href="https://github.com/jhelvy/surveydown-ext/tree/main" class="external-link">extension repo</a>, containing the extension, an example survey, and an RStudio project.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.0.3" id="surveydown-003">surveydown 0.0.3<a class="anchor" aria-label="anchor" href="#surveydown-003"></a></h2>

@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.5</span>
       </span>
     </div>
 
@@ -132,7 +132,7 @@ Code</a> or <a href="https://github.com/posit-dev/positron" class="external-link
 (a novel IDE made by Posit).</p>
 </div>
 <div class="section level2">
-<h2 id="install-the-package">Install the package<a class="anchor" aria-label="anchor" href="#install-the-package"></a>
+<h2 id="install-the-r-package">Install the R package<a class="anchor" aria-label="anchor" href="#install-the-r-package"></a>
 </h2>
 <p>For now, {surveydown} is not get on CRAN, but you can install the
 development version from <a href="https://github.com/jhelvy/surveydown" class="external-link">GitHub</a> by running the
@@ -142,13 +142,42 @@ following command in R:</p>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"jhelvy/surveydown"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="quarto-extension">Quarto extension<a class="anchor" aria-label="anchor" href="#quarto-extension"></a>
+<h2 id="install-the-quarto-extension">Install the Quarto extension<a class="anchor" aria-label="anchor" href="#install-the-quarto-extension"></a>
 </h2>
-<p>Finally, the {surveydown} package works in tandem with our <a href="https://github.com/jhelvy/surveydown-ext" class="external-link">surveydown Quarto
+<p>The {surveydown} package works in tandem with our <a href="https://github.com/jhelvy/surveydown-ext" class="external-link">surveydown Quarto
 extension</a>, which is required to make everything work. The extension
 is needed in the root directory folder of every survey project you
 create, so don’t worry about installing it now - just know that you’ll
 need it eventually.</p>
+<p>To install the surveydown <strong>Quarto extension</strong>, your can
+either do so using the <em>Terminal</em>, or using the {surveydown}
+<em>R package</em>:</p>
+<ol style="list-style-type: decimal">
+<li>Using <em>Terminal</em> (next to the “Console” panel in your
+RStudio), run:</li>
+</ol>
+<pre><code># Make sure you have Quarto installed.
+quarto install extension jhelvy/surveydown-ext</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Using the {surveydown} <em>R package</em>, run:</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Make sure you have the {surveydown} R package installed.</span></span>
+<span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_update_extension.html">sd_update_extension</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="versions">Versions<a class="anchor" aria-label="anchor" href="#versions"></a>
+</h2>
+<p>We recommend you to have the most up-to-date R pacakge and Quarto
+extension.</p>
+<p>To check if the R package and Quarto extension versions are up to
+date, run:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_check_versions.html">sd_check_versions</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>To update the R package and Quarto extension to the latest version,
+run:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_update_surveydown.html">sd_update_surveydown</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
   </div>
 
