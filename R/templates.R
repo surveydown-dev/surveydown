@@ -15,10 +15,10 @@
 #'
 #' @examples
 #' \dontrun{
-#' create_survey()
-#' create_survey(path = "path/to/package", template = "simple")
+#' sd_create_survey()
+#' sd_create_survey(path = "path/to/package", template = "simple")
 #' }
-create_survey <- function(path = getwd(), template = "simple") {
+sd_create_survey <- function(path = getwd(), template = "simple") {
     using_current_dir <- path == getwd()
     if (using_current_dir && !usethis::ui_yeah(paste("Do you want to use the current working directory (", path, ") as the path?"))) {
         stop("Operation aborted by the user.")
@@ -80,10 +80,10 @@ create_survey <- function(path = getwd(), template = "simple") {
 #'
 #' @examples
 #' \dontrun{
-#' update_extension()
-#' update_extension(path = "path/to/project")
+#' sd_update_extension()
+#' sd_update_extension(path = "path/to/project")
 #' }
-update_extension <- function(path = getwd()) {
+sd_update_extension <- function(path = getwd()) {
     temp_dir <- tempfile()
     dir.create(temp_dir)
     unzipped_dir <- download_extension(temp_dir)

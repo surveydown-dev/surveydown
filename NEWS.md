@@ -1,5 +1,12 @@
 # surveydown (development version)
 
+# surveydown 0.0.5
+
+- `create_survey()` changed to `sd_create_survey()` for function name consistency.
+- `sd_update_extension()` function to update the surveydown Quarto extension.
+- `sd_check_versions()` function to check the version of both the R package and the Quarto extension. If any of them don't match with the latest version, there will be a suggestion to run the `sd_update_surveydown()` function.
+- `sd_update_surveydown()` function to update both the R package and the Quarto extension.
+
 # surveydown 0.0.4
 
 - (extension) [Raleway Font](https://fonts.google.com/specimen/Raleway) is set as the default font of the survey pages. Can be overwritten in the YAML header with the `theme` command using the [bootswatch themes](https://bootswatch.com) or a custom `scss` file.
