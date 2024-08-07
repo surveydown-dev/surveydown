@@ -27,7 +27,7 @@ It kind of goes without saying, but you need to [install R](https://cloud.r-proj
 
 Also, Quarto works great with an IDE. We recommend [RStudio](https://www.rstudio.com/categories/rstudio-ide/), but you can also use it with [VS Code](https://code.visualstudio.com) or [Positron](https://github.com/posit-dev/positron) (a novel IDE made by Posit).
 
-# Install the package
+# Install the R package
 
 For now, {surveydown} is not get on CRAN, but you can install the development version from [GitHub](https://github.com/jhelvy/surveydown) by running the following command in R:
 
@@ -38,6 +38,44 @@ For now, {surveydown} is not get on CRAN, but you can install the development ve
 remotes::install_github("jhelvy/surveydown")
 ```
 
-# Quarto extension
+# Install the Quarto extension
 
-Finally, the {surveydown} package works in tandem with our [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext), which is required to make everything work. The extension is needed in the root directory folder of every survey project you create, so don't worry about installing it now - just know that you'll need it eventually.
+The {surveydown} package works in tandem with our [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext), which is required to make everything work. The extension is needed in the root directory folder of every survey project you create, so don't worry about installing it now - just know that you'll need it eventually.
+
+To install the surveydown **Quarto extension**, your can either do so using the *Terminal*, or using the {surveydown} *R package*:
+
+1. Using *Terminal* (next to the "Console" panel in your RStudio), run:
+
+```
+# Make sure you have Quarto installed.
+quarto install extension jhelvy/surveydown-ext
+```
+
+2. Using the {surveydown} *R package*, run:
+
+```{r}
+#| eval: false
+
+# Make sure you have the {surveydown} R package installed.
+surveydown::sd_update_extension()
+```
+
+# Versions
+
+We recommend you to have the most up-to-date R pacakge and Quarto extension.
+
+To check if the R package and Quarto extension versions are up to date, run:
+
+```{r}
+#| eval: false
+
+surveydown::sd_check_versions()
+```
+
+To update the R package and Quarto extension to the latest version, run:
+
+```{r}
+#| eval: false
+
+surveydown::sd_update_surveydown()
+```

@@ -12,10 +12,10 @@
 #'
 #' @examples
 #' \dontrun{
-#' update_surveydown()
-#' update_surveydown(force = TRUE)
+#' sd_update_surveydown()
+#' sd_update_surveydown(force = TRUE)
 #' }
-update_surveydown <- function(force = FALSE) {
+sd_update_surveydown <- function(force = FALSE) {
     # Check R package version
     pkg_version <- packageVersion("surveydown")
 
@@ -40,7 +40,7 @@ update_surveydown <- function(force = FALSE) {
         )
 
         message("Updating surveydown Quarto extension...")
-        surveydown::update_extension()
+        surveydown::sd_update_extension()
 
         message("Update complete.")
     } else {
@@ -51,14 +51,15 @@ update_surveydown <- function(force = FALSE) {
 #' Check Surveydown Versions
 #'
 #' This function checks the versions of both the surveydown R package and its
-#' associated Quarto extension, reporting any mismatches.
+#' associated Quarto extension, reporting any mismatches and suggesting an update
+#' if necessary.
 #'
 #' @return No return value, called for side effects (prints version information).
 #' @export
 #'
 #' @examples
-#' check_surveydown_versions()
-check_surveydown_versions <- function() {
+#' sd_check_versions()
+sd_check_versions <- function() {
     pkg_version <- packageVersion("surveydown")
     ext_version <- get_extension_version()
 
@@ -69,10 +70,10 @@ check_surveydown_versions <- function() {
         message("Surveydown Quarto extension version: ", ext_version)
     }
 
-    if (!is.null(ext_version) && pkg_version != ext_version) {
-        warning("Version mismatch detected between R package and Quarto extension.")
-    } else if (!is.null(ext_version)) {
-        message("Versions match.")
+    if (is.null(ext_version) || pkg_version != ext_version) {
+        message("To update both the package and extension to the latest version, run: sd_update_surveydown()")
+    } else {
+        message("Versions match and are up to date.")
     }
 }
 
