@@ -176,10 +176,7 @@ database_uploading <- function(df, db, table_name) {
         #Have to read the table in again in order for the next condition to be checked
         data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
     } else if (!all(names(df) %in% names(data))) { #This is for updating the col_names if the survey parameters change
-        # Drop the existing table
-        DBI::dbExecute(db, paste0("DROP TABLE IF EXISTS \"", table_name, "\";"))
-        # Create a new table with the updated names
-        create_table(db, table_name, df)
+        column_update(db, table_name, df)
         # Append the existing data to the new table
         DBI::dbWriteTable(db, table_name, data, append = TRUE, row.names = FALSE)
     }
@@ -195,6 +192,13 @@ database_uploading <- function(df, db, table_name) {
     } else { # If there are no matching rows, we just append the new row
         DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
     }
+}
+
+column_update <- function(db, table_name, df) {
+    # Drop the existing table
+    DBI::dbExecute(db, paste0("DROP TABLE IF EXISTS \"", table_name, "\";"))
+    # Create a new table with the updated names
+    create_table(db, table_name, df)
 }
 
 
