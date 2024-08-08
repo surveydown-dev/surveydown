@@ -2,7 +2,7 @@
 % Please edit documentation in R/db.R
 \name{sd_database}
 \alias{sd_database}
-\title{Connect to a SupaBase Database}
+\title{Connect to a supabase Database}
 \usage{
 sd_database(
   host = NULL,
@@ -10,37 +10,38 @@ sd_database(
   port = NULL,
   user = NULL,
   table_name = NULL,
-  password = NULL
+  password = NULL,
+  gssencmode = "prefer"
 )
 }
 \arguments{
-\item{host}{Character string. The host address of the SupaBase database.}
+\item{host}{Character string. The host address of the supabase database.}
 
-\item{db_name}{Character string. The name of the SupaBase database.}
+\item{db_name}{Character string. The name of the supabase database.}
 
-\item{port}{Integer. The port number for the SupaBase database connection.}
+\item{port}{Integer. The port number for the supabase database connection.}
 
-\item{user}{Character string. The username for the SupaBase database connection.}
+\item{user}{Character string. The username for the supabase database connection.}
 
-\item{table_name}{Character string. The name of the table to interact with in the SupaBase database.}
+\item{table_name}{Character string. The name of the table to interact with in the supabase database.}
 
-\item{password}{Character string. The password for the SupaBase database connection.}
+\item{password}{Character string. The password for the supabase database connection.}
+
+\item{gssencmode}{Character string. The GSS encryption mode for the database connection. Defaults to "prefer".}
 }
 \value{
 A list containing the database connection object (\code{db}) and the table name (\code{table_name}).
 }
 \description{
-This function establishes a connection to a SupaBase database using the provided
+This function establishes a connection to a supabase database using the provided
 connection details.
 }
 \details{
 The function checks for the presence of all required parameters and attempts to
-establish a connection to the SupaBase database. If successful, it returns a list containing
-the database connection object and the table name. The user must have created the specified
-table in SupaBase beforehand.
+establish a connection to the supabase database. If successful, it returns a list containing
 }
 \note{
-The user must create their own table inside SupaBase in order to make additions.
+The user must create their own table inside supabase in order to make additions.
 }
 \examples{
 \dontrun{
@@ -53,7 +54,7 @@ The user must create their own table inside SupaBase in order to make additions.
     password = "your-password"
   )
 
-  #'Supabase Example PSQL Connect String
+  #'supabase Example PSQL Connect String
   psql -h aws-0-us-west-1.pooler.supabase.com -p 6--- -d postgres -U postgres.k----------i
 
   db_connection <- sd_database(

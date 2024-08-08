@@ -8,19 +8,11 @@ sd_check_versions()
 }
 \value{
 No return value, called for side effects (prints version information).
-
-No return value, called for side effects (prints version information).
 }
 \description{
 This function checks if the local surveydown R package and Quarto extension
 are up-to-date with the latest online version.
 }
 \examples{
-sd_check_versions()
-Check Surveydown Versions
-
-This function checks if the local surveydown R package and Quarto extension
-are up-to-date with the latest online version.
-
 sd_check_versions()
 }
