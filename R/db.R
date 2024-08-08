@@ -9,10 +9,12 @@
 #' @param user Character string. The username for the supabase database connection.
 #' @param table_name Character string. The name of the table to interact with in the supabase database.
 #' @param password Character string. The password for the supabase database connection.
-#' @param gssencmode Character string. The GSS encryption mode for the database connection. Defaults to "prefer".
 #'
+#' @param gssencmode Character string. The GSS encryption mode for the database connection. Defaults to "prefer".
 #' @details The function checks for the presence of all required parameters and attempts to
 #'   establish a connection to the supabase database. If successful, it returns a list containing
+#'   the database connection object and the table name. The user must have created the specified
+#'   table in supabase beforehand.
 #'
 #' @return A list containing the database connection object (`db`) and the table name (`table_name`).
 #'
@@ -21,12 +23,12 @@
 #' @examples
 #' \dontrun{
 #'   db_connection <- sd_database(
-#'     host = "your-host",
-#'     db_name = "your-db-name",
-#'     port = "port",
-#'     user = "your-username",
+#'     host       = "your-host",
+#'     db_name    = "your-db-name",
+#'     port       = "port",
+#'     user       = "your-username",
 #'     table_name = "your-table-name",
-#'     password = "your-password"
+#'     password   = "your-password"
 #'   )
 #'
 #'   #'supabase Example PSQL Connect String
@@ -52,7 +54,7 @@ sd_database <- function(
         table_name = NULL,
         password   = NULL,
         gssencmode = "prefer"
-    ) {
+) {
 
     # Authentication/Checks for NULL Values
     if (
@@ -73,17 +75,17 @@ sd_database <- function(
         stop("You must provide your supabase password to access the database")
     }
 
-  # < Code to handle supabase authentication here >
-  #User Must create their own table inside of supabase in order to make additions.
+    # < Code to handle supabase authentication here >
+    #User Must create their own table inside of supabase in order to make additions.
     tryCatch(
         {
             db <-  DBI::dbConnect(
                 RPostgres::Postgres(),
-                host     = host,
-                dbname   = db_name,
-                port     = port,
-                user     = user,
-                password = password,
+                host       = host,
+                dbname     = db_name,
+                port       = port,
+                user       = user,
+                password   = password,
                 gssencmode = gssencmode
             )
             message("Successfully connected to the database.")
@@ -103,25 +105,25 @@ sd_database <- function(
 
 transform_data <- function(question_vals, timestamp_vals, session_id) {
 
-  # Replace NULLs with empty string, and
-  # convert vectors to comma-separated strings
-  for (i in seq_len(length(question_vals))) {
-    # Check for NULL and replace with an empty string
-    val <- question_vals[[i]]
-    if (is.null(val)) {
-      question_vals[[i]] <- ""
-    } else if (length(val) > 1) {
-      # Convert vectors to comma-separated strings
-      question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
+    # Replace NULLs with empty string, and
+    # convert vectors to comma-separated strings
+    for (i in seq_len(length(question_vals))) {
+        # Check for NULL and replace with an empty string
+        val <- question_vals[[i]]
+        if (is.null(val)) {
+            question_vals[[i]] <- ""
+        } else if (length(val) > 1) {
+            # Convert vectors to comma-separated strings
+            question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
+        }
     }
-  }
 
-  responses <- as.data.frame(question_vals)
+    responses <- as.data.frame(question_vals)
 
-  # Add session_id and timestamps
-  data <- cbind(session_id, responses, as.data.frame(timestamp_vals))
+    # Add session_id and timestamps
+    data <- cbind(session_id, responses, as.data.frame(timestamp_vals))
 
-  return(data)
+    return(data)
 }
 
 ### Database Uploading ----
@@ -173,11 +175,19 @@ database_uploading <- function(df, db, table_name) {
     #This actually checks if its empty and will create a brand new table name of your choice
     if (is.null(data)) {
         create_table(db, table_name, df)
-    } else if (!all(colnames(df) %in% colnames(data))){
-        update_columns()
+    } else {
+        # Check for new columns
+        existing_cols <- DBI::dbListFields(db, table_name)
+        new_cols <- setdiff(names(df), existing_cols)
+
+        # Add new columns if any
+        for (col in new_cols) {
+            r_type <- typeof(df[[col]])
+            sql_type <- r_to_sql_type(r_type)
+            query <- paste0('ALTER TABLE "', table_name, '" ADD COLUMN "', col, '" ', sql_type, ';')
+            DBI::dbExecute(db, query)
+        }
     }
-
-
 
     #Table Editing Section
     #Checking For Matching Session_Id's
@@ -192,11 +202,3 @@ database_uploading <- function(df, db, table_name) {
         DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
     }
 }
-
-
-
-
-
-
-
-
