@@ -39,6 +39,8 @@ connection details.
 \details{
 The function checks for the presence of all required parameters and attempts to
 establish a connection to the supabase database. If successful, it returns a list containing
+the database connection object and the table name. The user must have created the specified
+table in supabase beforehand.
 }
 \note{
 The user must create their own table inside supabase in order to make additions.
@@ -46,12 +48,12 @@ The user must create their own table inside supabase in order to make additions.
 \examples{
 \dontrun{
   db_connection <- sd_database(
-    host = "your-host",
-    db_name = "your-db-name",
-    port = "port",
-    user = "your-username",
+    host       = "your-host",
+    db_name    = "your-db-name",
+    port       = "port",
+    user       = "your-username",
     table_name = "your-table-name",
-    password = "your-password"
+    password   = "your-password"
   )
 
   #'supabase Example PSQL Connect String
