@@ -15,41 +15,112 @@
 #'
 #' @examples
 #' \dontrun{
-#' create_survey()
-#' create_survey(path = "path/to/package", template = "simple")
+#' sd_create_survey()
+#' sd_create_survey(path = "path/to/package", template = "simple")
 #' }
-create_survey <- function(path = getwd(), template = "simple") {
-
-  # Use the usethis ui_ask_yes_no function for confirmation
-  if (path == getwd()) {
-    if (
-      !usethis::ui_yeah(paste(
-        "Do you want to use the current working directory (",
-        path, ") as the path?"
-      ))
-    ) {
-      stop("Operation aborted by the user.")
+sd_create_survey <- function(path = getwd(), template = "simple") {
+    using_current_dir <- path == getwd()
+    if (using_current_dir && !usethis::ui_yeah(paste("Do you want to use the current working directory (", path, ") as the path?"))) {
+        stop("Operation aborted by the user.")
     }
-  }
 
-  # Ensure the path is valid and create the directory
-  if (!dir.exists(path)) {
-    dir.create(path, recursive = TRUE)
-  }
+    temp_dir <- tempfile()
+    dir.create(temp_dir)
+    unzipped_dir <- download_extension(temp_dir)
 
-  # Define the source directory within surveydown package
-  source_dir <- system.file(
-    file.path("example", template),
-    package = "surveydown"
-  )
+    dir.create(path, recursive = TRUE, showWarnings = FALSE)
 
-  # Check if the source directory exists
-  if (source_dir == "") {
-    stop("Source directory not found in the package for the specified template.")
-  }
+    if (using_current_dir) {
+        existing_rproj <- list.files(path, pattern = "\\.Rproj$", full.names = TRUE)
+        if (length(existing_rproj) > 0) {
+            example_rproj <- file.path(unzipped_dir, "example.Rproj")
+            if (file.exists(example_rproj)) {
+                file.remove(example_rproj)
+            }
+        }
+    }
 
-  # Copy files and directories recursively from the source to the target path
-  file.copy(list.files(source_dir, full.names = TRUE), path, recursive = TRUE)
+    target_surveydown_path <- file.path(path, "_extensions", "jhelvy", "surveydown")
+    if (dir.exists(target_surveydown_path)) {
+        unlink(target_surveydown_path, recursive = TRUE)
+    }
 
-  usethis::ui_done(paste("Survey template created at", path))
+    target_jhelvy_path <- file.path(path, "_extensions", "jhelvy")
+    dir.create(target_jhelvy_path, recursive = TRUE, showWarnings = FALSE)
+
+    source_surveydown_path <- file.path(unzipped_dir, "_extensions", "jhelvy", "surveydown")
+    file.copy(source_surveydown_path, target_jhelvy_path, recursive = TRUE)
+
+    items_to_move <- list.files(unzipped_dir, all.files = TRUE, full.names = TRUE, no.. = TRUE)
+    items_to_move <- items_to_move[!grepl("_extensions", items_to_move)]
+
+    for (item in items_to_move) {
+        if (dir.exists(item)) {
+            file.copy(item, path, recursive = TRUE)
+        } else {
+            file.copy(item, file.path(path, basename(item)), overwrite = TRUE)
+        }
+    }
+
+    unlink(temp_dir, recursive = TRUE)
+
+    usethis::ui_done(paste("Survey template created at", path))
+}
+
+#' Update Survey Extension
+#'
+#' This function updates or creates the _extensions/jhelvy/surveydown folder
+#' with the latest contents from the surveydown-ext repository.
+#'
+#' @param path A character string specifying the directory in which to update
+#' or create the extension. Defaults to the current working directory.
+#'
+#' @return A message indicating the successful update of the extension.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' sd_update_extension()
+#' sd_update_extension(path = "path/to/project")
+#' }
+sd_update_extension <- function(path = getwd()) {
+    temp_dir <- tempfile()
+    dir.create(temp_dir)
+    unzipped_dir <- download_extension(temp_dir)
+
+    source_path <- file.path(unzipped_dir, "_extensions", "jhelvy", "surveydown")
+    target_path <- file.path(path, "_extensions", "jhelvy", "surveydown")
+
+    if (dir.exists(target_path)) {
+        unlink(list.files(target_path, full.names = TRUE), recursive = TRUE)
+    } else {
+        dir.create(target_path, recursive = TRUE, showWarnings = FALSE)
+    }
+
+    file.copy(list.files(source_path, full.names = TRUE), target_path, recursive = TRUE)
+
+    unlink(temp_dir, recursive = TRUE)
+
+    usethis::ui_done(paste("Survey extension updated at", target_path))
+}
+
+#' Download and Extract Survey Extension
+#'
+#' This helper function downloads the surveydown extension from GitHub and extracts it.
+#'
+#' @param temp_dir A temporary directory to store downloaded files.
+#'
+#' @return A character string with the path to the unzipped directory.
+#' @keywords internal
+download_extension <- function(temp_dir) {
+    repo_url <- "https://github.com/jhelvy/surveydown-ext/archive/refs/heads/main.zip"
+    temp_file <- tempfile(fileext = ".zip")
+
+    utils::download.file(repo_url, temp_file, mode = "wb")
+    utils::unzip(temp_file, exdir = temp_dir)
+
+    unzipped_dir <- file.path(temp_dir, "surveydown-ext-main")
+    unlink(temp_file)
+
+    return(unzipped_dir)
 }

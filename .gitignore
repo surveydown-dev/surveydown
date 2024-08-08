@@ -3,6 +3,7 @@ build.R
 .Rhistory
 .DS_Store
 .Rproj.user
+.vscode
 docs
 doc
 notes

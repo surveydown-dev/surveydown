@@ -37,13 +37,25 @@ navbar:
       href: news/index.html
 
 reference:
-- title: "Package Functions"
-  desc: "All the functions exported by the surveydown package."
+- title: "Survey Setup"
+  desc: "Functions for setting up and creating surveys"
   contents:
   - sd_setup
+  - sd_create_survey
+- title: "Survey Components"
+  desc: "Functions for defining survey questions and navigation"
+  contents:
   - sd_question
   - sd_next
+- title: "Configuration and Server"
+  desc: "Functions for configuring surveys and setting up the server"
+  contents:
   - sd_config
   - sd_database
   - sd_server
-  - create_survey
+- title: "Version Management"
+  desc: "Functions for managing package and extension versions"
+  contents:
+  - sd_check_versions
+  - sd_update_extension
+  - sd_update_surveydown

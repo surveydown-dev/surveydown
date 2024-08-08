@@ -11,7 +11,7 @@
 
 <br>
 <center>
-<img src='man/figures/technologies.png' align="center" style="max-height:250px;"/>
+<img src='man/figures/technologies.png' align="center" style="max-height:200px;"/>
 </center>
 
 <br>
@@ -56,6 +56,55 @@ outlines more on the general idea and the motivation for it. The post is
 now outdated in terms of the overall design, but it provides something
 of an origin story and some of the motivation for developing this
 project.
+
+# Quick Use Guide
+
+To install the {surveydown} **R package** (not available on CRAN yet):
+
+``` r
+# install.packages("remotes")
+remotes::install_github("jhelvy/surveydown")
+```
+
+To install the surveydown **Quarto extension**, your can either do so
+using the *Terminal*, or using the {surveydown} *R package*:
+
+1.  Using *Terminal* (next to the “Console” panel in your RStudio), run:
+
+<!-- -->
+
+    # Make sure you have Quarto installed.
+    quarto install extension jhelvy/surveydown-ext
+
+2.  Using the {surveydown} *R package*, run:
+
+``` r
+# Make sure you have the {surveydown} R package installed.
+surveydown::sd_update_extension()
+```
+
+To start with an **example survey** (which includes the extension), run:
+
+``` r
+# To install the survey under your current path
+surveydown::sd_create_survey()
+
+# To designate a path inside your current path
+surveydown::sd_create_survey("path/to/folder")
+```
+
+To check if the R package and Quarto extension versions are up to date,
+run:
+
+``` r
+surveydown::sd_check_versions()
+```
+
+To update the R package and Quarto extension to the latest version, run:
+
+``` r
+surveydown::sd_update_surveydown()
+```
 
 # TODO List
 
@@ -122,11 +171,11 @@ Resources / examples:
 
 Vignettes for each of the following:
 
-- [ ] Quick overview / basic usage
-- [ ] List of question types and examples
-- [ ] Question formatting options
-- [ ] Flow control (conditional skipping and conditional display)
-- [ ] Setting up the database with supabase
+- [x] Quick overview / basic usage
+- [x] List of question types and examples
+- [x] Question formatting options
+- [x] Flow control (conditional skipping and conditional display)
+- [x] Setting up the database with supabase
 
 ## [License Information](https://github.com/jhelvy/surveydown/blob/master/LICENSE.md)
 

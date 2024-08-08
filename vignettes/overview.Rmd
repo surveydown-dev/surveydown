@@ -25,17 +25,21 @@ Before jumping in, check out the [installation instructions](https://jhelvy.gith
 
 # Start with a template
 
-We recommend using the `surveydown::create_survey()` function to start with a template:
+We recommend using the `surveydown::sd_create_survey()` function to start with a template (including the extension):
 
 ```{r}
 #| eval: false
 
-surveydown::create_survey("path/to/folder")
+# To install the survey under your current path
+surveydown::sd_create_survey()
+
+# To designate a path inside your current path
+surveydown::sd_create_survey("path/to/folder")
 ```
 
-replacing `"path/to/folder"` with the path where you want to create your template surveydown project. You can also provide a `template` argument to specify which template to use (for now there is only one template: `"simple"`).
+You can either leave the argument blank to install the template in your current directory, or replace `"path/to/folder"` with the path where you want to create your template surveydown project.
 
-> Every survey created with {surveydown} should be in it's own separate project folder.
+> Every survey created with {surveydown} should be in its own separate project folder.
 
 Once you've created a template survey to work with, you'll notice a `_extensions` folder. Inside that folder, there is a `surveydown` folder containing the [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext), which is required to make everything work. **Make sure you keep that folder in the root of your project** to keep everything working properly :)
 
