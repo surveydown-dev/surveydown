@@ -19,3 +19,4 @@ data-raw
 ^\.travis\.yml$
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
+^.vscode$

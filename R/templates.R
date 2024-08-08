@@ -54,6 +54,10 @@ sd_create_survey <- function(path = getwd(), template = "simple") {
     items_to_move <- list.files(unzipped_dir, all.files = TRUE, full.names = TRUE, no.. = TRUE)
     items_to_move <- items_to_move[!grepl("_extensions", items_to_move)]
 
+    # Exclude README.md and .gitignore
+    exclude_files <- c("README.md", ".gitignore")
+    items_to_move <- items_to_move[!basename(items_to_move) %in% exclude_files]
+
     for (item in items_to_move) {
         if (dir.exists(item)) {
             file.copy(item, path, recursive = TRUE)

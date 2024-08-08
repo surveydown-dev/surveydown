@@ -173,19 +173,11 @@ database_uploading <- function(df, db, table_name) {
     #This actually checks if its empty and will create a brand new table name of your choice
     if (is.null(data)) {
         create_table(db, table_name, df)
-    } else {
-        # Check for new columns
-        existing_cols <- DBI::dbListFields(db, table_name)
-        new_cols <- setdiff(names(df), existing_cols)
-
-        # Add new columns if any
-        for (col in new_cols) {
-            r_type <- typeof(df[[col]])
-            sql_type <- r_to_sql_type(r_type)
-            query <- paste0('ALTER TABLE "', table_name, '" ADD COLUMN "', col, '" ', sql_type, ';')
-            DBI::dbExecute(db, query)
-        }
+    } else if (!all(colnames(df) %in% colnames(data))){
+        update_columns()
     }
+
+
 
     #Table Editing Section
     #Checking For Matching Session_Id's
@@ -200,3 +192,11 @@ database_uploading <- function(df, db, table_name) {
         DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
     }
 }
+
+
+
+
+
+
+
+
