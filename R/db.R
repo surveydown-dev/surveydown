@@ -167,42 +167,34 @@ database_uploading <- function(df, db, table_name) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
     }
-
     # Establish the database connection
     data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
 
     if (is.null(data)) {
         # If the table doesn't exist, create a new one
         create_table(db, table_name, df)
-    } else if (!all(names(df) %in% names(data))) {
-        # If the column names don't match, update the table structure
-        update_columns(df, db, table_name)
-    } else {
-        # Check for matching session_id's
-        matching_rows <- df[df$session_id %in% data$session_id, ]
+    } else if (!all(names(df) %in% names(data))) { #This is for updating the col_names if the survey parameters change
+        # Drop the existing table
+        DBI::dbExecute(db, paste0("DROP TABLE IF EXISTS \"", table_name, "\";"))
+        # Create a new table with the updated names
+        create_table(db, table_name, df)
+        # Append the existing data to the new table
+        DBI::dbWriteTable(db, table_name, data, append = TRUE, row.names = FALSE)
+    }
 
-        if (nrow(matching_rows) > 0) {
-            # Delete existing rows in the database table with matching session_id values from df
-            DBI::dbExecute(db, paste0('DELETE FROM "', table_name, '" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
-            # Append the new non-matching rows to the database table
-            DBI::dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
-        } else { # If there are no matching rows, we just append the new row
-            DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
-        }
+
+    # Check for matching session_id's
+    matching_rows <- df[df$session_id %in% data$session_id, ]
+    if (nrow(matching_rows) > 0) {
+        # Delete existing rows in the database table with matching session_id values from df
+        DBI::dbExecute(db, paste0('DELETE FROM "', table_name, '" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+        # Append the new non-matching rows to the database table
+        DBI::dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
+    } else { # If there are no matching rows, we just append the new row
+        DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
     }
 }
 
-update_columns <- function(df, db, table_name) {
-    # Get the existing table data
-    data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
-    # Drop the existing table
-    DBI::dbExecute(db, paste0("DROP TABLE IF EXISTS \"", table_name, "\";"))
-    # Create a new table with the updated names
-    create_table(db, table_name, df)
-    DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
-    # Append the existing data to the new table
-    DBI::dbWriteTable(db, table_name, data, append = TRUE, row.names = FALSE)
-}
 
 
 
