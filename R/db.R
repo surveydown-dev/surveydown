@@ -51,7 +51,8 @@ sd_database <- function(
         port       = NULL,
         user       = NULL,
         table_name = NULL,
-        password = NULL
+        password = NULL,
+        gssencmode = "prefer"
     ) {
 
     # Authentication/Checks for NULL Values
@@ -83,12 +84,19 @@ sd_database <- function(
                 dbname   = db_name,
                 port     = port,
                 user     = user,
-                password = password
+                password = password,
+                gssencmode = gssencmode
             )
             message("Successfully connected to the database.")
             return(list(db = db, table_name = table_name))
         }, error = function(e) {
-            stop("Error: Failed to connect to the database. Please check your connection details.")
+            stop(paste("Error: Failed to connect to the database.",
+                       "Details:", conditionMessage(e),
+                       "\nPlease check your connection details:)",
+                       "\n- host:", host,
+                       "\n- dbname:", db_name,
+                       "\n- port:", port,
+                       "\n- user:", user))
         })
 }
 
@@ -159,13 +167,27 @@ database_uploading <- function(df, db, table_name) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
     }
+
     # Establish the database connection
     data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
 
     #This actually checks if its empty and will create a brand new table name of your choice
     if (is.null(data)) {
         create_table(db, table_name, df)
+    } else {
+        # Check for new columns
+        existing_cols <- DBI::dbListFields(db, table_name)
+        new_cols <- setdiff(names(df), existing_cols)
+
+        # Add new columns if any
+        for (col in new_cols) {
+            r_type <- typeof(df[[col]])
+            sql_type <- r_to_sql_type(r_type)
+            query <- paste0('ALTER TABLE "', table_name, '" ADD COLUMN "', col, '" ', sql_type, ';')
+            DBI::dbExecute(db, query)
+        }
     }
+
     #Table Editing Section
     #Checking For Matching Session_Id's
     matching_rows <- df[df$session_id %in% data$session_id, ]
