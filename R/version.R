@@ -15,9 +15,10 @@
 #' sd_update_surveydown()
 #' sd_update_surveydown(force = TRUE)
 #' }
+#' @importFrom utils packageVersion
 sd_update_surveydown <- function(force = FALSE) {
     # Check R package version
-    pkg_version <- packageVersion("surveydown")
+    pkg_version <- utils::packageVersion("surveydown")
 
     # Check Quarto extension version
     ext_version <- get_extension_version()
@@ -58,19 +59,9 @@ sd_update_surveydown <- function(force = FALSE) {
 #'
 #' @examples
 #' sd_check_versions()
-#' Check Surveydown Versions
-#'
-#' This function checks if the local surveydown R package and Quarto extension
-#' are up-to-date with the latest online version.
-#'
-#' @return No return value, called for side effects (prints version information).
-#' @export
-#'
-#' @examples
-#' sd_check_versions()
 sd_check_versions <- function() {
     # Get local versions
-    local_pkg_version <- packageVersion("surveydown")
+    local_pkg_version <- utils::packageVersion("surveydown")
     local_ext_version <- get_extension_version()
 
     # Get latest online versions
