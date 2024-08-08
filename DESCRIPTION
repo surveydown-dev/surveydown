@@ -34,14 +34,11 @@ Imports:
     DBI,
     markdown,
     readr,
-    remotes,
     RPostgres,
     rvest,
     shiny,
     shinyjs,
-    shinyWidgets,
-    usethis,
-    utils,
-    yaml
+    shinyWidgets, 
+    usethis
 URL: https://github.com/jhelvy/surveydown
 BugReports: https://github.com/jhelvy/surveydown/issues

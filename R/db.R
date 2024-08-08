@@ -1,22 +1,23 @@
-#' Connect to a supabase Database
+#' Connect to a SupaBase Database
 #'
-#' This function establishes a connection to a supabase database using the provided
+#' This function establishes a connection to a SupaBase database using the provided
 #' connection details.
 #'
-#' @param host Character string. The host address of the supabase database.
-#' @param db_name Character string. The name of the supabase database.
-#' @param port Integer. The port number for the supabase database connection.
-#' @param user Character string. The username for the supabase database connection.
-#' @param table_name Character string. The name of the table to interact with in the supabase database.
-#' @param password Character string. The password for the supabase database connection.
-#' @param gssencmode Character string. The GSS encryption mode for the database connection. Defaults to "prefer".
+#' @param host Character string. The host address of the SupaBase database.
+#' @param db_name Character string. The name of the SupaBase database.
+#' @param port Integer. The port number for the SupaBase database connection.
+#' @param user Character string. The username for the SupaBase database connection.
+#' @param table_name Character string. The name of the table to interact with in the SupaBase database.
+#' @param password Character string. The password for the SupaBase database connection.
 #'
 #' @details The function checks for the presence of all required parameters and attempts to
-#'   establish a connection to the supabase database. If successful, it returns a list containing
+#'   establish a connection to the SupaBase database. If successful, it returns a list containing
+#'   the database connection object and the table name. The user must have created the specified
+#'   table in SupaBase beforehand.
 #'
 #' @return A list containing the database connection object (`db`) and the table name (`table_name`).
 #'
-#' @note The user must create their own table inside supabase in order to make additions.
+#' @note The user must create their own table inside SupaBase in order to make additions.
 #'
 #' @examples
 #' \dontrun{
@@ -29,7 +30,7 @@
 #'     password = "your-password"
 #'   )
 #'
-#'   #'supabase Example PSQL Connect String
+#'   #'Supabase Example PSQL Connect String
 #'   psql -h aws-0-us-west-1.pooler.supabase.com -p 6--- -d postgres -U postgres.k----------i
 #'
 #'   db_connection <- sd_database(
@@ -50,7 +51,7 @@ sd_database <- function(
         port       = NULL,
         user       = NULL,
         table_name = NULL,
-        password   = NULL,
+        password = NULL,
         gssencmode = "prefer"
     ) {
 
@@ -70,11 +71,11 @@ sd_database <- function(
 
 
     if (!nchar(password)) {
-        stop("You must provide your supabase password to access the database")
+        stop("You must provide your SupaBase password to access the database")
     }
 
-  # < Code to handle supabase authentication here >
-  #User Must create their own table inside of supabase in order to make additions.
+  # < Code to handle SupaBase authentication here >
+  #User Must create their own table inside of Supabase in order to make additions.
     tryCatch(
         {
             db <-  DBI::dbConnect(
@@ -159,7 +160,7 @@ create_table <- function(db, table_name, df) {
     DBI::dbExecute(db, create_table_query)
     #A precaution to enable RLS
     DBI::dbExecute(db, paste0('ALTER TABLE \"', table_name, '\" ENABLE ROW LEVEL SECURITY;'))
-    return(message("Database should appear on your supabase Account (Can take up to a minute.)"))
+    return(message("Database should appear on your SupaBase Account (Can take up to a minute.)"))
 }
 
 database_uploading <- function(df, db, table_name) {
