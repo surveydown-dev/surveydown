@@ -173,6 +173,8 @@ database_uploading <- function(df, db, table_name) {
     if (is.null(data)) {
         # If the table doesn't exist, create a new one
         create_table(db, table_name, df)
+        #Have to read the table in again in order for the next condition to be checked
+        data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
     } else if (!all(names(df) %in% names(data))) { #This is for updating the col_names if the survey parameters change
         # Drop the existing table
         DBI::dbExecute(db, paste0("DROP TABLE IF EXISTS \"", table_name, "\";"))
