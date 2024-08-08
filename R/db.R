@@ -174,7 +174,10 @@ database_uploading <- function(df, db, table_name) {
     #This actually checks if its empty and will create a brand new table name of your choice
     if (is.null(data)) {
         create_table(db, table_name, df)
-    } else {
+    } else if (!all(colnames(df) %in% colnames(data))){
+        update_columns()
+    }
+
 
 
     #Table Editing Section
@@ -190,3 +193,11 @@ database_uploading <- function(df, db, table_name) {
         DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
     }
 }
+
+
+
+
+
+
+
+
