@@ -57,30 +57,13 @@ now outdated in terms of the overall design, but it provides something
 of an origin story and some of the motivation for developing this
 project.
 
-# Quick Use Guide
+# Quick Start
 
-To install the {surveydown} **R package** (not available on CRAN yet):
+Install the {surveydown} **R package** (not available on CRAN yet):
 
 ``` r
 # install.packages("remotes")
 remotes::install_github("jhelvy/surveydown")
-```
-
-To install the surveydown **Quarto extension**, your can either do so
-using the *Terminal*, or using the {surveydown} *R package*:
-
-1.  Using *Terminal* (next to the “Console” panel in your RStudio), run:
-
-<!-- -->
-
-    # Make sure you have Quarto installed.
-    quarto install extension jhelvy/surveydown-ext
-
-2.  Using the {surveydown} *R package*, run:
-
-``` r
-# Make sure you have the {surveydown} R package installed.
-surveydown::sd_update_extension()
 ```
 
 To start with an **example survey** (which includes the extension), run:
@@ -91,19 +74,6 @@ surveydown::sd_create_survey()
 
 # To designate a path inside your current path
 surveydown::sd_create_survey("path/to/folder")
-```
-
-To check if the R package and Quarto extension versions are up to date,
-run:
-
-``` r
-surveydown::sd_check_versions()
-```
-
-To update the R package and Quarto extension to the latest version, run:
-
-``` r
-surveydown::sd_update_surveydown()
 ```
 
 # TODO List

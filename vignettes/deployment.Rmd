@@ -1,0 +1,20 @@
+---
+title: "6. Deployment"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{6. Deployment}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.retina = 3,
+  comment = "#>"
+)
+```
+
+This is the page for deployment.
