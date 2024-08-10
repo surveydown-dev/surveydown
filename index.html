@@ -41,7 +41,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.6</span>
       </span>
     </div>
 
@@ -54,32 +54,43 @@
   </a>
 </li>
 <li>
-  <a href="reference/index.html">Reference</a>
+  <a href="reference/index.html">Functions</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
+    Usage Guide
 
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="articles/installation.html">Installation</a>
+      <a href="articles/quick_start.html">1. Quick Start</a>
     </li>
     <li>
-      <a href="articles/overview.html">Overview</a>
+      <a href="articles/installation.html">2. Installation</a>
+    </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">3. Editing Survey</a>
+      <ul class="dropdown-menu" role="menu">
+<li>
+          <a href="articles/overview.html">3.1 Overview</a>
+        </li>
+        <li>
+          <a href="articles/question_types.html">3.2 Question Types</a>
+        </li>
+        <li>
+          <a href="articles/question_formatting.html">3.3 Question Formatting</a>
+        </li>
+      </ul>
+</li>
+    <li>
+      <a href="articles/control_logic.html">4. Control Logic</a>
     </li>
     <li>
-      <a href="articles/question_types.html">Question types</a>
+      <a href="articles/database_setup.html">5. Database Setup</a>
     </li>
     <li>
-      <a href="articles/survey_control_logic.html">Survey control logic</a>
-    </li>
-    <li>
-      <a href="articles/formatting_options.html">Formatting options</a>
-    </li>
-    <li>
-      <a href="articles/database_setup.html">Database setup</a>
+      <a href="articles/deployment.html">6. Deployment</a>
     </li>
   </ul>
 </li>
@@ -138,37 +149,19 @@
 <p>If you’re curious where this whole idea came from, check out this <a href="https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/" class="external-link">blog post</a>, which outlines more on the general idea and the motivation for it. The post is now outdated in terms of the overall design, but it provides something of an origin story and some of the motivation for developing this project.</p>
 </div>
 <div class="section level1">
-<h1 id="quick-use-guide">Quick Use Guide<a class="anchor" aria-label="anchor" href="#quick-use-guide"></a>
+<h1 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h1>
-<p>To install the {surveydown} <strong>R package</strong> (not available on CRAN yet):</p>
+<p>Install the {surveydown} <strong>R package</strong> (not available on CRAN yet):</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"jhelvy/surveydown"</span><span class="op">)</span></span></code></pre></div>
-<p>To install the surveydown <strong>Quarto extension</strong>, your can either do so using the <em>Terminal</em>, or using the {surveydown} <em>R package</em>:</p>
-<ol style="list-style-type: decimal">
-<li>Using <em>Terminal</em> (next to the “Console” panel in your RStudio), run:</li>
-</ol>
-<!-- --><div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Make sure you have Quarto installed.</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>quarto install extension jhelvy<span class="sc">/</span>surveydown<span class="sc">-</span>ext</span></code></pre></div>
-<ol start="2" style="list-style-type: decimal">
-<li>Using the {surveydown} <em>R package</em>, run:</li>
-</ol>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Make sure you have the {surveydown} R package installed.</span></span>
-<span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_update_extension.html">sd_update_extension</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>To start with an <strong>example survey</strong> (which includes the extension), run:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># To install the survey under your current path</span></span>
 <span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_create_survey.html">sd_create_survey</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># To designate a path inside your current path</span></span>
 <span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_create_survey.html">sd_create_survey</a></span><span class="op">(</span><span class="st">"path/to/folder"</span><span class="op">)</span></span></code></pre></div>
-<p>To check if the R package and Quarto extension versions are up to date, run:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_check_versions.html">sd_check_versions</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>To update the R package and Quarto extension to the latest version, run:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_update_surveydown.html">sd_update_surveydown</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level1">
 <h1 id="todo-list">TODO List<a class="anchor" aria-label="anchor" href="#todo-list"></a>
@@ -236,7 +229,7 @@
 <h2 id="citation-information">Citation Information<a class="anchor" aria-label="anchor" href="#citation-information"></a>
 </h2>
 <p>If you use this package for in a publication, please cite it! You can get the citation by typing <code>citation("surveydown")</code> into R:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"surveydown"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>

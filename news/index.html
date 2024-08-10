@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.6</span>
       </span>
     </div>
 
@@ -29,31 +29,40 @@
   </a>
 </li>
 <li>
-  <a href="../reference/index.html">Reference</a>
+  <a href="../reference/index.html">Functions</a>
 </li>
 <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Articles
+    Usage Guide
 
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/installation.html">Installation</a>
+      <a href="../articles/quick_start.html">1. Quick Start</a>
     </li>
     <li>
-      <a href="../articles/overview.html">Overview</a>
+      <a href="../articles/installation.html">2. Installation</a>
+    </li>
+    <li class="dropdown-submenu">
+      <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">3. Editing Survey</a>
+      <ul class="dropdown-menu" role="menu"><li>
+          <a href="../articles/overview.html">3.1 Overview</a>
+        </li>
+        <li>
+          <a href="../articles/question_types.html">3.2 Question Types</a>
+        </li>
+        <li>
+          <a href="../articles/question_formatting.html">3.3 Question Formatting</a>
+        </li>
+      </ul></li>
+    <li>
+      <a href="../articles/control_logic.html">4. Control Logic</a>
     </li>
     <li>
-      <a href="../articles/question_types.html">Question types</a>
+      <a href="../articles/database_setup.html">5. Database Setup</a>
     </li>
     <li>
-      <a href="../articles/survey_control_logic.html">Survey control logic</a>
-    </li>
-    <li>
-      <a href="../articles/formatting_options.html">Formatting options</a>
-    </li>
-    <li>
-      <a href="../articles/database_setup.html">Database setup</a>
+      <a href="../articles/deployment.html">6. Deployment</a>
     </li>
   </ul></li>
 <li>
@@ -81,6 +90,13 @@
     <div class="section level2">
 <h2 class="page-header" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.0.6" id="surveydown-006">surveydown 0.0.6<a class="anchor" aria-label="anchor" href="#surveydown-006"></a></h2>
+<ul><li>In <code>sd_database</code>, a <code>gssencmode</code> argument is added and set to “prefer” by default. In some cases, local deployment may fail due to network environments such as VPN settings. It can be solved by setting <code>gssencmode = "disable"</code> in the survey <code>qmd</code> file.</li>
+<li>Now the survey can be updated even AFTER its deployment. You may add, delete, or modify a question. The old question column and its time stamp, will stay where they were. The new question column and time stamp will be concatenated in the end of the table.</li>
+<li>(extension) Now the <code>example.qmd</code> survey has instructions for supabase configuration and shinyapps deployment.</li>
+<li>(extension) Now the <code>.gitignore</code> file has <code>.Renviron</code> included. This file will store supabase password and is essential for shinyapps deployment. Eliminating this file from pushing to GitHub will ensure that your password is only saved locally.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.0.5" id="surveydown-005">surveydown 0.0.5<a class="anchor" aria-label="anchor" href="#surveydown-005"></a></h2>
 <ul><li>

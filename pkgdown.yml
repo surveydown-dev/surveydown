@@ -2,13 +2,15 @@ pandoc: 3.1.11
 pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
+  control_logic: control_logic.html
   database_setup: database_setup.html
-  formatting_options: formatting_options.html
+  deployment: deployment.html
   installation: installation.html
   overview: overview.html
+  question_formatting: question_formatting.html
   question_types: question_types.html
-  survey_control_logic: survey_control_logic.html
-last_built: 2024-08-08T20:03Z
+  quick_start: quick_start.html
+last_built: 2024-08-10T20:18Z
 urls:
   reference: https://jhelvy.github.io/surveydown/reference
   article: https://jhelvy.github.io/surveydown/articles
