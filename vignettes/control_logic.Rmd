@@ -1,8 +1,8 @@
 ---
-title: "Survey Control Logic"
+title: "4. Control Logic"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Survey Control Logic}
+  %\VignetteIndexEntry{4. Control Logic}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

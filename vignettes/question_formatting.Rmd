@@ -1,8 +1,8 @@
 ---
-title: "Formatting Options"
+title: "3.3 Question Formatting"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Formatting Options}
+  %\VignetteIndexEntry{3.3 Question Formatting}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

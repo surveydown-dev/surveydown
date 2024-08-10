@@ -1,8 +1,8 @@
 ---
-title: "Database Setup using SupaBase"
+title: "5. Database Setup"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Database Setup}
+  %\VignetteIndexEntry{5. Database Setup}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -17,12 +17,12 @@ knitr::opts_chunk$set(
 )
 ```
 
-> This guide will help users set up a Supabase account to work inside of SurveyDown 
+> This guide will help users set up a supabase account to work inside of SurveyDown 
 for quick & live server updates
 
 # Step 1: Creating your account.
 
-<p style="font-size: 18px;"> To begin your database setup that involves creating an account on the [SupaBase](https://supabase.com/) website.
+<p style="font-size: 18px;"> To begin your database setup that involves creating an account on the [supabase](https://supabase.com/) website.
 </p>
 
 # Step 2: Creating your account.
@@ -162,7 +162,7 @@ Now that we have our password secure and all other parameters we can update our 
  db <- sd_database(
    host       = "aws-0-us-west-1.pooler.supabase.com", #This varies based on location,
                                                        #check Step 7.
-   db_name    = "postgres", # For the purpose of Supabase, this will always be "postgres".
+   db_name    = "postgres", # For the purpose of supabase, this will always be "postgres".
    port       = "####", # Your 4 digit port number from Step 7.
    user       = "postgres.UserValue", # This is the User parameter from Step 7.
    table_name = "What Ever Name You Want", # This is what your table name will be.

@@ -1,5 +1,13 @@
 # surveydown (development version)
 
+# surveydown 0.0.6
+
+- In `sd_database`, a `gssencmode` argument is added and set to "prefer" by default. In some cases, local deployment may fail due to network environments such as VPN settings. It can be solved by setting `gssencmode = "disable"` in the survey `qmd` file.
+- Now the survey can be updated even AFTER its deployment. You may add, delete, or modify a question. The old question column and its time stamp, will stay where they were. The new question column and time stamp will be concatenated in the end of the table.
+- (extension) Now the `example.qmd` survey has instructions for supabase configuration and shinyapps deployment.
+- (extension) Now the `.gitignore` file has `.Renviron` included. This file will store supabase password and is essential for shinyapps deployment. Eliminating this file from pushing to GitHub will ensure that your password is only saved locally.
+
+
 # surveydown 0.0.5
 
 - `create_survey()` changed to `sd_create_survey()` for function name consistency.
