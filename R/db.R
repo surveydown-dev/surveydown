@@ -202,3 +202,71 @@ database_uploading <- function(df, db, table_name) {
         DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
     }
 }
+
+#' Set Supabase Password
+#'
+#' This function sets the supabase password in the .Renviron file and adds .Renviron to .gitignore.
+#'
+#' @param password Character string. The password to be set for Supabase connection.
+#'
+#' @details The function performs the following actions:
+#'   1. Creates a .Renviron file in the root directory if it doesn't exist.
+#'   2. Adds or updates the SUPABASE_PASSWORD entry in the .Renviron file.
+#'   3. Adds .Renviron to .gitignore if it's not already there.
+#'
+#' @return None. The function is called for its side effects.
+#'
+#' @examples
+#' \dontrun{
+#'   sd_set_password("your_supabase_password")
+#' }
+#'
+#' @export
+
+sd_set_password <- function(password) {
+    # Define the path to .Renviron file
+    renviron_path <- file.path(getwd(), ".Renviron")
+
+    # Check if .Renviron file exists, if not create it
+    if (!file.exists(renviron_path)) {
+        file.create(renviron_path)
+    }
+
+    # Read existing content
+    existing_content <- readLines(renviron_path)
+
+    # Check if SUPABASE_PASSWORD is already defined
+    password_line_index <- grep("^SUPABASE_PASSWORD=", existing_content)
+
+    # Prepare the new password line
+    new_password_line <- paste0("SUPABASE_PASSWORD=", password)
+
+    # If SUPABASE_PASSWORD is already defined, replace it; otherwise, append it
+    if (length(password_line_index) > 0) {
+        existing_content[password_line_index] <- new_password_line
+    } else {
+        existing_content <- c(existing_content, new_password_line)
+    }
+
+    # Write the updated content back to .Renviron
+    writeLines(existing_content, renviron_path)
+
+    # Add .Renviron to .gitignore if not already there
+    gitignore_path <- file.path(getwd(), ".gitignore")
+    if (file.exists(gitignore_path)) {
+        gitignore_content <- readLines(gitignore_path)
+        if (!".Renviron" %in% gitignore_content) {
+            # Remove any trailing empty lines
+            while (length(gitignore_content) > 0 && gitignore_content[length(gitignore_content)] == "") {
+                gitignore_content <- gitignore_content[-length(gitignore_content)]
+            }
+            # Add .Renviron to the end without an extra newline
+            gitignore_content <- c(gitignore_content, ".Renviron")
+            writeLines(gitignore_content, gitignore_path)
+        }
+    } else {
+        writeLines(".Renviron", gitignore_path)
+    }
+
+    message("Password set successfully and .Renviron added to .gitignore.")
+}

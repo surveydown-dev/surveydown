@@ -46,15 +46,13 @@ Pick an IDE that is compatible with R and Quarto ([RStudio](https://posit.co/pro
 
 The previous articles in **Usage Guide** are sufficient to guide you through the survey construction process.
 
-## Step 1-2: Password as environment variable
+## Step 1-2: Set your password
 
 One important setting is the **password** of your supabase project. Here's how.
 
-Firstly, while you set up your supabase project, you will create a password for it. This password can be saved as an *environment variable* in your survey project, which we'll cover soon.
+While you set up your supabase project, you will create a password for it. This password will then be defined in your survey project. In the very end of your survey `.qmd` file, you'll need to define the `db` variable, which should be the settings of your supabase project. There is an argument called `password`. You can directly paste your password here as `password = "my_password"`, but it's not recommended since this will make your supabase project unsafe.
 
-Secondly, in the very end of your survey `.qmd` file, you'll need to define the `db` variable, which should be the settings of your [supabase](https://supabase.com) project. There is an argument called `password`. You can directly paste your password here as `password = "your_password"`, but it's not recommended since this will make your supabase project unsafe.
-
-We recommend you to use `password = Sys.getenv("SUPABASE_PASSWORD")` and define the `SUPABASE_PASSWORD` in `.Renviron`, which is the file that stores environment variables. Please define your password like this:
+We recommend you to write `password = Sys.getenv("SUPABASE_PASSWORD")`, like this:
 
 ```{r eval=FALSE}
 db <- sd_database(
@@ -63,23 +61,16 @@ db <- sd_database(
 )
 ```
 
-> The instructions below teach you to construct/edit **two** `.Renviron` files for local rendering and online deployment. Since the online deployment relies on the local rendering, you need to complete **both** of the `.Renviron` files.
+Then, define the password using the `sd_set_password()` function. For example, if your password is `my_password`, you should run `sd_set_password("my_password")` in the R Console.
 
-Now, here is the critical thing. In order to make this `password = Sys.getenv("SUPABASE_PASSWORD")` work **locally**, you need to run `usethis::edit_r_environ()` in your **R Console**. It will summon the system `.Renviron` file. In this file, you can define:
+Great! Now you have your supabase password successfully defined in your survey project!
 
-```{r eval=FALSE}
-SUPABASE_PASSWORD=your_password
-```
+If you are interested, below are the details of what `sd_set_password()` does:
 
-Note that there is NO quotation mark needed for your password.
-
-In order to make this `password = Sys.getenv("SUPABASE_PASSWORD")` work **online**, you need to create an `.Renviron` file in your survey project root folder, and paste the same contents in it:
-
-```{r eval=FALSE}
-SUPABASE_PASSWORD=your_password
-```
-
-After that, make sure you have `.Renviron` included in your `.gitignore` file, so that it won't be pushed to your GitHub repo and will only be saved locally. The `.Renviron` file is usually hidden, which further increases its safety.
+1.  It creates an `.Renviron` file or writes into an existing one.
+2.  In this `.Renviron` file, it writes in `SUPABASE_PASSWORD=my_password`, where `"my_password"` is whatever your argument of the `sd_set_password()` function.
+3.  If there is a previously defined `SUPABASE_PASSWORD` in `.Renviron`, it will be overwritten, so you are safe to run this function multiple times.
+4.  It adds `.Renviron` into `.gitignore` to avoid it being pushed to GitHub thus keeps your password safe. If you run multiple times, `.Renviron` will appear only once in `.gitignore`.
 
 ## Step 1-3: Render your `.qmd` file
 

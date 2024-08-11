@@ -59,6 +59,7 @@ reference:
   - sd_config
   - sd_database
   - sd_server
+  - sd_set_password
 - title: "Version Management"
   desc: "Functions for managing package and extension versions"
   contents:
