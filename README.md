@@ -39,12 +39,15 @@ get started making your own surveydown survey!**
 
 # Background & Motivation
 
-`surveydown` was created as a markdown-based alternative to platforms
-like Google Forms, Qualtrics, Survey Monkey, etc. Unlike every other
-platform, it allows the user to define their entire survey content using
-markdown and R code, making the survey itself fully reproducible and
-easy to share and collaborate with others. The resulting shiny app for
-each survey can be hosted on a number of platforms, like
+Most survey platforms (e.g., Google forms, Qualtrics, etc.) use
+drag-and-drop interfaces to design surveys, making version control and
+collaboration with others difficult. They’re also not easily
+reproducible. `surveydown` was designed to address these problems. As an
+open-source, markdown-based survey platform, all survey content is
+created with plain text (markdown and R code) in a single .qmd file that
+renders into a shiny app. This makes your survey easy to reproduce,
+share, and version control with common platforms like Git. The resulting
+shiny app for each survey can be hosted on a number of platforms, like
 [shinyapps.io](https://shinyapps.io/) or
 [huggingface](https://huggingface.co/), and the survey data collected is
 owned by the survey designer in their supabase account. Best of all,
@@ -59,22 +62,53 @@ project.
 
 # Quick Start
 
-Install the {surveydown} **R package** (not available on CRAN yet):
+> This is a tl;dr of how to make a survey with surveydown.
+
+### 1. [**Install surveydown**]()
+
+### 2. **Start with a template**
+
+In the R console, run the following to to setup a a template survey:
 
 ``` r
-# install.packages("remotes")
-remotes::install_github("jhelvy/surveydown")
-```
-
-To start with an **example survey** (which includes the extension), run:
-
-``` r
-# To install the survey under your current path
-surveydown::sd_create_survey()
-
-# To designate a path inside your current path
 surveydown::sd_create_survey("path/to/folder")
 ```
+
+This will create a folder with the following files:
+
+- `example.qmd`: a template survey you should edit.
+- `example.Rproj`: An RStudio project file (helpful if you’re working in
+  RStudio)
+- `_extensions`: A folder with the [surveydown Quarto
+  extension](https://github.com/jhelvy/surveydown-ext) needed to make
+  everything work (don’t modify this).
+
+### 3. **Add content**
+
+Add text, images, etc. with markdown and / or code chunks, and insert
+[questions]() with the `sd_question()` function in code chunks.
+
+### 4. **Add control logic**
+
+In the server chunk (bottom of qmd file), add [control logic]() to your
+survey by modifying the `sd_config()` function.
+
+### 5. **Setup your database**
+
+Also in the server chunk, [setup your database]() by modifying the
+`sd_database()` function, or leave it blank to preview / edit your
+survey without your database connected.
+
+### 6. **Locally preview**
+
+Preview your survey by clicking the “Run Document” button in RStudio or
+in your terminal running the command
+`quarto serve survey_file_name.qmd`.
+
+### 7. **Deploy**
+
+\[Deploy your survey\] by hosting it on your favorite server, like
+shinyapps.io, huggingface, etc.
 
 # TODO List
 

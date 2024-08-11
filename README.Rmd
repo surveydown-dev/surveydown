@@ -39,31 +39,13 @@ The {surveydown} R package works in tandem with our [surveydown Quarto extension
 
 # Background & Motivation
 
-`surveydown` was created as a markdown-based alternative to platforms like Google Forms, Qualtrics, Survey Monkey, etc. Unlike every other platform, it allows the user to define their entire survey content using markdown and R code, making the survey itself fully reproducible and easy to share and collaborate with others. The resulting shiny app for each survey can be hosted on a number of platforms, like [shinyapps.io](https://shinyapps.io/) or [huggingface](https://huggingface.co/), and the survey data collected is owned by the survey designer in their supabase account. Best of all, everything is open source and free :)
+Most survey platforms (e.g., Google forms, Qualtrics, etc.) use drag-and-drop interfaces to design surveys, making version control and collaboration with others difficult. They're also not easily reproducible. `surveydown` was designed to address these problems. As an open-source, markdown-based survey platform, all survey content is created with plain text (markdown and R code) in a single .qmd file that renders into a shiny app. This makes your survey easy to reproduce, share, and version control with common platforms like Git. The resulting shiny app for each survey can be hosted on a number of platforms, like [shinyapps.io](https://shinyapps.io/) or [huggingface](https://huggingface.co/), and the survey data collected is owned by the survey designer in their supabase account. Best of all, everything is open source and free :)
 
 If you're curious where this whole idea came from, check out this [blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/), which outlines more on the general idea and the motivation for it. The post is now outdated in terms of the overall design, but it provides something of an origin story and some of the motivation for developing this project.
 
 # Quick Start
 
-Install the {surveydown} **R package** (not available on CRAN yet):
-
-```{r}
-#| eval: false
- 
-# install.packages("remotes")
-remotes::install_github("jhelvy/surveydown")
-```
-
-To start with an **example survey** (which includes the extension), run:
-
-```{r}
-#| eval: false
-
-# To install the survey under your current path
-surveydown::sd_create_survey()
-
-# To designate a path inside your current path
-surveydown::sd_create_survey("path/to/folder")
+```{r, child='man/rmdchunks/quick_start.Rmd'}
 ```
 
 # TODO List
