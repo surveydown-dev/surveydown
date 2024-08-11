@@ -14,17 +14,8 @@ knitr::opts_chunk$set(
 
 ### 2. **Start with a template**
 
-In the R console, run the following to to setup a a template survey:
-
-```{r, eval=FALSE}
-surveydown::sd_create_survey("path/to/folder")
+```{r, child='template.Rmd'}
 ```
-
-This will create a folder with the following files:
-
-- `example.qmd`: a template survey you should edit.
-- `example.Rproj`: An RStudio project file (helpful if you're working in RStudio)
-- `_extensions`: A folder with the [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) needed to make everything work (don't modify this).
 
 ### 3. **Add content**
 

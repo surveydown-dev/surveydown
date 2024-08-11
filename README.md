@@ -68,13 +68,14 @@ project.
 
 ### 2. **Start with a template**
 
-In the R console, run the following to to setup a a template survey:
+In the R console, run the following to to setup a template survey:
 
 ``` r
 surveydown::sd_create_survey("path/to/folder")
 ```
 
-This will create a folder with the following files:
+This will create a folder located at `"path/to/folder"` with the
+following files:
 
 - `example.qmd`: a template survey you should edit.
 - `example.Rproj`: An RStudio project file (helpful if you’re working in
