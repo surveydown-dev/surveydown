@@ -24,7 +24,7 @@ Great! Now you are ready for online deployment. The purpose of the deployment is
 In order to deploy your survey, you'll need to have the following recipes ready:
 
 1.  Your survey project made by Quarto that is properly rendered locally.
-2.  Your supabase project with its credentials defined in your survey `.qmd` file. See [5. Database Setup](../doc/database_setup.html) for details.
+2.  Your supabase project with its credentials defined in your survey `.qmd` file. See [5. Database Setup](../articles/database_setup.html) for details.
 3.  An account on [shinyapps](https://www.shinyapps.io), which will be used for survey online deployment.
 
 These steps are easy to follow. We will go through one by one.
