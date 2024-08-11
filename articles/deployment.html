@@ -38,7 +38,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.7</span>
       </span>
     </div>
 
@@ -174,57 +174,48 @@ extension.</p>
 to guide you through the survey construction process.</p>
 </div>
 <div class="section level3">
-<h3 id="step-1-2-password-as-environment-variable">Step 1-2: Password as environment variable<a class="anchor" aria-label="anchor" href="#step-1-2-password-as-environment-variable"></a>
+<h3 id="step-1-2-set-your-password">Step 1-2: Set your password<a class="anchor" aria-label="anchor" href="#step-1-2-set-your-password"></a>
 </h3>
 <p>One important setting is the <strong>password</strong> of your
 supabase project. Here’s how.</p>
-<p>Firstly, while you set up your supabase project, you will create a
-password for it. This password can be saved as an <em>environment
-variable</em> in your survey project, which we’ll cover soon.</p>
-<p>Secondly, in the very end of your survey <code>.qmd</code> file,
-you’ll need to define the <code>db</code> variable, which should be the
-settings of your <a href="https://supabase.com" class="external-link">supabase</a> project.
-There is an argument called <code>password</code>. You can directly
-paste your password here as <code>password = "your_password"</code>, but
-it’s not recommended since this will make your supabase project
-unsafe.</p>
-<p>We recommend you to use
-<code>password = Sys.getenv("SUPABASE_PASSWORD")</code> and define the
-<code>SUPABASE_PASSWORD</code> in <code>.Renviron</code>, which is the
-file that stores environment variables. Please define your password like
-this:</p>
+<p>While you set up your supabase project, you will create a password
+for it. This password will then be defined in your survey project. In
+the very end of your survey <code>.qmd</code> file, you’ll need to
+define the <code>db</code> variable, which should be the settings of
+your supabase project. There is an argument called
+<code>password</code>. You can directly paste your password here as
+<code>password = "my_password"</code>, but it’s not recommended since
+this will make your supabase project unsafe.</p>
+<p>We recommend you to write
+<code>password = Sys.getenv("SUPABASE_PASSWORD")</code>, like this:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
 <span>  <span class="co"># Other settings...</span></span>
 <span>  password <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SUPABASE_PASSWORD"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<blockquote>
-<p>The instructions below teach you to construct/edit
-<strong>two</strong> <code>.Renviron</code> files for local rendering
-and online deployment. Since the online deployment relies on the local
-rendering, you need to complete <strong>both</strong> of the
-<code>.Renviron</code> files.</p>
-</blockquote>
-<p>Now, here is the critical thing. In order to make this
-<code>password = Sys.getenv("SUPABASE_PASSWORD")</code> work
-<strong>locally</strong>, you need to run
-<code><a href="https://usethis.r-lib.org/reference/edit.html" class="external-link">usethis::edit_r_environ()</a></code> in your <strong>R
-Console</strong>. It will summon the system <code>.Renviron</code> file.
-In this file, you can define:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">SUPABASE_PASSWORD</span><span class="op">=</span><span class="va">your_password</span></span></code></pre></div>
-<p>Note that there is NO quotation mark needed for your password.</p>
-<p>In order to make this
-<code>password = Sys.getenv("SUPABASE_PASSWORD")</code> work
-<strong>online</strong>, you need to create an <code>.Renviron</code>
-file in your survey project root folder, and paste the same contents in
-it:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">SUPABASE_PASSWORD</span><span class="op">=</span><span class="va">your_password</span></span></code></pre></div>
-<p>After that, make sure you have <code>.Renviron</code> included in
-your <code>.gitignore</code> file, so that it won’t be pushed to your
-GitHub repo and will only be saved locally. The <code>.Renviron</code>
-file is usually hidden, which further increases its safety.</p>
+<p>Then, define the password using the <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code>
+function. For example, if your password is <code>my_password</code>, you
+should run <code>sd_set_password("my_password")</code> in the R
+Console.</p>
+<p>Great! Now you have your supabase password successfully defined in
+your survey project!</p>
+<p>If you are interested, below are the details of what
+<code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> does:</p>
+<ol style="list-style-type: decimal">
+<li>It creates an <code>.Renviron</code> file or writes into an existing
+one.</li>
+<li>In this <code>.Renviron</code> file, it writes in
+<code>SUPABASE_PASSWORD=my_password</code>, where
+<code>"my_password"</code> is whatever your argument of the
+<code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> function.</li>
+<li>If there is a previously defined <code>SUPABASE_PASSWORD</code> in
+<code>.Renviron</code>, it will be overwritten, so you are safe to run
+this function multiple times.</li>
+<li>It adds <code>.Renviron</code> into <code>.gitignore</code> to avoid
+it being pushed to GitHub thus keeps your password safe. If you run
+multiple times, <code>.Renviron</code> will appear only once in
+<code>.gitignore</code>.</li>
+</ol>
 </div>
 <div class="section level3">
 <h3 id="step-1-3-render-your--qmd-file">Step 1-3: Render your <code>.qmd</code> file<a class="anchor" aria-label="anchor" href="#step-1-3-render-your--qmd-file"></a>
@@ -238,7 +229,7 @@ deployed online.</p>
 every argument correctly in your <code>db</code> variable, try to define
 <code>gssencmode = "disable"</code> in your <code>db</code>
 variable:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
 <span>  <span class="co"># Other settings...</span></span>
 <span>  gssencmode <span class="op">=</span> <span class="st">"disable"</span></span>
@@ -256,7 +247,7 @@ create any table on your supabase project. In your <code>db</code>
 variable of your <code>.qmd</code> file, there is a
 <code>table_name</code> argument. Whatever name you define here will
 become the table name of your supabase:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
 <span>  <span class="co"># Other settings...</span></span>
 <span>  table_name <span class="op">=</span> <span class="st">"demo"</span></span>
@@ -297,10 +288,10 @@ your IDE. See more information <a href="https://docs.posit.co/shinyapps.io/guide
 deploy your survey website.</p>
 <p>Make sure you have the <a href="https://rstudio.github.io/rsconnect/" class="external-link">rsconnect</a> R package
 installed (You should have done this while you authorize your IDE):</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'rsconnect'</span><span class="op">)</span></span></code></pre></div>
 <p>The simplest way is to run this:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">rsconnect</span><span class="fu">::</span><span class="fu">deployDoc</span><span class="op">(</span><span class="st">"your_survey.qmd"</span><span class="op">)</span></span></code></pre></div>
 <p>The URL of this page will be your domain followed by
 <code>/your_survey</code>, which means the name of your
@@ -311,7 +302,7 @@ is also <code>your_survey</code>. Better give a good name to your
 works properly. Otherwise, this deployment will fail.</strong></p>
 <p>If you want to define a different tab name for your survey page,
 run:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">rsconnect</span><span class="fu">::</span><span class="fu">deployDoc</span><span class="op">(</span></span>
 <span>  doc <span class="op">=</span> <span class="st">"your_survey.qmd"</span>,</span>
 <span>  appName <span class="op">=</span> <span class="st">"Survey Name"</span></span>

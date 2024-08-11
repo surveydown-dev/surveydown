@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.7</span>
       </span>
     </div>
 
@@ -90,6 +90,14 @@
     <div class="section level2">
 <h2 class="page-header" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="page-header" data-toc-text="0.0.7" id="surveydown-007">surveydown 0.0.7<a class="anchor" aria-label="anchor" href="#surveydown-007"></a></h2>
+<ul><li>
+<code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> function to set the supabase password as the survey environment variable. This function takes in a string, which should be your supabase password. We recommend you to only run it in the R Console so that your password does not appear in the <code>.qmd</code> file.</li>
+<li>(Continue) Upon running <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code>, an <code>.Renviron</code> file will be created in your survey project root directory. In this file, <code>SUPABASE_PASSWORD=your_password</code> will be created, with <code>your_password</code> being whatever your input of <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code>. Then, <code>.Renviron</code> will be added to your <code>.gitignore</code> file to avoid being pushed to GitHub.</li>
+<li>(Continue) If there is already an <code>.Renviron</code> file, <code>SUPABASE_PASSWORD=your_password</code> will be concatenated to the end. If there is already a definition of <code>SUPABASE_PASSWORD</code>, it will be overwritten. If there is no <code>.gitignore</code> file, it will be created. If there is already an <code>.Renviron</code> in <code>.gitignore</code>, it won’t be duplicated.</li>
+<li>(Continue) All the above explanation means that you simply run <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> once to define supabase password for your survey project. It takes care of the rest of necessary operations, and you can rerun <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> to change the password, with the previous value safely overwritten.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.0.6" id="surveydown-006">surveydown 0.0.6<a class="anchor" aria-label="anchor" href="#surveydown-006"></a></h2>
 <ul><li>In <code>sd_database</code>, a <code>gssencmode</code> argument is added and set to “prefer” by default. In some cases, local deployment may fail due to network environments such as VPN settings. It can be solved by setting <code>gssencmode = "disable"</code> in the survey <code>qmd</code> file.</li>
