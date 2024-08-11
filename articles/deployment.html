@@ -125,7 +125,226 @@
 
     
     
-<p>This is the page for deployment.</p>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>Great! Now you are ready for online deployment. The purpose of the
+deployment is to have your survey available online so that you can
+distribute to your desired audiences and collect their responses
+efficiently.</p>
+<p>In order to deploy your survey, you’ll need to have the following
+recipes ready:</p>
+<ol style="list-style-type: decimal">
+<li>Your survey project made by Quarto that is properly rendered
+locally.</li>
+<li>Your supabase project with its credentials defined in your survey
+<code>.qmd</code> file. See <a href="../doc/database_setup.html">5.
+Database Setup</a> for details.</li>
+<li>An account on <a href="https://www.shinyapps.io" class="external-link">shinyapps</a>,
+which will be used for survey online deployment.</li>
+</ol>
+<p>These steps are easy to follow. We will go through one by one.</p>
+</div>
+<div class="section level2">
+<h2 id="demo-survey">Demo Survey<a class="anchor" aria-label="anchor" href="#demo-survey"></a>
+</h2>
+<p>If you have trouble constructing your own survey, we have prepared a
+demo survey:</p>
+<ol style="list-style-type: decimal">
+<li><a href="https://pingfan.shinyapps.io/demo/" class="external-link">Online demo
+survey</a></li>
+<li><a href="https://github.com/jhelvy/surveydown_demo" class="external-link">GitHub
+repository</a></li>
+</ol>
+<p>This survey was made on <a href="https://posit.co/products/open-source/rstudio/" class="external-link">RStudio</a> using
+the {surveydown} R package and the surveydown Quarto extension, with
+survey data stored on <a href="https://supabase.com" class="external-link">supabase</a>, and
+its online website deployed on <a href="https://www.shinyapps.io" class="external-link">shinyapps</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="step-1-survey-project">Step 1: Survey Project<a class="anchor" aria-label="anchor" href="#step-1-survey-project"></a>
+</h2>
+<div class="section level3">
+<h3 id="step-1-1-construct-your-survey">Step 1-1: Construct your survey<a class="anchor" aria-label="anchor" href="#step-1-1-construct-your-survey"></a>
+</h3>
+<p>Pick an IDE that is compatible with R and Quarto (<a href="https://posit.co/products/open-source/rstudio/" class="external-link">RStudio</a>, <a href="https://code.visualstudio.com" class="external-link">VS Code</a>, <a href="https://www.cursor.com" class="external-link">Cursor</a>, etc.), and construct your
+survey using the {surveydown} R package and the surveydown Quarto
+extension.</p>
+<p>The previous articles in <strong>Usage Guide</strong> are sufficient
+to guide you through the survey construction process.</p>
+</div>
+<div class="section level3">
+<h3 id="step-1-2-password-as-environment-variable">Step 1-2: Password as environment variable<a class="anchor" aria-label="anchor" href="#step-1-2-password-as-environment-variable"></a>
+</h3>
+<p>One important setting is the <strong>password</strong> of your
+supabase project. Here’s how.</p>
+<p>Firstly, while you set up your supabase project, you will create a
+password for it. This password can be saved as an <em>environment
+variable</em> in your survey project, which we’ll cover soon.</p>
+<p>Secondly, in the very end of your survey <code>.qmd</code> file,
+you’ll need to define the <code>db</code> variable, which should be the
+settings of your <a href="https://supabase.com" class="external-link">supabase</a> project.
+There is an argument called <code>password</code>. You can directly
+paste your password here as <code>password = "your_password"</code>, but
+it’s not recommended since this will make your supabase project
+unsafe.</p>
+<p>We recommend you to use
+<code>password = Sys.getenv("SUPABASE_PASSWORD")</code> and define the
+<code>SUPABASE_PASSWORD</code> in <code>.Renviron</code>, which is the
+file that stores environment variables. Please define your password like
+this:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
+<span>  <span class="co"># Other settings...</span></span>
+<span>  password <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SUPABASE_PASSWORD"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<blockquote>
+<p>The instructions below teach you to construct/edit
+<strong>two</strong> <code>.Renviron</code> files for local rendering
+and online deployment. Since the online deployment relies on the local
+rendering, you need to complete <strong>both</strong> of the
+<code>.Renviron</code> files.</p>
+</blockquote>
+<p>Now, here is the critical thing. In order to make this
+<code>password = Sys.getenv("SUPABASE_PASSWORD")</code> work
+<strong>locally</strong>, you need to run
+<code><a href="https://usethis.r-lib.org/reference/edit.html" class="external-link">usethis::edit_r_environ()</a></code> in your <strong>R
+Console</strong>. It will summon the system <code>.Renviron</code> file.
+In this file, you can define:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">SUPABASE_PASSWORD</span><span class="op">=</span><span class="va">your_password</span></span></code></pre></div>
+<p>Note that there is NO quotation mark needed for your password.</p>
+<p>In order to make this
+<code>password = Sys.getenv("SUPABASE_PASSWORD")</code> work
+<strong>online</strong>, you need to create an <code>.Renviron</code>
+file in your survey project root folder, and paste the same contents in
+it:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">SUPABASE_PASSWORD</span><span class="op">=</span><span class="va">your_password</span></span></code></pre></div>
+<p>After that, make sure you have <code>.Renviron</code> included in
+your <code>.gitignore</code> file, so that it won’t be pushed to your
+GitHub repo and will only be saved locally. The <code>.Renviron</code>
+file is usually hidden, which further increases its safety.</p>
+</div>
+<div class="section level3">
+<h3 id="step-1-3-render-your--qmd-file">Step 1-3: Render your <code>.qmd</code> file<a class="anchor" aria-label="anchor" href="#step-1-3-render-your--qmd-file"></a>
+</h3>
+<p>This is simple: just hit <strong>Render</strong> or
+<code>cmd</code>/<code>ctrl</code> + <code>shift</code> + <code>K</code>
+(Mac/Win). But the reason why I make this a stand-alone step is that,
+WITHOUT rendering your <code>.qmd</code> file, your survey CANNOT be
+deployed online.</p>
+<p>One more thing… If you fail to deploy locally while you have set
+every argument correctly in your <code>db</code> variable, try to define
+<code>gssencmode = "disable"</code> in your <code>db</code>
+variable:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
+<span>  <span class="co"># Other settings...</span></span>
+<span>  gssencmode <span class="op">=</span> <span class="st">"disable"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>This can help solve your connection problem. The value of
+<code>gssencmode</code> is set to <code>"prefer"</code> by default.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="step-2-supabase-project">Step 2: Supabase Project<a class="anchor" aria-label="anchor" href="#step-2-supabase-project"></a>
+</h2>
+<p>This is covered in <a href="../doc/database_setup.html">5. Database
+Setup</a>. I want to further mention that you don’t need to actively
+create any table on your supabase project. In your <code>db</code>
+variable of your <code>.qmd</code> file, there is a
+<code>table_name</code> argument. Whatever name you define here will
+become the table name of your supabase:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
+<span>  <span class="co"># Other settings...</span></span>
+<span>  table_name <span class="op">=</span> <span class="st">"demo"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>In the above example, the table name in my supabase project will be
+<code>"demo"</code>. If your survey project runs successfully locally
+and can have survey data collected in supabase, you are ready for your
+online deployment.</p>
+</div>
+<div class="section level2">
+<h2 id="step-3-online-deployment">Step 3: Online Deployment<a class="anchor" aria-label="anchor" href="#step-3-online-deployment"></a>
+</h2>
+<p>So this is our final step: to deploy your survey online. I’m glad
+you’ve made this far! You are almost there!</p>
+<p>We’ll use <a href="https://www.shinyapps.io" class="external-link">shinyapps.io</a>. Now
+before we start, here are two explanations to clear out your possible
+questions:</p>
+<ol style="list-style-type: decimal">
+<li>
+<a href="https://www.shinyapps.io" class="external-link">shinyapps.io</a> can support both
+<a href="https://shiny.posit.co/r/getstarted/shiny-basics/lesson1/index.html" class="external-link">Shiny
+Apps</a> and <a href="https://quarto.org/docs/dashboards/interactivity/shiny-r.html" class="external-link">Quarto
+Shiny Documents</a>. In our case, our survey is considered as a Quarto
+Shiny Document.</li>
+<li>
+<a href="https://quartopub.com" class="external-link">Quarto Pub</a> is also a website
+publishing platform. In fact, both Quarto Pub and shinyapps.io are
+provided by <a href="https://posit.co" class="external-link">Posit</a>. However, we DON’T use
+Quarto Pub for our survey deployment. The core reason is that,
+shinyapps.io can make interactive websites, but Quarto Pub only makes
+static websites. A survey is apparently an interactive website, so it’s
+compatible with shinyapps.io, not Quarto Pub.</li>
+</ol>
+<p>To start using shinyapps.io, you’ll need to create an account and
+follow the basic instructions to set up your sub-domain and authorize
+your IDE. See more information <a href="https://docs.posit.co/shinyapps.io/guide/getting_started/" class="external-link">here</a>.</p>
+<p>Once you have your account and your sub-domain ready, it’s time to
+deploy your survey website.</p>
+<p>Make sure you have the <a href="https://rstudio.github.io/rsconnect/" class="external-link">rsconnect</a> R package
+installed (You should have done this while you authorize your IDE):</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'rsconnect'</span><span class="op">)</span></span></code></pre></div>
+<p>The simplest way is to run this:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">rsconnect</span><span class="fu">::</span><span class="fu">deployDoc</span><span class="op">(</span><span class="st">"your_survey.qmd"</span><span class="op">)</span></span></code></pre></div>
+<p>The URL of this page will be your domain followed by
+<code>/your_survey</code>, which means the name of your
+<code>.qmd</code> file will be in the URL. The tab name of the HTML page
+is also <code>your_survey</code>. Better give a good name to your
+<code>.qmd</code> file.</p>
+<p><strong>Again, you’ll need to firstly render locally and make sure it
+works properly. Otherwise, this deployment will fail.</strong></p>
+<p>If you want to define a different tab name for your survey page,
+run:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">rsconnect</span><span class="fu">::</span><span class="fu">deployDoc</span><span class="op">(</span></span>
+<span>  doc <span class="op">=</span> <span class="st">"your_survey.qmd"</span>,</span>
+<span>  appName <span class="op">=</span> <span class="st">"Survey Name"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Now you should have your survey site deployed. The survey is now
+served on <strong>shinyapps.io</strong>, with its data stored on
+<strong>supabase</strong>. Congratulations!</p>
+<p>Further explanation (with my personal interpretation) of the
+deployment functions:</p>
+<p>In rsconnect, there are two functions that can be used for
+deployment: <code>deployApp()</code> and <code>deployDoc()</code>. They
+serve different purposes and should NOT be mix-used.</p>
+<ol style="list-style-type: decimal">
+<li>
+<code>deployApp()</code> is used to deploy a Shiny App. It doesn’t
+work for <code>.qmd</code>, but works for Shiny App and
+<code>.rmd</code>, and it accepts multiple files.</li>
+<li>
+<code>deployDoc()</code> is used to deploy a Quarto Shiny Document.
+It works for a single file and tries to “automatically discover
+dependencies” (direct paste from <a href="https://rstudio.github.io/rsconnect/reference/deployDoc.html" class="external-link">official
+instructions</a>).</li>
+<li>Since our survey is a Quarto Shiny Document, we use
+<code>deployDoc()</code>.</li>
+</ol>
+<blockquote>
+<p>I guess <code>deployDoc()</code> is a newer function that
+specifically works for <code>.qmd</code>. I have a feeling that this
+function is specifically made for <code>.qmd</code> to match the fact of
+“single document” and “dependencies”. In our case,
+<code>deployDoc()</code> is a perfect match.</p>
+</blockquote>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
