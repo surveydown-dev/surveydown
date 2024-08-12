@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# surveydown <a href='https://jhelvy.github.io/surveydown/'><img src='man/figures/logo.png' align="right" style="height:139px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
+# surveydown <a href='https://jhelvy.github.io/surveydown/'><img src='man/figures/logo.png' align="right" style="width: 120px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
 
 ### Markdown-Based Surveys With [Quarto Shiny Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
 
