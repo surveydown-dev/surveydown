@@ -9,38 +9,43 @@
 #' @param user Character string. The username for the supabase database connection.
 #' @param table_name Character string. The name of the table to interact with in the supabase database.
 #' @param password Character string. The password for the supabase database connection.
-#'
+#'   Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.
 #' @param gssencmode Character string. The GSS encryption mode for the database connection. Defaults to "prefer".
+#' @param pause Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.
+#'
 #' @details The function checks for the presence of all required parameters and attempts to
 #'   establish a connection to the supabase database. If successful, it returns a list containing
 #'   the database connection object and the table name. The user must have created the specified
-#'   table in supabase beforehand.
+#'   table in supabase beforehand. If pause mode is enabled, the function returns NULL and data
+#'   will be saved to a local CSV file. The password is obtained from the SURVEYDOWN_PASSWORD
+#'   environment variable by default, but can be overridden by explicitly passing a value.
 #'
-#' @return A list containing the database connection object (`db`) and the table name (`table_name`).
+#' @return A list containing the database connection object (`db`) and the table name (`table_name`),
+#'   or NULL if in pause mode.
 #'
 #' @note The user must create their own table inside supabase in order to make additions.
 #'
 #' @examples
 #' \dontrun{
+#'   # Assuming SURVEYDOWN_PASSWORD is set in .Renviron
 #'   db_connection <- sd_database(
-#'     host       = "your-host",
-#'     db_name    = "your-db-name",
-#'     port       = "port",
-#'     user       = "your-username",
+#'     host       = "aws-0-us-west-1.pooler.supabase.com",
+#'     db_name    = "postgres",
+#'     port       = "6---",
+#'     user       = "postgres.k----------i",
 #'     table_name = "your-table-name",
-#'     password   = "your-password"
+#'     pause      = FALSE
 #'   )
 #'
-#'   #'supabase Example PSQL Connect String
-#'   psql -h aws-0-us-west-1.pooler.supabase.com -p 6--- -d postgres -U postgres.k----------i
-#'
+#'   # Explicitly providing the password
 #'   db_connection <- sd_database(
-#'     host = "aws-0-us-west-1.pooler.supabase.com ",
-#'     db_name = "postgres",
-#'     port = "6---",
-#'     user = "postgres.k----------i",
+#'     host       = "aws-0-us-west-1.pooler.supabase.com",
+#'     db_name    = "postgres",
+#'     port       = "6---",
+#'     user       = "postgres.k----------i",
 #'     table_name = "your-table-name",
-#'     password = "your-password"
+#'     password   = "your-password",
+#'     pause      = FALSE
 #'   )
 #' }
 #'
@@ -52,9 +57,15 @@ sd_database <- function(
         port       = NULL,
         user       = NULL,
         table_name = NULL,
-        password   = NULL,
-        gssencmode = "prefer"
+        password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
+        gssencmode = "prefer",
+        pause      = FALSE
 ) {
+
+    if (pause) {
+        message("Database connection paused. Saving data to local CSV file.")
+        return(NULL)
+    }
 
     # Authentication/Checks for NULL Values
     if (
@@ -70,9 +81,8 @@ sd_database <- function(
         return(NULL)
     }
 
-
     if (!nchar(password)) {
-        stop("You must provide your supabase password to access the database")
+        stop("Please define your password using surveydown::sd_set_password()")
     }
 
     # < Code to handle supabase authentication here >
@@ -93,11 +103,13 @@ sd_database <- function(
         }, error = function(e) {
             stop(paste("Error: Failed to connect to the database.",
                        "Details:", conditionMessage(e),
-                       "\nPlease check your connection details:)",
-                       "\n- host:", host,
-                       "\n- dbname:", db_name,
-                       "\n- port:", port,
-                       "\n- user:", user))
+                       "\nPlease check your connection details:",
+                       "\n- host:    ", host,
+                       "\n- dbname:  ", db_name,
+                       "\n- port:    ", port,
+                       "\n- user:    ", user,
+                       "\n- password:", password,
+                       "\nTo update password, please use surveydown::sd_set_password()"))
         })
 }
 
@@ -211,14 +223,14 @@ database_uploading <- function(df, db, table_name) {
 #'
 #' @details The function performs the following actions:
 #'   1. Creates a .Renviron file in the root directory if it doesn't exist.
-#'   2. Adds or updates the SUPABASE_PASSWORD entry in the .Renviron file.
+#'   2. Adds or updates the SURVEYDOWN_PASSWORD entry in the .Renviron file.
 #'   3. Adds .Renviron to .gitignore if it's not already there.
 #'
 #' @return None. The function is called for its side effects.
 #'
 #' @examples
 #' \dontrun{
-#'   sd_set_password("your_supabase_password")
+#'   sd_set_password("your_SURVEYDOWN_PASSWORD")
 #' }
 #'
 #' @export
@@ -235,13 +247,13 @@ sd_set_password <- function(password) {
     # Read existing content
     existing_content <- readLines(renviron_path)
 
-    # Check if SUPABASE_PASSWORD is already defined
-    password_line_index <- grep("^SUPABASE_PASSWORD=", existing_content)
+    # Check if SURVEYDOWN_PASSWORD is already defined
+    password_line_index <- grep("^SURVEYDOWN_PASSWORD=", existing_content)
 
     # Prepare the new password line
-    new_password_line <- paste0("SUPABASE_PASSWORD=", password)
+    new_password_line <- paste0("SURVEYDOWN_PASSWORD=", password)
 
-    # If SUPABASE_PASSWORD is already defined, replace it; otherwise, append it
+    # If SURVEYDOWN_PASSWORD is already defined, replace it; otherwise, append it
     if (length(password_line_index) > 0) {
         existing_content[password_line_index] <- new_password_line
     } else {
