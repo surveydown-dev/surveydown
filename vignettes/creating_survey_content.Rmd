@@ -21,9 +21,7 @@ knitr::opts_chunk$set(
 
 In {surveydown}, your entire survey is designed using markdown and R code in a single Quarto document (a `.qmd` file). The {surveydown} package provides a set of functions for defining the survey content and control logic. Each function starts with `sd_` to make them easy to identify.
 
-To edit your survey, you can add text using markdown formatting, or in RStudio you can edit with the visual editor, which inserts the markdown code for you. Survey questions are defined in R code chunks with a `sd_question()` function. Pages are defined using fences, with navigation buttons handled with the `sd_next()` function.
-
-Once all of the survey content is defined (pages, text, images, questions, etc.), you can modify the control logic in the server code chunk (the last code chunk at the bottom of the .qmd file) with the `sd_config()` function, and you can configure the database with the `sd_database()`. These are each detailed in separate guides (see [Control Logic](control_logic.html) and [Database Setup](database_setup.html)).
+To edit your survey, you can add text using markdown formatting, or in RStudio you can edit with the visual editor. Survey questions are defined in R code chunks with the `sd_question()` function. Pages are defined using fences (`:::`), and navigation buttons handled with the `sd_next()` function. You can modify the control logic in the server code chunk (the last code chunk at the bottom of the .qmd file) with the `sd_config()` function, and you can configure the database with the `sd_database()` (these are each detailed in separate guides - see [Control Logic](control_logic.html) and [Database Setup](database_setup.html)).
 
 The remainder of this guide covers how to add content to your survey.
 
@@ -42,6 +40,8 @@ Every {surveydown} survey is configured in a single `.qmd` file that consists of
 2. A setup code chunk.
 3. The survey body. 
 4. A server code chunk. 
+
+
 
 # 1. YAML Header
 
