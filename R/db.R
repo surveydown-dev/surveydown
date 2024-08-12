@@ -104,10 +104,11 @@ sd_database <- function(
             stop(paste("Error: Failed to connect to the database.",
                        "Details:", conditionMessage(e),
                        "\nPlease check your connection details:)",
-                       "\n- host:", host,
-                       "\n- dbname:", db_name,
-                       "\n- port:", port,
-                       "\n- user:", user))
+                       "\n- host:    ", host,
+                       "\n- dbname:  ", db_name,
+                       "\n- port:    ", port,
+                       "\n- user:    ", user,
+                       "\n- password:", password))
         })
 }
 
