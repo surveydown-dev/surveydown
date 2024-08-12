@@ -18,7 +18,7 @@ connection details."><meta property="og:image" content="https://jhelvy.github.io
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">surveydown</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.0.8</span>
       </span>
     </div>
 
@@ -101,8 +101,9 @@ connection details.</p>
 <span>  port <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  user <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  table_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  password <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  gssencmode <span class="op">=</span> <span class="st">"prefer"</span></span>
+<span>  password <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SURVEYDOWN_PASSWORD"</span><span class="op">)</span>,</span>
+<span>  gssencmode <span class="op">=</span> <span class="st">"prefer"</span>,</span>
+<span>  pause <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -131,23 +132,31 @@ connection details.</p>
 
 
 <dt id="arg-password">password<a class="anchor" aria-label="anchor" href="#arg-password"></a></dt>
-<dd><p>Character string. The password for the supabase database connection.</p></dd>
+<dd><p>Character string. The password for the supabase database connection.
+Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.</p></dd>
 
 
 <dt id="arg-gssencmode">gssencmode<a class="anchor" aria-label="anchor" href="#arg-gssencmode"></a></dt>
 <dd><p>Character string. The GSS encryption mode for the database connection. Defaults to "prefer".</p></dd>
 
+
+<dt id="arg-pause">pause<a class="anchor" aria-label="anchor" href="#arg-pause"></a></dt>
+<dd><p>Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
-    <p>A list containing the database connection object (<code>db</code>) and the table name (<code>table_name</code>).</p>
+    <p>A list containing the database connection object (<code>db</code>) and the table name (<code>table_name</code>),
+or NULL if in pause mode.</p>
     </div>
     <div id="details">
     <h2>Details</h2>
     <p>The function checks for the presence of all required parameters and attempts to
 establish a connection to the supabase database. If successful, it returns a list containing
 the database connection object and the table name. The user must have created the specified
-table in supabase beforehand.</p>
+table in supabase beforehand. If pause mode is enabled, the function returns NULL and data
+will be saved to a local CSV file. The password is obtained from the SURVEYDOWN_PASSWORD
+environment variable by default, but can be overridden by explicitly passing a value.</p>
     </div>
     <div id="note">
     <h2>Note</h2>
@@ -156,7 +165,30 @@ table in supabase beforehand.</p>
 
     <div id="ref-examples">
     <h2>Examples</h2>
-
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+<span class="r-in"><span>  <span class="co"># Assuming SURVEYDOWN_PASSWORD is set in .Renviron</span></span></span>
+<span class="r-in"><span>  <span class="va">db_connection</span> <span class="op">&lt;-</span> <span class="fu">sd_database</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    host       <span class="op">=</span> <span class="st">"aws-0-us-west-1.pooler.supabase.com"</span>,</span></span>
+<span class="r-in"><span>    db_name    <span class="op">=</span> <span class="st">"postgres"</span>,</span></span>
+<span class="r-in"><span>    port       <span class="op">=</span> <span class="st">"6---"</span>,</span></span>
+<span class="r-in"><span>    user       <span class="op">=</span> <span class="st">"postgres.k----------i"</span>,</span></span>
+<span class="r-in"><span>    table_name <span class="op">=</span> <span class="st">"your-table-name"</span>,</span></span>
+<span class="r-in"><span>    pause      <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Explicitly providing the password</span></span></span>
+<span class="r-in"><span>  <span class="va">db_connection</span> <span class="op">&lt;-</span> <span class="fu">sd_database</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    host       <span class="op">=</span> <span class="st">"aws-0-us-west-1.pooler.supabase.com"</span>,</span></span>
+<span class="r-in"><span>    db_name    <span class="op">=</span> <span class="st">"postgres"</span>,</span></span>
+<span class="r-in"><span>    port       <span class="op">=</span> <span class="st">"6---"</span>,</span></span>
+<span class="r-in"><span>    user       <span class="op">=</span> <span class="st">"postgres.k----------i"</span>,</span></span>
+<span class="r-in"><span>    table_name <span class="op">=</span> <span class="st">"your-table-name"</span>,</span></span>
+<span class="r-in"><span>    password   <span class="op">=</span> <span class="st">"your-password"</span>,</span></span>
+<span class="r-in"><span>    pause      <span class="op">=</span> <span class="cn">FALSE</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
     </div>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
