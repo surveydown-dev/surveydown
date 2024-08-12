@@ -9,9 +9,9 @@ sd_config(
   skip_if_custom = NULL,
   show_if = NULL,
   show_if_custom = NULL,
-  preview = FALSE,
   start_page = NULL,
-  show_all_pages = FALSE
+  show_all_pages = FALSE,
+  admin_page = FALSE
 )
 }
 \arguments{
@@ -23,15 +23,15 @@ sd_config(
 
 \item{show_if_custom}{A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.}
 
-\item{preview}{Logical. Whether the survey is in preview mode. Defaults to FALSE.}
-
 \item{start_page}{Character string. The ID of the page to start on. Defaults to NULL.}
 
 \item{show_all_pages}{Logical. Whether to show all pages initially. Defaults to FALSE.}
+
+\item{admin_page}{Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.}
 }
 \value{
 A list containing the configuration settings for the survey, including page and question
-structures, conditional display settings, and navigation options.
+structures, conditional display settings, navigation options, and admin page settings.
 }
 \description{
 This function sets up the configuration for a surveydown survey, including
@@ -40,18 +40,20 @@ page and question structures, conditional display settings, and navigation optio
 \details{
 The function retrieves the survey metadata, checks the validity of the conditional
 display settings, and ensures that the specified start page (if any) exists. It then stores
-these settings in a configuration list.
+these settings in a configuration list. If \code{admin_page} is set to TRUE, an admin page will be
+included in the survey. This page allows viewing and downloading of survey data upon entering
+the correct survey password (set using \code{sd_set_password()}).
 }
 \examples{
 \dontrun{
   config <- sd_config(
-    skip_if = list(),
+    skip_if        = list(),
     skip_if_custom = NULL,
-    show_if = list(),
+    show_if        = list(),
     show_if_custom = NULL,
-    preview = FALSE,
-    start_page = "page1",
-    show_all_pages = FALSE
+    start_page     = "page1",
+    show_all_pages = FALSE,
+    admin_page     = TRUE
   )
 }
 

@@ -10,8 +10,9 @@ sd_database(
   port = NULL,
   user = NULL,
   table_name = NULL,
-  password = NULL,
-  gssencmode = "prefer"
+  password = Sys.getenv("SURVEYDOWN_PASSWORD"),
+  gssencmode = "prefer",
+  pause = FALSE
 )
 }
 \arguments{
@@ -25,12 +26,16 @@ sd_database(
 
 \item{table_name}{Character string. The name of the table to interact with in the supabase database.}
 
-\item{password}{Character string. The password for the supabase database connection.}
+\item{password}{Character string. The password for the supabase database connection.
+Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.}
 
 \item{gssencmode}{Character string. The GSS encryption mode for the database connection. Defaults to "prefer".}
+
+\item{pause}{Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.}
 }
 \value{
-A list containing the database connection object (\code{db}) and the table name (\code{table_name}).
+A list containing the database connection object (\code{db}) and the table name (\code{table_name}),
+or NULL if in pause mode.
 }
 \description{
 This function establishes a connection to a supabase database using the provided
@@ -40,32 +45,34 @@ connection details.
 The function checks for the presence of all required parameters and attempts to
 establish a connection to the supabase database. If successful, it returns a list containing
 the database connection object and the table name. The user must have created the specified
-table in supabase beforehand.
+table in supabase beforehand. If pause mode is enabled, the function returns NULL and data
+will be saved to a local CSV file. The password is obtained from the SURVEYDOWN_PASSWORD
+environment variable by default, but can be overridden by explicitly passing a value.
 }
 \note{
 The user must create their own table inside supabase in order to make additions.
 }
 \examples{
 \dontrun{
+  # Assuming SURVEYDOWN_PASSWORD is set in .Renviron
   db_connection <- sd_database(
-    host       = "your-host",
-    db_name    = "your-db-name",
-    port       = "port",
-    user       = "your-username",
+    host       = "aws-0-us-west-1.pooler.supabase.com",
+    db_name    = "postgres",
+    port       = "6---",
+    user       = "postgres.k----------i",
     table_name = "your-table-name",
-    password   = "your-password"
+    pause      = FALSE
   )
 
-  #'supabase Example PSQL Connect String
-  psql -h aws-0-us-west-1.pooler.supabase.com -p 6--- -d postgres -U postgres.k----------i
-
+  # Explicitly providing the password
   db_connection <- sd_database(
-    host = "aws-0-us-west-1.pooler.supabase.com ",
-    db_name = "postgres",
-    port = "6---",
-    user = "postgres.k----------i",
+    host       = "aws-0-us-west-1.pooler.supabase.com",
+    db_name    = "postgres",
+    port       = "6---",
+    user       = "postgres.k----------i",
     table_name = "your-table-name",
-    password = "your-password"
+    password   = "your-password",
+    pause      = FALSE
   )
 }
 

@@ -82,7 +82,7 @@ sd_database <- function(
     }
 
     if (!nchar(password)) {
-        stop("You must provide your supabase password to access the database")
+        stop("Please define your password using surveydown::sd_set_password()")
     }
 
     # < Code to handle supabase authentication here >
@@ -103,12 +103,13 @@ sd_database <- function(
         }, error = function(e) {
             stop(paste("Error: Failed to connect to the database.",
                        "Details:", conditionMessage(e),
-                       "\nPlease check your connection details:)",
+                       "\nPlease check your connection details:",
                        "\n- host:    ", host,
                        "\n- dbname:  ", db_name,
                        "\n- port:    ", port,
                        "\n- user:    ", user,
-                       "\n- password:", password))
+                       "\n- password:", password,
+                       "\nTo update password, please use surveydown::sd_set_password()"))
         })
 }
 

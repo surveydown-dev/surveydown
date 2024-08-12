@@ -19,13 +19,13 @@ This function sets the supabase password in the .Renviron file and adds .Renviro
 The function performs the following actions:
 \enumerate{
 \item Creates a .Renviron file in the root directory if it doesn't exist.
-\item Adds or updates the SUPABASE_PASSWORD entry in the .Renviron file.
+\item Adds or updates the SURVEYDOWN_PASSWORD entry in the .Renviron file.
 \item Adds .Renviron to .gitignore if it's not already there.
 }
 }
 \examples{
 \dontrun{
-  sd_set_password("your_supabase_password")
+  sd_set_password("your_SURVEYDOWN_PASSWORD")
 }
 
 }

@@ -9,13 +9,16 @@
 #' @param show_if_custom A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
+#' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
 #'
 #' @details The function retrieves the survey metadata, checks the validity of the conditional
 #'   display settings, and ensures that the specified start page (if any) exists. It then stores
-#'   these settings in a configuration list.
+#'   these settings in a configuration list. If `admin_page` is set to TRUE, an admin page will be
+#'   included in the survey. This page allows viewing and downloading of survey data upon entering
+#'   the correct survey password (set using `sd_set_password()`).
 #'
 #' @return A list containing the configuration settings for the survey, including page and question
-#'   structures, conditional display settings, and navigation options.
+#'   structures, conditional display settings, navigation options, and admin page settings.
 #'
 #' @examples
 #' \dontrun{
@@ -25,7 +28,8 @@
 #'     show_if        = list(),
 #'     show_if_custom = NULL,
 #'     start_page     = "page1",
-#'     show_all_pages = FALSE
+#'     show_all_pages = FALSE,
+#'     admin_page     = TRUE
 #'   )
 #' }
 #'
@@ -36,7 +40,8 @@ sd_config <- function(
         show_if        = NULL,
         show_if_custom = NULL,
         start_page     = NULL,
-        show_all_pages = FALSE
+        show_all_pages = FALSE,
+        admin_page     = FALSE
 ) {
 
     # Get survey metadata
@@ -51,81 +56,88 @@ sd_config <- function(
         question_required  = sapply(question_structure, `[[`, "required")
     )
 
-  # Check skip_if and show_if inputs
-  check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
+    # Check skip_if and show_if inputs
+    check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
 
-  # Check that start_page (if used) points to an actual page
-  if (!is.null(start_page)) {
-    if (! start_page %in% config$page_ids) {
-      stop(
-        "The specified start_page does not exist - check that you have ",
-        "not mis-spelled the id"
-      )
+    # Check that start_page (if used) points to an actual page
+    if (!is.null(start_page)) {
+        if (! start_page %in% config$page_ids) {
+            stop(
+                "The specified start_page does not exist - check that you have ",
+                "not mis-spelled the id"
+            )
+        }
     }
-  }
 
-  if (show_all_pages) {
-    for (page in config$page_ids) {
-      shinyjs::show(page)
+    if (show_all_pages) {
+        for (page in config$page_ids) {
+            shinyjs::show(page)
+        }
     }
-  }
 
-  # Store remaining config settings
-  config$skip_if        <- skip_if
-  config$skip_if_custom <- skip_if_custom
-  config$show_if        <- show_if
-  config$show_if_custom <- show_if_custom
-  config$start_page     <- start_page
-  config$show_all_pages <- show_all_pages
+    if (admin_page) {
 
-  return(config)
+        # Admin page logic here....
+
+    }
+
+    # Store remaining config settings
+    config$skip_if        <- skip_if
+    config$skip_if_custom <- skip_if_custom
+    config$show_if        <- show_if
+    config$show_if_custom <- show_if_custom
+    config$start_page     <- start_page
+    config$show_all_pages <- show_all_pages
+    config$admin_page     <- admin_page
+
+    return(config)
 }
 
 ## Page structure ----
 
 get_page_structure <- function() {
 
-  # Get all page nodes
-  page_nodes <- get_page_nodes()
-  page_ids <- page_nodes |> rvest::html_attr("id")
+    # Get all page nodes
+    page_nodes <- get_page_nodes()
+    page_ids <- page_nodes |> rvest::html_attr("id")
 
-  # Initialize a list to hold the results
-  page_structure <- list()
+    # Initialize a list to hold the results
+    page_structure <- list()
 
-  # Iterate over each page node to get the question_ids
-  for (i in seq_along(page_nodes)) {
-    page_id <- page_ids[i]
-    page_node <- page_nodes[i]
+    # Iterate over each page node to get the question_ids
+    for (i in seq_along(page_nodes)) {
+        page_id <- page_ids[i]
+        page_node <- page_nodes[i]
 
-    # Extract all question IDs within this page
-    question_ids <- page_node |>
-      rvest::html_nodes("[data-question-id]") |>
-      rvest::html_attr("data-question-id")
+        # Extract all question IDs within this page
+        question_ids <- page_node |>
+            rvest::html_nodes("[data-question-id]") |>
+            rvest::html_attr("data-question-id")
 
-    # Store the question IDs for this page
-    page_structure[[page_id]] <- question_ids
-  }
+        # Store the question IDs for this page
+        page_structure[[page_id]] <- question_ids
+    }
 
-  return(page_structure)
+    return(page_structure)
 }
 
 get_page_nodes <- function() {
 
-  # Get the list of .qmd files in the current working directory
-  qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
+    # Get the list of .qmd files in the current working directory
+    qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
 
-  # Check if there is exactly one .qmd file
-  if (length(qmd_files) == 1) {
-    qmd_file_name <- qmd_files[1]
-    html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
+    # Check if there is exactly one .qmd file
+    if (length(qmd_files) == 1) {
+        qmd_file_name <- qmd_files[1]
+        html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
 
-    # Use the derived HTML file name to read the document with rvest
-    pages <- rvest::read_html(html_file_name) |>
-      rvest::html_nodes(".sd-page")
-    return(pages)
-  }
+        # Use the derived HTML file name to read the document with rvest
+        pages <- rvest::read_html(html_file_name) |>
+            rvest::html_nodes(".sd-page")
+        return(pages)
+    }
 
-  stop("Error: {surveydown} requires that only one .qmd file in the directory.")
+    stop("Error: {surveydown} requires that only one .qmd file in the directory.")
 
 }
 
