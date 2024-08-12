@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# surveydown <a href='https://jhelvy.github.io/surveydown/'><img src='man/figures/logo.png' align="right" style="height:139px;"/></a>
+# surveydown <a href='https://jhelvy.github.io/surveydown/'><img src='man/figures/logo.png' align="right" style="height:139px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
 
 ### Markdown-Based Surveys With [Quarto Shiny Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
 
@@ -11,7 +11,7 @@
 
 <br>
 <center>
-<img src='man/figures/technologies.png' align="center" style="max-height:200px;"/>
+<img src='man/figures/technologies.png' align="center" style="max-height:180px;" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
 </center>
 
 <br>

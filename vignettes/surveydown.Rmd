@@ -1,12 +1,13 @@
-```{r setup, include=FALSE, message=FALSE, warning=FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  warning = FALSE,
-  message = FALSE,
-  fig.retina = 3,
-  comment = "#>"
-)
-```
+---
+title: "Introduction to surveydown"
+description: >
+  Learn how to get started with the basics of surveydown.
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to surveydown}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
 
 > This is a tl;dr of how to make a survey with surveydown.
 
@@ -14,8 +15,17 @@ knitr::opts_chunk$set(
 
 ### 2. **Start with a template**
 
-```{r, child='template.Rmd'}
+In the R console, run the following to to setup a template survey:
+
+```{r, eval=FALSE}
+surveydown::sd_create_survey("path/to/folder")
 ```
+
+This will create a folder located at `"path/to/folder"` with the following files:
+
+- `example.qmd`: a template survey you should edit.
+- `example.Rproj`: An RStudio project file (helpful if you're working in RStudio)
+- `_extensions`: A folder with the [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) needed to make everything work (don't modify this).
 
 ### 3. **Add content**
 
@@ -33,6 +43,6 @@ Also in the server chunk, [setup your database]() by modifying the `sd_database(
 
 Preview your survey by clicking the "Run Document" button in RStudio or in your terminal running the command `quarto serve survey_file_name.qmd`.
 
-### 7. **Deploy** 
+### 7. **Deploy**
 
 [Deploy your survey] by hosting it on your favorite server, like shinyapps.io, huggingface, etc.

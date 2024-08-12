@@ -1,8 +1,8 @@
 ---
-title: "5. Database Setup"
+title: "Database Setup"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{5. Database Setup}
+  %\VignetteIndexEntry{Database Setup}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

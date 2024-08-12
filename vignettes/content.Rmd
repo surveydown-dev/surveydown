@@ -1,8 +1,8 @@
 ---
-title: "3.1 Creating Survey Content"
+title: "Survey Content"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{3.1 Creating Survey Content}
+  %\VignetteIndexEntry{Survey Content}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -12,9 +12,12 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
   message = FALSE,
+  eval = FALSE,
   fig.retina = 3,
   comment = "#>"
 )
+
+library(surveydown)
 ```
 
 # Quick overview
@@ -27,8 +30,17 @@ The remainder of this guide covers how to add content to your survey.
 
 # Start with a template
 
-```{r, child='../man/rmdchunks/template.Rmd'}
+In the R console, run the following to to setup a template survey:
+
+```{r}
+surveydown::sd_create_survey("path/to/folder")
 ```
+
+This will create a folder located at `"path/to/folder"` with the following files:
+
+- `example.qmd`: a template survey you should edit.
+- `example.Rproj`: An RStudio project file (helpful if you're working in RStudio)
+- `_extensions`: A folder with the [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) needed to make everything work (don't modify this).
 
 > Every survey created with {surveydown} should be in its own separate project folder.
 
@@ -41,7 +53,9 @@ Every {surveydown} survey is configured in a single `.qmd` file that consists of
 3. The survey body. 
 4. A server code chunk. 
 
-
+```{r out.width = '70%', echo = FALSE, eval=TRUE}
+knitr::include_graphics("images/survey-screenshot.png")
+```
 
 # 1. YAML Header
 

@@ -1,8 +1,8 @@
 ---
-title: "2. Installation"
+title: "Installation"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{2. Installation}
+  %\VignetteIndexEntry{Installation}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -41,7 +41,9 @@ remotes::install_github("jhelvy/surveydown")
 
 Every {surveydown} survey requires the [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) to work. Unlike the {surveydown} R package (which is installed globally), **the extension must be locally installed** in the `_extensions` folder in your survey project folder. 
 
-The latest extension will be automatically installed if you start with a template survey with `surveydown::sd_create_survey("path/to/folder")`. Otherwise, you can install the extension using the *terminal* or with the {surveydown} package:
+The latest extension will be automatically installed if you start with a template survey with `surveydown::sd_create_survey("path/to/folder")`.
+
+Otherwise, you can install the extension using the *terminal* or with the {surveydown} package:
 
 1. Using the *Terminal*:
 

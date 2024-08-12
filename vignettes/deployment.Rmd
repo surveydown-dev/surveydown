@@ -1,8 +1,8 @@
 ---
-title: "6. Deployment"
+title: "Deployment"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{6. Deployment}
+  %\VignetteIndexEntry{Deployment}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
