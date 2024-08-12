@@ -11,12 +11,16 @@
 #' @param password Character string. The password for the supabase database connection.
 #'
 #' @param gssencmode Character string. The GSS encryption mode for the database connection. Defaults to "prefer".
+#' @param pause Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.
+#'
 #' @details The function checks for the presence of all required parameters and attempts to
 #'   establish a connection to the supabase database. If successful, it returns a list containing
 #'   the database connection object and the table name. The user must have created the specified
-#'   table in supabase beforehand.
+#'   table in supabase beforehand. If pause mode is enabled, the function returns NULL and data
+#'   will be saved to a local CSV file.
 #'
-#' @return A list containing the database connection object (`db`) and the table name (`table_name`).
+#' @return A list containing the database connection object (`db`) and the table name (`table_name`),
+#'   or NULL if in pause mode.
 #'
 #' @note The user must create their own table inside supabase in order to make additions.
 #'
@@ -28,19 +32,21 @@
 #'     port       = "port",
 #'     user       = "your-username",
 #'     table_name = "your-table-name",
-#'     password   = "your-password"
+#'     password   = "your-password",
+#'     pause      = FALSE
 #'   )
 #'
 #'   #'supabase Example PSQL Connect String
 #'   psql -h aws-0-us-west-1.pooler.supabase.com -p 6--- -d postgres -U postgres.k----------i
 #'
 #'   db_connection <- sd_database(
-#'     host = "aws-0-us-west-1.pooler.supabase.com ",
-#'     db_name = "postgres",
-#'     port = "6---",
-#'     user = "postgres.k----------i",
+#'     host       = "aws-0-us-west-1.pooler.supabase.com ",
+#'     db_name    = "postgres",
+#'     port       = "6---",
+#'     user       = "postgres.k----------i",
 #'     table_name = "your-table-name",
-#'     password = "your-password"
+#'     password   = "your-password",
+#'     pause      = FALSE
 #'   )
 #' }
 #'
@@ -53,8 +59,14 @@ sd_database <- function(
         user       = NULL,
         table_name = NULL,
         password   = NULL,
-        gssencmode = "prefer"
+        gssencmode = "prefer",
+        pause      = FALSE
 ) {
+
+    if (pause) {
+        message("Database connection paused. Saving data to local CSV file.")
+        return(NULL)
+    }
 
     # Authentication/Checks for NULL Values
     if (

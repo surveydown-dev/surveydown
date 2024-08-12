@@ -7,7 +7,6 @@
 #' @param skip_if_custom A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param show_if A list of conditions under which certain pages should be shown. Defaults to NULL.
 #' @param show_if_custom A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.
-#' @param preview Logical. Whether the survey is in preview mode. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
 #'
@@ -21,24 +20,22 @@
 #' @examples
 #' \dontrun{
 #'   config <- sd_config(
-#'     skip_if = list(),
+#'     skip_if        = list(),
 #'     skip_if_custom = NULL,
-#'     show_if = list(),
+#'     show_if        = list(),
 #'     show_if_custom = NULL,
-#'     preview = FALSE,
-#'     start_page = "page1",
+#'     start_page     = "page1",
 #'     show_all_pages = FALSE
 #'   )
 #' }
 #'
 #' @export
 sd_config <- function(
-        skip_if = NULL,
+        skip_if        = NULL,
         skip_if_custom = NULL,
-        show_if = NULL,
+        show_if        = NULL,
         show_if_custom = NULL,
-        preview = FALSE,
-        start_page = NULL,
+        start_page     = NULL,
         show_all_pages = FALSE
 ) {
 
@@ -74,12 +71,11 @@ sd_config <- function(
   }
 
   # Store remaining config settings
-  config$skip_if <- skip_if
+  config$skip_if        <- skip_if
   config$skip_if_custom <- skip_if_custom
-  config$show_if <- show_if
+  config$show_if        <- show_if
   config$show_if_custom <- show_if_custom
-  config$preview <- preview
-  config$start_page <- start_page
+  config$start_page     <- start_page
   config$show_all_pages <- show_all_pages
 
   return(config)
