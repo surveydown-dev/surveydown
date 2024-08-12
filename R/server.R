@@ -32,7 +32,6 @@
 #'       skip_if = NULL,
 #'       skip_if_custom = NULL,
 #'       show_if_custom = NULL,
-#'       preview = FALSE,
 #'       start_page = "page1"
 #'     )
 #'     sd_server(input, session, config)
@@ -55,7 +54,6 @@ sd_server <- function(input, session, config, db = NULL) {
     skip_if_custom <- config$skip_if_custom
     show_if        <- config$show_if
     show_if_custom <- config$show_if_custom
-    preview        <- config$preview
     start_page     <- config$start_page
 
     # Create a local session_id variable for Data Operations use
@@ -130,46 +128,43 @@ sd_server <- function(input, session, config, db = NULL) {
 
     # Database Operations ----
 
-    # Update data base if not in preview mode
-    if (!preview) {
+    pause_mode <- is.null(db)
 
-        # Define a reactive expression for each question_id value
-        get_question_vals <- shiny::reactive({
-            temp <- sapply(
-                question_ids,
-                function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
-            )
-            names(temp) <- question_ids
-            temp
-        })
+    # Define a reactive expression for each question_id value
+    get_question_vals <- shiny::reactive({
+        temp <- sapply(
+            question_ids,
+            function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
+        )
+        names(temp) <- question_ids
+        temp
+    })
 
-        # Define a reactive expression for the time stamp values
-        get_time_stamps <- shiny::reactive({ timestamps$data })
+    # Define a reactive expression for the time stamp values
+    get_time_stamps <- shiny::reactive({ timestamps$data })
 
-        # Use observe to react whenever "input_vals" changes
-        # If it changes, update the database
+    # Use observe to react whenever "input_vals" changes
+    # If it changes, update the database
 
-        shiny::observe({
+    shiny::observe({
 
-            # Capture the current state of question values and timestamps
-            question_vals <- get_question_vals()
-            timestamp_vals <- get_time_stamps()
+        # Capture the current state of question values and timestamps
+        question_vals <- get_question_vals()
+        timestamp_vals <- get_time_stamps()
 
-            # Transform to data frame, handling uninitialized inputs appropriately
-            df_local <- transform_data(question_vals, timestamp_vals, session_id)
+        # Transform to data frame, handling uninitialized inputs appropriately
+        df_local <- transform_data(question_vals, timestamp_vals, session_id)
 
-            # Making everything a string because the db poops itself
-            df_local[] <- lapply(df_local, as.character)
+        # Making everything a string because the db poops itself
+        df_local[] <- lapply(df_local, as.character)
 
-            # Update database
-            if (is.null(db)) {
-                warning('db is not connected, writing to local data.csv file instead')
-                readr::write_csv(df_local, "data.csv")
-            } else{
-                database_uploading(df_local, db$db, db$table_name)
-            }
-        })
-    }
+        # Update database or write to CSV based on preview mode
+        if (pause_mode) {
+            readr::write_csv(df_local, "data.csv")
+        } else {
+            database_uploading(df_local, db$db, db$table_name)
+        }
+    })
 }
 
 # Helper Functions ----

@@ -46,7 +46,6 @@ The function performs the following tasks:
       skip_if = NULL,
       skip_if_custom = NULL,
       show_if_custom = NULL,
-      preview = FALSE,
       start_page = "page1"
     )
     sd_server(input, session, config)
