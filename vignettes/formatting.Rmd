@@ -1,8 +1,8 @@
 ---
-title: "3.3 Question Formatting"
+title: "Formatting Your Survey"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{3.3 Question Formatting}
+  %\VignetteIndexEntry{Formatting Your Survey}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---

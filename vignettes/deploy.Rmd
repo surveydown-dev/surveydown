@@ -1,8 +1,8 @@
 ---
-title: "6. Deployment"
+title: "Deploying Your Survey"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{6. Deployment}
+  %\VignetteIndexEntry{Deploying Your Survey}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
@@ -17,15 +17,13 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Introduction
+Once you have previewed and tested your survey and are ready to field it, it is time to make it live for respondents to fill out.
 
-Great! Now you are ready for online deployment. The purpose of the deployment is to have your survey available online so that you can distribute to your desired audiences and collect their responses efficiently.
+To deploy your survey, you'll need to have the following recipes ready:
 
-In order to deploy your survey, you'll need to have the following recipes ready:
-
-1.  Your survey project made by Quarto that is properly rendered locally.
-2.  Your supabase project with its credentials defined in your survey `.qmd` file. See [5. Database Setup](../articles/database_setup.html) for details.
-3.  An account on [shinyapps](https://www.shinyapps.io), which will be used for survey online deployment.
+1. Your survey project made by Quarto that is properly rendered locally.
+2. Your supabase project with its credentials defined in your survey `.qmd` file. See `vignette("database")` for details.
+3. An account on [shinyapps](https://www.shinyapps.io), which will be used for survey online deployment.
 
 These steps are easy to follow. We will go through one by one.
 
@@ -33,8 +31,8 @@ These steps are easy to follow. We will go through one by one.
 
 If you have trouble constructing your own survey, we have prepared a demo survey:
 
-1.  [Online demo survey](https://pingfan.shinyapps.io/demo/)
-2.  [GitHub repository](https://github.com/jhelvy/surveydown_demo)
+1. [Online demo survey](https://pingfan.shinyapps.io/demo/)
+2. [GitHub repository](https://github.com/jhelvy/surveydown_demo)
 
 This survey was made on [RStudio](https://posit.co/products/open-source/rstudio/) using the {surveydown} R package and the surveydown Quarto extension, with survey data stored on [supabase](https://supabase.com), and its online website deployed on [shinyapps](https://www.shinyapps.io).
 
@@ -42,7 +40,7 @@ This survey was made on [RStudio](https://posit.co/products/open-source/rstudio/
 
 ## Step 1-1: Construct your survey
 
-Pick an IDE that is compatible with R and Quarto ([RStudio](https://posit.co/products/open-source/rstudio/), [VS Code](https://code.visualstudio.com), [Cursor](https://www.cursor.com), etc.), and construct your survey using the {surveydown} R package and the surveydown Quarto extension.
+Construct your survey using the {surveydown} R package and the surveydown Quarto extension.
 
 The previous articles in **Usage Guide** are sufficient to guide you through the survey construction process.
 

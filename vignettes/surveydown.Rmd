@@ -1,0 +1,92 @@
+---
+title: "Introduction to surveydown"
+description: >
+  Learn how to get started with the basics of surveydown.
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to surveydown}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  eval = FALSE,
+  fig.retina = 3,
+  comment = "#>"
+)
+```
+
+In surveydown, your entire survey is designed using markdown and R code in a single Quarto document (a `.qmd` file). The {surveydown} R package provides a set of functions for defining the survey content and control logic. Each function starts with `sd_` to make them easy to identify.
+
+You can add content to your survey using markdown formatting, or in RStudio you can edit with the visual editor. Survey questions are defined in R code chunks with the `sd_question()` function. Pages are defined using fences (`:::`), and navigation buttons handled with the `sd_next()` function. You can modify the control logic in the server code chunk (the last code chunk at the bottom of the .qmd file) with the `sd_config()` function, and you can configure the database with the `sd_database()`. Details on each of these steps are provided in separate guides in the documentation.
+
+This introduction covers the basic steps to get started with surveydown.
+
+# 1. Install surveydown
+
+See `vignette("install")`
+
+# 2. Start with a template
+
+In the R console, run the following to to setup a template survey:
+
+```{r}
+surveydown::sd_create_survey("path/to/folder")
+```
+
+This will create a folder located at `"path/to/folder"` with the following files:
+
+- `example.qmd`: a template survey you should edit.
+- `example.Rproj`: An RStudio project file (helpful if you're working in RStudio)
+- `_extensions`: A folder with the [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) needed to make everything work (don't modify this).
+
+# 3. **Add content**
+
+See `vignette("content")` for details on adding content to your survey, like text, images, etc. with markdown and / or code chunks. As a quick overview:
+
+- Add pages using fences, like this:
+
+```
+::: {#page1 .sd-page}
+
+Page 1 content here
+
+:::
+```
+
+- Add questions with the `sd_question()` function in code chunks (see `vignette("questions")` for supported question types). For example:
+
+````
+`r ''````{r}
+sd_question(
+  type  = 'mc',
+  id    = 'penguins',
+  label = "Which is your favorite type of penguin?",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo'
+  )
+)
+```
+````
+
+# 4. **Add control logic**
+
+In the server chunk (bottom of qmd file), add control logic to your survey with the `sd_config()` function. See `vignette("control")`
+
+# 5. **Setup your database**
+
+Also in the server chunk, setup your database with the `sd_database()` function, or leave it blank to preview / edit your survey without database connected. See `vignette("database")`
+
+# 6. **Locally preview**
+
+Preview your survey by clicking the "Run Document" button in RStudio or in your terminal running the command `quarto serve survey_file_name.qmd`.
+
+# 7. **Deploy**
+
+Deploy your survey by hosting it on your favorite server, like shinyapps.io, huggingface, etc. See `vignette("deploy")`
