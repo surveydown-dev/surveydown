@@ -20,13 +20,13 @@ articles:
 - title: surveydown
   navbar: ~
   contents:
-  - installation
+  - install
   - content
   - questions
   - formatting
-  - control_logic
-  - database_setup
-  - deployment
+  - control
+  - database
+  - deploy
 
 reference:
 - title: Survey Setup
