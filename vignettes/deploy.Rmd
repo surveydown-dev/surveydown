@@ -40,7 +40,7 @@ This survey was made on [RStudio](https://posit.co/products/open-source/rstudio/
 
 ## Step 1-1: Construct your survey
 
-Pick an IDE that is compatible with R and Quarto ([RStudio](https://posit.co/products/open-source/rstudio/), [VS Code](https://code.visualstudio.com), [Cursor](https://www.cursor.com), etc.), and construct your survey using the {surveydown} R package and the surveydown Quarto extension.
+Construct your survey using the {surveydown} R package and the surveydown Quarto extension.
 
 The previous articles in **Usage Guide** are sufficient to guide you through the survey construction process.
 

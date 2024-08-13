@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 
 You need both: 
 
-- [Install R](https://cloud.r-project.org/)
+- [Install R](https://CRAN.R-project.org/)
 - [Install Quarto](https://quarto.org/docs/get-started/)
 
 Also, we recommend working with an IDE. [RStudio](https://www.rstudio.com/categories/rstudio-ide/) is great, and we also like [VS Code](https://code.visualstudio.com) and [Positron](https://github.com/posit-dev/positron).
