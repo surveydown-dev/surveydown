@@ -217,6 +217,45 @@ sd_question <- function(
   return(output_div)
 }
 
+#' Create a reactive survey question
+#'
+#' This function creates various types of reactive survey questions.
+#'
+#' @param ... Other inputs to be passed to sd_question.
+#' @return A renderUI function that creates the survey question.
+#' @export
+sd_question_reactive <- function(...) {
+  args <- list(...)
+  id <- args$id
+
+  shiny::observe({
+    output <- shiny::getDefaultReactiveDomain()$output
+    if (!is.null(output)) {
+      output[[id]] <- shiny::renderUI({
+        do.call(sd_question, args)
+      })
+    } else {
+      warning("sd_question_reactive was not called within a Shiny reactive context")
+    }
+  })
+}
+
+#' Create a placeholder for a reactive survey question
+#'
+#' This function creates a placeholder div for a reactive survey question.
+#'
+#' @param id A unique identifier for the question.
+#' @return A Shiny UI element that serves as a placeholder for the reactive question.
+#' @export
+sd_reactive_output <- function(id) {
+  shiny::div(
+    id = paste0("placeholder-", id),
+    `data-question-id` = id,
+    class = "question-container reactive-question-placeholder",
+    shiny::uiOutput(id)
+  )
+}
+
 #' Create a 'Next' Button for Page Navigation
 #'
 #' This function creates a 'Next' button for navigating to the specified next page in a surveydown survey.

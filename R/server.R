@@ -55,6 +55,7 @@ sd_server <- function(input, session, config, db = NULL) {
     show_if        <- config$show_if
     show_if_custom <- config$show_if_custom
     start_page     <- config$start_page
+    question_required <- config$question_required
 
     # Create a local session_id variable for Data Operations use
     session_id <- session$token
@@ -114,7 +115,9 @@ sd_server <- function(input, session, config, db = NULL) {
                 # Check if all required questions are answered
                 current_page_questions <- page_structure[[current_page]]
 
-                all_required_answered <- check_all_required(current_page_questions, config, input, show_if)
+                all_required_answered <- check_all_required(
+                    current_page_questions, question_required, input, show_if
+                )
 
                 if (all_required_answered) {
                     shinyjs::runjs("hideAllPages();")
@@ -296,12 +299,12 @@ handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next
 }
 
 # Answering progress of required questions
-check_all_required <- function(questions, config, input, show_if) {
+check_all_required <- function(questions, question_required, input, show_if) {
     all(vapply(questions, function(q) {
         tryCatch({
-            if (!config$question_required[[q]]) return(TRUE)
+            if (!question_required[[q]]) return(TRUE)
             if (!is_question_visible(q, show_if, input)) return(TRUE)
-            check_answer(q, config, input)
+            check_answer(q, question_required, input)
         }, error = function(e) {
             message("Error checking question ", q, ": ", e$message)
             return(FALSE)
@@ -309,8 +312,8 @@ check_all_required <- function(questions, config, input, show_if) {
     }, logical(1)))
 }
 
-check_answer <- function(q, config, input) {
-    if (!config$question_required[[q]]) return(TRUE)
+check_answer <- function(q, question_required, input) {
+    if (!question_required[[q]]) return(TRUE)
 
     answer <- input[[q]]
     if (is.null(answer)) return(FALSE)
