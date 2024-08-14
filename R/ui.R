@@ -18,7 +18,6 @@
 #' @param force_edges Logical. Whether to force edges for slider input. Defaults to TRUE.
 #' @param option List. Options for the select, radio, checkbox, and slider inputs.
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
-#' @param required Logical. Whether the input is required. Defaults to FALSE.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
 #' @details
 #' Insert any detailed information here, such as more details on the types of questions
@@ -45,16 +44,16 @@ sd_question <- function(
   force_edges  = TRUE,
   option       = NULL,
   placeholder  = NULL,
-  required     = FALSE,
   resize       = NULL
 ) {
 
   output <- NULL
 
-  # Add a large red asterisk to the label if the question is required
-  if (required) {
-      label <- paste(label, "<span style='color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;'>*</span>")
-  }
+  # Always add red asterisk for required questions, but hide it initially
+  label <- paste0(
+    label,
+    " <span class='required-asterisk' style='display:none; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;'>*</span>"
+  )
 
   if (type ==  "select") {
     option <- c("", option)
@@ -209,7 +208,6 @@ sd_question <- function(
   output_div <- shiny::tags$div(
       id = paste("container-", id),
       `data-question-id` = id,
-      `data-required` = if(required) "true" else "false",
       class = "question-container",
       output
   )
@@ -269,19 +267,7 @@ sd_reactive_output <- function(id) {
 #' @return A Shiny action button UI element.
 #'
 #' @examples
-#' \dontrun{
-#'   ui <- fluidPage(
-#'     sd_next(next_page = "page2", label = "Next Page")
-#'   )
-#'   server <- function(input, output, session) {
-#'     observeEvent(input$next_page, {
-#'       # Navigate to the next page
-#'       shinyjs::hide("page1")
-#'       shinyjs::show("page2")
-#'     })
-#'   }
-#'   shinyApp(ui, server)
-#' }
+#' # Examples here
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {

@@ -86,3 +86,20 @@ make_ts_name <- function(type, id) {
     "Please cite our package in your publications, see:\ncitation(\"surveydown\")"
   )
 }
+
+# Custom alternative to jsonlite::toJSON()
+vector_to_json_array <- function(vec) {
+  if (length(vec) == 0) return("[]")
+
+  # Ensure all elements are properly quoted
+  quoted_elements <- sapply(vec, function(x) {
+    if (is.character(x)) {
+      sprintf('"%s"', gsub('"', '\\"', x))  # Escape any quotes within strings
+    } else {
+      as.character(x)
+    }
+  })
+
+  # Join elements and wrap in brackets
+  sprintf("[%s]", paste(quoted_elements, collapse = ","))
+}

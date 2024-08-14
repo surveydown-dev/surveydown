@@ -5,6 +5,7 @@
 #' updates.
 #'
 #' @param input The Shiny input object.
+#' @param output The Shiny output object.
 #' @param session The Shiny session object.
 #' @param config A list containing configuration settings for the application. Expected
 #'        elements include `page_structure`, `page_ids`, `question_ids`, `show_if`, `skip_if`,
@@ -22,28 +23,13 @@
 #'   - Performs database operations to store responses, either to a specified database or a local CSV file if in preview mode.
 #'
 #' @examples
-#' \dontrun{
-#'   server <- function(input, output, session) {
-#'     config <- list(
-#'       page_structure = list(),
-#'       page_ids = c("page1", "page2"),
-#'       question_ids = c("q1", "q2"),
-#'       show_if = NULL,
-#'       skip_if = NULL,
-#'       skip_if_custom = NULL,
-#'       show_if_custom = NULL,
-#'       start_page = "page1"
-#'     )
-#'     sd_server(input, session, config)
-#'   }
-#'   shinyApp(ui = ui, server = server)
-#' }
-#'
+#' # Add examples here
 #' @export
 
-# Server Function ----
+sd_server <- function(input, output, session, config, db = NULL) {
 
-sd_server <- function(input, session, config, db = NULL) {
+    # Create a local session_id variable for Data Operations use
+    session_id <- session$token
 
     # Create local objects from config file
     page_structure <- config$page_structure
@@ -57,10 +43,16 @@ sd_server <- function(input, session, config, db = NULL) {
     start_page     <- config$start_page
     question_required <- config$question_required
 
-    # Create a local session_id variable for Data Operations use
-    session_id <- session$token
+    # Show asteriks for required questions
+    session$onFlush(function() {
+        shinyjs::runjs(sprintf(
+            "console.log('Shiny initialized'); window.initializeRequiredQuestions(%s);",
+            # jsonlite::toJSON(question_required) # Requires dependency
+            vector_to_json_array(question_required)
+        ))
+    }, once = TRUE)
 
-    # Progress Tracking ----
+    # Progress Bar Tracking ----
 
     # Initialize object for storing timestamps
     timestamps <- shiny::reactiveValues(data = initialize_timestamps(page_ids, question_ids))
@@ -299,12 +291,12 @@ handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next
 }
 
 # Answering progress of required questions
-check_all_required <- function(questions, question_required, input, show_if) {
+check_all_required <- function(questions, questions_required, input, show_if) {
     all(vapply(questions, function(q) {
         tryCatch({
-            if (!question_required[[q]]) return(TRUE)
+            if (!(q %in% questions_required)) return(TRUE)
             if (!is_question_visible(q, show_if, input)) return(TRUE)
-            check_answer(q, question_required, input)
+            check_answer(q, input)
         }, error = function(e) {
             message("Error checking question ", q, ": ", e$message)
             return(FALSE)
@@ -312,17 +304,13 @@ check_all_required <- function(questions, question_required, input, show_if) {
     }, logical(1)))
 }
 
-check_answer <- function(q, question_required, input) {
-    if (!question_required[[q]]) return(TRUE)
-
+check_answer <- function(q, input) {
     answer <- input[[q]]
     if (is.null(answer)) return(FALSE)
-
     if (is.character(answer)) return(any(nzchar(answer)))
     if (is.numeric(answer)) return(any(!is.na(answer)))
     if (inherits(answer, "Date")) return(any(!is.na(answer)))
     if (is.list(answer)) return(any(!sapply(answer, is.null)))
-
     return(TRUE)  # Default to true for unknown types
 }
 

@@ -7,6 +7,9 @@
 #' @param skip_if_custom A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param show_if A list of conditions under which certain pages should be shown. Defaults to NULL.
 #' @param show_if_custom A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.
+#' @param required_questions Vector of character strings. The IDs of questions that must
+#' be answered before the respondent can continue in the survey or survey can be
+#' submitted. Defaults to NULL.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
@@ -35,25 +38,28 @@
 #'
 #' @export
 sd_config <- function(
-        skip_if        = NULL,
-        skip_if_custom = NULL,
-        show_if        = NULL,
-        show_if_custom = NULL,
-        start_page     = NULL,
-        show_all_pages = FALSE,
-        admin_page     = FALSE
+        skip_if            = NULL,
+        skip_if_custom     = NULL,
+        show_if            = NULL,
+        show_if_custom     = NULL,
+        required_questions = NULL,
+        start_page         = NULL,
+        show_all_pages     = FALSE,
+        admin_page         = FALSE
 ) {
 
     # Get survey metadata
-    page_structure <- get_page_structure()
+    page_structure     <- get_page_structure()
     question_structure <- get_question_structure()
+    page_ids           <- names(page_structure)
+    question_ids       <- names(question_structure)
     config <- list(
         page_structure     = page_structure,
         question_structure = question_structure,
-        page_ids           = names(page_structure),
-        question_ids       = names(question_structure),
+        page_ids           = page_ids,
+        question_ids       = question_ids,
         question_values    = unname(unlist(lapply(question_structure, `[[`, "options"))),
-        question_required  = sapply(question_structure, `[[`, "required")
+        question_required  = required_questions
     )
 
     # Check skip_if and show_if inputs
@@ -61,7 +67,7 @@ sd_config <- function(
 
     # Check that start_page (if used) points to an actual page
     if (!is.null(start_page)) {
-        if (! start_page %in% config$page_ids) {
+        if (! start_page %in% page_ids) {
             stop(
                 "The specified start_page does not exist - check that you have ",
                 "not mis-spelled the id"
@@ -70,7 +76,7 @@ sd_config <- function(
     }
 
     if (show_all_pages) {
-        for (page in config$page_ids) {
+        for (page in page_ids) {
             shinyjs::show(page)
         }
     }
@@ -159,13 +165,9 @@ get_question_structure <- function() {
             rvest::html_attr(opt, "value")
         })
 
-        # Get the required status
-        is_required <- rvest::html_attr(question_node, "data-required")
-
         # Store the options and required status for this question
         question_structure[[question_id]] <- list(
-            options = options,
-            required = as.logical(is_required)
+            options = options
         )
     }
 
