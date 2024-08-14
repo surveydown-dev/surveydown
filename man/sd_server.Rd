@@ -4,10 +4,12 @@
 \alias{sd_server}
 \title{Server Logic for a surveydown survey}
 \usage{
-sd_server(input, session, config, db = NULL)
+sd_server(input, output, session, config, db = NULL)
 }
 \arguments{
 \item{input}{The Shiny input object.}
+
+\item{output}{The Shiny output object.}
 
 \item{session}{The Shiny session object.}
 
@@ -36,21 +38,5 @@ The function performs the following tasks:
 }
 }
 \examples{
-\dontrun{
-  server <- function(input, output, session) {
-    config <- list(
-      page_structure = list(),
-      page_ids = c("page1", "page2"),
-      question_ids = c("q1", "q2"),
-      show_if = NULL,
-      skip_if = NULL,
-      skip_if_custom = NULL,
-      show_if_custom = NULL,
-      start_page = "page1"
-    )
-    sd_server(input, session, config)
-  }
-  shinyApp(ui = ui, server = server)
-}
-
+# Add examples here
 }

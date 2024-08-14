@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+- Required questions are now moved to `sd_config()` as a separate `required_questions` argument, instead of being defined in `sd_question()`.
+- Two new functions for supporting reactive questions: `sd_question_reactive()` and `sd_reactive_output()`.
+
 # surveydown 0.0.8
 
 - `sd_database()` function added with `pause` argument default to `FALSE`. If `pause = FALSE`, database will be properly connected; if `pause = TRUE`, a local CSV will be generated and survey results will be stored there.

@@ -9,6 +9,7 @@ sd_config(
   skip_if_custom = NULL,
   show_if = NULL,
   show_if_custom = NULL,
+  required_questions = NULL,
   start_page = NULL,
   show_all_pages = FALSE,
   admin_page = FALSE
@@ -22,6 +23,10 @@ sd_config(
 \item{show_if}{A list of conditions under which certain pages should be shown. Defaults to NULL.}
 
 \item{show_if_custom}{A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.}
+
+\item{required_questions}{Vector of character strings. The IDs of questions that must
+be answered before the respondent can continue in the survey or survey can be
+submitted. Defaults to NULL.}
 
 \item{start_page}{Character string. The ID of the page to start on. Defaults to NULL.}
 

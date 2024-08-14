@@ -22,18 +22,6 @@ The function generates a Shiny action button that, when clicked, sets the input 
 to the specified next page ID, facilitating page navigation within the Shiny application.
 }
 \examples{
-\dontrun{
-  ui <- fluidPage(
-    sd_next(next_page = "page2", label = "Next Page")
-  )
-  server <- function(input, output, session) {
-    observeEvent(input$next_page, {
-      # Navigate to the next page
-      shinyjs::hide("page1")
-      shinyjs::show("page2")
-    })
-  }
-  shinyApp(ui, server)
-}
+# Examples here
 
 }

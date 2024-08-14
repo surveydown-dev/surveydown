@@ -21,7 +21,6 @@ sd_question(
   force_edges = TRUE,
   option = NULL,
   placeholder = NULL,
-  required = FALSE,
   resize = NULL
 )
 }
@@ -57,8 +56,6 @@ sd_question(
 \item{option}{List. Options for the select, radio, checkbox, and slider inputs.}
 
 \item{placeholder}{Character string. Placeholder text for text and textarea inputs.}
-
-\item{required}{Logical. Whether the input is required. Defaults to FALSE.}
 
 \item{resize}{Character string. Resize option for textarea input. Defaults to NULL.}
 }
