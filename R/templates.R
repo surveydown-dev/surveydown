@@ -8,16 +8,23 @@
 #' @param path A character string specifying the directory in which to create
 #' the survey template. Defaults to the current working directory.
 #' @param template A character string specifying the survey template to use.
-#' Defaults to `"simple"`.
+#' Defaults to `"simple"`. Currently, only the "simple" template is available.
 #'
-#' @return A message indicating the successful creation of the survey template.
+#' @return Invisibly returns TRUE if the survey template was successfully created.
 #' @export
+#'
+#' @details
+#' This function downloads the latest version of the surveydown extension from GitHub,
+#' and uses it to create a new survey project. It copies all necessary files and
+#' directories to the specified path, excluding some files like README.md and .gitignore.
 #'
 #' @examples
 #' \dontrun{
 #' sd_create_survey()
-#' sd_create_survey(path = "path/to/package", template = "simple")
+#' sd_create_survey(path = "path/to/survey", template = "simple")
 #' }
+#'
+#' @importFrom usethis ui_yeah ui_done
 sd_create_survey <- function(path = getwd(), template = "simple") {
     using_current_dir <- path == getwd()
     if (using_current_dir && !usethis::ui_yeah(paste("Do you want to use the current working directory (", path, ") as the path?"))) {
@@ -79,14 +86,21 @@ sd_create_survey <- function(path = getwd(), template = "simple") {
 #' @param path A character string specifying the directory in which to update
 #' or create the extension. Defaults to the current working directory.
 #'
-#' @return A message indicating the successful update of the extension.
+#' @return Invisibly returns TRUE if the extension was successfully updated.
 #' @export
+#'
+#' @details
+#' This function downloads the latest version of the surveydown extension from GitHub,
+#' and updates the local copy in the specified path. If the extension directory
+#' doesn't exist, it will be created.
 #'
 #' @examples
 #' \dontrun{
 #' sd_update_extension()
-#' sd_update_extension(path = "path/to/project")
+#' sd_update_extension(path = "path/to/survey")
 #' }
+#'
+#' @importFrom usethis ui_done
 sd_update_extension <- function(path = getwd()) {
     temp_dir <- tempfile()
     dir.create(temp_dir)
@@ -116,6 +130,8 @@ sd_update_extension <- function(path = getwd()) {
 #'
 #' @return A character string with the path to the unzipped directory.
 #' @keywords internal
+#'
+#' @importFrom utils download.file unzip
 download_extension <- function(temp_dir) {
     repo_url <- "https://github.com/jhelvy/surveydown-ext/archive/refs/heads/main.zip"
     temp_file <- tempfile(fileext = ".zip")

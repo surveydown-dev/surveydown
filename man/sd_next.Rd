@@ -15,25 +15,14 @@ sd_next(next_page = NULL, label = "Next")
 A Shiny action button UI element.
 }
 \description{
-This function creates a 'Next' button for navigating to the specified next page in a surveydown survey.
+This function creates a 'Next' button for navigating to the specified next page in a Surveydown survey.
 }
 \details{
 The function generates a Shiny action button that, when clicked, sets the input value
 to the specified next page ID, facilitating page navigation within the Shiny application.
+The button is styled to appear centered on the page.
 }
 \examples{
-\dontrun{
-  ui <- fluidPage(
-    sd_next(next_page = "page2", label = "Next Page")
-  )
-  server <- function(input, output, session) {
-    observeEvent(input$next_page, {
-      # Navigate to the next page
-      shinyjs::hide("page1")
-      shinyjs::show("page2")
-    })
-  }
-  shinyApp(ui, server)
-}
+sd_next("page2", "Continue to Next Section")
 
 }

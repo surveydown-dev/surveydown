@@ -21,12 +21,11 @@ sd_question(
   force_edges = TRUE,
   option = NULL,
   placeholder = NULL,
-  required = FALSE,
   resize = NULL
 )
 }
 \arguments{
-\item{type}{Specifies the type of question. Possible values are "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea", "numeric", "slider", "date", and "daterange". See "Details" section for more about each type.}
+\item{type}{Specifies the type of question. Possible values are "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea", "numeric", "slider", "date", and "daterange".}
 
 \item{id}{A unique identifier for the question, which will be used as the variable name in the resulting survey data.}
 
@@ -58,19 +57,32 @@ sd_question(
 
 \item{placeholder}{Character string. Placeholder text for text and textarea inputs.}
 
-\item{required}{Logical. Whether the input is required. Defaults to FALSE.}
-
 \item{resize}{Character string. Resize option for textarea input. Defaults to NULL.}
 }
 \value{
 A Shiny UI element wrapped in a div with a custom data attribute for question ID.
 }
 \description{
-This function creates various types of survey questions.
+This function creates various types of survey questions for use in a Surveydown survey.
 }
 \details{
-Insert any detailed information here, such as more details on the types of questions
+The function supports various question types:
+\itemize{
+\item "select": A dropdown selection
+\item "mc": Multiple choice (single selection)
+\item "mc_multiple": Multiple choice (multiple selections allowed)
+\item "mc_buttons": Multiple choice with button-style options (single selection)
+\item "mc_multiple_buttons": Multiple choice with button-style options (multiple selections allowed)
+\item "text": Single-line text input
+\item "textarea": Multi-line text input
+\item "numeric": Numeric input
+\item "slider": Slider input
+\item "date": Date input
+\item "daterange": Date range input
+}
 }
 \examples{
-# Insert examples here
+sd_question("text", "name", "What is your name?")
+sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
+
 }

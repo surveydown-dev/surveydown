@@ -7,6 +7,11 @@
 #' @param skip_if_custom A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param show_if A list of conditions under which certain pages should be shown. Defaults to NULL.
 #' @param show_if_custom A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.
+#' @param required_questions Vector of character strings. The IDs of questions that must
+#' be answered before the respondent can continue in the survey or survey can be
+#' submitted. Defaults to NULL.
+#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required.
+#' This overrides the `required_questions` parameter. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
@@ -16,6 +21,9 @@
 #'   these settings in a configuration list. If `admin_page` is set to TRUE, an admin page will be
 #'   included in the survey. This page allows viewing and downloading of survey data upon entering
 #'   the correct survey password (set using `sd_set_password()`).
+#'
+#'   If `all_questions_required` is set to TRUE, it will override the `required_questions` parameter
+#'   and set all questions in the survey as required.
 #'
 #' @return A list containing the configuration settings for the survey, including page and question
 #'   structures, conditional display settings, navigation options, and admin page settings.
@@ -27,6 +35,8 @@
 #'     skip_if_custom = NULL,
 #'     show_if        = list(),
 #'     show_if_custom = NULL,
+#'     required_questions = c("q1", "q2"),
+#'     all_questions_required = FALSE,
 #'     start_page     = "page1",
 #'     show_all_pages = FALSE,
 #'     admin_page     = TRUE
@@ -35,25 +45,29 @@
 #'
 #' @export
 sd_config <- function(
-        skip_if        = NULL,
-        skip_if_custom = NULL,
-        show_if        = NULL,
-        show_if_custom = NULL,
-        start_page     = NULL,
-        show_all_pages = FALSE,
-        admin_page     = FALSE
+        skip_if            = NULL,
+        skip_if_custom     = NULL,
+        show_if            = NULL,
+        show_if_custom     = NULL,
+        required_questions = NULL,
+        all_questions_required = FALSE,
+        start_page         = NULL,
+        show_all_pages     = FALSE,
+        admin_page         = FALSE
 ) {
 
     # Get survey metadata
-    page_structure <- get_page_structure()
+    page_structure     <- get_page_structure()
     question_structure <- get_question_structure()
+    page_ids           <- names(page_structure)
+    question_ids       <- names(question_structure)
     config <- list(
         page_structure     = page_structure,
         question_structure = question_structure,
-        page_ids           = names(page_structure),
-        question_ids       = names(question_structure),
+        page_ids           = page_ids,
+        question_ids       = question_ids,
         question_values    = unname(unlist(lapply(question_structure, `[[`, "options"))),
-        question_required  = sapply(question_structure, `[[`, "required")
+        question_required  = if (all_questions_required) question_ids else required_questions
     )
 
     # Check skip_if and show_if inputs
@@ -61,7 +75,7 @@ sd_config <- function(
 
     # Check that start_page (if used) points to an actual page
     if (!is.null(start_page)) {
-        if (! start_page %in% config$page_ids) {
+        if (! start_page %in% page_ids) {
             stop(
                 "The specified start_page does not exist - check that you have ",
                 "not mis-spelled the id"
@@ -70,7 +84,7 @@ sd_config <- function(
     }
 
     if (show_all_pages) {
-        for (page in config$page_ids) {
+        for (page in page_ids) {
             shinyjs::show(page)
         }
     }
@@ -93,8 +107,10 @@ sd_config <- function(
     return(config)
 }
 
-## Page structure ----
-
+#' Get page structure from HTML
+#'
+#' @return A list where each element represents a page and contains the question IDs on that page
+#' @keywords internal
 get_page_structure <- function() {
 
     # Get all page nodes
@@ -121,6 +137,10 @@ get_page_structure <- function() {
     return(page_structure)
 }
 
+#' Get page nodes from HTML
+#'
+#' @return A list of page nodes from the HTML document
+#' @keywords internal
 get_page_nodes <- function() {
 
     # Get the list of .qmd files in the current working directory
@@ -141,6 +161,10 @@ get_page_nodes <- function() {
 
 }
 
+#' Get question structure from HTML
+#'
+#' @return A list where each element represents a question and contains its options
+#' @keywords internal
 get_question_structure <- function() {
     question_nodes <- get_question_nodes()
 
@@ -159,19 +183,19 @@ get_question_structure <- function() {
             rvest::html_attr(opt, "value")
         })
 
-        # Get the required status
-        is_required <- rvest::html_attr(question_node, "data-required")
-
         # Store the options and required status for this question
         question_structure[[question_id]] <- list(
-            options = options,
-            required = as.logical(is_required)
+            options = options
         )
     }
 
     return(question_structure)
 }
 
+#' Get question nodes from HTML
+#'
+#' @return A list of question nodes from the HTML document
+#' @keywords internal
 get_question_nodes <- function() {
 
     # Get the list of .qmd files in the current working directory
@@ -192,8 +216,18 @@ get_question_nodes <- function() {
     stop("Error: {surveydown} requires that only one .qmd file in the directory.")
 }
 
-## Config checks ----
-
+#' Check skip and show conditions
+#'
+#' This function validates the skip_if and show_if conditions provided in the configuration.
+#'
+#' @param config The survey configuration list
+#' @param skip_if Data frame of skip conditions
+#' @param skip_if_custom Custom skip function
+#' @param show_if Data frame of show conditions
+#' @param show_if_custom Custom show function
+#'
+#' @return TRUE if all checks pass, otherwise stops with an error message
+#' @keywords internal
 check_skip_show <- function(config, skip_if, skip_if_custom,
                             show_if, show_if_custom) {
     required_names <- c("question_id", "question_value", "target")

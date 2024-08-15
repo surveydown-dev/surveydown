@@ -11,15 +11,21 @@ sd_update_extension(path = getwd())
 or create the extension. Defaults to the current working directory.}
 }
 \value{
-A message indicating the successful update of the extension.
+Invisibly returns TRUE if the extension was successfully updated.
 }
 \description{
 This function updates or creates the _extensions/jhelvy/surveydown folder
 with the latest contents from the surveydown-ext repository.
 }
+\details{
+This function downloads the latest version of the surveydown extension from GitHub,
+and updates the local copy in the specified path. If the extension directory
+doesn't exist, it will be created.
+}
 \examples{
 \dontrun{
 sd_update_extension()
-sd_update_extension(path = "path/to/project")
+sd_update_extension(path = "path/to/survey")
 }
+
 }

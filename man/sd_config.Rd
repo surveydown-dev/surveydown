@@ -9,6 +9,8 @@ sd_config(
   skip_if_custom = NULL,
   show_if = NULL,
   show_if_custom = NULL,
+  required_questions = NULL,
+  all_questions_required = FALSE,
   start_page = NULL,
   show_all_pages = FALSE,
   admin_page = FALSE
@@ -22,6 +24,13 @@ sd_config(
 \item{show_if}{A list of conditions under which certain pages should be shown. Defaults to NULL.}
 
 \item{show_if_custom}{A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.}
+
+\item{required_questions}{Vector of character strings. The IDs of questions that must
+be answered before the respondent can continue in the survey or survey can be
+submitted. Defaults to NULL.}
+
+\item{all_questions_required}{Logical. If TRUE, all questions in the survey will be required.
+This overrides the \code{required_questions} parameter. Defaults to FALSE.}
 
 \item{start_page}{Character string. The ID of the page to start on. Defaults to NULL.}
 
@@ -43,6 +52,9 @@ display settings, and ensures that the specified start page (if any) exists. It 
 these settings in a configuration list. If \code{admin_page} is set to TRUE, an admin page will be
 included in the survey. This page allows viewing and downloading of survey data upon entering
 the correct survey password (set using \code{sd_set_password()}).
+
+If \code{all_questions_required} is set to TRUE, it will override the \code{required_questions} parameter
+and set all questions in the survey as required.
 }
 \examples{
 \dontrun{
@@ -51,6 +63,8 @@ the correct survey password (set using \code{sd_set_password()}).
     skip_if_custom = NULL,
     show_if        = list(),
     show_if_custom = NULL,
+    required_questions = c("q1", "q2"),
+    all_questions_required = FALSE,
     start_page     = "page1",
     show_all_pages = FALSE,
     admin_page     = TRUE
