@@ -13,13 +13,13 @@ sd_server(input, output, session, config, db = NULL)
 
 \item{session}{The Shiny session object.}
 
-\item{config}{A list containing configuration settings for the application. Expected
-elements include \code{page_structure}, \code{page_ids}, \code{question_ids}, \code{show_if}, \code{skip_if},
-\code{skip_if_custom}, \code{show_if_custom}, \code{preview}, and \code{start_page}.}
+\item{config}{A list containing configuration settings for the application.}
 
 \item{db}{A list containing database connection information created using
-sd_database() function. Expected elements include \code{db} and \code{table_name}.
-Defaults to \code{NULL}.}
+sd_database() function. Defaults to \code{NULL}.}
+}
+\value{
+This function does not return a value; it sets up the server-side logic for the Shiny application.
 }
 \description{
 This function defines the server-side logic for a Shiny application, handling various
@@ -27,16 +27,38 @@ operations such as conditional display, progress tracking, page navigation, and 
 updates.
 }
 \details{
+The config list should include the following elements:
+\itemize{
+\item page_structure: A list defining the structure of survey pages.
+\item page_ids: A vector of page identifiers.
+\item question_ids: A vector of question identifiers.
+\item show_if: A data frame defining conditions for showing questions.
+\item skip_if: A data frame defining conditions for skipping pages.
+\item skip_if_custom: A list of custom skip conditions.
+\item show_if_custom: A list of custom show conditions.
+\item start_page: The identifier of the starting page.
+\item question_required: A vector of required question identifiers.
+\item all_questions_required: A logical indicating if all questions are required.
+}
+
 The function performs the following tasks:
 \itemize{
-\item Initializes local variables based on the provided configuration.
-\item Sets up reactive values to track timestamps and progress.
-\item Implements conditional display logic for UI elements based on \code{show_if} and \code{show_if_custom} conditions.
-\item Tracks the progress of answered questions and updates the progress bar accordingly.
-\item Handles page navigation within the Shiny application, including basic and custom skip logic.
-\item Performs database operations to store responses, either to a specified database or a local CSV file if in preview mode.
+\item Initializes variables and reactive values.
+\item Implements conditional display logic.
+\item Tracks answered questions and updates the progress bar.
+\item Handles page navigation and skip logic.
+\item Manages required questions.
+\item Performs database operations or saves to a local CSV file in preview mode.
 }
 }
 \examples{
-# Add examples here
+\dontrun{
+  shinyApp(
+    ui = sd_ui(),
+    server = function(input, output, session) {
+      sd_server(input, output, session, config = my_config, db = my_db)
+    }
+  )
+}
+
 }

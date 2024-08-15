@@ -13,5 +13,10 @@ sd_question_reactive(...)
 A renderUI function that creates the survey question.
 }
 \description{
-This function creates various types of reactive survey questions.
+This function creates various types of reactive survey questions for use in a Surveydown survey.
+It wraps the sd_question function in a renderUI call, allowing for dynamic question generation.
+}
+\examples{
+sd_question_reactive(type = "text", id = "name", label = "What is your name?")
+
 }

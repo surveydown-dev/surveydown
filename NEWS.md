@@ -1,7 +1,12 @@
 # surveydown (development version)
 
+# surveydown 0.0.9
+
 - Required questions are now moved to `sd_config()` as a separate `required_questions` argument, instead of being defined in `sd_question()`.
 - Two new functions for supporting reactive questions: `sd_question_reactive()` and `sd_reactive_output()`.
+- `sd_store_value()` function to store variables into the database. For example, `sd_store_value(respondentID, "respID")` will store the value of `respondentID` into a column named `"respID"`. If the name is not provided, the column will be named as its original variable name, in this case, `respondentID`.
+- Enhanced robustness for progress bar. Now the progress bar will update based on user's input.
+- Updated all roxygen2 documentation texts.
 
 # surveydown 0.0.8
 

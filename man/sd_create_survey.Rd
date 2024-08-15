@@ -11,10 +11,10 @@ sd_create_survey(path = getwd(), template = "simple")
 the survey template. Defaults to the current working directory.}
 
 \item{template}{A character string specifying the survey template to use.
-Defaults to \code{"simple"}.}
+Defaults to \code{"simple"}. Currently, only the "simple" template is available.}
 }
 \value{
-A message indicating the successful creation of the survey template.
+Invisibly returns TRUE if the survey template was successfully created.
 }
 \description{
 This function creates a survey template in a specified directory. It can use
@@ -22,9 +22,15 @@ different templates, with \code{"simple"} being the default. The function prompt
 the user to confirm the use of the current working directory if no path is
 specified.
 }
+\details{
+This function downloads the latest version of the surveydown extension from GitHub,
+and uses it to create a new survey project. It copies all necessary files and
+directories to the specified path, excluding some files like README.md and .gitignore.
+}
 \examples{
 \dontrun{
 sd_create_survey()
-sd_create_survey(path = "path/to/package", template = "simple")
+sd_create_survey(path = "path/to/survey", template = "simple")
 }
+
 }

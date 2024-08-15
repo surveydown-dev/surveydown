@@ -119,6 +119,7 @@ sd_database <- function(
 #' @param session_id String representing the session ID
 #' @param custom_vals List of custom values
 #' @return A data frame with transformed survey data
+#' @importFrom stats setNames
 #' @keywords internal
 transform_data <- function(question_vals, timestamp_vals, session_id, custom_vals) {
     # Replace NULLs with empty string, and

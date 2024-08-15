@@ -35,10 +35,13 @@ reference:
   - sd_setup
   - sd_create_survey
 - title: "Survey Components"
-  desc: "Functions for defining survey questions and navigation"
+  desc: "Functions for defining survey questions, navigation, and storing values"
   contents:
   - sd_question
+  - sd_question_reactive
+  - sd_reactive_output
   - sd_next
+  - sd_store_value
 - title: "Configuration and Server"
   desc: "Functions for configuring surveys and setting up the server"
   contents:

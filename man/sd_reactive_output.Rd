@@ -13,5 +13,10 @@ sd_reactive_output(id)
 A Shiny UI element that serves as a placeholder for the reactive question.
 }
 \description{
-This function creates a placeholder div for a reactive survey question.
+This function creates a placeholder div for a reactive survey question in a Surveydown survey.
+It's used in conjunction with sd_question_reactive to allow for dynamic question rendering.
+}
+\examples{
+sd_reactive_output("name")
+
 }
