@@ -118,27 +118,27 @@ sd_database <- function(
 #' @param timestamp_vals List of timestamp values
 #' @param session_id String representing the session ID
 #' @param custom_vals List of custom values
-#' @return A data frame with transformed survey data
+#' @return A data frame with transformed survey data, including a UTC timestamp
+#' @details This function transforms the input data into a format suitable for database storage.
+#'   It adds a UTC timestamp, formats question values, handles custom values, and combines all data
+#'   into a single data frame. The UTC timestamp is formatted as "YYYY-MM-DD HH:MM:SS UTC".
 #' @importFrom stats setNames
 #' @keywords internal
 transform_data <- function(question_vals, timestamp_vals, session_id, custom_vals) {
-    # Replace NULLs with empty string, and
-    # convert vectors to comma-separated strings
+    # Create current timestamp in UTC with the desired format
+    current_timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
+
     for (i in seq_len(length(question_vals))) {
-        # Check for NULL and replace with an empty string
         val <- question_vals[[i]]
         if (is.null(val)) {
             question_vals[[i]] <- ""
         } else if (length(val) > 1) {
-            # Convert vectors to comma-separated strings
             question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
         }
     }
 
-    # Convert question_vals to a data frame
     responses <- as.data.frame(question_vals)
 
-    # Process custom values
     custom_df <- data.frame(matrix(ncol = length(custom_vals), nrow = 1))
     colnames(custom_df) <- names(custom_vals)
     for (name in names(custom_vals)) {
@@ -147,6 +147,7 @@ transform_data <- function(question_vals, timestamp_vals, session_id, custom_val
 
     # Combine all data
     data <- cbind(
+        timestamp = current_timestamp,
         session_id = session_id,
         custom_df,
         responses,
@@ -201,15 +202,49 @@ create_table <- function(db, table_name, df) {
     return(message("Database should appear on your supabase Account (Can take up to a minute.)"))
 }
 
-#' Upload data to the database
+#' Upload survey data to the database
 #'
-#' This function handles the process of uploading survey data to the database,
-#' including creating the table if it doesn't exist and updating existing rows.
+#' @description
+#' This function handles the process of uploading survey data to the database.
+#' It creates the table if it doesn't exist, adds new columns if necessary,
+#' ensures correct column order, and updates or inserts rows based on the session ID.
 #'
-#' @param df Data frame of survey data to upload
-#' @param db Database connection object
-#' @param table_name String name of the table to upload to
-#' @return None (called for side effects)
+#' @param df A data frame containing the survey data to upload.
+#' @param db A database connection object created by \link[DBI]{dbConnect}.
+#' @param table_name A string specifying the name of the table to upload to.
+#'
+#' @details
+#' The function performs the following steps:
+#' \itemize{
+#'   \item Checks if the specified table exists in the database.
+#'   \item Creates the table if it doesn't exist.
+#'   \item Adds any new columns present in the data frame but not in the existing table.
+#'   \item Ensures the correct column order with 'timestamp' and 'session_id' at the beginning.
+#'   \item Identifies rows with matching session IDs.
+#'   \item Deletes existing rows with matching session IDs.
+#'   \item Inserts new or updated rows into the table.
+#' }
+#'
+#' @note
+#' This function assumes that the data frame \code{df} contains columns named 'timestamp' and 'session_id'.
+#' It uses the 'session_id' column to identify which rows to update in the database.
+#'
+#' @return
+#' This function does not return a value. It is called for its side effects
+#' of updating the database.
+#'
+#' @seealso
+#' \link[DBI]{dbConnect}, \link[DBI]{dbWriteTable}
+#'
+#' @examples
+#' \dontrun{
+#' # Assuming 'db_connection' is an active database connection
+#' # and 'survey_data' is a data frame with survey responses
+#' database_uploading(survey_data, db_connection$db, db_connection$table_name)
+#' }
+#'
+#' @importFrom DBI dbReadTable dbListFields dbExecute dbWriteTable
+#'
 #' @keywords internal
 database_uploading <- function(df, db, table_name) {
     if(is.null(db)) {
@@ -219,11 +254,10 @@ database_uploading <- function(df, db, table_name) {
     # Establish the database connection
     data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
 
-    #This actually checks if its empty and will create a brand new table name of your choice
     if (is.null(data)) {
         create_table(db, table_name, df)
     } else {
-        # Check for new columns
+        # Check for new columns and ensure correct order
         existing_cols <- DBI::dbListFields(db, table_name)
         new_cols <- setdiff(names(df), existing_cols)
 
@@ -234,18 +268,22 @@ database_uploading <- function(df, db, table_name) {
             query <- paste0('ALTER TABLE "', table_name, '" ADD COLUMN "', col, '" ', sql_type, ';')
             DBI::dbExecute(db, query)
         }
+
+        # Ensure correct column order
+        correct_order <- c("timestamp", "session_id", setdiff(names(df), c("timestamp", "session_id")))
+        df <- df[, correct_order]
     }
 
-    #Table Editing Section
-    #Checking For Matching Session_Id's
+    # Rest of the function remains the same
     matching_rows <- df[df$session_id %in% data$session_id, ]
 
     if (nrow(matching_rows) > 0) {
-        # Delete existing rows in the database table with matching session_id values from df
-        DBI::dbExecute(db, paste0('DELETE FROM \"', table_name, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
-        # Append the new non-matching rows to the database table
+        delete_query <- paste0('DELETE FROM "', table_name, '" WHERE session_id = $1')
+        for (session_id in matching_rows$session_id) {
+            DBI::dbExecute(db, delete_query, params = list(session_id))
+        }
         DBI::dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
-    } else { #If there are no matching rows we just append the new row.
+    } else {
         DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
     }
 }

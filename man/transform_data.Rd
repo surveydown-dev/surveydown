@@ -16,9 +16,14 @@ transform_data(question_vals, timestamp_vals, session_id, custom_vals)
 \item{custom_vals}{List of custom values}
 }
 \value{
-A data frame with transformed survey data
+A data frame with transformed survey data, including a UTC timestamp
 }
 \description{
 Transform survey data for database storage
+}
+\details{
+This function transforms the input data into a format suitable for database storage.
+It adds a UTC timestamp, formats question values, handles custom values, and combines all data
+into a single data frame. The UTC timestamp is formatted as "YYYY-MM-DD HH:MM:SS UTC".
 }
 \keyword{internal}
