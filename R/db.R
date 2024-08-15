@@ -50,7 +50,6 @@
 #' }
 #'
 #' @export
-
 sd_database <- function(
         host       = NULL,
         db_name    = NULL,
@@ -113,8 +112,14 @@ sd_database <- function(
         })
 }
 
-## Updating Database ----
-
+#' Transform survey data for database storage
+#'
+#' @param question_vals List of question values
+#' @param timestamp_vals List of timestamp values
+#' @param session_id String representing the session ID
+#' @param custom_vals List of custom values
+#' @return A data frame with transformed survey data
+#' @keywords internal
 transform_data <- function(question_vals, timestamp_vals, session_id, custom_vals) {
     # Replace NULLs with empty string, and
     # convert vectors to comma-separated strings
@@ -150,11 +155,11 @@ transform_data <- function(question_vals, timestamp_vals, session_id, custom_val
     return(data)
 }
 
-### Database Uploading ----
-
-# Database Creation Section
-
-#Needed to change from R type to SQL type
+#' Convert R data type to SQL data type
+#'
+#' @param r_type String representing R data type
+#' @return String representing corresponding SQL data type
+#' @keywords internal
 r_to_sql_type <- function(r_type) {
     switch(toupper(r_type),
            CHARACTER = "TEXT",
@@ -165,6 +170,13 @@ r_to_sql_type <- function(r_type) {
            "TEXT")
 }
 
+#' Create a new table in the database
+#'
+#' @param db Database connection object
+#' @param table_name String name of the table to create
+#' @param df Data frame used to determine table structure
+#' @return None (called for side effects)
+#' @keywords internal
 create_table <- function(db, table_name, df) {
     # Loop through the column names
     col_def <- ""
@@ -188,6 +200,16 @@ create_table <- function(db, table_name, df) {
     return(message("Database should appear on your supabase Account (Can take up to a minute.)"))
 }
 
+#' Upload data to the database
+#'
+#' This function handles the process of uploading survey data to the database,
+#' including creating the table if it doesn't exist and updating existing rows.
+#'
+#' @param df Data frame of survey data to upload
+#' @param db Database connection object
+#' @param table_name String name of the table to upload to
+#' @return None (called for side effects)
+#' @keywords internal
 database_uploading <- function(df, db, table_name) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
@@ -246,7 +268,6 @@ database_uploading <- function(df, db, table_name) {
 #' }
 #'
 #' @export
-
 sd_set_password <- function(password) {
     # Define the path to .Renviron file
     renviron_path <- file.path(getwd(), ".Renviron")

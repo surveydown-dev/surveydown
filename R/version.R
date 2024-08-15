@@ -52,9 +52,12 @@ sd_update_surveydown <- function(force = FALSE) {
 #' Check Surveydown Versions
 #'
 #' This function checks if the local surveydown R package and Quarto extension
-#' are up-to-date with the latest online version.
+#' are up-to-date with the latest online version. It compares local versions
+#' with the latest versions available on GitHub and provides information about
+#' whether updates are needed.
 #'
-#' @return No return value, called for side effects (prints version information).
+#' @return No return value, called for side effects (prints version information
+#' and update status to the console).
 #' @export
 #'
 #' @examples
@@ -103,7 +106,9 @@ sd_check_versions <- function() {
 #'
 #' @param url The URL of the file containing the version information
 #' @param pattern The pattern to search for in the file (e.g., "Version: " or "version: ")
+#'
 #' @return A package_version object representing the latest version, or NULL if unable to fetch
+#'
 #' @keywords internal
 get_latest_version_from_url <- function(url, pattern) {
     tryCatch({
@@ -132,6 +137,7 @@ get_latest_version_from_url <- function(url, pattern) {
 #'
 #' @return A character string representing the extension version, or NULL if
 #' the extension is not found.
+#'
 #' @keywords internal
 get_extension_version <- function(path = getwd()) {
     ext_yaml <- file.path(path, "_extensions", "jhelvy", "surveydown", "_extension.yml")

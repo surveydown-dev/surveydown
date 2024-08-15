@@ -107,8 +107,10 @@ sd_config <- function(
     return(config)
 }
 
-## Page structure ----
-
+#' Get page structure from HTML
+#'
+#' @return A list where each element represents a page and contains the question IDs on that page
+#' @keywords internal
 get_page_structure <- function() {
 
     # Get all page nodes
@@ -135,6 +137,10 @@ get_page_structure <- function() {
     return(page_structure)
 }
 
+#' Get page nodes from HTML
+#'
+#' @return A list of page nodes from the HTML document
+#' @keywords internal
 get_page_nodes <- function() {
 
     # Get the list of .qmd files in the current working directory
@@ -155,6 +161,10 @@ get_page_nodes <- function() {
 
 }
 
+#' Get question structure from HTML
+#'
+#' @return A list where each element represents a question and contains its options
+#' @keywords internal
 get_question_structure <- function() {
     question_nodes <- get_question_nodes()
 
@@ -182,6 +192,10 @@ get_question_structure <- function() {
     return(question_structure)
 }
 
+#' Get question nodes from HTML
+#'
+#' @return A list of question nodes from the HTML document
+#' @keywords internal
 get_question_nodes <- function() {
 
     # Get the list of .qmd files in the current working directory
@@ -202,8 +216,18 @@ get_question_nodes <- function() {
     stop("Error: {surveydown} requires that only one .qmd file in the directory.")
 }
 
-## Config checks ----
-
+#' Check skip and show conditions
+#'
+#' This function validates the skip_if and show_if conditions provided in the configuration.
+#'
+#' @param config The survey configuration list
+#' @param skip_if Data frame of skip conditions
+#' @param skip_if_custom Custom skip function
+#' @param show_if Data frame of show conditions
+#' @param show_if_custom Custom show function
+#'
+#' @return TRUE if all checks pass, otherwise stops with an error message
+#' @keywords internal
 check_skip_show <- function(config, skip_if, skip_if_custom,
                             show_if, show_if_custom) {
     required_names <- c("question_id", "question_value", "target")

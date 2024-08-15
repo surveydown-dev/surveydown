@@ -4,7 +4,8 @@
 #' Store a custom value for the survey
 #'
 #' This function allows storing additional values to be included in the survey data,
-#' such as respondent IDs or other custom data.
+#' such as respondent IDs or other custom data. The values are stored in a special
+#' environment (.sd_custom_values) and will be included when the survey data is saved.
 #'
 #' @param value The value to be stored.
 #' @param name (Optional) The name for the value in the data.
@@ -37,22 +38,34 @@ sd_store_value <- function(value, name = NULL) {
 #' @param input The Shiny input object.
 #' @param output The Shiny output object.
 #' @param session The Shiny session object.
-#' @param config A list containing configuration settings for the application. Expected
-#'        elements include `page_structure`, `page_ids`, `question_ids`, `show_if`, `skip_if`,
-#'        `skip_if_custom`, `show_if_custom`, `start_page`, `question_required`, and
-#'        `all_questions_required`.
+#' @param config A list containing configuration settings for the application.
 #' @param db A list containing database connection information created using
-#'        sd_database() function. Expected elements include `db` and `table_name`.
-#'        Defaults to `NULL`.
+#'        sd_database() function. Defaults to `NULL`.
 #'
-#' @details The function performs the following tasks:
-#'   - Initializes local variables based on the provided configuration.
-#'   - Sets up reactive values to track timestamps and progress.
-#'   - Implements conditional display logic for UI elements based on `show_if` and `show_if_custom` conditions.
-#'   - Tracks the progress of answered questions and updates the progress bar accordingly.
-#'   - Handles page navigation within the Shiny application, including basic and custom skip logic.
-#'   - Manages required questions based on `question_required` or `all_questions_required` settings.
-#'   - Performs database operations to store responses, either to a specified database or a local CSV file if in preview mode.
+#' @details
+#' The config list should include the following elements:
+#' \itemize{
+#'   \item page_structure: A list defining the structure of survey pages.
+#'   \item page_ids: A vector of page identifiers.
+#'   \item question_ids: A vector of question identifiers.
+#'   \item show_if: A data frame defining conditions for showing questions.
+#'   \item skip_if: A data frame defining conditions for skipping pages.
+#'   \item skip_if_custom: A list of custom skip conditions.
+#'   \item show_if_custom: A list of custom show conditions.
+#'   \item start_page: The identifier of the starting page.
+#'   \item question_required: A vector of required question identifiers.
+#'   \item all_questions_required: A logical indicating if all questions are required.
+#' }
+#'
+#' The function performs the following tasks:
+#' \itemize{
+#'   \item Initializes variables and reactive values.
+#'   \item Implements conditional display logic.
+#'   \item Tracks answered questions and updates the progress bar.
+#'   \item Handles page navigation and skip logic.
+#'   \item Manages required questions.
+#'   \item Performs database operations or saves to a local CSV file in preview mode.
+#' }
 #'
 #' @return This function does not return a value; it sets up the server-side logic for the Shiny application.
 #'
@@ -70,7 +83,6 @@ sd_store_value <- function(value, name = NULL) {
 #' @importFrom shiny reactive reactiveVal observeEvent
 #' @importFrom shinyjs show hide runjs
 #' @importFrom readr write_csv
-
 sd_server <- function(input, output, session, config, db = NULL) {
 
     # Create a local session_id variable for Data Operations use
@@ -245,9 +257,11 @@ sd_server <- function(input, output, session, config, db = NULL) {
     })
 }
 
-# Helper Functions ----
-
-# show_if
+#' Handle basic show-if logic
+#'
+#' @param input Shiny input object
+#' @param show_if Data frame of show-if conditions
+#' @keywords internal
 handle_basic_show_if_logic <- function(input, show_if) {
     # Ensure show_if is a tibble or data frame
     if (!is.data.frame(show_if)) {
@@ -281,6 +295,11 @@ handle_basic_show_if_logic <- function(input, show_if) {
     }
 }
 
+#' Handle custom show-if logic
+#'
+#' @param input Shiny input object
+#' @param show_if_custom List of custom show-if conditions
+#' @keywords internal
 handle_custom_show_if_logic <- function(input, show_if_custom) {
     # Group show_if_custom rules by target
     show_if_custom_grouped <- split(show_if_custom, sapply(show_if_custom, function(x) x$target))
@@ -321,7 +340,14 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
     }
 }
 
-# skip_if
+#' Handle basic skip logic
+#'
+#' @param input Shiny input object
+#' @param skip_if Data frame of skip-if conditions
+#' @param current_page Current page identifier
+#' @param next_page Next page identifier
+#' @return Updated next page identifier
+#' @keywords internal
 handle_basic_skip_logic <- function(
         input, skip_if, current_page, next_page
 ) {
@@ -339,6 +365,14 @@ handle_basic_skip_logic <- function(
     return(next_page)
 }
 
+#' Handle custom skip logic
+#'
+#' @param input Shiny input object
+#' @param skip_if_custom List of custom skip-if conditions
+#' @param current_page Current page identifier
+#' @param next_page Next page identifier
+#' @return Updated next page identifier
+#' @keywords internal
 handle_custom_skip_logic <- function(
         input, skip_if_custom, current_page, next_page
 ) {
@@ -363,6 +397,15 @@ handle_custom_skip_logic <- function(
     return(next_page)
 }
 
+#' Handle overall skip logic
+#'
+#' @param input Shiny input object
+#' @param skip_if Data frame of basic skip-if conditions
+#' @param skip_if_custom List of custom skip-if conditions
+#' @param current_page Current page identifier
+#' @param next_page Next page identifier
+#' @return Updated next page identifier
+#' @keywords internal
 handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next_page) {
     if (!is.null(skip_if)) {
         next_page <- handle_basic_skip_logic(input, skip_if, current_page, next_page)
@@ -373,7 +416,14 @@ handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next
     return(next_page)
 }
 
-# Answering progress of required questions
+#' Check if all required questions are answered
+#'
+#' @param questions Vector of question identifiers
+#' @param questions_required Vector of required question identifiers
+#' @param input Shiny input object
+#' @param show_if Data frame of show-if conditions
+#' @return Logical indicating if all required questions are answered
+#' @keywords internal
 check_all_required <- function(questions, questions_required, input, show_if) {
     all(vapply(questions, function(q) {
         tryCatch({
@@ -387,6 +437,12 @@ check_all_required <- function(questions, questions_required, input, show_if) {
     }, logical(1)))
 }
 
+#' Check if a single question is answered
+#'
+#' @param q Question identifier
+#' @param input Shiny input object
+#' @return Logical indicating if the question is answered
+#' @keywords internal
 check_answer <- function(q, input) {
     answer <- input[[q]]
     if (is.null(answer)) return(FALSE)
@@ -397,7 +453,13 @@ check_answer <- function(q, input) {
     return(TRUE)  # Default to true for unknown types
 }
 
-# Check if a question is visible
+#' Check if a question is visible
+#'
+#' @param q Question identifier
+#' @param show_if Data frame of show-if conditions
+#' @param input Shiny input object
+#' @return Logical indicating if the question is visible
+#' @keywords internal
 is_question_visible <- function(q, show_if, input) {
     if (is.null(show_if) || nrow(show_if) == 0) return(TRUE)
 
