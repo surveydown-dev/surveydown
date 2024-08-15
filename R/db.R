@@ -201,15 +201,48 @@ create_table <- function(db, table_name, df) {
     return(message("Database should appear on your supabase Account (Can take up to a minute.)"))
 }
 
-#' Upload data to the database
+#' Upload survey data to the database
 #'
-#' This function handles the process of uploading survey data to the database,
-#' including creating the table if it doesn't exist and updating existing rows.
+#' @description
+#' This function handles the process of uploading survey data to the database.
+#' It creates the table if it doesn't exist, adds new columns if necessary,
+#' and updates or inserts rows based on the session ID.
 #'
-#' @param df Data frame of survey data to upload
-#' @param db Database connection object
-#' @param table_name String name of the table to upload to
-#' @return None (called for side effects)
+#' @param df A data frame containing the survey data to upload.
+#' @param db A database connection object created by \code{\link{DBI::dbConnect}}.
+#' @param table_name A string specifying the name of the table to upload to.
+#'
+#' @details
+#' The function performs the following steps:
+#' \itemize{
+#'   \item Checks if the specified table exists in the database.
+#'   \item Creates the table if it doesn't exist.
+#'   \item Adds any new columns present in the data frame but not in the existing table.
+#'   \item Identifies rows with matching session IDs.
+#'   \item Deletes existing rows with matching session IDs.
+#'   \item Inserts new or updated rows into the table.
+#' }
+#'
+#' @note
+#' This function assumes that the data frame \code{df} contains a column named 'session_id'.
+#' It uses this column to identify which rows to update in the database.
+#'
+#' @return
+#' This function does not return a value. It is called for its side effects
+#' of updating the database.
+#'
+#' @seealso
+#' \code{\link{DBI::dbConnect}}, \code{\link{DBI::dbWriteTable}}
+#'
+#' @examples
+#' \dontrun{
+#' # Assuming 'db_connection' is an active database connection
+#' # and 'survey_data' is a data frame with survey responses
+#' database_uploading(survey_data, db_connection, "survey_responses")
+#' }
+#'
+#' @importFrom DBI dbReadTable dbListFields dbExecute dbWriteTable
+#'
 #' @keywords internal
 database_uploading <- function(df, db, table_name) {
     if(is.null(db)) {
@@ -242,7 +275,10 @@ database_uploading <- function(df, db, table_name) {
 
     if (nrow(matching_rows) > 0) {
         # Delete existing rows in the database table with matching session_id values from df
-        DBI::dbExecute(db, paste0('DELETE FROM \"', table_name, '\" WHERE session_id IN (', paste(shQuote(matching_rows$session_id), collapse = ", "), ')'))
+        delete_query <- paste0('DELETE FROM "', table_name, '" WHERE session_id = $1')
+        for (session_id in matching_rows$session_id) {
+            DBI::dbExecute(db, delete_query, params = list(session_id))
+        }
         # Append the new non-matching rows to the database table
         DBI::dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
     } else { #If there are no matching rows we just append the new row.

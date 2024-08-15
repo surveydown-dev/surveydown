@@ -31,43 +31,54 @@ sd_store_value <- function(value, name = NULL) {
 
 #' Server Logic for a surveydown survey
 #'
-#' This function defines the server-side logic for a Shiny application, handling various
-#' operations such as conditional display, progress tracking, page navigation, and database
-#' updates.
+#' @description
+#' This function defines the server-side logic for a Shiny application used in surveydown.
+#' It handles various operations such as conditional display, progress tracking,
+#' page navigation, and database updates for survey responses.
 #'
 #' @param input The Shiny input object.
 #' @param output The Shiny output object.
 #' @param session The Shiny session object.
 #' @param config A list containing configuration settings for the application.
 #' @param db A list containing database connection information created using
-#'        sd_database() function. Defaults to `NULL`.
+#'        \code{\link{sd_database}} function. Defaults to \code{NULL}.
 #'
 #' @details
-#' The config list should include the following elements:
+#' The \code{config} list should include the following elements:
 #' \itemize{
-#'   \item page_structure: A list defining the structure of survey pages.
-#'   \item page_ids: A vector of page identifiers.
-#'   \item question_ids: A vector of question identifiers.
-#'   \item show_if: A data frame defining conditions for showing questions.
-#'   \item skip_if: A data frame defining conditions for skipping pages.
-#'   \item skip_if_custom: A list of custom skip conditions.
-#'   \item show_if_custom: A list of custom show conditions.
-#'   \item start_page: The identifier of the starting page.
-#'   \item question_required: A vector of required question identifiers.
-#'   \item all_questions_required: A logical indicating if all questions are required.
+#'   \item \code{page_structure}: A list defining the structure of survey pages.
+#'   \item \code{page_ids}: A vector of page identifiers.
+#'   \item \code{question_ids}: A vector of question identifiers.
+#'   \item \code{show_if}: A data frame defining conditions for showing questions.
+#'   \item \code{skip_if}: A data frame defining conditions for skipping pages.
+#'   \item \code{skip_if_custom}: A list of custom skip conditions.
+#'   \item \code{show_if_custom}: A list of custom show conditions.
+#'   \item \code{start_page}: The identifier of the starting page.
+#'   \item \code{question_required}: A vector of required question identifiers.
+#'   \item \code{all_questions_required}: A logical indicating if all questions are required.
 #' }
 #'
 #' The function performs the following tasks:
 #' \itemize{
 #'   \item Initializes variables and reactive values.
-#'   \item Implements conditional display logic.
+#'   \item Implements conditional display logic for questions.
 #'   \item Tracks answered questions and updates the progress bar.
 #'   \item Handles page navigation and skip logic.
 #'   \item Manages required questions.
 #'   \item Performs database operations or saves to a local CSV file in preview mode.
 #' }
 #'
-#' @return This function does not return a value; it sets up the server-side logic for the Shiny application.
+#' @section Progress Bar:
+#' The progress bar is updated based on the last answered question. It will jump to the
+#' percentage corresponding to the last answered question and will never decrease,
+#' even if earlier questions are answered later.
+#'
+#' @section Database Operations:
+#' If \code{db} is provided, the function will update the database with survey responses.
+#' If \code{db} is \code{NULL} (pause mode), responses will be saved to a local CSV file.
+#'
+#' @return
+#' This function does not return a value; it sets up the server-side logic for the Shiny application.
 #'
 #' @examples
 #' \dontrun{
@@ -78,6 +89,9 @@ sd_store_value <- function(value, name = NULL) {
 #'     }
 #'   )
 #' }
+#'
+#' @seealso
+#' \code{\link{sd_database}}, \code{\link{sd_ui}}
 #'
 #' @export
 #' @importFrom shiny reactive reactiveVal observeEvent
@@ -125,26 +139,11 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Track the progress
     max_progress <- shiny::reactiveVal(0)
-    # Progress Bar Tracking ----
-
-    # Initialize object for storing timestamps
-    timestamps <- shiny::reactiveValues(data = initialize_timestamps(page_ids, question_ids))
-
-    # Conditional display (show_if conditions)
-    if (!is.null(show_if)) {
-        handle_basic_show_if_logic(input, show_if)
-    }
-
-    if (!is.null(show_if_custom)) {
-        handle_custom_show_if_logic(input, show_if_custom)
-    }
-
-    # Track the progress
-    max_progress <- shiny::reactiveVal(0)
-    answered_questions <- shiny::reactiveVal(list())
+    last_answered_question <- shiny::reactiveVal(0)
 
     shiny::observe({
-        lapply(question_ids, function(id) {
+        lapply(seq_along(question_ids), function(index) {
+            id <- question_ids[index]
             shiny::observeEvent(input[[id]], {
                 # Check if the question is answered (non-null and non-empty)
                 is_answered <- !is.null(input[[id]]) &&
@@ -155,14 +154,13 @@ sd_server <- function(input, output, session, config, db = NULL) {
                         timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
                     }
 
-                    # Update the list of answered questions
-                    current_answered <- answered_questions()
-                    current_answered[[id]] <- TRUE
-                    answered_questions(current_answered)
+                    # Update the last answered question if this question has a higher index
+                    if (index > last_answered_question()) {
+                        last_answered_question(index)
+                    }
 
-                    # Calculate progress based on answered questions
-                    num_answered <- sum(unlist(answered_questions()))
-                    current_progress <- num_answered / length(question_ids)
+                    # Calculate progress based on the last answered question
+                    current_progress <- last_answered_question() / length(question_ids)
                     max_progress(max(max_progress(), current_progress))
                     shinyjs::runjs(sprintf("updateProgressBar(%f);", max_progress() * 100))
                 }
