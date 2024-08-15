@@ -91,7 +91,7 @@ sd_store_value <- function(value, name = NULL) {
 #' }
 #'
 #' @seealso
-#' \code{\link{sd_database}}, \code{\link{sd_ui}}
+#' \code{\link{sd_database}}, \code{\link{sd_question}}
 #'
 #' @export
 #' @importFrom shiny reactive reactiveVal observeEvent

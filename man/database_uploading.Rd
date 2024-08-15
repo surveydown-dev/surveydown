@@ -2,22 +2,51 @@
 % Please edit documentation in R/db.R
 \name{database_uploading}
 \alias{database_uploading}
-\title{Upload data to the database}
+\title{Upload survey data to the database}
 \usage{
 database_uploading(df, db, table_name)
 }
 \arguments{
-\item{df}{Data frame of survey data to upload}
+\item{df}{A data frame containing the survey data to upload.}
 
-\item{db}{Database connection object}
+\item{db}{A database connection object created by \link[DBI]{dbConnect}.}
 
-\item{table_name}{String name of the table to upload to}
+\item{table_name}{A string specifying the name of the table to upload to.}
 }
 \value{
-None (called for side effects)
+This function does not return a value. It is called for its side effects
+of updating the database.
 }
 \description{
-This function handles the process of uploading survey data to the database,
-including creating the table if it doesn't exist and updating existing rows.
+This function handles the process of uploading survey data to the database.
+It creates the table if it doesn't exist, adds new columns if necessary,
+ensures correct column order, and updates or inserts rows based on the session ID.
+}
+\details{
+The function performs the following steps:
+\itemize{
+\item Checks if the specified table exists in the database.
+\item Creates the table if it doesn't exist.
+\item Adds any new columns present in the data frame but not in the existing table.
+\item Ensures the correct column order with 'timestamp' and 'session_id' at the beginning.
+\item Identifies rows with matching session IDs.
+\item Deletes existing rows with matching session IDs.
+\item Inserts new or updated rows into the table.
+}
+}
+\note{
+This function assumes that the data frame \code{df} contains columns named 'timestamp' and 'session_id'.
+It uses the 'session_id' column to identify which rows to update in the database.
+}
+\examples{
+\dontrun{
+# Assuming 'db_connection' is an active database connection
+# and 'survey_data' is a data frame with survey responses
+database_uploading(survey_data, db_connection$db, db_connection$table_name)
+}
+
+}
+\seealso{
+\link[DBI]{dbConnect}, \link[DBI]{dbWriteTable}
 }
 \keyword{internal}

@@ -16,41 +16,54 @@ sd_server(input, output, session, config, db = NULL)
 \item{config}{A list containing configuration settings for the application.}
 
 \item{db}{A list containing database connection information created using
-sd_database() function. Defaults to \code{NULL}.}
+\code{\link{sd_database}} function. Defaults to \code{NULL}.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for the Shiny application.
 }
 \description{
-This function defines the server-side logic for a Shiny application, handling various
-operations such as conditional display, progress tracking, page navigation, and database
-updates.
+This function defines the server-side logic for a Shiny application used in surveydown.
+It handles various operations such as conditional display, progress tracking,
+page navigation, and database updates for survey responses.
 }
 \details{
-The config list should include the following elements:
+The \code{config} list should include the following elements:
 \itemize{
-\item page_structure: A list defining the structure of survey pages.
-\item page_ids: A vector of page identifiers.
-\item question_ids: A vector of question identifiers.
-\item show_if: A data frame defining conditions for showing questions.
-\item skip_if: A data frame defining conditions for skipping pages.
-\item skip_if_custom: A list of custom skip conditions.
-\item show_if_custom: A list of custom show conditions.
-\item start_page: The identifier of the starting page.
-\item question_required: A vector of required question identifiers.
-\item all_questions_required: A logical indicating if all questions are required.
+\item \code{page_structure}: A list defining the structure of survey pages.
+\item \code{page_ids}: A vector of page identifiers.
+\item \code{question_ids}: A vector of question identifiers.
+\item \code{show_if}: A data frame defining conditions for showing questions.
+\item \code{skip_if}: A data frame defining conditions for skipping pages.
+\item \code{skip_if_custom}: A list of custom skip conditions.
+\item \code{show_if_custom}: A list of custom show conditions.
+\item \code{start_page}: The identifier of the starting page.
+\item \code{question_required}: A vector of required question identifiers.
+\item \code{all_questions_required}: A logical indicating if all questions are required.
 }
 
 The function performs the following tasks:
 \itemize{
 \item Initializes variables and reactive values.
-\item Implements conditional display logic.
+\item Implements conditional display logic for questions.
 \item Tracks answered questions and updates the progress bar.
 \item Handles page navigation and skip logic.
 \item Manages required questions.
 \item Performs database operations or saves to a local CSV file in preview mode.
 }
 }
+\section{Progress Bar}{
+
+The progress bar is updated based on the last answered question. It will jump to the
+percentage corresponding to the last answered question and will never decrease,
+even if earlier questions are answered later.
+}
+
+\section{Database Operations}{
+
+If \code{db} is provided, the function will update the database with survey responses.
+If \code{db} is \code{NULL} (pause mode), responses will be saved to a local CSV file.
+}
+
 \examples{
 \dontrun{
   shinyApp(
@@ -61,4 +74,7 @@ The function performs the following tasks:
   )
 }
 
+}
+\seealso{
+\code{\link{sd_database}}, \code{\link{sd_question}}
 }

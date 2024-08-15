@@ -118,7 +118,10 @@ sd_database <- function(
 #' @param timestamp_vals List of timestamp values
 #' @param session_id String representing the session ID
 #' @param custom_vals List of custom values
-#' @return A data frame with transformed survey data
+#' @return A data frame with transformed survey data, including a UTC timestamp
+#' @details This function transforms the input data into a format suitable for database storage.
+#'   It adds a UTC timestamp, formats question values, handles custom values, and combines all data
+#'   into a single data frame. The UTC timestamp is formatted as "YYYY-MM-DD HH:MM:SS UTC".
 #' @importFrom stats setNames
 #' @keywords internal
 transform_data <- function(question_vals, timestamp_vals, session_id, custom_vals) {
@@ -204,10 +207,10 @@ create_table <- function(db, table_name, df) {
 #' @description
 #' This function handles the process of uploading survey data to the database.
 #' It creates the table if it doesn't exist, adds new columns if necessary,
-#' and updates or inserts rows based on the session ID.
+#' ensures correct column order, and updates or inserts rows based on the session ID.
 #'
 #' @param df A data frame containing the survey data to upload.
-#' @param db A database connection object created by \code{\link{DBI::dbConnect}}.
+#' @param db A database connection object created by \link[DBI]{dbConnect}.
 #' @param table_name A string specifying the name of the table to upload to.
 #'
 #' @details
@@ -216,27 +219,28 @@ create_table <- function(db, table_name, df) {
 #'   \item Checks if the specified table exists in the database.
 #'   \item Creates the table if it doesn't exist.
 #'   \item Adds any new columns present in the data frame but not in the existing table.
+#'   \item Ensures the correct column order with 'timestamp' and 'session_id' at the beginning.
 #'   \item Identifies rows with matching session IDs.
 #'   \item Deletes existing rows with matching session IDs.
 #'   \item Inserts new or updated rows into the table.
 #' }
 #'
 #' @note
-#' This function assumes that the data frame \code{df} contains a column named 'session_id'.
-#' It uses this column to identify which rows to update in the database.
+#' This function assumes that the data frame \code{df} contains columns named 'timestamp' and 'session_id'.
+#' It uses the 'session_id' column to identify which rows to update in the database.
 #'
 #' @return
 #' This function does not return a value. It is called for its side effects
 #' of updating the database.
 #'
 #' @seealso
-#' \code{\link{DBI::dbConnect}}, \code{\link{DBI::dbWriteTable}}
+#' \link[DBI]{dbConnect}, \link[DBI]{dbWriteTable}
 #'
 #' @examples
 #' \dontrun{
 #' # Assuming 'db_connection' is an active database connection
 #' # and 'survey_data' is a data frame with survey responses
-#' database_uploading(survey_data, db_connection, "survey_responses")
+#' database_uploading(survey_data, db_connection$db, db_connection$table_name)
 #' }
 #'
 #' @importFrom DBI dbReadTable dbListFields dbExecute dbWriteTable
