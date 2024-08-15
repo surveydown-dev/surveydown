@@ -11,7 +11,7 @@ updates."><meta property="og:image" content="https://jhelvy.github.io/surveydown
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,7 +61,7 @@ updates.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_server</span><span class="op">(</span><span class="va">input</span>, <span class="va">session</span>, <span class="va">config</span>, db <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_server</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span>, <span class="va">config</span>, db <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,49 +72,56 @@ updates.</p>
 <dd><p>The Shiny input object.</p></dd>
 
 
+<dt id="arg-output">output<a class="anchor" aria-label="anchor" href="#arg-output"></a></dt>
+<dd><p>The Shiny output object.</p></dd>
+
+
 <dt id="arg-session">session<a class="anchor" aria-label="anchor" href="#arg-session"></a></dt>
 <dd><p>The Shiny session object.</p></dd>
 
 
 <dt id="arg-config">config<a class="anchor" aria-label="anchor" href="#arg-config"></a></dt>
-<dd><p>A list containing configuration settings for the application. Expected
-elements include <code>page_structure</code>, <code>page_ids</code>, <code>question_ids</code>, <code>show_if</code>, <code>skip_if</code>,
-<code>skip_if_custom</code>, <code>show_if_custom</code>, <code>preview</code>, and <code>start_page</code>.</p></dd>
+<dd><p>A list containing configuration settings for the application.</p></dd>
 
 
 <dt id="arg-db">db<a class="anchor" aria-label="anchor" href="#arg-db"></a></dt>
 <dd><p>A list containing database connection information created using
-sd_database() function. Expected elements include <code>db</code> and <code>table_name</code>.
-Defaults to <code>NULL</code>.</p></dd>
+sd_database() function. Defaults to <code>NULL</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>This function does not return a value; it sets up the server-side logic for the Shiny application.</p>
+    </div>
+    <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function performs the following tasks:</p><ul><li><p>Initializes local variables based on the provided configuration.</p></li>
-<li><p>Sets up reactive values to track timestamps and progress.</p></li>
-<li><p>Implements conditional display logic for UI elements based on <code>show_if</code> and <code>show_if_custom</code> conditions.</p></li>
-<li><p>Tracks the progress of answered questions and updates the progress bar accordingly.</p></li>
-<li><p>Handles page navigation within the Shiny application, including basic and custom skip logic.</p></li>
-<li><p>Performs database operations to store responses, either to a specified database or a local CSV file if in preview mode.</p></li>
+    <p>The config list should include the following elements:</p><ul><li><p>page_structure: A list defining the structure of survey pages.</p></li>
+<li><p>page_ids: A vector of page identifiers.</p></li>
+<li><p>question_ids: A vector of question identifiers.</p></li>
+<li><p>show_if: A data frame defining conditions for showing questions.</p></li>
+<li><p>skip_if: A data frame defining conditions for skipping pages.</p></li>
+<li><p>skip_if_custom: A list of custom skip conditions.</p></li>
+<li><p>show_if_custom: A list of custom show conditions.</p></li>
+<li><p>start_page: The identifier of the starting page.</p></li>
+<li><p>question_required: A vector of required question identifiers.</p></li>
+<li><p>all_questions_required: A logical indicating if all questions are required.</p></li>
+</ul><p>The function performs the following tasks:</p><ul><li><p>Initializes variables and reactive values.</p></li>
+<li><p>Implements conditional display logic.</p></li>
+<li><p>Tracks answered questions and updates the progress bar.</p></li>
+<li><p>Handles page navigation and skip logic.</p></li>
+<li><p>Manages required questions.</p></li>
+<li><p>Performs database operations or saves to a local CSV file in preview mode.</p></li>
 </ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span>  <span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>    <span class="va">config</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>      page_structure <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      page_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"page1"</span>, <span class="st">"page2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      question_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"q1"</span>, <span class="st">"q2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>      show_if <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>      skip_if <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>      skip_if_custom <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>      show_if_custom <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>      start_page <span class="op">=</span> <span class="st">"page1"</span></span></span>
-<span class="r-in"><span>    <span class="op">)</span></span></span>
-<span class="r-in"><span>    <span class="fu">sd_server</span><span class="op">(</span><span class="va">input</span>, <span class="va">session</span>, <span class="va">config</span><span class="op">)</span></span></span>
-<span class="r-in"><span>  <span class="op">}</span></span></span>
-<span class="r-in"><span>  <span class="fu">shinyApp</span><span class="op">(</span>ui <span class="op">=</span> <span class="va">ui</span>, server <span class="op">=</span> <span class="va">server</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">shinyApp</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    ui <span class="op">=</span> <span class="fu">sd_ui</span><span class="op">(</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    server <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>      <span class="fu">sd_server</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span>, config <span class="op">=</span> <span class="va">my_config</span>, db <span class="op">=</span> <span class="va">my_db</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="op">}</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

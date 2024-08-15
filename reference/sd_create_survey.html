@@ -13,7 +13,7 @@ specified.'><meta property="og:image" content="https://jhelvy.github.io/surveydo
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -78,20 +78,27 @@ the survey template. Defaults to the current working directory.</p></dd>
 
 <dt id="arg-template">template<a class="anchor" aria-label="anchor" href="#arg-template"></a></dt>
 <dd><p>A character string specifying the survey template to use.
-Defaults to <code>"simple"</code>.</p></dd>
+Defaults to <code>"simple"</code>. Currently, only the "simple" template is available.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A message indicating the successful creation of the survey template.</p>
+    <p>Invisibly returns TRUE if the survey template was successfully created.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>This function downloads the latest version of the surveydown extension from GitHub,
+and uses it to create a new survey project. It copies all necessary files and
+directories to the specified path, excluding some files like README.md and .gitignore.</p>
     </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu">sd_create_survey</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">sd_create_survey</span><span class="op">(</span>path <span class="op">=</span> <span class="st">"path/to/package"</span>, template <span class="op">=</span> <span class="st">"simple"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">sd_create_survey</span><span class="op">(</span>path <span class="op">=</span> <span class="st">"path/to/survey"</span>, template <span class="op">=</span> <span class="st">"simple"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
