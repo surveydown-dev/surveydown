@@ -10,6 +10,8 @@
 #' @param required_questions Vector of character strings. The IDs of questions that must
 #' be answered before the respondent can continue in the survey or survey can be
 #' submitted. Defaults to NULL.
+#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required.
+#' This overrides the `required_questions` parameter. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
@@ -19,6 +21,9 @@
 #'   these settings in a configuration list. If `admin_page` is set to TRUE, an admin page will be
 #'   included in the survey. This page allows viewing and downloading of survey data upon entering
 #'   the correct survey password (set using `sd_set_password()`).
+#'
+#'   If `all_questions_required` is set to TRUE, it will override the `required_questions` parameter
+#'   and set all questions in the survey as required.
 #'
 #' @return A list containing the configuration settings for the survey, including page and question
 #'   structures, conditional display settings, navigation options, and admin page settings.
@@ -30,6 +35,8 @@
 #'     skip_if_custom = NULL,
 #'     show_if        = list(),
 #'     show_if_custom = NULL,
+#'     required_questions = c("q1", "q2"),
+#'     all_questions_required = FALSE,
 #'     start_page     = "page1",
 #'     show_all_pages = FALSE,
 #'     admin_page     = TRUE
@@ -43,6 +50,7 @@ sd_config <- function(
         show_if            = NULL,
         show_if_custom     = NULL,
         required_questions = NULL,
+        all_questions_required = FALSE,
         start_page         = NULL,
         show_all_pages     = FALSE,
         admin_page         = FALSE
@@ -59,7 +67,7 @@ sd_config <- function(
         page_ids           = page_ids,
         question_ids       = question_ids,
         question_values    = unname(unlist(lapply(question_structure, `[[`, "options"))),
-        question_required  = required_questions
+        question_required  = if (all_questions_required) question_ids else required_questions
     )
 
     # Check skip_if and show_if inputs
