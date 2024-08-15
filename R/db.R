@@ -122,23 +122,20 @@ sd_database <- function(
 #' @importFrom stats setNames
 #' @keywords internal
 transform_data <- function(question_vals, timestamp_vals, session_id, custom_vals) {
-    # Replace NULLs with empty string, and
-    # convert vectors to comma-separated strings
+    # Create current timestamp in UTC with the desired format
+    current_timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
+
     for (i in seq_len(length(question_vals))) {
-        # Check for NULL and replace with an empty string
         val <- question_vals[[i]]
         if (is.null(val)) {
             question_vals[[i]] <- ""
         } else if (length(val) > 1) {
-            # Convert vectors to comma-separated strings
             question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
         }
     }
 
-    # Convert question_vals to a data frame
     responses <- as.data.frame(question_vals)
 
-    # Process custom values
     custom_df <- data.frame(matrix(ncol = length(custom_vals), nrow = 1))
     colnames(custom_df) <- names(custom_vals)
     for (name in names(custom_vals)) {
@@ -147,6 +144,7 @@ transform_data <- function(question_vals, timestamp_vals, session_id, custom_val
 
     # Combine all data
     data <- cbind(
+        timestamp = current_timestamp,
         session_id = session_id,
         custom_df,
         responses,
@@ -252,11 +250,10 @@ database_uploading <- function(df, db, table_name) {
     # Establish the database connection
     data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
 
-    #This actually checks if its empty and will create a brand new table name of your choice
     if (is.null(data)) {
         create_table(db, table_name, df)
     } else {
-        # Check for new columns
+        # Check for new columns and ensure correct order
         existing_cols <- DBI::dbListFields(db, table_name)
         new_cols <- setdiff(names(df), existing_cols)
 
@@ -267,21 +264,22 @@ database_uploading <- function(df, db, table_name) {
             query <- paste0('ALTER TABLE "', table_name, '" ADD COLUMN "', col, '" ', sql_type, ';')
             DBI::dbExecute(db, query)
         }
+
+        # Ensure correct column order
+        correct_order <- c("timestamp", "session_id", setdiff(names(df), c("timestamp", "session_id")))
+        df <- df[, correct_order]
     }
 
-    #Table Editing Section
-    #Checking For Matching Session_Id's
+    # Rest of the function remains the same
     matching_rows <- df[df$session_id %in% data$session_id, ]
 
     if (nrow(matching_rows) > 0) {
-        # Delete existing rows in the database table with matching session_id values from df
         delete_query <- paste0('DELETE FROM "', table_name, '" WHERE session_id = $1')
         for (session_id in matching_rows$session_id) {
             DBI::dbExecute(db, delete_query, params = list(session_id))
         }
-        # Append the new non-matching rows to the database table
         DBI::dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
-    } else { #If there are no matching rows we just append the new row.
+    } else {
         DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
     }
 }
