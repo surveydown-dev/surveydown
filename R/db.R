@@ -115,8 +115,7 @@ sd_database <- function(
 
 ## Updating Database ----
 
-transform_data <- function(question_vals, timestamp_vals, session_id) {
-
+transform_data <- function(question_vals, timestamp_vals, session_id, custom_vals) {
     # Replace NULLs with empty string, and
     # convert vectors to comma-separated strings
     for (i in seq_len(length(question_vals))) {
@@ -130,10 +129,23 @@ transform_data <- function(question_vals, timestamp_vals, session_id) {
         }
     }
 
+    # Convert question_vals to a data frame
     responses <- as.data.frame(question_vals)
 
-    # Add session_id and timestamps
-    data <- cbind(session_id, responses, as.data.frame(timestamp_vals))
+    # Process custom values
+    custom_df <- data.frame(matrix(ncol = length(custom_vals), nrow = 1))
+    colnames(custom_df) <- names(custom_vals)
+    for (name in names(custom_vals)) {
+        custom_df[[name]] <- ifelse(is.null(custom_vals[[name]]), "", custom_vals[[name]])
+    }
+
+    # Combine all data
+    data <- cbind(
+        session_id = session_id,
+        custom_df,
+        responses,
+        setNames(as.data.frame(timestamp_vals), paste0("timestamp_", names(timestamp_vals)))
+    )
 
     return(data)
 }

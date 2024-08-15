@@ -1,3 +1,33 @@
+# Global variable to store custom values
+.sd_custom_values <- new.env()
+
+#' Store a custom value for the survey
+#'
+#' This function allows storing additional values to be included in the survey data,
+#' such as respondent IDs or other custom data.
+#'
+#' @param value The value to be stored.
+#' @param name (Optional) The name for the value in the data.
+#'             If not provided, the name of the `value` variable will be used.
+#'
+#' @return NULL (invisibly)
+#'
+#' @examples
+#' \dontrun{
+#'   sd_store_value(respondentID)
+#'   sd_store_value(respondentID, "respID")
+#' }
+#'
+#' @export
+sd_store_value <- function(value, name = NULL) {
+    if (is.null(name)) {
+        name <- deparse(substitute(value))
+    }
+    # Store the value in the global environment
+    assign(name, value, envir = .sd_custom_values)
+    invisible(NULL)
+}
+
 #' Server Logic for a surveydown survey
 #'
 #' This function defines the server-side logic for a Shiny application, handling various
@@ -185,6 +215,11 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Define a reactive expression for the time stamp values
     get_time_stamps <- shiny::reactive({ timestamps$data })
 
+    # Define a reactive expression for custom values
+    get_custom_vals <- shiny::reactive({
+        as.list(.sd_custom_values)
+    })
+
     # Use observe to react whenever "input_vals" changes
     # If it changes, update the database
 
@@ -193,9 +228,10 @@ sd_server <- function(input, output, session, config, db = NULL) {
         # Capture the current state of question values and timestamps
         question_vals <- get_question_vals()
         timestamp_vals <- get_time_stamps()
+        custom_vals <- get_custom_vals()
 
         # Transform to data frame, handling uninitialized inputs appropriately
-        df_local <- transform_data(question_vals, timestamp_vals, session_id)
+        df_local <- transform_data(question_vals, timestamp_vals, session_id, custom_vals)
 
         # Making everything a string because the db poops itself
         df_local[] <- lapply(df_local, as.character)
