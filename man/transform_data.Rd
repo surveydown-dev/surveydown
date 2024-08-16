@@ -4,7 +4,7 @@
 \alias{transform_data}
 \title{Transform survey data for database storage}
 \usage{
-transform_data(question_vals, time_vals, session_id, custom_vals)
+transform_data(question_vals, time_vals, session_id, stored_vals)
 }
 \arguments{
 \item{question_vals}{List of question values}
@@ -13,7 +13,7 @@ transform_data(question_vals, time_vals, session_id, custom_vals)
 
 \item{session_id}{String representing the session ID}
 
-\item{custom_vals}{List of custom values}
+\item{stored_vals}{List of stored values}
 }
 \value{
 A data frame with transformed survey data, including a UTC timestamp

@@ -96,22 +96,23 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Admin Page Logic ----
 
     if (config$admin_page) {
-        # Create a reactive value to track whether we're on the admin page
 
+        sd_add_admin_functionality(input, output, session)
+        # Create a reactive value to track whether we're on the admin page
 
         is_admin_page <- shiny::reactiveVal(FALSE)
 
         # Observer for the admin button click
         shiny::observeEvent(input$admin_button, {
             is_admin_page(TRUE)
-            shinyjs::hide("survey-content")
+            hide_sd_pages()
             shinyjs::show("admin-content")
         })
 
         # Observer for the back to survey button click
         shiny::observeEvent(input$back_to_survey_button, {
             is_admin_page(FALSE)
-            shinyjs::show("survey-content")
+            show_sd_pages()
             shinyjs::hide("admin-content")
         })
     }
@@ -550,7 +551,7 @@ sd_add_admin_functionality <- function(input, output, session) {
 
     # Toggle admin section visibility
     observeEvent(input$admin_button, {
-        shinyjs::hide("survey-content")
+        hide_sd_pages()
         shinyjs::show("admin-section")
         shinyjs::show("login-page")
     })
@@ -571,7 +572,7 @@ sd_add_admin_functionality <- function(input, output, session) {
                     id = "admin-content",
                     h2("Admin Page"),
                     p("Welcome to the admin page. Future functionality will be added here."),
-                    actionButton("back_to_survey", "Back to Survey")
+                    actionButton("back_to_survey", "Admin Logout and Back to Survey")
                 )
             )
         } else {
@@ -581,12 +582,63 @@ sd_add_admin_functionality <- function(input, output, session) {
 
     # Back to survey button
     observeEvent(input$back_to_survey, {
+        # Clear the admin session
         session$userData$isAdmin <- NULL
 
+        # Hide admin-related content
         shinyjs::hide("admin-section")
         shinyjs::hide("login-page")
-        shinyjs::show("survey-content")
+
+        removeUI(selector = "#admin-content")
+        updateTextInput(session, "adminpw", value = "")
+        show_sd_pages()
     })
 }
 
+
+#' Hide All Elements with the .sd-page Class
+#'
+#' This function hides all HTML elements on the page that have the `.sd-page` class.
+#' It uses JavaScript to set the `display` style of these elements to `'none'`, effectively making them invisible on the webpage.
+#'
+#' @import shinyjs
+#' @export
+#' @examples
+#' \dontrun{
+#' hide_sd_pages()
+#' }
+hide_sd_pages <- function() {
+    js_code <- "
+    (function() {
+        var pages = document.querySelectorAll('.sd-page');
+        pages.forEach(function(page) {
+            page.style.display = 'none';
+        });
+    })();
+    "
+    runjs(js_code)
+}
+
+#' Show Only the First Element with the .sd-page Class
+#'
+#' This function shows only the first HTML element on the page that has the `.sd-page` class.
+#' It uses JavaScript to set the `display` style of the first such element to `'block'`, making it visible on the webpage.
+#'
+#' @import shinyjs
+#' @export
+#' @examples
+#' \dontrun{
+#' show_sd_pages()
+#' }
+show_sd_pages <- function() {
+    js_code <- "
+    (function() {
+        var pages = document.querySelectorAll('.sd-page');
+        if (pages.length > 0) {
+            pages[0].style.display = 'block';
+        }
+    })();
+    "
+    runjs(js_code)
+}
 
