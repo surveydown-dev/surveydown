@@ -117,14 +117,14 @@ sd_database <- function(
 #' @param question_vals List of question values
 #' @param time_vals List of timestamp values
 #' @param session_id String representing the session ID
-#' @param custom_vals List of custom values
+#' @param stored_vals List of stored values
 #' @return A data frame with transformed survey data, including a UTC timestamp
 #' @details This function transforms the input data into a format suitable for database storage.
 #'   It adds a UTC timestamp, formats question values, handles custom values, and combines all data
 #'   into a single data frame. The UTC timestamp is formatted as "YYYY-MM-DD HH:MM:SS UTC".
 #' @importFrom stats setNames
 #' @keywords internal
-transform_data <- function(question_vals, time_vals, session_id, custom_vals) {
+transform_data <- function(question_vals, time_vals, session_id, stored_vals) {
     # Create current timestamp in UTC with the desired format
     current_time <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
 
@@ -139,10 +139,10 @@ transform_data <- function(question_vals, time_vals, session_id, custom_vals) {
 
     responses <- as.data.frame(question_vals)
 
-    custom_df <- data.frame(matrix(ncol = length(custom_vals), nrow = 1))
-    colnames(custom_df) <- names(custom_vals)
-    for (name in names(custom_vals)) {
-        custom_df[[name]] <- ifelse(is.null(custom_vals[[name]]), "", custom_vals[[name]])
+    custom_df <- data.frame(matrix(ncol = length(stored_vals), nrow = 1))
+    colnames(custom_df) <- names(stored_vals)
+    for (name in names(stored_vals)) {
+        custom_df[[name]] <- ifelse(is.null(stored_vals[[name]]), "", stored_vals[[name]])
     }
 
     # Combine all data

@@ -2,6 +2,8 @@
 
 - Added `sd_display_value()` for displaying a question value based on the question `id`.
 - Added `sd_copy_value()` for making a copy of a question value, which may be needed if you need to display something more than once since you can't make more than one object with the same `id`.
+- Changed `sd_reactive_output()` to `sd_display_question()`.
+- Changed how `sd_store_value()` works to avoid a global environment, and changed the arg name from `name` to `id`.
 
 # surveydown 0.0.9
 
