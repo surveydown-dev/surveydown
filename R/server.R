@@ -501,7 +501,9 @@ is_question_visible <- function(q, show_if, input) {
 #' @param db pulls in the database object to create a connection for various admin actions
 #'
 #' @importFrom shinyjs hide show
-#' @importFrom shiny observeEvent showNotification
+#' @importFrom shiny observeEvent showNotification insertUI removeUI actionButton div h2 h3 hr passwordInput updateTextInput downloadHandler downloadButton
+#' @importFrom htmltools tags
+#' @importFrom utils write.csv
 #' @export
 sd_add_admin_functionality <- function(input, output, session, db) {
     # Add admin button

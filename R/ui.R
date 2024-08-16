@@ -314,7 +314,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
   return(output)
 }
 
-#' Store a custom value 
+#' Store a custom value
 #'
 #' This function allows storing additional values to be included in the survey data,
 #' such as respondent IDs or other custom data. The values are stored in a special
@@ -337,7 +337,7 @@ sd_store_value <- function(value, id = NULL) {
   if (is.null(id)) {
     id <- deparse(substitute(value))
   }
-  
+
   shiny::isolate({
     session <- shiny::getDefaultReactiveDomain()
     if (is.null(session)) {
@@ -348,7 +348,7 @@ sd_store_value <- function(value, id = NULL) {
     }
     session$userData$custom_values[[id]] <- value
   })
-  
+
   invisible(NULL)
 }
 
@@ -363,10 +363,12 @@ sd_store_value <- function(value, id = NULL) {
 #' @return NULL invisibly. This function is called for its side effects.
 #'
 #' @examples
-#' sd_make_copy(id = "respondent_name", name = "resp_name2")
+#' \dontrun{
+#' sd_copy_value(id = "respondent_name", id_copy = "resp_name2")
 #'
 #' # Then in UI:
 #' # sd_display_value("resp_name2")
+#' }
 #'
 #' @export
 sd_copy_value <- function(id, id_copy) {
@@ -380,7 +382,7 @@ sd_copy_value <- function(id, id_copy) {
     if (!is.null(output)) {
       output[[output_id]] <- shiny::renderText({ input[[id]] })
     } else {
-      warning("sd_make_copy was not called within a Shiny reactive context")
+      warning("sd_copy_value was not called within a Shiny reactive context")
     }
   })
   invisible(NULL)

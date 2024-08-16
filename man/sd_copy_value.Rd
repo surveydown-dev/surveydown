@@ -19,9 +19,11 @@ This function creates a copy of an input value and makes it available as a new o
 The new output can then be displayed using sd_display_value().
 }
 \examples{
-sd_make_copy(id = "respondent_name", name = "resp_name2")
+\dontrun{
+sd_copy_value(id = "respondent_name", id_copy = "resp_name2")
 
 # Then in UI:
 # sd_display_value("resp_name2")
+}
 
 }
