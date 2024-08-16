@@ -301,7 +301,7 @@ sd_reactive_output <- function(id) {
 #' @export
 sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
   value_id <- paste0(id, "_value")
-  
+
   output <- switch(
     display_type,
     "inline" = shiny::textOutput(value_id, inline = TRUE),
@@ -310,11 +310,11 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
     "ui" = shiny::uiOutput(value_id),
     stop("Invalid display_type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
   )
-  
+
   if (!is.null(wrapper)) {
     output <- wrapper(output, ...)
   }
-  
+
   return(output)
 }
 
@@ -330,7 +330,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #'
 #' @examples
 #' sd_make_copy(id = "respondent_name", name = "resp_name2")
-#' 
+#'
 #' # Then in UI:
 #' # sd_display_value("resp_name2")
 #'
@@ -397,10 +397,9 @@ make_next_button_id <- function(next_page) {
 }
 
 
-#' Generate Admin UI Elements for surveydown
+#' Custom Admin UI Function
 #'
-#' This function creates the UI elements for the admin functionality in a surveydown survey.
-#' It includes an admin button and a placeholder for the admin page content.
+#' This function creates a custom admin UI for the surveydown package.
 #'
 #' @return A shiny tagList containing the admin UI elements.
 #'
@@ -409,15 +408,9 @@ sd_admin_ui <- function() {
     shiny::tagList(
         shiny::div(
             id = "admin-button-container",
-            style = "position: fixed; top: 10px; right: 10px; z-index: 1000;",
-            shiny::actionButton("admin_button", "Admin")
-        ),
-        shiny::div(
-            id = "admin-content",
-            style = "display: none;",
-            shiny::h2("Admin Page"),
-            shiny::p("This is a placeholder for the admin page content."),
-            shiny::actionButton("back_to_survey_button", "Back to Survey")
+            style = "position: fixed; top: 20px; left: 10px; z-index: 1000;",
+            shiny::actionButton("admin_button", "Admin",
+                                onclick = "window.location.href='?admin=true';")
         )
     )
 }

@@ -526,3 +526,84 @@ is_question_visible <- function(q, show_if, input) {
         }
     }))
 }
+
+#' Add Admin Functionality to Survey
+#'
+#' This function adds admin functionality to a surveydown survey, including
+#' an admin button, login page, and basic admin page.
+#'
+#' @param input Shiny input object
+#' @param output Shiny output object
+#' @param session Shiny session object
+#'
+#' @importFrom shinyjs hide show
+#' @importFrom shiny observeEvent showNotification
+#' @export
+sd_add_admin_functionality <- function(input, output, session) {
+    # Add admin button
+    insertUI(
+        selector = "body",
+        where = "afterBegin",
+        ui = tags$div(
+            style = "position: fixed; top: 20px; left: 10px; z-index: 1000;",
+            actionButton("admin_button", "Admin")
+        )
+    )
+
+    # Add hidden admin section
+    insertUI(
+        selector = "body",
+        where = "beforeEnd",
+        ui = shinyjs::hidden(
+            div(
+                id = "admin-section",
+                class = "admin-section",
+                # Login page
+                div(
+                    id = "login-page",
+                    h2("Admin Login"),
+                    passwordInput("adminpw", "Password"),
+                    actionButton("submitPw", "Log in")
+                ),
+                # Admin page (initially hidden)
+                shinyjs::hidden(
+                    div(
+                        id = "admin-content",
+                        h2("Admin Page"),
+                        p("Welcome to the admin page. Future functionality will be added here."),
+                        actionButton("back_to_survey", "Back to Survey")
+                    )
+                )
+            )
+        )
+    )
+
+    # Toggle admin section visibility
+    observeEvent(input$admin_button, {
+        shinyjs::hide("survey-content")
+        shinyjs::show("admin-section")
+        shinyjs::show("login-page")
+        shinyjs::hide("admin-content")
+    })
+
+    # Password check and admin content reveal
+    observeEvent(input$submitPw, {
+        if (input$adminpw == Sys.getenv("SUPABASE_PASSWORD")) {
+            shinyjs::hide("login-page")
+            shinyjs::show("admin-content")
+        } else {
+            showNotification("Incorrect password", type = "error")
+        }
+    })
+
+    # Back to survey button
+    observeEvent(input$back_to_survey, {
+        shinyjs::hide("admin-section")
+        shinyjs::show("survey-content")
+        # Reset admin section to login page for next time
+        shinyjs::show("login-page")
+        shinyjs::hide("admin-content")
+    })
+}
+
+
