@@ -274,7 +274,6 @@ database_uploading <- function(df, db, table_name) {
         df <- df[, correct_order]
     }
 
-    # Rest of the function remains the same
     matching_rows <- df[df$session_id %in% data$session_id, ]
 
     if (nrow(matching_rows) > 0) {
