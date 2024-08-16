@@ -128,6 +128,8 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     if (config$admin_page) {
         # Create a reactive value to track whether we're on the admin page
+
+
         is_admin_page <- shiny::reactiveVal(FALSE)
 
         # Observer for the admin button click
@@ -550,7 +552,7 @@ sd_add_admin_functionality <- function(input, output, session) {
         )
     )
 
-    # Add hidden admin section
+    # Add hidden admin section (only login page is rendered initially)
     insertUI(
         selector = "body",
         where = "beforeEnd",
@@ -558,21 +560,11 @@ sd_add_admin_functionality <- function(input, output, session) {
             div(
                 id = "admin-section",
                 class = "admin-section",
-                # Login page
                 div(
                     id = "login-page",
                     h2("Admin Login"),
                     passwordInput("adminpw", "Password"),
                     actionButton("submitPw", "Log in")
-                ),
-                # Admin page (initially hidden)
-                shinyjs::hidden(
-                    div(
-                        id = "admin-content",
-                        h2("Admin Page"),
-                        p("Welcome to the admin page. Future functionality will be added here."),
-                        actionButton("back_to_survey", "Back to Survey")
-                    )
                 )
             )
         )
@@ -583,14 +575,27 @@ sd_add_admin_functionality <- function(input, output, session) {
         shinyjs::hide("survey-content")
         shinyjs::show("admin-section")
         shinyjs::show("login-page")
-        shinyjs::hide("admin-content")
     })
 
     # Password check and admin content reveal
     observeEvent(input$submitPw, {
         if (input$adminpw == Sys.getenv("SUPABASE_PASSWORD")) {
+            # Store login status in a session variable
+            session$userData$isAdmin <- TRUE
+
+            # Hide login page
             shinyjs::hide("login-page")
-            shinyjs::show("admin-content")
+
+            # Render admin content dynamically
+            insertUI(
+                selector = "#admin-section",
+                ui = div(
+                    id = "admin-content",
+                    h2("Admin Page"),
+                    p("Welcome to the admin page. Future functionality will be added here."),
+                    actionButton("back_to_survey", "Back to Survey")
+                )
+            )
         } else {
             showNotification("Incorrect password", type = "error")
         }
@@ -598,11 +603,11 @@ sd_add_admin_functionality <- function(input, output, session) {
 
     # Back to survey button
     observeEvent(input$back_to_survey, {
+        session$userData$isAdmin <- NULL
+
         shinyjs::hide("admin-section")
+        shinyjs::hide("login-page")
         shinyjs::show("survey-content")
-        # Reset admin section to login page for next time
-        shinyjs::show("login-page")
-        shinyjs::hide("admin-content")
     })
 }
 
