@@ -147,9 +147,17 @@ sd_server <- function(input, output, session, config, db = NULL) {
             shiny::observeEvent(input[[id]], {
                 # Check if the question is answered (non-null and non-empty)
                 is_answered <- !is.null(input[[id]]) &&
-                    (if(is.list(input[[id]])) length(input[[id]]) > 0 else input[[id]] != "")
+                    (if(is.list(input[[id]])) {
+                        length(input[[id]]) > 0
+                    } else if(is.character(input[[id]])) {
+                        any(nchar(trimws(input[[id]])) > 0)
+                    } else if(is.numeric(input[[id]])) {
+                        !all(is.na(input[[id]]))
+                    } else {
+                        !isTRUE(all(is.na(input[[id]]))) && !identical(input[[id]], "")
+                    })
 
-                if (is_answered) {
+                if (isTRUE(is_answered)) {
                     if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
                         timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
                     }
