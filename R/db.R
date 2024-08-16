@@ -115,7 +115,7 @@ sd_database <- function(
 #' Transform survey data for database storage
 #'
 #' @param question_vals List of question values
-#' @param timestamp_vals List of timestamp values
+#' @param time_vals List of timestamp values
 #' @param session_id String representing the session ID
 #' @param custom_vals List of custom values
 #' @return A data frame with transformed survey data, including a UTC timestamp
@@ -124,9 +124,9 @@ sd_database <- function(
 #'   into a single data frame. The UTC timestamp is formatted as "YYYY-MM-DD HH:MM:SS UTC".
 #' @importFrom stats setNames
 #' @keywords internal
-transform_data <- function(question_vals, timestamp_vals, session_id, custom_vals) {
+transform_data <- function(question_vals, time_vals, session_id, custom_vals) {
     # Create current timestamp in UTC with the desired format
-    current_timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
+    current_time <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
 
     for (i in seq_len(length(question_vals))) {
         val <- question_vals[[i]]
@@ -147,11 +147,11 @@ transform_data <- function(question_vals, timestamp_vals, session_id, custom_val
 
     # Combine all data
     data <- cbind(
-        timestamp = current_timestamp,
+        time_start = current_time,
         session_id = session_id,
         custom_df,
         responses,
-        setNames(as.data.frame(timestamp_vals), paste0("timestamp_", names(timestamp_vals)))
+        setNames(as.data.frame(time_vals), names(time_vals))
     )
 
     return(data)
@@ -270,7 +270,7 @@ database_uploading <- function(df, db, table_name) {
         }
 
         # Ensure correct column order
-        correct_order <- c("timestamp", "session_id", setdiff(names(df), c("timestamp", "session_id")))
+        correct_order <- c("time_start", "session_id", setdiff(names(df), c("time_start", "session_id")))
         df <- df[, correct_order]
     }
 

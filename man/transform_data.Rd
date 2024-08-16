@@ -4,12 +4,12 @@
 \alias{transform_data}
 \title{Transform survey data for database storage}
 \usage{
-transform_data(question_vals, timestamp_vals, session_id, custom_vals)
+transform_data(question_vals, time_vals, session_id, custom_vals)
 }
 \arguments{
 \item{question_vals}{List of question values}
 
-\item{timestamp_vals}{List of timestamp values}
+\item{time_vals}{List of timestamp values}
 
 \item{session_id}{String representing the session ID}
 
