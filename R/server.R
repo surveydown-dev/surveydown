@@ -557,11 +557,17 @@ sd_add_admin_functionality <- function(input, output, session, db) {
                     h2("Admin Page"),
                     actionButton("pause_survey", "Pause Survey"),
                     actionButton("pause_db", "Pause DB"),
-                    actionButton("show_data", "Show Data"),
                     downloadButton("download_data", "Download Data"),
-                    actionButton("back_to_survey", "Admin Logout and Back to Survey")
+                    actionButton("back_to_survey", "Admin Logout and Back to Survey"),
+                    hr(),
+                    h3("Survey Data"),
+                    DT::DTOutput("survey_data_table")
                 )
             )
+            output$survey_data_table <- DT::renderDT({
+                data <- DBI::dbReadTable(db$db, db$table_name)
+                DT::datatable(data, options = list(scrollX = TRUE))
+            })
         } else {
             showNotification("Incorrect password", type = "error")
         }
