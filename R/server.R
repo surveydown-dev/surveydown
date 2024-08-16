@@ -96,25 +96,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Admin Page Logic ----
 
     if (config$admin_page) {
-
-        sd_add_admin_functionality(input, output, session)
-        # Create a reactive value to track whether we're on the admin page
-
-        is_admin_page <- shiny::reactiveVal(FALSE)
-
-        # Observer for the admin button click
-        shiny::observeEvent(input$admin_button, {
-            is_admin_page(TRUE)
-            hide_sd_pages()
-            shinyjs::show("admin-content")
-        })
-
-        # Observer for the back to survey button click
-        shiny::observeEvent(input$back_to_survey_button, {
-            is_admin_page(FALSE)
-            show_sd_pages()
-            shinyjs::hide("admin-content")
-        })
+        sd_add_admin_functionality(input, output, session, db)
     }
 
     # Progress Bar Tracking ----
@@ -516,16 +498,18 @@ is_question_visible <- function(q, show_if, input) {
 #' @param input Shiny input object
 #' @param output Shiny output object
 #' @param session Shiny session object
+#' @param db pulls in the database object to create a connection for various admin actions
 #'
 #' @importFrom shinyjs hide show
 #' @importFrom shiny observeEvent showNotification
 #' @export
-sd_add_admin_functionality <- function(input, output, session) {
+sd_add_admin_functionality <- function(input, output, session, db) {
     # Add admin button
     insertUI(
         selector = "body",
         where = "afterBegin",
         ui = tags$div(
+            id = "admin-button-container",
             style = "position: fixed; top: 20px; left: 10px; z-index: 1000;",
             actionButton("admin_button", "Admin")
         )
@@ -571,7 +555,10 @@ sd_add_admin_functionality <- function(input, output, session) {
                 ui = div(
                     id = "admin-content",
                     h2("Admin Page"),
-                    p("Welcome to the admin page. Future functionality will be added here."),
+                    actionButton("pause_survey", "Pause Survey"),
+                    actionButton("pause_db", "Pause DB"),
+                    actionButton("show_data", "Show Data"),
+                    downloadButton("download_data", "Download Data"),
                     actionButton("back_to_survey", "Admin Logout and Back to Survey")
                 )
             )
@@ -593,6 +580,20 @@ sd_add_admin_functionality <- function(input, output, session) {
         updateTextInput(session, "adminpw", value = "")
         show_sd_pages()
     })
+
+    # Download Data button functionality
+    output$download_data <- downloadHandler(
+        filename = function() {
+            paste0(db$table_name, "_", Sys.Date(), ".csv")
+        },
+        content = function(file) {
+            # Read the table
+            data <- DBI::dbReadTable(db$db, db$table_name)
+
+            # Write to CSV
+            write.csv(data, file, row.names = FALSE)
+        }
+    )
 }
 
 

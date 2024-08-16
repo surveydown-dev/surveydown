@@ -4,7 +4,7 @@
 \alias{sd_add_admin_functionality}
 \title{Add Admin Functionality to Survey}
 \usage{
-sd_add_admin_functionality(input, output, session)
+sd_add_admin_functionality(input, output, session, db)
 }
 \arguments{
 \item{input}{Shiny input object}
@@ -12,6 +12,8 @@ sd_add_admin_functionality(input, output, session)
 \item{output}{Shiny output object}
 
 \item{session}{Shiny session object}
+
+\item{db}{pulls in the database object to create a connection for various admin actions}
 }
 \description{
 This function adds admin functionality to a surveydown survey, including
