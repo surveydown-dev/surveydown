@@ -114,6 +114,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     start_page     <- config$start_page
     question_required <- config$question_required
 
+
     # Show asteriks for required questions
     session$onFlush(function() {
         shinyjs::runjs(sprintf(
@@ -122,6 +123,27 @@ sd_server <- function(input, output, session, config, db = NULL) {
             vector_to_json_array(question_required)
         ))
     }, once = TRUE)
+
+    # Admin Page Logic ----
+
+    if (config$admin_page) {
+        # Create a reactive value to track whether we're on the admin page
+        is_admin_page <- shiny::reactiveVal(FALSE)
+
+        # Observer for the admin button click
+        shiny::observeEvent(input$admin_button, {
+            is_admin_page(TRUE)
+            shinyjs::hide("survey-content")
+            shinyjs::show("admin-content")
+        })
+
+        # Observer for the back to survey button click
+        shiny::observeEvent(input$back_to_survey_button, {
+            is_admin_page(FALSE)
+            shinyjs::show("survey-content")
+            shinyjs::hide("admin-content")
+        })
+    }
 
     # Progress Bar Tracking ----
 

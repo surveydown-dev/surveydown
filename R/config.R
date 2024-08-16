@@ -90,9 +90,9 @@ sd_config <- function(
     }
 
     if (admin_page) {
-
-        # Admin page logic here....
-
+        config$admin_page <- TRUE
+    } else {
+        config$admin_page <- FALSE
     }
 
     # Store remaining config settings

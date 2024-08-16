@@ -327,3 +327,29 @@ sd_next <- function(next_page = NULL, label = "Next") {
 make_next_button_id <- function(next_page) {
   return(paste0("next-", next_page))
 }
+
+
+#' Generate Admin UI Elements for surveydown
+#'
+#' This function creates the UI elements for the admin functionality in a surveydown survey.
+#' It includes an admin button and a placeholder for the admin page content.
+#'
+#' @return A shiny tagList containing the admin UI elements.
+#'
+#' @export
+sd_admin_ui <- function() {
+    shiny::tagList(
+        shiny::div(
+            id = "admin-button-container",
+            style = "position: fixed; top: 10px; right: 10px; z-index: 1000;",
+            shiny::actionButton("admin_button", "Admin")
+        ),
+        shiny::div(
+            id = "admin-content",
+            style = "display: none;",
+            shiny::h2("Admin Page"),
+            shiny::p("This is a placeholder for the admin page content."),
+            shiny::actionButton("back_to_survey_button", "Back to Survey")
+        )
+    )
+}
