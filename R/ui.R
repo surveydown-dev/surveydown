@@ -41,8 +41,6 @@
 #' sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
 #'
 #' @export
-#' @importFrom shiny selectInput radioButtons checkboxGroupInput textInput textAreaInput numericInput dateInput dateRangeInput tags
-#' @importFrom shinyWidgets radioGroupButtons checkboxGroupButtons sliderTextInput
 sd_question <- function(
   type,
   id,
@@ -244,12 +242,11 @@ sd_question <- function(
 #' sd_question_reactive(type = "text", id = "name", label = "What is your name?")
 #'
 #' @export
-#' @importFrom shiny observe getDefaultReactiveDomain renderUI
 sd_question_reactive <- function(...) {
   args <- list(...)
   id <- args$id
 
-  shiny::observe({
+  shiny::isolate({
     output <- shiny::getDefaultReactiveDomain()$output
     if (!is.null(output)) {
       output[[id]] <- shiny::renderUI({
@@ -271,11 +268,10 @@ sd_question_reactive <- function(...) {
 #' @return A Shiny UI element that serves as a placeholder for the reactive question.
 #'
 #' @examples
-#' sd_reactive_output("name")
+#' sd_display_question("name")
 #'
 #' @export
-#' @importFrom shiny div uiOutput
-sd_reactive_output <- function(id) {
+sd_display_question <- function(id) {
   shiny::div(
     id = paste0("placeholder-", id),
     `data-question-id` = id,
@@ -318,6 +314,44 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
   return(output)
 }
 
+#' Store a custom value 
+#'
+#' This function allows storing additional values to be included in the survey data,
+#' such as respondent IDs or other custom data. The values are stored in a special
+#' environment (.sd_custom_values) and will be included when the survey data is saved.
+#'
+#' @param value The raid value to be stored.
+#' @param id (Optional) The id (name) of the value in the data.
+#'             If not provided, the id of the `value` variable will be used.
+#'
+#' @return NULL (invisibly)
+#'
+#' @examples
+#' \dontrun{
+#'   sd_store_value(respondentID)
+#'   sd_store_value(respondentID, "respID")
+#' }
+#'
+#' @export
+sd_store_value <- function(value, id = NULL) {
+  if (is.null(id)) {
+    id <- deparse(substitute(value))
+  }
+  
+  shiny::isolate({
+    session <- shiny::getDefaultReactiveDomain()
+    if (is.null(session)) {
+      stop("sd_store_value must be called from within a Shiny reactive context")
+    }
+    if (is.null(session$userData$custom_values)) {
+      session$userData$custom_values <- list()
+    }
+    session$userData$custom_values[[id]] <- value
+  })
+  
+  invisible(NULL)
+}
+
 #' Create a copy of an input value
 #'
 #' This function creates a copy of an input value and makes it available as a new output.
@@ -339,7 +373,7 @@ sd_copy_value <- function(id, id_copy) {
   if (id == id_copy) {
     stop("The 'id_copy' must be different from the 'id'")
   }
-  shiny::observe({
+  shiny::isolate({
     output <- shiny::getDefaultReactiveDomain()$output
     input <- shiny::getDefaultReactiveDomain()$input
     output_id <- paste0(id_copy, "_value")
@@ -369,7 +403,6 @@ sd_copy_value <- function(id, id_copy) {
 #' sd_next("page2", "Continue to Next Section")
 #'
 #' @export
-#' @importFrom shiny actionButton
 sd_next <- function(next_page = NULL, label = "Next") {
   if (is.null(next_page)) {
     stop("You must specify the current_page for the 'Next' button.")

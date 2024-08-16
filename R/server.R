@@ -1,34 +1,3 @@
-# Global variable to store custom values
-.sd_custom_values <- new.env()
-
-#' Store a custom value for the survey
-#'
-#' This function allows storing additional values to be included in the survey data,
-#' such as respondent IDs or other custom data. The values are stored in a special
-#' environment (.sd_custom_values) and will be included when the survey data is saved.
-#'
-#' @param value The value to be stored.
-#' @param name (Optional) The name for the value in the data.
-#'             If not provided, the name of the `value` variable will be used.
-#'
-#' @return NULL (invisibly)
-#'
-#' @examples
-#' \dontrun{
-#'   sd_store_value(respondentID)
-#'   sd_store_value(respondentID, "respID")
-#' }
-#'
-#' @export
-sd_store_value <- function(value, name = NULL) {
-    if (is.null(name)) {
-        name <- deparse(substitute(value))
-    }
-    # Store the value in the global environment
-    assign(name, value, envir = .sd_custom_values)
-    invisible(NULL)
-}
-
 #' Server Logic for a surveydown survey
 #'
 #' @description
@@ -257,10 +226,19 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Define a reactive expression for the time stamp values
     get_time_stamps <- shiny::reactive({ timestamps$data })
 
-    # Define a reactive expression for custom values
-    get_custom_vals <- shiny::reactive({
-        as.list(.sd_custom_values)
-    })
+    # Define a function to get all stored values
+    get_stored_vals <- function() {
+        shiny::isolate({
+            session <- shiny::getDefaultReactiveDomain()
+            if (is.null(session)) {
+            stop("sd_get_all_stored_values must be called from within a Shiny reactive context")
+            }
+            if (is.null(session$userData$custom_values)) {
+            return(list())
+            }
+            session$userData$custom_values
+        })
+    }
 
     # Use observe to react whenever "input_vals" changes
     # If it changes, update the database
@@ -270,7 +248,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
         # Capture the current state of question values and timestamps
         question_vals <- get_question_vals()
         timestamp_vals <- get_time_stamps()
-        custom_vals <- get_custom_vals()
+        stored_vals <- get_stored_vals()
 
         # Make values accessible in the UI
         for (id in names(question_vals)) {
@@ -286,7 +264,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
         }
 
         # Transform to data frame, handling uninitialized inputs appropriately
-        df_local <- transform_data(question_vals, timestamp_vals, session_id, custom_vals)
+        df_local <- transform_data(question_vals, timestamp_vals, session_id, stored_vals)
 
         # Making everything a string because the db poops itself
         df_local[] <- lapply(df_local, as.character)

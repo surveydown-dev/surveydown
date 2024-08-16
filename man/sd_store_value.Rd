@@ -7,7 +7,7 @@
 sd_store_value(value, name = NULL)
 }
 \arguments{
-\item{value}{The value to be stored.}
+\item{value}{The raid value to be stored.}
 
 \item{name}{(Optional) The name for the value in the data.
 If not provided, the name of the \code{value} variable will be used.}
