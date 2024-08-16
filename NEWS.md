@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+- Added `sd_display_value()` for displaying a question value based on the question `id`.
+- Added `sd_copy_value()` for making a copy of a question value, which may be needed if you need to display something more than once since you can't make more than one object with the same `id`.
+
 # surveydown 0.0.9
 
 - Required questions are now moved to `sd_config()` as a separate `required_questions` argument, instead of being defined in `sd_question()`.

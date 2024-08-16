@@ -284,6 +284,74 @@ sd_reactive_output <- function(id) {
   )
 }
 
+#' Display the value of a survey question
+#'
+#' @param id The ID of the question to display
+#' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
+#' @param wrapper A function to wrap the output (e.g., tags$h1, tags$strong)
+#' @param ... Additional arguments passed to the wrapper function
+#'
+#' @return A Shiny UI element displaying the question's value
+#'
+#' @examples
+#' sd_display_value("name")
+#' sd_display_value("age", display_type = "text")
+#' sd_display_value("email", display_type = "inline", wrapper = tags$strong)
+#'
+#' @export
+sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
+  value_id <- paste0(id, "_value")
+  
+  output <- switch(
+    display_type,
+    "inline" = shiny::textOutput(value_id, inline = TRUE),
+    "text" = shiny::textOutput(value_id),
+    "verbatim" = shiny::verbatimTextOutput(value_id),
+    "ui" = shiny::uiOutput(value_id),
+    stop("Invalid display_type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
+  )
+  
+  if (!is.null(wrapper)) {
+    output <- wrapper(output, ...)
+  }
+  
+  return(output)
+}
+
+#' Create a copy of an input value
+#'
+#' This function creates a copy of an input value and makes it available as a new output.
+#' The new output can then be displayed using sd_display_value().
+#'
+#' @param id The ID of the input value to copy
+#' @param id_copy The ID for the new copy (must be different from id)
+#'
+#' @return NULL invisibly. This function is called for its side effects.
+#'
+#' @examples
+#' sd_make_copy(id = "respondent_name", name = "resp_name2")
+#' 
+#' # Then in UI:
+#' # sd_display_value("resp_name2")
+#'
+#' @export
+sd_copy_value <- function(id, id_copy) {
+  if (id == id_copy) {
+    stop("The 'id_copy' must be different from the 'id'")
+  }
+  shiny::observe({
+    output <- shiny::getDefaultReactiveDomain()$output
+    input <- shiny::getDefaultReactiveDomain()$input
+    output_id <- paste0(id_copy, "_value")
+    if (!is.null(output)) {
+      output[[output_id]] <- shiny::renderText({ input[[id]] })
+    } else {
+      warning("sd_make_copy was not called within a Shiny reactive context")
+    }
+  })
+  invisible(NULL)
+}
+
 #' Create a 'Next' Button for Page Navigation
 #'
 #' This function creates a 'Next' button for navigating to the specified next page in a Surveydown survey.

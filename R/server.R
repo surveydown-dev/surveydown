@@ -270,6 +270,19 @@ sd_server <- function(input, output, session, config, db = NULL) {
         timestamp_vals <- get_time_stamps()
         custom_vals <- get_custom_vals()
 
+        # Make values accessible in the UI
+        for (id in names(question_vals)) {
+            local({
+                local_id <- id
+                output[[paste0(local_id, "_value")]] <- shiny::renderText({
+                    value <- question_vals[[local_id]]
+                    if (is.null(value)) return("")
+                    if (is.list(value)) value <- paste(value, collapse = ", ")
+                    as.character(value)
+                })
+            })
+        }
+
         # Transform to data frame, handling uninitialized inputs appropriately
         df_local <- transform_data(question_vals, timestamp_vals, session_id, custom_vals)
 
