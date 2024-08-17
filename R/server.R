@@ -68,6 +68,8 @@
 #' @importFrom readr write_csv
 sd_server <- function(input, output, session, config, db = NULL) {
 
+    # Initialize local variables ----
+
     # Create a local session_id variable for Data Operations use
     session_id <- session$token
 
@@ -82,6 +84,18 @@ sd_server <- function(input, output, session, config, db = NULL) {
     show_if_custom <- config$show_if_custom
     start_page     <- config$start_page
     question_required <- config$question_required
+
+    # Initial page setting ----
+
+    # Hide all pages on startup
+    hide_all_pages()
+
+    # Start from start_page (if specified)
+    if (!is.null(start_page)) {
+        shinyjs::show(start_page)
+    } else {
+        show_first_page()
+    }
 
     # Show asteriks for required questions
     session$onFlush(function() {
@@ -152,16 +166,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
     })
 
     # Page Navigation ----
-
-    # Hide all pages on startup
-    hide_all_pages()
-
-    # Start from start_page (if specified)
-    if (!is.null(start_page)) {
-        shinyjs::show(start_page)
-    } else {
-        show_first_page()
-    }
 
     # Create a reactive value for show_if
     show_if_reactive <- shiny::reactiveVal(show_if)
