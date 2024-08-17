@@ -96,7 +96,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Admin Page Logic ----
 
     if (config$admin_page) {
-        sd_add_admin_functionality(input, output, session, db)
+        sd_admin_enable(input, output, session, db)
     }
 
     # Progress Bar Tracking ----
@@ -506,7 +506,7 @@ is_question_visible <- function(q, show_if, input) {
 #' @importFrom utils write.csv
 #' @importFrom DT renderDT datatable
 #' @export
-sd_add_admin_functionality <- function(input, output, session, db) {
+sd_admin_enable <- function(input, output, session, db) {
     # Add admin button
     insertUI(
         selector = "body",
@@ -538,7 +538,7 @@ sd_add_admin_functionality <- function(input, output, session, db) {
 
     # Toggle admin section visibility
     observeEvent(input$admin_button, {
-        hide_sd_pages()
+        sd_hide_pages()
         shinyjs::show("admin-section")
         shinyjs::show("login-page")
     })
@@ -587,7 +587,7 @@ sd_add_admin_functionality <- function(input, output, session, db) {
 
         removeUI(selector = "#admin-content")
         updateTextInput(session, "adminpw", value = "")
-        show_sd_pages()
+        sd_show_pages()
     })
 
     # Download Data button functionality
@@ -615,9 +615,9 @@ sd_add_admin_functionality <- function(input, output, session, db) {
 #' @export
 #' @examples
 #' \dontrun{
-#' hide_sd_pages()
+#' sd_hide_pages()
 #' }
-hide_sd_pages <- function() {
+sd_hide_pages <- function() {
     js_code <- "
     (function() {
         var pages = document.querySelectorAll('.sd-page');
@@ -638,9 +638,9 @@ hide_sd_pages <- function() {
 #' @export
 #' @examples
 #' \dontrun{
-#' show_sd_pages()
+#' sd_show_pages()
 #' }
-show_sd_pages <- function() {
+sd_show_pages <- function() {
     js_code <- "
     (function() {
         var pages = document.querySelectorAll('.sd-page');
