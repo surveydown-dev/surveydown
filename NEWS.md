@@ -6,14 +6,12 @@
 - Changed how `sd_store_value()` works to avoid a global environment, and changed the arg name from `name` to `id`.
 - `sd_add_admin` function to react to admin_page condition, if set to true an 'Admin' page will be created for survey creators.
 - `sd_admin_ui` creates the UI for the Admin page button.
-- `hide_sd_pages` function to hide all classes with the tag ".sd-page".
-- `show_sd_pages` function to show all classes with the tag ".sd-page".
 
 **Admin Page** 
 
 1. Creation: Admin page will be created by setting `admin_page` to TRUE inside the `sd_config()` function.
-2. Login: Consists of a single "Password" parameter, this is set to your `SUPABASE_PASSWORD` which was previously used for db setup.
-3. Admin Actions: \
+2. Login: Consists of a single "Password" parameter, this is set using `sd_set_password()`.
+3. Admin page features: \
     3.1. Pause Survey: Once clicked, the shiny app pauses all instances replacing questions with a placeholder "Paused Survey" page. **Status: Non-functional** \
     3.2. Pause DB: Once clicked, the db arugment for `sd_server` will be set to NULL pausing all database uploads. **Status: Non-functional** \
     3.3. Download Survey: Once clicked, the most recent table instance is pulled from the database and downloaded locally as a .csv file. **Status: Functional** \

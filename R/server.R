@@ -538,7 +538,7 @@ sd_admin_enable <- function(input, output, session, db) {
 
     # Toggle admin section visibility
     observeEvent(input$admin_button, {
-        sd_hide_pages()
+        hide_all_pages()
         shinyjs::show("admin-section")
         shinyjs::show("login-page")
     })
@@ -587,7 +587,7 @@ sd_admin_enable <- function(input, output, session, db) {
 
         removeUI(selector = "#admin-content")
         updateTextInput(session, "adminpw", value = "")
-        sd_show_pages()
+        show_first_page()
     })
 
     # Download Data button functionality
@@ -604,51 +604,3 @@ sd_admin_enable <- function(input, output, session, db) {
         }
     )
 }
-
-
-#' Hide All Elements with the .sd-page Class
-#'
-#' This function hides all HTML elements on the page that have the `.sd-page` class.
-#' It uses JavaScript to set the `display` style of these elements to `'none'`, effectively making them invisible on the webpage.
-#'
-#' @import shinyjs
-#' @export
-#' @examples
-#' \dontrun{
-#' sd_hide_pages()
-#' }
-sd_hide_pages <- function() {
-    js_code <- "
-    (function() {
-        var pages = document.querySelectorAll('.sd-page');
-        pages.forEach(function(page) {
-            page.style.display = 'none';
-        });
-    })();
-    "
-    runjs(js_code)
-}
-
-#' Show Only the First Element with the .sd-page Class
-#'
-#' This function shows only the first HTML element on the page that has the `.sd-page` class.
-#' It uses JavaScript to set the `display` style of the first such element to `'block'`, making it visible on the webpage.
-#'
-#' @import shinyjs
-#' @export
-#' @examples
-#' \dontrun{
-#' sd_show_pages()
-#' }
-sd_show_pages <- function() {
-    js_code <- "
-    (function() {
-        var pages = document.querySelectorAll('.sd-page');
-        if (pages.length > 0) {
-            pages[0].style.display = 'block';
-        }
-    })();
-    "
-    runjs(js_code)
-}
-
