@@ -1,22 +1,14 @@
 # surveydown (development version)
 
+# surveydown 0.1.0
+
 - Added `sd_display_value()` for displaying a question value based on the question `id`.
 - Added `sd_copy_value()` for making a copy of a question value, which may be needed if you need to display something more than once since you can't make more than one object with the same `id`.
 - Changed `sd_reactive_output()` to `sd_display_question()`.
 - Changed how `sd_store_value()` works to avoid a global environment, and changed the arg name from `name` to `id`.
-- `sd_add_admin` function to react to admin_page condition, if set to true an 'Admin' page will be created for survey creators.
-- `sd_admin_ui` creates the UI for the Admin page button.
-
-**Admin Page** 
-
-1. Creation: Admin page will be created by setting `admin_page` to TRUE inside the `sd_config()` function.
-2. Login: Consists of a single "Password" parameter, this is set using `sd_set_password()`.
-3. Admin page features: \
-    3.1. Pause Survey: Once clicked, the shiny app pauses all instances replacing questions with a placeholder "Paused Survey" page. **Status: Non-functional** \
-    3.2. Pause DB: Once clicked, the db arugment for `sd_server` will be set to NULL pausing all database uploads. **Status: Non-functional** \
-    3.3. Download Survey: Once clicked, the most recent table instance is pulled from the database and downloaded locally as a .csv file. **Status: Functional** \
-    3.4. Admin Logout and Return to Survey: Once clicked, the admin page will derender itself and return to start of survey. **Status: Functional** \
-    3.5. Survey Data: Pulls most recent instance of the database and displays the data. **Status: Functional**
+- Added `sd_add_admin()` function to react to admin_page condition, if set to true an 'Admin' page will be created for survey creators.
+- Added `sd_admin_ui()` function to create the UI for the Admin page button.
+- (extension) JS files removed from extension to R package. Now the extension only contains the `.lua` file and the css styles.
 
 # surveydown 0.0.9
 

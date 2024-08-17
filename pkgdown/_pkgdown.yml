@@ -27,6 +27,7 @@ articles:
   - control
   - database
   - deploy
+  - adminpage
 
 reference:
 - title: Survey Setup

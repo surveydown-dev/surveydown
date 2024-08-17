@@ -1,0 +1,34 @@
+---
+title: "Admin Page"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Admin Page}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.retina = 3,
+  comment = "#>"
+)
+```
+
+1. Creation: Admin page will be created by setting `admin_page` to TRUE inside the `sd_config()` function.
+
+2. Login: Consists of a single "Password" parameter, this is set using `sd_set_password()`.
+
+3. Admin page features:
+
+    3.1. Pause Survey: Once clicked, the shiny app pauses all instances replacing questions with a placeholder "Paused Survey" page. **Status: Non-functional**
+    
+    3.2. Pause DB: Once clicked, the db arugment for `sd_server` will be set to NULL pausing all database uploads. **Status: Non-functional**
+    
+    3.3. Download Survey: Once clicked, the most recent table instance is pulled from the database and downloaded locally as a .csv file. **Status: Functional**
+    
+    3.4. Admin Logout and Return to Survey: Once clicked, the admin page will derender itself and return to start of survey. **Status: Functional**
+    
+    3.5. Survey Data: Pulls most recent instance of the database and displays the data. **Status: Functional**

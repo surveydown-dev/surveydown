@@ -97,7 +97,11 @@ sd_server <- function(input, output, session, config, db = NULL) {
         show_first_page()
     }
 
-    # Show asteriks for required questions
+    # Load the functions for JS
+    load_js_file("required_questions.js")
+    load_js_file("update_progress.js")
+
+    # Show asterisks for required questions
     session$onFlush(function() {
         shinyjs::runjs(sprintf(
             "console.log('Shiny initialized'); window.initializeRequiredQuestions(%s);",
@@ -113,7 +117,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
     }
 
     # Progress Bar Tracking ----
-
     # Initialize object for storing timestamps
     timestamps <- shiny::reactiveValues(data = initialize_timestamps(page_ids, question_ids))
 
@@ -125,6 +128,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
     if (!is.null(show_if_custom)) {
         handle_custom_show_if_logic(input, show_if_custom)
     }
+
+    # Initialize progress bar update functionality
+    load_js_file("update_progress.js")
 
     # Track the progress
     max_progress <- shiny::reactiveVal(0)
@@ -159,7 +165,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
                     # Calculate progress based on the last answered question
                     current_progress <- last_answered_question() / length(question_ids)
                     max_progress(max(max_progress(), current_progress))
-                    shinyjs::runjs(sprintf("updateProgressBar(%f);", max_progress() * 100))
+
+                    # Use the custom message handler to update the progress bar
+                    session$sendCustomMessage("updateProgressBar", max_progress() * 100)
                 }
             }, ignoreInit = TRUE, ignoreNULL = FALSE)
         })
