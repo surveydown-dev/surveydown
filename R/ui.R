@@ -42,191 +42,191 @@
 #'
 #' @export
 sd_question <- function(
-  type,
-  id,
-  label,
-  cols         = "80",
-  direction    = "horizontal",
-  status       = "default",
-  width        = "100%",
-  height       = "100px",
-  selected     = NULL,
-  label_select = "Choose an option...",
-  grid         = TRUE,
-  individual   = TRUE,
-  justified    = FALSE,
-  force_edges  = TRUE,
-  option       = NULL,
-  placeholder  = NULL,
-  resize       = NULL
+        type,
+        id,
+        label,
+        cols         = "80",
+        direction    = "horizontal",
+        status       = "default",
+        width        = "100%",
+        height       = "100px",
+        selected     = NULL,
+        label_select = "Choose an option...",
+        grid         = TRUE,
+        individual   = TRUE,
+        justified    = FALSE,
+        force_edges  = TRUE,
+        option       = NULL,
+        placeholder  = NULL,
+        resize       = NULL
 ) {
 
-  output <- NULL
+    output <- NULL
 
-  # Always add red asterisk for required questions, but hide it initially
-  label <- paste0(
-    label,
-    " <span class='required-asterisk' style='display:none; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;'>*</span>"
-  )
-
-  if (type ==  "select") {
-    option <- c("", option)
-    names(option)[1] <- label_select
-
-    output <- shiny::selectInput(
-      inputId  = id,
-      label    = markdown_to_html(label),
-      width    = width,
-      choices  = option,
-      multiple = FALSE,
-      selected = FALSE
+    # Always add red asterisk for required questions, but hide it initially
+    label <- paste0(
+        label,
+        " <span class='required-asterisk' style='display:none; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;'>*</span>"
     )
 
-  } else if (type == "mc") {
+    if (type ==  "select") {
+        option <- c("", option)
+        names(option)[1] <- label_select
 
-    output <- shiny::radioButtons(
-      inputId  = id,
-      label    = markdown_to_html(label),
-      width    = width,
-      choices  = option,
-      selected = FALSE
+        output <- shiny::selectInput(
+            inputId  = id,
+            label    = markdown_to_html(label),
+            width    = width,
+            choices  = option,
+            multiple = FALSE,
+            selected = FALSE
+        )
+
+    } else if (type == "mc") {
+
+        output <- shiny::radioButtons(
+            inputId  = id,
+            label    = markdown_to_html(label),
+            width    = width,
+            choices  = option,
+            selected = FALSE
+        )
+
+    } else if (type == "mc_multiple") {
+
+        output <- shiny::checkboxGroupInput(
+            inputId  = id,
+            label    = markdown_to_html(label),
+            width    = width,
+            choices  = option,
+            selected = FALSE
+        )
+
+    } else if (type == "mc_buttons") {
+
+        output <- shinyWidgets::radioGroupButtons(
+            inputId  = id,
+            label    = markdown_to_html(label),
+            choices  = list_name_md_to_html(option),
+            selected = character(0),
+            width    = width,
+            status   = status
+        )
+
+    } else if (type == "mc_multiple_buttons") {
+
+        output <- shinyWidgets::checkboxGroupButtons(
+            inputId    = id,
+            label      = markdown_to_html(label),
+            choices    = list_name_md_to_html(option),
+            direction  = direction,
+            individual = individual,
+            justified  = justified,
+            width      = width
+        )
+
+    } else if (type == "text") {
+
+        output <- shiny::textInput(
+            inputId     = id,
+            label       = markdown_to_html(label),
+            width       = width,
+            placeholder = option
+        )
+
+    } else if (type == "textarea") {
+
+        output <- shiny::textAreaInput(
+            inputId     = id,
+            label       = markdown_to_html(label),
+            width       = width,
+            height      = height,
+            cols        = cols,
+            value       = NULL,
+            rows        = "6",
+            placeholder = placeholder,
+            resize      = resize
+        )
+
+    } else if (type == "numeric") {
+
+        output <- shiny::numericInput(
+            inputId = id,
+            label   = markdown_to_html(label),
+            width   = width,
+            value   = NULL
+        )
+
+    } else if (type == "slider") {
+
+        output <- shinyWidgets::sliderTextInput(
+            inputId      = id,
+            label        = markdown_to_html(label),
+            width        = width,
+            choices      = option,
+            selected     = selected,
+            force_edges  = force_edges,
+            grid         = grid,
+            animate      = FALSE,
+            hide_min_max = FALSE,
+            from_fixed   = FALSE,
+            to_fixed     = FALSE,
+            from_min     = NULL,
+            from_max     = NULL,
+            to_min       = NULL,
+            to_max       = NULL,
+            pre          = NULL,
+            post         = NULL,
+            dragRange    = TRUE
+        )
+
+    } else if (type == "date") {
+
+        output <- shiny::dateInput(
+            inputId            = id,
+            label              = markdown_to_html(label),
+            width              = width,
+            value              = NULL,
+            min                = NULL,
+            max                = NULL,
+            format             = "mm/dd/yyyy",
+            startview          = "month",
+            weekstart          = 0,
+            language           = "en",
+            autoclose          = TRUE,
+            datesdisabled      = NULL,
+            daysofweekdisabled = NULL
+        )
+
+    } else if (type == "daterange") {
+
+        output <- shiny::dateRangeInput(
+            inputId   = id,
+            label     = markdown_to_html(label),
+            width     = width,
+            start     = NULL,
+            end       = NULL,
+            min       = NULL,
+            max       = NULL,
+            format    = "mm/dd/yyyy",
+            startview = "month",
+            weekstart = 0,
+            language  = "en",
+            separator = "-",
+            autoclose = TRUE
+        )
+
+    }
+
+    # Wrap the output in a div with custom data attributes
+    output_div <- shiny::tags$div(
+        id = paste("container-", id),
+        `data-question-id` = id,
+        class = "question-container",
+        output
     )
 
-  } else if (type == "mc_multiple") {
-
-    output <- shiny::checkboxGroupInput(
-      inputId  = id,
-      label    = markdown_to_html(label),
-      width    = width,
-      choices  = option,
-      selected = FALSE
-    )
-
-  } else if (type == "mc_buttons") {
-
-    output <- shinyWidgets::radioGroupButtons(
-      inputId  = id,
-      label    = markdown_to_html(label),
-      choices  = list_name_md_to_html(option),
-      selected = character(0),
-      width    = width,
-      status   = status
-    )
-
-  } else if (type == "mc_multiple_buttons") {
-
-    output <- shinyWidgets::checkboxGroupButtons(
-      inputId    = id,
-      label      = markdown_to_html(label),
-      choices    = list_name_md_to_html(option),
-      direction  = direction,
-      individual = individual,
-      justified  = justified,
-      width      = width
-    )
-
-  } else if (type == "text") {
-
-    output <- shiny::textInput(
-      inputId     = id,
-      label       = markdown_to_html(label),
-      width       = width,
-      placeholder = option
-    )
-
-  } else if (type == "textarea") {
-
-    output <- shiny::textAreaInput(
-      inputId     = id,
-      label       = markdown_to_html(label),
-      width       = width,
-      height      = height,
-      cols        = cols,
-      value       = NULL,
-      rows        = "6",
-      placeholder = placeholder,
-      resize      = resize
-    )
-
-  } else if (type == "numeric") {
-
-    output <- shiny::numericInput(
-      inputId = id,
-      label   = markdown_to_html(label),
-      width   = width,
-      value   = NULL
-    )
-
-  } else if (type == "slider") {
-
-    output <- shinyWidgets::sliderTextInput(
-      inputId      = id,
-      label        = markdown_to_html(label),
-      width        = width,
-      choices      = option,
-      selected     = selected,
-      force_edges  = force_edges,
-      grid         = grid,
-      animate      = FALSE,
-      hide_min_max = FALSE,
-      from_fixed   = FALSE,
-      to_fixed     = FALSE,
-      from_min     = NULL,
-      from_max     = NULL,
-      to_min       = NULL,
-      to_max       = NULL,
-      pre          = NULL,
-      post         = NULL,
-      dragRange    = TRUE
-    )
-
-  } else if (type == "date") {
-
-    output <- shiny::dateInput(
-      inputId            = id,
-      label              = markdown_to_html(label),
-      width              = width,
-      value              = NULL,
-      min                = NULL,
-      max                = NULL,
-      format             = "mm/dd/yyyy",
-      startview          = "month",
-      weekstart          = 0,
-      language           = "en",
-      autoclose          = TRUE,
-      datesdisabled      = NULL,
-      daysofweekdisabled = NULL
-    )
-
-  } else if (type == "daterange") {
-
-    output <- shiny::dateRangeInput(
-      inputId   = id,
-      label     = markdown_to_html(label),
-      width     = width,
-      start     = NULL,
-      end       = NULL,
-      min       = NULL,
-      max       = NULL,
-      format    = "mm/dd/yyyy",
-      startview = "month",
-      weekstart = 0,
-      language  = "en",
-      separator = "-",
-      autoclose = TRUE
-    )
-
-  }
-
-  # Wrap the output in a div with custom data attributes
-  output_div <- shiny::tags$div(
-      id = paste("container-", id),
-      `data-question-id` = id,
-      class = "question-container",
-      output
-  )
-
-  return(output_div)
+    return(output_div)
 }
 
 #' Create a reactive survey question
@@ -243,19 +243,19 @@ sd_question <- function(
 #'
 #' @export
 sd_question_reactive <- function(...) {
-  args <- list(...)
-  id <- args$id
+    args <- list(...)
+    id <- args$id
 
-  shiny::isolate({
-    output <- shiny::getDefaultReactiveDomain()$output
-    if (!is.null(output)) {
-      output[[id]] <- shiny::renderUI({
-        do.call(sd_question, args)
-      })
-    } else {
-      warning("sd_question_reactive was not called within a Shiny reactive context")
-    }
-  })
+    shiny::isolate({
+        output <- shiny::getDefaultReactiveDomain()$output
+        if (!is.null(output)) {
+            output[[id]] <- shiny::renderUI({
+                do.call(sd_question, args)
+            })
+        } else {
+            warning("sd_question_reactive was not called within a Shiny reactive context")
+        }
+    })
 }
 
 #' Create a placeholder for a reactive survey question
@@ -272,46 +272,51 @@ sd_question_reactive <- function(...) {
 #'
 #' @export
 sd_display_question <- function(id) {
-  shiny::div(
-    id = paste0("placeholder-", id),
-    `data-question-id` = id,
-    class = "question-container reactive-question-placeholder",
-    shiny::uiOutput(id)
-  )
+    shiny::div(
+        id = paste0("placeholder-", id),
+        `data-question-id` = id,
+        class = "question-container reactive-question-placeholder",
+        shiny::uiOutput(id)
+    )
 }
 
 #' Display the value of a survey question
 #'
 #' @param id The ID of the question to display
 #' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
-#' @param wrapper A function to wrap the output (e.g., tags$h1, tags$strong)
+#' @param wrapper A function to wrap the output (e.g., htmltools::tags$h1, htmltools::tags$strong)
 #' @param ... Additional arguments passed to the wrapper function
 #'
 #' @return A Shiny UI element displaying the question's value
 #'
+#' @importFrom htmltools tags
+#' @importFrom shiny textOutput verbatimTextOutput uiOutput
+#'
 #' @examples
 #' sd_display_value("name")
 #' sd_display_value("age", display_type = "text")
-#' sd_display_value("email", display_type = "inline", wrapper = tags$strong)
+#' \dontrun{
+#'   sd_display_value("email", display_type = "inline", wrapper = htmltools::tags$strong)
+#' }
 #'
 #' @export
 sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
-  value_id <- paste0(id, "_value")
+    value_id <- paste0(id, "_value")
 
-  output <- switch(
-    display_type,
-    "inline" = shiny::textOutput(value_id, inline = TRUE),
-    "text" = shiny::textOutput(value_id),
-    "verbatim" = shiny::verbatimTextOutput(value_id),
-    "ui" = shiny::uiOutput(value_id),
-    stop("Invalid display_type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
-  )
+    output <- switch(
+        display_type,
+        "inline" = shiny::textOutput(value_id, inline = TRUE),
+        "text" = shiny::textOutput(value_id),
+        "verbatim" = shiny::verbatimTextOutput(value_id),
+        "ui" = shiny::uiOutput(value_id),
+        stop("Invalid display_type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
+    )
 
-  if (!is.null(wrapper)) {
-    output <- wrapper(output, ...)
-  }
+    if (!is.null(wrapper)) {
+        output <- wrapper(output, ...)
+    }
 
-  return(output)
+    return(output)
 }
 
 #' Store a custom value
@@ -334,22 +339,22 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #'
 #' @export
 sd_store_value <- function(value, id = NULL) {
-  if (is.null(id)) {
-    id <- deparse(substitute(value))
-  }
-
-  shiny::isolate({
-    session <- shiny::getDefaultReactiveDomain()
-    if (is.null(session)) {
-      stop("sd_store_value must be called from within a Shiny reactive context")
+    if (is.null(id)) {
+        id <- deparse(substitute(value))
     }
-    if (is.null(session$userData$custom_values)) {
-      session$userData$custom_values <- list()
-    }
-    session$userData$custom_values[[id]] <- value
-  })
 
-  invisible(NULL)
+    shiny::isolate({
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            stop("sd_store_value must be called from within a Shiny reactive context")
+        }
+        if (is.null(session$userData$custom_values)) {
+            session$userData$custom_values <- list()
+        }
+        session$userData$custom_values[[id]] <- value
+    })
+
+    invisible(NULL)
 }
 
 #' Create a copy of an input value
@@ -372,20 +377,20 @@ sd_store_value <- function(value, id = NULL) {
 #'
 #' @export
 sd_copy_value <- function(id, id_copy) {
-  if (id == id_copy) {
-    stop("The 'id_copy' must be different from the 'id'")
-  }
-  shiny::isolate({
-    output <- shiny::getDefaultReactiveDomain()$output
-    input <- shiny::getDefaultReactiveDomain()$input
-    output_id <- paste0(id_copy, "_value")
-    if (!is.null(output)) {
-      output[[output_id]] <- shiny::renderText({ input[[id]] })
-    } else {
-      warning("sd_copy_value was not called within a Shiny reactive context")
+    if (id == id_copy) {
+        stop("The 'id_copy' must be different from the 'id'")
     }
-  })
-  invisible(NULL)
+    shiny::isolate({
+        output <- shiny::getDefaultReactiveDomain()$output
+        input <- shiny::getDefaultReactiveDomain()$input
+        output_id <- paste0(id_copy, "_value")
+        if (!is.null(output)) {
+            output[[output_id]] <- shiny::renderText({ input[[id]] })
+        } else {
+            warning("sd_copy_value was not called within a Shiny reactive context")
+        }
+    })
+    invisible(NULL)
 }
 
 #' Create a 'Next' Button for Page Navigation
@@ -406,16 +411,16 @@ sd_copy_value <- function(id, id_copy) {
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
-  if (is.null(next_page)) {
-    stop("You must specify the current_page for the 'Next' button.")
-  }
+    if (is.null(next_page)) {
+        stop("You must specify the current_page for the 'Next' button.")
+    }
 
-  shiny::actionButton(
-    inputId = make_next_button_id(next_page),
-    label   = label,
-    style   = "display: block; margin: auto;",
-    onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
-  )
+    shiny::actionButton(
+        inputId = make_next_button_id(next_page),
+        label   = label,
+        style   = "display: block; margin: auto;",
+        onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
+    )
 }
 
 #' Generate Next Button ID
@@ -428,7 +433,7 @@ sd_next <- function(next_page = NULL, label = "Next") {
 #'
 #' @keywords internal
 make_next_button_id <- function(next_page) {
-  return(paste0("next-", next_page))
+    return(paste0("next-", next_page))
 }
 
 

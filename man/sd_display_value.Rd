@@ -11,7 +11,7 @@ sd_display_value(id, display_type = "inline", wrapper = NULL, ...)
 
 \item{display_type}{The type of display. Can be "inline" (default), "text", "verbatim", or "ui".}
 
-\item{wrapper}{A function to wrap the output (e.g., tags$h1, tags$strong)}
+\item{wrapper}{A function to wrap the output (e.g., htmltools::tags$h1, htmltools::tags$strong)}
 
 \item{...}{Additional arguments passed to the wrapper function}
 }
@@ -24,6 +24,8 @@ Display the value of a survey question
 \examples{
 sd_display_value("name")
 sd_display_value("age", display_type = "text")
-sd_display_value("email", display_type = "inline", wrapper = tags$strong)
+\dontrun{
+  sd_display_value("email", display_type = "inline", wrapper = htmltools::tags$strong)
+}
 
 }

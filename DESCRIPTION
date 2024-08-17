@@ -32,6 +32,7 @@ Suggests:
 Imports:
     bslib,
     DBI,
+    DT,
     htmltools,
     markdown,
     readr,
