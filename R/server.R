@@ -83,7 +83,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
     start_page     <- config$start_page
     question_required <- config$question_required
 
-
     # Show asteriks for required questions
     session$onFlush(function() {
         shinyjs::runjs(sprintf(
@@ -154,10 +153,14 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Page Navigation ----
 
+    # Hide all pages on startup
+    hide_all_pages()
+
     # Start from start_page (if specified)
     if (!is.null(start_page)) {
-        shinyjs::runjs("hideAllPages();")
         shinyjs::show(start_page)
+    } else {
+        show_first_page()
     }
 
     # Create a reactive value for show_if
@@ -183,7 +186,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 )
 
                 if (all_required_answered) {
-                    shinyjs::runjs("hideAllPages();")
+                    hide_all_pages()
                     shinyjs::show(next_page)
                 } else {
                     shinyjs::alert("Please answer all required questions before proceeding.")

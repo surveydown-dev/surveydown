@@ -7,7 +7,7 @@ hide_all_pages <- function() {
         });
     })();
     "
-    runjs(js_code)
+    shinyjs::runjs(js_code)
 }
 
 show_first_page <- function() {
@@ -19,6 +19,6 @@ show_first_page <- function() {
         }
     })();
     "
-    runjs(js_code)
+    shinyjs::runjs(js_code)
 }
 
