@@ -2,6 +2,7 @@
 <url><loc>https://jhelvy.github.io/surveydown/404.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/LICENSE-text.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/LICENSE.html</loc></url>
+<url><loc>https://jhelvy.github.io/surveydown/articles/adminpage.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/articles/content.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/articles/control.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/articles/database.html</loc></url>
@@ -32,10 +33,12 @@
 <url><loc>https://jhelvy.github.io/surveydown/reference/handle_custom_show_if_logic.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/handle_custom_skip_logic.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/handle_skip_logic.html</loc></url>
+<url><loc>https://jhelvy.github.io/surveydown/reference/hide_all_pages.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/index.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/initialize_timestamps.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/is_question_visible.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/list_name_md_to_html.html</loc></url>
+<url><loc>https://jhelvy.github.io/surveydown/reference/load_js_file.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/make_next_button_id.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/make_ts_name.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/markdown_to_html.html</loc></url>
@@ -58,6 +61,7 @@
 <url><loc>https://jhelvy.github.io/surveydown/reference/sd_store_value.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/sd_update_extension.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/sd_update_surveydown.html</loc></url>
+<url><loc>https://jhelvy.github.io/surveydown/reference/show_first_page.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/transform_data.html</loc></url>
 <url><loc>https://jhelvy.github.io/surveydown/reference/vector_to_json_array.html</loc></url>
 </urlset>

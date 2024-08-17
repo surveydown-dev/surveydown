@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Installation • surveydown</title>
+<title>Admin Page • surveydown</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Installation">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Admin Page">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -77,71 +77,39 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Installation</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Admin Page</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/jhelvy/surveydown/blob/main/vignettes/install.Rmd" class="external-link"><code>vignettes/install.Rmd</code></a></small>
-      <div class="d-none name"><code>install.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/jhelvy/surveydown/blob/main/vignettes/adminpage.Rmd" class="external-link"><code>vignettes/adminpage.Rmd</code></a></small>
+      <div class="d-none name"><code>adminpage.Rmd</code></div>
     </div>
 
     
     
-<div class="section level2">
-<h2 id="install-r-quarto">Install R &amp; Quarto<a class="anchor" aria-label="anchor" href="#install-r-quarto"></a>
-</h2>
-<p>You need both:</p>
-<ul>
-<li><a href="https://CRAN.R-project.org/" class="external-link">Install R</a></li>
-<li><a href="https://quarto.org/docs/get-started/" class="external-link">Install
-Quarto</a></li>
-</ul>
-<p>Also, we recommend working with an IDE. <a href="https://www.rstudio.com/categories/rstudio-ide/" class="external-link">RStudio</a> is
-great, and we also like <a href="https://code.visualstudio.com" class="external-link">VS
-Code</a> and <a href="https://github.com/posit-dev/positron" class="external-link">Positron</a>.</p>
-</div>
-<div class="section level2">
-<h2 id="install-the-surveydown-r-package">Install the {surveydown} R package<a class="anchor" aria-label="anchor" href="#install-the-surveydown-r-package"></a>
-</h2>
-<p>{surveydown} is not yet on CRAN, but you can install the development
-version from GitHub with the following command in R:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"jhelvy/surveydown"</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="install-the-surveydown-quarto-extension">Install the surveydown Quarto Extension<a class="anchor" aria-label="anchor" href="#install-the-surveydown-quarto-extension"></a>
-</h2>
-<p>Once you start working on an actual survey, you’ll need the <a href="https://github.com/jhelvy/surveydown-ext" class="external-link">surveydown Quarto
-extension</a>. We recommend starting with a template survey, which will
-automatically add the latest extension for you:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_create_survey.html">sd_create_survey</a></span><span class="op">(</span><span class="st">"path/to/folder"</span><span class="op">)</span></span></code></pre></div>
-<p>Otherwise, you can install the extension using the <em>terminal</em>
-or with the {surveydown} package:</p>
-<ul>
-<li>Using the <em>Terminal</em>:</li>
-</ul>
-<pre><code>quarto install extension jhelvy/surveydown-ext</code></pre>
-<ul>
-<li>Using the {surveydown} R package:</li>
-</ul>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_update_extension.html">sd_update_extension</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level2">
-<h2 id="version-control">Version Control<a class="anchor" aria-label="anchor" href="#version-control"></a>
-</h2>
-<p>To check if you have the latest R package and Quarto extension
-versions installed, run:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_check_versions.html">sd_check_versions</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>To update the R package and Quarto extension to the latest
-version:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_update_surveydown.html">sd_update_surveydown</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
-    </nav></aside>
+<ol style="list-style-type: decimal">
+<li><p>Creation: Admin page will be created by setting
+<code>admin_page</code> to TRUE inside the <code><a href="../reference/sd_config.html">sd_config()</a></code>
+function.</p></li>
+<li><p>Login: Consists of a single “Password” parameter, this is set
+using <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code>.</p></li>
+<li>
+<p>Admin page features:</p>
+<p>3.1. Pause Survey: Once clicked, the shiny app pauses all instances
+replacing questions with a placeholder “Paused Survey” page.
+<strong>Status: Non-functional</strong></p>
+<p>3.2. Pause DB: Once clicked, the db arugment for
+<code>sd_server</code> will be set to NULL pausing all database uploads.
+<strong>Status: Non-functional</strong></p>
+<p>3.3. Download Survey: Once clicked, the most recent table instance is
+pulled from the database and downloaded locally as a .csv file.
+<strong>Status: Functional</strong></p>
+<p>3.4. Admin Logout and Return to Survey: Once clicked, the admin page
+will derender itself and return to start of survey. <strong>Status:
+Functional</strong></p>
+<p>3.5. Survey Data: Pulls most recent instance of the database and
+displays the data. <strong>Status: Functional</strong></p>
+</li>
+</ol></main>
 </div>
 
 

@@ -26,6 +26,7 @@
     <li><a class="dropdown-item" href="../articles/control.html">Control Logic</a></li>
     <li><a class="dropdown-item" href="../articles/database.html">Database Setup</a></li>
     <li><a class="dropdown-item" href="../articles/deploy.html">Deploying Your Survey</a></li>
+    <li><a class="dropdown-item" href="../articles/adminpage.html">Admin Page</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -50,25 +51,17 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.1.0" id="surveydown-010">surveydown 0.1.0<a class="anchor" aria-label="anchor" href="#surveydown-010"></a></h2>
 <ul><li>Added <code><a href="../reference/sd_display_value.html">sd_display_value()</a></code> for displaying a question value based on the question <code>id</code>.</li>
 <li>Added <code><a href="../reference/sd_copy_value.html">sd_copy_value()</a></code> for making a copy of a question value, which may be needed if you need to display something more than once since you can’t make more than one object with the same <code>id</code>.</li>
 <li>Changed <code>sd_reactive_output()</code> to <code><a href="../reference/sd_display_question.html">sd_display_question()</a></code>.</li>
 <li>Changed how <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code> works to avoid a global environment, and changed the arg name from <code>name</code> to <code>id</code>.</li>
-<li>
-<code>sd_add_admin</code> function to react to admin_page condition, if set to true an ‘Admin’ page will be created for survey creators.</li>
-<li>
-<code>sd_admin_ui</code> creates the UI for the Admin page button.</li>
-</ul><p><strong>Admin Page</strong></p>
-<ol style="list-style-type: decimal"><li>Creation: Admin page will be created by setting <code>admin_page</code> to TRUE inside the <code><a href="../reference/sd_config.html">sd_config()</a></code> function.</li>
-<li>Login: Consists of a single “Password” parameter, this is set using <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code>.</li>
-<li>Admin page features:<br>
-3.1. Pause Survey: Once clicked, the shiny app pauses all instances replacing questions with a placeholder “Paused Survey” page. <strong>Status: Non-functional</strong><br>
-3.2. Pause DB: Once clicked, the db arugment for <code>sd_server</code> will be set to NULL pausing all database uploads. <strong>Status: Non-functional</strong><br>
-3.3. Download Survey: Once clicked, the most recent table instance is pulled from the database and downloaded locally as a .csv file. <strong>Status: Functional</strong><br>
-3.4. Admin Logout and Return to Survey: Once clicked, the admin page will derender itself and return to start of survey. <strong>Status: Functional</strong><br>
-3.5. Survey Data: Pulls most recent instance of the database and displays the data. <strong>Status: Functional</strong>
-</li>
-</ol></div>
+<li>Added <code>sd_add_admin()</code> function to react to admin_page condition, if set to true an ‘Admin’ page will be created for survey creators.</li>
+<li>Added <code><a href="../reference/sd_admin_ui.html">sd_admin_ui()</a></code> function to create the UI for the Admin page button.</li>
+<li>(extension) JS files removed from extension to R package. Now the extension only contains the <code>.lua</code> file and the css styles.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.9" id="surveydown-009">surveydown 0.0.9<a class="anchor" aria-label="anchor" href="#surveydown-009"></a></h2>
 <ul><li>Required questions are now moved to <code><a href="../reference/sd_config.html">sd_config()</a></code> as a separate <code>required_questions</code> argument, instead of being defined in <code><a href="../reference/sd_question.html">sd_question()</a></code>.</li>
