@@ -45,5 +45,5 @@ Imports:
     usethis,
     utils,
     yaml
-URL: https://github.com/jhelvy/surveydown
-BugReports: https://github.com/jhelvy/surveydown/issues
+URL: https://github.com/surveydown-dev/surveydown
+BugReports: https://github.com/surveydown-dev/surveydown/issues
