@@ -2,16 +2,16 @@ pandoc: 3.1.11
 pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
-  adminpage: adminpage.html
+  config: config.html
   content: content.html
-  control: control.html
   database: database.html
   deploy: deploy.html
   formatting: formatting.html
   install: install.html
+  password: password.html
   questions: questions.html
   surveydown: surveydown.html
-last_built: 2024-08-17T20:48Z
+last_built: 2024-08-18T18:09Z
 urls:
   reference: https://jhelvy.github.io/surveydown/reference
   article: https://jhelvy.github.io/surveydown/articles

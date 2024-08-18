@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Database Setup • surveydown</title>
+<title>Database • surveydown</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -16,7 +16,7 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Database Setup">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Database">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -44,10 +44,10 @@
     <li><a class="dropdown-item" href="../articles/content.html">Survey Content</a></li>
     <li><a class="dropdown-item" href="../articles/questions.html">Question Types</a></li>
     <li><a class="dropdown-item" href="../articles/formatting.html">Formatting Your Survey</a></li>
-    <li><a class="dropdown-item" href="../articles/control.html">Control Logic</a></li>
-    <li><a class="dropdown-item" href="../articles/database.html">Database Setup</a></li>
+    <li><a class="dropdown-item" href="../articles/password.html">Setting a Password</a></li>
+    <li><a class="dropdown-item" href="../articles/config.html">Configuration Options</a></li>
+    <li><a class="dropdown-item" href="../articles/database.html">Database</a></li>
     <li><a class="dropdown-item" href="../articles/deploy.html">Deploying Your Survey</a></li>
-    <li><a class="dropdown-item" href="../articles/adminpage.html">Admin Page</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -56,7 +56,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/jhelvy/surveydown/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/surveydown-dev/surveydown/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -77,10 +77,10 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Database Setup</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Database</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/jhelvy/surveydown/blob/main/vignettes/database.Rmd" class="external-link"><code>vignettes/database.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/surveydown-dev/surveydown/blob/main/vignettes/database.Rmd" class="external-link"><code>vignettes/database.Rmd</code></a></small>
       <div class="d-none name"><code>database.Rmd</code></div>
     </div>
 
@@ -91,163 +91,91 @@
 of SurveyDown for quick &amp; live server updates</p>
 </blockquote>
 <div class="section level2">
-<h2 id="step-1-creating-your-account-">Step 1: Creating your account.<a class="anchor" aria-label="anchor" href="#step-1-creating-your-account-"></a>
+<h2 id="step-1-create-your-account">Step 1: Create your account<a class="anchor" aria-label="anchor" href="#step-1-create-your-account"></a>
 </h2>
-<p style="font-size: 18px;">
-To begin your database setup that involves creating an account on the <a href="https://supabase.com/" class="external-link">supabase</a> website.
-</p>
+<p>Navigate to <a href="https://supabase.com/" class="external-link">supabase</a> website and
+create an account.</p>
 </div>
 <div class="section level2">
-<h2 id="step-2-creating-your-account-">Step 2: Creating your account.<a class="anchor" aria-label="anchor" href="#step-2-creating-your-account-"></a>
+<h2 id="step-2-start-a-project">Step 2: Start a project<a class="anchor" aria-label="anchor" href="#step-2-start-a-project"></a>
 </h2>
-<p style="font-size: 18px;">
-From the Main page, select “Start your Project” underlined in <span style="color:red; text-decoration:underline;"> red</span>.
-</p>
+<p>From the Main page, select “Start your Project” underlined in
+red.</p>
 <p><img src="images/main_pageS2.png" alt="drawing" width="700"></p>
 </div>
 <div class="section level2">
-<h2 id="step-3-creating-your-database-">Step 3: Creating your database.<a class="anchor" aria-label="anchor" href="#step-3-creating-your-database-"></a>
+<h2 id="step-3-create-a-project">Step 3: Create a project<a class="anchor" aria-label="anchor" href="#step-3-create-a-project"></a>
 </h2>
-<p style="font-size: 18px;">
-After creating your new account proceed to your dashboard, and select
-“New Project”
-</p>
+<p>After creating your new account proceeding to your dashboard, select
+“New Project”.</p>
 <p><img src="images/main_pageS3.png" alt="drawing" width="700"></p>
 </div>
 <div class="section level2">
-<h2 id="step-4-creating-your-database-">Step 4: Creating your database.<a class="anchor" aria-label="anchor" href="#step-4-creating-your-database-"></a>
+<h2 id="step-4-create-a-database">Step 4: Create a database<a class="anchor" aria-label="anchor" href="#step-4-create-a-database"></a>
 </h2>
-<p style="font-size: 18px;">
-The next step is to create your respective database, be sure to take
-note of the database password as this will be needed later on.
-</p>
+<p>The next step is to create your respective database. Here you
+<strong>must</strong> use the password you created for your survey
+project (see <code><a href="../articles/password.html">vignette("password")</a></code>).</p>
 <p><img src="images/main_pageS4.png" alt="drawing" width="700"></p>
 </div>
 <div class="section level2">
-<h2 id="step-5-finding-our-db-parameters-">Step 5: Finding our DB parameters.<a class="anchor" aria-label="anchor" href="#step-5-finding-our-db-parameters-"></a>
+<h2 id="step-5-find-the-db-parameters">Step 5: Find the DB parameters<a class="anchor" aria-label="anchor" href="#step-5-find-the-db-parameters"></a>
 </h2>
-<p style="font-size: 18px;">
-While on your project dashboard select the settings gear in the bottom
-left.
-</p>
+<p>While on your project dashboard select the settings gear in the
+bottom left, then select “Database”.</p>
 <p><img src="images/main_pageS5.png" alt="drawing" width="700"></p>
+<p><img src="images/main_pageS6.png" alt="drawing" width="500"></p>
 </div>
 <div class="section level2">
-<h2 id="step-6-finding-our-db-parameters-">Step 6: Finding our DB parameters.<a class="anchor" aria-label="anchor" href="#step-6-finding-our-db-parameters-"></a>
+<h2 id="step-6-copy-the-db-parameters">Step 6: Copy the DB parameters<a class="anchor" aria-label="anchor" href="#step-6-copy-the-db-parameters"></a>
 </h2>
-<p style="font-size: 18px;">
-Select “Database” under configuration.
-</p>
-<p><img src="images/main_pageS6.png" alt="drawing" width="700"></p>
-</div>
-<div class="section level2">
-<h2 id="step-7-finding-our-db-parameters-">Step 7: Finding our DB parameters.<a class="anchor" aria-label="anchor" href="#step-7-finding-our-db-parameters-"></a>
-</h2>
-<p style="font-size: 18px;">
-Take note of all the of the connection parameters, as well as the
-database password in Step 4.
-</p>
+<p>Copy the all of the connection parameters to your database.</p>
 <p><img src="images/main_pageS7.png" alt="drawing" width="700"></p>
 </div>
 <div class="section level2">
-<h2 id="step-8-taking-a-look-at-the-sd_database-function-">Step 8: Taking a look at the sd_database() function.<a class="anchor" aria-label="anchor" href="#step-8-taking-a-look-at-the-sd_database-function-"></a>
+<h2 id="step-7-update-the-arguments-in-sd_database">Step 7: Update the arguments in <code>sd_database()</code><a class="anchor" aria-label="anchor" href="#step-7-update-the-arguments-in-sd_database"></a>
 </h2>
-<p style="font-size: 18px;">
-Now that we’ve created our database and have gotten all the needed
-parameters we can now connect the database to our survey. Taking a look
-at our code inside of our <strong>survey.qmd</strong> file you may
-notice the 6 parameters, 5 of which we’ve discovered earlier. The last
-parameter would be “table_name”, this parameter can be any name of your
-choosing.
-</p>
-<p><em>Note: All parameters currently listed as NULL must be wrapped in
-quotes when replaced.</em></p>
+<p>Now that we’ve created our database and have gotten all the needed
+parameters we can now connect the database to our survey.</p>
+<p>Taking a look at our code inside of our <strong>survey.qmd</strong>
+file you will notice five arguments in <code><a href="../reference/sd_database.html">sd_database()</a></code>. This
+is where you will replace the <code>NULL</code> values with the ones you
+copied from your database. The last argument, <code>table_name</code>,
+can be any name of your choosing.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># surveydown stores data on a database that you define at https://supabase.com/</span></span>
-<span><span class="co"># To connect to a database to store the survey data, update this with details</span></span>
-<span><span class="co"># from your supabase account and database. See documentation for details.</span></span>
-<span><span class="co"># For security, we recommend storing your supabase password in your R</span></span>
-<span><span class="co"># environment instead of hard-coding it here, which you can open and edit with</span></span>
-<span><span class="co"># usethis::edit_r_environ()</span></span>
-<span></span>
-<span> <span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
-<span>   host       <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>   db_name    <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>   port       <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>   user       <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>   table_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>   password   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SUPABASE_PASSWORD"</span><span class="op">)</span></span>
-<span> <span class="op">)</span></span>
-<span></span>
-<span><span class="co"># If you don't have a database setup you can just leave the function blank.</span></span>
-<span></span>
-<span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p style="font-size: 18px;">
-As you may also notice db is defined twice. After putting in your
-parameters in their respective places make sure to delete the line:
-</p>
+<code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
+<span>  host       <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  db_name    <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  port       <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  user       <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  table_name <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>If you don’t have a database setup yet, you can just leave the
+function blank and your survey will still run, just without any response
+data being stored:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p style="font-size: 18px;">
-You may also notice that our <strong>password</strong> parameter is
-hidden inside of our R environment. This is for security reasons and is
-recommended.
-</p>
 </div>
 <div class="section level2">
-<h2 id="step-9-putting-the-dasebase-password-inside-of-the-r-env-">Step 9: Putting the dasebase Password inside of the R env.<a class="anchor" aria-label="anchor" href="#step-9-putting-the-dasebase-password-inside-of-the-r-env-"></a>
+<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
 </h2>
-<p style="font-size: 18px;">
-This step shows how to put your database password inside of the R
-environment.
-</p>
-<div class="section level3">
-<h3 id="first-open-the-r-environment-">First: Open the R environment.<a class="anchor" aria-label="anchor" href="#first-open-the-r-environment-"></a>
-</h3>
-<p>This should open up a new R tab called <em>“.Renviron”</em></p>
+<p>An example of what the function should look like after you have
+updated all the parameters is below:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">usethis</span><span class="fu">::</span><span class="fu"><a href="https://usethis.r-lib.org/reference/edit.html" class="external-link">edit_r_environ</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="second-edit-r-environment-">Second: Edit R environment.<a class="anchor" aria-label="anchor" href="#second-edit-r-environment-"></a>
-</h3>
-<p>Add in your database password.</p>
-<p><em>Note: This does not need to be wrapped in quotes</em></p>
-<p>SUPABASE_PASSWORD=######</p>
-</div>
-<div class="section level3">
-<h3 id="third-restart-your-r-session">Third: Restart your R session<a class="anchor" aria-label="anchor" href="#third-restart-your-r-session"></a>
-</h3>
-<p>This can be done by going to <em>“Session”</em> -&gt; <em>“Restart
-R”</em> or by doing the shortcut <em>“Cmd + Shift + 0”</em> on Mac.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="step-10-bringing-it-all-together-">Step 10: Bringing it all together.<a class="anchor" aria-label="anchor" href="#step-10-bringing-it-all-together-"></a>
-</h2>
-<p style="font-size: 18px;">
-Now that we have our password secure and all other parameters we can
-update our sd_database() function from Step 8 to look like this:
-</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span> <span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
-<span>   host       <span class="op">=</span> <span class="st">"aws-0-us-west-1.pooler.supabase.com"</span>, <span class="co">#This varies based on location,</span></span>
-<span>                                                       <span class="co">#check Step 7.</span></span>
-<span>   db_name    <span class="op">=</span> <span class="st">"postgres"</span>, <span class="co"># For the purpose of supabase, this will always be "postgres".</span></span>
-<span>   port       <span class="op">=</span> <span class="st">"####"</span>, <span class="co"># Your 4 digit port number from Step 7.</span></span>
-<span>   user       <span class="op">=</span> <span class="st">"postgres.UserValue"</span>, <span class="co"># This is the User parameter from Step 7.</span></span>
-<span>   table_name <span class="op">=</span> <span class="st">"What Ever Name You Want"</span>, <span class="co"># This is what your table name will be.</span></span>
-<span>   password   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SUPABASE_PASSWORD"</span><span class="op">)</span> <span class="co">#Database password - Steps 4 and 9.</span></span>
-<span> <span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sd_database.html">sd_database</a></span><span class="op">(</span></span>
+<span>  host       <span class="op">=</span> <span class="st">"aws-0-us-west-1.pooler.supabase.com"</span>, </span>
+<span>  db_name    <span class="op">=</span> <span class="st">"postgres"</span>, <span class="co"># For the purpose of supabase, this will always be "postgres".</span></span>
+<span>  port       <span class="op">=</span> <span class="st">"1234"</span>, </span>
+<span>  user       <span class="op">=</span> <span class="st">"postgres.UserValue"</span>,</span>
+<span>  table_name <span class="op">=</span> <span class="st">"my_table_name"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="tada">Tada!!!<a class="anchor" aria-label="anchor" href="#tada"></a>
 </h2>
-<p style="font-size: 18px;">
-Going back to your Project dashboard and selecting <em>“Table
+<p>Going back to your Project dashboard and selecting <em>“Table
 Editor”</em> on the left hand bar tab you should see your table appear
-once your survey is run and interacted with atleast once.
-</p>
+once your survey is run and interacted with atleast once.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
