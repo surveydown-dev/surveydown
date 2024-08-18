@@ -7,7 +7,12 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+```{r}
+#| label: setup
+#| include: false
+#| message: false
+#| warning: false
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
@@ -234,16 +239,15 @@ Finally, `sd_question()` has a `required` argument that can be used to make a qu
 
 At the very bottom of the .qmd file is a special "server" code chunk (that's the `#| context: server` bit) that defines the app server. This is where you can customize and control the survey flow logic as well as where you define the database that will store the survey response data. It looks like this:
 
-
 ````
 `r ''````{r}
 #| context: server
 
-# Define the database settings
-db <- sd_database()
-
 # Define the configuration settings
 config <- sd_config()
+
+# Define the database settings
+db <- sd_database()
 
 # The sd_server() function initiates your survey - don't change this
 sd_server(
@@ -255,8 +259,9 @@ sd_server(
 ```
 ````
 
-The `sd_server()` function at the bottom makes everything run, which you can safely ignore - just don't change it and all will be good!
+The `sd_config()` function is where you can define configuration options for the survey, such as *conditional display* (conditionally displaying a question based on responses to questions), or *conditional skip* (conditionally sending the respondent to a page based on responses to questions). See `vignette("config")` for details.
 
 The `sd_database()` function is where you set up your database. See `vignette("database")` for details.
 
-The `sd_config()` function is where you can define custom control logic for the survey, such as *conditional display* (conditionally displaying a question based on responses to questions), or *conditional skip* (conditionally sending the respondent to a page based on responses to questions). See `vignette("control")`
+The `sd_server()` function at the bottom makes everything run, which you can safely ignore - just don't change it and all will be good!
+

@@ -24,10 +24,10 @@ articles:
   - content
   - questions
   - formatting
-  - control
+  - password
+  - config
   - database
   - deploy
-  - adminpage
 
 reference:
 - title: Survey Setup

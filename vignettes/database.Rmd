@@ -1,17 +1,23 @@
 ---
-title: "Database Setup"
+title: "Database"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Database Setup}
+  %\VignetteIndexEntry{Database}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 ---
 
-```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+```{r}
+#| label: setup
+#| include: false
+#| message: false
+#| warning: false
+
 knitr::opts_chunk$set(
   collapse = TRUE,
   warning = FALSE,
   message = FALSE,
+  eval = FALSE,
   fig.retina = 3,
   comment = "#>"
 )
@@ -20,170 +26,79 @@ knitr::opts_chunk$set(
 > This guide will help users set up a supabase account to work inside of SurveyDown 
 for quick & live server updates
 
-# Step 1: Creating your account.
+# Step 1: Create your account
 
-<p style="font-size: 18px;"> To begin your database setup that involves creating an account on the [supabase](https://supabase.com/) website.
-</p>
+Navigate to [supabase](https://supabase.com/) website and create an account.
 
-# Step 2: Creating your account.
+# Step 2: Start a project
 
-<p style="font-size: 18px;"> 
-From the Main page, select "Start your Project" underlined in <span style="color:red; text-decoration:underline;"> red</span>.
-</p>
+From the Main page, select "Start your Project" underlined in red.
 
 <img src="images/main_pageS2.png" alt="drawing" width="700"/>
 
+# Step 3: Create a project
 
-# Step 3: Creating your database.
-
-<p style="font-size: 18px;">
-After creating your new account proceed to your dashboard, and select "New Project"
-</p>
+After creating your new account proceeding to your dashboard, select "New Project".
 
 <img src="images/main_pageS3.png" alt="drawing" width="700"/>
 
-# Step 4: Creating your database.
+# Step 4: Create a database
 
-<p style="font-size: 18px;">
-The next step is to create your respective database, be sure to take note of the database password as this will be needed later on.
-</p>
+The next step is to create your respective database. Here you **must** use the password you created for your survey project (see `vignette("password")`).
 
 <img src="images/main_pageS4.png" alt="drawing" width="700"/>
 
-# Step 5: Finding our DB parameters.
+# Step 5: Find the DB parameters
 
-<p style="font-size: 18px;">
-While on your project dashboard select the settings gear in the bottom left.
-</p>
+While on your project dashboard select the settings gear in the bottom left, then select "Database".
 
 <img src="images/main_pageS5.png" alt="drawing" width="700"/>
 
-# Step 6: Finding our DB parameters.
+<img src="images/main_pageS6.png" alt="drawing" width="500"/>
 
-<p style="font-size: 18px;">
-Select "Database" under configuration.
-</p>
+# Step 6: Copy the DB parameters
 
-<img src="images/main_pageS6.png" alt="drawing" width="700"/>
-
-# Step 7: Finding our DB parameters.
-
-<p style="font-size: 18px;">
-Take note of all the of the connection parameters, as well as the database password in Step 4.
-</p>
+Copy the all of the connection parameters to your database.
 
 <img src="images/main_pageS7.png" alt="drawing" width="700"/>
 
-# Step 8: Taking a look at the sd_database() function.
+# Step 7: Update the arguments in `sd_database()`
 
-<p style="font-size: 18px;">
 Now that we've created our database and have gotten all the needed parameters we can now connect the database to our survey.
-Taking a look at our code inside of our **survey.qmd** file you may notice the 6 parameters, 5 of which we've discovered earlier. The last parameter would be "table_name", this parameter can be any name of your choosing. </p>
 
-*Note: All parameters currently listed as NULL must be wrapped in quotes when replaced.*
+Taking a look at our code inside of our **survey.qmd** file you will notice five arguments in `sd_database()`. This is where you will replace the `NULL` values with the ones you copied from your database. The last argument, `table_name`, can be any name of your choosing.
 
 ```{r}
-#| eval: false
+db <- sd_database(
+  host       = NULL,
+  db_name    = NULL,
+  port       = NULL,
+  user       = NULL,
+  table_name = NULL
+)
+```
 
-# surveydown stores data on a database that you define at https://supabase.com/
-# To connect to a database to store the survey data, update this with details
-# from your supabase account and database. See documentation for details.
-# For security, we recommend storing your supabase password in your R
-# environment instead of hard-coding it here, which you can open and edit with
-# usethis::edit_r_environ()
+If you don't have a database setup yet, you can just leave the function blank and your survey will still run, just without any response data being stored:
 
- db <- sd_database(
-   host       = NULL,
-   db_name    = NULL,
-   port       = NULL,
-   user       = NULL,
-   table_name = NULL,
-   password   = Sys.getenv("SUPABASE_PASSWORD")
- )
-
-# If you don't have a database setup you can just leave the function blank.
-
+```{r}
 db <- sd_database()
-
 ```
 
-<p style="font-size: 18px;">
-As you may also notice db is defined twice. After putting in your parameters in their respective places make sure to delete the line:
-</p>
+# Example
+
+An example of what the function should look like after you have updated all the parameters is below:
 
 ```{r}
-#| eval: false
-
-db <- sd_database()
-
-```
-
-<p style="font-size: 18px;">
-You may also notice that our **password** parameter is hidden inside of our R environment. This is for security reasons and is recommended.
-</p>
-
-# Step 9: Putting the dasebase Password inside of the R env.
-
-<p style="font-size: 18px;">
-This step shows how to put your database password inside of the R environment. 
-</p>
-
-## First: Open the R environment.
-
-This should open up a new R tab called *".Renviron"*
-```{r}
-#| eval: false
-usethis::edit_r_environ()
-```
-
-## Second: Edit R environment.
-
-Add in your database password. 
-
-*Note: This does not need to be wrapped in quotes*
-
-
-SUPABASE_PASSWORD=######
-
-## Third: Restart your R session
-
-This can be done by going to *"Session"* -> *"Restart R"* or by doing the shortcut *"Cmd + Shift + 0"* on Mac.
-
-# Step 10: Bringing it all together.
-
-<p style="font-size: 18px;">
-Now that we have our password secure and all other parameters we can update our sd_database() function from Step 8 to look like this:
-</p>
-
-
-```{r}
-#| eval: false
-
- db <- sd_database(
-   host       = "aws-0-us-west-1.pooler.supabase.com", #This varies based on location,
-                                                       #check Step 7.
-   db_name    = "postgres", # For the purpose of supabase, this will always be "postgres".
-   port       = "####", # Your 4 digit port number from Step 7.
-   user       = "postgres.UserValue", # This is the User parameter from Step 7.
-   table_name = "What Ever Name You Want", # This is what your table name will be.
-   password   = Sys.getenv("SUPABASE_PASSWORD") #Database password - Steps 4 and 9.
- )
-
+db <- sd_database(
+  host       = "aws-0-us-west-1.pooler.supabase.com", 
+  db_name    = "postgres", # For the purpose of supabase, this will always be "postgres".
+  port       = "1234", 
+  user       = "postgres.UserValue",
+  table_name = "my_table_name"
+)
 ```
 
 # Tada!!!
 
-<p style="font-size: 18px;">
 Going back to your Project dashboard and selecting *"Table Editor"* on the left hand bar tab you should see your table appear once your survey is run and interacted with atleast once.
-</p>
-
-
-
-
-
-
-
-
-
-
 
