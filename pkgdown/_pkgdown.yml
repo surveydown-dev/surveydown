@@ -1,4 +1,4 @@
-url: https://jhelvy.github.io/surveydown/
+url: https://surveydown.org/
 
 home:
   title: Build markdown-based surveys with quarto shiny documents
@@ -13,21 +13,8 @@ template:
     danger: "#A6081A"
   opengraph:
     image:
-      src: https://jhelvy.github.io/surveydown/reference/figures/logo.png
+      src: https://pkg.surveydown.org/reference/figures/logo.png
       alt: "Logo for the surveydown package"
-
-articles:
-- title: surveydown
-  navbar: ~
-  contents:
-  - install
-  - content
-  - questions
-  - formatting
-  - password
-  - config
-  - database
-  - deploy
 
 reference:
 - title: Survey Setup

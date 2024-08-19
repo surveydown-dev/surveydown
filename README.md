@@ -1,13 +1,12 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# surveydown <a href='https://jhelvy.github.io/surveydown/'><img src='man/figures/logo.png' align="right" style="width: 120px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
+# surveydown <a href='https://surveydown.org/'><img src='man/figures/logo.png' align="right" style="width: 120px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
 
 ### Markdown-Based Surveys With [Quarto Shiny Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
 
-> Note: This is still a very early-stage project. We don’t yet recommend
-> using it for collecting data, but we would love any feedback you have
-> if you try it out!
+> Note: This is still an early-stage project. Use with caution, and
+> please give us feedback!
 
 This project brings together three open source technologies
 ([Quarto](https://quarto.org/), [shiny](https://shiny.posit.co/), and
@@ -33,9 +32,8 @@ The {surveydown} R package works in tandem with our [surveydown Quarto
 extension](https://github.com/jhelvy/surveydown-ext) to make everything
 work.
 
-**See the
-[documentation](https://jhelvy.github.io/surveydown/articles/surveydown.html)
-to get started making your own surveydown survey!**
+**See the [documentation](https://surveydown.org) to get started making
+your own surveydown survey!**
 
 # Background & Motivation
 
@@ -113,7 +111,7 @@ This is a running list of things we’re working on adding to the project:
   - [ ] Matrix
   - \[?\] Slider
 
-Resources / examples:
+Resources / other related examples:
 
 - [shinysurveys](https://github.com/jdtrat/shinysurveys)
 - [shinyforms](https://github.com/daattali/shinyforms)
@@ -121,16 +119,6 @@ Resources / examples:
   of adding JS modules to shiny app (pop up message) - could be useful
   for adding any number of JS-based features, like pop ups for required
   questions, JS-based progress bar, etc.
-
-# Documentation TODO
-
-Vignettes for each of the following:
-
-- [x] Quick overview / basic usage
-- [x] List of question types and examples
-- [x] Question formatting options
-- [x] Flow control (conditional skipping and conditional display)
-- [x] Setting up the database with supabase
 
 ## [License Information](https://github.com/jhelvy/surveydown/blob/master/LICENSE.md)
 

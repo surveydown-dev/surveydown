@@ -20,6 +20,12 @@ knitr::opts_chunk$set(
 )
 ```
 
+# Main Documentation
+
+The main documentation for surveydown is at [https://surveydown.org/](https://surveydown.org/). We recommend navigating there for more detailed documentation about the R package and how to use it in a Quarto shiny document.
+
+# Overview
+
 In surveydown, your entire survey is designed using markdown and R code in a single Quarto document (a `.qmd` file). The {surveydown} R package provides a set of functions for defining the survey content and configuration options. Each function starts with `sd_` to make them easy to identify.
 
 You can add content to your survey using markdown formatting, or in RStudio you can edit with the visual editor. Survey questions are defined in R code chunks with the `sd_question()` function. Pages are defined using fences (`:::`), and navigation buttons handled with the `sd_next()` function. You can modify the configuration options in the server code chunk (the last code chunk at the bottom of the .qmd file) with the `sd_config()` function, and you can configure the database with the `sd_database()`. Details on each of these steps are provided in separate guides in the documentation.
@@ -28,7 +34,7 @@ This introduction covers the basic steps to get started with surveydown.
 
 # 1. Install
 
-See `vignette("install")`
+See the [installation](https://surveydown.org/installation) documentation.
 
 # 2. Start with a template
 
@@ -46,7 +52,7 @@ This will create a folder located at `"path/to/folder"` with the following files
 
 # 3. Add content
 
-See `vignette("content")` for details on adding content to your survey, like text, images, etc. with markdown and / or code chunks. As a quick overview:
+See the [Survey Components](https://surveydown.org/components) documentation for details on adding content to your survey, like text, images, etc. with markdown and / or code chunks. As a quick overview:
 
 - Add pages using fences, like this:
 
@@ -77,11 +83,11 @@ sd_question(
 
 # 4. Add configuration options
 
-In the server chunk (bottom of qmd file), add control logic to your survey with the `sd_config()` function. See `vignette("config")`.
+In the server chunk (bottom of qmd file), add control logic to your survey with the `sd_config()` function. See the [Configuration Options](https://surveydown.org/config) documentation for more details.
 
 # 5. Setup your database
 
-Also in the server chunk, setup your database with the `sd_database()` function, or leave it blank to preview / edit your survey without database connected. See `vignette("database")`.
+Also in the server chunk, setup your database with the `sd_database()` function, or leave it blank to preview / edit your survey without database connected. See the [Database Settings](https://surveydown.org/database) documentation for more details.
 
 # 6. Locally preview
 
@@ -89,4 +95,4 @@ Preview your survey by clicking the "Run Document" button in RStudio or in your 
 
 # 7. Deploy
 
-Deploy your survey by hosting it on your favorite server, like shinyapps.io, huggingface, etc. See `vignette("deploy")`.
+Deploy your survey by hosting it on your favorite server, like shinyapps.io, huggingface, etc. See the [Deployment](https://surveydown.org/deployment) documentation for more details.
