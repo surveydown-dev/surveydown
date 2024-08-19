@@ -3,6 +3,6 @@ bibentry(bibtype = "Manual",
   author = c(person(given = "John Paul", family = "Helveston", role = c("aut", "cre", "cph")), person(given = "Pingfan", family = "Hu", role = c("aut", "cph")), person(given = "Bogdan", family = "Bunea", role = c("aut", "cph"))),
   year = "2024",
   note = "R package",
-  url = "https://jhelvy.github.io/surveydown/",
+  url = "https://surveydown.org/",
   header = "To cite surveydown in publications use:"
 )
