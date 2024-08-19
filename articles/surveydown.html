@@ -21,7 +21,7 @@
 ">
 <meta property="og:description" content="Learn how to get started with the basics of surveydown.
 ">
-<meta property="og:image" content="https://jhelvy.github.io/surveydown/reference/figures/logo.png">
+<meta property="og:image" content="https://pkg.surveydown.org/reference/figures/logo.png">
 <meta property="og:image:alt" content="Logo for the surveydown package">
 </head>
 <body>
@@ -43,19 +43,6 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="../articles/surveydown.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/install.html">Installation</a></li>
-    <li><a class="dropdown-item" href="../articles/content.html">Survey Content</a></li>
-    <li><a class="dropdown-item" href="../articles/questions.html">Question Types</a></li>
-    <li><a class="dropdown-item" href="../articles/formatting.html">Formatting Your Survey</a></li>
-    <li><a class="dropdown-item" href="../articles/password.html">Setting a Password</a></li>
-    <li><a class="dropdown-item" href="../articles/config.html">Configuration Options</a></li>
-    <li><a class="dropdown-item" href="../articles/database.html">Database</a></li>
-    <li><a class="dropdown-item" href="../articles/deploy.html">Deploying Your Survey</a></li>
-  </ul>
-</li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -92,6 +79,16 @@
 
     
     
+<div class="section level2">
+<h2 id="main-documentation">Main Documentation<a class="anchor" aria-label="anchor" href="#main-documentation"></a>
+</h2>
+<p>The main documentation for surveydown is at <a href="https://surveydown.org/">https://surveydown.org/</a>. We recommend
+navigating there for more detailed documentation about the R package and
+how to use it in a Quarto shiny document.</p>
+</div>
+<div class="section level2">
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h2>
 <p>In surveydown, your entire survey is designed using markdown and R
 code in a single Quarto document (a <code>.qmd</code> file). The
 {surveydown} R package provides a set of functions for defining the
@@ -109,10 +106,12 @@ function, and you can configure the database with the
 in separate guides in the documentation.</p>
 <p>This introduction covers the basic steps to get started with
 surveydown.</p>
+</div>
 <div class="section level2">
 <h2 id="install">1. Install<a class="anchor" aria-label="anchor" href="#install"></a>
 </h2>
-<p>See <code><a href="../articles/install.html">vignette("install")</a></code></p>
+<p>See the <a href="https://surveydown.org/installation">installation</a>
+documentation.</p>
 </div>
 <div class="section level2">
 <h2 id="start-with-a-template">2. Start with a template<a class="anchor" aria-label="anchor" href="#start-with-a-template"></a>
@@ -137,9 +136,10 @@ extension</a> needed to make everything work (don’t modify this).</li>
 <div class="section level2">
 <h2 id="add-content">3. Add content<a class="anchor" aria-label="anchor" href="#add-content"></a>
 </h2>
-<p>See <code><a href="../articles/content.html">vignette("content")</a></code> for details on adding content to
-your survey, like text, images, etc. with markdown and / or code chunks.
-As a quick overview:</p>
+<p>See the <a href="https://surveydown.org/components">Survey
+Components</a> documentation for details on adding content to your
+survey, like text, images, etc. with markdown and / or code chunks. As a
+quick overview:</p>
 <ul>
 <li>Add pages using fences, like this:</li>
 </ul>
@@ -150,7 +150,7 @@ Page 1 content here
 :::</code></pre>
 <ul>
 <li>Add questions with the <code><a href="../reference/sd_question.html">sd_question()</a></code> function in code
-chunks (see <code><a href="../articles/questions.html">vignette("questions")</a></code> for supported question
+chunks (see <code>vignette("questions")</code> for supported question
 types). For example:</li>
 </ul>
 <pre><code>```{r}
@@ -170,16 +170,16 @@ sd_question(
 <h2 id="add-configuration-options">4. Add configuration options<a class="anchor" aria-label="anchor" href="#add-configuration-options"></a>
 </h2>
 <p>In the server chunk (bottom of qmd file), add control logic to your
-survey with the <code><a href="../reference/sd_config.html">sd_config()</a></code> function. See
-<code><a href="../articles/config.html">vignette("config")</a></code>.</p>
+survey with the <code><a href="../reference/sd_config.html">sd_config()</a></code> function. See the <a href="https://surveydown.org/config">Configuration Options</a>
+documentation for more details.</p>
 </div>
 <div class="section level2">
 <h2 id="setup-your-database">5. Setup your database<a class="anchor" aria-label="anchor" href="#setup-your-database"></a>
 </h2>
 <p>Also in the server chunk, setup your database with the
 <code><a href="../reference/sd_database.html">sd_database()</a></code> function, or leave it blank to preview / edit
-your survey without database connected. See
-<code><a href="../articles/database.html">vignette("database")</a></code>.</p>
+your survey without database connected. See the <a href="https://surveydown.org/database">Database Settings</a>
+documentation for more details.</p>
 </div>
 <div class="section level2">
 <h2 id="locally-preview">6. Locally preview<a class="anchor" aria-label="anchor" href="#locally-preview"></a>
@@ -192,7 +192,8 @@ or in your terminal running the command
 <h2 id="deploy">7. Deploy<a class="anchor" aria-label="anchor" href="#deploy"></a>
 </h2>
 <p>Deploy your survey by hosting it on your favorite server, like
-shinyapps.io, huggingface, etc. See <code><a href="../articles/deploy.html">vignette("deploy")</a></code>.</p>
+shinyapps.io, huggingface, etc. See the <a href="https://surveydown.org/deployment">Deployment</a> documentation
+for more details.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

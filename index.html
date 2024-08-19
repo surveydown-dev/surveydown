@@ -19,7 +19,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Build markdown-based surveys with quarto shiny documents">
 <meta name="description" content="Generate surveys using markdown and R code chunks. Surveys are defined as Quarto shiny documents that render to shiny apps. Survey data collected from respondents is stored in a supabase database. Features include controls for conditional skip logic (skip to a page based on an answer to a question), conditional display logic (display a question based on an answer to a question), the ability to export time stamps (both for each page and each question interaction), a customizable progress bar, and a wide variety of question types, including multiple choice (single choice and multiple choices), select, text, numeric, multiple choice buttons, text area, and dates.">
 <meta property="og:description" content="Generate surveys using markdown and R code chunks. Surveys are defined as Quarto shiny documents that render to shiny apps. Survey data collected from respondents is stored in a supabase database. Features include controls for conditional skip logic (skip to a page based on an answer to a question), conditional display logic (display a question based on an answer to a question), the ability to export time stamps (both for each page and each question interaction), a customizable progress bar, and a wide variety of question types, including multiple choice (single choice and multiple choices), select, text, numeric, multiple choice buttons, text area, and dates.">
-<meta property="og:image" content="https://jhelvy.github.io/surveydown/reference/figures/logo.png">
+<meta property="og:image" content="https://pkg.surveydown.org/reference/figures/logo.png">
 <meta property="og:image:alt" content="Logo for the surveydown package">
 </head>
 <body>
@@ -41,19 +41,6 @@
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="articles/surveydown.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/install.html">Installation</a></li>
-    <li><a class="dropdown-item" href="articles/content.html">Survey Content</a></li>
-    <li><a class="dropdown-item" href="articles/questions.html">Question Types</a></li>
-    <li><a class="dropdown-item" href="articles/formatting.html">Formatting Your Survey</a></li>
-    <li><a class="dropdown-item" href="articles/password.html">Setting a Password</a></li>
-    <li><a class="dropdown-item" href="articles/config.html">Configuration Options</a></li>
-    <li><a class="dropdown-item" href="articles/database.html">Database</a></li>
-    <li><a class="dropdown-item" href="articles/deploy.html">Deploying Your Survey</a></li>
-  </ul>
-</li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -86,7 +73,7 @@
 <h3 id="markdown-based-surveys-with-quarto-shiny-documents">Markdown-Based Surveys With <a href="https://quarto.org/docs/dashboards/interactivity/shiny-r.html" class="external-link">Quarto Shiny Documents</a>.<a class="anchor" aria-label="anchor" href="#markdown-based-surveys-with-quarto-shiny-documents"></a>
 </h3>
 <blockquote>
-<p>Note: This is still a very early-stage project. We don’t yet recommend using it for collecting data, but we would love any feedback you have if you try it out!</p>
+<p>Note: This is still an early-stage project. Use with caution, and please give us feedback!</p>
 </blockquote>
 <p>This project brings together three open source technologies (<a href="https://quarto.org/" class="external-link">Quarto</a>, <a href="https://shiny.posit.co/" class="external-link">shiny</a>, and <a href="https://supabase.com/" class="external-link">supabase</a>) to create dynamic, markdown-based surveys. Here’s the basic concept:</p>
 <br><center>
@@ -99,7 +86,7 @@
 <li>Store your survey responses in a <a href="https://supabase.com/" class="external-link">supabase</a> database.</li>
 </ol>
 <p>The {surveydown} R package works in tandem with our <a href="https://github.com/jhelvy/surveydown-ext" class="external-link">surveydown Quarto extension</a> to make everything work.</p>
-<p><strong>See the <a href="https://jhelvy.github.io/surveydown/articles/surveydown.html">documentation</a> to get started making your own surveydown survey!</strong></p>
+<p><strong>See the <a href="https://surveydown.org">documentation</a> to get started making your own surveydown survey!</strong></p>
 </div>
 </div>
 <div class="section level1">
@@ -147,24 +134,12 @@
 </ul>
 </li>
 </ul>
-<p>Resources / examples:</p>
+<p>Resources / other related examples:</p>
 <ul>
 <li><a href="https://github.com/jdtrat/shinysurveys" class="external-link">shinysurveys</a></li>
 <li><a href="https://github.com/daattali/shinyforms" class="external-link">shinyforms</a></li>
 <li>
 <a href="https://rtask.thinkr.fr/pimping-your-shiny-app-with-a-javascript-library-an-example-using-sweetalert2/" class="external-link">Example</a> of adding JS modules to shiny app (pop up message) - could be useful for adding any number of JS-based features, like pop ups for required questions, JS-based progress bar, etc.</li>
-</ul>
-</div>
-<div class="section level1">
-<h1 id="documentation-todo">Documentation TODO<a class="anchor" aria-label="anchor" href="#documentation-todo"></a>
-</h1>
-<p>Vignettes for each of the following:</p>
-<ul class="task-list">
-<li><label><input type="checkbox" checked>Quick overview / basic usage</label></li>
-<li><label><input type="checkbox" checked>List of question types and examples</label></li>
-<li><label><input type="checkbox" checked>Question formatting options</label></li>
-<li><label><input type="checkbox" checked>Flow control (conditional skipping and conditional display)</label></li>
-<li><label><input type="checkbox" checked>Setting up the database with supabase</label></li>
 </ul>
 <div class="section level2">
 <h2 id="license-information">
