@@ -112,51 +112,6 @@ sd_database <- function(
         })
 }
 
-#' Transform survey data for database storage
-#'
-#' @param question_vals List of question values
-#' @param time_vals List of timestamp values
-#' @param session_id String representing the session ID
-#' @param stored_vals List of stored values
-#' @return A data frame with transformed survey data, including a UTC timestamp
-#' @details This function transforms the input data into a format suitable for database storage.
-#'   It adds a UTC timestamp, formats question values, handles custom values, and combines all data
-#'   into a single data frame. The UTC timestamp is formatted as "YYYY-MM-DD HH:MM:SS UTC".
-#' @importFrom stats setNames
-#' @keywords internal
-transform_data <- function(question_vals, time_vals, session_id, stored_vals) {
-    # Create current timestamp in UTC with the desired format
-    current_time <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
-
-    for (i in seq_len(length(question_vals))) {
-        val <- question_vals[[i]]
-        if (is.null(val)) {
-            question_vals[[i]] <- ""
-        } else if (length(val) > 1) {
-            question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
-        }
-    }
-
-    responses <- as.data.frame(question_vals)
-
-    custom_df <- data.frame(matrix(ncol = length(stored_vals), nrow = 1))
-    colnames(custom_df) <- names(stored_vals)
-    for (name in names(stored_vals)) {
-        custom_df[[name]] <- ifelse(is.null(stored_vals[[name]]), "", stored_vals[[name]])
-    }
-
-    # Combine all data
-    data <- cbind(
-        time_start = current_time,
-        session_id = session_id,
-        custom_df,
-        responses,
-        setNames(as.data.frame(time_vals), names(time_vals))
-    )
-
-    return(data)
-}
-
 #' Convert R data type to SQL data type
 #'
 #' @param r_type String representing R data type
@@ -287,69 +242,41 @@ database_uploading <- function(df, db, table_name) {
     }
 }
 
-#' Set Password
+#' Fetch data from a database table with optional reactivity
 #'
-#' This function sets the supabase password in the .Renviron file and adds .Renviron to .gitignore.
+#' This function retrieves all data from a specified table in a database.
+#' When used in a Shiny application, it can optionally return a reactive
+#' expression that automatically refreshes the data at specified intervals.
 #'
-#' @param password Character string. The password to be set for Supabase connection.
+#' @param db A list containing database connection details. Must have elements:
+#'   \itemize{
+#'     \item db: A DBI database connection object
+#'     \item table_name: A string specifying the name of the table to query
+#'   }
+#' @param reactive Logical. If `TRUE`, returns a reactive expression for use in the server. 
+#'   If `FALSE` (default), returns the data directly.
+#' @param refresh_interval Numeric. The time interval (in seconds) between data refreshes
+#'   when in reactive mode. Default is `5` seconds. Ignored if reactive is `FALSE`.
 #'
-#' @details The function performs the following actions:
-#'   1. Creates a .Renviron file in the root directory if it doesn't exist.
-#'   2. Adds or updates the SURVEYDOWN_PASSWORD entry in the .Renviron file.
-#'   3. Adds .Renviron to .gitignore if it's not already there.
-#'
-#' @return None. The function is called for its side effects.
-#'
-#' @examples
-#' \dontrun{
-#'   sd_set_password("your_SURVEYDOWN_PASSWORD")
-#' }
+#' @return If reactive is `FALSE`, returns a data frame containing all rows and columns 
+#'   from the specified table. If reactive is TRUE, returns a reactive expression that, 
+#'   when called, returns the most recent data from the specified database table.
 #'
 #' @export
-sd_set_password <- function(password) {
-    # Define the path to .Renviron file
-    renviron_path <- file.path(getwd(), ".Renviron")
-
-    # Check if .Renviron file exists, if not create it
-    if (!file.exists(renviron_path)) {
-        file.create(renviron_path)
-    }
-
-    # Read existing content
-    existing_content <- readLines(renviron_path)
-
-    # Check if SURVEYDOWN_PASSWORD is already defined
-    password_line_index <- grep("^SURVEYDOWN_PASSWORD=", existing_content)
-
-    # Prepare the new password line
-    new_password_line <- paste0("SURVEYDOWN_PASSWORD=", password)
-
-    # If SURVEYDOWN_PASSWORD is already defined, replace it; otherwise, append it
-    if (length(password_line_index) > 0) {
-        existing_content[password_line_index] <- new_password_line
-    } else {
-        existing_content <- c(existing_content, new_password_line)
-    }
-
-    # Write the updated content back to .Renviron
-    writeLines(existing_content, renviron_path)
-
-    # Add .Renviron to .gitignore if not already there
-    gitignore_path <- file.path(getwd(), ".gitignore")
-    if (file.exists(gitignore_path)) {
-        gitignore_content <- readLines(gitignore_path)
-        if (!".Renviron" %in% gitignore_content) {
-            # Remove any trailing empty lines
-            while (length(gitignore_content) > 0 && gitignore_content[length(gitignore_content)] == "") {
-                gitignore_content <- gitignore_content[-length(gitignore_content)]
-            }
-            # Add .Renviron to the end without an extra newline
-            gitignore_content <- c(gitignore_content, ".Renviron")
-            writeLines(gitignore_content, gitignore_path)
-        }
-    } else {
-        writeLines(".Renviron", gitignore_path)
-    }
-
-    message("Password set successfully and .Renviron added to .gitignore.")
+#'
+#' @examples
+#' # Examples here
+sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
+  fetch_data <- function() {
+    DBI::dbReadTable(db$db, db$table_name)
+  }
+  
+  if (reactive) {
+    return(shiny::reactive({
+      shiny::invalidateLater(refresh_interval * 1000)
+      fetch_data()
+    }))
+  } else {
+    return(fetch_data())
+  }
 }

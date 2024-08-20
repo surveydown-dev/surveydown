@@ -21,7 +21,8 @@ sd_question(
   force_edges = TRUE,
   option = NULL,
   placeholder = NULL,
-  resize = NULL
+  resize = NULL,
+  reactive = FALSE
 )
 }
 \arguments{
@@ -58,9 +59,11 @@ sd_question(
 \item{placeholder}{Character string. Placeholder text for text and textarea inputs.}
 
 \item{resize}{Character string. Resize option for textarea input. Defaults to NULL.}
+
+\item{reactive}{Logical. Whether the question should be reactive. Defaults to \code{FALSE}.}
 }
 \value{
-A Shiny UI element wrapped in a div with a custom data attribute for question ID.
+A Shiny UI element wrapped in a div with a  data attribute for question ID.
 }
 \description{
 This function creates various types of survey questions for use in a Surveydown survey.

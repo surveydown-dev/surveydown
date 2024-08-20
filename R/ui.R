@@ -19,6 +19,7 @@
 #' @param option List. Options for the select, radio, checkbox, and slider inputs.
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
+#' @param reactive Logical. Whether the question should be reactive. Defaults to `FALSE`.
 #'
 #' @details
 #' The function supports various question types:
@@ -34,7 +35,7 @@
 #' - "date": Date input
 #' - "daterange": Date range input
 #'
-#' @return A Shiny UI element wrapped in a div with a custom data attribute for question ID.
+#' @return A Shiny UI element wrapped in a div with a  data attribute for question ID.
 #'
 #' @examples
 #' sd_question("text", "name", "What is your name?")
@@ -58,7 +59,8 @@ sd_question <- function(
         force_edges  = TRUE,
         option       = NULL,
         placeholder  = NULL,
-        resize       = NULL
+        resize       = NULL,
+        reactive     = FALSE
 ) {
 
     output <- NULL
@@ -226,36 +228,22 @@ sd_question <- function(
         output
     )
 
-    return(output_div)
-}
+    if (reactive) {
 
-#' Create a reactive survey question
-#'
-#' This function creates various types of reactive survey questions for use in a Surveydown survey.
-#' It wraps the sd_question function in a renderUI call, allowing for dynamic question generation.
-#'
-#' @param ... Other inputs to be passed to sd_question.
-#'
-#' @return A renderUI function that creates the survey question.
-#'
-#' @examples
-#' sd_question_reactive(type = "text", id = "name", label = "What is your name?")
-#'
-#' @export
-sd_question_reactive <- function(...) {
-    args <- list(...)
-    id <- args$id
+        shiny::isolate({
+            output <- shiny::getDefaultReactiveDomain()$output
+            if (!is.null(output)) {
+                output[[id]] <- shiny::renderUI({
+                    output_div
+                })
+            } else {
+                stop("If reactive = TRUE, sd_question must be called within a Shiny reactive context")
+            }
+        })
 
-    shiny::isolate({
-        output <- shiny::getDefaultReactiveDomain()$output
-        if (!is.null(output)) {
-            output[[id]] <- shiny::renderUI({
-                do.call(sd_question, args)
-            })
-        } else {
-            warning("sd_question_reactive was not called within a Shiny reactive context")
-        }
-    })
+    } else {
+        return(output_div)
+    }
 }
 
 #' Create a placeholder for a reactive survey question
@@ -319,11 +307,10 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
     return(output)
 }
 
-#' Store a custom value
+#' Store a value
 #'
 #' This function allows storing additional values to be included in the survey data,
-#' such as respondent IDs or other custom data. The values are stored in a special
-#' environment (.sd_custom_values) and will be included when the survey data is saved.
+#' such as respondent IDs or other data. 
 #'
 #' @param value The raid value to be stored.
 #' @param id (Optional) The id (name) of the value in the data.
@@ -348,10 +335,10 @@ sd_store_value <- function(value, id = NULL) {
         if (is.null(session)) {
             stop("sd_store_value must be called from within a Shiny reactive context")
         }
-        if (is.null(session$userData$custom_values)) {
-            session$userData$custom_values <- list()
+        if (is.null(session$userData$stored_values)) {
+            session$userData$stored_values <- list()
         }
-        session$userData$custom_values[[id]] <- value
+        session$userData$stored_values[[id]] <- value
     })
 
     invisible(NULL)
@@ -434,23 +421,4 @@ sd_next <- function(next_page = NULL, label = "Next") {
 #' @keywords internal
 make_next_button_id <- function(next_page) {
     return(paste0("next-", next_page))
-}
-
-
-#' Custom Admin UI Function
-#'
-#' This function creates a custom admin UI for the surveydown package.
-#'
-#' @return A shiny tagList containing the admin UI elements.
-#'
-#' @export
-sd_admin_ui <- function() {
-    shiny::tagList(
-        shiny::div(
-            id = "admin-button-container",
-            style = "position: fixed; top: 20px; left: 10px; z-index: 1000;",
-            shiny::actionButton("admin_button", "Admin",
-                                onclick = "window.location.href='?admin=true';")
-        )
-    )
 }

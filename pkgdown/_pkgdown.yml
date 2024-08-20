@@ -26,7 +26,6 @@ reference:
   desc: "Functions for defining survey questions, navigation, and storing values"
   contents:
   - sd_question
-  - sd_question_reactive
   - sd_display_question
   - sd_display_value
   - sd_next
@@ -37,6 +36,7 @@ reference:
   contents:
   - sd_config
   - sd_database
+  - sd_get_data
   - sd_server
   - sd_set_password
 - title: "Version Management"
@@ -45,8 +45,4 @@ reference:
   - sd_check_versions
   - sd_update_extension
   - sd_update_surveydown
-- title: "Admin Functionality"
-  desc: "Functions for adding and managing admin features"
-  contents:
-  - sd_admin_enable
-  - sd_admin_ui
+  

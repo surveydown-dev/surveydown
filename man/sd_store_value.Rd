@@ -2,7 +2,7 @@
 % Please edit documentation in R/ui.R
 \name{sd_store_value}
 \alias{sd_store_value}
-\title{Store a custom value}
+\title{Store a value}
 \usage{
 sd_store_value(value, id = NULL)
 }
@@ -17,8 +17,7 @@ NULL (invisibly)
 }
 \description{
 This function allows storing additional values to be included in the survey data,
-such as respondent IDs or other custom data. The values are stored in a special
-environment (.sd_custom_values) and will be included when the survey data is saved.
+such as respondent IDs or other data.
 }
 \examples{
 \dontrun{

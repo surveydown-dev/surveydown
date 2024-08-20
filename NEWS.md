@@ -1,6 +1,7 @@
 # surveydown (development version)
 
 - Added `sd_get_data()` with a `reactive` argument to enable reactive data fetching.
+- `sd_question()` now has a `reactive` argument to enable reactive questions, and `sd_question_reactive()` was removed.
 - Made `sd_admin_enable()` internal, changed to `admin_enable()`.
 - Removed `sd_admin_ui()` and `sd_add_admin()` from the package.
 - Bug fixes: 
