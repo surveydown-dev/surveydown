@@ -49,6 +49,8 @@
 <li>Bug fixes:
 <ul><li>The admin page password was looking for the <code>SUPABASE_PASSWORD</code> environment variable, but it should be <code>SURVEYDOWN_PASSWORD</code>.</li>
 <li>The data fetching was not working to download the data as a CSV file in the admin page, now uses <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> and works.</li>
+<li>The <code>show_if_custom</code> logic was not working for multiple conditions, now it does.</li>
+<li>In <code><a href="../reference/sd_config.html">sd_config()</a></code>, items were being assigned with the <code>&lt;-</code> operator, causing them to be deleted when the thing being assigned was <code>NULL</code>. Now changed to <code>=</code>.</li>
 </ul></li>
 </ul></div>
     <div class="section level2">
