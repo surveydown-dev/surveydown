@@ -13,7 +13,8 @@ sd_config(
   all_questions_required = FALSE,
   start_page = NULL,
   show_all_pages = FALSE,
-  admin_page = FALSE
+  admin_page = FALSE,
+  keep_alive_interval = 60000
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ This overrides the \code{required_questions} parameter. Defaults to FALSE.}
 \item{show_all_pages}{Logical. Whether to show all pages initially. Defaults to FALSE.}
 
 \item{admin_page}{Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.}
+
+\item{keep_alive_interval}{Integer. The interval (in milliseconds) at which the keep-alive message is sent. Defaults to \code{60000}.}
 }
 \value{
 A list containing the configuration settings for the survey, including page and question
@@ -67,7 +70,8 @@ and set all questions in the survey as required.
     all_questions_required = FALSE,
     start_page     = "page1",
     show_all_pages = FALSE,
-    admin_page     = TRUE
+    admin_page     = TRUE, 
+    keep_alive_interval = 60000
   )
 }
 
