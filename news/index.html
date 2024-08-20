@@ -40,7 +40,16 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-</div>
+<ul><li>Added <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> with a <code>reactive</code> argument to enable reactive data fetching.</li>
+<li>
+<code><a href="../reference/sd_question.html">sd_question()</a></code> now has a <code>reactive</code> argument to enable reactive questions, and <code>sd_question_reactive()</code> was removed.</li>
+<li>Made <code>sd_admin_enable()</code> internal, changed to <code>admin_enable()</code>.</li>
+<li>Removed <code>sd_admin_ui()</code> and <code>sd_add_admin()</code> from the package.</li>
+<li>Bug fixes:
+<ul><li>The admin page password was looking for the <code>SUPABASE_PASSWORD</code> environment variable, but it should be <code>SURVEYDOWN_PASSWORD</code>.</li>
+<li>The data fetching was not working to download the data as a CSV file in the admin page, now uses <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> and works.</li>
+</ul></li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="surveydown-010">surveydown 0.1.0<a class="anchor" aria-label="anchor" href="#surveydown-010"></a></h2>
 <ul><li>Added <code><a href="../reference/sd_display_value.html">sd_display_value()</a></code> for displaying a question value based on the question <code>id</code>.</li>
@@ -48,13 +57,13 @@
 <li>Changed <code>sd_reactive_output()</code> to <code><a href="../reference/sd_display_question.html">sd_display_question()</a></code>.</li>
 <li>Changed how <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code> works to avoid a global environment, and changed the arg name from <code>name</code> to <code>id</code>.</li>
 <li>Added <code>sd_add_admin()</code> function to react to admin_page condition, if set to true an ‘Admin’ page will be created for survey creators.</li>
-<li>Added <code><a href="../reference/sd_admin_ui.html">sd_admin_ui()</a></code> function to create the UI for the Admin page button.</li>
+<li>Added <code>sd_admin_ui()</code> function to create the UI for the Admin page button.</li>
 <li>(extension) JS files removed from extension to R package. Now the extension only contains the <code>.lua</code> file and the css styles.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.9" id="surveydown-009">surveydown 0.0.9<a class="anchor" aria-label="anchor" href="#surveydown-009"></a></h2>
 <ul><li>Required questions are now moved to <code><a href="../reference/sd_config.html">sd_config()</a></code> as a separate <code>required_questions</code> argument, instead of being defined in <code><a href="../reference/sd_question.html">sd_question()</a></code>.</li>
-<li>Two new functions for supporting reactive questions: <code><a href="../reference/sd_question_reactive.html">sd_question_reactive()</a></code> and <code>sd_reactive_output()</code>.</li>
+<li>Two new functions for supporting reactive questions: <code>sd_question_reactive()</code> and <code>sd_reactive_output()</code>.</li>
 <li>
 <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code> function to store variables into the database. For example, <code>sd_store_value(respondentID, "respID")</code> will store the value of <code>respondentID</code> into a column named <code>"respID"</code>. If the name is not provided, the column will be named as its original variable name, in this case, <code>respondentID</code>.</li>
 <li>Enhanced robustness for progress bar. Now the progress bar will update based on user’s input.</li>

@@ -35,8 +35,6 @@
 <url><loc>https://surveydown.org/reference/make_ts_name.html</loc></url>
 <url><loc>https://surveydown.org/reference/markdown_to_html.html</loc></url>
 <url><loc>https://surveydown.org/reference/r_to_sql_type.html</loc></url>
-<url><loc>https://surveydown.org/reference/sd_admin_enable.html</loc></url>
-<url><loc>https://surveydown.org/reference/sd_admin_ui.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_check_versions.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_config.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_copy_value.html</loc></url>
@@ -44,9 +42,9 @@
 <url><loc>https://surveydown.org/reference/sd_database.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_display_question.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_display_value.html</loc></url>
+<url><loc>https://surveydown.org/reference/sd_get_data.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_next.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_question.html</loc></url>
-<url><loc>https://surveydown.org/reference/sd_question_reactive.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_server.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_set_password.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_setup.html</loc></url>
