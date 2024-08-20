@@ -57,7 +57,8 @@ page and question structures, conditional display settings, and navigation optio
 <span>  all_questions_required <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  start_page <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  show_all_pages <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  admin_page <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  admin_page <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  keep_alive_interval <span class="op">=</span> <span class="fl">60000</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -103,6 +104,10 @@ This overrides the <code>required_questions</code> parameter. Defaults to FALSE.
 <dt id="arg-admin-page">admin_page<a class="anchor" aria-label="anchor" href="#arg-admin-page"></a></dt>
 <dd><p>Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.</p></dd>
 
+
+<dt id="arg-keep-alive-interval">keep_alive_interval<a class="anchor" aria-label="anchor" href="#arg-keep-alive-interval"></a></dt>
+<dd><p>Integer. The interval (in milliseconds) at which the keep-alive message is sent. Defaults to <code>60000</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -132,7 +137,8 @@ and set all questions in the survey as required.</p>
 <span class="r-in"><span>    all_questions_required <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>    start_page     <span class="op">=</span> <span class="st">"page1"</span>,</span></span>
 <span class="r-in"><span>    show_all_pages <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
-<span class="r-in"><span>    admin_page     <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>    admin_page     <span class="op">=</span> <span class="cn">TRUE</span>, </span></span>
+<span class="r-in"><span>    keep_alive_interval <span class="op">=</span> <span class="fl">60000</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
