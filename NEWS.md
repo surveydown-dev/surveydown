@@ -8,6 +8,8 @@
 - Bug fixes: 
   - The admin page password was looking for the `SUPABASE_PASSWORD` environment variable, but it should be `SURVEYDOWN_PASSWORD`.
   - The data fetching was not working to download the data as a CSV file in the admin page, now uses `sd_get_data()` and works.
+  - The `show_if_custom` logic was not working for multiple conditions, now it does.
+  - In `sd_config()`, items were being assigned with the ` <- ` operator, causing them to be deleted when the thing being assigned was `NULL`. Now changed to ` = `.
 
 # surveydown 0.1.0
 
