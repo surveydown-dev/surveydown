@@ -2,7 +2,7 @@
 % Please edit documentation in R/db.R
 \name{sd_set_password}
 \alias{sd_set_password}
-\title{Set Supabase Password}
+\title{Set Password}
 \usage{
 sd_set_password(password)
 }

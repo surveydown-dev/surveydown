@@ -287,7 +287,7 @@ database_uploading <- function(df, db, table_name) {
     }
 }
 
-#' Set Supabase Password
+#' Set Password
 #'
 #' This function sets the supabase password in the .Renviron file and adds .Renviron to .gitignore.
 #'

@@ -63,9 +63,6 @@
 #' \code{\link{sd_database}}, \code{\link{sd_question}}
 #'
 #' @export
-#' @importFrom shiny reactive reactiveVal observeEvent
-#' @importFrom shinyjs show hide runjs
-#' @importFrom readr write_csv
 sd_server <- function(input, output, session, config, db = NULL) {
 
     # Initialize local variables ----
@@ -113,7 +110,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Admin Page Logic ----
 
     if (config$admin_page) {
-        sd_admin_enable(input, output, session, db)
+        admin_enable(input, output, session, db)
     }
 
     # Progress Bar Tracking ----
@@ -269,7 +266,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
         # Update database or write to CSV based on preview mode
         if (pause_mode) {
-            readr::write_csv(df_local, "data.csv")
+            write.csv(df_local, "data.csv", row.names = FALSE)
         } else {
             database_uploading(df_local, db$db, db$table_name)
         }
@@ -505,23 +502,7 @@ is_question_visible <- function(q, show_if, input) {
     }))
 }
 
-#' Add Admin Functionality to Survey
-#'
-#' This function adds admin functionality to a surveydown survey, including
-#' an admin button, login page, and basic admin page.
-#'
-#' @param input Shiny input object
-#' @param output Shiny output object
-#' @param session Shiny session object
-#' @param db pulls in the database object to create a connection for various admin actions
-#'
-#' @importFrom shinyjs hide show
-#' @importFrom shiny observeEvent showNotification insertUI removeUI actionButton div h2 h3 hr passwordInput updateTextInput downloadHandler downloadButton
-#' @importFrom htmltools tags
-#' @importFrom utils write.csv
-#' @importFrom DT renderDT datatable
-#' @export
-sd_admin_enable <- function(input, output, session, db) {
+admin_enable <- function(input, output, session, db) {
     # Add admin button
     insertUI(
         selector = "body",
@@ -560,7 +541,7 @@ sd_admin_enable <- function(input, output, session, db) {
 
     # Password check and admin content reveal
     observeEvent(input$submitPw, {
-        if (input$adminpw == Sys.getenv("SUPABASE_PASSWORD")) {
+        if (input$adminpw == Sys.getenv("SURVEYDOWN_PASSWORD")) {
             # Store login status in a session variable
             session$userData$isAdmin <- TRUE
 
@@ -612,10 +593,49 @@ sd_admin_enable <- function(input, output, session, db) {
         },
         content = function(file) {
             # Read the table
-            data <- DBI::dbReadTable(db$db, db$table_name)
+            data <- sd_get_data(db)
 
             # Write to CSV
             write.csv(data, file, row.names = FALSE)
         }
     )
+}
+
+#' Fetch data from a database table with optional reactivity
+#'
+#' This function retrieves all data from a specified table in a database.
+#' When used in a Shiny application, it can optionally return a reactive
+#' expression that automatically refreshes the data at specified intervals.
+#'
+#' @param db A list containing database connection details. Must have elements:
+#'   \itemize{
+#'     \item db: A DBI database connection object
+#'     \item table_name: A string specifying the name of the table to query
+#'   }
+#' @param reactive Logical. If `TRUE`, returns a reactive expression for use in the server. 
+#'   If `FALSE` (default), returns the data directly.
+#' @param refresh_interval Numeric. The time interval (in seconds) between data refreshes
+#'   when in reactive mode. Default is `5` seconds. Ignored if reactive is `FALSE`.
+#'
+#' @return If reactive is `FALSE`, returns a data frame containing all rows and columns 
+#'   from the specified table. If reactive is TRUE, returns a reactive expression that, 
+#'   when called, returns the most recent data from the specified database table.
+#'
+#' @export
+#'
+#' @examples
+#' # Examples here
+sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
+  fetch_data <- function() {
+    DBI::dbReadTable(db$db, db$table_name)
+  }
+  
+  if (reactive) {
+    return(shiny::reactive({
+      shiny::invalidateLater(refresh_interval * 1000)
+      fetch_data()
+    }))
+  } else {
+    return(fetch_data())
+  }
 }

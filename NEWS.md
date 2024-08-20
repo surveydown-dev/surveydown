@@ -1,5 +1,12 @@
 # surveydown (development version)
 
+- Added `sd_get_data()` with a `reactive` argument to enable reactive data fetching.
+- Made `sd_admin_enable()` internal, changed to `admin_enable()`.
+- Removed `sd_admin_ui()` and `sd_add_admin()` from the package.
+- Bug fixes: 
+  - The admin page password was looking for the `SUPABASE_PASSWORD` environment variable, but it should be `SURVEYDOWN_PASSWORD`.
+  - The data fetching was not working to download the data as a CSV file in the admin page, now uses `sd_get_data()` and works.
+
 # surveydown 0.1.0
 
 - Added `sd_display_value()` for displaying a question value based on the question `id`.
