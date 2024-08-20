@@ -45,6 +45,7 @@
 <code><a href="../reference/sd_question.html">sd_question()</a></code> now has a <code>reactive</code> argument to enable reactive questions, and <code>sd_question_reactive()</code> was removed.</li>
 <li>Made <code>sd_admin_enable()</code> internal, changed to <code>admin_enable()</code>.</li>
 <li>Removed <code>sd_admin_ui()</code> and <code>sd_add_admin()</code> from the package.</li>
+<li>Moved the surveydown.css and page_nav.js files into the R package and out of the Quarto extension.</li>
 <li>Bug fixes:
 <ul><li>The admin page password was looking for the <code>SUPABASE_PASSWORD</code> environment variable, but it should be <code>SURVEYDOWN_PASSWORD</code>.</li>
 <li>The data fetching was not working to download the data as a CSV file in the admin page, now uses <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> and works.</li>
