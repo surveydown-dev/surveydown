@@ -74,12 +74,13 @@ sd_server <- function(input, output, session, config, db = NULL) {
     page_structure <- config$page_structure
     page_ids       <- config$page_ids
     question_ids   <- config$question_ids
-    show_if        <- config$show_if
     skip_if        <- config$skip_if
     skip_if_custom <- config$skip_if_custom
     show_if        <- config$show_if
     show_if_custom <- config$show_if_custom
     start_page     <- config$start_page
+    show_all_pages <- config$show_all_pages
+    admin_page     <- config$admin_page
     question_required <- config$question_required
 
     # Initial page setting ----
@@ -91,7 +92,14 @@ sd_server <- function(input, output, session, config, db = NULL) {
         shinyjs::runjs("showFirstPage();")
     }
 
-    # Load the functions for JS
+    # Show all pages if show_all_pages is TRUE
+    if (show_all_pages) {
+        for (page in page_ids) {
+            shinyjs::show(page)
+        }
+    }
+
+    # Load the JS function
     load_js_file("required_questions.js")
     load_js_file("update_progress.js")
 
@@ -106,7 +114,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Admin Page Logic ----
 
-    if (config$admin_page) {
+    if (admin_page) {
         admin_enable(input, output, session, db)
     }
 
@@ -115,6 +123,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     timestamps <- shiny::reactiveValues(data = initialize_timestamps(page_ids, question_ids))
 
     # Conditional display (show_if conditions)
+
     if (!is.null(show_if)) {
         handle_basic_show_if_logic(input, show_if)
     }
@@ -276,6 +285,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
 #' @param show_if Data frame of show-if conditions
 #' @keywords internal
 handle_basic_show_if_logic <- function(input, show_if) {
+
     # Ensure show_if is a tibble or data frame
     if (!is.data.frame(show_if)) {
         stop("show_if must be a data frame or tibble.")
@@ -314,43 +324,27 @@ handle_basic_show_if_logic <- function(input, show_if) {
 #' @param show_if_custom List of custom show-if conditions
 #' @keywords internal
 handle_custom_show_if_logic <- function(input, show_if_custom) {
-    # Group show_if_custom rules by target
-    show_if_custom_grouped <- split(show_if_custom, sapply(show_if_custom, function(x) x$target))
+  # Initially hide all conditional questions
+  lapply(show_if_custom, function(x) shinyjs::hide(x$target))
 
-    # Initially hide all conditional questions
-    unique_targets <- names(show_if_custom_grouped)
-    for (target in unique_targets) {
-        shinyjs::hide(target)
+  # Create a reactive expression for each condition
+  condition_reactives <- lapply(show_if_custom, function(rule) {
+    shiny::reactive({ rule$condition(input) })
+  })
+
+  # Create a single observer to handle all conditions
+  shiny::observe({
+    for (i in seq_along(show_if_custom)) {
+      condition_result <- condition_reactives[[i]]()
+      condition_met <- isTRUE(condition_result)
+      
+      if (condition_met) {
+        shinyjs::show(show_if_custom[[i]]$target)
+      } else {
+        shinyjs::hide(show_if_custom[[i]]$target)
+      }
     }
-
-    # Iterate over each group of show_if_custom rules
-    for (group in show_if_custom_grouped) {
-        target <- group[[1]]$target
-
-        # Collect all dependent questions and conditions for this target
-        dependent_questions <- unique(sapply(group, function(x) x$dependent_question))
-        conditions <- lapply(group, function(x) x$condition)
-
-        # Create a reactive expression to check all conditions
-        check_conditions <- shiny::reactive({
-            any(sapply(conditions, function(condition) condition(input)))
-        })
-
-        # Observe changes in any of the dependent questions
-        shiny::observe({
-            # Trigger the observer for changes in any dependent question
-            for (question in dependent_questions) {
-                input[[question]]
-            }
-
-            # Check if any condition is met to show/hide the question
-            if (check_conditions()) {
-                shinyjs::show(target)
-            } else {
-                shinyjs::hide(target)
-            }
-        })
-    }
+  })
 }
 
 #' Handle basic skip logic

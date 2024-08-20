@@ -61,17 +61,17 @@ sd_config <- function(
     question_structure <- get_question_structure()
     page_ids           <- names(page_structure)
     question_ids       <- names(question_structure)
-    config <- list(
-        page_structure     = page_structure,
-        question_structure = question_structure,
-        page_ids           = page_ids,
-        question_ids       = question_ids,
-        question_values    = unname(unlist(lapply(question_structure, `[[`, "options"))),
-        question_required  = if (all_questions_required) question_ids else required_questions
-    )
+    question_values    <- unname(unlist(lapply(question_structure, `[[`, "options")))
+    question_required  <- question_ids
+    if (! all_questions_required) { 
+        question_required <- required_questions 
+    }
 
     # Check skip_if and show_if inputs
-    check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
+    check_skip_show(
+        question_ids, question_values, page_ids, skip_if, skip_if_custom,
+        show_if, show_if_custom
+    )
 
     # Check that start_page (if used) points to an actual page
     if (!is.null(start_page)) {
@@ -83,26 +83,22 @@ sd_config <- function(
         }
     }
 
-    if (show_all_pages) {
-        for (page in page_ids) {
-            shinyjs::show(page)
-        }
-    }
-
-    if (admin_page) {
-        config$admin_page <- TRUE
-    } else {
-        config$admin_page <- FALSE
-    }
-
-    # Store remaining config settings
-    config$skip_if        <- skip_if
-    config$skip_if_custom <- skip_if_custom
-    config$show_if        <- show_if
-    config$show_if_custom <- show_if_custom
-    config$start_page     <- start_page
-    config$show_all_pages <- show_all_pages
-    config$admin_page     <- admin_page
+    # Store all config settings
+    config <- list(
+        page_structure     = page_structure,
+        question_structure = question_structure,
+        page_ids           = page_ids,
+        question_ids       = question_ids,
+        question_values    = question_values,
+        question_required  = question_required,
+        skip_if_custom     = skip_if_custom,
+        skip_if            = skip_if,
+        show_if_custom     = show_if_custom,
+        show_if            = show_if,
+        start_page         = start_page,
+        show_all_pages     = show_all_pages,
+        admin_page         = admin_page
+    )
 
     return(config)
 }
@@ -228,7 +224,8 @@ get_question_nodes <- function() {
 #'
 #' @return TRUE if all checks pass, otherwise stops with an error message
 #' @keywords internal
-check_skip_show <- function(config, skip_if, skip_if_custom,
+check_skip_show <- function(
+    question_ids, question_values, page_ids, skip_if, skip_if_custom,
                             show_if, show_if_custom) {
     required_names <- c("question_id", "question_value", "target")
 
@@ -239,13 +236,13 @@ check_skip_show <- function(config, skip_if, skip_if_custom,
         if (!all(required_names %in% names(skip_if))) {
             stop("skip_if must contain the columns: question_id, question_value, and target.")
         }
-        if (!all(skip_if$question_id %in% config$question_ids)) {
+        if (!all(skip_if$question_id %in% question_ids)) {
             stop("All question_id values in skip_if must be valid question IDs.")
         }
-        if (!all(skip_if$target %in% config$page_ids)) {
+        if (!all(skip_if$target %in% page_ids)) {
             stop("All target values in skip_if must be valid page IDs.")
         }
-        if (!all(skip_if$question_value %in% config$question_values)) {
+        if (!all(skip_if$question_value %in% question_values)) {
             stop("All question_value values in skip_if must be valid question values.")
         }
     }
@@ -257,13 +254,13 @@ check_skip_show <- function(config, skip_if, skip_if_custom,
         if (!all(required_names %in% names(show_if))) {
             stop("show_if must contain the columns: question_id, question_value, and target.")
         }
-        if (!all(show_if$question_id %in% config$question_ids)) {
+        if (!all(show_if$question_id %in% question_ids)) {
             stop("All question_id values in show_if must be valid question IDs.")
         }
-        if (!all(show_if$target %in% config$question_ids)) {
+        if (!all(show_if$target %in% question_ids)) {
             stop("All target values in show_if must be valid question IDs.")
         }
-        if (!all(show_if$question_value %in% config$question_values)) {
+        if (!all(show_if$question_value %in% question_values)) {
             stop("All question_value values in show_if must be valid question values.")
         }
     }
