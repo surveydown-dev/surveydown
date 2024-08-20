@@ -391,12 +391,8 @@ handle_custom_skip_logic <- function(
         # Evaluate the condition
         condition_result <- rule$condition(input)
 
-        # Check if the condition is met (and not logical(0))
-        if (
-            (length(condition_result) > 0) &
-            (current_page != rule$target) &
-            condition_result
-        ) {
+        # Check if the condition is met 
+        if (isTRUE(condition_result) & (current_page != rule$target)) {
             return(rule$target)
         }
     }
