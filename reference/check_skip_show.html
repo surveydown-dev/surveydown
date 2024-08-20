@@ -45,18 +45,22 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_skip_show</span><span class="op">(</span><span class="va">config</span>, <span class="va">skip_if</span>, <span class="va">skip_if_custom</span>, <span class="va">show_if</span>, <span class="va">show_if_custom</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">check_skip_show</span><span class="op">(</span></span>
+<span>  <span class="va">question_ids</span>,</span>
+<span>  <span class="va">question_values</span>,</span>
+<span>  <span class="va">page_ids</span>,</span>
+<span>  <span class="va">skip_if</span>,</span>
+<span>  <span class="va">skip_if_custom</span>,</span>
+<span>  <span class="va">show_if</span>,</span>
+<span>  <span class="va">show_if_custom</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-config">config<a class="anchor" aria-label="anchor" href="#arg-config"></a></dt>
-<dd><p>The survey configuration list</p></dd>
-
-
-<dt id="arg-skip-if">skip_if<a class="anchor" aria-label="anchor" href="#arg-skip-if"></a></dt>
+<dl><dt id="arg-skip-if">skip_if<a class="anchor" aria-label="anchor" href="#arg-skip-if"></a></dt>
 <dd><p>Data frame of skip conditions</p></dd>
 
 
@@ -70,6 +74,10 @@
 
 <dt id="arg-show-if-custom">show_if_custom<a class="anchor" aria-label="anchor" href="#arg-show-if-custom"></a></dt>
 <dd><p>Custom show function</p></dd>
+
+
+<dt id="arg-config">config<a class="anchor" aria-label="anchor" href="#arg-config"></a></dt>
+<dd><p>The survey configuration list</p></dd>
 
 </dl></div>
     <div class="section level2">
