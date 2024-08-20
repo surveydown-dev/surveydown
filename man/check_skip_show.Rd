@@ -4,11 +4,17 @@
 \alias{check_skip_show}
 \title{Check skip and show conditions}
 \usage{
-check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
+check_skip_show(
+  question_ids,
+  question_values,
+  page_ids,
+  skip_if,
+  skip_if_custom,
+  show_if,
+  show_if_custom
+)
 }
 \arguments{
-\item{config}{The survey configuration list}
-
 \item{skip_if}{Data frame of skip conditions}
 
 \item{skip_if_custom}{Custom skip function}
@@ -16,6 +22,8 @@ check_skip_show(config, skip_if, skip_if_custom, show_if, show_if_custom)
 \item{show_if}{Data frame of show conditions}
 
 \item{show_if_custom}{Custom show function}
+
+\item{config}{The survey configuration list}
 }
 \value{
 TRUE if all checks pass, otherwise stops with an error message

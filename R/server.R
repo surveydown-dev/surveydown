@@ -65,6 +65,11 @@
 #' @export
 sd_server <- function(input, output, session, config, db = NULL) {
 
+    # Keep-alive observer - this will be triggered every 60 seconds
+    shiny::observeEvent(input$keepAlive, {
+        cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
+    })
+
     # Initialize local variables ----
 
     # Create a local session_id variable for Data Operations use
