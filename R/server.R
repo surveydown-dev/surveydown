@@ -65,11 +65,6 @@
 #' @export
 sd_server <- function(input, output, session, config, db = NULL) {
 
-    # Keep-alive observer - this will be triggered every 60 seconds
-    shiny::observeEvent(input$keepAlive, {
-        cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
-    })
-
     # Initialize local variables ----
 
     # Create a local session_id variable for Data Operations use
@@ -86,6 +81,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     start_page     <- config$start_page
     show_all_pages <- config$show_all_pages
     admin_page     <- config$admin_page
+    keep_alive_interval <- config$keep_alive_interval
     question_required <- config$question_required
 
     # Initial page setting ----
@@ -103,6 +99,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
             shinyjs::show(page)
         }
     }
+    
+    # Start the keep-alive
+    start_keep_alive(keep_alive_interval)
 
     # Load the JS function
     load_js_file("required_questions.js")
@@ -703,4 +702,15 @@ sd_set_password <- function(password) {
     }
 
     message("Password set successfully and .Renviron added to .gitignore.")
+}
+
+start_keep_alive <- function(interval) {
+    # Send the interval to JavaScript when the session starts
+    observe({
+        session$sendCustomMessage("updateKeepAliveInterval", interval)
+    })
+    # Keep-alive observer - this will be triggered based on the interval
+    shiny::observeEvent(input$keepAlive, {
+        cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
+    })
 }

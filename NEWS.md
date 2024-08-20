@@ -5,6 +5,7 @@
 - Made `sd_admin_enable()` internal, changed to `admin_enable()`.
 - Removed `sd_admin_ui()` and `sd_add_admin()` from the package.
 - Moved the surveydown.css and page_nav.js files into the R package and out of the Quarto extension.
+- Added keep alive functionality to the survey.
 - Bug fixes: 
   - The admin page password was looking for the `SUPABASE_PASSWORD` environment variable, but it should be `SURVEYDOWN_PASSWORD`.
   - The data fetching was not working to download the data as a CSV file in the admin page, now uses `sd_get_data()` and works.
