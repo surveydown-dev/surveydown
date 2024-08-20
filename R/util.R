@@ -165,3 +165,19 @@ vector_to_json_array <- function(vec) {
     # Join elements and wrap in brackets
     sprintf("[%s]", paste(quoted_elements, collapse = ","))
 }
+
+#' Load and Run JavaScript File
+#'
+#' This function loads a JavaScript file from the package's inst/js directory
+#' and runs it using shinyjs::runjs().
+#'
+#' @param name Character string. The name of the JavaScript file to load.
+#'
+#' @return None (invisible NULL)
+#'
+#' @keywords internal
+load_js_file <- function(name) {
+    js_file_path <- system.file("js", name, package = "surveydown")
+    js_code <- paste(readLines(js_file_path), collapse = "\n")
+    shinyjs::runjs(js_code)
+}

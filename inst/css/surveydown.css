@@ -1,0 +1,66 @@
+/* Progressbar */
+#progressbar {
+  background-color: #ECE8DF;
+  padding: 3px;
+  width: 100%;
+  position: fixed;
+  left: 0;
+  z-index: 1000;
+}
+#progressbar.POSITION_PLACEHOLDER {
+  POSITION_PLACEHOLDER: 0;
+}
+#progressbar > div {
+  width: 0%;
+  height: 10px;
+  border-radius: 0;
+}
+
+/* Top padding */
+body {
+  padding-top: 20px;
+}
+
+/* Question border */
+.form-group {
+  border: 1px solid #ddd;  /* Light gray border */
+  border-radius: 5px;      /* Rounded corners */
+  padding: 1rem;           /* Inner spacing */
+  background-color: #f9f9f9; /* Light background */
+}
+.question-container {
+  margin-bottom: 1rem;   /* Space between questions */
+}
+
+/* Bottom margin of texts */
+p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
+  margin-bottom: 0.5rem;
+}
+/* Margin of question label */
+.form-group > label.control-label {
+  margin-top: 0rem;
+  margin-bottom: 0.3rem;
+}
+
+p:last-child, .form-group:last-child {
+  margin-bottom: 0rem;
+}
+
+/* Margin of question options */
+.radio {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Center-align radio and checkbox button groups */
+.radio-group-buttons,
+.checkbox-group-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.btn-group-container-sw {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}

@@ -84,14 +84,11 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Initial page setting ----
 
-    # Hide all pages on startup
-    hide_all_pages()
-
     # Start from start_page (if specified)
     if (!is.null(start_page)) {
         shinyjs::show(start_page)
     } else {
-        show_first_page()
+        shinyjs::runjs("showFirstPage();")
     }
 
     # Load the functions for JS
@@ -195,7 +192,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 )
 
                 if (all_required_answered) {
-                    hide_all_pages()
+                    shinyjs::runjs("hideAllPages();")
                     shinyjs::show(next_page)
                 } else {
                     shinyjs::alert("Please answer all required questions before proceeding.")
@@ -534,7 +531,7 @@ admin_enable <- function(input, output, session, db) {
 
     # Toggle admin section visibility
     observeEvent(input$admin_button, {
-        hide_all_pages()
+        shinyjs::runjs("hideAllPages();")
         shinyjs::show("admin-section")
         shinyjs::show("login-page")
     })
@@ -583,7 +580,7 @@ admin_enable <- function(input, output, session, db) {
 
         removeUI(selector = "#admin-content")
         updateTextInput(session, "adminpw", value = "")
-        show_first_page()
+        shinyjs::runjs("showFirstPage();")
     })
 
     # Download Data button functionality
