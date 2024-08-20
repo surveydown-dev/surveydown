@@ -68,10 +68,7 @@ sd_config <- function(
     }
 
     # Check skip_if and show_if inputs
-    check_skip_show(
-        question_ids, question_values, page_ids, skip_if, skip_if_custom,
-        show_if, show_if_custom
-    )
+    check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
 
     # Check that start_page (if used) points to an actual page
     if (!is.null(start_page)) {
@@ -82,6 +79,10 @@ sd_config <- function(
             )
         }
     }
+
+    # Convert show_if_custom and skip_if_custom to list of lists
+    show_if_custom <- convert_to_list_of_lists(show_if_custom)
+    skip_if_custom <- convert_to_list_of_lists(skip_if_custom)
 
     # Store all config settings
     config <- list(
@@ -225,8 +226,8 @@ get_question_nodes <- function() {
 #' @return TRUE if all checks pass, otherwise stops with an error message
 #' @keywords internal
 check_skip_show <- function(
-    question_ids, question_values, page_ids, skip_if, skip_if_custom,
-                            show_if, show_if_custom) {
+    question_ids, question_values, page_ids, skip_if, show_if 
+) {
     required_names <- c("question_id", "question_value", "target")
 
     if (!is.null(skip_if)) {
@@ -266,4 +267,12 @@ check_skip_show <- function(
     }
 
     return(TRUE)
+}
+
+convert_to_list_of_lists <- function(tbl) {
+    if (is.data.frame(tbl)) {
+        return(tibble_to_list_of_lists(tbl))
+    } else {
+        return(tbl)
+    }
 }

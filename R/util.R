@@ -181,3 +181,20 @@ load_js_file <- function(name) {
     js_code <- paste(readLines(js_file_path), collapse = "\n")
     shinyjs::runjs(js_code)
 }
+
+tibble_to_list_of_lists <- function(tbl) {
+  if (!is.data.frame(tbl)) {
+    stop("Input must be a data frame or tibble")
+  }
+  
+  if (!"condition" %in% names(tbl) || !"target" %in% names(tbl)) {
+    stop("Input must have 'condition' and 'target' columns")
+  }
+  
+  lapply(seq_len(nrow(tbl)), function(i) {
+    list(
+      condition = tbl$condition[[i]],
+      target = tbl$target[i]
+    )
+  })
+}
