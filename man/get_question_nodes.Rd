@@ -6,10 +6,6 @@
 \usage{
 get_question_nodes()
 }
-\value{
-A list of question nodes from the HTML document
-}
 \description{
 Get question nodes from HTML
 }
-\keyword{internal}

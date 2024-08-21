@@ -277,9 +277,6 @@ sd_display_question <- function(id) {
 #'
 #' @return A Shiny UI element displaying the question's value
 #'
-#' @importFrom htmltools tags
-#' @importFrom shiny textOutput verbatimTextOutput uiOutput
-#'
 #' @examples
 #' sd_display_value("name")
 #' sd_display_value("age", display_type = "text")

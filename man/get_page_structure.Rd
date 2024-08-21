@@ -6,10 +6,6 @@
 \usage{
 get_page_structure()
 }
-\value{
-A list where each element represents a page and contains the question IDs on that page
-}
 \description{
 Get page structure from HTML
 }
-\keyword{internal}

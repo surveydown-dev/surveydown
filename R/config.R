@@ -15,7 +15,7 @@
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
-#' 
+#'
 #' @details The function retrieves the survey metadata, checks the validity of the conditional
 #'   display settings, and ensures that the specified start page (if any) exists. It then stores
 #'   these settings in a configuration list. If `admin_page` is set to TRUE, an admin page will be
@@ -29,31 +29,18 @@
 #'   structures, conditional display settings, navigation options, and admin page settings.
 #'
 #' @examples
-#' \dontrun{
-#'   config <- sd_config(
-#'     skip_if        = list(),
-#'     skip_if_custom = NULL,
-#'     show_if        = list(),
-#'     show_if_custom = NULL,
-#'     required_questions = c("q1", "q2"),
-#'     all_questions_required = FALSE,
-#'     start_page     = "page1",
-#'     show_all_pages = FALSE,
-#'     admin_page     = TRUE
-#'   )
-#' }
-#'
+#' # Examples here
 #' @export
 sd_config <- function(
-        skip_if            = NULL,
-        skip_if_custom     = NULL,
-        show_if            = NULL,
-        show_if_custom     = NULL,
-        required_questions = NULL,
-        all_questions_required = FALSE,
-        start_page         = NULL,
-        show_all_pages     = FALSE,
-        admin_page         = FALSE
+    skip_if            = NULL,
+    skip_if_custom     = NULL,
+    show_if            = NULL,
+    show_if_custom     = NULL,
+    required_questions = NULL,
+    all_questions_required = FALSE,
+    start_page         = NULL,
+    show_all_pages     = FALSE,
+    admin_page         = FALSE
 ) {
 
     # Get survey metadata
@@ -63,8 +50,8 @@ sd_config <- function(
     question_ids       <- names(question_structure)
     question_values    <- unname(unlist(lapply(question_structure, `[[`, "options")))
     question_required  <- question_ids
-    if (! all_questions_required) { 
-        question_required <- required_questions 
+    if (! all_questions_required) {
+        question_required <- required_questions
     }
 
     # Check skip_if and show_if inputs
@@ -105,9 +92,6 @@ sd_config <- function(
 }
 
 #' Get page structure from HTML
-#'
-#' @return A list where each element represents a page and contains the question IDs on that page
-#' @keywords internal
 get_page_structure <- function() {
 
     # Get all page nodes
@@ -135,9 +119,6 @@ get_page_structure <- function() {
 }
 
 #' Get page nodes from HTML
-#'
-#' @return A list of page nodes from the HTML document
-#' @keywords internal
 get_page_nodes <- function() {
 
     # Get the list of .qmd files in the current working directory
@@ -159,9 +140,6 @@ get_page_nodes <- function() {
 }
 
 #' Get question structure from HTML
-#'
-#' @return A list where each element represents a question and contains its options
-#' @keywords internal
 get_question_structure <- function() {
     question_nodes <- get_question_nodes()
 
@@ -190,9 +168,6 @@ get_question_structure <- function() {
 }
 
 #' Get question nodes from HTML
-#'
-#' @return A list of question nodes from the HTML document
-#' @keywords internal
 get_question_nodes <- function() {
 
     # Get the list of .qmd files in the current working directory
@@ -213,20 +188,8 @@ get_question_nodes <- function() {
     stop("Error: {surveydown} requires that only one .qmd file in the directory.")
 }
 
-#' Check skip and show conditions
-#'
-#' This function validates the skip_if and show_if conditions provided in the configuration.
-#'
-#' @param config The survey configuration list
-#' @param skip_if Data frame of skip conditions
-#' @param skip_if_custom Custom skip function
-#' @param show_if Data frame of show conditions
-#' @param show_if_custom Custom show function
-#'
-#' @return TRUE if all checks pass, otherwise stops with an error message
-#' @keywords internal
 check_skip_show <- function(
-    question_ids, question_values, page_ids, skip_if, show_if 
+    question_ids, question_values, page_ids, skip_if, show_if
 ) {
     required_names <- c("question_id", "question_value", "target")
 

@@ -6,10 +6,6 @@
 \usage{
 get_page_nodes()
 }
-\value{
-A list of page nodes from the HTML document
-}
 \description{
 Get page nodes from HTML
 }
-\keyword{internal}

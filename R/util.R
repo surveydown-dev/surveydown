@@ -20,9 +20,6 @@
 #' }
 #'
 #' @export
-#' @importFrom shiny shinyOptions
-#' @importFrom bslib bs_theme
-#' @importFrom shinyjs useShinyjs
 sd_setup <- function() {
     shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
     shinyjs::useShinyjs(rmd = TRUE)
@@ -36,8 +33,6 @@ sd_setup <- function() {
 #'
 #' @return An HTML string converted from the input markdown text.
 #'
-#' @importFrom shiny HTML
-#' @importFrom markdown renderMarkdown
 #' @keywords internal
 markdown_to_html <- function(text) {
     if (is.null(text)) { return(text) }
@@ -127,7 +122,6 @@ make_ts_name <- function(type, id) {
 #' @param libname The library where the package is installed
 #' @param pkgname The name of the package
 #'
-#' @importFrom utils packageDescription
 #' @noRd
 .onAttach <- function(libname, pkgname) {
     desc  <- utils::packageDescription(pkgname, libname)

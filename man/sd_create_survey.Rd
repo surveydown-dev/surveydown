@@ -32,5 +32,4 @@ directories to the specified path, excluding some files like README.md and .giti
 sd_create_survey()
 sd_create_survey(path = "path/to/survey", template = "simple")
 }
-
 }

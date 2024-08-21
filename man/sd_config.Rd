@@ -57,18 +57,5 @@ If \code{all_questions_required} is set to TRUE, it will override the \code{requ
 and set all questions in the survey as required.
 }
 \examples{
-\dontrun{
-  config <- sd_config(
-    skip_if        = list(),
-    skip_if_custom = NULL,
-    show_if        = list(),
-    show_if_custom = NULL,
-    required_questions = c("q1", "q2"),
-    all_questions_required = FALSE,
-    start_page     = "page1",
-    show_all_pages = FALSE,
-    admin_page     = TRUE
-  )
-}
-
+# Examples here
 }

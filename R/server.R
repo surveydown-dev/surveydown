@@ -98,7 +98,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
             shinyjs::show(page)
         }
     }
-    
+
     # Keep-alive observer - this will be triggered every 60 seconds
     shiny::observeEvent(input$keepAlive, {
         cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
@@ -273,7 +273,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
         # Update database or write to CSV based on preview mode
         if (pause_mode) {
-            write.csv(df_local, "data.csv", row.names = FALSE)
+            utils::write.csv(df_local, "data.csv", row.names = FALSE)
         } else {
             database_uploading(df_local, db$db, db$table_name)
         }
@@ -338,7 +338,7 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
     for (i in seq_along(show_if_custom)) {
       condition_result <- condition_reactives[[i]]()
       condition_met <- isTRUE(condition_result)
-      
+
       if (condition_met) {
         shinyjs::show(show_if_custom[[i]]$target)
       } else {
@@ -392,7 +392,7 @@ handle_custom_skip_logic <- function(
         # Evaluate the condition
         condition_result <- rule$condition(input)
 
-        # Check if the condition is met 
+        # Check if the condition is met
         if (isTRUE(condition_result) & (current_page != rule$target)) {
             return(rule$target)
         }
@@ -492,43 +492,43 @@ is_question_visible <- function(q, show_if, input) {
 
 admin_enable <- function(input, output, session, db) {
     # Add admin button
-    insertUI(
+    shiny::insertUI(
         selector = "body",
         where = "afterBegin",
-        ui = tags$div(
+        ui = htmltools::tags$div(
             id = "admin-button-container",
             style = "position: fixed; top: 20px; left: 10px; z-index: 1000;",
-            actionButton("admin_button", "Admin")
+            shiny::actionButton("admin_button", "Admin")
         )
     )
 
     # Add hidden admin section (only login page is rendered initially)
-    insertUI(
+    shiny::insertUI(
         selector = "body",
         where = "beforeEnd",
         ui = shinyjs::hidden(
-            div(
+            htmltools::div(
                 id = "admin-section",
                 class = "admin-section",
-                div(
+                htmltools::div(
                     id = "login-page",
-                    h2("Admin Login"),
-                    passwordInput("adminpw", "Password"),
-                    actionButton("submitPw", "Log in")
+                    htmltools::h2("Admin Login"),
+                    shiny::passwordInput("adminpw", "Password"),
+                    shiny::actionButton("submitPw", "Log in")
                 )
             )
         )
     )
 
     # Toggle admin section visibility
-    observeEvent(input$admin_button, {
+    shiny::observeEvent(input$admin_button, {
         shinyjs::runjs("hideAllPages();")
         shinyjs::show("admin-section")
         shinyjs::show("login-page")
     })
 
     # Password check and admin content reveal
-    observeEvent(input$submitPw, {
+    shiny::observeEvent(input$submitPw, {
         if (input$adminpw == Sys.getenv("SURVEYDOWN_PASSWORD")) {
             # Store login status in a session variable
             session$userData$isAdmin <- TRUE
@@ -537,17 +537,17 @@ admin_enable <- function(input, output, session, db) {
             shinyjs::hide("login-page")
 
             # Render admin content dynamically
-            insertUI(
+            shiny::insertUI(
                 selector = "#admin-section",
-                ui = div(
+                ui = htmltools::div(
                     id = "admin-content",
-                    h2("Admin Page"),
-                    actionButton("pause_survey", "Pause Survey"),
-                    actionButton("pause_db", "Pause DB"),
-                    downloadButton("download_data", "Download Data"),
-                    actionButton("back_to_survey", "Admin Logout and Back to Survey"),
-                    hr(),
-                    h3("Survey Data"),
+                    htmltools::h2("Admin Page"),
+                    shiny::actionButton("pause_survey", "Pause Survey"),
+                    shiny::actionButton("pause_db", "Pause DB"),
+                    shiny::downloadButton("download_data", "Download Data"),
+                    shiny::actionButton("back_to_survey", "Admin Logout and Back to Survey"),
+                    htmltools::hr(),
+                    htmltools::h3("Survey Data"),
                     DT::DTOutput("survey_data_table")
                 )
             )
@@ -556,12 +556,12 @@ admin_enable <- function(input, output, session, db) {
                 DT::datatable(data, options = list(scrollX = TRUE))
             })
         } else {
-            showNotification("Incorrect password", type = "error")
+            shiny::showNotification("Incorrect password", type = "error")
         }
     })
 
     # Back to survey button
-    observeEvent(input$back_to_survey, {
+    shiny::observeEvent(input$back_to_survey, {
         # Clear the admin session
         session$userData$isAdmin <- NULL
 
@@ -569,13 +569,13 @@ admin_enable <- function(input, output, session, db) {
         shinyjs::hide("admin-section")
         shinyjs::hide("login-page")
 
-        removeUI(selector = "#admin-content")
-        updateTextInput(session, "adminpw", value = "")
+        shiny::removeUI(selector = "#admin-content")
+        shiny::updateTextInput(session, "adminpw", value = "")
         shinyjs::runjs("showFirstPage();")
     })
 
     # Download Data button functionality
-    output$download_data <- downloadHandler(
+    output$download_data <- shiny::downloadHandler(
         filename = function() {
             paste0(db$table_name, "_", Sys.Date(), ".csv")
         },
@@ -584,7 +584,7 @@ admin_enable <- function(input, output, session, db) {
             data <- sd_get_data(db)
 
             # Write to CSV
-            write.csv(data, file, row.names = FALSE)
+            utils::write.csv(data, file, row.names = FALSE)
         }
     )
 }
@@ -599,7 +599,6 @@ admin_enable <- function(input, output, session, db) {
 #' @details This function transforms the input data into a format suitable for database storage.
 #'   It adds a UTC timestamp, formats question values, handles stored values, and combines all data
 #'   into a single data frame. The UTC timestamp is formatted as "YYYY-MM-DD HH:MM:SS UTC".
-#' @importFrom stats setNames
 #' @keywords internal
 transform_data <- function(question_vals, time_vals, session_id, stored_vals) {
     # Create current timestamp in UTC with the desired format
@@ -628,7 +627,7 @@ transform_data <- function(question_vals, time_vals, session_id, stored_vals) {
         session_id = session_id,
         stored_df,
         responses,
-        setNames(as.data.frame(time_vals), names(time_vals))
+        stats::setNames(as.data.frame(time_vals), names(time_vals))
     )
 
     return(data)

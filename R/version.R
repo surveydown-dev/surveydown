@@ -15,7 +15,6 @@
 #' sd_update_surveydown()
 #' sd_update_surveydown(force = TRUE)
 #' }
-#' @importFrom utils packageVersion
 sd_update_surveydown <- function(force = FALSE) {
     # Check R package version
     pkg_version <- utils::packageVersion("surveydown")
@@ -100,16 +99,6 @@ sd_check_versions <- function() {
     }
 }
 
-#' Get Latest Version from URL
-#'
-#' This function fetches the latest version from a file at a given URL.
-#'
-#' @param url The URL of the file containing the version information
-#' @param pattern The pattern to search for in the file (e.g., "Version: " or "version: ")
-#'
-#' @return A package_version object representing the latest version, or NULL if unable to fetch
-#'
-#' @keywords internal
 get_latest_version_from_url <- function(url, pattern) {
     tryCatch({
         content <- readLines(url)
@@ -127,18 +116,6 @@ get_latest_version_from_url <- function(url, pattern) {
     })
 }
 
-#' Get Surveydown Extension Version
-#'
-#' This function reads the version of the surveydown Quarto extension from its
-#' _extension.yml file.
-#'
-#' @param path A character string specifying the directory to search for the
-#' extension. Defaults to the current working directory.
-#'
-#' @return A character string representing the extension version, or NULL if
-#' the extension is not found.
-#'
-#' @keywords internal
 get_extension_version <- function(path = getwd()) {
     ext_yaml <- file.path(path, "_extensions", "jhelvy", "surveydown", "_extension.yml")
     if (!file.exists(ext_yaml)) {

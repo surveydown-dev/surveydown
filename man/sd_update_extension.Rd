@@ -27,5 +27,4 @@ doesn't exist, it will be created.
 sd_update_extension()
 sd_update_extension(path = "path/to/survey")
 }
-
 }

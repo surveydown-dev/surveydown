@@ -23,8 +23,6 @@
 #' sd_create_survey()
 #' sd_create_survey(path = "path/to/survey", template = "simple")
 #' }
-#'
-#' @importFrom usethis ui_yeah ui_done
 sd_create_survey <- function(path = getwd(), template = "simple") {
     using_current_dir <- path == getwd()
     if (using_current_dir && !usethis::ui_yeah(paste("Do you want to use the current working directory (", path, ") as the path?"))) {
@@ -99,8 +97,6 @@ sd_create_survey <- function(path = getwd(), template = "simple") {
 #' sd_update_extension()
 #' sd_update_extension(path = "path/to/survey")
 #' }
-#'
-#' @importFrom usethis ui_done
 sd_update_extension <- function(path = getwd()) {
     temp_dir <- tempfile()
     dir.create(temp_dir)
@@ -130,8 +126,6 @@ sd_update_extension <- function(path = getwd()) {
 #'
 #' @return A character string with the path to the unzipped directory.
 #' @keywords internal
-#'
-#' @importFrom utils download.file unzip
 download_extension <- function(temp_dir) {
     repo_url <- "https://github.com/jhelvy/surveydown-ext/archive/refs/heads/main.zip"
     temp_file <- tempfile(fileext = ".zip")

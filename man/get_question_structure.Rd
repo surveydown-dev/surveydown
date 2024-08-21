@@ -6,10 +6,6 @@
 \usage{
 get_question_structure()
 }
-\value{
-A list where each element represents a question and contains its options
-}
 \description{
 Get question structure from HTML
 }
-\keyword{internal}

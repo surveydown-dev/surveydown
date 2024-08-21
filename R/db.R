@@ -197,9 +197,6 @@ create_table <- function(db, table_name, df) {
 #' # and 'survey_data' is a data frame with survey responses
 #' database_uploading(survey_data, db_connection$db, db_connection$table_name)
 #' }
-#'
-#' @importFrom DBI dbReadTable dbListFields dbExecute dbWriteTable
-#'
 #' @keywords internal
 database_uploading <- function(df, db, table_name) {
     if(is.null(db)) {

@@ -44,7 +44,6 @@ It uses the 'session_id' column to identify which rows to update in the database
 # and 'survey_data' is a data frame with survey responses
 database_uploading(survey_data, db_connection$db, db_connection$table_name)
 }
-
 }
 \seealso{
 \link[DBI]{dbConnect}, \link[DBI]{dbWriteTable}
