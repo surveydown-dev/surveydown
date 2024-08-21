@@ -104,10 +104,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
         cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
     })
 
-    # Load the JS function
-    load_js_file("required_questions.js")
-    load_js_file("update_progress.js")
-
     # Show asterisks for required questions
     session$onFlush(function() {
         shinyjs::runjs(sprintf(
