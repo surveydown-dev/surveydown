@@ -15,7 +15,6 @@
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
-#' @param keep_alive_interval Integer. The interval (in milliseconds) at which the keep-alive message is sent. Defaults to `60000`.
 #' 
 #' @details The function retrieves the survey metadata, checks the validity of the conditional
 #'   display settings, and ensures that the specified start page (if any) exists. It then stores
@@ -40,8 +39,7 @@
 #'     all_questions_required = FALSE,
 #'     start_page     = "page1",
 #'     show_all_pages = FALSE,
-#'     admin_page     = TRUE, 
-#'     keep_alive_interval = 60000
+#'     admin_page     = TRUE
 #'   )
 #' }
 #'
@@ -55,8 +53,7 @@ sd_config <- function(
         all_questions_required = FALSE,
         start_page         = NULL,
         show_all_pages     = FALSE,
-        admin_page         = FALSE,
-        keep_alive_interval = 60000
+        admin_page         = FALSE
 ) {
 
     # Get survey metadata
@@ -101,8 +98,7 @@ sd_config <- function(
         show_if            = show_if,
         start_page         = start_page,
         show_all_pages     = show_all_pages,
-        admin_page         = admin_page,
-        keep_alive_interval = keep_alive_interval
+        admin_page         = admin_page
     )
 
     return(config)
