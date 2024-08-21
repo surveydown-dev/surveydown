@@ -1,0 +1,7 @@
+title: surveydown
+author: John Paul Helveston, Pingfan Hu
+version: 0.1.1
+quarto-required: ">= 1.2.198"
+contributes:
+  filters:
+    - surveydown.lua
