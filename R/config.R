@@ -91,7 +91,7 @@ sd_config <- function(
     return(config)
 }
 
-#' Get page structure from HTML
+# Get page structure from HTML
 get_page_structure <- function() {
 
     # Get all page nodes
@@ -118,7 +118,7 @@ get_page_structure <- function() {
     return(page_structure)
 }
 
-#' Get page nodes from HTML
+# Get page nodes from HTML
 get_page_nodes <- function() {
 
     # Get the list of .qmd files in the current working directory
@@ -139,7 +139,7 @@ get_page_nodes <- function() {
 
 }
 
-#' Get question structure from HTML
+# Get question structure from HTML
 get_question_structure <- function() {
     question_nodes <- get_question_nodes()
 
@@ -167,7 +167,7 @@ get_question_structure <- function() {
     return(question_structure)
 }
 
-#' Get question nodes from HTML
+# Get question nodes from HTML
 get_question_nodes <- function() {
 
     # Get the list of .qmd files in the current working directory
