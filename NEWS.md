@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+- Moved the main surveydown.lua file into the package at inst/quarto/filters. The surveydown Quarto extension is now just a wrapper to load this file, so the extension won't likely need to update any further as all updates can be made in the package lua file.
+
+# surveydown 0.1.1
+
 - Added `sd_get_data()` with a `reactive` argument to enable reactive data fetching.
 - `sd_question()` now has a `reactive` argument to enable reactive questions, and `sd_question_reactive()` was removed.
 - Made `sd_admin_enable()` internal, changed to `admin_enable()`.
