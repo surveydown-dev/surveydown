@@ -180,36 +180,15 @@ tibble_to_list_of_lists <- function(tbl) {
   if (!is.data.frame(tbl)) {
     stop("Input must be a data frame or tibble")
   }
-
+  
   if (!"condition" %in% names(tbl) || !"target" %in% names(tbl)) {
     stop("Input must have 'condition' and 'target' columns")
   }
-
+  
   lapply(seq_len(nrow(tbl)), function(i) {
     list(
       condition = tbl$condition[[i]],
       target = tbl$target[i]
     )
   })
-}
-
-#' Set up Surveydown Filter for Quarto
-#'
-#' This function sets up the Surveydown Lua filter for use in Quarto documents.
-#' It finds the filter path and sets the appropriate Quarto option.
-#'
-#' @return Invisibly returns the path to the Surveydown Lua filter.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' sd_filter()
-#' }
-sd_filter <- function() {
-    filter_path <- system.file("filter", "surveydown.lua", package = "surveydown")
-    if (filter_path == "") {
-        stop("Surveydown Lua filter not found. Please ensure the package is installed correctly.")
-    }
-    options(quarto.filters = filter_path)
-    invisible(filter_path)
 }
