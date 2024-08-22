@@ -33,7 +33,7 @@ sd_update_surveydown <- function(force = FALSE) {
     if (force) {
         message("Updating surveydown R package and all dependencies...")
         remotes::install_github(
-            "jhelvy/surveydown",
+            "surveydown-dev/surveydown",
             force = TRUE,
             dependencies = TRUE,
             upgrade = "always"
@@ -67,8 +67,8 @@ sd_check_versions <- function() {
     local_ext_version <- get_extension_version()
 
     # Get latest online versions
-    latest_pkg_version <- get_latest_version_from_url("https://raw.githubusercontent.com/jhelvy/surveydown/main/DESCRIPTION", "Version: ")
-    latest_ext_version <- get_latest_version_from_url("https://raw.githubusercontent.com/jhelvy/surveydown-ext/main/_extensions/jhelvy/surveydown/_extension.yml", "version: ")
+    latest_pkg_version <- get_latest_version_from_url("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
+    latest_ext_version <- get_latest_version_from_url("https://raw.githubusercontent.com/surveydown-dev/surveydown-ext/main/_extensions/surveydown-dev/surveydown/_extension.yml", "version: ")
 
     # Display version information
     message("surveydown R package (local): ", local_pkg_version)
@@ -117,7 +117,7 @@ get_latest_version_from_url <- function(url, pattern) {
 }
 
 get_extension_version <- function(path = getwd()) {
-    ext_yaml <- file.path(path, "_extensions", "jhelvy", "surveydown", "_extension.yml")
+    ext_yaml <- file.path(path, "_extensions", "surveydown-dev", "surveydown", "_extension.yml")
     if (!file.exists(ext_yaml)) {
         return(NULL)
     }

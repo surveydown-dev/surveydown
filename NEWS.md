@@ -1,6 +1,7 @@
 # surveydown (development version)
 
 - Moved the main surveydown.lua file into the package at inst/quarto/filters. The surveydown Quarto extension is now just a wrapper to load this file, so the extension won't likely need to update any further as all updates can be made in the package lua file.
+- Changed `jhelvy` to `surveydown-dev` in version control functions.
 
 # surveydown 0.1.1
 
