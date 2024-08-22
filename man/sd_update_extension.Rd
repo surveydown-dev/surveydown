@@ -14,7 +14,7 @@ or create the extension. Defaults to the current working directory.}
 Invisibly returns TRUE if the extension was successfully updated.
 }
 \description{
-This function updates or creates the _extensions/jhelvy/surveydown folder
+This function updates or creates the _extensions/surveydown-dev/surveydown folder
 with the latest contents from the surveydown-ext repository.
 }
 \details{

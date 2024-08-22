@@ -45,16 +45,16 @@ sd_create_survey <- function(path = getwd(), template = "simple") {
         }
     }
 
-    target_surveydown_path <- file.path(path, "_extensions", "jhelvy", "surveydown")
+    target_surveydown_path <- file.path(path, "_extensions", "surveydown-dev", "surveydown")
     if (dir.exists(target_surveydown_path)) {
         unlink(target_surveydown_path, recursive = TRUE)
     }
 
-    target_jhelvy_path <- file.path(path, "_extensions", "jhelvy")
-    dir.create(target_jhelvy_path, recursive = TRUE, showWarnings = FALSE)
+    target_surveydown_dev_path <- file.path(path, "_extensions", "surveydown-dev")
+    dir.create(target_surveydown_dev_path, recursive = TRUE, showWarnings = FALSE)
 
-    source_surveydown_path <- file.path(unzipped_dir, "_extensions", "jhelvy", "surveydown")
-    file.copy(source_surveydown_path, target_jhelvy_path, recursive = TRUE)
+    source_surveydown_path <- file.path(unzipped_dir, "_extensions", "surveydown-dev", "surveydown")
+    file.copy(source_surveydown_path, target_surveydown_dev_path, recursive = TRUE)
 
     items_to_move <- list.files(unzipped_dir, all.files = TRUE, full.names = TRUE, no.. = TRUE)
     items_to_move <- items_to_move[!grepl("_extensions", items_to_move)]
@@ -78,7 +78,7 @@ sd_create_survey <- function(path = getwd(), template = "simple") {
 
 #' Update Survey Extension
 #'
-#' This function updates or creates the _extensions/jhelvy/surveydown folder
+#' This function updates or creates the _extensions/surveydown-dev/surveydown folder
 #' with the latest contents from the surveydown-ext repository.
 #'
 #' @param path A character string specifying the directory in which to update
@@ -102,8 +102,8 @@ sd_update_extension <- function(path = getwd()) {
     dir.create(temp_dir)
     unzipped_dir <- download_extension(temp_dir)
 
-    source_path <- file.path(unzipped_dir, "_extensions", "jhelvy", "surveydown")
-    target_path <- file.path(path, "_extensions", "jhelvy", "surveydown")
+    source_path <- file.path(unzipped_dir, "_extensions", "surveydown-dev", "surveydown")
+    target_path <- file.path(path, "_extensions", "surveydown-dev", "surveydown")
 
     if (dir.exists(target_path)) {
         unlink(list.files(target_path, full.names = TRUE), recursive = TRUE)
@@ -127,7 +127,7 @@ sd_update_extension <- function(path = getwd()) {
 #' @return A character string with the path to the unzipped directory.
 #' @keywords internal
 download_extension <- function(temp_dir) {
-    repo_url <- "https://github.com/jhelvy/surveydown-ext/archive/refs/heads/main.zip"
+    repo_url <- "https://github.com/surveydown-dev/surveydown-ext/archive/refs/heads/main.zip"
     temp_file <- tempfile(fileext = ".zip")
 
     utils::download.file(repo_url, temp_file, mode = "wb")
