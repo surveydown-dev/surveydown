@@ -307,7 +307,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' Store a value
 #'
 #' This function allows storing additional values to be included in the survey data,
-#' such as respondent IDs or other data. 
+#' such as respondent IDs or other data.
 #'
 #' @param value The raid value to be stored.
 #' @param id (Optional) The id (name) of the value in the data.
@@ -407,15 +407,7 @@ sd_next <- function(next_page = NULL, label = "Next") {
     )
 }
 
-#' Generate Next Button ID
-#'
-#' This internal function generates a unique ID for the 'Next' button based on the next page ID.
-#'
-#' @param next_page Character string. The ID of the next page.
-#'
-#' @return A character string representing the button ID.
-#'
-#' @keywords internal
+# Generate Next Button ID
 make_next_button_id <- function(next_page) {
     return(paste0("next-", next_page))
 }

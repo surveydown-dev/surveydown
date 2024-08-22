@@ -118,14 +118,7 @@ sd_update_extension <- function(path = getwd()) {
     usethis::ui_done(paste("Survey extension updated at", target_path))
 }
 
-#' Download and Extract Survey Extension
-#'
-#' This helper function downloads the surveydown extension from GitHub and extracts it.
-#'
-#' @param temp_dir A temporary directory to store downloaded files.
-#'
-#' @return A character string with the path to the unzipped directory.
-#' @keywords internal
+# Download and Extract Survey Extension
 download_extension <- function(temp_dir) {
     repo_url <- "https://github.com/surveydown-dev/surveydown-ext/archive/refs/heads/main.zip"
     temp_file <- tempfile(fileext = ".zip")

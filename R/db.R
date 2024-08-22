@@ -112,11 +112,46 @@ sd_database <- function(
         })
 }
 
-#' Convert R data type to SQL data type
+#' Fetch data from a database table with optional reactivity
 #'
-#' @param r_type String representing R data type
-#' @return String representing corresponding SQL data type
-#' @keywords internal
+#' This function retrieves all data from a specified table in a database.
+#' When used in a Shiny application, it can optionally return a reactive
+#' expression that automatically refreshes the data at specified intervals.
+#'
+#' @param db A list containing database connection details. Must have elements:
+#'   \itemize{
+#'     \item db: A DBI database connection object
+#'     \item table_name: A string specifying the name of the table to query
+#'   }
+#' @param reactive Logical. If `TRUE`, returns a reactive expression for use in the server.
+#'   If `FALSE` (default), returns the data directly.
+#' @param refresh_interval Numeric. The time interval (in seconds) between data refreshes
+#'   when in reactive mode. Default is `5` seconds. Ignored if reactive is `FALSE`.
+#'
+#' @return If reactive is `FALSE`, returns a data frame containing all rows and columns
+#'   from the specified table. If reactive is TRUE, returns a reactive expression that,
+#'   when called, returns the most recent data from the specified database table.
+#'
+#' @export
+#'
+#' @examples
+#' # Examples here
+sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
+    fetch_data <- function() {
+        DBI::dbReadTable(db$db, db$table_name)
+    }
+
+    if (reactive) {
+        return(shiny::reactive({
+            shiny::invalidateLater(refresh_interval * 1000)
+            fetch_data()
+        }))
+    } else {
+        return(fetch_data())
+    }
+}
+
+# Convert to SQL
 r_to_sql_type <- function(r_type) {
     switch(toupper(r_type),
            CHARACTER = "TEXT",
@@ -127,13 +162,7 @@ r_to_sql_type <- function(r_type) {
            "TEXT")
 }
 
-#' Create a new table in the database
-#'
-#' @param db Database connection object
-#' @param table_name String name of the table to create
-#' @param df Data frame used to determine table structure
-#' @return None (called for side effects)
-#' @keywords internal
+# Create a new table in the database
 create_table <- function(db, table_name, df) {
     # Loop through the column names
     col_def <- ""
@@ -157,47 +186,7 @@ create_table <- function(db, table_name, df) {
     return(message("Database should appear on your supabase Account (Can take up to a minute.)"))
 }
 
-#' Upload survey data to the database
-#'
-#' @description
-#' This function handles the process of uploading survey data to the database.
-#' It creates the table if it doesn't exist, adds new columns if necessary,
-#' ensures correct column order, and updates or inserts rows based on the session ID.
-#'
-#' @param df A data frame containing the survey data to upload.
-#' @param db A database connection object created by \link[DBI]{dbConnect}.
-#' @param table_name A string specifying the name of the table to upload to.
-#'
-#' @details
-#' The function performs the following steps:
-#' \itemize{
-#'   \item Checks if the specified table exists in the database.
-#'   \item Creates the table if it doesn't exist.
-#'   \item Adds any new columns present in the data frame but not in the existing table.
-#'   \item Ensures the correct column order with 'timestamp' and 'session_id' at the beginning.
-#'   \item Identifies rows with matching session IDs.
-#'   \item Deletes existing rows with matching session IDs.
-#'   \item Inserts new or updated rows into the table.
-#' }
-#'
-#' @note
-#' This function assumes that the data frame \code{df} contains columns named 'timestamp' and 'session_id'.
-#' It uses the 'session_id' column to identify which rows to update in the database.
-#'
-#' @return
-#' This function does not return a value. It is called for its side effects
-#' of updating the database.
-#'
-#' @seealso
-#' \link[DBI]{dbConnect}, \link[DBI]{dbWriteTable}
-#'
-#' @examples
-#' \dontrun{
-#' # Assuming 'db_connection' is an active database connection
-#' # and 'survey_data' is a data frame with survey responses
-#' database_uploading(survey_data, db_connection$db, db_connection$table_name)
-#' }
-#' @keywords internal
+# Upload survey data to the database
 database_uploading <- function(df, db, table_name) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
@@ -239,41 +228,3 @@ database_uploading <- function(df, db, table_name) {
     }
 }
 
-#' Fetch data from a database table with optional reactivity
-#'
-#' This function retrieves all data from a specified table in a database.
-#' When used in a Shiny application, it can optionally return a reactive
-#' expression that automatically refreshes the data at specified intervals.
-#'
-#' @param db A list containing database connection details. Must have elements:
-#'   \itemize{
-#'     \item db: A DBI database connection object
-#'     \item table_name: A string specifying the name of the table to query
-#'   }
-#' @param reactive Logical. If `TRUE`, returns a reactive expression for use in the server. 
-#'   If `FALSE` (default), returns the data directly.
-#' @param refresh_interval Numeric. The time interval (in seconds) between data refreshes
-#'   when in reactive mode. Default is `5` seconds. Ignored if reactive is `FALSE`.
-#'
-#' @return If reactive is `FALSE`, returns a data frame containing all rows and columns 
-#'   from the specified table. If reactive is TRUE, returns a reactive expression that, 
-#'   when called, returns the most recent data from the specified database table.
-#'
-#' @export
-#'
-#' @examples
-#' # Examples here
-sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
-  fetch_data <- function() {
-    DBI::dbReadTable(db$db, db$table_name)
-  }
-  
-  if (reactive) {
-    return(shiny::reactive({
-      shiny::invalidateLater(refresh_interval * 1000)
-      fetch_data()
-    }))
-  } else {
-    return(fetch_data())
-  }
-}

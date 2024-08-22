@@ -25,30 +25,13 @@ sd_setup <- function() {
     shinyjs::useShinyjs(rmd = TRUE)
 }
 
-#' Convert Markdown to HTML
-#'
-#' This function converts markdown text to HTML.
-#'
-#' @param text A character string containing markdown text.
-#'
-#' @return An HTML string converted from the input markdown text.
-#'
-#' @keywords internal
+# Convert Markdown to HTML
 markdown_to_html <- function(text) {
     if (is.null(text)) { return(text) }
     return(shiny::HTML(markdown::renderMarkdown(text = text)))
 }
 
-#' Convert List Names from Markdown to HTML
-#'
-#' This function converts the names of a list from markdown to HTML format.
-#' It only works for mc_buttons and mc_multiple_buttons.
-#'
-#' @param list A list whose names are in markdown format.
-#'
-#' @return A list with names converted to HTML format.
-#'
-#' @keywords internal
+# Convert List Names from Markdown to HTML
 list_name_md_to_html <- function(list) {
     list_names_md <- names(list)
     list_names_html <- lapply(list_names_md, function(name) {
@@ -60,27 +43,12 @@ list_name_md_to_html <- function(list) {
     return(list)
 }
 
-#' Get Current UTC Timestamp
-#'
-#' This function returns the current timestamp in UTC format.
-#'
-#' @return A character string representing the current UTC timestamp.
-#'
-#' @keywords internal
+# Get Current UTC Timestamp
 get_utc_timestamp <- function() {
     return(format(Sys.time(), tz = "UTC", usetz = TRUE))
 }
 
-#' Initialize Timestamps for Pages and Questions
-#'
-#' This function initializes timestamps for pages and questions in a survey.
-#'
-#' @param page_ids A vector of page IDs.
-#' @param question_ids A vector of question IDs.
-#'
-#' @return A list of initialized timestamps for pages and questions.
-#'
-#' @keywords internal
+# Initialize Timestamps for Pages and Questions
 initialize_timestamps <- function(page_ids, question_ids) {
     timestamps <- list()
 
@@ -96,16 +64,7 @@ initialize_timestamps <- function(page_ids, question_ids) {
     return(timestamps)
 }
 
-#' Make Timestamp Name
-#'
-#' This function creates a standardized name for timestamps based on the type and ID.
-#'
-#' @param type A character string, either "page" or "question".
-#' @param id The ID of the page or question.
-#'
-#' @return A character string representing the timestamp name.
-#'
-#' @keywords internal
+# Make Timestamp Name
 make_ts_name <- function(type, id) {
     if (type == "page") {
         return(paste0("time_p_", id))
@@ -134,16 +93,7 @@ make_ts_name <- function(type, id) {
     )
 }
 
-#' Convert Vector to JSON Array
-#'
-#' This function converts a vector to a JSON array string. It's a custom alternative
-#' to jsonlite::toJSON().
-#'
-#' @param vec A vector to be converted to a JSON array.
-#'
-#' @return A character string representing the JSON array.
-#'
-#' @keywords internal
+# Convert Vector to JSON Array
 vector_to_json_array <- function(vec) {
     if (length(vec) == 0) return("[]")
 
@@ -160,16 +110,7 @@ vector_to_json_array <- function(vec) {
     sprintf("[%s]", paste(quoted_elements, collapse = ","))
 }
 
-#' Load and Run JavaScript File
-#'
-#' This function loads a JavaScript file from the package's inst/js directory
-#' and runs it using shinyjs::runjs().
-#'
-#' @param name Character string. The name of the JavaScript file to load.
-#'
-#' @return None (invisible NULL)
-#'
-#' @keywords internal
+# Load and Run JavaScript File
 load_js_file <- function(name) {
     js_file_path <- system.file("js", name, package = "surveydown")
     js_code <- paste(readLines(js_file_path), collapse = "\n")
@@ -180,11 +121,11 @@ tibble_to_list_of_lists <- function(tbl) {
   if (!is.data.frame(tbl)) {
     stop("Input must be a data frame or tibble")
   }
-  
+
   if (!"condition" %in% names(tbl) || !"target" %in% names(tbl)) {
     stop("Input must have 'condition' and 'target' columns")
   }
-  
+
   lapply(seq_len(nrow(tbl)), function(i) {
     list(
       condition = tbl$condition[[i]],

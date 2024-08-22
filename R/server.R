@@ -280,11 +280,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     })
 }
 
-#' Handle basic show-if logic
-#'
-#' @param input Shiny input object
-#' @param show_if Data frame of show-if conditions
-#' @keywords internal
+# Handle basic show-if logic
 handle_basic_show_if_logic <- function(input, show_if) {
 
     # Ensure show_if is a tibble or data frame
@@ -319,11 +315,7 @@ handle_basic_show_if_logic <- function(input, show_if) {
     }
 }
 
-#' Handle custom show-if logic
-#'
-#' @param input Shiny input object
-#' @param show_if_custom List of custom show-if conditions
-#' @keywords internal
+# Handle custom show-if logic
 handle_custom_show_if_logic <- function(input, show_if_custom) {
   # Initially hide all conditional questions
   lapply(show_if_custom, function(x) shinyjs::hide(x$target))
@@ -348,14 +340,7 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
   })
 }
 
-#' Handle basic skip logic
-#'
-#' @param input Shiny input object
-#' @param skip_if Data frame of skip-if conditions
-#' @param current_page Current page identifier
-#' @param next_page Next page identifier
-#' @return Updated next page identifier
-#' @keywords internal
+# Handle basic skip logic
 handle_basic_skip_logic <- function(
         input, skip_if, current_page, next_page
 ) {
@@ -373,14 +358,7 @@ handle_basic_skip_logic <- function(
     return(next_page)
 }
 
-#' Handle custom skip logic
-#'
-#' @param input Shiny input object
-#' @param skip_if_custom List of custom skip-if conditions
-#' @param current_page Current page identifier
-#' @param next_page Next page identifier
-#' @return Updated next page identifier
-#' @keywords internal
+# Handle custom skip logic
 handle_custom_skip_logic <- function(
     input, skip_if_custom, current_page, next_page
 ) {
@@ -401,15 +379,7 @@ handle_custom_skip_logic <- function(
     return(next_page)
 }
 
-#' Handle overall skip logic
-#'
-#' @param input Shiny input object
-#' @param skip_if Data frame of basic skip-if conditions
-#' @param skip_if_custom List of custom skip-if conditions
-#' @param current_page Current page identifier
-#' @param next_page Next page identifier
-#' @return Updated next page identifier
-#' @keywords internal
+# Handle overall skip logic
 handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next_page) {
     if (!is.null(skip_if)) {
         next_page <- handle_basic_skip_logic(input, skip_if, current_page, next_page)
@@ -420,14 +390,7 @@ handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next
     return(next_page)
 }
 
-#' Check if all required questions are answered
-#'
-#' @param questions Vector of question identifiers
-#' @param questions_required Vector of required question identifiers
-#' @param input Shiny input object
-#' @param show_if Data frame of show-if conditions
-#' @return Logical indicating if all required questions are answered
-#' @keywords internal
+# Check if all required questions are answered
 check_all_required <- function(questions, questions_required, input, show_if) {
     all(vapply(questions, function(q) {
         tryCatch({
@@ -441,12 +404,7 @@ check_all_required <- function(questions, questions_required, input, show_if) {
     }, logical(1)))
 }
 
-#' Check if a single question is answered
-#'
-#' @param q Question identifier
-#' @param input Shiny input object
-#' @return Logical indicating if the question is answered
-#' @keywords internal
+# Check if a single question is answered
 check_answer <- function(q, input) {
     answer <- input[[q]]
     if (is.null(answer)) return(FALSE)
@@ -457,13 +415,7 @@ check_answer <- function(q, input) {
     return(TRUE)  # Default to true for unknown types
 }
 
-#' Check if a question is visible
-#'
-#' @param q Question identifier
-#' @param show_if Data frame of show-if conditions
-#' @param input Shiny input object
-#' @return Logical indicating if the question is visible
-#' @keywords internal
+# Check if a question is visible
 is_question_visible <- function(q, show_if, input) {
     if (is.null(show_if) || nrow(show_if) == 0) return(TRUE)
 
@@ -589,17 +541,7 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
-#' Transform survey data for database storage
-#'
-#' @param question_vals List of question values
-#' @param time_vals List of timestamp values
-#' @param session_id String representing the session ID
-#' @param stored_vals List of stored values
-#' @return A data frame with transformed survey data, including a UTC timestamp
-#' @details This function transforms the input data into a format suitable for database storage.
-#'   It adds a UTC timestamp, formats question values, handles stored values, and combines all data
-#'   into a single data frame. The UTC timestamp is formatted as "YYYY-MM-DD HH:MM:SS UTC".
-#' @keywords internal
+# Transform survey data for database storage
 transform_data <- function(question_vals, time_vals, session_id, stored_vals) {
     # Create current timestamp in UTC with the desired format
     current_time <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
