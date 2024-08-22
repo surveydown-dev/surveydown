@@ -7,26 +7,7 @@
 <url><loc>https://surveydown.org/authors.html</loc></url>
 <url><loc>https://surveydown.org/index.html</loc></url>
 <url><loc>https://surveydown.org/news/index.html</loc></url>
-<url><loc>https://surveydown.org/reference/check_all_required.html</loc></url>
-<url><loc>https://surveydown.org/reference/check_answer.html</loc></url>
-<url><loc>https://surveydown.org/reference/create_table.html</loc></url>
-<url><loc>https://surveydown.org/reference/database_uploading.html</loc></url>
-<url><loc>https://surveydown.org/reference/download_extension.html</loc></url>
-<url><loc>https://surveydown.org/reference/get_utc_timestamp.html</loc></url>
-<url><loc>https://surveydown.org/reference/handle_basic_show_if_logic.html</loc></url>
-<url><loc>https://surveydown.org/reference/handle_basic_skip_logic.html</loc></url>
-<url><loc>https://surveydown.org/reference/handle_custom_show_if_logic.html</loc></url>
-<url><loc>https://surveydown.org/reference/handle_custom_skip_logic.html</loc></url>
-<url><loc>https://surveydown.org/reference/handle_skip_logic.html</loc></url>
 <url><loc>https://surveydown.org/reference/index.html</loc></url>
-<url><loc>https://surveydown.org/reference/initialize_timestamps.html</loc></url>
-<url><loc>https://surveydown.org/reference/is_question_visible.html</loc></url>
-<url><loc>https://surveydown.org/reference/list_name_md_to_html.html</loc></url>
-<url><loc>https://surveydown.org/reference/load_js_file.html</loc></url>
-<url><loc>https://surveydown.org/reference/make_next_button_id.html</loc></url>
-<url><loc>https://surveydown.org/reference/make_ts_name.html</loc></url>
-<url><loc>https://surveydown.org/reference/markdown_to_html.html</loc></url>
-<url><loc>https://surveydown.org/reference/r_to_sql_type.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_check_versions.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_config.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_copy_value.html</loc></url>
@@ -43,7 +24,5 @@
 <url><loc>https://surveydown.org/reference/sd_store_value.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_update_extension.html</loc></url>
 <url><loc>https://surveydown.org/reference/sd_update_surveydown.html</loc></url>
-<url><loc>https://surveydown.org/reference/transform_data.html</loc></url>
-<url><loc>https://surveydown.org/reference/vector_to_json_array.html</loc></url>
 </urlset>
 
