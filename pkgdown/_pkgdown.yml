@@ -21,6 +21,7 @@ reference:
 - subtitle: Functions for setting up and creating surveys
   contents:
   - sd_setup
+  - sd_filter
   - sd_create_survey
 - title: "Survey Components"
   desc: "Functions for defining survey questions, navigation, and storing values"

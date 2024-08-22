@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+# surveydown 0.1.1
+- We got rid of the Quarto extension. everything is in the surveydown R package now. An extra `sd_filter()` function is needed in the beginning of the qmd file.
 - Added `sd_get_data()` with a `reactive` argument to enable reactive data fetching.
 - `sd_question()` now has a `reactive` argument to enable reactive questions, and `sd_question_reactive()` was removed.
 - Made `sd_admin_enable()` internal, changed to `admin_enable()`.
