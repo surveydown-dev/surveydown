@@ -140,8 +140,8 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Set the respondent_id
     respondent_id <- ''
-    if (!pause_mode) { 
-        respondent_id <- get_respondent_id(db, session_id) 
+    if (!pause_mode) {
+        respondent_id <- get_respondent_id(db, session_id)
     }
 
     # Format static data
@@ -168,17 +168,17 @@ sd_server <- function(input, output, session, config, db = NULL) {
     shiny::observe({
         question_values <- get_question_vals()
         time_last_interaction <- get_utc_timestamp()
-    
+
         for (index in seq_along(question_ids)) {
             id <- question_ids[index]
-            value <- question_values[[id]]            
+            value <- question_values[[id]]
 
             # Make value accessible in the UI
             local({
                 output[[paste0(id, "_value")]] <- shiny::renderText({
                     as.character(value)
                 })
-            }) 
+            })
 
             # If answered, update timestamp, progress bar, and database
             if (is_question_answered(value)) {
@@ -186,13 +186,13 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 if (is.na(timestamps$data[[ts_name]])) {
                     timestamps$data[[ts_name]] <- get_utc_timestamp()
                 }
-                
+
                 if (index > last_answered_question()) {
                     last_answered_question(index)
                 }
             }
         }
-        
+
         # Calculate progress based on the last answered question
         current_progress <- last_answered_question() / length(question_ids)
         max_progress(max(max_progress(), current_progress))
@@ -214,7 +214,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
     })
 
     # Main Page Observer ----
-
     shiny::observe({
         lapply(2:length(page_structure), function(i) {
             current_page <- page_ids[i-1]
@@ -228,10 +227,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 timestamps$data[[make_ts_name("page", next_page)]] <- get_utc_timestamp()
 
                 # Check if all required questions are answered
-                current_page_questions <- page_structure[[current_page]]
-
+                current_page_questions <- page_structure[[current_page]]$questions
                 all_required_answered <- check_all_required(
-                    current_page_questions, question_required, input, show_if, show_if_custom
+                    current_page_questions, question_required, input, show_if
                 )
 
                 if (all_required_answered) {
@@ -289,9 +287,9 @@ format_question_value <- function(val) {
 
 # Helper function to check if a question is answered
 is_question_answered <- function(value) {
-  if (is.character(value)) return(nchar(trimws(value)) > 0)
-  if (is.numeric(value)) return(!is.na(value))
-  !is.null(value) && !identical(value, "")
+    if (is.character(value)) return(nchar(trimws(value)) > 0)
+    if (is.numeric(value)) return(!is.na(value))
+    !is.null(value) && !identical(value, "")
 }
 
 # Handle basic show-if logic
@@ -331,27 +329,27 @@ basic_show_if_logic <- function(input, show_if) {
 
 # Handle custom show-if logic
 custom_show_if_logic <- function(input, show_if_custom) {
-  # Initially hide all conditional questions
-  lapply(show_if_custom, function(x) shinyjs::hide(x$target))
+    # Initially hide all conditional questions
+    lapply(show_if_custom, function(x) shinyjs::hide(x$target))
 
-  # Create a reactive expression for each condition
-  condition_reactives <- lapply(show_if_custom, function(rule) {
-    shiny::reactive({ rule$condition(input) })
-  })
+    # Create a reactive expression for each condition
+    condition_reactives <- lapply(show_if_custom, function(rule) {
+        shiny::reactive({ rule$condition(input) })
+    })
 
-  # Create a single observer to handle all conditions
-  shiny::observe({
-    for (i in seq_along(show_if_custom)) {
-      condition_result <- condition_reactives[[i]]()
-      condition_met <- isTRUE(condition_result)
+    # Create a single observer to handle all conditions
+    shiny::observe({
+        for (i in seq_along(show_if_custom)) {
+            condition_result <- condition_reactives[[i]]()
+            condition_met <- isTRUE(condition_result)
 
-      if (condition_met) {
-        shinyjs::show(show_if_custom[[i]]$target)
-      } else {
-        shinyjs::hide(show_if_custom[[i]]$target)
-      }
-    }
-  })
+            if (condition_met) {
+                shinyjs::show(show_if_custom[[i]]$target)
+            } else {
+                shinyjs::hide(show_if_custom[[i]]$target)
+            }
+        }
+    })
 }
 
 # Handle overall skip logic
@@ -385,7 +383,7 @@ basic_skip_logic <- function(
 
 # Handle custom skip logic
 custom_skip_logic <- function(
-    input, skip_if_custom, current_page, next_page
+        input, skip_if_custom, current_page, next_page
 ) {
 
     # Loop through each skip logic condition
@@ -406,18 +404,20 @@ custom_skip_logic <- function(
 
 # Check if all required questions are answered
 check_all_required <- function(
-    questions, questions_required, input, show_if, show_if_custom
+        questions, questions_required, input, show_if
 ) {
-    all(vapply(questions, function(q) {
-        tryCatch({
-            if (!(q %in% questions_required)) return(TRUE)
-            if (!is_question_visible(q, show_if, input)) return(TRUE)
-            check_answer(q, input)
-        }, error = function(e) {
-            message("Error checking question ", q, ": ", e$message)
-            return(FALSE)
-        })
-    }, logical(1)))
+    results <- vapply(questions, function(q) {
+        is_required <- q %in% questions_required
+        is_visible <- is_question_visible(q, show_if, input)
+        is_answered <- check_answer(q, input)
+
+        if (!is_required) return(TRUE)
+        if (!is_visible) return(TRUE)
+        return(is_answered)
+    }, logical(1))
+
+    all_required_answered <- all(results)
+    return(all_required_answered)
 }
 
 # Check if a single question is answered
@@ -578,20 +578,20 @@ admin_enable <- function(input, output, session, db) {
 }
 
 get_respondent_id <- function(db, session_id) {
-    
+
     # Get the latest data from the database
     data <- sd_get_data(db)
-    
+
     # If there are no data yet or no respondentID, create the respondentID
     if (is.null(data) || (nrow(data) == 0) || !("respondent_id" %in% colnames(data))) {
         return(1)
-    } 
+    }
 
     # Check if this session_id already has a respondentID
     existing_id <- data$respondent_id[which(data$session_id == session_id)]
     if (length(existing_id) > 0 && !is.na(existing_id[1])) {
         return(existing_id[1])
-    } 
+    }
 
     # If not, assign a new ID
     return(max(as.numeric(data$respondent_id), na.rm = TRUE) + 1)
@@ -599,8 +599,8 @@ get_respondent_id <- function(db, session_id) {
 
 # Transform survey data for database storage
 transform_data <- function(
-    static_df, question_values, time_vals, time_last_interaction
-) { 
+        static_df, question_values, time_vals, time_last_interaction
+) {
     data <- cbind(
         static_df,
         as.data.frame(question_values),

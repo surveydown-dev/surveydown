@@ -122,12 +122,11 @@ sd_config <- function(
 
 # Get page structure from HTML
 get_page_structure <- function() {
-
     # Get all page nodes
     page_nodes <- get_page_nodes()
     all_page_ids <- page_nodes |> rvest::html_attr("id")
 
-    # Initialize a list to hold the results
+    # Initialize a named list to hold the results
     page_structure <- list()
 
     # Iterate over each page node to get the question_ids
@@ -140,8 +139,8 @@ get_page_structure <- function() {
             rvest::html_nodes("[data-question-id]") |>
             rvest::html_attr("data-question-id")
 
-        # Store the question IDs for this page
-        page_structure[[length(page_structure) + 1]] <- list(
+        # Store the question IDs for this page in a named list
+        page_structure[[page_id]] <- list(
             id = page_id,
             questions = question_ids
         )
@@ -176,7 +175,7 @@ get_page_nodes <- function() {
 get_question_structure <- function() {
     question_nodes <- get_question_nodes()
 
-    # Initialize a list to hold the results
+    # Initialize a named list to hold the results
     question_structure <- list()
     all_question_ids <- character()
 
@@ -195,8 +194,8 @@ get_question_structure <- function() {
             rvest::html_attr(opt, "value")
         })
 
-        # Store the options and required status for this question
-        question_structure[[length(question_structure) + 1]] <- list(
+        # Store the options for this question in a named list
+        question_structure[[question_id]] <- list(
             id = question_id,
             options = options
         )
