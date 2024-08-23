@@ -50,7 +50,7 @@ connection details.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_database</span><span class="op">(</span></span>
 <span>  host <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  db_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dbname <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  port <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  user <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  table_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -68,7 +68,7 @@ connection details.</p>
 <dd><p>Character string. The host address of the supabase database.</p></dd>
 
 
-<dt id="arg-db-name">db_name<a class="anchor" aria-label="anchor" href="#arg-db-name"></a></dt>
+<dt id="arg-dbname">dbname<a class="anchor" aria-label="anchor" href="#arg-dbname"></a></dt>
 <dd><p>Character string. The name of the supabase database.</p></dd>
 
 
@@ -122,7 +122,7 @@ environment variable by default, but can be overridden by explicitly passing a v
 <span class="r-in"><span>  <span class="co"># Assuming SURVEYDOWN_PASSWORD is set in .Renviron</span></span></span>
 <span class="r-in"><span>  <span class="va">db_connection</span> <span class="op">&lt;-</span> <span class="fu">sd_database</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    host       <span class="op">=</span> <span class="st">"aws-0-us-west-1.pooler.supabase.com"</span>,</span></span>
-<span class="r-in"><span>    db_name    <span class="op">=</span> <span class="st">"postgres"</span>,</span></span>
+<span class="r-in"><span>    dbname     <span class="op">=</span> <span class="st">"postgres"</span>,</span></span>
 <span class="r-in"><span>    port       <span class="op">=</span> <span class="st">"6---"</span>,</span></span>
 <span class="r-in"><span>    user       <span class="op">=</span> <span class="st">"postgres.k----------i"</span>,</span></span>
 <span class="r-in"><span>    table_name <span class="op">=</span> <span class="st">"your-table-name"</span>,</span></span>
@@ -132,7 +132,7 @@ environment variable by default, but can be overridden by explicitly passing a v
 <span class="r-in"><span>  <span class="co"># Explicitly providing the password</span></span></span>
 <span class="r-in"><span>  <span class="va">db_connection</span> <span class="op">&lt;-</span> <span class="fu">sd_database</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    host       <span class="op">=</span> <span class="st">"aws-0-us-west-1.pooler.supabase.com"</span>,</span></span>
-<span class="r-in"><span>    db_name    <span class="op">=</span> <span class="st">"postgres"</span>,</span></span>
+<span class="r-in"><span>    dbname     <span class="op">=</span> <span class="st">"postgres"</span>,</span></span>
 <span class="r-in"><span>    port       <span class="op">=</span> <span class="st">"6---"</span>,</span></span>
 <span class="r-in"><span>    user       <span class="op">=</span> <span class="st">"postgres.k----------i"</span>,</span></span>
 <span class="r-in"><span>    table_name <span class="op">=</span> <span class="st">"your-table-name"</span>,</span></span>
