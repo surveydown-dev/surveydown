@@ -40,12 +40,14 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-</div>
+<ul><li>Moved <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code> and <code><a href="../reference/sd_copy_value.html">sd_copy_value()</a></code> to the server.R file (these are server operations).</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.2" id="surveydown-012">surveydown 0.1.2<a class="anchor" aria-label="anchor" href="#surveydown-012"></a></h2>
 <ul><li>Moved the main surveydown.lua file into the package at inst/quarto/filters. The surveydown Quarto extension is now just a wrapper to load this file, so the extension won’t likely need to update any further as all updates can be made in the package lua file.</li>
 <li>Changed <code>jhelvy</code> to <code>surveydown-dev</code> in version control functions.</li>
 <li>Now if there are duplicated <code>page_id</code> and <code>question_id</code>, the survey will stop and show error.</li>
+<li>Removed roxygen2 documentation from non-exported functions.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.1" id="surveydown-011">surveydown 0.1.1<a class="anchor" aria-label="anchor" href="#surveydown-011"></a></h2>
