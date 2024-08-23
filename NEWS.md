@@ -1,6 +1,7 @@
 # surveydown (development version)
 
 - Moved `sd_store_value()` and `sd_copy_value()` to the server.R file (these are server operations).
+- Added `respondent_id` variable that tracks the respondent based on their starting the survey.
 
 # surveydown 0.1.2
 

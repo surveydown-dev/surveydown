@@ -271,6 +271,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
         # Making everything a string because the db poops itself
         df_local[] <- lapply(df_local, as.character)
 
+        # Get the respondent_id
+        df_local <- set_respondent_id(db, df_local, session_id, pause_mode)
+
         # Update database or write to CSV based on preview mode
         if (pause_mode) {
             utils::write.csv(df_local, "data.csv", row.names = FALSE)
@@ -573,6 +576,37 @@ transform_data <- function(question_vals, time_vals, session_id, stored_vals) {
     )
 
     return(data)
+}
+
+set_respondent_id <- function(db, df_local, session_id, pause_mode) {
+    if (pause_mode) {
+        df_local$respondent_id <- ''
+        return(df_local)
+    }
+    
+    # Get the latest data from the database
+    data <- sd_get_data(db)
+    
+    # If there are no data yet or no respondentID, create the respondentID
+    if (is.null(data) || (nrow(data) == 0) || !("respondent_id" %in% colnames(data))) {
+        new_id <- 1
+    } else {
+        # Check if this session_id already has a respondentID
+        existing_id <- data$respondent_id[which(data$session_id == session_id)]
+        if (length(existing_id) > 0 && !is.na(existing_id[1])) {
+            new_id <- existing_id[1]
+        } else {
+            # If not, assign a new ID
+            new_id <- max(as.numeric(data$respondent_id), na.rm = TRUE) + 1
+        }
+    }
+    
+    # Assign the respondentID
+    df_local$respondent_id <- new_id
+    
+    # Move the respondentID to the first column
+    df_local <- df_local[, c(ncol(df_local), 1:(ncol(df_local) - 1))]
+    return(df_local)
 }
 
 #' Set Password

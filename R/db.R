@@ -137,10 +137,13 @@ sd_database <- function(
 #' @examples
 #' # Examples here
 sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
+    if (is.null(db)) {
+        warning("Database is not connected, db is NULL")
+        return(NULL)
+    }
     fetch_data <- function() {
         DBI::dbReadTable(db$db, db$table_name)
     }
-
     if (reactive) {
         return(shiny::reactive({
             shiny::invalidateLater(refresh_interval * 1000)
