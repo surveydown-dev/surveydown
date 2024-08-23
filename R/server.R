@@ -229,7 +229,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 # Check if all required questions are answered
                 current_page_questions <- page_structure[[current_page]]$questions
                 all_required_answered <- check_all_required(
-                    current_page_questions, question_required, input, show_if
+                    current_page_questions, question_required, input, show_if, show_if_custom
                 )
 
                 if (all_required_answered) {
@@ -404,11 +404,11 @@ custom_skip_logic <- function(
 
 # Check if all required questions are answered
 check_all_required <- function(
-        questions, questions_required, input, show_if
+        questions, questions_required, input, show_if, show_if_custom
 ) {
     results <- vapply(questions, function(q) {
         is_required <- q %in% questions_required
-        is_visible <- is_question_visible(q, show_if, input)
+        is_visible <- is_question_visible(q, show_if, show_if_custom, input)
         is_answered <- check_answer(q, input)
 
         if (!is_required) return(TRUE)
@@ -432,30 +432,28 @@ check_answer <- function(q, input) {
 }
 
 # Check if a question is visible
-is_question_visible <- function(q, show_if, input) {
-    if (is.null(show_if) || nrow(show_if) == 0) return(TRUE)
+is_question_visible <- function(q, show_if, show_if_custom, input) {
+    # Check basic show_if conditions
+    basic_visible <- if (is.null(show_if) || nrow(show_if) == 0) TRUE else {
+        rules <- show_if[show_if$target == q, ]
+        nrow(rules) == 0 || any(sapply(1:nrow(rules), function(i) {
+            input_value <- input[[rules$question_id[i]]]
+            expected_value <- rules$question_value[i]
+            if (is.null(input_value)) FALSE
+            else if (is.list(input_value)) expected_value %in% unlist(input_value)
+            else input_value == expected_value
+        }))
+    }
 
-    # Check if the question is a target in show_if
-    is_target <- q %in% show_if$target
-    if (!is_target) return(TRUE)
+    # Check custom show_if conditions
+    custom_visible <- if (is.null(show_if_custom)) TRUE else {
+        !any(sapply(show_if_custom, function(rule) {
+            rule$target == q && !isTRUE(rule$condition(input))
+        }))
+    }
 
-    # Get all corresponding rules for this target
-    rules <- show_if[show_if$target == q, ]
-
-    # Check if any condition is met
-    any(sapply(1:nrow(rules), function(i) {
-        input_value <- input[[rules$question_id[i]]]
-        expected_value <- rules$question_value[i]
-
-        # Handle different input types
-        if (is.null(input_value)) {
-            return(FALSE)
-        } else if (is.list(input_value)) {
-            return(expected_value %in% unlist(input_value))
-        } else {
-            return(input_value == expected_value)
-        }
-    }))
+    # Return TRUE if the question is visible according to both conditions
+    basic_visible && custom_visible
 }
 
 # Function to get all stored values
