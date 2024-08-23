@@ -1,8 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.2.0
+
 - Moved `sd_store_value()` and `sd_copy_value()` to the server.R file (these are server operations).
 - Added `respondent_id` variable that tracks the respondent based on their starting the survey.
 - Restructure the server to be more efficient.
+- Now the required questions can successfully bypass the hidden required questions of all types.
 
 # surveydown 0.1.2
 

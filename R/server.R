@@ -3,7 +3,7 @@
 #' @description
 #' This function defines the server-side logic for a Shiny application used in surveydown.
 #' It handles various operations such as conditional display, progress tracking,
-#' page navigation, and database updates for survey responses.
+#' page navigation, database updates for survey responses, and admin functionality.
 #'
 #' @param input The Shiny input object.
 #' @param output The Shiny output object.
@@ -25,6 +25,7 @@
 #'   \item \code{start_page}: The identifier of the starting page.
 #'   \item \code{question_required}: A vector of required question identifiers.
 #'   \item \code{all_questions_required}: A logical indicating if all questions are required.
+#'   \item \code{admin_page}: A logical indicating if an admin page should be included.
 #' }
 #'
 #' The function performs the following tasks:
@@ -35,12 +36,14 @@
 #'   \item Handles page navigation and skip logic.
 #'   \item Manages required questions.
 #'   \item Performs database operations or saves to a local CSV file in preview mode.
+#'   \item Sets up admin functionality if enabled in the configuration.
 #' }
 #'
 #' @section Progress Bar:
 #' The progress bar is updated based on the last answered question. It will jump to the
 #' percentage corresponding to the last answered question and will never decrease,
-#' even if earlier questions are answered later.
+#' even if earlier questions are answered later. The progress is calculated as the ratio
+#' of the last answered question's index to the total number of questions.
 #'
 #' @section Database Operations:
 #' If \code{db} is provided, the function will update the database with survey responses.
@@ -51,6 +54,15 @@
 #'
 #' @examples
 #' \dontrun{
+#'   shinyApp(
+#'     ui = sd_ui(),
+#'     server = function(input, output, session) {
+#'       sd_server(input, output, session, config = my_config, db = my_db)
+#'     }
+#'   )
+#'
+#'   # With admin page enabled
+#'   my_config <- sd_config(admin_page = TRUE)
 #'   shinyApp(
 #'     ui = sd_ui(),
 #'     server = function(input, output, session) {
