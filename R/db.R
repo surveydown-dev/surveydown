@@ -4,7 +4,7 @@
 #' connection details.
 #'
 #' @param host Character string. The host address of the supabase database.
-#' @param db_name Character string. The name of the supabase database.
+#' @param dbname Character string. The name of the supabase database.
 #' @param port Integer. The port number for the supabase database connection.
 #' @param user Character string. The username for the supabase database connection.
 #' @param table_name Character string. The name of the table to interact with in the supabase database.
@@ -30,7 +30,7 @@
 #'   # Assuming SURVEYDOWN_PASSWORD is set in .Renviron
 #'   db_connection <- sd_database(
 #'     host       = "aws-0-us-west-1.pooler.supabase.com",
-#'     db_name    = "postgres",
+#'     dbname     = "postgres",
 #'     port       = "6---",
 #'     user       = "postgres.k----------i",
 #'     table_name = "your-table-name",
@@ -40,7 +40,7 @@
 #'   # Explicitly providing the password
 #'   db_connection <- sd_database(
 #'     host       = "aws-0-us-west-1.pooler.supabase.com",
-#'     db_name    = "postgres",
+#'     dbname     = "postgres",
 #'     port       = "6---",
 #'     user       = "postgres.k----------i",
 #'     table_name = "your-table-name",
@@ -52,7 +52,7 @@
 #' @export
 sd_database <- function(
         host       = NULL,
-        db_name    = NULL,
+        dbname     = NULL,
         port       = NULL,
         user       = NULL,
         table_name = NULL,
@@ -69,7 +69,7 @@ sd_database <- function(
     # Authentication/Checks for NULL Values
     if (
         is.null(host) |
-        is.null(db_name) |
+        is.null(dbname) |
         is.null(port) |
         is.null(user) |
         is.null(table_name)
@@ -91,7 +91,7 @@ sd_database <- function(
             db <-  DBI::dbConnect(
                 RPostgres::Postgres(),
                 host       = host,
-                dbname     = db_name,
+                dbname     = dbname,
                 port       = port,
                 user       = user,
                 password   = password,
@@ -104,7 +104,7 @@ sd_database <- function(
                        "Details:", conditionMessage(e),
                        "\nPlease check your connection details:",
                        "\n- host:    ", host,
-                       "\n- dbname:  ", db_name,
+                       "\n- dbname:  ", dbname,
                        "\n- port:    ", port,
                        "\n- user:    ", user,
                        "\n- password:", password,
@@ -212,10 +212,6 @@ database_uploading <- function(df, db, table_name) {
             query <- paste0('ALTER TABLE "', table_name, '" ADD COLUMN "', col, '" ', sql_type, ';')
             DBI::dbExecute(db, query)
         }
-
-        # Ensure correct column order
-        correct_order <- c("time_start", "session_id", setdiff(names(df), c("time_start", "session_id")))
-        df <- df[, correct_order]
     }
 
     matching_rows <- df[df$session_id %in% data$session_id, ]

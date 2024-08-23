@@ -67,8 +67,12 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Initialize local variables ----
 
-    # Create a local session_id variable for Data Operations use
+    # Tag start time and unique session_id
+    time_start <- get_utc_timestamp()
     session_id <- session$token
+
+    # Check if db is NULL (either left blank or specified with pause = TRUE)
+    pause_mode <- is.null(db)
 
     # Create local objects from config file
     page_structure <- config$page_structure
@@ -83,7 +87,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     admin_page     <- config$admin_page
     question_required <- config$question_required
 
-    # Initial page setting ----
+    # Initial page settings ----
 
     # Start from start_page (if specified)
     if (!is.null(start_page)) {
@@ -93,11 +97,13 @@ sd_server <- function(input, output, session, config, db = NULL) {
     }
 
     # Show all pages if show_all_pages is TRUE
-    if (show_all_pages) {
-        for (page in page_ids) {
-            shinyjs::show(page)
-        }
-    }
+    if (show_all_pages) lapply(page_ids, shinyjs::show)
+
+    # Conditional display (show_if conditions)
+    if (!is.null(show_if)) { basic_show_if_logic(input, show_if) }
+    if (!is.null(show_if_custom)) { custom_show_if_logic(input, show_if_custom) }
+
+    # Other settings ----
 
     # Keep-alive observer - this will be triggered every 60 seconds
     shiny::observeEvent(input$keepAlive, {
@@ -113,74 +119,101 @@ sd_server <- function(input, output, session, config, db = NULL) {
         ))
     }, once = TRUE)
 
-    # Admin Page Logic ----
+    # Create admin page if admin_page is TRUE
+    if (admin_page) { admin_enable(input, output, session, db) }
 
-    if (admin_page) {
-        admin_enable(input, output, session, db)
-    }
+    # Data tracking ----
 
-    # Progress Bar Tracking ----
     # Initialize object for storing timestamps
-    timestamps <- shiny::reactiveValues(data = initialize_timestamps(page_ids, question_ids))
+    timestamps <- shiny::reactiveValues(
+        data = initialize_timestamps(page_ids, question_ids)
+    )
 
-    # Conditional display (show_if conditions)
+    # Create a reactive expression for obtaining all formatted question values
+    get_question_vals <- shiny::reactive({
+        result <- list()
+        for (id in question_ids) {
+            result[[id]] <- format_question_value(input[[id]])
+        }
+        return(result)
+    })
 
-    if (!is.null(show_if)) {
-        handle_basic_show_if_logic(input, show_if)
+    # Set the respondent_id
+    respondent_id <- ''
+    if (!pause_mode) { 
+        respondent_id <- get_respondent_id(db, session_id) 
     }
 
-    if (!is.null(show_if_custom)) {
-        handle_custom_show_if_logic(input, show_if_custom)
+    # Format static data
+    stored_vals <- get_stored_vals(session)
+    static_df <- cbind(
+        data.frame(
+            respondent_id = respondent_id,
+            session_id    = session_id,
+            time_start    = time_start
+        )
+    )
+    if (!is.null(stored_vals)) {
+        static_df <- cbind(static_df, stored_vals)
     }
 
-    # Initialize progress bar update functionality
+    # Initialize values for progressbar
     load_js_file("update_progress.js")
-
-    # Track the progress
     max_progress <- shiny::reactiveVal(0)
     last_answered_question <- shiny::reactiveVal(0)
 
+    # Main question observer ----
+
+    # Main observer for progress bar, timestamps, and database updating
     shiny::observe({
-        lapply(seq_along(question_ids), function(index) {
+        question_values <- get_question_vals()
+        time_last_interaction <- get_utc_timestamp()
+    
+        for (index in seq_along(question_ids)) {
             id <- question_ids[index]
-            shiny::observeEvent(input[[id]], {
-                # Check if the question is answered (non-null and non-empty)
-                is_answered <- !is.null(input[[id]]) &&
-                    (if(is.list(input[[id]])) {
-                        length(input[[id]]) > 0
-                    } else if(is.character(input[[id]])) {
-                        any(nchar(trimws(input[[id]])) > 0)
-                    } else if(is.numeric(input[[id]])) {
-                        !all(is.na(input[[id]]))
-                    } else {
-                        !isTRUE(all(is.na(input[[id]]))) && !identical(input[[id]], "")
-                    })
+            value <- question_values[[id]]            
 
-                if (isTRUE(is_answered)) {
-                    if (is.na(timestamps$data[[make_ts_name("question", id)]])) {
-                        timestamps$data[[make_ts_name("question", id)]] <- get_utc_timestamp()
-                    }
+            # Make value accessible in the UI
+            local({
+                output[[paste0(id, "_value")]] <- shiny::renderText({
+                    as.character(value)
+                })
+            }) 
 
-                    # Update the last answered question if this question has a higher index
-                    if (index > last_answered_question()) {
-                        last_answered_question(index)
-                    }
-
-                    # Calculate progress based on the last answered question
-                    current_progress <- last_answered_question() / length(question_ids)
-                    max_progress(max(max_progress(), current_progress))
-
-                    # Use the custom message handler to update the progress bar
-                    session$sendCustomMessage("updateProgressBar", max_progress() * 100)
+            # If answered, update timestamp, progress bar, and database
+            if (is_question_answered(value)) {
+                ts_name <- make_ts_name("question", id)
+                if (is.na(timestamps$data[[ts_name]])) {
+                    timestamps$data[[ts_name]] <- get_utc_timestamp()
                 }
-            }, ignoreInit = TRUE, ignoreNULL = FALSE)
-        })
+                
+                if (index > last_answered_question()) {
+                    last_answered_question(index)
+                }
+            }
+        }
+        
+        # Calculate progress based on the last answered question
+        current_progress <- last_answered_question() / length(question_ids)
+        max_progress(max(max_progress(), current_progress))
+
+        # Use the custom message handler to update the progress bar
+        session$sendCustomMessage("updateProgressBar", max_progress() * 100)
+
+        # Update database ----
+
+        # Transform to data frame, handling uninitialized inputs appropriately
+        df_local <- transform_data(static_df, question_values, timestamps$data, time_last_interaction)
+
+        # Update database or write to CSV based on preview mode
+        if (pause_mode) {
+            utils::write.csv(df_local, "data.csv", row.names = FALSE)
+        } else {
+            database_uploading(df_local, db$db, db$table_name)
+        }
     })
 
-    # Page Navigation ----
-
-    # Create a reactive value for show_if
-    show_if_reactive <- shiny::reactiveVal(show_if)
+    # Main Page Observer ----
 
     shiny::observe({
         lapply(2:length(page_structure), function(i) {
@@ -198,7 +231,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 current_page_questions <- page_structure[[current_page]]
 
                 all_required_answered <- check_all_required(
-                    current_page_questions, question_required, input, show_if
+                    current_page_questions, question_required, input, show_if, show_if_custom
                 )
 
                 if (all_required_answered) {
@@ -211,80 +244,58 @@ sd_server <- function(input, output, session, config, db = NULL) {
         })
     })
 
-    # Database Operations ----
+}
 
-    pause_mode <- is.null(db)
+# Get Current UTC Timestamp
+get_utc_timestamp <- function() {
+    return(format(Sys.time(), tz = "UTC", usetz = TRUE))
+}
 
-    # Define a reactive expression for each question_id value
-    get_question_vals <- shiny::reactive({
-        temp <- sapply(
-            question_ids,
-            function(id) input[[id]], simplify = FALSE, USE.NAMES = TRUE
-        )
-        names(temp) <- question_ids
-        temp
-    })
+# Initialize Timestamps for Pages and Questions
+initialize_timestamps <- function(page_ids, question_ids) {
+    timestamps <- list()
 
-    # Define a reactive expression for the time stamp values
-    get_time_stamps <- shiny::reactive({ timestamps$data })
-
-    # Define a function to get all stored values
-    get_stored_vals <- function() {
-        shiny::isolate({
-            session <- shiny::getDefaultReactiveDomain()
-            if (is.null(session)) {
-            stop("sd_get_all_stored_values must be called from within a Shiny reactive context")
-            }
-            if (is.null(session$userData$stored_values)) {
-            return(list())
-            }
-            session$userData$stored_values
-        })
+    timestamps[[make_ts_name("page", page_ids[1])]] <- get_utc_timestamp()
+    for (i in 2:length(page_ids)) {
+        timestamps[[make_ts_name("page", page_ids[i])]] <- NA
     }
 
-    # Use observe to react whenever "input_vals" changes
-    # If it changes, update the database
+    for (qid in question_ids) {
+        timestamps[[make_ts_name("question", qid)]] <- NA
+    }
 
-    shiny::observe({
+    return(timestamps)
+}
 
-        # Capture the current state of question values and timestamps
-        question_vals <- get_question_vals()
-        timestamp_vals <- get_time_stamps()
-        stored_vals <- get_stored_vals()
+# Make Timestamp Name
+make_ts_name <- function(type, id) {
+    if (type == "page") {
+        return(paste0("time_p_", id))
+    } else if (type == "question") {
+        return(paste0("time_q_", id))
+    }
+}
 
-        # Make values accessible in the UI
-        for (id in names(question_vals)) {
-            local({
-                local_id <- id
-                output[[paste0(local_id, "_value")]] <- shiny::renderText({
-                    value <- question_vals[[local_id]]
-                    if (is.null(value)) return("")
-                    if (is.list(value)) value <- paste(value, collapse = ", ")
-                    as.character(value)
-                })
-            })
-        }
+# Helper function to format a single question value
+format_question_value <- function(val) {
+    if (is.null(val)) {
+        return("")
+    } else if (length(val) > 1) {
+        return(paste(val, collapse = ", "))
+    } else {
+        return(as.character(val))
+    }
+}
 
-        # Transform to data frame, handling uninitialized inputs appropriately
-        df_local <- transform_data(question_vals, timestamp_vals, session_id, stored_vals)
-
-        # Making everything a string because the db poops itself
-        df_local[] <- lapply(df_local, as.character)
-
-        # Get the respondent_id
-        df_local <- set_respondent_id(db, df_local, session_id, pause_mode)
-
-        # Update database or write to CSV based on preview mode
-        if (pause_mode) {
-            utils::write.csv(df_local, "data.csv", row.names = FALSE)
-        } else {
-            database_uploading(df_local, db$db, db$table_name)
-        }
-    })
+# Helper function to check if a question is answered
+is_question_answered <- function(value) {
+  if (is.character(value)) return(nchar(trimws(value)) > 0)
+  if (is.numeric(value)) return(!is.na(value))
+  !is.null(value) && !identical(value, "")
 }
 
 # Handle basic show-if logic
-handle_basic_show_if_logic <- function(input, show_if) {
+basic_show_if_logic <- function(input, show_if) {
 
     # Ensure show_if is a tibble or data frame
     if (!is.data.frame(show_if)) {
@@ -319,7 +330,7 @@ handle_basic_show_if_logic <- function(input, show_if) {
 }
 
 # Handle custom show-if logic
-handle_custom_show_if_logic <- function(input, show_if_custom) {
+custom_show_if_logic <- function(input, show_if_custom) {
   # Initially hide all conditional questions
   lapply(show_if_custom, function(x) shinyjs::hide(x$target))
 
@@ -343,8 +354,19 @@ handle_custom_show_if_logic <- function(input, show_if_custom) {
   })
 }
 
+# Handle overall skip logic
+handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next_page) {
+    if (!is.null(skip_if)) {
+        next_page <- basic_skip_logic(input, skip_if, current_page, next_page)
+    }
+    if (!is.null(skip_if_custom)) {
+        next_page <- custom_skip_logic(input, skip_if_custom, current_page, next_page)
+    }
+    return(next_page)
+}
+
 # Handle basic skip logic
-handle_basic_skip_logic <- function(
+basic_skip_logic <- function(
         input, skip_if, current_page, next_page
 ) {
 
@@ -362,7 +384,7 @@ handle_basic_skip_logic <- function(
 }
 
 # Handle custom skip logic
-handle_custom_skip_logic <- function(
+custom_skip_logic <- function(
     input, skip_if_custom, current_page, next_page
 ) {
 
@@ -382,19 +404,10 @@ handle_custom_skip_logic <- function(
     return(next_page)
 }
 
-# Handle overall skip logic
-handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next_page) {
-    if (!is.null(skip_if)) {
-        next_page <- handle_basic_skip_logic(input, skip_if, current_page, next_page)
-    }
-    if (!is.null(skip_if_custom)) {
-        next_page <- handle_custom_skip_logic(input, skip_if_custom, current_page, next_page)
-    }
-    return(next_page)
-}
-
 # Check if all required questions are answered
-check_all_required <- function(questions, questions_required, input, show_if) {
+check_all_required <- function(
+    questions, questions_required, input, show_if, show_if_custom
+) {
     all(vapply(questions, function(q) {
         tryCatch({
             if (!(q %in% questions_required)) return(TRUE)
@@ -443,6 +456,26 @@ is_question_visible <- function(q, show_if, input) {
             return(input_value == expected_value)
         }
     }))
+}
+
+# Function to get all stored values
+get_stored_vals <- function(session) {
+    shiny::isolate({
+        if (is.null(session)) {
+            stop("get_stored_vals must be called from within a Shiny reactive context")
+        }
+        stored_vals <- session$userData$stored_values
+        if (is.null(stored_vals)) { return(NULL) }
+
+        # Format stored values
+        stored_df <- data.frame(matrix(ncol = length(stored_vals), nrow = 1))
+        colnames(stored_df) <- names(stored_vals)
+        for (name in names(stored_vals)) {
+            val <- stored_vals[[name]]
+            stored_df[[name]] <- ifelse(is.null(val), "", val)
+        }
+        return(stored_df)
+    })
 }
 
 admin_enable <- function(input, output, session, db) {
@@ -544,69 +577,37 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
-# Transform survey data for database storage
-transform_data <- function(question_vals, time_vals, session_id, stored_vals) {
-    # Create current timestamp in UTC with the desired format
-    current_time <- format(Sys.time(), "%Y-%m-%d %H:%M:%S UTC", tz = "UTC")
-
-    for (i in seq_len(length(question_vals))) {
-        val <- question_vals[[i]]
-        if (is.null(val)) {
-            question_vals[[i]] <- ""
-        } else if (length(val) > 1) {
-            question_vals[[i]] <- paste(question_vals[[i]], collapse = ", ")
-        }
-    }
-
-    responses <- as.data.frame(question_vals)
-
-    stored_df <- data.frame(matrix(ncol = length(stored_vals), nrow = 1))
-    colnames(stored_df) <- names(stored_vals)
-    for (name in names(stored_vals)) {
-        stored_df[[name]] <- ifelse(is.null(stored_vals[[name]]), "", stored_vals[[name]])
-    }
-
-    # Combine all data
-    data <- cbind(
-        time_start = current_time,
-        session_id = session_id,
-        stored_df,
-        responses,
-        stats::setNames(as.data.frame(time_vals), names(time_vals))
-    )
-
-    return(data)
-}
-
-set_respondent_id <- function(db, df_local, session_id, pause_mode) {
-    if (pause_mode) {
-        df_local$respondent_id <- ''
-        return(df_local)
-    }
+get_respondent_id <- function(db, session_id) {
     
     # Get the latest data from the database
     data <- sd_get_data(db)
     
     # If there are no data yet or no respondentID, create the respondentID
     if (is.null(data) || (nrow(data) == 0) || !("respondent_id" %in% colnames(data))) {
-        new_id <- 1
-    } else {
-        # Check if this session_id already has a respondentID
-        existing_id <- data$respondent_id[which(data$session_id == session_id)]
-        if (length(existing_id) > 0 && !is.na(existing_id[1])) {
-            new_id <- existing_id[1]
-        } else {
-            # If not, assign a new ID
-            new_id <- max(as.numeric(data$respondent_id), na.rm = TRUE) + 1
-        }
-    }
-    
-    # Assign the respondentID
-    df_local$respondent_id <- new_id
-    
-    # Move the respondentID to the first column
-    df_local <- df_local[, c(ncol(df_local), 1:(ncol(df_local) - 1))]
-    return(df_local)
+        return(1)
+    } 
+
+    # Check if this session_id already has a respondentID
+    existing_id <- data$respondent_id[which(data$session_id == session_id)]
+    if (length(existing_id) > 0 && !is.na(existing_id[1])) {
+        return(existing_id[1])
+    } 
+
+    # If not, assign a new ID
+    return(max(as.numeric(data$respondent_id), na.rm = TRUE) + 1)
+}
+
+# Transform survey data for database storage
+transform_data <- function(
+    static_df, question_values, time_vals, time_last_interaction
+) { 
+    data <- cbind(
+        static_df,
+        as.data.frame(question_values),
+        time_last_interaction = time_last_interaction,
+        stats::setNames(as.data.frame(time_vals), names(time_vals))
+    )
+    return(data)
 }
 
 #' Set Password

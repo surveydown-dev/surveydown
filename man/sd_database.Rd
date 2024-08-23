@@ -6,7 +6,7 @@
 \usage{
 sd_database(
   host = NULL,
-  db_name = NULL,
+  dbname = NULL,
   port = NULL,
   user = NULL,
   table_name = NULL,
@@ -18,7 +18,7 @@ sd_database(
 \arguments{
 \item{host}{Character string. The host address of the supabase database.}
 
-\item{db_name}{Character string. The name of the supabase database.}
+\item{dbname}{Character string. The name of the supabase database.}
 
 \item{port}{Integer. The port number for the supabase database connection.}
 
@@ -57,7 +57,7 @@ The user must create their own table inside supabase in order to make additions.
   # Assuming SURVEYDOWN_PASSWORD is set in .Renviron
   db_connection <- sd_database(
     host       = "aws-0-us-west-1.pooler.supabase.com",
-    db_name    = "postgres",
+    dbname     = "postgres",
     port       = "6---",
     user       = "postgres.k----------i",
     table_name = "your-table-name",
@@ -67,7 +67,7 @@ The user must create their own table inside supabase in order to make additions.
   # Explicitly providing the password
   db_connection <- sd_database(
     host       = "aws-0-us-west-1.pooler.supabase.com",
-    db_name    = "postgres",
+    dbname     = "postgres",
     port       = "6---",
     user       = "postgres.k----------i",
     table_name = "your-table-name",

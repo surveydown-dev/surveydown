@@ -43,36 +43,6 @@ list_name_md_to_html <- function(list) {
     return(list)
 }
 
-# Get Current UTC Timestamp
-get_utc_timestamp <- function() {
-    return(format(Sys.time(), tz = "UTC", usetz = TRUE))
-}
-
-# Initialize Timestamps for Pages and Questions
-initialize_timestamps <- function(page_ids, question_ids) {
-    timestamps <- list()
-
-    timestamps[[make_ts_name("page", page_ids[1])]] <- get_utc_timestamp()
-    for (i in 2:length(page_ids)) {
-        timestamps[[make_ts_name("page", page_ids[i])]] <- NA
-    }
-
-    for (qid in question_ids) {
-        timestamps[[make_ts_name("question", qid)]] <- NA
-    }
-
-    return(timestamps)
-}
-
-# Make Timestamp Name
-make_ts_name <- function(type, id) {
-    if (type == "page") {
-        return(paste0("time_p_", id))
-    } else if (type == "question") {
-        return(paste0("time_q_", id))
-    }
-}
-
 #' Display Package Information on Attach
 #'
 #' This function is called when the package is attached. It displays version number,
