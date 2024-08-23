@@ -1,10 +1,13 @@
 # surveydown (development version)
 
+- Moved `sd_store_value()` and `sd_copy_value()` to the server.R file (these are server operations).
+
 # surveydown 0.1.2
 
 - Moved the main surveydown.lua file into the package at inst/quarto/filters. The surveydown Quarto extension is now just a wrapper to load this file, so the extension won't likely need to update any further as all updates can be made in the package lua file.
 - Changed `jhelvy` to `surveydown-dev` in version control functions.
 - Now if there are duplicated `page_id` and `question_id`, the survey will stop and show error.
+- Removed roxygen2 documentation from non-exported functions.
 
 # surveydown 0.1.1
 
