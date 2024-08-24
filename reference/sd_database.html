@@ -53,7 +53,7 @@ connection details.</p>
 <span>  dbname <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  port <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  user <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  table_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  table <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  password <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"SURVEYDOWN_PASSWORD"</span><span class="op">)</span>,</span>
 <span>  gssencmode <span class="op">=</span> <span class="st">"prefer"</span>,</span>
 <span>  pause <span class="op">=</span> <span class="cn">FALSE</span></span>
@@ -80,7 +80,7 @@ connection details.</p>
 <dd><p>Character string. The username for the supabase database connection.</p></dd>
 
 
-<dt id="arg-table-name">table_name<a class="anchor" aria-label="anchor" href="#arg-table-name"></a></dt>
+<dt id="arg-table">table<a class="anchor" aria-label="anchor" href="#arg-table"></a></dt>
 <dd><p>Character string. The name of the table to interact with in the supabase database.</p></dd>
 
 
@@ -99,7 +99,7 @@ Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list containing the database connection object (<code>db</code>) and the table name (<code>table_name</code>),
+    <p>A list containing the database connection object (<code>db</code>) and the table name (<code>table</code>),
 or NULL if in pause mode.</p>
     </div>
     <div class="section level2">
@@ -125,7 +125,7 @@ environment variable by default, but can be overridden by explicitly passing a v
 <span class="r-in"><span>    dbname     <span class="op">=</span> <span class="st">"postgres"</span>,</span></span>
 <span class="r-in"><span>    port       <span class="op">=</span> <span class="st">"6---"</span>,</span></span>
 <span class="r-in"><span>    user       <span class="op">=</span> <span class="st">"postgres.k----------i"</span>,</span></span>
-<span class="r-in"><span>    table_name <span class="op">=</span> <span class="st">"your-table-name"</span>,</span></span>
+<span class="r-in"><span>    table <span class="op">=</span> <span class="st">"your-table-name"</span>,</span></span>
 <span class="r-in"><span>    pause      <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -135,7 +135,7 @@ environment variable by default, but can be overridden by explicitly passing a v
 <span class="r-in"><span>    dbname     <span class="op">=</span> <span class="st">"postgres"</span>,</span></span>
 <span class="r-in"><span>    port       <span class="op">=</span> <span class="st">"6---"</span>,</span></span>
 <span class="r-in"><span>    user       <span class="op">=</span> <span class="st">"postgres.k----------i"</span>,</span></span>
-<span class="r-in"><span>    table_name <span class="op">=</span> <span class="st">"your-table-name"</span>,</span></span>
+<span class="r-in"><span>    table <span class="op">=</span> <span class="st">"your-table-name"</span>,</span></span>
 <span class="r-in"><span>    password   <span class="op">=</span> <span class="st">"your-password"</span>,</span></span>
 <span class="r-in"><span>    pause      <span class="op">=</span> <span class="cn">FALSE</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>

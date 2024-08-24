@@ -40,7 +40,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-</div>
+<ul><li>In <code><a href="../reference/sd_database.html">sd_database()</a></code>, now <code>db_name</code> is changed to <code>dbname</code>, and <code>table_name</code> is changed to <code>table</code>, for consistency with Supabase, and simplicity of parameter names.</li>
+<li>Now the error message of <code><a href="../reference/sd_database.html">sd_database()</a></code> will also prompt “If you have verified all connection details are correct but still cannot access the database, consider setting the ‘gssencmode’ parameter to ‘disabled’ in the sd_database() function.” We don’t encourage users to disable ‘gssencmode’, since it’s more secure to have it on, but if users encounter with connection error, this will be a possible solution.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="surveydown-020">surveydown 0.2.0<a class="anchor" aria-label="anchor" href="#surveydown-020"></a></h2>
 <ul><li>Moved <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code> and <code><a href="../reference/sd_copy_value.html">sd_copy_value()</a></code> to the server.R file (these are server operations).</li>
