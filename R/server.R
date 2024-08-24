@@ -151,10 +151,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     })
 
     # Set the respondent_id
-    respondent_id <- ''
-    if (!pause_mode) {
-        respondent_id <- get_respondent_id(db, session_id)
-    }
+    respondent_id <- get_respondent_id(if (!pause_mode) db else NULL)
 
     # Format static data
     stored_vals <- get_stored_vals(session)
@@ -587,24 +584,16 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
-get_respondent_id <- function(db, session_id) {
+# Get the next respondent ID
+get_respondent_id <- function(db = NULL) {
+    if (is.null(db)) return(1)
 
-    # Get the latest data from the database
-    data <- sd_get_data(db)
-
-    # If there are no data yet or no respondentID, create the respondentID
-    if (is.null(data) || (nrow(data) == 0) || !("respondent_id" %in% colnames(data))) {
-        return(1)
-    }
-
-    # Check if this session_id already has a respondentID
-    existing_id <- data$respondent_id[which(data$session_id == session_id)]
-    if (length(existing_id) > 0 && !is.na(existing_id[1])) {
-        return(existing_id[1])
-    }
-
-    # If not, assign a new ID
-    return(max(as.numeric(data$respondent_id), na.rm = TRUE) + 1)
+    tryCatch({
+        if (DBI::dbExistsTable(db$db, db$table_name)) {
+            max_id <- DBI::dbGetQuery(db$db, paste0("SELECT MAX(respondent_id) FROM ", db$table_name))[[1]]
+            if (!is.na(max_id)) as.integer(max_id) + 1 else 1
+        } else 1
+    }, error = function(e) 1)
 }
 
 # Transform survey data for database storage
