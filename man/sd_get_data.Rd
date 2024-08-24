@@ -10,7 +10,7 @@ sd_get_data(db, reactive = FALSE, refresh_interval = 5)
 \item{db}{A list containing database connection details. Must have elements:
 \itemize{
 \item db: A DBI database connection object
-\item table_name: A string specifying the name of the table to query
+\item table: A string specifying the name of the table to query
 }}
 
 \item{reactive}{Logical. If \code{TRUE}, returns a reactive expression for use in the server.

@@ -218,7 +218,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
         if (pause_mode) {
             utils::write.csv(df_local, "data.csv", row.names = FALSE)
         } else {
-            database_uploading(df_local, db$db, db$table_name)
+            database_uploading(df_local, db$db, db$table)
         }
     })
 
@@ -547,7 +547,7 @@ admin_enable <- function(input, output, session, db) {
                 )
             )
             output$survey_data_table <- DT::renderDT({
-                data <- DBI::dbReadTable(db$db, db$table_name)
+                data <- DBI::dbReadTable(db$db, db$table)
                 DT::datatable(data, options = list(scrollX = TRUE))
             })
         } else {
@@ -572,7 +572,7 @@ admin_enable <- function(input, output, session, db) {
     # Download Data button functionality
     output$download_data <- shiny::downloadHandler(
         filename = function() {
-            paste0(db$table_name, "_", Sys.Date(), ".csv")
+            paste0(db$table, "_", Sys.Date(), ".csv")
         },
         content = function(file) {
             # Read the table
@@ -589,8 +589,8 @@ get_respondent_id <- function(db = NULL) {
     if (is.null(db)) return(1)
 
     tryCatch({
-        if (DBI::dbExistsTable(db$db, db$table_name)) {
-            max_id <- DBI::dbGetQuery(db$db, paste0("SELECT MAX(respondent_id) FROM ", db$table_name))[[1]]
+        if (DBI::dbExistsTable(db$db, db$table)) {
+            max_id <- DBI::dbGetQuery(db$db, paste0("SELECT MAX(respondent_id) FROM ", db$table))[[1]]
             if (!is.na(max_id)) as.integer(max_id) + 1 else 1
         } else 1
     }, error = function(e) 1)

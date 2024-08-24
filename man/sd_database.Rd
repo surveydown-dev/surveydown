@@ -9,7 +9,7 @@ sd_database(
   dbname = NULL,
   port = NULL,
   user = NULL,
-  table_name = NULL,
+  table = NULL,
   password = Sys.getenv("SURVEYDOWN_PASSWORD"),
   gssencmode = "prefer",
   pause = FALSE
@@ -24,7 +24,7 @@ sd_database(
 
 \item{user}{Character string. The username for the supabase database connection.}
 
-\item{table_name}{Character string. The name of the table to interact with in the supabase database.}
+\item{table}{Character string. The name of the table to interact with in the supabase database.}
 
 \item{password}{Character string. The password for the supabase database connection.
 Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.}
@@ -34,7 +34,7 @@ Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.}
 \item{pause}{Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.}
 }
 \value{
-A list containing the database connection object (\code{db}) and the table name (\code{table_name}),
+A list containing the database connection object (\code{db}) and the table name (\code{table}),
 or NULL if in pause mode.
 }
 \description{
@@ -60,7 +60,7 @@ The user must create their own table inside supabase in order to make additions.
     dbname     = "postgres",
     port       = "6---",
     user       = "postgres.k----------i",
-    table_name = "your-table-name",
+    table = "your-table-name",
     pause      = FALSE
   )
 
@@ -70,7 +70,7 @@ The user must create their own table inside supabase in order to make additions.
     dbname     = "postgres",
     port       = "6---",
     user       = "postgres.k----------i",
-    table_name = "your-table-name",
+    table = "your-table-name",
     password   = "your-password",
     pause      = FALSE
   )

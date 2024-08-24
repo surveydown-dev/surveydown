@@ -7,7 +7,7 @@
 #' @param dbname Character string. The name of the supabase database.
 #' @param port Integer. The port number for the supabase database connection.
 #' @param user Character string. The username for the supabase database connection.
-#' @param table_name Character string. The name of the table to interact with in the supabase database.
+#' @param table Character string. The name of the table to interact with in the supabase database.
 #' @param password Character string. The password for the supabase database connection.
 #'   Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.
 #' @param gssencmode Character string. The GSS encryption mode for the database connection. Defaults to "prefer".
@@ -20,7 +20,7 @@
 #'   will be saved to a local CSV file. The password is obtained from the SURVEYDOWN_PASSWORD
 #'   environment variable by default, but can be overridden by explicitly passing a value.
 #'
-#' @return A list containing the database connection object (`db`) and the table name (`table_name`),
+#' @return A list containing the database connection object (`db`) and the table name (`table`),
 #'   or NULL if in pause mode.
 #'
 #' @note The user must create their own table inside supabase in order to make additions.
@@ -33,7 +33,7 @@
 #'     dbname     = "postgres",
 #'     port       = "6---",
 #'     user       = "postgres.k----------i",
-#'     table_name = "your-table-name",
+#'     table = "your-table-name",
 #'     pause      = FALSE
 #'   )
 #'
@@ -43,7 +43,7 @@
 #'     dbname     = "postgres",
 #'     port       = "6---",
 #'     user       = "postgres.k----------i",
-#'     table_name = "your-table-name",
+#'     table = "your-table-name",
 #'     password   = "your-password",
 #'     pause      = FALSE
 #'   )
@@ -55,7 +55,7 @@ sd_database <- function(
         dbname     = NULL,
         port       = NULL,
         user       = NULL,
-        table_name = NULL,
+        table      = NULL,
         password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
         gssencmode = "prefer",
         pause      = FALSE
@@ -72,7 +72,7 @@ sd_database <- function(
         is.null(dbname) |
         is.null(port) |
         is.null(user) |
-        is.null(table_name)
+        is.null(table)
     ) {
         message(
             "One or more of the required parameters are NULL, so the database is NOT connected; writing to local data.csv file instead."
@@ -98,7 +98,7 @@ sd_database <- function(
                 gssencmode = gssencmode
             )
             message("Successfully connected to the database.")
-            return(list(db = db, table_name = table_name))
+            return(list(db = db, table = table))
         }, error = function(e) {
             stop(paste("Error: Failed to connect to the database.",
                        "Details:", conditionMessage(e),
@@ -108,7 +108,8 @@ sd_database <- function(
                        "\n- port:    ", port,
                        "\n- user:    ", user,
                        "\n- password:", password,
-                       "\nTo update password, please use surveydown::sd_set_password()"))
+                       "\nTo update password, please use surveydown::sd_set_password().",
+                       "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disabled' in the sd_database() function."))
         })
 }
 
@@ -121,7 +122,7 @@ sd_database <- function(
 #' @param db A list containing database connection details. Must have elements:
 #'   \itemize{
 #'     \item db: A DBI database connection object
-#'     \item table_name: A string specifying the name of the table to query
+#'     \item table: A string specifying the name of the table to query
 #'   }
 #' @param reactive Logical. If `TRUE`, returns a reactive expression for use in the server.
 #'   If `FALSE` (default), returns the data directly.
@@ -142,7 +143,7 @@ sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
         return(NULL)
     }
     fetch_data <- function() {
-        DBI::dbReadTable(db$db, db$table_name)
+        DBI::dbReadTable(db$db, db$table)
     }
     if (reactive) {
         return(shiny::reactive({
@@ -166,7 +167,7 @@ r_to_sql_type <- function(r_type) {
 }
 
 # Create a new table in the database
-create_table <- function(db, table_name, df) {
+create_table <- function(db, table, df) {
     # Loop through the column names
     col_def <- ""
 
@@ -181,35 +182,35 @@ create_table <- function(db, table_name, df) {
     col_def <- substr(col_def, 1, nchar(col_def) - 2)
 
     create_table_query <- paste0(
-        'CREATE TABLE "', table_name, '" (', col_def, ")"
+        'CREATE TABLE "', table, '" (', col_def, ")"
     )
     DBI::dbExecute(db, create_table_query)
     #A precaution to enable RLS
-    DBI::dbExecute(db, paste0('ALTER TABLE \"', table_name, '\" ENABLE ROW LEVEL SECURITY;'))
+    DBI::dbExecute(db, paste0('ALTER TABLE \"', table, '\" ENABLE ROW LEVEL SECURITY;'))
     return(message("Database should appear on your supabase Account (Can take up to a minute.)"))
 }
 
 # Upload survey data to the database
-database_uploading <- function(df, db, table_name) {
+database_uploading <- function(df, db, table) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
     }
 
     # Establish the database connection
-    data <- tryCatch(DBI::dbReadTable(db, table_name), error = function(e) NULL)
+    data <- tryCatch(DBI::dbReadTable(db, table), error = function(e) NULL)
 
     if (is.null(data)) {
-        create_table(db, table_name, df)
+        create_table(db, table, df)
     } else {
         # Check for new columns and ensure correct order
-        existing_cols <- DBI::dbListFields(db, table_name)
+        existing_cols <- DBI::dbListFields(db, table)
         new_cols <- setdiff(names(df), existing_cols)
 
         # Add new columns if any
         for (col in new_cols) {
             r_type <- typeof(df[[col]])
             sql_type <- r_to_sql_type(r_type)
-            query <- paste0('ALTER TABLE "', table_name, '" ADD COLUMN "', col, '" ', sql_type, ';')
+            query <- paste0('ALTER TABLE "', table, '" ADD COLUMN "', col, '" ', sql_type, ';')
             DBI::dbExecute(db, query)
         }
     }
@@ -217,13 +218,13 @@ database_uploading <- function(df, db, table_name) {
     matching_rows <- df[df$session_id %in% data$session_id, ]
 
     if (nrow(matching_rows) > 0) {
-        delete_query <- paste0('DELETE FROM "', table_name, '" WHERE session_id = $1')
+        delete_query <- paste0('DELETE FROM "', table, '" WHERE session_id = $1')
         for (session_id in matching_rows$session_id) {
             DBI::dbExecute(db, delete_query, params = list(session_id))
         }
-        DBI::dbWriteTable(db, table_name, matching_rows, append = TRUE, row.names = FALSE)
+        DBI::dbWriteTable(db, table, matching_rows, append = TRUE, row.names = FALSE)
     } else {
-        DBI::dbWriteTable(db, table_name, df, append = TRUE, row.names = FALSE)
+        DBI::dbWriteTable(db, table, df, append = TRUE, row.names = FALSE)
     }
 }
 

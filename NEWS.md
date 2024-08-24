@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+- In `sd_database()`, now `db_name` is changed to `dbname`, and `table_name` is changed to `table`, for consistency with Supabase, and simplicity of parameter names.
+- Now the error message of `sd_database()` will also prompt "If you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disabled' in the sd_database() function." We don't encourage users to disable 'gssencmode', since it's more secure to have it on, but if users encounter with connection error, this will be a possible solution.
+
 # surveydown 0.2.0
 
 - Moved `sd_store_value()` and `sd_copy_value()` to the server.R file (these are server operations).
