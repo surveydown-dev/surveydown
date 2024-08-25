@@ -52,7 +52,7 @@ This will create a folder located at `"path/to/folder"` with the following files
 
 # 3. Add content
 
-See the [Survey Components](https://surveydown.org/components) documentation for details on adding content to your survey, like text, images, etc. with markdown and / or code chunks. As a quick overview:
+See the [Survey Components](https://surveydown.org/survey-components) documentation for details on adding content to your survey, like text, images, etc. with markdown and / or code chunks. As a quick overview:
 
 - Add pages using fences, like this:
 
@@ -83,11 +83,11 @@ sd_question(
 
 # 4. Add configuration options
 
-In the server chunk (bottom of qmd file), add control logic to your survey with the `sd_config()` function. See the [Configuration Options](https://surveydown.org/config) documentation for more details.
+In the server chunk (bottom of qmd file), add control logic to your survey with the `sd_config()` function. See the [Configuration Options](https://surveydown.org/config-options) documentation for more details.
 
 # 5. Setup your database
 
-Also in the server chunk, setup your database with the `sd_database()` function, or leave it blank to preview / edit your survey without database connected. See the [Database Settings](https://surveydown.org/database) documentation for more details.
+Also in the server chunk, setup your database with the `sd_database()` function, or leave it blank to preview / edit your survey without database connected. See the [Store Data](https://surveydown.org/store-data) documentation for more details.
 
 # 6. Locally preview
 
