@@ -20,3 +20,5 @@ images
 example.qmd
 .vdoc.r
 .Renviron
+example.html
+example_files
