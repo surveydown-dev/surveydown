@@ -65,6 +65,9 @@ sd_question <- function(
 
     output <- NULL
 
+    # Check if question if answered
+    js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
+
     # Always add red asterisk for required questions, but hide it initially
     label <- paste0(
         label,
@@ -225,6 +228,7 @@ sd_question <- function(
         id = paste("container-", id),
         `data-question-id` = id,
         class = "question-container",
+        oninput = js_interaction,
         output
     )
 

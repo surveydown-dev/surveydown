@@ -184,6 +184,13 @@ sd_server <- function(input, output, session, config, db = NULL) {
             id <- question_ids[index]
             value <- question_values[[id]]
 
+            # Add more detailed debugging output
+            cat("Question ID:", id, "\n")
+            cat("  Raw Value:", input[[id]], "\n")
+            cat("  Formatted Value:", value, "\n")
+            cat("  Type:", class(value), "\n")
+            cat("  Is Answered:", !is.null(input[[paste0(id, "_interacted")]]), "\n\n")
+
             # Make value accessible in the UI
             local({
                 output[[paste0(id, "_value")]] <- shiny::renderText({
@@ -192,12 +199,11 @@ sd_server <- function(input, output, session, config, db = NULL) {
             })
 
             # If answered, update timestamp, progress bar, and database
-            if (is_question_answered(value)) {
+            if (!is.null(input[[paste0(id, "_interacted")]])) {
                 ts_name <- make_ts_name("question", id)
                 if (is.na(timestamps$data[[ts_name]])) {
                     timestamps$data[[ts_name]] <- get_utc_timestamp()
                 }
-
                 if (index > last_answered_question()) {
                     last_answered_question(index)
                 }
@@ -287,7 +293,7 @@ make_ts_name <- function(type, id) {
 
 # Helper function to format a single question value
 format_question_value <- function(val) {
-    if (is.null(val)) {
+    if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
         return("")
     } else if (length(val) > 1) {
         return(paste(val, collapse = ", "))
@@ -297,10 +303,8 @@ format_question_value <- function(val) {
 }
 
 # Helper function to check if a question is answered
-is_question_answered <- function(value) {
-    if (is.character(value)) return(nchar(trimws(value)) > 0)
-    if (is.numeric(value)) return(!is.na(value))
-    !is.null(value) && !identical(value, "")
+is_question_answered <- function(id) {
+    !is.null(input[[paste0(id, "_interacted")]])
 }
 
 # Handle basic show-if logic
