@@ -184,13 +184,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
             id <- question_ids[index]
             value <- question_values[[id]]
 
-            # Add more detailed debugging output
-            cat("Question ID:", id, "\n")
-            cat("  Raw Value:", input[[id]], "\n")
-            cat("  Formatted Value:", value, "\n")
-            cat("  Type:", class(value), "\n")
-            cat("  Is Answered:", !is.null(input[[paste0(id, "_interacted")]]), "\n\n")
-
             # Make value accessible in the UI
             local({
                 output[[paste0(id, "_value")]] <- shiny::renderText({
@@ -300,11 +293,6 @@ format_question_value <- function(val) {
     } else {
         return(as.character(val))
     }
-}
-
-# Helper function to check if a question is answered
-is_question_answered <- function(id) {
-    !is.null(input[[paste0(id, "_interacted")]])
 }
 
 # Handle basic show-if logic

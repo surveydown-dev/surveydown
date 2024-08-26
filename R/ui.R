@@ -203,6 +203,8 @@ sd_question <- function(
             daysofweekdisabled = NULL
         )
 
+        output <- date_interaction(output, id)
+
     } else if (type == "daterange") {
 
         output <- shiny::dateRangeInput(
@@ -220,6 +222,8 @@ sd_question <- function(
             separator = "-",
             autoclose = TRUE
         )
+
+        output <- date_interaction(output, id)
 
     }
 
@@ -248,6 +252,18 @@ sd_question <- function(
     } else {
         return(output_div)
     }
+}
+
+date_interaction <- function(output, id) {
+    js_code <- sprintf(
+        "setTimeout(function() {
+            $('#%s').on('change', function() {
+                Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+            });
+         }, 1000);",  # 1000 ms delay
+        id, id
+    )
+    shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(js_code)))
 }
 
 #' Create a placeholder for a reactive survey question
