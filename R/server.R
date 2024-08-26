@@ -489,44 +489,49 @@ get_stored_vals <- function(session) {
 
 admin_enable <- function(input, output, session, db) {
 
+
     # Add hidden admin section
     insertUI(
         selector = "body",
         where = "beforeEnd",
-        ui = div(
+        ui = shinyjs::hidden(div(
             id = "admin-section",
             class = "admin-section",
-            style = "display: none;",
             div(
                 id = "login-page",
                 h2("Admin Login"),
                 passwordInput("adminpw", "Password"),
                 actionButton("submitPw", "Log in")
             ),
-            shinyjs::hidden(
-                div(
-                    id = "admin-content",
-                    h2("Admin Page"),
-                    actionButton("pause_survey", "Pause Survey"),
-                    actionButton("pause_db", "Pause DB"),
-                    downloadButton("download_data", "Download Data"),
-                    actionButton("back_to_survey", "Back to Survey"),
-                    hr(),
-                    h3("Survey Data"),
-                    DT::DTOutput("survey_data_table")
-                )
-            )
-        )
+            shinyjs::hidden(div(
+                id = "admin-content",
+                h2("Admin Page"),
+                actionButton("pause_survey", "Pause Survey"),
+                actionButton("pause_db", "Pause DB"),
+                downloadButton("download_data", "Download Data"),
+                actionButton("back_to_survey", "Back to Survey"),
+                hr(),
+                h3("Survey Data"),
+                DT::DTOutput("survey_data_table")
+            ))
+        ))
     )
 
-    # Check for admin parameter in URL
+
+    #URL Checker
     observe({
         query <- parseQueryString(session$clientData$url_search)
-        if (!is.null(query[["admin"]])) {
+        admin_query <- query[['admin']]
+        show_admin <- !is.null(admin_query)
+        message("Show admin: ", show_admin)
+        if (show_admin) {
+            shinyjs::runjs("hideAllPages();")
             shinyjs::show("admin-section")
             shinyjs::show("login-page")
         }
     })
+
+
 
     # Password check and admin content reveal
     observeEvent(input$submitPw, {
@@ -550,8 +555,6 @@ admin_enable <- function(input, output, session, db) {
         session$userData$isAdmin <- NULL
         shinyjs::hide("admin-section")
         shinyjs::runjs("showFirstPage();")
-        # Remove the admin parameter from the URL
-        updateQueryString("?", mode = "replace")
     })
 
     # Download Data button functionality
