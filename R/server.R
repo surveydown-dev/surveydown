@@ -488,34 +488,32 @@ get_stored_vals <- function(session) {
 }
 
 admin_enable <- function(input, output, session, db) {
-    # Load the hide_pages.js file
 
     # Add hidden admin section
     insertUI(
         selector = "body",
         where = "beforeEnd",
-        ui = shinyjs::hidden(
+        ui = div(
+            id = "admin-section",
+            class = "admin-section",
+            style = "display: none;",
             div(
-                id = "admin-section",
-                class = "admin-section",
+                id = "login-page",
+                h2("Admin Login"),
+                passwordInput("adminpw", "Password"),
+                actionButton("submitPw", "Log in")
+            ),
+            shinyjs::hidden(
                 div(
-                    id = "login-page",
-                    h2("Admin Login"),
-                    passwordInput("adminpw", "Password"),
-                    actionButton("submitPw", "Log in")
-                ),
-                shinyjs::hidden(
-                    div(
-                        id = "admin-content",
-                        h2("Admin Page"),
-                        actionButton("pause_survey", "Pause Survey"),
-                        actionButton("pause_db", "Pause DB"),
-                        downloadButton("download_data", "Download Data"),
-                        actionButton("back_to_survey", "Back to Survey"),
-                        hr(),
-                        h3("Survey Data"),
-                        DT::DTOutput("survey_data_table")
-                    )
+                    id = "admin-content",
+                    h2("Admin Page"),
+                    actionButton("pause_survey", "Pause Survey"),
+                    actionButton("pause_db", "Pause DB"),
+                    downloadButton("download_data", "Download Data"),
+                    actionButton("back_to_survey", "Back to Survey"),
+                    hr(),
+                    h3("Survey Data"),
+                    DT::DTOutput("survey_data_table")
                 )
             )
         )
@@ -525,7 +523,6 @@ admin_enable <- function(input, output, session, db) {
     observe({
         query <- parseQueryString(session$clientData$url_search)
         if (!is.null(query[["admin"]])) {
-            shinyjs::runjs("hideAllPages();")
             shinyjs::show("admin-section")
             shinyjs::show("login-page")
         }
