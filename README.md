@@ -87,18 +87,18 @@ This is a running list of things we’re working on adding to the project:
 - [x] Required questions (`required = TRUE`): post a popup if a question
   is required before allowing next button. Default should be
   `required = FALSE`.
-- [ ] Form validation: Make sure the user inputs the correct type
-  depending on the question type. (see
-  <https://shiny.posit.co/r/reference/shiny/0.14/validate.html>)
-- [ ] Admin page w/password to preview / download data (see
+- [x] Add a `sd_get_data()` function so the survey designer can obtain
+  the current survey results from inside the app:
+  <https://shinysurveys.jdtrat.com/articles/get-survey-data.html>
+- [x] Admin page w/password to preview / download data (see
   <https://github.com/daattali/shinyforms>)
 - [ ] User tracking via url parameters:
   <https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking>
+- [ ] Form validation: Make sure the user inputs the correct type
+  depending on the question type. (see
+  <https://shiny.posit.co/r/reference/shiny/0.14/validate.html>)
 - [ ] Deal with cookies so users who close the browser can start back
   where they left off.
-- [ ] Add a `sd_get_data()` function so the survey designer can obtain
-  the current survey results from inside the app:
-  <https://shinysurveys.jdtrat.com/articles/get-survey-data.html>
 - Question types:
   - [x] Multiple choice (single choice)
   - [x] Multiple choice (multiple choices)
@@ -109,16 +109,12 @@ This is a running list of things we’re working on adding to the project:
   - [x] Text area
   - [x] Date
   - [ ] Matrix
-  - \[?\] Slider
+  - [ ] Slider
 
 Resources / other related examples:
 
 - [shinysurveys](https://github.com/jdtrat/shinysurveys)
 - [shinyforms](https://github.com/daattali/shinyforms)
-- [Example](https://rtask.thinkr.fr/pimping-your-shiny-app-with-a-javascript-library-an-example-using-sweetalert2/)
-  of adding JS modules to shiny app (pop up message) - could be useful
-  for adding any number of JS-based features, like pop ups for required
-  questions, JS-based progress bar, etc.
 
 ## [License Information](https://github.com/jhelvy/surveydown/blob/master/LICENSE.md)
 
