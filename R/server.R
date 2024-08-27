@@ -132,7 +132,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     }, once = TRUE)
 
     # Create admin page if admin_page is TRUE
-    if (config$admin_page) {
+    if (isTRUE(config$admin_page)) {
         admin_enable(input, output, session, db)
     }
 
@@ -480,49 +480,56 @@ get_stored_vals <- function(session) {
 }
 
 admin_enable <- function(input, output, session, db) {
+    #not fun to figure out, do not render the admin page at the start if you are
+    #using an outright hide_pages js file
+    show_admin_section <- function() {
+        shinyjs::hide("quarto-content")
+        insertUI(
+            selector = "body",
+            where = "beforeEnd",
+            ui = div(
+                id = "admin-section",
+                class = "admin-section",
+                div(
+                    id = "login-page",
+                    h2("Admin Login"),
+                    passwordInput("adminpw", "Password"),
+                    actionButton("submitPw", "Log in"),
+                    br(),
+                    br(),
+                    actionButton("back_to_survey_login", "Back to Survey")
+                ),
+                shinyjs::hidden(
+                    div(
+                        id = "admin-content",
+                        h2("Admin Page"),
+                        actionButton("pause_survey", "Pause Survey"),
+                        actionButton("pause_db", "Pause DB"),
+                        downloadButton("download_data", "Download Data"),
+                        actionButton("back_to_survey_admin", "Back to Survey"),
+                        hr(),
+                        h3("Survey Data"),
+                        DT::DTOutput("survey_data_table")
+                    )
+                )
+            )
+        )
+    }
 
-
-    # Add hidden admin section
-    insertUI(
-        selector = "body",
-        where = "beforeEnd",
-        ui = shinyjs::hidden(div(
-            id = "admin-section",
-            class = "admin-section",
-            div(
-                id = "login-page",
-                h2("Admin Login"),
-                passwordInput("adminpw", "Password"),
-                actionButton("submitPw", "Log in")
-            ),
-            shinyjs::hidden(div(
-                id = "admin-content",
-                h2("Admin Page"),
-                actionButton("pause_survey", "Pause Survey"),
-                actionButton("pause_db", "Pause DB"),
-                downloadButton("download_data", "Download Data"),
-                actionButton("back_to_survey", "Back to Survey"),
-                hr(),
-                h3("Survey Data"),
-                DT::DTOutput("survey_data_table")
-            ))
-        ))
-    )
-
-
-    #URL Checker
-    observe({
-        query <- parseQueryString(session$clientData$url_search)
-        admin_query <- query[['admin']]
-        show_admin <- !is.null(admin_query)
-        message("Show admin: ", show_admin)
-        if (show_admin) {
-            shinyjs::runjs("hideAllPages();")
-            shinyjs::show("admin-section")
-            shinyjs::show("login-page")
-        }
+    # Observe for URL change
+    url_reactive <- reactive({
+        session$clientData$url_search
     })
 
+    # Observe changes to the URL
+    observe({
+        url <- url_reactive()
+        query <- parseQueryString(url)
+        admin_param <- query[['admin']]
+        if(!is.null(admin_param)) {
+            show_admin_section()
+        }
+    })
 
 
     # Password check and admin content reveal
@@ -542,12 +549,25 @@ admin_enable <- function(input, output, session, db) {
         }
     })
 
-    # Back to survey button
-    observeEvent(input$back_to_survey, {
+    # Function to return to survey
+    return_to_survey <- function() {
         session$userData$isAdmin <- NULL
         shinyjs::hide("admin-section")
+        shinyjs::show("quarto-content")
         shinyjs::runjs("showFirstPage();")
+        updateQueryString("?", mode = "replace")
+    }
+
+    # Back to survey button on login page
+    observeEvent(input$back_to_survey_login, {
+        return_to_survey()
     })
+
+    # Back to survey button on admin content page
+    observeEvent(input$back_to_survey_admin, {
+        return_to_survey()
+    })
+
 
     # Download Data button functionality
     output$download_data <- downloadHandler(
