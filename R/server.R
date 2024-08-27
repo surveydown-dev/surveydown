@@ -597,12 +597,34 @@ get_respondent_id <- function(db = NULL) {
 transform_data <- function(
         static_df, question_values, time_vals, time_last_interaction
 ) {
+    # Get the number of rows from static_df
+    n_rows <- nrow(static_df)
+
+    # Handle case where there are no questions
+    if (length(question_values) == 0) {
+        question_values_df <- data.frame(row.names = seq_len(n_rows))
+    } else {
+        question_values_df <- as.data.frame(lapply(question_values, function(x) rep(x, length.out = n_rows)))
+    }
+
+    # Handle case where there are no time values
+    if (length(time_vals) == 0) {
+        time_vals_df <- data.frame(row.names = seq_len(n_rows))
+    } else {
+        time_vals_df <- as.data.frame(lapply(time_vals, function(x) rep(x, length.out = n_rows)))
+    }
+
+    # Ensure time_last_interaction has the correct number of rows
+    time_last_interaction_df <- data.frame(time_last_interaction = rep(time_last_interaction, length.out = n_rows))
+
+    # Combine all parts
     data <- cbind(
         static_df,
-        as.data.frame(question_values),
-        time_last_interaction = time_last_interaction,
-        stats::setNames(as.data.frame(time_vals), names(time_vals))
+        question_values_df,
+        time_last_interaction_df,
+        time_vals_df
     )
+
     return(data)
 }
 
