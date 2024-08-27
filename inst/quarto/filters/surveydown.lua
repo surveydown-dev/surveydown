@@ -85,12 +85,15 @@ local function process_document(doc)
     color = barcolor == 'theme' and theme_colors[theme] or theme_colors['cosmo']
   end
   -- Ensure valid position
-  local position = barposition == 'bottom' and 'bottom' or 'top'
+  local position = barposition == 'bottom' and 'bottom' or (barposition == 'none' and 'none' or 'top')
   -- Replace placeholders in CSS template
   local css = [[
   <style>
-  #progressbar.]] .. position .. [[ {
-    ]] .. position .. [[: 0;
+  #progressbar.top {
+    top: 0;
+  }
+  #progressbar.bottom {
+    bottom: 0;
   }
   body {
     background-color: ]] .. backgroundcolor .. [[;
@@ -98,11 +101,14 @@ local function process_document(doc)
   </style>
   ]]
   -- Define the HTML for the progress bar
-  local progressbar = string.format([[
-  <div id="progressbar" class="%s">
-    <div id="progress" style="background-color: %s;"></div>
-  </div>
-  ]], position, color)
+  local progressbar = ""
+  if position ~= "none" then
+    progressbar = string.format([[
+    <div id="progressbar" class="%s">
+      <div id="progress" style="background-color: %s;"></div>
+    </div>
+    ]], position, color)
+  end
   -- Define CSS for Raleway font and link to Google Fonts
   local raleway_html = [[
   <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800&display=swap" rel="stylesheet">
@@ -114,7 +120,9 @@ local function process_document(doc)
   ]]
   -- Insert the CSS and progress bar HTML into the document
   table.insert(doc.blocks, 1, pandoc.RawBlock('html', css))
-  table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar))
+  if position ~= "none" then
+    table.insert(doc.blocks, 2, pandoc.RawBlock('html', progressbar))
+  end
   -- Insert Raleway CSS if no theme is specified or if theme is 'raleway'
   if theme == 'raleway' then
     table.insert(doc.blocks, 3, pandoc.RawBlock('html', raleway_html))
