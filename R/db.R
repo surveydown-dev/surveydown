@@ -88,14 +88,16 @@ sd_database <- function(
     #User Must create their own table inside of supabase in order to make additions.
     tryCatch(
         {
-            db <-  DBI::dbConnect(
+            db <- pool::dbPool(
                 RPostgres::Postgres(),
-                host       = host,
-                dbname     = dbname,
-                port       = port,
-                user       = user,
-                password   = password,
-                gssencmode = gssencmode
+                host = host,
+                dbname = dbname,
+                port = port,
+                user = user,
+                password = password,
+                gssencmode = gssencmode,
+                minSize = 1,
+                maxSize = Inf
             )
             message("Successfully connected to the database.")
             return(list(db = db, table = table))
@@ -143,7 +145,9 @@ sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
         return(NULL)
     }
     fetch_data <- function() {
-        DBI::dbReadTable(db$db, db$table)
+        pool::poolWithTransaction(db$db, function(conn) {
+            DBI::dbReadTable(conn, db$table)
+        })
     }
     if (reactive) {
         return(shiny::reactive({
@@ -184,9 +188,13 @@ create_table <- function(db, table, df) {
     create_table_query <- paste0(
         'CREATE TABLE "', table, '" (', col_def, ")"
     )
-    DBI::dbExecute(db, create_table_query)
-    #A precaution to enable RLS
-    DBI::dbExecute(db, paste0('ALTER TABLE \"', table, '\" ENABLE ROW LEVEL SECURITY;'))
+    pool::poolWithTransaction(db$db, function(conn) {
+        # Create the table
+        DBI::dbExecute(conn, create_table_query)
+
+        # Enable Row Level Security
+        DBI::dbExecute(conn, paste0('ALTER TABLE "', table, '" ENABLE ROW LEVEL SECURITY;'))
+    })
     return(message("Database should appear on your supabase Account (Can take up to a minute.)"))
 }
 
@@ -196,35 +204,43 @@ database_uploading <- function(df, db, table) {
         return(warning("Databasing is not in use"))
     }
 
-    # Establish the database connection
-    data <- tryCatch(DBI::dbReadTable(db, table), error = function(e) NULL)
+    tryCatch({
+        pool::poolWithTransaction(db, function(conn) {
+            # Check if table exists
+            table_exists <- DBI::dbExistsTable(conn, table)
 
-    if (is.null(data)) {
-        create_table(db, table, df)
-    } else {
-        # Check for new columns and ensure correct order
-        existing_cols <- DBI::dbListFields(db, table)
-        new_cols <- setdiff(names(df), existing_cols)
+            if (!table_exists) {
+                create_table(list(db = db, table = table), table, df)
+            } else {
+                # Check for new columns and ensure correct order
+                existing_cols <- DBI::dbListFields(conn, table)
+                new_cols <- setdiff(names(df), existing_cols)
 
-        # Add new columns if any
-        for (col in new_cols) {
-            r_type <- typeof(df[[col]])
-            sql_type <- r_to_sql_type(r_type)
-            query <- paste0('ALTER TABLE "', table, '" ADD COLUMN "', col, '" ', sql_type, ';')
-            DBI::dbExecute(db, query)
-        }
-    }
+                # Add new columns if any
+                for (col in new_cols) {
+                    r_type <- typeof(df[[col]])
+                    sql_type <- r_to_sql_type(r_type)
+                    query <- paste0('ALTER TABLE "', table, '" ADD COLUMN "', col, '" ', sql_type, ';')
+                    DBI::dbExecute(conn, query)
+                }
+            }
 
-    matching_rows <- df[df$session_id %in% data$session_id, ]
+            # Read existing data
+            data <- DBI::dbReadTable(conn, table)
 
-    if (nrow(matching_rows) > 0) {
-        delete_query <- paste0('DELETE FROM "', table, '" WHERE session_id = $1')
-        for (session_id in matching_rows$session_id) {
-            DBI::dbExecute(db, delete_query, params = list(session_id))
-        }
-        DBI::dbWriteTable(db, table, matching_rows, append = TRUE, row.names = FALSE)
-    } else {
-        DBI::dbWriteTable(db, table, df, append = TRUE, row.names = FALSE)
-    }
+            matching_rows <- df[df$session_id %in% data$session_id, ]
+
+            if (nrow(matching_rows) > 0) {
+                delete_query <- paste0('DELETE FROM "', table, '" WHERE session_id = $1')
+                for (session_id in matching_rows$session_id) {
+                    DBI::dbExecute(conn, delete_query, params = list(session_id))
+                }
+                DBI::dbWriteTable(conn, table, matching_rows, append = TRUE, row.names = FALSE)
+            } else {
+                DBI::dbWriteTable(conn, table, df, append = TRUE, row.names = FALSE)
+            }
+        })
+    }, error = function(e) {
+        warning("Error in database operation: ", e$message)
+    })
 }
-

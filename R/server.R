@@ -251,7 +251,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
             })
         })
     })
-
 }
 
 # Get Current UTC Timestamp
