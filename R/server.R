@@ -594,7 +594,6 @@ get_respondent_id <- function(db = NULL) {
 }
 
 # Transform survey data for database storage
-# Transform survey data for database storage
 transform_data <- function(
         static_df, question_values, time_vals, time_last_interaction
 ) {
