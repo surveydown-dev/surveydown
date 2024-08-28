@@ -594,28 +594,23 @@ get_respondent_id <- function(db = NULL) {
 }
 
 # Transform survey data for database storage
+# Transform survey data for database storage
 transform_data <- function(
         static_df, question_values, time_vals, time_last_interaction
 ) {
-    # Get the number of rows from static_df
-    n_rows <- nrow(static_df)
-
-    # Handle case where there are no questions
-    if (length(question_values) == 0) {
-        question_values_df <- data.frame(row.names = seq_len(n_rows))
-    } else {
-        question_values_df <- as.data.frame(lapply(question_values, function(x) rep(x, length.out = n_rows)))
+    # Ensure static_df is a single row
+    if (nrow(static_df) != 1) {
+        stop("static_df should contain exactly one row")
     }
 
-    # Handle case where there are no time values
-    if (length(time_vals) == 0) {
-        time_vals_df <- data.frame(row.names = seq_len(n_rows))
-    } else {
-        time_vals_df <- as.data.frame(lapply(time_vals, function(x) rep(x, length.out = n_rows)))
-    }
+    # Convert question_values to a single-row data frame
+    question_values_df <- as.data.frame(question_values, stringsAsFactors = FALSE)
 
-    # Ensure time_last_interaction has the correct number of rows
-    time_last_interaction_df <- data.frame(time_last_interaction = rep(time_last_interaction, length.out = n_rows))
+    # Convert time_vals to a single-row data frame
+    time_vals_df <- as.data.frame(time_vals, stringsAsFactors = FALSE)
+
+    # Create a single-row data frame for time_last_interaction
+    time_last_interaction_df <- data.frame(time_last_interaction = time_last_interaction)
 
     # Combine all parts
     data <- cbind(
