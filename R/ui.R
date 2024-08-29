@@ -292,7 +292,7 @@ sd_display_question <- function(id) {
 #'
 #' @param id The ID of the question to display
 #' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
-#' @param wrapper A function to wrap the output (e.g., htmltools::tags$h1, htmltools::tags$strong)
+#' @param wrapper A function to wrap the output
 #' @param ... Additional arguments passed to the wrapper function
 #'
 #' @return A Shiny UI element displaying the question's value
@@ -301,7 +301,7 @@ sd_display_question <- function(id) {
 #' sd_display_value("name")
 #' sd_display_value("age", display_type = "text")
 #' \dontrun{
-#'   sd_display_value("email", display_type = "inline", wrapper = htmltools::tags$strong)
+#'   sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
 #' }
 #'
 #' @export

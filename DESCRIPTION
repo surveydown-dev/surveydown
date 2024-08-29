@@ -27,14 +27,14 @@ VignetteBuilder: knitr
 Depends:
     R (>= 4.0.0)
 Suggests:
-    knitr, 
+    knitr,
     testthat
 Imports:
     bslib,
     DBI,
     DT,
-    htmltools,
     markdown,
+    pool,
     remotes,
     RPostgres,
     rvest,
