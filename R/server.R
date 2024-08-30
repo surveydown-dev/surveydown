@@ -186,8 +186,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
             # Make value accessible in the UI
             local({
-                output[[paste0(id, "_value")]] <- shiny::renderText({
-                    as.character(value)
+                local_id <- id
+                output[[paste0(local_id, "_value")]] <- shiny::renderText({
+                    as.character(question_values[[local_id]])
                 })
             })
 
