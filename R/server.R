@@ -597,16 +597,24 @@ get_respondent_id <- function(db = NULL) {
 transform_data <- function(
         static_df, question_values, time_vals, time_last_interaction
 ) {
-    # Ensure static_df is a single row
-    if (nrow(static_df) != 1) {
-        stop("static_df should contain exactly one row")
+
+    # Initialize empty data frames (if no questions, no time values)
+    question_values_df <- data.frame(row.names = 1)
+    time_vals_df <- question_values_df
+
+    # Convert question and time values to a data frame
+    if (length(question_values) != 0) {
+        question_values_df <- as.data.frame(
+            lapply(question_values, function(x) rep(x, length.out = 1)), 
+            stringsAsFactors = FALSE
+        )
     }
-
-    # Convert question_values to a single-row data frame
-    question_values_df <- as.data.frame(question_values, stringsAsFactors = FALSE)
-
-    # Convert time_vals to a single-row data frame
-    time_vals_df <- as.data.frame(time_vals, stringsAsFactors = FALSE)
+    if (length(time_vals) != 0) {
+        time_vals_df <- as.data.frame(
+            lapply(time_vals, function(x) rep(x, length.out = 1)),
+            stringsAsFactors = FALSE
+        )
+    }
 
     # Create a single-row data frame for time_last_interaction
     time_last_interaction_df <- data.frame(time_last_interaction = time_last_interaction)
