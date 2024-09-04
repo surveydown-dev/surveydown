@@ -1,10 +1,13 @@
 # surveydown (development version)
 
+# surveydown 0.2.1
+
 - In `sd_database()`, now `db_name` is changed to `dbname`, and `table_name` is changed to `table`, for consistency with Supabase, and simplicity of parameter names.
 - Now the error message of `sd_database()` will also prompt "If you have verified all connection details are correct but still cannot access the database, consider setting the `gssencmode` parameter to `"disable"` in the `sd_database()` function." We don't encourage users to disable `gssencmode`, since it's more secure to have it on, but if users encounter with connection error, this will be a possible solution.
 - Bug fix: A bug was introduced when restructuring the `sd_server()` function in the last update that affected numeric questions being determined as answered or not, that is now fixed.
 - Fixed [issue #80](https://github.com/surveydown-dev/surveydown/issues/80): If `sd_display_value()` was used multiple times on different question IDs, it could only fetch the last user input. Now it's fixed.
-- Renamed main lua file in `inst/quarto/filters` from `surveydown.lua` to `main.lua` and updated the extension v0.2.1 to call this via a more robust, cross-platform approach.
+- Renamed main lua file in `inst/quarto/filters` from `surveydown.lua` to `sd_main.lua` and updated the extension v0.2.5 to call this via a more robust, cross-platform approach.
+- (Extension) Renamed the extension lua filter to `sd_wrapper.lua` to avoid naming conflict. Now the extension is only used as a wrapper. The `sd_main.lua` and related CSS and JS files are all in the R package.
 
 # surveydown 0.2.0
 
