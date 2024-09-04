@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,11 +40,15 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.1" id="surveydown-021">surveydown 0.2.1<a class="anchor" aria-label="anchor" href="#surveydown-021"></a></h2>
 <ul><li>In <code><a href="../reference/sd_database.html">sd_database()</a></code>, now <code>db_name</code> is changed to <code>dbname</code>, and <code>table_name</code> is changed to <code>table</code>, for consistency with Supabase, and simplicity of parameter names.</li>
 <li>Now the error message of <code><a href="../reference/sd_database.html">sd_database()</a></code> will also prompt “If you have verified all connection details are correct but still cannot access the database, consider setting the <code>gssencmode</code> parameter to <code>"disable"</code> in the <code><a href="../reference/sd_database.html">sd_database()</a></code> function.” We don’t encourage users to disable <code>gssencmode</code>, since it’s more secure to have it on, but if users encounter with connection error, this will be a possible solution.</li>
 <li>Bug fix: A bug was introduced when restructuring the <code><a href="../reference/sd_server.html">sd_server()</a></code> function in the last update that affected numeric questions being determined as answered or not, that is now fixed.</li>
 <li>Fixed <a href="https://github.com/surveydown-dev/surveydown/issues/80" class="external-link">issue </a><a href="https://github.com/surveydown-dev/surveydown/issues/80" class="external-link">#80</a>: If <code><a href="../reference/sd_display_value.html">sd_display_value()</a></code> was used multiple times on different question IDs, it could only fetch the last user input. Now it’s fixed.</li>
-<li>Renamed main lua file in <code>inst/quarto/filters</code> from <code>surveydown.lua</code> to <code>main.lua</code> and updated the extension v0.2.1 to call this via a more robust, cross-platform approach.</li>
+<li>Renamed main lua file in <code>inst/quarto/filters</code> from <code>surveydown.lua</code> to <code>sd_main.lua</code> and updated the extension v0.2.5 to call this via a more robust, cross-platform approach.</li>
+<li>(Extension) Renamed the extension lua filter to <code>sd_wrapper.lua</code> to avoid naming conflict. Now the extension is only used as a wrapper. The <code>sd_main.lua</code> and related CSS and JS files are all in the R package.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.0" id="surveydown-020">surveydown 0.2.0<a class="anchor" aria-label="anchor" href="#surveydown-020"></a></h2>
