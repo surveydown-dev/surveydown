@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+- `sd_redirect()` to create redirection to external links, either by providing a button, a countdown, or both.
+
 # surveydown 0.2.1
 
 - In `sd_database()`, now `db_name` is changed to `dbname`, and `table_name` is changed to `table`, for consistency with Supabase, and simplicity of parameter names.

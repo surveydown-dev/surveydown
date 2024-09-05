@@ -358,3 +358,152 @@ sd_next <- function(next_page = NULL, label = "Next") {
 make_next_button_id <- function(next_page) {
     return(paste0("next-", next_page))
 }
+
+#' Redirect button
+#'
+#' This function redirects to external links by providing a button or auto countdown, or both.
+#'
+#' @param url Character string. The target URL for redirection.
+#' @param button Logical. If TRUE, creates a clickable button. If FALSE, creates non-clickable text. Defaults to TRUE.
+#' @param label Character string. The text for the button or display. Defaults to "Click here".
+#' @param delay Numeric. The delay in seconds before automatic redirection. If NULL, no automatic redirection occurs. Defaults to NULL.
+#'
+#' @return A Shiny UI element (button or text) with redirection functionality, horizontally centered and styled.
+#'
+#' @examples
+#' sd_redirect(
+#'   url = "https://www.google.com",
+#'   button = TRUE,
+#'   label = "Go to Google",
+#'   delay = 5)
+#' sd_redirect(
+#'   url = "https://www.example.com",
+#'   button = FALSE,
+#'   label = "Redirecting to Example",
+#'   delay = 10
+#' )
+#'
+#' @importFrom digest digest
+#' @export
+sd_redirect <- function(url, button = TRUE, label = "Click here", delay = NULL) {
+    # Validate URL
+    if (!grepl("^https?://", url)) {
+        url <- paste0("https://", url)
+    }
+
+    # Create JavaScript for redirection
+    redirect_js <- sprintf("window.location.href = '%s';", url)
+
+    # Create a unique ID for this instance of sd_redirect
+    unique_id <- paste0("redirect_", digest::digest(paste(url, label, delay), algo = "md5"))
+
+    # Styling for the container
+    container_style <- "
+    display: inline-block;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    background-color: #f9f9f9;
+    margin: 0.5rem 0;
+  "
+
+    # Wrapper for centering the container
+    wrapper_style <- "
+    text-align: center;
+    margin: 1rem 0;
+  "
+
+    # Create button or text element
+    if (button) {
+        element <- shiny::actionButton(
+            inputId = paste0("button_", unique_id),
+            label = label,
+            onclick = redirect_js
+        )
+    } else {
+        element <- shiny::span(label)
+    }
+
+    # Add automatic redirection if delay is specified
+    if (!is.null(delay) && is.numeric(delay) && delay > 0) {
+        countdown_id <- paste0("countdown_", unique_id)
+
+        element <- shiny::tagList(
+            shiny::div(
+                style = wrapper_style,
+                shiny::div(
+                    id = unique_id,
+                    style = container_style,
+                    element,
+                    shiny::p(
+                        style = "margin: 0.5rem 0 0 0;",
+                        "Redirecting in ",
+                        shiny::tags$strong(id = countdown_id, delay),
+                        " seconds."
+                    )
+                )
+            ),
+            shiny::tags$script(shiny::HTML(countdown_js(delay, redirect_js, countdown_id, unique_id)))
+        )
+    } else if (!button) {
+        # If there's no delay and it's not a button, we need to inform the user that no action is possible
+        element <- shiny::div(
+            style = wrapper_style,
+            shiny::div(
+                style = container_style,
+                element,
+                shiny::p(style = "margin: 0.5rem 0 0 0;", "Note: This text is for display only and does not trigger redirection.")
+            )
+        )
+    } else {
+        # If it's a button without delay, just wrap it in the styled container
+        element <- shiny::div(
+            style = wrapper_style,
+            shiny::div(
+                style = container_style,
+                element
+            )
+        )
+    }
+
+    return(element)
+}
+
+# Countdown JS
+countdown_js <- function(delay, redirect_js, countdown_id, unique_id) {
+    sprintf(
+        "
+    $(document).ready(function() {
+      var countdown = %d;
+      var countdownTimer;
+
+      function startCountdown() {
+        countdownTimer = setInterval(function() {
+          countdown--;
+          if (countdown <= 0) {
+            clearInterval(countdownTimer);
+            %s
+          } else {
+            $('#%s').text(countdown);
+          }
+        }, 1000);
+      }
+
+      // Start countdown when this element becomes visible
+      var observer = new IntersectionObserver(function(entries) {
+        if(entries[0].isIntersecting === true) {
+          startCountdown();
+          observer.disconnect();
+        }
+      }, { threshold: [0] });
+
+      observer.observe(document.getElementById('%s'));
+    });
+    ",
+        delay,
+        redirect_js,
+        countdown_id,
+        unique_id
+    )
+}
