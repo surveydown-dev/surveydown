@@ -2,6 +2,7 @@
 
 - `sd_redirect()` to create redirection to external links, either by providing a button, a countdown, or both.
 - Now `sd_next()` and `sd_redirect()` both support the "Enter" key for a better user experience.
+- Add automatic clean up in `sd_database()`.
 
 # surveydown 0.2.1
 
