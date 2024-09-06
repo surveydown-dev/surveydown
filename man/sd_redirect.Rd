@@ -17,9 +17,17 @@ sd_redirect(url, button = TRUE, label = "Click here", delay = NULL)
 }
 \value{
 A Shiny UI element (button or text) with redirection functionality, horizontally centered and styled.
+If a button is created, it includes JavaScript for Enter key functionality.
 }
 \description{
-This function redirects to external links by providing a button or auto countdown, or both.
+This function creates a UI element for redirecting to external links. It can provide a clickable button,
+automatic redirection after a delay, or both. When a button is created, it can be activated by clicking
+or by pressing the Enter key.
+}
+\details{
+When \code{button = TRUE}, the function creates a clickable button that can be activated by mouse click or by pressing the Enter key.
+The Enter key functionality is only active when the button is visible on the page.
+If a delay is specified, the function will initiate an automatic redirection after the specified number of seconds.
 }
 \examples{
 sd_redirect(

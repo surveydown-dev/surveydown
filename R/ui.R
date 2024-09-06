@@ -327,15 +327,16 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' Create a 'Next' Button for Page Navigation
 #'
 #' This function creates a 'Next' button for navigating to the specified next page in a Surveydown survey.
+#' The button can be activated by clicking or by pressing the Enter key.
 #'
 #' @param next_page Character string. The ID of the next page to navigate to. This parameter is required.
 #' @param label Character string. The label of the 'Next' button. Defaults to "Next".
 #'
-#' @details The function generates a Shiny action button that, when clicked, sets the input value
-#'   to the specified next page ID, facilitating page navigation within the Shiny application.
-#'   The button is styled to appear centered on the page.
+#' @details The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
+#'   sets the input value to the specified next page ID, facilitating page navigation within the Shiny application.
+#'   The button is styled to appear centered on the page. The Enter key functionality is only active when the button is visible.
 #'
-#' @return A Shiny action button UI element.
+#' @return A Shiny action button UI element with associated JavaScript for Enter key functionality.
 #'
 #' @examples
 #' sd_next("page2", "Continue to Next Section")
@@ -346,11 +347,16 @@ sd_next <- function(next_page = NULL, label = "Next") {
         stop("You must specify the current_page for the 'Next' button.")
     }
 
-    shiny::actionButton(
-        inputId = make_next_button_id(next_page),
-        label   = label,
-        style   = "display: block; margin: auto;",
-        onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
+    button_id <- make_next_button_id(next_page)
+
+    shiny::tagList(
+        shiny::actionButton(
+            inputId = button_id,
+            label = label,
+            style = "display: block; margin: auto;",
+            onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
+        ),
+        shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
     )
 }
 
@@ -361,7 +367,9 @@ make_next_button_id <- function(next_page) {
 
 #' Redirect button
 #'
-#' This function redirects to external links by providing a button or auto countdown, or both.
+#' This function creates a UI element for redirecting to external links. It can provide a clickable button,
+#' automatic redirection after a delay, or both. When a button is created, it can be activated by clicking
+#' or by pressing the Enter key.
 #'
 #' @param url Character string. The target URL for redirection.
 #' @param button Logical. If TRUE, creates a clickable button. If FALSE, creates non-clickable text. Defaults to TRUE.
@@ -369,6 +377,12 @@ make_next_button_id <- function(next_page) {
 #' @param delay Numeric. The delay in seconds before automatic redirection. If NULL, no automatic redirection occurs. Defaults to NULL.
 #'
 #' @return A Shiny UI element (button or text) with redirection functionality, horizontally centered and styled.
+#'   If a button is created, it includes JavaScript for Enter key functionality.
+#'
+#' @details
+#' When `button = TRUE`, the function creates a clickable button that can be activated by mouse click or by pressing the Enter key.
+#' The Enter key functionality is only active when the button is visible on the page.
+#' If a delay is specified, the function will initiate an automatic redirection after the specified number of seconds.
 #'
 #' @examples
 #' sd_redirect(
@@ -416,10 +430,14 @@ sd_redirect <- function(url, button = TRUE, label = "Click here", delay = NULL) 
 
     # Create button or text element
     if (button) {
-        element <- shiny::actionButton(
-            inputId = paste0("button_", unique_id),
-            label = label,
-            onclick = redirect_js
+        button_id <- paste0("button_", unique_id)
+        element <- shiny::tagList(
+            shiny::actionButton(
+                inputId = button_id,
+                label = label,
+                onclick = redirect_js
+            ),
+            shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
         )
     } else {
         element <- shiny::span(label)
@@ -468,6 +486,24 @@ sd_redirect <- function(url, button = TRUE, label = "Click here", delay = NULL) 
     }
 
     return(element)
+}
+
+# Enter Key JS
+enter_key_js <- function(button_id) {
+    sprintf("
+    $(document).ready(function() {
+        var buttonId = '%s';
+        $(document).on('keydown', function(event) {
+            if (event.key === 'Enter' && !event.repeat) {
+                var $button = $('#' + buttonId);
+                if ($button.is(':visible')) {
+                    $button.click();
+                    event.preventDefault();
+                }
+            }
+        });
+    });
+    ", button_id)
 }
 
 # Countdown JS
