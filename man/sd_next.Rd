@@ -12,15 +12,16 @@ sd_next(next_page = NULL, label = "Next")
 \item{label}{Character string. The label of the 'Next' button. Defaults to "Next".}
 }
 \value{
-A Shiny action button UI element.
+A Shiny action button UI element with associated JavaScript for Enter key functionality.
 }
 \description{
 This function creates a 'Next' button for navigating to the specified next page in a Surveydown survey.
+The button can be activated by clicking or by pressing the Enter key.
 }
 \details{
-The function generates a Shiny action button that, when clicked, sets the input value
-to the specified next page ID, facilitating page navigation within the Shiny application.
-The button is styled to appear centered on the page.
+The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
+sets the input value to the specified next page ID, facilitating page navigation within the Shiny application.
+The button is styled to appear centered on the page. The Enter key functionality is only active when the button is visible.
 }
 \examples{
 sd_next("page2", "Continue to Next Section")

@@ -29,6 +29,7 @@ reference:
   - sd_display_question
   - sd_display_value
   - sd_next
+  - sd_redirect
   - sd_store_value
   - sd_copy_value
 - title: "Configuration and Server"
