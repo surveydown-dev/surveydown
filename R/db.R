@@ -3,27 +3,32 @@
 #' This function establishes a connection pool to a Supabase database and sets
 #' up automatic cleanup when the Shiny session ends.
 #'
-#' @param host Character string. The host address of the supabase database.
-#' @param dbname Character string. The name of the supabase database.
-#' @param port Integer. The port number for the supabase database connection.
-#' @param user Character string. The username for the supabase database connection.
-#' @param table Character string. The name of the table to interact with in the supabase database.
-#' @param password Character string. The password for the supabase database connection.
-#'   Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.
-#' @param gssencmode Character string. The GSS encryption mode for the database connection. Defaults to "prefer".
+#' @param host Character string. The host address of the Supabase database.
+#' @param dbname Character string. The name of the Supabase database.
+#' @param port Integer. The port number for the Supabase database connection.
+#' @param user Character string. The username for the Supabase database
+#' connection.
+#' @param table Character string. The name of the table to interact with in
+#' the Supabase database.
+#' @param password Character string. The password for the Supabase database
+#' connection. NOTE: While you can provide a hard-coded password here, we do
+#' NOT recommend doing so for security purposes. Instead, you should establish
+#' a password with `surveydown::sd_set_password()`, which will create a local
+#' .Renviron file that stores you password as a SURVEYDOWN_PASSWORD environment
+#' variable. The `password` argument uses this as the default value, so if you
+#' set a password properly with `surveydown::sd_set_password()`, then you can
+#' safely ignore using the `password` argument here.
+#' @param gssencmode Character string. The GSS encryption mode for the database
+#' connection. Defaults to `"prefer"`. NOTE: If you have verified all
+#' connection details are correct but still cannot access the database,
+#' consider setting this to `"disable"`. This can be necessary if you're on a
+#' secure connection, such as a VPN.
 #' @param ignore Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.
+#' @param min_size Integer. The minimum number of connections in the pool. Defaults to 1.
+#' @param max_size Integer. The maximum number of connections in the pool. Defaults to Inf.
 #'
-#' @details The function checks for the presence of all required parameters and attempts to
-#'   establish a connection to the supabase database. If successful, it returns a list containing
-#'   the database connection object and the table name. The user must have created the specified
-#'   table in supabase beforehand. If ignore mode is enabled, the function returns NULL and data
-#'   will be saved to a local CSV file. The password is obtained from the SURVEYDOWN_PASSWORD
-#'   environment variable by default, but can be overridden by explicitly passing a value.
-#'
-#' @return A list containing the database connection object (`db`) and the table name (`table`),
-#'   or NULL if in ignore mode.
-#'
-#' @note The user must create their own table inside supabase in order to make additions.
+#' @return A list containing the database connection pool (`db`) and the table name (`table`),
+#'   or NULL if in ignore mode or if there's an error.
 #'
 #' @examples
 #' \dontrun{
@@ -58,11 +63,13 @@ sd_database <- function(
         table      = NULL,
         password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
         gssencmode = "prefer",
-        ignore      = TRUE
+        ignore     = FALSE,
+        min_size   = 1,
+        max_size   = Inf
 ) {
 
-    if (!ignore) {
-        message("Database connection paused. Saving data to local CSV file.")
+    if (ignore) {
+        message("Database connection ignored. Saving data to local CSV file.")
         return(NULL)
     }
 

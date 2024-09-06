@@ -2,7 +2,7 @@
 % Please edit documentation in R/db.R
 \name{sd_database}
 \alias{sd_database}
-\title{Connect to a supabase Database}
+\title{Connect to a Supabase Database with Automatic Cleanup}
 \usage{
 sd_database(
   host = NULL,
@@ -12,45 +12,52 @@ sd_database(
   table = NULL,
   password = Sys.getenv("SURVEYDOWN_PASSWORD"),
   gssencmode = "prefer",
-  pause = FALSE
+  ignore = FALSE,
+  min_size = 1,
+  max_size = Inf
 )
 }
 \arguments{
-\item{host}{Character string. The host address of the supabase database.}
+\item{host}{Character string. The host address of the Supabase database.}
 
-\item{dbname}{Character string. The name of the supabase database.}
+\item{dbname}{Character string. The name of the Supabase database.}
 
-\item{port}{Integer. The port number for the supabase database connection.}
+\item{port}{Integer. The port number for the Supabase database connection.}
 
-\item{user}{Character string. The username for the supabase database connection.}
+\item{user}{Character string. The username for the Supabase database
+connection.}
 
-\item{table}{Character string. The name of the table to interact with in the supabase database.}
+\item{table}{Character string. The name of the table to interact with in
+the Supabase database.}
 
-\item{password}{Character string. The password for the supabase database connection.
-Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.}
+\item{password}{Character string. The password for the Supabase database
+connection. NOTE: While you can provide a hard-coded password here, we do
+NOT recommend doing so for security purposes. Instead, you should establish
+a password with \code{surveydown::sd_set_password()}, which will create a local
+.Renviron file that stores you password as a SURVEYDOWN_PASSWORD environment
+variable. The \code{password} argument uses this as the default value, so if you
+set a password properly with \code{surveydown::sd_set_password()}, then you can
+safely ignore using the \code{password} argument here.}
 
-\item{gssencmode}{Character string. The GSS encryption mode for the database connection. Defaults to "prefer".}
+\item{gssencmode}{Character string. The GSS encryption mode for the database
+connection. Defaults to \code{"prefer"}. NOTE: If you have verified all
+connection details are correct but still cannot access the database,
+consider setting this to \code{"disable"}. This can be necessary if you're on a
+secure connection, such as a VPN.}
 
-\item{pause}{Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.}
+\item{ignore}{Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.}
+
+\item{min_size}{Integer. The minimum number of connections in the pool. Defaults to 1.}
+
+\item{max_size}{Integer. The maximum number of connections in the pool. Defaults to Inf.}
 }
 \value{
-A list containing the database connection object (\code{db}) and the table name (\code{table}),
-or NULL if in pause mode.
+A list containing the database connection pool (\code{db}) and the table name (\code{table}),
+or NULL if in ignore mode or if there's an error.
 }
 \description{
-This function establishes a connection to a supabase database using the provided
-connection details.
-}
-\details{
-The function checks for the presence of all required parameters and attempts to
-establish a connection to the supabase database. If successful, it returns a list containing
-the database connection object and the table name. The user must have created the specified
-table in supabase beforehand. If pause mode is enabled, the function returns NULL and data
-will be saved to a local CSV file. The password is obtained from the SURVEYDOWN_PASSWORD
-environment variable by default, but can be overridden by explicitly passing a value.
-}
-\note{
-The user must create their own table inside supabase in order to make additions.
+This function establishes a connection pool to a Supabase database and sets
+up automatic cleanup when the Shiny session ends.
 }
 \examples{
 \dontrun{
@@ -61,7 +68,7 @@ The user must create their own table inside supabase in order to make additions.
     port       = "6---",
     user       = "postgres.k----------i",
     table = "your-table-name",
-    pause      = FALSE
+    ignore      = FALSE
   )
 
   # Explicitly providing the password
@@ -72,7 +79,7 @@ The user must create their own table inside supabase in order to make additions.
     user       = "postgres.k----------i",
     table = "your-table-name",
     password   = "your-password",
-    pause      = FALSE
+    ignore      = FALSE
   )
 }
 

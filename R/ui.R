@@ -471,7 +471,7 @@ sd_redirect <- function(url, button = TRUE, label = "Click here", delay = NULL) 
             shiny::div(
                 style = container_style,
                 element,
-                shiny::p(style = "margin: 0.5rem 0 0 0;", "Note: This text is for display only and does not trigger redirection.")
+                shiny::p(style = "margin: 0.5rem 0 0 0;", "Error: This text won't trigger any redirection...")
             )
         )
     } else {
