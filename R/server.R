@@ -83,7 +83,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     time_start <- get_utc_timestamp()
     session_id <- session$token
 
-    # Check if db is NULL (either left blank or specified with pause = TRUE)
+    # Check if db is NULL (either left blank or specified with ignore = TRUE)
     pause_mode <- is.null(db)
 
     # Create local objects from config file
@@ -567,6 +567,26 @@ admin_enable <- function(input, output, session, db) {
     observeEvent(input$back_to_survey_admin, {
         return_to_survey()
     })
+
+    #Pause Survey - Pause DB Section
+
+    observeEvent(input$pause_survey, {
+        #Code here that write to the table to change row value from 0 -> 1 and back if it happens
+        data <- DBI::dbReadTable(db$db, paste0(db$table, "_admin_table"))
+        #Read table value in, change it from true to false
+
+
+        #Add in Sd_server if(survey_paused == TRUE)
+        #Create and display a blank page that says the survey is pause
+
+
+    })
+
+
+
+
+
+
 
 
     # Download Data button functionality
