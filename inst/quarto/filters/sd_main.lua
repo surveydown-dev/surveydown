@@ -4,7 +4,15 @@ local function get_package_file_path(package_name, file_name, subdirectory)
     "Rscript -e \"cat(system.file('%s', '%s', package = '%s'))\"",
     subdirectory or "", file_name, package_name
   )
-  return pandoc.pipe("sh", {"-c", cmd}, ""):gsub("%s+$", "")
+
+  local handle = io.popen(cmd)
+  if handle then
+    local result = handle:read("*a")
+    handle:close()
+    return (result or ""):gsub("%s+$", "")
+  else
+    return ""
+  end
 end
 
 local function ensure_html_deps()
