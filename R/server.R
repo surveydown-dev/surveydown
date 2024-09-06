@@ -83,7 +83,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     time_start <- get_utc_timestamp()
     session_id <- session$token
 
-    # Check if db is NULL (either left blank or specified with pause = TRUE)
+    # Check if db is NULL (either left blank or specified with ignore = TRUE)
     pause_mode <- is.null(db)
 
     # Create local objects from config file

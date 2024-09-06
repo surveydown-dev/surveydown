@@ -11,17 +11,17 @@
 #' @param password Character string. The password for the supabase database connection.
 #'   Defaults to the value of the SURVEYDOWN_PASSWORD environment variable.
 #' @param gssencmode Character string. The GSS encryption mode for the database connection. Defaults to "prefer".
-#' @param pause Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.
+#' @param ignore Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.
 #'
 #' @details The function checks for the presence of all required parameters and attempts to
 #'   establish a connection to the supabase database. If successful, it returns a list containing
 #'   the database connection object and the table name. The user must have created the specified
-#'   table in supabase beforehand. If pause mode is enabled, the function returns NULL and data
+#'   table in supabase beforehand. If ignore mode is enabled, the function returns NULL and data
 #'   will be saved to a local CSV file. The password is obtained from the SURVEYDOWN_PASSWORD
 #'   environment variable by default, but can be overridden by explicitly passing a value.
 #'
 #' @return A list containing the database connection object (`db`) and the table name (`table`),
-#'   or NULL if in pause mode.
+#'   or NULL if in ignore mode.
 #'
 #' @note The user must create their own table inside supabase in order to make additions.
 #'
@@ -34,7 +34,7 @@
 #'     port       = "6---",
 #'     user       = "postgres.k----------i",
 #'     table = "your-table-name",
-#'     pause      = FALSE
+#'     ignore      = FALSE
 #'   )
 #'
 #'   # Explicitly providing the password
@@ -45,7 +45,7 @@
 #'     user       = "postgres.k----------i",
 #'     table = "your-table-name",
 #'     password   = "your-password",
-#'     pause      = FALSE
+#'     input      = FALSE
 #'   )
 #' }
 #'
@@ -58,10 +58,10 @@ sd_database <- function(
         table      = NULL,
         password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
         gssencmode = "prefer",
-        pause      = FALSE
+        ignore      = TRUE
 ) {
 
-    if (pause) {
+    if (!ignore) {
         message("Database connection paused. Saving data to local CSV file.")
         return(NULL)
     }
