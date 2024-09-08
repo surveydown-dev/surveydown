@@ -41,7 +41,12 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 <ul><li>
-<code><a href="../reference/sd_redirect.html">sd_redirect()</a></code> to create redirection to external links, either by providing a button, a countdown, or both.</li>
+<code><a href="../reference/sd_redirect.html">sd_redirect()</a></code> to create redirection to external links, either by providing a button, a countdown, or both. This function can be called both in the survey body and the server chunk.</li>
+<li>
+<code><a href="../reference/sd_get_url_pars.html">sd_get_url_pars()</a></code> to reactively get the parameters in the URL.</li>
+<li>
+<code><a href="../reference/sd_render_url.html">sd_render_url()</a></code> to create external URL with parameters in the survey body. It is simply a replacement of the <code><a href="https://rdrr.io/pkg/shiny/man/htmlOutput.html" class="external-link">shiny::uiOutput()</a></code> function.</li>
+<li>The above 3 functions work together to retrieve and redirect URL parameters so that surveydown is compatible with survey panels.</li>
 <li>Now <code><a href="../reference/sd_next.html">sd_next()</a></code> and <code><a href="../reference/sd_redirect.html">sd_redirect()</a></code> both support the “Enter” key for a better user experience.</li>
 <li>Add automatic clean up in <code><a href="../reference/sd_database.html">sd_database()</a></code>.</li>
 </ul></div>
