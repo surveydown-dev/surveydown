@@ -241,9 +241,7 @@ sd_question <- function(
         shiny::isolate({
             output <- shiny::getDefaultReactiveDomain()$output
             if (!is.null(output)) {
-                output[[id]] <- shiny::renderUI({
-                    output_div
-                })
+                output[[id]] <- shiny::renderUI({ output_div })
             } else {
                 stop("If reactive = TRUE, sd_question must be called within a Shiny reactive context")
             }
@@ -370,8 +368,8 @@ make_next_button_id <- function(next_page) {
 #' This function creates a UI element that redirects the user to a specified URL.
 #' It can be used in both reactive and non-reactive contexts within Shiny applications.
 #'
+#' @param id A character string of a unique id to be used to identify the redirect button in the survey body.
 #' @param url A character string specifying the URL to redirect to.
-#' @param urlpars An optional list of URL parameters to be appended to the URL.
 #' @param button A logical value indicating whether to create a button (TRUE) or
 #'   a text element (FALSE) for the redirect. Default is TRUE.
 #' @param label A character string for the button or text label. Default is "Click here".
@@ -406,34 +404,39 @@ make_next_button_id <- function(next_page) {
 #'   )
 #' }
 #' }
-sd_redirect <- function(url, urlpars = NULL, button = TRUE, label = "Click here", delay = NULL) {
-    # Function to create the redirect element
-    create_redirect_element <- function(url, urlpars, button, label, delay) {
-        # Validate URL
-        if (!grepl("^https?://", url)) {
-            url <- paste0("https://", url)
-        }
+sd_redirect <- function(
+    id,
+    url,
+    button = TRUE,
+    label  = "Click here",
+    delay  = NULL
+) {
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+        # In a reactive context, directly add to output with renderUI
+        shiny::isolate({
+            output <- shiny::getDefaultReactiveDomain()$output
+            output[[id]] <- shiny::renderUI({
+                create_redirect_element(id, url, button, label, delay)
+            })
+        })
+    } else {
+        # If not in a reactive context, just return the element
+        return(create_redirect_element(id, url, button, label, delay))
+    }
+}
 
-        # Append URL parameters if provided
-        if (!is.null(urlpars) && length(urlpars) > 0) {
-            # If urlpars is reactive, evaluate it
-            if (shiny::is.reactive(urlpars)) {
-                urlpars <- urlpars()
-            }
-            # Convert list to query string
-            query_string <- paste(names(urlpars), urlpars, sep = "=", collapse = "&")
-            # Append to URL
-            url <- paste0(url, if(grepl("\\?", url)) "&" else "?", query_string)
-        }
+# Function to create the redirect element
+create_redirect_element <- function(id, url, button, label, delay) {
+    # Validate URL
+    if (!grepl("^https?://", url)) {
+        url <- paste0("https://", url)
+    }
 
-        # Create JavaScript for redirection
-        redirect_js <- sprintf("window.location.href = '%s';", url)
+    # Create JavaScript for redirection
+    redirect_js <- paste0("window.location.href = '", url, "';")
 
-        # Create a unique ID for this instance of sd_redirect
-        unique_id <- paste0("redirect_", digest::digest(paste(url, label, delay), algo = "md5"))
-
-        # Styling for the container
-        container_style <- "
+    # Styling for the container
+    container_style <- "
         display: inline-block;
         text-align: center;
         border: 1px solid #ddd;
@@ -443,84 +446,69 @@ sd_redirect <- function(url, urlpars = NULL, button = TRUE, label = "Click here"
         margin: 0.5rem 0;
         "
 
-        # Wrapper for centering the container
-        wrapper_style <- "
+    # Wrapper for centering the container
+    wrapper_style <- "
         text-align: center;
         margin: 1rem 0;
         "
 
-        # Create button or text element
-        if (button) {
-            button_id <- paste0("button_", unique_id)
-            element <- shiny::tagList(
-                shiny::actionButton(
-                    inputId = button_id,
-                    label = label,
-                    onclick = redirect_js
-                ),
-                shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
-            )
-        } else {
-            element <- shiny::span(label)
-        }
+    # Create button or text element
+    if (button) {
+        element <- shiny::tagList(
+            shiny::actionButton(
+                inputId = id,
+                label = label,
+                onclick = redirect_js
+            ),
+            shiny::tags$script(shiny::HTML(enter_key_js(id)))
+        )
+    } else {
+        element <- shiny::span(label)
+    }
 
-        # Add automatic redirection if delay is specified
-        if (!is.null(delay) && is.numeric(delay) && delay > 0) {
-            countdown_id <- paste0("countdown_", unique_id)
+    # Add automatic redirection if delay is specified
+    if (!is.null(delay) && is.numeric(delay) && delay > 0) {
+        countdown_id <- paste0("countdown_", id)
 
-            element <- shiny::tagList(
-                shiny::div(
-                    style = wrapper_style,
-                    shiny::div(
-                        id = unique_id,
-                        style = container_style,
-                        element,
-                        shiny::p(
-                            style = "margin: 0.5rem 0 0 0;",
-                            "Redirecting in ",
-                            shiny::tags$strong(id = countdown_id, delay),
-                            " seconds."
-                        )
-                    )
-                ),
-                shiny::tags$script(shiny::HTML(countdown_js(delay, redirect_js, countdown_id, unique_id)))
-            )
-        } else if (!button) {
-            # If there's no delay and it's not a button, we need to inform the user that no action is possible
-            element <- shiny::div(
+        element <- shiny::tagList(
+            shiny::div(
                 style = wrapper_style,
                 shiny::div(
+                    id = id,
                     style = container_style,
                     element,
-                    shiny::p(style = "margin: 0.5rem 0 0 0;", "Error: This text won't trigger any redirection...")
+                    shiny::p(
+                        style = "margin: 0.5rem 0 0 0;",
+                        "Redirecting in ",
+                        shiny::tags$strong(id = countdown_id, delay),
+                        " seconds."
+                    )
                 )
+            ),
+            shiny::tags$script(shiny::HTML(countdown_js(delay, redirect_js, countdown_id, id)))
+        )
+    } else if (!button) {
+        # If there's no delay and it's not a button, we need to inform the user that no action is possible
+        element <- shiny::div(
+            style = wrapper_style,
+            shiny::div(
+                style = container_style,
+                element,
+                shiny::p(style = "margin: 0.5rem 0 0 0;", "Error: This text won't trigger any redirection...")
             )
-        } else {
-            # If it's a button without delay, just wrap it in the styled container
-            element <- shiny::div(
-                style = wrapper_style,
-                shiny::div(
-                    style = container_style,
-                    element
-                )
-            )
-        }
-
-        return(element)
-    }
-
-    # Check if we're in a reactive context
-    if (!is.null(shiny::getDefaultReactiveDomain())) {
-        # In a reactive context, call directly in renderUI
-        return(function() {
-            shiny::renderUI({
-                create_redirect_element(url, urlpars, button, label, delay)
-            })
-        })
+        )
     } else {
-        # If not in a reactive context, just return the element
-        return(create_redirect_element(url, urlpars, button, label, delay))
+        # If it's a button without delay, just wrap it in the styled container
+        element <- shiny::div(
+            style = wrapper_style,
+            shiny::div(
+                style = container_style,
+                element
+            )
+        )
     }
+
+    return(element)
 }
 
 # Enter Key JS
@@ -610,33 +598,24 @@ countdown_js <- function(delay, redirect_js, countdown_id, unique_id) {
 #' }
 #' }
 sd_get_url_pars <- function(...) {
-    shiny::reactive({
-        # Get the current session
-        session <- shiny::getDefaultReactiveDomain()
-
-        if (is.null(session)) {
-            stop("sd_get_url_pars() must be called from within a Shiny reactive context")
-        }
-
-        # Get the full URL
-        full_url <- session$clientData$url_search
-
-        # Parse the query string
-        parsed_query <- shiny::parseQueryString(full_url)
-
-        # Get the requested parameters
-        requested_params <- list(...)
-
-        # If no specific parameters are requested, return all
-        if (length(requested_params) == 0) {
-            return(parsed_query)
-        }
-
-        # If specific parameters are requested, filter and order the parsed query
-        requested_params <- unlist(requested_params)
-        filtered_query <- parsed_query[requested_params]
-        filtered_query[!sapply(filtered_query, is.null)]  # Remove any NULL values
-    })
+    session <- shiny::getDefaultReactiveDomain()
+    
+    if (is.null(session)) {
+        stop("sd_get_url_pars() must be called from within a Shiny reactive context")
+    }
+    
+    full_url <- session$clientData$url_search
+    parsed_query <- shiny::parseQueryString(full_url)
+    
+    requested_params <- list(...)
+    
+    if (length(requested_params) == 0) {
+        return(parsed_query)
+    }
+    
+    requested_params <- unlist(requested_params)
+    filtered_query <- parsed_query[requested_params]
+    filtered_query[!sapply(filtered_query, is.null)]
 }
 
 #' Render URL Output in Shiny
