@@ -84,7 +84,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     session_id <- session$token
 
     # Check if db is NULL (either left blank or specified with ignore = TRUE)
-    pause_mode <- is.null(db)
+    ignore_mode <- is.null(db)
 
     # Create local objects from config file
     page_structure <- config$page_structure
@@ -153,15 +153,15 @@ sd_server <- function(input, output, session, config, db = NULL) {
     })
 
     # Set the respondent_id
-    respondent_id <- get_respondent_id(if (!pause_mode) db else NULL)
+    respondent_id <- get_respondent_id(if (!ignore_mode) db else NULL)
 
     # Format static data
     stored_vals <- get_stored_vals(session)
     static_df <- cbind(
         data.frame(
+            time_start    = time_start,
             respondent_id = respondent_id,
-            session_id    = session_id,
-            time_start    = time_start
+            session_id    = session_id
         )
     )
     if (!is.null(stored_vals)) {
@@ -217,8 +217,18 @@ sd_server <- function(input, output, session, config, db = NULL) {
         df_local <- transform_data(static_df, question_values, timestamps$data, time_last_interaction)
 
         # Update database or write to CSV based on preview mode
-        if (pause_mode) {
-            utils::write.csv(df_local, "data.csv", row.names = FALSE)
+        if (ignore_mode) {
+            if (file.access('.', 2) == 0) {  # Check if current directory is writable
+                tryCatch({
+                    utils::write.csv(df_local, "data.csv", row.names = FALSE)
+                    message("Data successfully written to data.csv")
+                }, error = function(e) {
+                    warning("Unable to write to data.csv. The survey will run without data collection.")
+                    message("Error details: ", e$message)
+                })
+            } else {
+                message("Running in a non-writable environment. The survey will proceed without data collection.")
+            }
         } else {
             database_uploading(df_local, db$db, db$table)
         }
@@ -599,10 +609,17 @@ get_respondent_id <- function(db = NULL) {
 
     tryCatch({
         if (DBI::dbExistsTable(db$db, db$table)) {
-            max_id <- DBI::dbGetQuery(db$db, paste0("SELECT MAX(respondent_id) FROM ", db$table))[[1]]
-            if (!is.na(max_id)) as.integer(max_id) + 1 else 1
-        } else 1
-    }, error = function(e) 1)
+            query <- paste0("SELECT COALESCE(MAX(CAST(respondent_id AS INTEGER)), 0) FROM ", db$table)
+            result <- DBI::dbGetQuery(db$db, query)
+            new_id <- as.integer(result[[1]]) + 1
+            return(new_id)
+        } else {
+            return(1)
+        }
+    }, error = function(e) {
+        warning("Error in get_respondent_id: ", e$message)
+        return(1)
+    })
 }
 
 # Transform survey data for database storage
