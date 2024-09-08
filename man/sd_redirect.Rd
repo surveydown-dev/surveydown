@@ -2,44 +2,56 @@
 % Please edit documentation in R/ui.R
 \name{sd_redirect}
 \alias{sd_redirect}
-\title{Redirect button}
+\title{Create a Redirect Element for Shiny Applications}
 \usage{
-sd_redirect(url, button = TRUE, label = "Click here", delay = NULL)
+sd_redirect(
+  url,
+  urlpars = NULL,
+  button = TRUE,
+  label = "Click here",
+  delay = NULL
+)
 }
 \arguments{
-\item{url}{Character string. The target URL for redirection.}
+\item{url}{A character string specifying the URL to redirect to.}
 
-\item{button}{Logical. If TRUE, creates a clickable button. If FALSE, creates non-clickable text. Defaults to TRUE.}
+\item{urlpars}{An optional list of URL parameters to be appended to the URL.}
 
-\item{label}{Character string. The text for the button or display. Defaults to "Click here".}
+\item{button}{A logical value indicating whether to create a button (TRUE) or
+a text element (FALSE) for the redirect. Default is TRUE.}
 
-\item{delay}{Numeric. The delay in seconds before automatic redirection. If NULL, no automatic redirection occurs. Defaults to NULL.}
+\item{label}{A character string for the button or text label. Default is "Click here".}
+
+\item{delay}{An optional numeric value specifying the delay in seconds before
+automatic redirection. If NULL (default), no automatic redirection occurs.}
 }
 \value{
-A Shiny UI element (button or text) with redirection functionality, horizontally centered and styled.
-If a button is created, it includes JavaScript for Enter key functionality.
+In a reactive context, returns a function that when called, renders the
+redirect element. In a non-reactive context, returns the redirect element directly.
 }
 \description{
-This function creates a UI element for redirecting to external links. It can provide a clickable button,
-automatic redirection after a delay, or both. When a button is created, it can be activated by clicking
-or by pressing the Enter key.
-}
-\details{
-When \code{button = TRUE}, the function creates a clickable button that can be activated by mouse click or by pressing the Enter key.
-The Enter key functionality is only active when the button is visible on the page.
-If a delay is specified, the function will initiate an automatic redirection after the specified number of seconds.
+This function creates a UI element that redirects the user to a specified URL.
+It can be used in both reactive and non-reactive contexts within Shiny applications.
 }
 \examples{
-sd_redirect(
-  url = "https://www.google.com",
-  button = TRUE,
-  label = "Go to Google",
-  delay = 5)
-sd_redirect(
-  url = "https://www.example.com",
-  button = FALSE,
-  label = "Redirecting to Example",
-  delay = 10
+\dontrun{
+# In a Shiny UI
+ui <- fluidPage(
+  uiOutput("redirect_element")
 )
 
+# In a Shiny server function
+server <- function(input, output, session) {
+  # Basic usage with a button
+  output$redirect_element <- sd_redirect("www.example.com")
+
+  # Text redirect with parameters and delay
+  output$another_redirect <- sd_redirect("www.example.com",
+    urlpars = list(param1 = "value1", param2 = "value2"),
+    button = FALSE,
+    label = "Redirecting...",
+    delay = 5
+  )
+}
+}
 }

@@ -531,7 +531,6 @@ admin_enable <- function(input, output, session, db) {
         }
     })
 
-
     # Password check and admin content reveal
     observeEvent(input$submitPw, {
         if (input$adminpw == Sys.getenv("SURVEYDOWN_PASSWORD")) {
@@ -582,13 +581,6 @@ admin_enable <- function(input, output, session, db) {
 
     })
 
-
-
-
-
-
-
-
     # Download Data button functionality
     output$download_data <- downloadHandler(
         filename = function() {
@@ -625,7 +617,7 @@ transform_data <- function(
     # Convert question and time values to a data frame
     if (length(question_values) != 0) {
         question_values_df <- as.data.frame(
-            lapply(question_values, function(x) rep(x, length.out = 1)), 
+            lapply(question_values, function(x) rep(x, length.out = 1)),
             stringsAsFactors = FALSE
         )
     }
@@ -749,6 +741,7 @@ sd_store_value <- function(value, id = NULL) {
             session$userData$stored_values <- list()
         }
         session$userData$stored_values[[id]] <- value
+        print(paste("sd_store_value called with id:", id, "and value:", value))
     })
 
     invisible(NULL)

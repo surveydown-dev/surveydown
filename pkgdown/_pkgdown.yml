@@ -38,6 +38,9 @@ reference:
   - sd_config
   - sd_database
   - sd_get_data
+  - sd_get_url_pars
+  - sd_redirect
+  - sd_render_url
   - sd_server
   - sd_set_password
 - title: "Version Management"
