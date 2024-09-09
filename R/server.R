@@ -221,7 +221,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
             if (file.access('.', 2) == 0) {  # Check if current directory is writable
                 tryCatch({
                     utils::write.csv(df_local, "data.csv", row.names = FALSE)
-                    message("Data successfully written to data.csv")
                 }, error = function(e) {
                     warning("Unable to write to data.csv. The survey will run without data collection.")
                     message("Error details: ", e$message)
