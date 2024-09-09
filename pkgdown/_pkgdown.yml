@@ -26,6 +26,7 @@ reference:
   desc: "Functions for defining survey questions, navigation, and storing values"
   contents:
   - sd_question
+  - sd_output
   - sd_display_question
   - sd_display_value
   - sd_next
@@ -40,7 +41,6 @@ reference:
   - sd_get_data
   - sd_get_url_pars
   - sd_redirect
-  - sd_render_url
   - sd_server
   - sd_set_password
 - title: "Version Management"

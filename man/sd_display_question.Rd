@@ -13,10 +13,19 @@ sd_display_question(id)
 A Shiny UI element that serves as a placeholder for the reactive question.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+This function is deprecated. Please use \code{sd_output()} with \code{type = "question"} instead.
+
 This function creates a placeholder div for a reactive survey question in a Surveydown survey.
-It's used in conjunction with sd_question_reactive to allow for dynamic question rendering.
+It's used in conjunction with sd_question to allow for dynamic question rendering.
 }
 \examples{
+\dontrun{
+# Deprecated:
 sd_display_question("name")
+
+# Use instead:
+sd_output("name", type = "question")
+}
 
 }

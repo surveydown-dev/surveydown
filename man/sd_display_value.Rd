@@ -19,13 +19,20 @@ sd_display_value(id, display_type = "inline", wrapper = NULL, ...)
 A Shiny UI element displaying the question's value
 }
 \description{
-Display the value of a survey question
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+This function is deprecated. Please use \code{sd_output()} with \code{type = "value"} instead.
 }
 \examples{
+\dontrun{
+# Deprecated:
 sd_display_value("name")
 sd_display_value("age", display_type = "text")
-\dontrun{
-  sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
+sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
+
+# Use instead:
+sd_output("name", type = "value")
+sd_output("age", type = "value", display = "text")
+sd_output("email", type = "value", display = "inline", wrapper = function(x) tags$strong(x))
 }
 
 }

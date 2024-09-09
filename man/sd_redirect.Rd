@@ -4,18 +4,12 @@
 \alias{sd_redirect}
 \title{Create a Redirect Element for Shiny Applications}
 \usage{
-sd_redirect(
-  url,
-  urlpars = NULL,
-  button = TRUE,
-  label = "Click here",
-  delay = NULL
-)
+sd_redirect(id, url, button = TRUE, label = "Click here", delay = NULL)
 }
 \arguments{
-\item{url}{A character string specifying the URL to redirect to.}
+\item{id}{A character string of a unique id to be used to identify the redirect button in the survey body.}
 
-\item{urlpars}{An optional list of URL parameters to be appended to the URL.}
+\item{url}{A character string specifying the URL to redirect to.}
 
 \item{button}{A logical value indicating whether to create a button (TRUE) or
 a text element (FALSE) for the redirect. Default is TRUE.}

@@ -19,7 +19,6 @@
 #' @param option List. Options for the select, radio, checkbox, and slider inputs.
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
-#' @param reactive Logical. Whether the question should be reactive. Defaults to `FALSE`.
 #'
 #' @details
 #' The function supports various question types:
@@ -257,64 +256,6 @@ date_interaction <- function(output, id) {
         id, id
     )
     shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(js_code)))
-}
-
-#' Create a placeholder for a reactive survey question
-#'
-#' This function creates a placeholder div for a reactive survey question in a Surveydown survey.
-#' It's used in conjunction with sd_question to allow for dynamic question rendering.
-#'
-#' @param id A unique identifier for the question.
-#'
-#' @return A Shiny UI element that serves as a placeholder for the reactive question.
-#'
-#' @examples
-#' sd_display_question("name")
-#'
-#' @export
-sd_display_question <- function(id) {
-    shiny::div(
-        id = paste0("placeholder-", id),
-        `data-question-id` = id,
-        class = "question-container reactive-question-placeholder",
-        shiny::uiOutput(id)
-    )
-}
-
-#' Display the value of a survey question
-#'
-#' @param id The ID of the question to display
-#' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
-#' @param wrapper A function to wrap the output
-#' @param ... Additional arguments passed to the wrapper function
-#'
-#' @return A Shiny UI element displaying the question's value
-#'
-#' @examples
-#' sd_display_value("name")
-#' sd_display_value("age", display_type = "text")
-#' \dontrun{
-#'   sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
-#' }
-#'
-#' @export
-sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
-    value_id <- paste0(id, "_value")
-
-    output <- switch(
-        display_type,
-        "inline" = shiny::textOutput(value_id, inline = TRUE),
-        "text" = shiny::textOutput(value_id),
-        "verbatim" = shiny::verbatimTextOutput(value_id),
-        "ui" = shiny::uiOutput(value_id),
-        stop("Invalid display_type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
-    )
-
-    if (!is.null(wrapper)) {
-        output <- wrapper(output, ...)
-    }
-
-    return(output)
 }
 
 #' Create a 'Next' Button for Page Navigation
@@ -610,17 +551,160 @@ sd_get_url_pars <- function(...) {
     filtered_query[!sapply(filtered_query, is.null)]
 }
 
-#' Render URL Output in Shiny
+#' Create a placeholder for a reactive survey question
 #'
-#' A wrapper function for \code{shiny::uiOutput}, used for consistency in URL-related render functions.
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' This function is deprecated. Please use `sd_output()` with `type = "question"` instead.
 #'
-#' @param outputId A character string specifying the output ID for the UI element.
-#' @param ... Additional arguments passed to \code{shiny::uiOutput}.
+#' This function creates a placeholder div for a reactive survey question in a Surveydown survey.
+#' It's used in conjunction with sd_question to allow for dynamic question rendering.
 #'
-#' @return A UI output element.
+#' @param id A unique identifier for the question.
 #'
-#' @importFrom shiny uiOutput
+#' @return A Shiny UI element that serves as a placeholder for the reactive question.
+#'
+#' @examples
+#' \dontrun{
+#' # Deprecated:
+#' sd_display_question("name")
+#'
+#' # Use instead:
+#' sd_output("name", type = "question")
+#' }
+#'
 #' @export
-sd_render_url <- function(outputId, ...) {
-    shiny::uiOutput(outputId, ...)
+sd_display_question <- function(id) {
+    lifecycle::deprecate_soft("1.0.0", "sd_display_question()", "sd_output()")
+    shiny::div(
+        id = paste0("placeholder-", id),
+        `data-question-id` = id,
+        class = "question-container reactive-question-placeholder",
+        shiny::uiOutput(id)
+    )
+}
+
+#' Display the value of a survey question
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#' This function is deprecated. Please use `sd_output()` with `type = "value"` instead.
+#'
+#' @param id The ID of the question to display
+#' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
+#' @param wrapper A function to wrap the output
+#' @param ... Additional arguments passed to the wrapper function
+#'
+#' @return A Shiny UI element displaying the question's value
+#'
+#' @examples
+#' \dontrun{
+#' # Deprecated:
+#' sd_display_value("name")
+#' sd_display_value("age", display_type = "text")
+#' sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
+#'
+#' # Use instead:
+#' sd_output("name", type = "value")
+#' sd_output("age", type = "value", display = "text")
+#' sd_output("email", type = "value", display = "inline", wrapper = function(x) tags$strong(x))
+#' }
+#'
+#' @export
+sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
+    lifecycle::deprecate_soft("1.0.0", "sd_display_value()", "sd_output()")
+    value_id <- paste0(id, "_value")
+    output <- switch(
+        display_type,
+        "inline" = shiny::textOutput(value_id, inline = TRUE),
+        "text" = shiny::textOutput(value_id),
+        "verbatim" = shiny::verbatimTextOutput(value_id),
+        "ui" = shiny::uiOutput(value_id),
+        stop("Invalid display_type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
+    )
+    if (!is.null(wrapper)) {
+        output <- wrapper(output, ...)
+    }
+    return(output)
+}
+
+#' Unified Output Function for Survey Display
+#'
+#' This function combines the functionality of `sd_display_question()`, `sd_display_value()`,
+#' and `sd_render_url()` into a single, versatile function for creating various types of
+#' survey-related outputs in Shiny applications.
+#'
+#' @param id Character string. A unique identifier for the output element.
+#' @param type Character string. Specifies the type of output. Can be "question", "value", or NULL.
+#'   If NULL, the function behaves like `shiny::uiOutput()`.
+#' @param display Character string. Specifies the display type for "value" outputs.
+#'   Can be "inline", "text", "verbatim", or "ui". Only used when `type = "value"`.
+#' @param wrapper Function. A function to wrap the output. Only used when `type = "value"`.
+#' @param ... Additional arguments passed to the underlying Shiny functions or the wrapper function.
+#'
+#' @return A Shiny UI element, the type of which depends on the input parameters.
+#'
+#' @details
+#' The function behaves differently based on the `type` parameter:
+#' - If `type` is NULL, it acts like `shiny::uiOutput()`.
+#' - If `type` is "question", it creates a placeholder for a reactive survey question.
+#' - If `type` is "value", it creates an output to display the value of a survey question,
+#'   with the display style determined by the `display` parameter.
+#'
+#' @examples
+#' \dontrun{
+#' # Create a placeholder for a reactive question
+#' sd_output('cbc1', type = 'question')
+#'
+#' # Display the value of a survey question inline
+#' sd_output('cbc1', type = 'value', display = 'inline')
+#'
+#' # Use as a simple uiOutput
+#' sd_output('redirect')
+#'
+#' # Use with a wrapper function
+#' sd_output('age', type = 'value', display = 'text',
+#'           wrapper = function(x) tags$strong(x))
+#' }
+#'
+#' @export
+sd_output <- function(id, type = NULL, display = NULL, wrapper = NULL, ...) {
+    if (is.null(type)) {
+        # If only id is provided, behave like shiny::uiOutput
+        return(shiny::uiOutput(id, ...))
+    }
+
+    if (type == "question") {
+        return(shiny::div(
+            id = paste0("placeholder-", id),
+            `data-question-id` = id,
+            class = "question-container reactive-question-placeholder",
+            shiny::uiOutput(id)
+        ))
+    }
+
+    if (type == "value") {
+        value_id <- paste0(id, "_value")
+
+        if (!is.null(display) && !display %in% c("inline", "text", "verbatim", "ui")) {
+            stop("Invalid display type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
+        }
+
+        output <- switch(
+            display,
+            "inline" = shiny::textOutput(value_id, inline = TRUE),
+            "text" = shiny::textOutput(value_id),
+            "verbatim" = shiny::verbatimTextOutput(value_id),
+            "ui" = shiny::uiOutput(value_id),
+            shiny::uiOutput(value_id)  # Default to uiOutput if display is not specified
+        )
+
+        if (!is.null(wrapper)) {
+            output <- wrapper(output, ...)
+        }
+
+        return(output)
+    }
+
+    stop("Invalid type. Choose 'question' or 'value'.")
 }
