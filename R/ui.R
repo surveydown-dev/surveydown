@@ -59,8 +59,7 @@ sd_question <- function(
         force_edges  = TRUE,
         option       = NULL,
         placeholder  = NULL,
-        resize       = NULL,
-        reactive     = FALSE
+        resize       = NULL
 ) {
 
     output <- NULL
@@ -236,18 +235,14 @@ sd_question <- function(
         output
     )
 
-    if (reactive) {
-
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+        # In a reactive context, directly add to output with renderUI
         shiny::isolate({
             output <- shiny::getDefaultReactiveDomain()$output
-            if (!is.null(output)) {
-                output[[id]] <- shiny::renderUI({ output_div })
-            } else {
-                stop("If reactive = TRUE, sd_question must be called within a Shiny reactive context")
-            }
+            output[[id]] <- shiny::renderUI({ output_div })
         })
-
     } else {
+        # If not in a reactive context, just return the element
         return(output_div)
     }
 }
@@ -267,7 +262,7 @@ date_interaction <- function(output, id) {
 #' Create a placeholder for a reactive survey question
 #'
 #' This function creates a placeholder div for a reactive survey question in a Surveydown survey.
-#' It's used in conjunction with sd_question_reactive to allow for dynamic question rendering.
+#' It's used in conjunction with sd_question to allow for dynamic question rendering.
 #'
 #' @param id A unique identifier for the question.
 #'
