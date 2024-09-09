@@ -454,13 +454,10 @@ create_redirect_element <- function(id, url, button, label, delay) {
 
     # Create button or text element
     if (button) {
-        element <- shiny::tagList(
-            shiny::actionButton(
-                inputId = id,
-                label = label,
-                onclick = redirect_js
-            ),
-            shiny::tags$script(shiny::HTML(enter_key_js(id)))
+        element <- shiny::actionButton(
+            inputId = id,
+            label = label,
+            onclick = redirect_js
         )
     } else {
         element <- shiny::span(label)
@@ -599,20 +596,20 @@ countdown_js <- function(delay, redirect_js, countdown_id, unique_id) {
 #' }
 sd_get_url_pars <- function(...) {
     session <- shiny::getDefaultReactiveDomain()
-    
+
     if (is.null(session)) {
         stop("sd_get_url_pars() must be called from within a Shiny reactive context")
     }
-    
+
     full_url <- session$clientData$url_search
     parsed_query <- shiny::parseQueryString(full_url)
-    
+
     requested_params <- list(...)
-    
+
     if (length(requested_params) == 0) {
         return(parsed_query)
     }
-    
+
     requested_params <- unlist(requested_params)
     filtered_query <- parsed_query[requested_params]
     filtered_query[!sapply(filtered_query, is.null)]
