@@ -758,7 +758,6 @@ sd_store_value <- function(value, id = NULL) {
             session$userData$stored_values <- list()
         }
         session$userData$stored_values[[id]] <- value
-        print(paste("sd_store_value called with id:", id, "and value:", value))
     })
 
     invisible(NULL)
