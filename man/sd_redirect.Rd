@@ -4,18 +4,12 @@
 \alias{sd_redirect}
 \title{Create a Redirect Element for Shiny Applications}
 \usage{
-sd_redirect(
-  url,
-  urlpars = NULL,
-  button = TRUE,
-  label = "Click here",
-  delay = NULL
-)
+sd_redirect(id, url, button = TRUE, label = "Click here", delay = NULL)
 }
 \arguments{
-\item{url}{A character string specifying the URL to redirect to.}
+\item{id}{A character string of a unique id to be used to identify the redirect button in the survey body.}
 
-\item{urlpars}{An optional list of URL parameters to be appended to the URL.}
+\item{url}{A character string specifying the URL to redirect to.}
 
 \item{button}{A logical value indicating whether to create a button (TRUE) or
 a text element (FALSE) for the redirect. Default is TRUE.}
@@ -34,24 +28,5 @@ This function creates a UI element that redirects the user to a specified URL.
 It can be used in both reactive and non-reactive contexts within Shiny applications.
 }
 \examples{
-\dontrun{
-# In a Shiny UI
-ui <- fluidPage(
-  uiOutput("redirect_element")
-)
-
-# In a Shiny server function
-server <- function(input, output, session) {
-  # Basic usage with a button
-  output$redirect_element <- sd_redirect("www.example.com")
-
-  # Text redirect with parameters and delay
-  output$another_redirect <- sd_redirect("www.example.com",
-    urlpars = list(param1 = "value1", param2 = "value2"),
-    button = FALSE,
-    label = "Redirecting...",
-    delay = 5
-  )
-}
-}
+# Examples here
 }

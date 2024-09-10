@@ -92,8 +92,8 @@ This is a running list of things we’re working on adding to the project:
   <https://shinysurveys.jdtrat.com/articles/get-survey-data.html>
 - [x] Admin page w/password to preview / download data (see
   <https://github.com/daattali/shinyforms>)
-- [ ] User tracking via url parameters:
-  <https://shinysurveys.jdtrat.com/articles/surveying-shinysurveys.html#user-tracking>
+- [x] Ability to pass url parameters, e.g. for tracking users.
+- [x] Ability to redirect users to another url.
 - [ ] Form validation: Make sure the user inputs the correct type
   depending on the question type. (see
   <https://shiny.posit.co/r/reference/shiny/0.14/validate.html>)

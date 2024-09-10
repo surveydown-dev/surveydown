@@ -1,0 +1,32 @@
+title: "Your question in one sentence"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        First, please check [Surveydown Issues](https://github.com/surveydown-dev/surveydown/issues) and [Q&A GitHub Discussions](https://github.com/surveydown-dev/surveydown/discussions/categories/q-a) first to see if your question has already been asked.
+        If it has, please consider adding a comment to the existing discussion instead of creating a new one.
+
+        After checking, if you are not sure if your question has already been asked, please create a new discussion.
+        We look forward to hearing from you.
+
+        Finally, try to describe the best you can what you want to achieve or what is your issue, especially by providing a complete self-contained reproducible example.
+        This will help us to understand your question and answer it.
+
+        You can add some additional information that can help us to help you:
+
+        - What surveydown version are you using?
+          You can find the version of surveydown when you run this in your R console: `utils::packageDescription('surveydown')$Version`
+        - What operating system are you using?  
+          Linux Ubuntu 20.04, macOS 11.2.3, Windows 10, _etc._
+
+        _Thank you for opening this discussion either to ask for help or to report a possible bug!_
+  - type: textarea
+    attributes:
+      label: Description
+      description: Start your question/report!
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        _Thank you for opening this discussion either to ask for help or to report a possible bug!_

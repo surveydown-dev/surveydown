@@ -19,7 +19,6 @@
 #' @param option List. Options for the select, radio, checkbox, and slider inputs.
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
-#' @param reactive Logical. Whether the question should be reactive. Defaults to `FALSE`.
 #'
 #' @details
 #' The function supports various question types:
@@ -43,24 +42,23 @@
 #'
 #' @export
 sd_question <- function(
-        type,
-        id,
-        label,
-        cols         = "80",
-        direction    = "horizontal",
-        status       = "default",
-        width        = "100%",
-        height       = "100px",
-        selected     = NULL,
-        label_select = "Choose an option...",
-        grid         = TRUE,
-        individual   = TRUE,
-        justified    = FALSE,
-        force_edges  = TRUE,
-        option       = NULL,
-        placeholder  = NULL,
-        resize       = NULL,
-        reactive     = FALSE
+  type,
+  id,
+  label,
+  cols         = "80",
+  direction    = "horizontal",
+  status       = "default",
+  width        = "100%",
+  height       = "100px",
+  selected     = NULL,
+  label_select = "Choose an option...",
+  grid         = TRUE,
+  individual   = TRUE,
+  justified    = FALSE,
+  force_edges  = TRUE,
+  option       = NULL,
+  placeholder  = NULL,
+  resize       = NULL
 ) {
 
     output <- NULL
@@ -236,20 +234,14 @@ sd_question <- function(
         output
     )
 
-    if (reactive) {
-
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+        # In a reactive context, directly add to output with renderUI
         shiny::isolate({
             output <- shiny::getDefaultReactiveDomain()$output
-            if (!is.null(output)) {
-                output[[id]] <- shiny::renderUI({
-                    output_div
-                })
-            } else {
-                stop("If reactive = TRUE, sd_question must be called within a Shiny reactive context")
-            }
+            output[[id]] <- shiny::renderUI({ output_div })
         })
-
     } else {
+        # If not in a reactive context, just return the element
         return(output_div)
     }
 }
@@ -264,64 +256,6 @@ date_interaction <- function(output, id) {
         id, id
     )
     shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(js_code)))
-}
-
-#' Create a placeholder for a reactive survey question
-#'
-#' This function creates a placeholder div for a reactive survey question in a Surveydown survey.
-#' It's used in conjunction with sd_question_reactive to allow for dynamic question rendering.
-#'
-#' @param id A unique identifier for the question.
-#'
-#' @return A Shiny UI element that serves as a placeholder for the reactive question.
-#'
-#' @examples
-#' sd_display_question("name")
-#'
-#' @export
-sd_display_question <- function(id) {
-    shiny::div(
-        id = paste0("placeholder-", id),
-        `data-question-id` = id,
-        class = "question-container reactive-question-placeholder",
-        shiny::uiOutput(id)
-    )
-}
-
-#' Display the value of a survey question
-#'
-#' @param id The ID of the question to display
-#' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
-#' @param wrapper A function to wrap the output
-#' @param ... Additional arguments passed to the wrapper function
-#'
-#' @return A Shiny UI element displaying the question's value
-#'
-#' @examples
-#' sd_display_value("name")
-#' sd_display_value("age", display_type = "text")
-#' \dontrun{
-#'   sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
-#' }
-#'
-#' @export
-sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
-    value_id <- paste0(id, "_value")
-
-    output <- switch(
-        display_type,
-        "inline" = shiny::textOutput(value_id, inline = TRUE),
-        "text" = shiny::textOutput(value_id),
-        "verbatim" = shiny::verbatimTextOutput(value_id),
-        "ui" = shiny::uiOutput(value_id),
-        stop("Invalid display_type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
-    )
-
-    if (!is.null(wrapper)) {
-        output <- wrapper(output, ...)
-    }
-
-    return(output)
 }
 
 #' Create a 'Next' Button for Page Navigation
@@ -370,8 +304,8 @@ make_next_button_id <- function(next_page) {
 #' This function creates a UI element that redirects the user to a specified URL.
 #' It can be used in both reactive and non-reactive contexts within Shiny applications.
 #'
+#' @param id A character string of a unique id to be used to identify the redirect button in the survey body.
 #' @param url A character string specifying the URL to redirect to.
-#' @param urlpars An optional list of URL parameters to be appended to the URL.
 #' @param button A logical value indicating whether to create a button (TRUE) or
 #'   a text element (FALSE) for the redirect. Default is TRUE.
 #' @param label A character string for the button or text label. Default is "Click here".
@@ -386,54 +320,40 @@ make_next_button_id <- function(next_page) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # In a Shiny UI
-#' ui <- fluidPage(
-#'   uiOutput("redirect_element")
-#' )
-#'
-#' # In a Shiny server function
-#' server <- function(input, output, session) {
-#'   # Basic usage with a button
-#'   output$redirect_element <- sd_redirect("www.example.com")
-#'
-#'   # Text redirect with parameters and delay
-#'   output$another_redirect <- sd_redirect("www.example.com",
-#'     urlpars = list(param1 = "value1", param2 = "value2"),
-#'     button = FALSE,
-#'     label = "Redirecting...",
-#'     delay = 5
-#'   )
-#' }
-#' }
-sd_redirect <- function(url, urlpars = NULL, button = TRUE, label = "Click here", delay = NULL) {
-    # Function to create the redirect element
-    create_redirect_element <- function(url, urlpars, button, label, delay) {
-        # Validate URL
-        if (!grepl("^https?://", url)) {
-            url <- paste0("https://", url)
-        }
+#' # Examples here
+sd_redirect <- function(
+    id,
+    url,
+    button = TRUE,
+    label  = "Click here",
+    delay  = NULL
+) {
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+        # In a reactive context, directly add to output with renderUI
+        shiny::isolate({
+            output <- shiny::getDefaultReactiveDomain()$output
+            output[[id]] <- shiny::renderUI({
+                create_redirect_element(id, url, button, label, delay)
+            })
+        })
+    } else {
+        # If not in a reactive context, just return the element
+        return(create_redirect_element(id, url, button, label, delay))
+    }
+}
 
-        # Append URL parameters if provided
-        if (!is.null(urlpars) && length(urlpars) > 0) {
-            # If urlpars is reactive, evaluate it
-            if (shiny::is.reactive(urlpars)) {
-                urlpars <- urlpars()
-            }
-            # Convert list to query string
-            query_string <- paste(names(urlpars), urlpars, sep = "=", collapse = "&")
-            # Append to URL
-            url <- paste0(url, if(grepl("\\?", url)) "&" else "?", query_string)
-        }
+# Function to create the redirect element
+create_redirect_element <- function(id, url, button, label, delay) {
+    # Validate URL
+    if (!grepl("^https?://", url)) {
+        url <- paste0("https://", url)
+    }
 
-        # Create JavaScript for redirection
-        redirect_js <- sprintf("window.location.href = '%s';", url)
+    # Create JavaScript for redirection
+    redirect_js <- paste0("window.location.href = '", url, "';")
 
-        # Create a unique ID for this instance of sd_redirect
-        unique_id <- paste0("redirect_", digest::digest(paste(url, label, delay), algo = "md5"))
-
-        # Styling for the container
-        container_style <- "
+    # Styling for the container
+    container_style <- "
         display: inline-block;
         text-align: center;
         border: 1px solid #ddd;
@@ -443,84 +363,66 @@ sd_redirect <- function(url, urlpars = NULL, button = TRUE, label = "Click here"
         margin: 0.5rem 0;
         "
 
-        # Wrapper for centering the container
-        wrapper_style <- "
+    # Wrapper for centering the container
+    wrapper_style <- "
         text-align: center;
         margin: 1rem 0;
         "
 
-        # Create button or text element
-        if (button) {
-            button_id <- paste0("button_", unique_id)
-            element <- shiny::tagList(
-                shiny::actionButton(
-                    inputId = button_id,
-                    label = label,
-                    onclick = redirect_js
-                ),
-                shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
-            )
-        } else {
-            element <- shiny::span(label)
-        }
+    # Create button or text element
+    if (button) {
+        element <- shiny::actionButton(
+            inputId = id,
+            label = label,
+            onclick = redirect_js
+        )
+    } else {
+        element <- shiny::span(label)
+    }
 
-        # Add automatic redirection if delay is specified
-        if (!is.null(delay) && is.numeric(delay) && delay > 0) {
-            countdown_id <- paste0("countdown_", unique_id)
+    # Add automatic redirection if delay is specified
+    if (!is.null(delay) && is.numeric(delay) && delay > 0) {
+        countdown_id <- paste0("countdown_", id)
 
-            element <- shiny::tagList(
-                shiny::div(
-                    style = wrapper_style,
-                    shiny::div(
-                        id = unique_id,
-                        style = container_style,
-                        element,
-                        shiny::p(
-                            style = "margin: 0.5rem 0 0 0;",
-                            "Redirecting in ",
-                            shiny::tags$strong(id = countdown_id, delay),
-                            " seconds."
-                        )
-                    )
-                ),
-                shiny::tags$script(shiny::HTML(countdown_js(delay, redirect_js, countdown_id, unique_id)))
-            )
-        } else if (!button) {
-            # If there's no delay and it's not a button, we need to inform the user that no action is possible
-            element <- shiny::div(
+        element <- shiny::tagList(
+            shiny::div(
                 style = wrapper_style,
                 shiny::div(
+                    id = id,
                     style = container_style,
                     element,
-                    shiny::p(style = "margin: 0.5rem 0 0 0;", "Error: This text won't trigger any redirection...")
+                    shiny::p(
+                        style = "margin: 0.5rem 0 0 0;",
+                        "Redirecting in ",
+                        shiny::tags$strong(id = countdown_id, delay),
+                        " seconds."
+                    )
                 )
+            ),
+            shiny::tags$script(shiny::HTML(countdown_js(delay, redirect_js, countdown_id, id)))
+        )
+    } else if (!button) {
+        # If there's no delay and it's not a button, we need to inform the user that no action is possible
+        element <- shiny::div(
+            style = wrapper_style,
+            shiny::div(
+                style = container_style,
+                element,
+                shiny::p(style = "margin: 0.5rem 0 0 0;", "Error: This text won't trigger any redirection...")
             )
-        } else {
-            # If it's a button without delay, just wrap it in the styled container
-            element <- shiny::div(
-                style = wrapper_style,
-                shiny::div(
-                    style = container_style,
-                    element
-                )
-            )
-        }
-
-        return(element)
-    }
-
-    # Check if we're in a reactive context
-    if (!is.null(shiny::getDefaultReactiveDomain())) {
-        # In a reactive context, call directly in renderUI
-        return(function() {
-            shiny::renderUI({
-                create_redirect_element(url, urlpars, button, label, delay)
-            })
-        })
+        )
     } else {
-        # If not in a reactive context, just return the element
-        return(create_redirect_element(url, urlpars, button, label, delay))
+        # If it's a button without delay, just wrap it in the styled container
+        element <- shiny::div(
+            style = wrapper_style,
+            shiny::div(
+                style = container_style,
+                element
+            )
+        )
     }
+
+    return(element)
 }
 
 # Enter Key JS
@@ -593,63 +495,152 @@ countdown_js <- function(delay, redirect_js, countdown_id, unique_id) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # In a Shiny server function:
-#' server <- function(input, output, session) {
-#'   # Get all URL parameters
-#'   all_params <- sd_get_url_pars()
-#'
-#'   # Get specific URL parameters
-#'   specific_params <- sd_get_url_pars("param1", "param2")
-#'
-#'   # Use the reactive values
-#'   output$paramDisplay <- renderText({
-#'     params <- all_params()
-#'     paste("Parameters:", paste(names(params), params, sep = "=", collapse = ", "))
-#'   })
-#' }
-#' }
+#' # Examples here
 sd_get_url_pars <- function(...) {
-    shiny::reactive({
-        # Get the current session
-        session <- shiny::getDefaultReactiveDomain()
+    session <- shiny::getDefaultReactiveDomain()
 
-        if (is.null(session)) {
-            stop("sd_get_url_pars() must be called from within a Shiny reactive context")
-        }
+    if (is.null(session)) {
+        stop("sd_get_url_pars() must be called from within a Shiny reactive context")
+    }
 
-        # Get the full URL
-        full_url <- session$clientData$url_search
+    full_url <- session$clientData$url_search
+    parsed_query <- shiny::parseQueryString(full_url)
 
-        # Parse the query string
-        parsed_query <- shiny::parseQueryString(full_url)
+    requested_params <- list(...)
 
-        # Get the requested parameters
-        requested_params <- list(...)
+    if (length(requested_params) == 0) {
+        return(parsed_query)
+    }
 
-        # If no specific parameters are requested, return all
-        if (length(requested_params) == 0) {
-            return(parsed_query)
-        }
-
-        # If specific parameters are requested, filter and order the parsed query
-        requested_params <- unlist(requested_params)
-        filtered_query <- parsed_query[requested_params]
-        filtered_query[!sapply(filtered_query, is.null)]  # Remove any NULL values
-    })
+    requested_params <- unlist(requested_params)
+    filtered_query <- parsed_query[requested_params]
+    filtered_query[!sapply(filtered_query, is.null)]
 }
 
-#' Render URL Output in Shiny
+#' Create a placeholder for a reactive survey question
 #'
-#' A wrapper function for \code{shiny::uiOutput}, used for consistency in URL-related render functions.
+#' This function creates a placeholder div for a reactive survey question in a Surveydown survey.
+#' It's used in conjunction with sd_question to allow for dynamic question rendering.
 #'
-#' @param outputId A character string specifying the output ID for the UI element.
-#' @param ... Additional arguments passed to \code{shiny::uiOutput}.
+#' @param id A unique identifier for the question.
+#' @return A Shiny UI element that serves as a placeholder for the reactive question.
 #'
-#' @return A UI output element.
+#' @examples
+#' \dontrun{
+#' # Deprecated:
+#' sd_display_question("name")
 #'
-#' @importFrom shiny uiOutput
+#' # Use instead:
+#' sd_output("name", type = "question")
+#' }
+#'
 #' @export
-sd_render_url <- function(outputId, ...) {
-    shiny::uiOutput(outputId, ...)
+sd_display_question <- function(id) {
+  # v0.2.1
+  .Deprecated("sd_output")
+}
+
+#' Display the value of a survey question
+#'
+#' @param id The ID of the question to display
+#' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
+#' @param wrapper A function to wrap the output
+#' @param ... Additional arguments passed to the wrapper function
+#'
+#' @return A Shiny UI element displaying the question's value
+#'
+#' @examples
+#' \dontrun{
+#' # Deprecated:
+#' sd_display_value("name")
+#' sd_display_value("age", display_type = "text")
+#' sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
+#'
+#' # Use instead:
+#' sd_output("name", type = "value")
+#' sd_output("age", type = "value", display = "text")
+#' sd_output("email", type = "value", display = "inline", wrapper = function(x) tags$strong(x))
+#' }
+#'
+#' @export
+sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
+  # v0.2.1
+  .Deprecated("sd_output")
+}
+
+#' Output Function for Displaying reactive objects and values
+#'
+#' @param id Character string. A unique identifier for the output element.
+#' @param type Character string. Specifies the type of output. Can be "question", "value", or `NULL.`
+#'   If `NULL`, the function behaves like `shiny::uiOutput()`.
+#' @param display Character string. Specifies the display type for "value" outputs.
+#'   Can be "inline", "text", "verbatim", or "ui". Only used when `type = "value"`.
+#' @param wrapper Function. A function to wrap the output. Only used when `type = "value"`.
+#' @param ... Additional arguments passed to the underlying Shiny functions or the wrapper function.
+#'
+#' @return A Shiny UI element, the type of which depends on the input parameters.
+#'
+#' @details
+#' The function behaves differently based on the `type` parameter:
+#' - If `type` is `NULL`, it acts like `shiny::uiOutput()`.
+#' - If `type` is `"question"`, it creates a placeholder for a reactive survey question.
+#' - If `type` is `"value"`, it creates an output to display the value of a survey question,
+#'   with the display style determined by the `display` parameter.
+#'
+#' @examples
+#' \dontrun{
+#' # Create a placeholder for a reactive question
+#' sd_output('cbc1', type = 'question')
+#'
+#' # Display the value of a survey question inline
+#' sd_output('cbc1', type = 'value', display = 'inline')
+#'
+#' # Use as a simple uiOutput
+#' sd_output('redirect')
+#'
+#' # Use with a wrapper function
+#' sd_output('age', type = 'value', display = 'text',
+#'           wrapper = function(x) tags$strong(x))
+#' }
+#'
+#' @export
+sd_output <- function(id, type = NULL, display = "inline", wrapper = NULL, ...) {
+    if (is.null(type)) {
+        # If only id is provided, behave like shiny::uiOutput
+        return(shiny::uiOutput(id, ...))
+    }
+
+    if (type == "question") {
+        return(shiny::div(
+            id = paste0("placeholder-", id),
+            `data-question-id` = id,
+            class = "question-container reactive-question-placeholder",
+            shiny::uiOutput(id)
+        ))
+    }
+
+    if (type == "value") {
+        value_id <- paste0(id, "_value")
+
+        if (!is.null(display) && !display %in% c("inline", "text", "verbatim", "ui")) {
+            stop("Invalid display type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
+        }
+
+        output <- switch(
+            display,
+            "inline" = shiny::textOutput(value_id, inline = TRUE),
+            "text" = shiny::textOutput(value_id),
+            "verbatim" = shiny::verbatimTextOutput(value_id),
+            "ui" = shiny::uiOutput(value_id),
+            shiny::uiOutput(value_id)  # Default to uiOutput if display is not specified
+        )
+
+        if (!is.null(wrapper)) {
+            output <- wrapper(output, ...)
+        }
+
+        return(output)
+    }
+
+    stop("Invalid type. Choose 'question' or 'value'.")
 }

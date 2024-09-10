@@ -22,10 +22,16 @@ A Shiny UI element displaying the question's value
 Display the value of a survey question
 }
 \examples{
+\dontrun{
+# Deprecated:
 sd_display_value("name")
 sd_display_value("age", display_type = "text")
-\dontrun{
-  sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
+sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
+
+# Use instead:
+sd_output("name", type = "value")
+sd_output("age", type = "value", display = "text")
+sd_output("email", type = "value", display = "inline", wrapper = function(x) tags$strong(x))
 }
 
 }

@@ -21,8 +21,7 @@ sd_question(
   force_edges = TRUE,
   option = NULL,
   placeholder = NULL,
-  resize = NULL,
-  reactive = FALSE
+  resize = NULL
 )
 }
 \arguments{
@@ -59,8 +58,6 @@ sd_question(
 \item{placeholder}{Character string. Placeholder text for text and textarea inputs.}
 
 \item{resize}{Character string. Resize option for textarea input. Defaults to NULL.}
-
-\item{reactive}{Logical. Whether the question should be reactive. Defaults to \code{FALSE}.}
 }
 \value{
 A Shiny UI element wrapped in a div with a  data attribute for question ID.
