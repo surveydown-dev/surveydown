@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question
+    url: https://github.com/surveydown-dev/surveydown/discussions/categories/q-a
+    about: Please ask and answer questions in our Discussion board
+  - name: Share an idea, a missing feature or anything else
+    url: https://github.com/surveydown-dev/surveydown/discussions/categories/feature-requests
+    about: Please give us any feedback in our Discussion board
