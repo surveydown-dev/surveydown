@@ -1,9 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit this file -->
 
-# surveydown
-
-<a href='https://surveydown.org/'><img src='man/figures/logo.png' align="right" style="width: 120px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
+# surveydown <img src='man/figures/logo.png' align="right" height="139" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/>
 
 ### Visit our main site [surveydown.org](https://surveydown.org) for more information!
 
