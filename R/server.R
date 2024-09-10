@@ -12,6 +12,10 @@
 #' @param db A list containing database connection information created using
 #'        \code{\link{sd_database}} function. Defaults to \code{NULL}.
 #'
+#' @import shiny
+#' @importFrom stats setNames
+#' @importFrom shiny reactiveValuesToList observeEvent renderText
+#'
 #' @details
 #' The \code{config} list should include the following elements:
 #' \itemize{

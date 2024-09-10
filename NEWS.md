@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.2.3
+
+- Solved the speed problem for database connections: refactored `sd_server()` for efficiency; converted local data storage to lists instead of data frames.
+- Assigned `session_id` as the leading column, and removed the `respondent_id` column.
+
 # surveydown 0.2.2
 
 - `sd_redirect()` to create redirection to external links, either by providing a button, a countdown, or both. This function can be called both in the survey body and the server chunk.
