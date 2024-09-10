@@ -56,16 +56,16 @@
 #'
 #' @export
 sd_database <- function(
-        host       = NULL,
-        dbname     = NULL,
-        port       = NULL,
-        user       = NULL,
-        table      = NULL,
-        password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
-        gssencmode = "prefer",
-        ignore     = FALSE,
-        min_size   = 1,
-        max_size   = Inf
+    host       = NULL,
+    dbname     = NULL,
+    port       = NULL,
+    user       = NULL,
+    table      = NULL,
+    password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
+    gssencmode = "prefer",
+    ignore     = FALSE,
+    min_size   = 1,
+    max_size   = Inf
 ) {
 
     if (ignore) {
@@ -201,48 +201,44 @@ create_table <- function(db, table, df) {
 }
 
 # Upload survey data to the database
-database_uploading <- function(df, db, table) {
+database_uploading <- function(data_list, db, table) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
     }
 
     tryCatch({
         pool::poolWithTransaction(db, function(conn) {
-            # Check if table exists
-            table_exists <- DBI::dbExistsTable(conn, table)
+            # Prepare the update query
+            cols <- names(data_list)
+            update_cols <- setdiff(cols, "session_id")
+            update_query <- paste0(
+                'INSERT INTO "', table, '" ("',
+                paste(cols, collapse = '", "'),
+                '") VALUES (',
+                paste(rep("?", length(cols)), collapse = ", "),
+                ') ON CONFLICT (session_id) DO UPDATE SET ',
+                paste(paste0('"', update_cols, '" = EXCLUDED."', update_cols, '"'), collapse = ", ")
+            )
 
-            if (!table_exists) {
-                create_table(list(db = db, table = table), table, df)
-            } else {
-                # Check for new columns and ensure correct order
-                existing_cols <- DBI::dbListFields(conn, table)
-                new_cols <- setdiff(names(df), existing_cols)
-
-                # Add new columns if any
-                for (col in new_cols) {
-                    r_type <- typeof(df[[col]])
-                    sql_type <- r_to_sql_type(r_type)
-                    query <- paste0('ALTER TABLE "', table, '" ADD COLUMN "', col, '" ', sql_type, ';')
-                    DBI::dbExecute(conn, query)
-                }
-            }
-
-            # Read existing data
-            data <- DBI::dbReadTable(conn, table)
-
-            matching_rows <- df[df$session_id %in% data$session_id, ]
-
-            if (nrow(matching_rows) > 0) {
-                delete_query <- paste0('DELETE FROM "', table, '" WHERE session_id = $1')
-                for (session_id in matching_rows$session_id) {
-                    DBI::dbExecute(conn, delete_query, params = list(session_id))
-                }
-                DBI::dbWriteTable(conn, table, matching_rows, append = TRUE, row.names = FALSE)
-            } else {
-                DBI::dbWriteTable(conn, table, df, append = TRUE, row.names = FALSE)
-            }
+            # Execute the query
+            res <- DBI::dbSendQuery(conn, update_query)
+            DBI::dbBind(res, data_list)
+            DBI::dbClearResult(res)
         })
     }, error = function(e) {
         warning("Error in database operation: ", e$message)
+    })
+}
+
+check_and_add_columns <- function(data_local, db, table) {
+    pool::poolWithTransaction(db, function(conn) {
+        existing_cols <- DBI::dbListFields(conn, table)
+        new_cols <- setdiff(names(data_local), existing_cols)
+        for (col in new_cols) {
+            r_type <- typeof(data_local[[col]])
+            sql_type <- r_to_sql_type(r_type)
+            query <- paste0('ALTER TABLE "', table, '" ADD COLUMN "', col, '" ', sql_type, ';')
+            DBI::dbExecute(conn, query)
+        }
     })
 }
