@@ -172,62 +172,33 @@ r_to_sql_type <- function(r_type) {
            "TEXT")
 }
 
-# Create a new table in the database
-create_table <- function(db, table, df) {
-    # Loop through the column names
-    col_def <- ""
-
-    #Create the col_definitions based on the type
-    for (col_name in colnames(df)) {
-        r_type <- typeof(df[[col_name]])
+create_table <- function(data_list, db, table) {
+    # Create column definitions
+    col_def <- sapply(names(data_list), function(col_name) {
+        r_type <- typeof(data_list[[col_name]])
         sql_type <- r_to_sql_type(r_type)
-        col_def <- paste0(col_def, "\"", col_name, "\" ", sql_type, ", ")
-    }
+        paste0('"', col_name, '" ', sql_type)
+    })
 
-    # Remove the trailing comma and space
-    col_def <- substr(col_def, 1, nchar(col_def) - 2)
+    # Ensure session_id is the first column and set as PRIMARY KEY
+    col_def <- c('"session_id" TEXT PRIMARY KEY', col_def[names(col_def) != "session_id"])
+
+    # Join column definitions
+    col_def_str <- paste(col_def, collapse = ", ")
 
     create_table_query <- paste0(
-        'CREATE TABLE "', table, '" (', col_def, ")"
+        'CREATE TABLE IF NOT EXISTS "', table, '" (', col_def_str, ")"
     )
-    pool::poolWithTransaction(db$db, function(conn) {
+
+    pool::poolWithTransaction(db, function(conn) {
         # Create the table
         DBI::dbExecute(conn, create_table_query)
 
         # Enable Row Level Security
         DBI::dbExecute(conn, paste0('ALTER TABLE "', table, '" ENABLE ROW LEVEL SECURITY;'))
     })
-    return(message("Database should appear on your supabase Account (Can take up to a minute.)"))
-}
 
-# Upload survey data to the database
-database_uploading <- function(data_list, db, table) {
-    if(is.null(db)) {
-        return(warning("Databasing is not in use"))
-    }
-
-    tryCatch({
-        pool::poolWithTransaction(db, function(conn) {
-            # Prepare the update query
-            cols <- names(data_list)
-            update_cols <- setdiff(cols, "session_id")
-            update_query <- paste0(
-                'INSERT INTO "', table, '" ("',
-                paste(cols, collapse = '", "'),
-                '") VALUES (',
-                paste(rep("?", length(cols)), collapse = ", "),
-                ') ON CONFLICT (session_id) DO UPDATE SET ',
-                paste(paste0('"', update_cols, '" = EXCLUDED."', update_cols, '"'), collapse = ", ")
-            )
-
-            # Execute the query
-            res <- DBI::dbSendQuery(conn, update_query)
-            DBI::dbBind(res, data_list)
-            DBI::dbClearResult(res)
-        })
-    }, error = function(e) {
-        warning("Error in database operation: ", e$message)
-    })
+    message("Table created (or already exists) in your Supabase database.")
 }
 
 check_and_add_columns <- function(data_local, db, table) {
@@ -240,5 +211,57 @@ check_and_add_columns <- function(data_local, db, table) {
             query <- paste0('ALTER TABLE "', table, '" ADD COLUMN "', col, '" ', sql_type, ';')
             DBI::dbExecute(conn, query)
         }
+    })
+}
+
+database_uploading <- function(data_list, db, table) {
+    if(is.null(db)) {
+        return(warning("Databasing is not in use"))
+    }
+
+    tryCatch({
+        pool::poolWithTransaction(db, function(conn) {
+            # Get the actual columns in the table
+            existing_cols <- DBI::dbListFields(conn, table)
+
+            # Filter data_list to only include existing columns
+            data_list <- data_list[names(data_list) %in% existing_cols]
+
+            # Prepare the update query
+            cols <- names(data_list)
+            update_cols <- setdiff(cols, "session_id")
+
+            # Create value string, properly escaping and quoting values
+            values <- sapply(data_list, function(x) {
+                if (is.character(x)) {
+                    paste0("'", gsub("'", "''", x), "'")
+                } else if (is.numeric(x)) {
+                    as.character(x)
+                } else {
+                    "NULL"
+                }
+            })
+            values_str <- paste(values, collapse = ", ")
+
+            update_set <- paste(sapply(update_cols, function(col) {
+                paste0('"', col, '" = EXCLUDED."', col, '"')
+            }), collapse = ", ")
+
+            update_query <- paste0(
+                'INSERT INTO "', table, '" ("', paste(cols, collapse = '", "'), '") ',
+                'VALUES (', values_str, ') ',
+                'ON CONFLICT (session_id) DO UPDATE SET ',
+                update_set
+            )
+
+            # Print the query for debugging
+            print(update_query)
+
+            # Execute the query
+            DBI::dbExecute(conn, update_query)
+        })
+    }, error = function(e) {
+        warning("Error in database operation: ", e$message)
+        print(e)  # Print the full error for debugging
     })
 }

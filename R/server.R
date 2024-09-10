@@ -89,26 +89,14 @@ sd_server <- function(input, output, session, config, db = NULL) {
         }
     }
 
-    # Function to get the latest data as a list
-    get_latest_data <- function() {
-        # Merge all lists
-        data <- c(
-            static_list,
-            reactiveValuesToList(question_vals),
-            reactiveValuesToList(timestamps)
-        )
-        # Ensure all elements are of length 1
-        return(lapply(data, function(x) if (length(x) == 0) NA else x[1]))
-    }
-
     # Function to update the data
     update_data <- function() {
-        data_local <- get_latest_data()
+        data_list <- latest_data()
         if (ignore_mode) {
             if (file.access('.', 2) == 0) {  # Check if current directory is writable
                 tryCatch({
                     utils::write.csv(
-                        as.data.frame(data_local, stringsAsFactors = FALSE),
+                        as.data.frame(data_list, stringsAsFactors = FALSE),
                         "data.csv",
                         row.names = FALSE
                     )
@@ -120,7 +108,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 message("Running in a non-writable environment.")
             }
         } else {
-            database_uploading(data_local, db$db, db$table)
+            database_uploading(data_list, db$db, db$table)
         }
     }
 
@@ -190,9 +178,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Format static data
     static_list <- list(
+        session_id = session_id,
         time_start = time_start,
-        respondent_id = get_respondent_id(if (!ignore_mode) db else NULL),
-        session_id = session_id
+        respondent_id = get_respondent_id(if (!ignore_mode) db else NULL)
     )
     static_list <- c(static_list, get_stored_vals(session))
 
@@ -205,9 +193,37 @@ sd_server <- function(input, output, session, config, db = NULL) {
     timestamps <- initialize_timestamps(page_ts_ids, question_ts_ids, time_start)
     question_vals <- initialize_question_vals(question_ids)
 
-    # Check if there are any new columns, update DB accordingly
-    if (!ignore_mode && !is.null(db)) {
-        check_and_add_columns(get_latest_data(), db$db, db$table)
+    # Create a reactive expression for the latest data
+    latest_data <- shiny::reactive({
+        # Merge all lists
+        data <- c(
+            static_list,
+            reactiveValuesToList(question_vals),
+            reactiveValuesToList(timestamps)
+        )
+        # Ensure all elements are of length 1, use "" for empty or NULL values
+        data <- lapply(data, function(x) {
+            if (length(x) == 0 || is.null(x) || (is.na(x) && !is.character(x))) "" else as.character(x)[1]
+        })
+        data <- data[names(data) != ""]
+        return(data)
+    })
+
+    # Database table initialization
+    if (!ignore_mode) {
+        table_exists <- pool::poolWithTransaction(db$db, function(conn) {
+            DBI::dbExistsTable(conn, db$table)
+        })
+        initial_data <- c(
+            static_list,
+            setNames(lapply(question_ids, function(id) NA), question_ids),
+            setNames(lapply(all_ts_ids, function(id) NA), all_ts_ids)
+        )
+        if (!table_exists) {
+            create_table(initial_data, db$db, db$table)
+        }
+        # Check if there are any new columns, update DB accordingly
+        check_and_add_columns(initial_data, db$db, db$table)
     }
 
     # Main question observers ----
@@ -326,12 +342,12 @@ initialize_timestamps <- function(page_ts_ids, question_ts_ids, time_start) {
 
     # Initialize page timestamps
     for (i in seq_along(page_ts_ids)) {
-        timestamps[[page_ts_ids[i]]] <- if (i == 1) get_utc_timestamp() else NA
+        timestamps[[page_ts_ids[i]]] <- if (i == 1) get_utc_timestamp() else ""
     }
 
     # Initialize question timestamps
     for (ts_id in question_ts_ids) {
-        timestamps[[ts_id]] <- NA
+        timestamps[[ts_id]] <- ""
     }
 
     # Initialize time of last interaction
@@ -343,7 +359,7 @@ initialize_timestamps <- function(page_ts_ids, question_ts_ids, time_start) {
 initialize_question_vals <- function(question_ids) {
     vals <- shiny::reactiveValues()
     for (id in question_ids) {
-        vals[[id]] <- NA  # or "" if you prefer empty string for unanswered questions
+        vals[[id]] <- ""  # Empty string instead of NA
     }
     return(vals)
 }
