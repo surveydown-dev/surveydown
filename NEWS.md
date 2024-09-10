@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+# surveydown 0.2.2
+
 - `sd_redirect()` to create redirection to external links, either by providing a button, a countdown, or both. This function can be called both in the survey body and the server chunk.
 - `sd_get_url_pars()` to reactively get the parameters in the URL.
 - The above 3 functions work together to retrieve and redirect URL parameters so that surveydown is compatible with survey panels.
