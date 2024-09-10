@@ -179,8 +179,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Format static data
     static_list <- list(
         session_id = session_id,
-        time_start = time_start,
-        respondent_id = get_respondent_id(if (!ignore_mode) db else NULL)
+        time_start = time_start
     )
     static_list <- c(static_list, get_stored_vals(session))
 
@@ -317,27 +316,6 @@ get_stored_vals <- function(session) {
         })
 
         return(formatted_vals)
-    })
-}
-
-# Get the next respondent ID
-get_respondent_id <- function(db = NULL) {
-    if (is.null(db)) return(1)
-
-    tryCatch({
-        new_id <- pool::poolWithTransaction(db$db, function(conn) {
-            if (DBI::dbExistsTable(conn, db$table)) {
-                query <- paste0("SELECT COALESCE(MAX(CAST(respondent_id AS INTEGER)), 0) FROM ", db$table)
-                result <- DBI::dbGetQuery(conn, query)
-                as.integer(result[[1]]) + 1
-            } else {
-                1
-            }
-        })
-        return(new_id)
-    }, error = function(e) {
-        warning("Error in get_respondent_id: ", e$message)
-        return(1)
     })
 }
 
