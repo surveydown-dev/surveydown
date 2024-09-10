@@ -1,14 +1,16 @@
 
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+<!-- README.md is generated from README.Rmd. Please edit this file -->
 
 # surveydown <a href='https://surveydown.org/'><img src='man/figures/logo.png' align="right" style="width: 120px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
 
-### Markdown-Based Surveys With [Quarto Shiny Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
+### Visit [surveydown.org](https://surveydown.org) for more information!
 
 > Note: This is still an early-stage project. Use with caution, and
 > please give us feedback!
 
-This project brings together three open source technologies
+This package helps you create markdown-based surveys with [Quarto Shiny
+Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
+It brings together three open source technologies
 ([Quarto](https://quarto.org/), [shiny](https://shiny.posit.co/), and
 [supabase](https://supabase.com/)) to create dynamic, markdown-based
 surveys. Here’s the basic concept:
