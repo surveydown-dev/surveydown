@@ -18,20 +18,5 @@ This function retrieves URL parameters from the current Shiny session.
 It must be called from within a Shiny reactive context.
 }
 \examples{
-\dontrun{
-# In a Shiny server function:
-server <- function(input, output, session) {
-  # Get all URL parameters
-  all_params <- sd_get_url_pars()
-
-  # Get specific URL parameters
-  specific_params <- sd_get_url_pars("param1", "param2")
-
-  # Use the reactive values
-  output$paramDisplay <- renderText({
-    params <- all_params()
-    paste("Parameters:", paste(names(params), params, sep = "=", collapse = ", "))
-  })
-}
-}
+# Examples here
 }

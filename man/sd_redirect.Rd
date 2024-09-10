@@ -28,24 +28,5 @@ This function creates a UI element that redirects the user to a specified URL.
 It can be used in both reactive and non-reactive contexts within Shiny applications.
 }
 \examples{
-\dontrun{
-# In a Shiny UI
-ui <- fluidPage(
-  uiOutput("redirect_element")
-)
-
-# In a Shiny server function
-server <- function(input, output, session) {
-  # Basic usage with a button
-  output$redirect_element <- sd_redirect("www.example.com")
-
-  # Text redirect with parameters and delay
-  output$another_redirect <- sd_redirect("www.example.com",
-    urlpars = list(param1 = "value1", param2 = "value2"),
-    button = FALSE,
-    label = "Redirecting...",
-    delay = 5
-  )
-}
-}
+# Examples here
 }

@@ -42,23 +42,23 @@
 #'
 #' @export
 sd_question <- function(
-        type,
-        id,
-        label,
-        cols         = "80",
-        direction    = "horizontal",
-        status       = "default",
-        width        = "100%",
-        height       = "100px",
-        selected     = NULL,
-        label_select = "Choose an option...",
-        grid         = TRUE,
-        individual   = TRUE,
-        justified    = FALSE,
-        force_edges  = TRUE,
-        option       = NULL,
-        placeholder  = NULL,
-        resize       = NULL
+  type,
+  id,
+  label,
+  cols         = "80",
+  direction    = "horizontal",
+  status       = "default",
+  width        = "100%",
+  height       = "100px",
+  selected     = NULL,
+  label_select = "Choose an option...",
+  grid         = TRUE,
+  individual   = TRUE,
+  justified    = FALSE,
+  force_edges  = TRUE,
+  option       = NULL,
+  placeholder  = NULL,
+  resize       = NULL
 ) {
 
     output <- NULL
@@ -320,26 +320,7 @@ make_next_button_id <- function(next_page) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # In a Shiny UI
-#' ui <- fluidPage(
-#'   uiOutput("redirect_element")
-#' )
-#'
-#' # In a Shiny server function
-#' server <- function(input, output, session) {
-#'   # Basic usage with a button
-#'   output$redirect_element <- sd_redirect("www.example.com")
-#'
-#'   # Text redirect with parameters and delay
-#'   output$another_redirect <- sd_redirect("www.example.com",
-#'     urlpars = list(param1 = "value1", param2 = "value2"),
-#'     button = FALSE,
-#'     label = "Redirecting...",
-#'     delay = 5
-#'   )
-#' }
-#' }
+#' # Examples here
 sd_redirect <- function(
     id,
     url,
@@ -514,22 +495,7 @@ countdown_js <- function(delay, redirect_js, countdown_id, unique_id) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # In a Shiny server function:
-#' server <- function(input, output, session) {
-#'   # Get all URL parameters
-#'   all_params <- sd_get_url_pars()
-#'
-#'   # Get specific URL parameters
-#'   specific_params <- sd_get_url_pars("param1", "param2")
-#'
-#'   # Use the reactive values
-#'   output$paramDisplay <- renderText({
-#'     params <- all_params()
-#'     paste("Parameters:", paste(names(params), params, sep = "=", collapse = ", "))
-#'   })
-#' }
-#' }
+#' # Examples here
 sd_get_url_pars <- function(...) {
     session <- shiny::getDefaultReactiveDomain()
 
@@ -553,15 +519,10 @@ sd_get_url_pars <- function(...) {
 
 #' Create a placeholder for a reactive survey question
 #'
-#' @description
-#' `r lifecycle::badge("deprecated")`
-#' This function is deprecated. Please use `sd_output()` with `type = "question"` instead.
-#'
 #' This function creates a placeholder div for a reactive survey question in a Surveydown survey.
 #' It's used in conjunction with sd_question to allow for dynamic question rendering.
 #'
 #' @param id A unique identifier for the question.
-#'
 #' @return A Shiny UI element that serves as a placeholder for the reactive question.
 #'
 #' @examples
@@ -575,20 +536,11 @@ sd_get_url_pars <- function(...) {
 #'
 #' @export
 sd_display_question <- function(id) {
-    lifecycle::deprecate_soft("1.0.0", "sd_display_question()", "sd_output()")
-    shiny::div(
-        id = paste0("placeholder-", id),
-        `data-question-id` = id,
-        class = "question-container reactive-question-placeholder",
-        shiny::uiOutput(id)
-    )
+  # v0.2.1
+  .Deprecated("sd_output")
 }
 
 #' Display the value of a survey question
-#'
-#' @description
-#' `r lifecycle::badge("deprecated")`
-#' This function is deprecated. Please use `sd_output()` with `type = "value"` instead.
 #'
 #' @param id The ID of the question to display
 #' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
@@ -612,31 +564,15 @@ sd_display_question <- function(id) {
 #'
 #' @export
 sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
-    lifecycle::deprecate_soft("1.0.0", "sd_display_value()", "sd_output()")
-    value_id <- paste0(id, "_value")
-    output <- switch(
-        display_type,
-        "inline" = shiny::textOutput(value_id, inline = TRUE),
-        "text" = shiny::textOutput(value_id),
-        "verbatim" = shiny::verbatimTextOutput(value_id),
-        "ui" = shiny::uiOutput(value_id),
-        stop("Invalid display_type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
-    )
-    if (!is.null(wrapper)) {
-        output <- wrapper(output, ...)
-    }
-    return(output)
+  # v0.2.1
+  .Deprecated("sd_output")
 }
 
-#' Unified Output Function for Survey Display
-#'
-#' This function combines the functionality of `sd_display_question()`, `sd_display_value()`,
-#' and `sd_render_url()` into a single, versatile function for creating various types of
-#' survey-related outputs in Shiny applications.
+#' Output Function for Displaying reactive objects and values
 #'
 #' @param id Character string. A unique identifier for the output element.
-#' @param type Character string. Specifies the type of output. Can be "question", "value", or NULL.
-#'   If NULL, the function behaves like `shiny::uiOutput()`.
+#' @param type Character string. Specifies the type of output. Can be "question", "value", or `NULL.`
+#'   If `NULL`, the function behaves like `shiny::uiOutput()`.
 #' @param display Character string. Specifies the display type for "value" outputs.
 #'   Can be "inline", "text", "verbatim", or "ui". Only used when `type = "value"`.
 #' @param wrapper Function. A function to wrap the output. Only used when `type = "value"`.
@@ -646,9 +582,9 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #'
 #' @details
 #' The function behaves differently based on the `type` parameter:
-#' - If `type` is NULL, it acts like `shiny::uiOutput()`.
-#' - If `type` is "question", it creates a placeholder for a reactive survey question.
-#' - If `type` is "value", it creates an output to display the value of a survey question,
+#' - If `type` is `NULL`, it acts like `shiny::uiOutput()`.
+#' - If `type` is `"question"`, it creates a placeholder for a reactive survey question.
+#' - If `type` is `"value"`, it creates an output to display the value of a survey question,
 #'   with the display style determined by the `display` parameter.
 #'
 #' @examples
@@ -668,7 +604,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' }
 #'
 #' @export
-sd_output <- function(id, type = NULL, display = NULL, wrapper = NULL, ...) {
+sd_output <- function(id, type = NULL, display = "inline", wrapper = NULL, ...) {
     if (is.null(type)) {
         # If only id is provided, behave like shiny::uiOutput
         return(shiny::uiOutput(id, ...))

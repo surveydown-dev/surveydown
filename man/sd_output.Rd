@@ -2,15 +2,15 @@
 % Please edit documentation in R/ui.R
 \name{sd_output}
 \alias{sd_output}
-\title{Unified Output Function for Survey Display}
+\title{Output Function for Displaying reactive objects and values}
 \usage{
-sd_output(id, type = NULL, display = NULL, wrapper = NULL, ...)
+sd_output(id, type = NULL, display = "inline", wrapper = NULL, ...)
 }
 \arguments{
 \item{id}{Character string. A unique identifier for the output element.}
 
-\item{type}{Character string. Specifies the type of output. Can be "question", "value", or NULL.
-If NULL, the function behaves like \code{shiny::uiOutput()}.}
+\item{type}{Character string. Specifies the type of output. Can be "question", "value", or \code{NULL.}
+If \code{NULL}, the function behaves like \code{shiny::uiOutput()}.}
 
 \item{display}{Character string. Specifies the display type for "value" outputs.
 Can be "inline", "text", "verbatim", or "ui". Only used when \code{type = "value"}.}
@@ -23,16 +23,14 @@ Can be "inline", "text", "verbatim", or "ui". Only used when \code{type = "value
 A Shiny UI element, the type of which depends on the input parameters.
 }
 \description{
-This function combines the functionality of \code{sd_display_question()}, \code{sd_display_value()},
-and \code{sd_render_url()} into a single, versatile function for creating various types of
-survey-related outputs in Shiny applications.
+Output Function for Displaying reactive objects and values
 }
 \details{
 The function behaves differently based on the \code{type} parameter:
 \itemize{
-\item If \code{type} is NULL, it acts like \code{shiny::uiOutput()}.
-\item If \code{type} is "question", it creates a placeholder for a reactive survey question.
-\item If \code{type} is "value", it creates an output to display the value of a survey question,
+\item If \code{type} is \code{NULL}, it acts like \code{shiny::uiOutput()}.
+\item If \code{type} is \code{"question"}, it creates a placeholder for a reactive survey question.
+\item If \code{type} is \code{"value"}, it creates an output to display the value of a survey question,
 with the display style determined by the \code{display} parameter.
 }
 }
