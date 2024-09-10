@@ -1,11 +1,13 @@
 # surveydown (development version)
 
+# surveydown 0.2.2
+
 - `sd_redirect()` to create redirection to external links, either by providing a button, a countdown, or both. This function can be called both in the survey body and the server chunk.
 - `sd_get_url_pars()` to reactively get the parameters in the URL.
-- `sd_render_url()` to create external URL with parameters in the survey body. It is simply a replacement of the `shiny::uiOutput()` function.
 - The above 3 functions work together to retrieve and redirect URL parameters so that surveydown is compatible with survey panels.
 - Now `sd_next()` and `sd_redirect()` both support the "Enter" key for a better user experience.
 - Add automatic clean up in `sd_database()`.
+- `sd_output()` function that replaces the original `sd_display_question()` (by specifying `type = "question"`) and `sd_display_value()` (by specifying `type = "value"`). The original 2 functions are depreciated and will be removed in future updates. If `sd_output()` is only used with `"id"` specified, it works the same as `shiny::uiOutput()`.
 
 # surveydown 0.2.1
 
