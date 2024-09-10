@@ -254,9 +254,6 @@ database_uploading <- function(data_list, db, table) {
                 update_set
             )
 
-            # Print the query for debugging
-            print(update_query)
-
             # Execute the query
             DBI::dbExecute(conn, update_query)
         })

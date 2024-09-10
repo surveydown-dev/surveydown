@@ -193,8 +193,28 @@ sd_server <- function(input, output, session, config, db = NULL) {
     timestamps <- initialize_timestamps(page_ts_ids, question_ts_ids, time_start)
     question_vals <- initialize_question_vals(question_ids)
 
+    # Database table initialization
+    if (!ignore_mode) {
+        table_exists <- pool::poolWithTransaction(db$db, function(conn) {
+            DBI::dbExistsTable(conn, db$table)
+        })
+        time_ids <- c(all_ts_ids, 'time_last_interaction')
+        initial_data <- c(
+            static_list,
+            setNames(lapply(question_ids, function(id) NA), question_ids),
+            setNames(lapply(time_ids, function(id) NA), time_ids)
+        )
+        if (!table_exists) {
+            create_table(initial_data, db$db, db$table)
+        }
+        # Check if there are any new columns, update DB accordingly
+        check_and_add_columns(initial_data, db$db, db$table)
+    }
+
     # Create a reactive expression for the latest data
     latest_data <- shiny::reactive({
+        # Update timestamp of last interaction
+        timestamps$time_last_interaction <- get_utc_timestamp()
         # Merge all lists
         data <- c(
             static_list,
@@ -208,23 +228,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
         data <- data[names(data) != ""]
         return(data)
     })
-
-    # Database table initialization
-    if (!ignore_mode) {
-        table_exists <- pool::poolWithTransaction(db$db, function(conn) {
-            DBI::dbExistsTable(conn, db$table)
-        })
-        initial_data <- c(
-            static_list,
-            setNames(lapply(question_ids, function(id) NA), question_ids),
-            setNames(lapply(all_ts_ids, function(id) NA), all_ts_ids)
-        )
-        if (!table_exists) {
-            create_table(initial_data, db$db, db$table)
-        }
-        # Check if there are any new columns, update DB accordingly
-        check_and_add_columns(initial_data, db$db, db$table)
-    }
 
     # Main question observers ----
     # (one created for each question)
@@ -240,7 +243,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
             # Update timestamp and progress if interacted
             if (!is.null(input[[paste0(local_id, "_interacted")]])) {
                 timestamps[[local_ts_id]] <- get_utc_timestamp()
-                timestamps$time_last_interaction <- get_utc_timestamp()
                 update_progress_bar(index)
             }
 
@@ -282,12 +284,20 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 if (all_required_answered) {
                     shinyjs::runjs("hideAllPages();")
                     shinyjs::show(next_page)
+
                     # Update data after page change
                     update_data()
                 } else {
                     shinyjs::alert("Please answer all required questions before proceeding.")
                 }
             })
+        })
+    })
+
+    # Add observer to ensure final update on session end
+    shiny::onSessionEnded(function() {
+        shiny::isolate({
+            update_data()
         })
     })
 }
@@ -351,7 +361,7 @@ initialize_timestamps <- function(page_ts_ids, question_ts_ids, time_start) {
     }
 
     # Initialize time of last interaction
-    timestamps$time_last_interaction <- time_start
+    timestamps[['time_last_interaction']] <- time_start
 
     return(timestamps)
 }
