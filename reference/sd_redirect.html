@@ -9,7 +9,7 @@ It can be used in both reactive and non-reactive contexts within Shiny applicati
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -48,25 +48,19 @@ It can be used in both reactive and non-reactive contexts within Shiny applicati
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_redirect</span><span class="op">(</span></span>
-<span>  <span class="va">url</span>,</span>
-<span>  urlpars <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  button <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  label <span class="op">=</span> <span class="st">"Click here"</span>,</span>
-<span>  delay <span class="op">=</span> <span class="cn">NULL</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_redirect</span><span class="op">(</span><span class="va">id</span>, <span class="va">url</span>, button <span class="op">=</span> <span class="cn">TRUE</span>, label <span class="op">=</span> <span class="st">"Click here"</span>, delay <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-url">url<a class="anchor" aria-label="anchor" href="#arg-url"></a></dt>
+<dl><dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
+<dd><p>A character string of a unique id to be used to identify the redirect button in the survey body.</p></dd>
+
+
+<dt id="arg-url">url<a class="anchor" aria-label="anchor" href="#arg-url"></a></dt>
 <dd><p>A character string specifying the URL to redirect to.</p></dd>
-
-
-<dt id="arg-urlpars">urlpars<a class="anchor" aria-label="anchor" href="#arg-urlpars"></a></dt>
-<dd><p>An optional list of URL parameters to be appended to the URL.</p></dd>
 
 
 <dt id="arg-button">button<a class="anchor" aria-label="anchor" href="#arg-button"></a></dt>
@@ -91,26 +85,8 @@ redirect element. In a non-reactive context, returns the redirect element direct
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># In a Shiny UI</span></span></span>
-<span class="r-in"><span><span class="va">ui</span> <span class="op">&lt;-</span> <span class="fu">fluidPage</span><span class="op">(</span></span></span>
-<span class="r-in"><span>  <span class="fu">uiOutput</span><span class="op">(</span><span class="st">"redirect_element"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># In a Shiny server function</span></span></span>
-<span class="r-in"><span><span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>  <span class="co"># Basic usage with a button</span></span></span>
-<span class="r-in"><span>  <span class="va">output</span><span class="op">$</span><span class="va">redirect_element</span> <span class="op">&lt;-</span> <span class="fu">sd_redirect</span><span class="op">(</span><span class="st">"www.example.com"</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span>  <span class="co"># Text redirect with parameters and delay</span></span></span>
-<span class="r-in"><span>  <span class="va">output</span><span class="op">$</span><span class="va">another_redirect</span> <span class="op">&lt;-</span> <span class="fu">sd_redirect</span><span class="op">(</span><span class="st">"www.example.com"</span>,</span></span>
-<span class="r-in"><span>    urlpars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>param1 <span class="op">=</span> <span class="st">"value1"</span>, param2 <span class="op">=</span> <span class="st">"value2"</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    button <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
-<span class="r-in"><span>    label <span class="op">=</span> <span class="st">"Redirecting..."</span>,</span></span>
-<span class="r-in"><span>    delay <span class="op">=</span> <span class="fl">5</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Examples here</span></span></span>
+<span class="r-in"></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
