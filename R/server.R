@@ -493,31 +493,31 @@ admin_enable <- function(input, output, session, db) {
     #using an outright hide_pages js file
     show_admin_section <- function() {
         shinyjs::hide("quarto-content")
-        insertUI(
+        shiny::insertUI(
             selector = "body",
             where = "beforeEnd",
-            ui = div(
+            ui = htmltools::div(
                 id = "admin-section",
                 class = "admin-section",
-                div(
+                htmltools::div(
                     id = "login-page",
-                    h2("Admin Login"),
-                    passwordInput("adminpw", "Password"),
-                    actionButton("submitPw", "Log in"),
-                    br(),
-                    br(),
-                    actionButton("back_to_survey_login", "Back to Survey")
+                    htmltools::h2("Admin Login"),
+                    shiny::passwordInput("adminpw", "Password"),
+                    shiny::actionButton("submitPw", "Log in"),
+                    htmltools::br(),
+                    htmltools::br(),
+                    shiny::actionButton("back_to_survey_login", "Back to Survey")
                 ),
                 shinyjs::hidden(
-                    div(
+                    htmltools::div(
                         id = "admin-content",
-                        h2("Admin Page"),
-                        actionButton("pause_survey", "Pause Survey"),
-                        actionButton("pause_db", "Pause DB"),
-                        downloadButton("download_data", "Download Data"),
-                        actionButton("back_to_survey_admin", "Back to Survey"),
-                        hr(),
-                        h3("Survey Data"),
+                        htmltools::h2("Admin Page"),
+                        shiny::actionButton("pause_survey", "Pause Survey"),
+                        shiny::actionButton("pause_db", "Pause DB"),
+                        shiny::downloadButton("download_data", "Download Data"),
+                        shiny::actionButton("back_to_survey_admin", "Back to Survey"),
+                        htmltools::hr(),
+                        htmltools::h3("Survey Data"),
                         DT::DTOutput("survey_data_table")
                     )
                 )
@@ -531,7 +531,7 @@ admin_enable <- function(input, output, session, db) {
     })
 
     # Observe changes to the URL
-    observe({
+    shiny::observe({
         url <- url_reactive()
         query <- parseQueryString(url)
         admin_param <- query[['admin']]
@@ -541,19 +541,18 @@ admin_enable <- function(input, output, session, db) {
     })
 
     # Password check and admin content reveal
-    observeEvent(input$submitPw, {
+    shiny::observeEvent(input$submitPw, {
         if (input$adminpw == Sys.getenv("SURVEYDOWN_PASSWORD")) {
             session$userData$isAdmin <- TRUE
             shinyjs::hide("login-page")
             shinyjs::show("admin-content")
 
-            # Render the data table using DT
             output$survey_data_table <- DT::renderDT({
                 data <- DBI::dbReadTable(db$db, db$table)
                 DT::datatable(data, options = list(scrollX = TRUE))
             })
         } else {
-            showNotification("Incorrect password", type = "error")
+            shiny::showNotification("Incorrect password", type = "error")
         }
     })
 
@@ -563,22 +562,22 @@ admin_enable <- function(input, output, session, db) {
         shinyjs::hide("admin-section")
         shinyjs::show("quarto-content")
         shinyjs::runjs("showFirstPage();")
-        updateQueryString("?", mode = "replace")
+        shiny::updateQueryString("?", mode = "replace")
     }
 
     # Back to survey button on login page
-    observeEvent(input$back_to_survey_login, {
+    shiny::observeEvent(input$back_to_survey_login, {
         return_to_survey()
     })
 
     # Back to survey button on admin content page
-    observeEvent(input$back_to_survey_admin, {
+    shiny::observeEvent(input$back_to_survey_admin, {
         return_to_survey()
     })
 
     #Pause Survey - Pause DB Section
 
-    observeEvent(input$pause_survey, {
+    shiny::observeEvent(input$pause_survey, {
         #Code here that write to the table to change row value from 0 -> 1 and back if it happens
         data <- DBI::dbReadTable(db$db, paste0(db$table, "_admin_table"))
         #Read table value in, change it from true to false
@@ -591,13 +590,13 @@ admin_enable <- function(input, output, session, db) {
     })
 
     # Download Data button functionality
-    output$download_data <- downloadHandler(
+    output$download_data <- shiny::downloadHandler(
         filename = function() {
             paste0(db$table, "_", Sys.Date(), ".csv")
         },
         content = function(file) {
             data <- DBI::dbReadTable(db$db, db$table)
-            write.csv(data, file, row.names = FALSE)
+            utils::write.csv(data, file, row.names = FALSE)
         }
     )
 }
