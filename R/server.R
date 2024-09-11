@@ -375,10 +375,13 @@ basic_show_if_logic <- function(input, show_if) {
         stop("show_if must be a data frame or tibble.")
     }
 
-    # Initially hide all conditional questions
+    # Initially hide all conditional questions and their containers
     unique_targets <- unique(show_if$target)
     for (target in unique_targets) {
-        shinyjs::hide(target)
+        shinyjs::runjs(sprintf("
+            $('#%s').closest('.question-container').hide();
+            $('#%s').hide();
+        ", target, target))
     }
 
     # Group show_if rules by question_id and target
@@ -394,9 +397,15 @@ basic_show_if_logic <- function(input, show_if) {
             # Check if the condition is met to show/hide the question
             val <- input[[question_id]]
             if (!is.null(val) && val %in% question_values) {
-                shinyjs::show(target)
+                shinyjs::runjs(sprintf("
+                    $('#%s').closest('.question-container').show();
+                    $('#%s').show();
+                ", target, target))
             } else {
-                shinyjs::hide(target)
+                shinyjs::runjs(sprintf("
+                    $('#%s').closest('.question-container').hide();
+                    $('#%s').hide();
+                ", target, target))
             }
         }, ignoreNULL = TRUE)
     }
@@ -404,8 +413,13 @@ basic_show_if_logic <- function(input, show_if) {
 
 # Handle custom show-if logic
 custom_show_if_logic <- function(input, show_if_custom) {
-    # Initially hide all conditional questions
-    lapply(show_if_custom, function(x) shinyjs::hide(x$target))
+    # Initially hide all conditional questions and their containers
+    lapply(show_if_custom, function(x) {
+        shinyjs::runjs(sprintf("
+            $('#%s').closest('.question-container').hide();
+            $('#%s').hide();
+        ", x$target, x$target))
+    })
 
     # Create a reactive expression for each condition
     condition_reactives <- lapply(show_if_custom, function(rule) {
@@ -417,11 +431,18 @@ custom_show_if_logic <- function(input, show_if_custom) {
         for (i in seq_along(show_if_custom)) {
             condition_result <- condition_reactives[[i]]()
             condition_met <- isTRUE(condition_result)
+            target <- show_if_custom[[i]]$target
 
             if (condition_met) {
-                shinyjs::show(show_if_custom[[i]]$target)
+                shinyjs::runjs(sprintf("
+                    $('#%s').closest('.question-container').show();
+                    $('#%s').show();
+                ", target, target))
             } else {
-                shinyjs::hide(show_if_custom[[i]]$target)
+                shinyjs::runjs(sprintf("
+                    $('#%s').closest('.question-container').hide();
+                    $('#%s').hide();
+                ", target, target))
             }
         }
     })

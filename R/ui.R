@@ -285,7 +285,7 @@ sd_next <- function(next_page = NULL, label = "Next") {
 
     shiny::tagList(
         shiny::div(
-            style = "margin-top: 0.5rem;",
+            style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
             shiny::actionButton(
                 inputId = button_id,
                 label = label,

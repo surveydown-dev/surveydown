@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+- No need to use `<br>` above the next button anymore.
+
 # surveydown 0.2.3
 
 - Solved the speed problem for database connections: refactored `sd_server()` for efficiency; converted local data storage to lists instead of data frames.
