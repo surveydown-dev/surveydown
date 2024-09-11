@@ -117,31 +117,43 @@ sd_database <- function(
     })
 }
 
-#' Fetch data from a database table with optional reactivity
+#' Fetch data from a database table with automatic reactivity detection
 #'
 #' This function retrieves all data from a specified table in a database.
-#' When used in a Shiny application, it can optionally return a reactive
-#' expression that automatically refreshes the data at specified intervals.
+#' It automatically detects whether it's being used in a reactive context
+#' (e.g., within a Shiny application) and behaves accordingly. In a reactive
+#' context, it returns a reactive expression that automatically refreshes
+#' the data at specified intervals.
 #'
 #' @param db A list containing database connection details. Must have elements:
 #'   \itemize{
 #'     \item db: A DBI database connection object
 #'     \item table: A string specifying the name of the table to query
 #'   }
-#' @param reactive Logical. If `TRUE`, returns a reactive expression for use in the server.
-#'   If `FALSE` (default), returns the data directly.
 #' @param refresh_interval Numeric. The time interval (in seconds) between data refreshes
-#'   when in reactive mode. Default is `5` seconds. Ignored if reactive is `FALSE`.
+#'   when in a reactive context. Default is `5` seconds. Ignored in non-reactive contexts.
 #'
-#' @return If reactive is `FALSE`, returns a data frame containing all rows and columns
-#'   from the specified table. If reactive is TRUE, returns a reactive expression that,
+#' @return In a non-reactive context, returns a data frame containing all rows and columns
+#'   from the specified table. In a reactive context, returns a reactive expression that,
 #'   when called, returns the most recent data from the specified database table.
 #'
 #' @export
 #'
 #' @examples
-#' # Examples here
-sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
+#' \dontrun{
+#' # Non-reactive context
+#' db <- list(db = DBI::dbConnect(...), table = "my_table")
+#' data <- sd_get_data(db)
+#'
+#' # Reactive context (inside a Shiny server function)
+#' server <- function(input, output, session) {
+#'   data <- sd_get_data(db, refresh_interval = 10)
+#'   output$table <- renderTable({
+#'     data()  # Note the parentheses to retrieve the reactive value
+#'   })
+#' }
+#' }
+sd_get_data <- function(db, refresh_interval = 5) {
     if (is.null(db)) {
         warning("Database is not connected, db is NULL")
         return(NULL)
@@ -151,12 +163,14 @@ sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
             DBI::dbReadTable(conn, db$table)
         })
     }
-    if (reactive) {
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+        # In a reactive context
         return(shiny::reactive({
             shiny::invalidateLater(refresh_interval * 1000)
             fetch_data()
         }))
     } else {
+        # If not in a reactive context, just return the data
         return(fetch_data())
     }
 }

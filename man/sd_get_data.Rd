@@ -2,9 +2,9 @@
 % Please edit documentation in R/db.R
 \name{sd_get_data}
 \alias{sd_get_data}
-\title{Fetch data from a database table with optional reactivity}
+\title{Fetch data from a database table with automatic reactivity detection}
 \usage{
-sd_get_data(db, reactive = FALSE, refresh_interval = 5)
+sd_get_data(db, refresh_interval = 5)
 }
 \arguments{
 \item{db}{A list containing database connection details. Must have elements:
@@ -13,22 +13,33 @@ sd_get_data(db, reactive = FALSE, refresh_interval = 5)
 \item table: A string specifying the name of the table to query
 }}
 
-\item{reactive}{Logical. If \code{TRUE}, returns a reactive expression for use in the server.
-If \code{FALSE} (default), returns the data directly.}
-
 \item{refresh_interval}{Numeric. The time interval (in seconds) between data refreshes
-when in reactive mode. Default is \code{5} seconds. Ignored if reactive is \code{FALSE}.}
+when in a reactive context. Default is \code{5} seconds. Ignored in non-reactive contexts.}
 }
 \value{
-If reactive is \code{FALSE}, returns a data frame containing all rows and columns
-from the specified table. If reactive is TRUE, returns a reactive expression that,
+In a non-reactive context, returns a data frame containing all rows and columns
+from the specified table. In a reactive context, returns a reactive expression that,
 when called, returns the most recent data from the specified database table.
 }
 \description{
 This function retrieves all data from a specified table in a database.
-When used in a Shiny application, it can optionally return a reactive
-expression that automatically refreshes the data at specified intervals.
+It automatically detects whether it's being used in a reactive context
+(e.g., within a Shiny application) and behaves accordingly. In a reactive
+context, it returns a reactive expression that automatically refreshes
+the data at specified intervals.
 }
 \examples{
-# Examples here
+\dontrun{
+# Non-reactive context
+db <- list(db = DBI::dbConnect(...), table = "my_table")
+data <- sd_get_data(db)
+
+# Reactive context (inside a Shiny server function)
+server <- function(input, output, session) {
+  data <- sd_get_data(db, refresh_interval = 10)
+  output$table <- renderTable({
+    data()  # Note the parentheses to retrieve the reactive value
+  })
+}
+}
 }
