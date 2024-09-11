@@ -284,11 +284,14 @@ sd_next <- function(next_page = NULL, label = "Next") {
     button_id <- make_next_button_id(next_page)
 
     shiny::tagList(
-        shiny::actionButton(
-            inputId = button_id,
-            label = label,
-            style = "display: block; margin: auto;",
-            onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
+        shiny::div(
+            style = "margin-top: 0.5rem;",
+            shiny::actionButton(
+                inputId = button_id,
+                label = label,
+                style = "display: block; margin: auto;",
+                onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
+            )
         ),
         shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
     )
@@ -358,15 +361,15 @@ create_redirect_element <- function(id, url, button, label, delay) {
         text-align: center;
         border: 1px solid #ddd;
         border-radius: 5px;
-        padding: 0.5rem 1rem;
+        padding: 0.5rem 0.5rem;
         background-color: #f9f9f9;
-        margin: 0.5rem 0;
+        margin: 0.5rem 0.5rem;
         "
 
     # Wrapper for centering the container
     wrapper_style <- "
         text-align: center;
-        margin: 1rem 0;
+        margin: 0.5rem 0.5rem;
         "
 
     # Create button or text element
