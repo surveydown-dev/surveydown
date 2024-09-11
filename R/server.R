@@ -763,7 +763,7 @@ sd_store_value <- function(value, id = NULL) {
         if (is.null(session$userData$stored_values)) {
             session$userData$stored_values <- list()
         }
-        session$userData$stored_values[[id]] <- value
+        session$userData$stored_values[[id]] <- format_question_value(value)
     })
 
     invisible(NULL)

@@ -1,6 +1,8 @@
 # surveydown (development version)
 
-- No need to use `<br>` above the next button anymore.
+- No need to use `<br>` above the Next button anymore. The Next buttons can now be in the same chunk as the questions.
+- Modified margins on top and bottom. Solved the large gap created by hidden questions.
+- Fixed the issue with `sd_store_value()`. There used to be a problem if a value is a list with multiple entries. Now they are collapsed with commas due to the application of `format_question_value()` on the `value` variable.
 
 # surveydown 0.2.3
 
