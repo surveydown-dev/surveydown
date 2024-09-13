@@ -44,6 +44,8 @@
 <li>Modified margins on top and bottom. Solved the large gap created by hidden questions.</li>
 <li>Fixed the issue with <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code>. There used to be a problem if a value is a list with multiple entries. Now they are collapsed with commas due to the application of <code>format_question_value()</code> on the <code>value</code> variable.</li>
 <li>Removed the <code>reactive</code> argument for <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code>. Now all functions that should be compatible with both reactive (server) and static (ui) conditions will automatically match, without necessity of explicitly specifying them.</li>
+<li>
+<code><a href="../reference/sd_redirect.html">sd_redirect()</a></code> updated with a parameter called <code>newtab</code>, defaults to <code>FALSE</code>. If <code>TRUE</code>, the redirection link will be opened in a new tab. If used together with <code>delay</code>, the new tab might be blocked by the browser after count-down, but the user click will not be blocked.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.3" id="surveydown-023">surveydown 0.2.3<a class="anchor" aria-label="anchor" href="#surveydown-023"></a></h2>
