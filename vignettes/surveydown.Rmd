@@ -48,7 +48,7 @@ This will create a folder located at `"path/to/folder"` with the following files
 
 - `example.qmd`: a template survey you should edit.
 - `example.Rproj`: An RStudio project file (helpful if you're working in RStudio)
-- `_extensions`: A folder with the [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) needed to make everything work (don't modify this).
+- `_extensions`: A folder with the [surveydown Quarto extension](https://github.com/surveydown-dev/surveydown-ext) needed to make everything work (don't modify this).
 
 # 3. Add content
 

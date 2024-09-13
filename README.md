@@ -31,8 +31,8 @@ surveys. Here’s the basic concept:
     database.
 
 The {surveydown} R package works in tandem with our [surveydown Quarto
-extension](https://github.com/jhelvy/surveydown-ext) to make everything
-work.
+extension](https://github.com/surveydown-dev/surveydown-ext) to make
+everything work.
 
 **See the [documentation](https://surveydown.org) to get started making
 your own surveydown survey!**
@@ -118,7 +118,7 @@ Resources / other related examples:
 - [shinysurveys](https://github.com/jdtrat/shinysurveys)
 - [shinyforms](https://github.com/daattali/shinyforms)
 
-## [License Information](https://github.com/jhelvy/surveydown/blob/master/LICENSE.md)
+## [License Information](https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md)
 
 ## Citation Information
 

@@ -228,6 +228,74 @@ check_and_add_columns <- function(data_local, db, table) {
     })
 }
 
+# Less secure approach - vulnerable to SQL injection
+# database_uploading <- function(data_list, db, table) {
+#     if(is.null(db)) {
+#         return(warning("Databasing is not in use"))
+#     }
+#
+#     tryCatch({
+#         pool::poolWithTransaction(db, function(conn) {
+#             # Get the actual columns in the table
+#             existing_cols <- DBI::dbListFields(conn, table)
+#
+#             # Filter data_list to only include existing columns
+#             data_list <- data_list[names(data_list) %in% existing_cols]
+#
+#             # Prepare the update query
+#             cols <- names(data_list)
+#             update_cols <- setdiff(cols, "session_id")
+#
+#             # Create value string, properly escaping and quoting values
+#             values <- sapply(data_list, function(x) {
+#                 if (is.character(x)) {
+#                     paste0("'", gsub("'", "''", x), "'")
+#                 } else if (is.numeric(x)) {
+#                     as.character(x)
+#                 } else {
+#                     "NULL"
+#                 }
+#             })
+#             values_str <- paste(values, collapse = ", ")
+#
+#             update_set <- paste(sapply(update_cols, function(col) {
+#                 paste0('"', col, '" = EXCLUDED."', col, '"')
+#             }), collapse = ", ")
+#
+#             update_query <- paste0(
+#                 'INSERT INTO "', table, '" ("', paste(cols, collapse = '", "'), '") ',
+#                 'VALUES (', values_str, ') ',
+#                 'ON CONFLICT (session_id) DO UPDATE SET ',
+#                 update_set
+#             )
+#
+#             # Execute the query
+#             DBI::dbExecute(conn, update_query)
+#         })
+#     }, error = function(e) {
+#         warning("Error in database operation: ", e$message)
+#         print(e)  # Print the full error for debugging
+#     })
+# }
+
+# Solution found in this issue:
+# https://github.com/r-dbi/DBI/issues/193
+sqlInterpolateList <- function(conn, sql, vars=list(), list_vars=list()) {
+    if (length(list_vars) > 0) {
+        for (name in names(list_vars)) {
+            sql <- sub(paste0("\\?", name), paste("?", name, "_list_var", 1:length(list_vars[[name]]), sep="", collapse=" , "), sql)
+        }
+        list_vars <- lapply(list_vars, function(sublist) {
+            names(sublist) <- paste0("list_var", 1:length(sublist))
+            sublist
+        }) |> unlist()
+        # unlist gives names as "outer.inner" but DBI doesn't like names with periods
+        names(list_vars) <- sub("\\.", "_", names(list_vars))
+        vars <- c(vars, list_vars)
+    }
+    DBI::sqlInterpolate(conn, sql, .dots=vars)
+}
+
 database_uploading <- function(data_list, db, table) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
@@ -241,35 +309,37 @@ database_uploading <- function(data_list, db, table) {
             # Filter data_list to only include existing columns
             data_list <- data_list[names(data_list) %in% existing_cols]
 
-            # Prepare the update query
-            cols <- names(data_list)
+            # Ensure session_id is the first column
+            cols <- c("session_id", setdiff(names(data_list), "session_id"))
+            data_list <- data_list[cols]
+
+            # Prepare the placeholders
+            placeholders <- paste0("?", names(data_list))
+
+            # Prepare the update set
             update_cols <- setdiff(cols, "session_id")
-
-            # Create value string, properly escaping and quoting values
-            values <- sapply(data_list, function(x) {
-                if (is.character(x)) {
-                    paste0("'", gsub("'", "''", x), "'")
-                } else if (is.numeric(x)) {
-                    as.character(x)
-                } else {
-                    "NULL"
-                }
-            })
-            values_str <- paste(values, collapse = ", ")
-
             update_set <- paste(sapply(update_cols, function(col) {
-                paste0('"', col, '" = EXCLUDED."', col, '"')
+                sprintf('"%s" = EXCLUDED."%s"', col, col)
             }), collapse = ", ")
 
-            update_query <- paste0(
-                'INSERT INTO "', table, '" ("', paste(cols, collapse = '", "'), '") ',
-                'VALUES (', values_str, ') ',
-                'ON CONFLICT (session_id) DO UPDATE SET ',
+            # Prepare the SQL query template
+            query_template <- sprintf(
+                'INSERT INTO "%s" ("%s") VALUES (%s) ON CONFLICT (session_id) DO UPDATE SET %s',
+                table,
+                paste(cols, collapse = '", "'),
+                paste(placeholders, collapse = ", "),
                 update_set
             )
 
+            # Use sqlInterpolateList to safely insert values
+            query <- sqlInterpolateList(
+                conn,
+                query_template,
+                list_vars = data_list
+            )
+
             # Execute the query
-            DBI::dbExecute(conn, update_query)
+            DBI::dbExecute(conn, query)
         })
     }, error = function(e) {
         warning("Error in database operation: ", e$message)

@@ -1,10 +1,15 @@
 # surveydown (development version)
 
-- No need to use `<br>` above the Next button anymore. The Next buttons can now be in the same chunk as the questions.
+
+
+# surveydown 0.2.4
+
+- No need to use `<br>` above the Next button anymore. The Next buttons can now be in the same chunk as the questions as spacing has been added.
 - Modified margins on top and bottom. Solved the large gap created by hidden questions.
-- Fixed the issue with `sd_store_value()`. There used to be a problem if a value is a list with multiple entries. Now they are collapsed with commas due to the application of `format_question_value()` on the `value` variable.
+- Fixed an issue with `sd_store_value()`. There used to be a problem if a value is a list with multiple entries. Now they are collapsed with commas due to the application of `format_question_value()` on the `value` variable.
 - Removed the `reactive` argument for `sd_get_data()`. Now all functions that should be compatible with both reactive (server) and static (ui) conditions will automatically match, without necessity of explicitly specifying them.
 - `sd_redirect()` updated with a parameter called `newtab`, defaults to `FALSE`. If `TRUE`, the redirection link will be opened in a new tab. If used together with `delay`, the new tab might be blocked by the browser after count-down, but the user click will not be blocked.
+- Improved the `database_uploading()` function to secure it from possible SQL injection attacks.
 
 # surveydown 0.2.3
 
@@ -113,7 +118,7 @@
 - (extension) Default page background is set as "#f2f6f9" (a light blue color). Can be overwritten in the YAML header with the `backgroundcolor`.
 - (extension) Questions are now encapsulated in a container that distinguishes from the descriptive texts.
 - (extension) Options of `mc_button` and `mu_multiple_buttons` types of questions are now centered.
-- Now the `surveydown::create_survey()` function will download the whole [extension repo](https://github.com/jhelvy/surveydown-ext/tree/main), containing the extension, an example survey, and an RStudio project.
+- Now the `surveydown::create_survey()` function will download the whole [extension repo](https://github.com/surveydown-dev/surveydown-ext/tree/main), containing the extension, an example survey, and an RStudio project.
 
 
 # surveydown 0.0.3

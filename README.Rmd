@@ -33,7 +33,7 @@ This package helps you create markdown-based surveys with [Quarto Shiny Document
 2. Render your doc into a [shiny](https://shiny.posit.co/) app that can be hosted online and sent to respondents.
 3. Store your survey responses in a [supabase](https://supabase.com/) database.
 
-The {surveydown} R package works in tandem with our [surveydown Quarto extension](https://github.com/jhelvy/surveydown-ext) to make everything work. 
+The {surveydown} R package works in tandem with our [surveydown Quarto extension](https://github.com/surveydown-dev/surveydown-ext) to make everything work. 
 
 **See the [documentation](https://surveydown.org) to get started making your own surveydown survey!**
 
@@ -85,7 +85,7 @@ Resources / other related examples:
 - [shinysurveys](https://github.com/jdtrat/shinysurveys)
 - [shinyforms](https://github.com/daattali/shinyforms)
 
-## [License Information](https://github.com/jhelvy/surveydown/blob/master/LICENSE.md)
+## [License Information](https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md)
 
 ## Citation Information
 
