@@ -4,7 +4,14 @@
 \alias{sd_redirect}
 \title{Create a Redirect Element for Shiny Applications}
 \usage{
-sd_redirect(id, url, button = TRUE, label = "Click here", delay = NULL)
+sd_redirect(
+  id,
+  url,
+  button = TRUE,
+  label = "Click here",
+  delay = NULL,
+  newtab = FALSE
+)
 }
 \arguments{
 \item{id}{A character string of a unique id to be used to identify the redirect button in the survey body.}
@@ -18,6 +25,9 @@ a text element (FALSE) for the redirect. Default is TRUE.}
 
 \item{delay}{An optional numeric value specifying the delay in seconds before
 automatic redirection. If NULL (default), no automatic redirection occurs.}
+
+\item{newtab}{A logical value indicating whether to open the URL in a new tab (TRUE)
+or in the current tab (FALSE). Default is FALSE.}
 }
 \value{
 In a reactive context, returns a function that when called, renders the
@@ -28,5 +38,17 @@ This function creates a UI element that redirects the user to a specified URL.
 It can be used in both reactive and non-reactive contexts within Shiny applications.
 }
 \examples{
-# Examples here
+\dontrun{
+# Basic usage with a button
+sd_redirect("my_button", "https://example.com")
+
+# Create a text link instead of a button
+sd_redirect("my_link", "https://example.com", button = FALSE, label = "Visit Example")
+
+# Add a 5-second delay before redirection
+sd_redirect("delayed_redirect", "https://example.com", delay = 5)
+
+# Open the link in a new tab
+sd_redirect("new_tab_link", "https://example.com", newtab = TRUE)
+}
 }

@@ -4,6 +4,7 @@
 - Modified margins on top and bottom. Solved the large gap created by hidden questions.
 - Fixed the issue with `sd_store_value()`. There used to be a problem if a value is a list with multiple entries. Now they are collapsed with commas due to the application of `format_question_value()` on the `value` variable.
 - Removed the `reactive` argument for `sd_get_data()`. Now all functions that should be compatible with both reactive (server) and static (ui) conditions will automatically match, without necessity of explicitly specifying them.
+- `sd_redirect()` updated with a parameter called `newtab`, defaults to `FALSE`. If `TRUE`, the redirection link will be opened in a new tab. If used together with `delay`, the new tab might be blocked by the browser after count-down, but the user click will not be blocked.
 
 # surveydown 0.2.3
 

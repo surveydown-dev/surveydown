@@ -314,6 +314,8 @@ make_next_button_id <- function(next_page) {
 #' @param label A character string for the button or text label. Default is "Click here".
 #' @param delay An optional numeric value specifying the delay in seconds before
 #'   automatic redirection. If NULL (default), no automatic redirection occurs.
+#' @param newtab A logical value indicating whether to open the URL in a new tab (TRUE)
+#'   or in the current tab (FALSE). Default is FALSE.
 #'
 #' @return In a reactive context, returns a function that when called, renders the
 #'   redirect element. In a non-reactive context, returns the redirect element directly.
@@ -323,37 +325,54 @@ make_next_button_id <- function(next_page) {
 #' @export
 #'
 #' @examples
-#' # Examples here
+#' \dontrun{
+#' # Basic usage with a button
+#' sd_redirect("my_button", "https://example.com")
+#'
+#' # Create a text link instead of a button
+#' sd_redirect("my_link", "https://example.com", button = FALSE, label = "Visit Example")
+#'
+#' # Add a 5-second delay before redirection
+#' sd_redirect("delayed_redirect", "https://example.com", delay = 5)
+#'
+#' # Open the link in a new tab
+#' sd_redirect("new_tab_link", "https://example.com", newtab = TRUE)
+#' }
 sd_redirect <- function(
-    id,
-    url,
-    button = TRUE,
-    label  = "Click here",
-    delay  = NULL
+        id,
+        url,
+        button = TRUE,
+        label  = "Click here",
+        delay  = NULL,
+        newtab = FALSE
 ) {
     if (!is.null(shiny::getDefaultReactiveDomain())) {
         # In a reactive context, directly add to output with renderUI
         shiny::isolate({
             output <- shiny::getDefaultReactiveDomain()$output
             output[[id]] <- shiny::renderUI({
-                create_redirect_element(id, url, button, label, delay)
+                create_redirect_element(id, url, button, label, delay, newtab)
             })
         })
     } else {
         # If not in a reactive context, just return the element
-        return(create_redirect_element(id, url, button, label, delay))
+        return(create_redirect_element(id, url, button, label, delay, newtab))
     }
 }
 
 # Function to create the redirect element
-create_redirect_element <- function(id, url, button, label, delay) {
+create_redirect_element <- function(id, url, button, label, delay, newtab = FALSE) {
     # Validate URL
     if (!grepl("^https?://", url)) {
         url <- paste0("https://", url)
     }
 
     # Create JavaScript for redirection
-    redirect_js <- paste0("window.location.href = '", url, "';")
+    redirect_js <- if (newtab) {
+        paste0("window.open('", url, "', '_blank');")
+    } else {
+        paste0("window.location.href = '", url, "';")
+    }
 
     # Styling for the container
     container_style <- "
@@ -386,7 +405,6 @@ create_redirect_element <- function(id, url, button, label, delay) {
     # Add automatic redirection if delay is specified
     if (!is.null(delay) && is.numeric(delay) && delay > 0) {
         countdown_id <- paste0("countdown_", id)
-
         element <- shiny::tagList(
             shiny::div(
                 style = wrapper_style,
@@ -398,7 +416,8 @@ create_redirect_element <- function(id, url, button, label, delay) {
                         style = "margin: 0.5rem 0 0 0;",
                         "Redirecting in ",
                         shiny::tags$strong(id = countdown_id, delay),
-                        " seconds."
+                        " seconds.",
+                        if (newtab) " (Opens in a new tab)" else NULL
                     )
                 )
             ),
