@@ -248,7 +248,12 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Page navigation ----
 
     # Create a reactive value to store the current page ID
-    current_page_id <- shiny::reactiveVal(pages[[1]]$id)
+    current_page_id <- shiny::reactiveVal(page_ids[1])
+
+    # Start from start_page (if specified)
+    if (!is.null(start_page)) {
+        current_page_id(start_page)
+    }
 
     # Render the current page along with the head content
     output$main <- shiny::renderUI({
@@ -272,12 +277,10 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Handle navigation
     shiny::observe({
-        lapply(pages, function(page) {
-            next_button_id <- make_next_button_id(page$id)
+        lapply(page_ids, function(page_id) {
+            next_button_id <- make_next_button_id(page_id)
             shiny::observeEvent(input[[next_button_id]], {
-                # Use the make_next_button_id function to get the next page
-                next_page <- sub(paste0("^", make_next_button_id("")), "", next_button_id)
-                current_page_id(next_page)
+                current_page_id(page_id)
 
                 # Here, integrate with existing navigation logic if needed
                 # For example, update timestamps, check required questions, etc.
