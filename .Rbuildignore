@@ -20,3 +20,7 @@ data-raw
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
 ^.vscode$
+^app.R$
+^survey.qmd$
+^_extensions$
+^data.csv$

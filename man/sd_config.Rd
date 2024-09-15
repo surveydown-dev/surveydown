@@ -5,6 +5,7 @@
 \title{Configuration Function for surveydown Surveys}
 \usage{
 sd_config(
+  survey_qmd = "survey.qmd",
   skip_if = NULL,
   skip_if_custom = NULL,
   show_if = NULL,
@@ -17,6 +18,8 @@ sd_config(
 )
 }
 \arguments{
+\item{survey_qmd}{Character string. The path to the survey .qmd file.}
+
 \item{skip_if}{A list of conditions under which certain pages should be skipped. Defaults to NULL.}
 
 \item{skip_if_custom}{A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.}
@@ -25,12 +28,9 @@ sd_config(
 
 \item{show_if_custom}{A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.}
 
-\item{required_questions}{Vector of character strings. The IDs of questions that must
-be answered before the respondent can continue in the survey or survey can be
-submitted. Defaults to NULL.}
+\item{required_questions}{Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.}
 
-\item{all_questions_required}{Logical. If TRUE, all questions in the survey will be required.
-This overrides the \code{required_questions} parameter. Defaults to FALSE.}
+\item{all_questions_required}{Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.}
 
 \item{start_page}{Character string. The ID of the page to start on. Defaults to NULL.}
 
@@ -39,48 +39,10 @@ This overrides the \code{required_questions} parameter. Defaults to FALSE.}
 \item{admin_page}{Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.}
 }
 \value{
-A list containing the configuration settings for the survey, including:
-\item{page_structure}{A list containing the structure of survey pages}
-\item{question_structure}{A list containing the structure of survey questions}
-\item{page_ids}{A vector of all page IDs}
-\item{question_ids}{A vector of all question IDs}
-\item{question_values}{A vector of all possible question values}
-\item{question_required}{A vector of IDs for required questions}
-\item{skip_if_custom}{Custom skip conditions}
-\item{skip_if}{Standard skip conditions}
-\item{show_if_custom}{Custom show conditions}
-\item{show_if}{Standard show conditions}
-\item{start_page}{The ID of the starting page}
-\item{show_all_pages}{Whether to show all pages initially}
-\item{admin_page}{Whether to include an admin page}
+A list containing the configuration settings for the survey and rendered HTML content.
 }
 \description{
 This function sets up the configuration for a surveydown survey, including
 page and question structures, conditional display settings, and navigation options.
-}
-\details{
-The function retrieves the survey metadata, checks for duplicate page and question IDs,
-validates the conditional display settings, and ensures that the specified start page (if any) exists.
-It then stores these settings in a configuration list. If \code{admin_page} is set to TRUE, an admin page
-will be included in the survey. This page allows viewing and downloading of survey data upon entering
-the correct survey password (set using \code{sd_set_password()}).
-
-If \code{all_questions_required} is set to TRUE, it will override the \code{required_questions} parameter
-and set all questions in the survey as required.
-}
-\examples{
-\dontrun{
-# These examples assume you have set up a survey with appropriate .qmd files
-
-# Basic configuration
-config <- sd_config()
-
-# Configuration with custom settings
-config <- sd_config(
-  start_page = "intro",
-  all_questions_required = TRUE,
-  show_all_pages = FALSE,
-  admin_page = TRUE
-)
-}
+It also renders the Quarto document and extracts necessary information.
 }

@@ -1,20 +1,135 @@
+# Load multiple resource files (CSS or JS)
+load_resources <- function(files, type = c("css", "js"), package = "surveydown") {
+    type <- match.arg(type)
+    sapply(files, function(file) {
+        path <- system.file(paste0(type, "/", file), package = package)
+        if (type == "css") {
+            shiny::includeCSS(path)
+        } else {
+            shiny::tags$script(src = path)
+        }
+    }, simplify = FALSE, USE.NAMES = FALSE)
+}
+
+#' Create the UI for a surveydown survey
+#'
+#' This function creates the user interface for a surveydown survey,
+#' including necessary CSS and JavaScript files, and applies custom styling.
+#'
+#' @param barcolor Color of the progress bar. Can be a hex color or 'theme' to use the theme's primary color.
+#' @param barposition Position of the progress bar. Can be 'top', 'bottom', or 'none'.
+#' @param theme The name of the Bootswatch theme to use.
+#' @param backgroundcolor Background color of the body.
+#' @param custom_css Path to a custom CSS file to override default styles.
+#'
+#' @return A Shiny UI object
 #' @export
-sd_ui <- function() {
+sd_ui <- function(
+        barcolor        = 'theme',
+        barposition     = 'top',
+        theme           = 'cosmo',
+        backgroundcolor = '#f2f6f9',
+        custom_css      = NULL
+) {
+    # Define Bootswatch theme primary colors
+    theme_colors <- list(
+        cerulean  = "#2FA4E7",
+        cosmo     = "#2780E3",
+        cyborg    = "#2A9FD6",
+        darkly    = "#375A7F",
+        flatly    = "#18BC9C",
+        journal   = "#EB6864",
+        litera    = "#007BFF",
+        lumen     = "#F08D49",
+        lux       = "#343A40",
+        materia   = "#2196F3",
+        minty     = "#78C2AD",
+        morph     = "#218C74",
+        paper     = "#2196F3",
+        pulse     = "#593196",
+        quartz    = "#8C9EFF",
+        readable  = "#3273DC",
+        sandstone = "#93C54B",
+        simplex   = "#D9230F",
+        sketchy   = "#333333",
+        slate     = "#007AFF",
+        spacelab  = "#3398DC",
+        superhero = "#DF691A",
+        united    = "#E95420",
+        vapor     = "#9B59B6",
+        yeti      = "#008CBA"
+    )
+
+    # Determine the progress bar color
+    if (barcolor == 'theme') {
+        color <- if (theme %in% names(theme_colors)) {
+            theme_colors[[theme]]
+        } else {
+            theme_colors[['cosmo']]
+        }
+    } else if (grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {
+        color <- barcolor
+    } else {
+        color <- theme_colors[['cosmo']]
+    }
+
+    # Determine the progress bar position
+    position <- switch(
+        barposition,
+        "bottom" = "bottom",
+        "none" = "none",
+        "top"
+    )
+
+    # Define progress bar height
+    progress_bar_height <- "16px"
+
+    # Custom CSS (only for dynamic variables)
+    custom_css_content <- sprintf("
+        :root {
+            --progressbar-color: %s;
+            --progressbar-position: %s;
+            --body-background-color: %s;
+            --progress-bar-height: %s;
+            --body-padding-top: %s;
+        }
+    ", color,
+                                  position,
+                                  backgroundcolor,
+                                  progress_bar_height,
+                                  ifelse(position == "top", progress_bar_height, "0"))
+
     shiny::fluidPage(
-        theme = bslib::bs_theme(version = 5),
+        theme = bslib::bs_theme(version = 5, bootswatch = theme),
         shinyjs::useShinyjs(),
-        shiny::tags$head(
-            shiny::tags$style(
-                HTML("
-                    .container-fluid .content {
-                        max-width: 800px;
-                        margin: 0 auto;
-                        padding: 15px;
-                    }
-                ")
+
+        # Include default CSS
+        load_resources("surveydown.css", type = "css"),
+
+        # Include dynamic styles
+        shiny::tags$style(HTML(custom_css_content)),
+
+        # Include custom CSS file if provided
+        if (!is.null(custom_css)) {
+            shiny::includeCSS(custom_css)
+        },
+
+        # Include JavaScript files
+        load_resources(c("keep_alive.js", "page_nav.js", "required_questions.js", "update_progress.js"), type = "js"),
+
+        # Progress bar HTML (if not 'none')
+        if (position != "none") {
+            shiny::tags$div(
+                id = "progressbar",
+                class = position,
+                shiny::tags$div(id = "progress")
             )
-        ),
-        shiny::uiOutput("main")
+        },
+
+        shiny::tags$div(
+            class = "content",
+            shiny::uiOutput("main")
+        )
     )
 }
 

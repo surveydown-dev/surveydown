@@ -37,8 +37,8 @@ sd_config <- function(
     unlink(temp_html)
 
     # Extract all divs with class "sd-page"
-    pages <- html_content %>%
-        rvest::html_elements(".sd-page") %>%
+    pages <- html_content |>
+        rvest::html_elements(".sd-page") |>
         lapply(function(x) {
             list(
                 id = rvest::html_attr(x, "id"),
@@ -47,10 +47,10 @@ sd_config <- function(
         })
 
     # Extract head content (for CSS and JS)
-    head_content <- html_content %>%
-        rvest::html_element("head") %>%
-        rvest::html_children() %>%
-        sapply(as.character) %>%
+    head_content <- html_content |>
+        rvest::html_element("head") |>
+        rvest::html_children() |>
+        sapply(as.character) |>
         paste(collapse = "\n")
 
     # Extract page and question structures

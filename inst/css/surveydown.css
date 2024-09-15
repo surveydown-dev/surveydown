@@ -1,52 +1,81 @@
-/* Progressbar */
-#progressbar {
-  background-color: #ECE8DF;
-  padding: 3px;
-  width: 100%;
-  position: fixed;
-  left: 0;
-  z-index: 1000;
-}
-#progressbar.POSITION_PLACEHOLDER {
-  POSITION_PLACEHOLDER: 0;
-}
-#progressbar > div {
-  width: 0%;
-  height: 10px;
-  border-radius: 0;
+/* Raleway font import */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800&display=swap');
+
+/* Root variables */
+:root {
+  --progressbar-color: #2780E3;
+  --progressbar-position: top;
+  --body-background-color: #f2f6f9;
+  --progress-bar-height: 16px;
+  --body-font-family: 'Raleway', sans-serif;
+  --heading-font-family: 'Raleway', sans-serif;
 }
 
-/* Top padding */
+/* Body styles */
 body {
-  padding-top: 20px;
+  padding-top: var(--body-padding-top, 0);
+  background-color: var(--body-background-color);
+  font-family: var(--body-font-family);
+}
+
+/* Progressbar */
+#progressbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: var(--progress-bar-height);
+  z-index: 1000;
+  background-color: #ECE8DF;
+}
+
+#progressbar.top {
+  top: 0;
+}
+
+#progressbar.bottom {
+  bottom: 0;
+}
+
+#progressbar > div {
+  width: 0%;
+  height: 100%;
+  background-color: var(--progressbar-color);
+}
+
+/* Content container */
+.container-fluid .content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 15px;
 }
 
 /* Question border */
 .form-group {
-  border: 1px solid #ddd;  /* Light gray border */
-  border-radius: 5px;      /* Rounded corners */
-  padding: 1rem;           /* Inner spacing */
-  background-color: #f9f9f9; /* Light background */
-}
-.question-container {
-  margin-bottom: 1rem;   /* Space between questions */
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 1rem;
+  background-color: #f9f9f9;
 }
 
-/* Bottom margin of texts */
+.question-container {
+  margin-bottom: 1rem;
+}
+
+/* Text margins */
 p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
   margin-bottom: 0.5rem;
 }
-/* Margin of question label */
+
 .form-group > label.control-label {
-  margin-top: 0rem;
+  margin-top: 0;
   margin-bottom: 0.3rem;
 }
 
 p:last-child, .form-group:last-child {
-  margin-bottom: 0rem;
+  margin-bottom: 0;
 }
 
-/* Margin of question options */
+/* Question options */
 .radio {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
@@ -54,13 +83,14 @@ p:last-child, .form-group:last-child {
 
 /* Center-align radio and checkbox button groups */
 .radio-group-buttons,
-.checkbox-group-buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+.checkbox-group-buttons,
 .btn-group-container-sw {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Heading styles */
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+  font-family: var(--heading-font-family);
 }

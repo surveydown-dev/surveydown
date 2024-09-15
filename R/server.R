@@ -126,6 +126,8 @@ sd_server <- function(input, output, session, config, db = NULL) {
     ignore_mode <- is.null(db)
 
     # Create local objects from config file
+    pages          <- config$pages
+    head_content   <- config$head_content
     page_structure <- config$page_structure
     page_ids       <- config$page_ids
     question_ids   <- config$question_ids
@@ -137,31 +139,13 @@ sd_server <- function(input, output, session, config, db = NULL) {
     show_all_pages <- config$show_all_pages
     admin_page     <- config$admin_page
     question_required <- config$question_required
-    pages <- config$pages
-    head_content <- config$head_content
 
     # Pre-compute timestamp IDs
-    page_ts_ids <- paste0("time_p_", page_ids)
+    page_ts_ids     <- paste0("time_p_", page_ids)
     question_ts_ids <- paste0("time_q_", question_ids)
-    all_ts_ids <- c(page_ts_ids, question_ts_ids)
+    all_ts_ids      <- c(page_ts_ids, question_ts_ids)
 
-    # Initial page settings ----
-
-    # Start from start_page (if specified)
-    if (!is.null(start_page)) {
-      shinyjs::show(start_page)
-    } else {
-      shinyjs::runjs("showFirstPage();")
-    }
-
-    # Show all pages if show_all_pages is TRUE
-    if (show_all_pages) lapply(page_ids, shinyjs::show)
-
-    # Conditional display (show_if conditions)
-    if (!is.null(show_if)) { basic_show_if_logic(input, show_if) }
-    if (!is.null(show_if_custom)) { custom_show_if_logic(input, show_if_custom) }
-
-    # Other initial settings ----
+    # Initial settings ----
 
     # Keep-alive observer - this will be triggered every 60 seconds
     shiny::observeEvent(input$keepAlive, {
