@@ -137,6 +137,8 @@ sd_server <- function(input, output, session, config, db = NULL) {
     show_all_pages <- config$show_all_pages
     admin_page     <- config$admin_page
     question_required <- config$question_required
+    pages <- config$pages
+    head_content <- config$head_content
 
     # Pre-compute timestamp IDs
     page_ts_ids <- paste0("time_p_", page_ids)
@@ -259,50 +261,58 @@ sd_server <- function(input, output, session, config, db = NULL) {
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
     })
 
-    # Main page observer ----
+    # Page navigation ----
 
-    shiny::observe({
-        lapply(2:length(page_structure), function(i) {
-            current_page <- page_ids[i-1]
-            next_page <- page_ids[i]
-            current_ts_id <- page_ts_ids[i-1]
-            next_ts_id <- page_ts_ids[i]
+    # Create a reactive value to store the current page ID
+    current_page_id <- shiny::reactiveVal(pages[[1]]$id)
 
-            shiny::observeEvent(input[[make_next_button_id(next_page)]], {
-                # Update next page based on skip logic
-                next_page <- handle_skip_logic(input, skip_if, skip_if_custom, current_page, next_page)
-
-                # Find the correct timestamp ID after skip logic
-                next_ts_id <- page_ts_ids[which(page_ids == next_page)]
-
-                # Update timestamp for the next page
-                timestamps[[next_ts_id]] <- get_utc_timestamp()
-
-                # Check if all required questions are answered
-                current_page_questions <- page_structure[[current_page]]$questions
-                all_required_answered <- check_all_required(
-                    current_page_questions, question_required, input, show_if, show_if_custom
+    # Render the current page along with the head content
+    output$main <- shiny::renderUI({
+        current_id <- current_page_id()
+        current_page <- pages[[which(sapply(pages, function(p) p$id == current_id))]]
+        shiny::tagList(
+            shiny::tags$head(shiny::HTML(head_content)),
+            shiny::tags$div(
+                class = "content",
+                shiny::tags$div(
+                    class = "page-columns page-rows-contents page-layout-article",
+                    shiny::tags$div(
+                        id = "quarto-content",
+                        role = "main",
+                        shiny::HTML(current_page$content)
+                    )
                 )
+            )
+        )
+    })
 
-                if (all_required_answered) {
-                    shinyjs::runjs("hideAllPages();")
-                    shinyjs::show(next_page)
+    # Handle navigation
+    shiny::observe({
+        lapply(pages, function(page) {
+            next_button_id <- make_next_button_id(page$id)
+            shiny::observeEvent(input[[next_button_id]], {
+                # Use the make_next_button_id function to get the next page
+                next_page <- sub(paste0("^", make_next_button_id("")), "", next_button_id)
+                current_page_id(next_page)
 
-                    # Update data after page change
-                    update_data()
-                } else {
-                    shinyjs::alert("Please answer all required questions before proceeding.")
-                }
+                # Here, integrate with existing navigation logic if needed
+                # For example, update timestamps, check required questions, etc.
             })
         })
     })
 
-    # Add observer to ensure final update on session end
+    # Handle the 'next_page' input set by the sd_next() function
+    shiny::observeEvent(input$next_page, {
+        current_page_id(input$next_page)
+    })
+
+    # Ensure final update on session end
     shiny::onSessionEnded(function() {
         shiny::isolate({
             update_data()
         })
     })
+
 }
 
 # Function to get all stored values

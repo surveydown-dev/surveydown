@@ -2,98 +2,76 @@
 #'
 #' This function sets up the configuration for a surveydown survey, including
 #' page and question structures, conditional display settings, and navigation options.
+#' It also renders the Quarto document and extracts necessary information.
 #'
+#' @param survey_qmd Character string. The path to the survey .qmd file.
 #' @param skip_if A list of conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param skip_if_custom A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param show_if A list of conditions under which certain pages should be shown. Defaults to NULL.
 #' @param show_if_custom A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.
-#' @param required_questions Vector of character strings. The IDs of questions that must
-#' be answered before the respondent can continue in the survey or survey can be
-#' submitted. Defaults to NULL.
-#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required.
-#' This overrides the `required_questions` parameter. Defaults to FALSE.
+#' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.
+#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
 #'
-#' @details The function retrieves the survey metadata, checks for duplicate page and question IDs,
-#'   validates the conditional display settings, and ensures that the specified start page (if any) exists.
-#'   It then stores these settings in a configuration list. If `admin_page` is set to TRUE, an admin page
-#'   will be included in the survey. This page allows viewing and downloading of survey data upon entering
-#'   the correct survey password (set using `sd_set_password()`).
+#' @return A list containing the configuration settings for the survey and rendered HTML content.
 #'
-#'   If `all_questions_required` is set to TRUE, it will override the `required_questions` parameter
-#'   and set all questions in the survey as required.
-#'
-#' @return A list containing the configuration settings for the survey, including:
-#'   \item{page_structure}{A list containing the structure of survey pages}
-#'   \item{question_structure}{A list containing the structure of survey questions}
-#'   \item{page_ids}{A vector of all page IDs}
-#'   \item{question_ids}{A vector of all question IDs}
-#'   \item{question_values}{A vector of all possible question values}
-#'   \item{question_required}{A vector of IDs for required questions}
-#'   \item{skip_if_custom}{Custom skip conditions}
-#'   \item{skip_if}{Standard skip conditions}
-#'   \item{show_if_custom}{Custom show conditions}
-#'   \item{show_if}{Standard show conditions}
-#'   \item{start_page}{The ID of the starting page}
-#'   \item{show_all_pages}{Whether to show all pages initially}
-#'   \item{admin_page}{Whether to include an admin page}
-#'
-#' @examples
-#' \dontrun{
-#' # These examples assume you have set up a survey with appropriate .qmd files
-#'
-#' # Basic configuration
-#' config <- sd_config()
-#'
-#' # Configuration with custom settings
-#' config <- sd_config(
-#'   start_page = "intro",
-#'   all_questions_required = TRUE,
-#'   show_all_pages = FALSE,
-#'   admin_page = TRUE
-#' )
-#' }
 #' @export
 sd_config <- function(
-    skip_if            = NULL,
-    skip_if_custom     = NULL,
-    show_if            = NULL,
-    show_if_custom     = NULL,
-    required_questions = NULL,
-    all_questions_required = FALSE,
-    start_page         = NULL,
-    show_all_pages     = FALSE,
-    admin_page         = FALSE
+        survey_qmd = "survey.qmd",
+        skip_if = NULL,
+        skip_if_custom = NULL,
+        show_if = NULL,
+        show_if_custom = NULL,
+        required_questions = NULL,
+        all_questions_required = FALSE,
+        start_page = NULL,
+        show_all_pages = FALSE,
+        admin_page = FALSE
 ) {
+    # Render the Quarto document to a temporary file
+    # Read and parse the rendered HTML file, then delete it
+    temp_html <- quarto_render_temp(survey_qmd)
+    html_content <- rvest::read_html(temp_html)
+    unlink(temp_html)
 
-    # Get survey metadata
-    page_structure     <- get_page_structure()
-    question_structure <- get_question_structure()
-    page_ids           <- attr(page_structure, "all_ids")
-    question_ids       <- attr(question_structure, "all_ids")
+    # Extract all divs with class "sd-page"
+    pages <- html_content %>%
+        rvest::html_elements(".sd-page") %>%
+        lapply(function(x) {
+            list(
+                id = rvest::html_attr(x, "id"),
+                content = as.character(x)
+            )
+        })
+
+    # Extract head content (for CSS and JS)
+    head_content <- html_content %>%
+        rvest::html_element("head") %>%
+        rvest::html_children() %>%
+        sapply(as.character) %>%
+        paste(collapse = "\n")
+
+    # Extract page and question structures
+    page_structure <- get_page_structure(html_content)
+    question_structure <- get_question_structure(html_content)
+
+    page_ids <- sapply(pages, function(p) p$id)
+    question_ids <- names(question_structure)
 
     # Check for duplicate or overlapping IDs
     check_ids(page_ids, question_ids)
 
-    question_values    <- unname(unlist(lapply(question_structure, `[[`, "options")))
-    question_required  <- question_ids
-    if (! all_questions_required) {
-        question_required <- required_questions
-    }
+    question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
+    question_required <- if (all_questions_required) question_ids else required_questions
 
     # Check skip_if and show_if inputs
     check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
 
     # Check that start_page (if used) points to an actual page
-    if (!is.null(start_page)) {
-        if (! start_page %in% page_ids) {
-            stop(
-                "The specified start_page does not exist - check that you have ",
-                "not mis-spelled the id"
-            )
-        }
+    if (!is.null(start_page) && !(start_page %in% page_ids)) {
+        stop("The specified start_page does not exist - check that you have not mis-spelled the id")
     }
 
     # Convert show_if_custom and skip_if_custom to list of lists
@@ -102,28 +80,31 @@ sd_config <- function(
 
     # Store all config settings
     config <- list(
-        page_structure     = page_structure,
+        page_structure = page_structure,
         question_structure = question_structure,
-        page_ids           = page_ids,
-        question_ids       = question_ids,
-        question_values    = question_values,
-        question_required  = question_required,
-        skip_if_custom     = skip_if_custom,
-        skip_if            = skip_if,
-        show_if_custom     = show_if_custom,
-        show_if            = show_if,
-        start_page         = start_page,
-        show_all_pages     = show_all_pages,
-        admin_page         = admin_page
+        page_ids = page_ids,
+        question_ids = question_ids,
+        question_values = question_values,
+        question_required = question_required,
+        skip_if_custom = skip_if_custom,
+        skip_if = skip_if,
+        show_if_custom = show_if_custom,
+        show_if = show_if,
+        start_page = start_page,
+        show_all_pages = show_all_pages,
+        admin_page = admin_page,
+        pages = pages,
+        head_content = head_content
     )
 
     return(config)
 }
 
 # Get page structure from HTML
-get_page_structure <- function() {
+get_page_structure <- function(html_content) {
+
     # Get all page nodes
-    page_nodes <- get_page_nodes()
+    page_nodes <- rvest::html_nodes(html_content, ".sd-page")
     all_page_ids <- page_nodes |> rvest::html_attr("id")
 
     # Initialize a named list to hold the results
@@ -172,8 +153,9 @@ get_page_nodes <- function() {
 }
 
 # Get question structure from HTML
-get_question_structure <- function() {
-    question_nodes <- get_question_nodes()
+get_question_structure <- function(html_content) {
+
+    question_nodes <- rvest::html_nodes(html_content, "[data-question-id]")
 
     # Initialize a named list to hold the results
     question_structure <- list()
@@ -203,27 +185,6 @@ get_question_structure <- function() {
 
     attr(question_structure, "all_ids") <- all_question_ids
     return(question_structure)
-}
-
-# Get question nodes from HTML
-get_question_nodes <- function() {
-
-    # Get the list of .qmd files in the current working directory
-    qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
-
-    # Check if there is exactly one .qmd file
-    if (length(qmd_files) == 1) {
-        qmd_file_name <- qmd_files[1]
-        html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
-
-        # Use the derived HTML file name to read the document with rvest
-        questions <- rvest::read_html(html_file_name) |>
-            rvest::html_nodes("[data-question-id]")
-
-        return(questions)
-    }
-
-    stop("Error: {surveydown} requires that only one .qmd file in the directory.")
 }
 
 check_skip_show <- function(

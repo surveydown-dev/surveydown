@@ -1,3 +1,23 @@
+#' @export
+sd_ui <- function() {
+    shiny::fluidPage(
+        theme = bslib::bs_theme(version = 5),
+        shinyjs::useShinyjs(),
+        shiny::tags$head(
+            shiny::tags$style(
+                HTML("
+                    .container-fluid .content {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 15px;
+                    }
+                ")
+            )
+        ),
+        shiny::uiOutput("main")
+    )
+}
+
 #' Create a survey question
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
