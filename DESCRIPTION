@@ -37,6 +37,7 @@ Imports:
     htmltools,
     markdown,
     pool,
+    quarto,
     remotes,
     RPostgres,
     rvest,
