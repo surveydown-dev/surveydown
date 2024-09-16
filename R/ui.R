@@ -49,7 +49,7 @@ sd_ui <- function(
     )
 
     # Define progress bar height
-    progress_bar_height <- "10px"
+
 
     # Custom CSS (only for dynamic variables)
     custom_css_content <- sprintf("
@@ -57,14 +57,8 @@ sd_ui <- function(
             --progressbar-color: %s;
             --progressbar-position: %s;
             --body-background-color: %s;
-            --progress-bar-height: %s;
-            --body-padding-top: %s;
         }
-    ", color,
-                                  position,
-                                  background,
-                                  progress_bar_height,
-                                  ifelse(position == "top", progress_bar_height, "0"))
+    ", color, position, background)
 
     shiny::fluidPage(
         theme = bslib::bs_theme(version = 5, bootswatch = theme),

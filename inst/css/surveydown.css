@@ -4,37 +4,37 @@
 /* Root variables */
 :root {
   /* Theme colors */
-  --cerulean-color: #2FA4E7;
-  --cosmo-color: #2780E3;
-  --cyborg-color: #2A9FD6;
-  --darkly-color: #375A7F;
-  --flatly-color: #18BC9C;
-  --journal-color: #EB6864;
-  --litera-color: #007BFF;
-  --lumen-color: #F08D49;
-  --lux-color: #343A40;
-  --materia-color: #2196F3;
-  --minty-color: #78C2AD;
-  --morph-color: #218C74;
-  --paper-color: #2196F3;
-  --pulse-color: #593196;
-  --quartz-color: #8C9EFF;
-  --readable-color: #3273DC;
+  --cerulean-color:  #2FA4E7;
+  --cosmo-color:     #2780E3;
+  --cyborg-color:    #2A9FD6;
+  --darkly-color:    #375A7F;
+  --flatly-color:    #18BC9C;
+  --journal-color:   #EB6864;
+  --litera-color:    #007BFF;
+  --lumen-color:     #F08D49;
+  --lux-color:       #343A40;
+  --materia-color:   #2196F3;
+  --minty-color:     #78C2AD;
+  --morph-color:     #218C74;
+  --paper-color:     #2196F3;
+  --pulse-color:     #593196;
+  --quartz-color:    #8C9EFF;
+  --readable-color:  #3273DC;
   --sandstone-color: #93C54B;
-  --simplex-color: #D9230F;
-  --sketchy-color: #333333;
-  --slate-color: #007AFF;
-  --spacelab-color: #3398DC;
+  --simplex-color:   #D9230F;
+  --sketchy-color:   #333333;
+  --slate-color:     #007AFF;
+  --spacelab-color:  #3398DC;
   --superhero-color: #DF691A;
-  --united-color: #E95420;
-  --vapor-color: #9B59B6;
-  --yeti-color: #008CBA;
+  --united-color:    #E95420;
+  --vapor-color:     #9B59B6;
+  --yeti-color:      #008CBA;
 
   /* Layout and theme variables */
   --progressbar-color: var(--cosmo-color);
   --progressbar-position: top;
   --body-background-color: #f2f6f9;
-  --progress-bar-height: 16px;
+  --progress-bar-height: 10px;
   --body-padding-top: var(--progress-bar-height);
 
   /* Typography */
@@ -56,6 +56,11 @@ body {
 
 p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
   margin-bottom: 0.5rem;
+}
+
+/* Question and option styles */
+.control-label, .radio label, .checkbox label {
+  font-size: 1.1em;
 }
 
 /* Layout */
@@ -111,6 +116,18 @@ p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
 .radio {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
+}
+
+/* Radio button styles */
+.radio label {
+  padding-left: 25px;
+  position: relative;
+}
+
+.radio input[type="radio"] {
+  position: absolute;
+  left: 0;
+
 }
 
 /* Button groups */
