@@ -57,9 +57,45 @@ sd_config <- function(
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
         lapply(function(x) {
+            # Extract question containers within the page
+            question_containers <- rvest::html_elements(x, ".question-container")
+
+            # Process each question container and collect question IDs
+            question_ids <- character(0)
+            required_question_ids <- character(0)
+            processed_content <- as.character(x)
+
+            for (container in question_containers) {
+                question_id <- rvest::html_attr(container, "data-question-id")
+                question_ids <- c(question_ids, question_id)
+
+                # Determine if the question is required
+                is_required <- all_questions_required | (question_id %in% required_questions)
+
+                if (is_required) {
+                    # Store the required question
+                    required_question_ids <- c(required_question_ids, question_id)
+
+                    # Find the asterisk element & replace it with display:inline
+                    asterisk <- rvest::html_element(container, ".required-asterisk")
+                    # Replaces in place
+                    asterisk <- xml2::xml_set_attr(asterisk, "style", "display:inline; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;")
+                }
+
+                # Replace the original container with the modified one
+                processed_content <- sub(
+                    as.character(container),
+                    as.character(container),
+                    processed_content,
+                    fixed = TRUE
+                )
+            }
+
             list(
                 id = rvest::html_attr(x, "id"),
-                content = as.character(x)
+                content = processed_content,
+                questions = question_ids,
+                required_questions = required_question_ids
             )
         })
 

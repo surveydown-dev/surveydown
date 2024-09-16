@@ -151,15 +151,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
       cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
     })
 
-    # Show asterisks for required questions
-    session$onFlush(function() {
-      shinyjs::runjs(sprintf(
-        "console.log('Shiny initialized'); window.initializeRequiredQuestions(%s);",
-        # jsonlite::toJSON(question_required) # Requires dependency
-        vector_to_json_array(question_required)
-      ))
-    }, once = TRUE)
-
     # Create admin page if admin_page is TRUE
     if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
 
@@ -244,9 +235,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
     })
 
-    # Page navigation ----
+    # Page rendering ----
 
-    # Create a reactive value to store the current page ID
+    # Create reactive values for the current page ID
     current_page_id <- shiny::reactiveVal(page_ids[1])
 
     # Start from start_page (if specified)
@@ -254,10 +245,13 @@ sd_server <- function(input, output, session, config, db = NULL) {
         current_page_id(start_page)
     }
 
+    get_current_page <- reactive({
+        pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
+    })
+
     # Render the current page along with the head content
     output$main <- shiny::renderUI({
-        current_id <- current_page_id()
-        current_page <- pages[[which(sapply(pages, function(p) p$id == current_id))]]
+        current_page <- get_current_page()
         shiny::tagList(
             shiny::tags$head(shiny::HTML(head_content)),
             shiny::tags$div(
@@ -274,9 +268,12 @@ sd_server <- function(input, output, session, config, db = NULL) {
         )
     })
 
-    # Handle navigation
+    # Page navigation ----
+
+    # All it does is determine which page to set as the current page
+    # and then update the current_page_id() reactive value
     shiny::observe({
-        lapply(2:length(page_structure), function(i) {
+        lapply(2:length(pages), function(i) {
             current_page <- page_ids[i-1]
             next_page <- page_ids[i]
             current_ts_id <- page_ts_ids[i-1]
@@ -284,6 +281,7 @@ sd_server <- function(input, output, session, config, db = NULL) {
             next_button_id <- make_next_button_id(next_page)
 
             shiny::observeEvent(input[[next_button_id]], {
+
                 # Update next page based on skip logic
                 next_page <- handle_skip_logic(input, skip_if, skip_if_custom, current_page, next_page)
 
@@ -294,16 +292,15 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 timestamps[[next_ts_id]] <- get_utc_timestamp()
 
                 # Check if all required questions are answered
-                current_page_questions <- page_structure[[current_page]]$questions
+                current_page <- get_current_page()
                 all_required_answered <- check_all_required(
-                    current_page_questions, question_required, input, show_if, show_if_custom
+                    current_page$questions, current_page$required_questions,
+                    input, show_if, show_if_custom
                 )
 
                 if (all_required_answered) {
-                    # Update the current page ID
+                    # Update the current page ID, then update the data
                     current_page_id(next_page)
-
-                    # Update data after page change
                     update_data()
                 } else {
                     shiny::showNotification("Please answer all required questions before proceeding.", type = "error")
@@ -381,87 +378,6 @@ format_question_value <- function(val) {
     } else {
         return(as.character(val))
     }
-}
-
-# Handle basic show-if logic
-basic_show_if_logic <- function(input, show_if) {
-
-    # Ensure show_if is a tibble or data frame
-    if (!is.data.frame(show_if)) {
-        stop("show_if must be a data frame or tibble.")
-    }
-
-    # Initially hide all conditional questions and their containers
-    unique_targets <- unique(show_if$target)
-    for (target in unique_targets) {
-        shinyjs::runjs(sprintf("
-            $('#%s').closest('.question-container').hide();
-            $('#%s').hide();
-        ", target, target))
-    }
-
-    # Group show_if rules by question_id and target
-    show_if_grouped <- split(show_if, list(show_if$question_id, show_if$target))
-
-    # Iterate over each group of show_if rules
-    for (group in show_if_grouped) {
-        question_id <- group$question_id[1]
-        target <- group$target[1]
-        question_values <- group$question_value
-
-        shiny::observeEvent(input[[question_id]], {
-            # Check if the condition is met to show/hide the question
-            val <- input[[question_id]]
-            if (!is.null(val) && val %in% question_values) {
-                shinyjs::runjs(sprintf("
-                    $('#%s').closest('.question-container').show();
-                    $('#%s').show();
-                ", target, target))
-            } else {
-                shinyjs::runjs(sprintf("
-                    $('#%s').closest('.question-container').hide();
-                    $('#%s').hide();
-                ", target, target))
-            }
-        }, ignoreNULL = TRUE)
-    }
-}
-
-# Handle custom show-if logic
-custom_show_if_logic <- function(input, show_if_custom) {
-    # Initially hide all conditional questions and their containers
-    lapply(show_if_custom, function(x) {
-        shinyjs::runjs(sprintf("
-            $('#%s').closest('.question-container').hide();
-            $('#%s').hide();
-        ", x$target, x$target))
-    })
-
-    # Create a reactive expression for each condition
-    condition_reactives <- lapply(show_if_custom, function(rule) {
-        shiny::reactive({ rule$condition(input) })
-    })
-
-    # Create a single observer to handle all conditions
-    shiny::observe({
-        for (i in seq_along(show_if_custom)) {
-            condition_result <- condition_reactives[[i]]()
-            condition_met <- isTRUE(condition_result)
-            target <- show_if_custom[[i]]$target
-
-            if (condition_met) {
-                shinyjs::runjs(sprintf("
-                    $('#%s').closest('.question-container').show();
-                    $('#%s').show();
-                ", target, target))
-            } else {
-                shinyjs::runjs(sprintf("
-                    $('#%s').closest('.question-container').hide();
-                    $('#%s').hide();
-                ", target, target))
-            }
-        }
-    })
 }
 
 # Handle overall skip logic
