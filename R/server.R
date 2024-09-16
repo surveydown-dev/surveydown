@@ -288,11 +288,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
         })
     })
 
-    # Handle the 'next_page' input set by the sd_next() function
-    shiny::observeEvent(input$next_page, {
-        current_page_id(input$next_page)
-    })
-
     # Ensure final update on session end
     shiny::onSessionEnded(function() {
         shiny::isolate({
