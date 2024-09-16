@@ -4,7 +4,7 @@
 #' page and question structures, conditional display settings, and navigation options.
 #' It also renders the Quarto document and extracts necessary information.
 #'
-#' @param survey_qmd Character string. The path to the survey .qmd file.
+#' @param survey Character string. The path to the survey .qmd file or .html file. If .qmd, the file will be rendered into a .html.
 #' @param skip_if A list of conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param skip_if_custom A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param show_if A list of conditions under which certain pages should be shown. Defaults to NULL.
@@ -19,7 +19,7 @@
 #'
 #' @export
 sd_config <- function(
-        survey_qmd = "survey.qmd",
+        survey = "survey.qmd",
         skip_if = NULL,
         skip_if_custom = NULL,
         show_if = NULL,
@@ -32,9 +32,28 @@ sd_config <- function(
 ) {
     # Render the Quarto document to a temporary file
     # Read and parse the rendered HTML file, then delete it
-    temp_html <- quarto_render_temp(survey_qmd)
-    html_content <- rvest::read_html(temp_html)
-    unlink(temp_html)
+    # temp_html <- quarto_render_temp(survey)
+    # html_content <- rvest::read_html(temp_html)
+    # unlink(temp_html)
+
+    # Check if the file exists
+    if (!file.exists(survey)) {
+        stop("The specified survey file does not exist.")
+    }
+
+    # Get the file extension
+    file_ext <- tools::file_ext(survey)
+
+    # Process based on file type
+    if (file_ext == "qmd") {
+        temp_html <- quarto_render_temp(survey)
+        html_content <- rvest::read_html(temp_html)
+        unlink(temp_html)
+    } else if (file_ext == "html") {
+        html_content <- rvest::read_html(survey)
+    } else {
+        stop("Invalid file type. Please provide either a .qmd or .html file.")
+    }
 
     # Extract all divs with class "sd-page"
     pages <- html_content |>

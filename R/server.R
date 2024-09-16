@@ -277,13 +277,38 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Handle navigation
     shiny::observe({
-        lapply(page_ids, function(page_id) {
-            next_button_id <- make_next_button_id(page_id)
-            shiny::observeEvent(input[[next_button_id]], {
-                current_page_id(page_id)
+        lapply(2:length(page_structure), function(i) {
+            current_page <- page_ids[i-1]
+            next_page <- page_ids[i]
+            current_ts_id <- page_ts_ids[i-1]
+            next_ts_id <- page_ts_ids[i]
+            next_button_id <- make_next_button_id(next_page)
 
-                # Here, integrate with existing navigation logic if needed
-                # For example, update timestamps, check required questions, etc.
+            shiny::observeEvent(input[[next_button_id]], {
+                # Update next page based on skip logic
+                next_page <- handle_skip_logic(input, skip_if, skip_if_custom, current_page, next_page)
+
+                # Find the correct timestamp ID after skip logic
+                next_ts_id <- page_ts_ids[which(page_ids == next_page)]
+
+                # Update timestamp for the next page
+                timestamps[[next_ts_id]] <- get_utc_timestamp()
+
+                # Check if all required questions are answered
+                current_page_questions <- page_structure[[current_page]]$questions
+                all_required_answered <- check_all_required(
+                    current_page_questions, question_required, input, show_if, show_if_custom
+                )
+
+                if (all_required_answered) {
+                    # Update the current page ID
+                    current_page_id(next_page)
+
+                    # Update data after page change
+                    update_data()
+                } else {
+                    shiny::showNotification("Please answer all required questions before proceeding.", type = "error")
+                }
             })
         })
     })
