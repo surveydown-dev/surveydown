@@ -12,7 +12,6 @@
 #' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.
 #' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
-#' @param show_all_pages Logical. Whether to show all pages initially. Defaults to FALSE.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
 #'
 #' @return A list containing the configuration settings for the survey and rendered HTML content.
@@ -27,7 +26,6 @@ sd_config <- function(
         required_questions = NULL,
         all_questions_required = FALSE,
         start_page = NULL,
-        show_all_pages = FALSE,
         admin_page = FALSE
 ) {
     # Render the Quarto document to a temporary file
@@ -110,7 +108,6 @@ sd_config <- function(
         show_if_custom = show_if_custom,
         show_if = show_if,
         start_page = start_page,
-        show_all_pages = show_all_pages,
         admin_page = admin_page,
         pages = pages,
         head_content = head_content

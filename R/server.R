@@ -136,7 +136,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
     show_if        <- config$show_if
     show_if_custom <- config$show_if_custom
     start_page     <- config$start_page
-    show_all_pages <- config$show_all_pages
     admin_page     <- config$admin_page
     question_required <- config$question_required
 
