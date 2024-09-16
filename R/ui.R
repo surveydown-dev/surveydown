@@ -82,7 +82,7 @@ sd_ui <- function(
     )
 
     # Define progress bar height
-    progress_bar_height <- "16px"
+    progress_bar_height <- "10px"
 
     # Custom CSS (only for dynamic variables)
     custom_css_content <- sprintf("

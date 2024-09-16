@@ -46,7 +46,8 @@ body {
 .container-fluid .content {
   max-width: 800px;
   margin: 0 auto;
-  padding: 15px;
+  padding-top: 0;
+  padding-bottom: 5px;
 }
 
 /* Question border */
