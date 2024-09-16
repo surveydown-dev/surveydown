@@ -3,22 +3,70 @@
 
 /* Root variables */
 :root {
-  --progressbar-color: #2780E3;
+  /* Theme colors */
+  --cerulean-color: #2FA4E7;
+  --cosmo-color: #2780E3;
+  --cyborg-color: #2A9FD6;
+  --darkly-color: #375A7F;
+  --flatly-color: #18BC9C;
+  --journal-color: #EB6864;
+  --litera-color: #007BFF;
+  --lumen-color: #F08D49;
+  --lux-color: #343A40;
+  --materia-color: #2196F3;
+  --minty-color: #78C2AD;
+  --morph-color: #218C74;
+  --paper-color: #2196F3;
+  --pulse-color: #593196;
+  --quartz-color: #8C9EFF;
+  --readable-color: #3273DC;
+  --sandstone-color: #93C54B;
+  --simplex-color: #D9230F;
+  --sketchy-color: #333333;
+  --slate-color: #007AFF;
+  --spacelab-color: #3398DC;
+  --superhero-color: #DF691A;
+  --united-color: #E95420;
+  --vapor-color: #9B59B6;
+  --yeti-color: #008CBA;
+
+  /* Layout and theme variables */
+  --progressbar-color: var(--cosmo-color);
   --progressbar-position: top;
   --body-background-color: #f2f6f9;
   --progress-bar-height: 16px;
+  --body-padding-top: var(--progress-bar-height);
+
+  /* Typography */
   --body-font-family: 'Raleway', sans-serif;
   --heading-font-family: 'Raleway', sans-serif;
 }
 
-/* Body styles */
+/* Base styles */
 body {
-  padding-top: var(--body-padding-top, 0);
   background-color: var(--body-background-color);
   font-family: var(--body-font-family);
+  padding-top: var(--body-padding-top);
 }
 
-/* Progressbar */
+/* Typography */
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+  font-family: var(--heading-font-family);
+}
+
+p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
+  margin-bottom: 0.5rem;
+}
+
+/* Layout */
+.container-fluid .content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-top: 0;
+  padding-bottom: 5px;
+}
+
+/* Progress bar */
 #progressbar {
   position: fixed;
   left: 0;
@@ -40,17 +88,10 @@ body {
   width: 0%;
   height: 100%;
   background-color: var(--progressbar-color);
+  transition: width 0.5s ease;
 }
 
-/* Content container */
-.container-fluid .content {
-  max-width: 800px;
-  margin: 0 auto;
-  padding-top: 0;
-  padding-bottom: 5px;
-}
-
-/* Question border */
+/* Form elements */
 .form-group {
   border: 1px solid #ddd;
   border-radius: 5px;
@@ -62,27 +103,17 @@ body {
   margin-bottom: 1rem;
 }
 
-/* Text margins */
-p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
-  margin-bottom: 0.5rem;
-}
-
 .form-group > label.control-label {
   margin-top: 0;
   margin-bottom: 0.3rem;
 }
 
-p:last-child, .form-group:last-child {
-  margin-bottom: 0;
-}
-
-/* Question options */
 .radio {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
 
-/* Center-align radio and checkbox button groups */
+/* Button groups */
 .radio-group-buttons,
 .checkbox-group-buttons,
 .btn-group-container-sw {
@@ -91,7 +122,7 @@ p:last-child, .form-group:last-child {
   flex-wrap: wrap;
 }
 
-/* Heading styles */
-.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
-  font-family: var(--heading-font-family);
+/* Utility classes */
+p:last-child, .form-group:last-child {
+  margin-bottom: 0;
 }

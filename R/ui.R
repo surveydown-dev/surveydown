@@ -19,58 +19,25 @@ load_resources <- function(files, type = c("css", "js"), package = "surveydown")
 #' @param barcolor Color of the progress bar. Can be a hex color or 'theme' to use the theme's primary color.
 #' @param barposition Position of the progress bar. Can be 'top', 'bottom', or 'none'.
 #' @param theme The name of the Bootswatch theme to use.
-#' @param backgroundcolor Background color of the body.
+#' @param background Background color of the body.
 #' @param custom_css Path to a custom CSS file to override default styles.
 #'
 #' @return A Shiny UI object
 #' @export
 sd_ui <- function(
-        barcolor        = 'theme',
-        barposition     = 'top',
-        theme           = 'cosmo',
-        backgroundcolor = '#f2f6f9',
-        custom_css      = NULL
+        barcolor    = 'theme',
+        barposition = 'top',
+        theme       = 'cosmo',
+        background  = '#f2f6f9',
+        custom_css  = NULL
 ) {
-    # Define Bootswatch theme primary colors
-    theme_colors <- list(
-        cerulean  = "#2FA4E7",
-        cosmo     = "#2780E3",
-        cyborg    = "#2A9FD6",
-        darkly    = "#375A7F",
-        flatly    = "#18BC9C",
-        journal   = "#EB6864",
-        litera    = "#007BFF",
-        lumen     = "#F08D49",
-        lux       = "#343A40",
-        materia   = "#2196F3",
-        minty     = "#78C2AD",
-        morph     = "#218C74",
-        paper     = "#2196F3",
-        pulse     = "#593196",
-        quartz    = "#8C9EFF",
-        readable  = "#3273DC",
-        sandstone = "#93C54B",
-        simplex   = "#D9230F",
-        sketchy   = "#333333",
-        slate     = "#007AFF",
-        spacelab  = "#3398DC",
-        superhero = "#DF691A",
-        united    = "#E95420",
-        vapor     = "#9B59B6",
-        yeti      = "#008CBA"
-    )
-
     # Determine the progress bar color
-    if (barcolor == 'theme') {
-        color <- if (theme %in% names(theme_colors)) {
-            theme_colors[[theme]]
-        } else {
-            theme_colors[['cosmo']]
-        }
+    color <- if (barcolor == 'theme') {
+        sprintf("var(--%s-color)", tolower(theme))
     } else if (grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {
-        color <- barcolor
+        barcolor
     } else {
-        color <- theme_colors[['cosmo']]
+        "var(--cosmo-color)"
     }
 
     # Determine the progress bar position
@@ -95,7 +62,7 @@ sd_ui <- function(
         }
     ", color,
                                   position,
-                                  backgroundcolor,
+                                  background,
                                   progress_bar_height,
                                   ifelse(position == "top", progress_bar_height, "0"))
 
@@ -103,7 +70,7 @@ sd_ui <- function(
         theme = bslib::bs_theme(version = 5, bootswatch = theme),
         shinyjs::useShinyjs(),
 
-        # Include default CSS
+        # Include the surveydown.css file
         load_resources("surveydown.css", type = "css"),
 
         # Include dynamic styles
