@@ -48,8 +48,8 @@ sd_ui <- function(
         "top"
     )
 
-    # Create a custom CSS rule to set the theme color
-    custom_theme_css <- sprintf("
+    # Custom CSS rule
+    custom_css_rule <- sprintf("
         :root {
             --theme-color: %s;
         }
@@ -59,7 +59,7 @@ sd_ui <- function(
         theme = bslib::bs_theme(version = 5, bootswatch = theme),
         shinyjs::useShinyjs(),
         load_resources("surveydown.css", type = "css"),
-        shiny::tags$style(HTML(custom_theme_css)),
+        shiny::tags$style(HTML(custom_css_rule)),
         if (!is.null(custom_css)) {
             shiny::includeCSS(custom_css)
         },
