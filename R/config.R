@@ -107,7 +107,6 @@ sd_config <- function(
         paste(collapse = "\n")
 
     # Extract page and question structures
-    page_structure <- get_page_structure(html_content)
     question_structure <- get_question_structure(html_content)
 
     page_ids <- sapply(pages, function(p) p$id)
@@ -133,7 +132,6 @@ sd_config <- function(
 
     # Store all config settings
     config <- list(
-        page_structure = page_structure,
         question_structure = question_structure,
         page_ids = page_ids,
         question_ids = question_ids,
@@ -150,37 +148,6 @@ sd_config <- function(
     )
 
     return(config)
-}
-
-# Get page structure from HTML
-get_page_structure <- function(html_content) {
-
-    # Get all page nodes
-    page_nodes <- rvest::html_nodes(html_content, ".sd-page")
-    all_page_ids <- page_nodes |> rvest::html_attr("id")
-
-    # Initialize a named list to hold the results
-    page_structure <- list()
-
-    # Iterate over each page node to get the question_ids
-    for (i in seq_along(page_nodes)) {
-        page_id <- all_page_ids[i]
-        page_node <- page_nodes[i]
-
-        # Extract all question IDs within this page
-        question_ids <- page_node |>
-            rvest::html_nodes("[data-question-id]") |>
-            rvest::html_attr("data-question-id")
-
-        # Store the question IDs for this page in a named list
-        page_structure[[page_id]] <- list(
-            id = page_id,
-            questions = question_ids
-        )
-    }
-
-    attr(page_structure, "all_ids") <- all_page_ids
-    return(page_structure)
 }
 
 # Get page nodes from HTML

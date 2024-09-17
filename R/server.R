@@ -19,7 +19,6 @@
 #' @details
 #' The \code{config} list should include the following elements:
 #' \itemize{
-#'   \item \code{page_structure}: A list defining the structure of survey pages.
 #'   \item \code{page_ids}: A vector of page identifiers.
 #'   \item \code{question_ids}: A vector of question identifiers.
 #'   \item \code{show_if}: A data frame defining conditions for showing questions.
@@ -128,7 +127,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Create local objects from config file
     pages          <- config$pages
     head_content   <- config$head_content
-    page_structure <- config$page_structure
     page_ids       <- config$page_ids
     question_ids   <- config$question_ids
     skip_if        <- config$skip_if
@@ -293,10 +291,11 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
                 # Check if all required questions are answered
                 current_page <- get_current_page()
-                all_required_answered <- check_all_required(
-                    current_page$questions, current_page$required_questions,
-                    input, show_if, show_if_custom
-                )
+                # all_required_answered <- check_all_required(
+                #     current_page$questions, current_page$required_questions,
+                #     input, show_if, show_if_custom
+                # )
+                all_required_answered <- TRUE
 
                 if (all_required_answered) {
                     # Update the current page ID, then update the data
@@ -316,6 +315,88 @@ sd_server <- function(input, output, session, config, db = NULL) {
         })
     })
 
+}
+
+hide_show_if_questions <- function(show_if, show_if_custom) {
+
+  if (!is.null(show_if)) {
+    unique_targets <- unique(show_if$target)
+    for (target in unique_targets) {
+      shinyjs::runjs(sprintf("
+                $('#%s').closest('.question-container').hide();
+                $('#%s').hide();
+            ", target, target))
+    }
+  }
+
+  if (!is.null(show_if_custom)) {
+    lapply(show_if_custom, function(x) {
+      shinyjs::runjs(sprintf("
+                $('#%s').closest('.question-container').hide();
+                $('#%s').hide();
+            ", x$target, x$target))
+    })
+  }
+}
+
+# Handle basic show-if logic
+basic_show_if_logic <- function(input, show_if) {
+
+  # Group show_if rules by question_id and target
+  show_if_grouped <- split(show_if, list(show_if$question_id, show_if$target))
+
+  # Iterate over each group of show_if rules
+  for (group in show_if_grouped) {
+    question_id <- group$question_id[1]
+    target <- group$target[1]
+    question_values <- group$question_value
+
+    shiny::observeEvent(input[[question_id]], {
+      # Check if the condition is met to show/hide the question
+      val <- input[[question_id]]
+      if (!is.null(val) && val %in% question_values) {
+        shinyjs::runjs(sprintf("
+                    $('#%s').closest('.question-container').show();
+                    $('#%s').show();
+                ", target, target))
+      } else {
+        shinyjs::runjs(sprintf("
+                    $('#%s').closest('.question-container').hide();
+                    $('#%s').hide();
+                ", target, target))
+      }
+    }, ignoreNULL = TRUE)
+  }
+}
+
+# Handle custom show-if logic
+custom_show_if_logic <- function(input, show_if_custom) {
+
+  # Create a reactive expression for each condition
+  condition_reactives <- lapply(show_if_custom, function(rule) {
+    shiny::reactive({ rule$condition(input) })
+  })
+
+  # Create a single observer to handle all conditions
+  shiny::observe({
+    for (i in seq_along(show_if_custom)) {
+      condition_result <- condition_reactives[[i]]()
+      condition_met <- isTRUE(condition_result)
+      target <- show_if_custom[[i]]$target
+
+      if (condition_met) {
+        shinyjs::runjs(sprintf("
+                    $('#%s').closest('.question-container').show();
+                    $('#%s').show();
+                ", target, target))
+      } else {
+        shinyjs::runjs(sprintf("
+                    $('#%s').closest('.question-container').hide();
+                    $('#%s').hide();
+                ", target, target))
+      }
+    }
+  })
 }
 
 # Function to get all stored values
