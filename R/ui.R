@@ -31,6 +31,9 @@ sd_ui <- function(
         background  = '#f2f6f9',
         custom_css  = NULL
 ) {
+    # Convert theme to lowercase if it's not NULL
+    theme <- if (!is.null(theme)) tolower(theme) else NULL
+
     # Determine the progress bar color
     color <- if (barcolor == 'theme') {
         if (is.null(theme)) {

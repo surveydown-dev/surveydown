@@ -1,18 +1,18 @@
-/* Import Raleway font */
-@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800&display=swap');
-
-/* Import fonts for Bootswatch themes */
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=News+Cycle:wght@400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Neucha&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+/* Import Fonts */
+@import url('https://fonts.googleapis.com/css2?\
+family=DM+Sans:ital,wght@0,400;0,700;1,400;1,700&\
+family=Inter:wght@400;700&\
+family=Lato:ital,wght@0,400;0,700;1,400;1,700&\
+family=Montserrat:ital,wght@0,400;0,700;1,400;1,700&\
+family=Neucha&\
+family=News+Cycle:wght@400;700&\
+family=Nunito+Sans:ital,wght@0,400;0,700;1,400;1,700&\
+family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&\
+family=Raleway:ital,wght@0,400;0,800;1,400;1,800&\
+family=Roboto:ital,wght@0,400;0,700;1,400;1,700&\
+family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400;1,700&\
+family=Ubuntu:ital,wght@0,400;0,700;1,400;1,700&\
+display=swap');
 
 /* Root variables */
 :root {
@@ -44,31 +44,31 @@
   --yeti-color:      #008CBA;
 
   /* Font families for Bootswatch themes */
+  --default-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --cerulean-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --cosmo-font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --cyborg-font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --darkly-font-family: Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --flatly-font-family: Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --journal-font-family: "News Cycle", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --litera-font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --lumen-font-family: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --lux-font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --materia-font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --minty-font-family: Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --morph-font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --paper-font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --pulse-font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --quartz-font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --readable-font-family: Raleway, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --sandstone-font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --simplex-font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --sketchy-font-family: Neucha, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --slate-font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --spacelab-font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --superhero-font-family: Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --united-font-family: Ubuntu, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --vapor-font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --yeti-font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --cosmo-font-family: "Source Sans Pro", var(--default-font-family);
+  --cyborg-font-family: Roboto, var(--default-font-family);
+  --darkly-font-family: Lato, var(--default-font-family);
+  --flatly-font-family: Lato, var(--default-font-family);
+  --journal-font-family: "News Cycle", var(--default-font-family);
+  --litera-font-family: Roboto, var(--default-font-family);
+  --lumen-font-family: "Source Sans Pro", var(--default-font-family);
+  --lux-font-family: "Nunito Sans", var(--default-font-family);
+  --materia-font-family: Roboto, var(--default-font-family);
+  --minty-font-family: Montserrat, var(--default-font-family);
+  --morph-font-family: Inter, var(--default-font-family);
+  --pulse-font-family: Roboto, var(--default-font-family);
+  --quartz-font-family: "DM Sans", var(--default-font-family);
+  --readable-font-family: Raleway, var(--default-font-family);
+  --sandstone-font-family: Roboto, var(--default-font-family);
+  --simplex-font-family: "Open Sans", var(--default-font-family);
+  --sketchy-font-family: Neucha, var(--default-font-family);
+  --slate-font-family: Roboto, var(--default-font-family);
+  --spacelab-font-family: "Open Sans", var(--default-font-family);
+  --superhero-font-family: Lato, var(--default-font-family);
+  --united-font-family: Ubuntu, var(--default-font-family);
+  --vapor-font-family: "Open Sans", var(--default-font-family);
+  --yeti-font-family: "Open Sans", var(--default-font-family);
 
   /* Layout and theme variables */
   --theme-color: inherit;
@@ -92,9 +92,11 @@ body {
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
   font-family: var(--heading-font-family);
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
 }
 
-p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
+p, .form-group, .control-label {
   margin-bottom: 0.5rem;
 }
 
