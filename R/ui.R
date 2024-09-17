@@ -48,17 +48,12 @@ sd_ui <- function(
         "top"
     )
 
-    # Define progress bar height
-
-
-    # Custom CSS (only for dynamic variables)
-    custom_css_content <- sprintf("
+    # Create a custom CSS rule to set the theme color
+    custom_theme_css <- sprintf("
         :root {
-            --progressbar-color: %s;
-            --progressbar-position: %s;
-            --body-background-color: %s;
+            --theme-color: %s;
         }
-    ", color, position, background)
+    ", color)
 
     shiny::fluidPage(
         theme = bslib::bs_theme(version = 5, bootswatch = theme),
@@ -67,8 +62,8 @@ sd_ui <- function(
         # Include the surveydown.css file
         load_resources("surveydown.css", type = "css"),
 
-        # Include dynamic styles
-        shiny::tags$style(HTML(custom_css_content)),
+        # Include custom theme CSS
+        shiny::tags$style(HTML(custom_theme_css)),
 
         # Include custom CSS file if provided
         if (!is.null(custom_css)) {

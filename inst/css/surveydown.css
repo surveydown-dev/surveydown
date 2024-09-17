@@ -1,4 +1,4 @@
-/* Raleway font import */
+/* Import Raleway font */
 @import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800&display=swap');
 
 /* Root variables */
@@ -31,11 +31,10 @@
   --yeti-color:      #008CBA;
 
   /* Layout and theme variables */
-  --progressbar-color: var(--cosmo-color);
+  --theme-color: inherit;
   --progressbar-position: top;
   --body-background-color: #f2f6f9;
   --progress-bar-height: 10px;
-  --body-padding-top: var(--progress-bar-height);
 
   /* Typography */
   --body-font-family: 'Raleway', sans-serif;
@@ -46,11 +45,12 @@
 body {
   background-color: var(--body-background-color);
   font-family: var(--body-font-family);
-  padding-top: var(--body-padding-top);
+  padding-top: var(--progress-bar-height);
 }
 
 /* Typography */
-.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
   font-family: var(--heading-font-family);
 }
 
@@ -58,17 +58,11 @@ p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
   margin-bottom: 0.5rem;
 }
 
-/* Question and option styles */
-.control-label, .radio label, .checkbox label {
-  font-size: 1.1em;
-}
-
 /* Layout */
 .container-fluid .content {
   max-width: 800px;
   margin: 0 auto;
-  padding-top: 0;
-  padding-bottom: 5px;
+  padding: 0 0 5px;
 }
 
 /* Progress bar */
@@ -92,7 +86,7 @@ p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
 #progressbar > div {
   width: 0%;
   height: 100%;
-  background-color: var(--progressbar-color);
+  background-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
   transition: width 0.5s ease;
 }
 
@@ -104,6 +98,11 @@ p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
   background-color: #f9f9f9;
 }
 
+.form-control:focus {
+  border-color: var(--theme-color);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-color) 25%, transparent);
+}
+
 .question-container {
   margin-bottom: 1rem;
 }
@@ -113,9 +112,12 @@ p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
   margin-bottom: 0.3rem;
 }
 
+.control-label, .radio label, .checkbox label {
+  font-size: 1.1em;
+}
+
 .radio {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
+  margin: 0.25rem 0;
 }
 
 /* Radio button styles */
@@ -127,7 +129,11 @@ p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
 .radio input[type="radio"] {
   position: absolute;
   left: 0;
+}
 
+.radio input[type="radio"]:checked {
+  border-color: var(--theme-color);
+  background-color: var(--theme-color);
 }
 
 /* Button groups */
