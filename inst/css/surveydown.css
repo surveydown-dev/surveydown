@@ -145,6 +145,20 @@ p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
   flex-wrap: wrap;
 }
 
+/* Next button styling */
+.action-button {
+  background-color: color-mix(in srgb, var(--theme-color) 70%, transparent);
+  border-color: var(--theme-color);
+  color: #ffffff;
+  transition: background-color 0.3s ease;
+}
+
+.action-button:hover, .action-button:focus {
+  background-color: var(--theme-color);
+  border-color: var(--theme-color);
+  color: #ffffff;
+}
+
 /* Utility classes */
 p:last-child, .form-group:last-child {
   margin-bottom: 0;

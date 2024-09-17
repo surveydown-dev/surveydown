@@ -58,22 +58,16 @@ sd_ui <- function(
     shiny::fluidPage(
         theme = bslib::bs_theme(version = 5, bootswatch = theme),
         shinyjs::useShinyjs(),
-
-        # Include the surveydown.css file
         load_resources("surveydown.css", type = "css"),
-
-        # Include custom theme CSS
         shiny::tags$style(HTML(custom_theme_css)),
-
-        # Include custom CSS file if provided
         if (!is.null(custom_css)) {
             shiny::includeCSS(custom_css)
         },
-
-        # Include JavaScript files
-        load_resources(c("keep_alive.js", "page_nav.js", "required_questions.js", "update_progress.js"), type = "js"),
-
-        # Progress bar HTML (if not 'none')
+        load_resources(c("keep_alive.js",
+                         "page_nav.js",
+                         "required_questions.js",
+                         "update_progress.js"),
+                       type = "js"),
         if (position != "none") {
             shiny::tags$div(
                 id = "progressbar",
@@ -81,7 +75,6 @@ sd_ui <- function(
                 shiny::tags$div(id = "progress")
             )
         },
-
         shiny::tags$div(
             class = "content",
             shiny::uiOutput("main")
