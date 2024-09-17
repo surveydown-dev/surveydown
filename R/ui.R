@@ -27,13 +27,17 @@ load_resources <- function(files, type = c("css", "js"), package = "surveydown")
 sd_ui <- function(
         barcolor    = 'theme',
         barposition = 'top',
-        theme       = 'cosmo',
+        theme       = NULL,
         background  = '#f2f6f9',
         custom_css  = NULL
 ) {
     # Determine the progress bar color
     color <- if (barcolor == 'theme') {
-        sprintf("var(--%s-color)", tolower(theme))
+        if (is.null(theme)) {
+            "var(--cosmo-color)"  # Use cosmo color as default
+        } else {
+            sprintf("var(--%s-color)", tolower(theme))
+        }
     } else if (grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {
         barcolor
     } else {
@@ -48,15 +52,26 @@ sd_ui <- function(
         "top"
     )
 
+    # Determine the font family based on the theme
+    body_font_family <- if (is.null(theme)) {
+        "'Raleway', sans-serif"
+    } else {
+        sprintf("var(--%s-font-family)", tolower(theme))
+    }
+
+    heading_font_family <- body_font_family
+
     # Custom CSS rule
     custom_css_rule <- sprintf("
         :root {
             --theme-color: %s;
+            --body-font-family: %s;
+            --heading-font-family: %s;
         }
-    ", color)
+    ", color, body_font_family, heading_font_family)
 
     shiny::fluidPage(
-        theme = bslib::bs_theme(version = 5, bootswatch = theme),
+        theme = if (!is.null(theme)) bslib::bs_theme(version = 5, bootswatch = theme) else bslib::bs_theme(version = 5),
         shinyjs::useShinyjs(),
         load_resources("surveydown.css", type = "css"),
         shiny::tags$style(HTML(custom_css_rule)),
