@@ -46,6 +46,5 @@ reference:
 - title: "Version Management"
   desc: "Functions for managing package and extension versions"
   contents:
-  - sd_check_versions
-  - sd_update_extension
-  - sd_update_surveydown
+  - sd_version
+  - sd_update

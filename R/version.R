@@ -1,10 +1,9 @@
-#' Update Surveydown Package and Extension
+#' Update Surveydown Package
 #'
-#' This function checks and updates both the surveydown R package and its
-#' associated Quarto extension. It ensures that both components are up-to-date
-#' and their versions match.
+#' This function checks and updates surveydown.
+#' It ensures that the package is up-to-date.
 #'
-#' @param force Logical; if TRUE, forces an update regardless of current versions.
+#' @param force Logical; if TRUE, forces an update regardless of current version.
 #' Defaults to FALSE.
 #'
 #' @return No return value, called for side effects.
@@ -12,94 +11,76 @@
 #'
 #' @examples
 #' \dontrun{
-#' sd_update_surveydown()
-#' sd_update_surveydown(force = TRUE)
+#' sd_update()
+#' sd_update(force = TRUE)
 #' }
-sd_update_surveydown <- function(force = FALSE) {
-    # Check R package version
-    pkg_version <- utils::packageVersion("surveydown")
+sd_update <- function(force = FALSE) {
+    # Check surveydown version
+    surveydown_version <- utils::packageVersion("surveydown")
 
-    # Check Quarto extension version
-    ext_version <- get_extension_version()
+    # Check latest version
+    latest_version <- get_latest_version("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
 
-    if (is.null(ext_version)) {
-        message("Quarto extension not found. Installing both package and extension.")
-        force <- TRUE
-    } else if (pkg_version != ext_version) {
-        message("Version mismatch detected. Updating both package and extension.")
-        force <- TRUE
+    if (is.null(latest_version)) {
+        message("Unable to fetch the latest version. Please check your internet connection.")
+        return(invisible())
     }
 
-    if (force) {
-        message("Updating surveydown R package and all dependencies...")
+    if (force || surveydown_version < latest_version) {
+        message("Updating surveydown and all dependencies...")
         remotes::install_github(
             "surveydown-dev/surveydown",
             force = TRUE,
             dependencies = TRUE,
             upgrade = "always"
         )
-
-        message("Updating surveydown Quarto extension...")
-        surveydown::sd_update_extension()
-
         message("Update complete.")
     } else {
-        message("Both R package and Quarto extension are up-to-date.")
+        message("surveydown is up-to-date.")
     }
 }
 
-#' Check Surveydown Versions
+#' Check Surveydown Version
 #'
-#' This function checks if the local surveydown R package and Quarto extension
-#' are up-to-date with the latest online version. It compares local versions
-#' with the latest versions available on GitHub and provides information about
-#' whether updates are needed.
+#' This function checks if the local surveydown package is up-to-date with
+#' the latest online version. It compares the local version with the latest
+#' version available on GitHub and provides information about whether an update
+#' is needed.
 #'
 #' @return No return value, called for side effects (prints version information
 #' and update status to the console).
 #' @export
 #'
 #' @examples
-#' sd_check_versions()
-sd_check_versions <- function() {
-    # Get local versions
-    local_pkg_version <- utils::packageVersion("surveydown")
-    local_ext_version <- get_extension_version()
+#' sd_version()
+sd_version <- function() {
+    # Get local version
+    local_surveydown_version <- utils::packageVersion("surveydown")
 
-    # Get latest online versions
-    latest_pkg_version <- get_latest_version_from_url("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
-    latest_ext_version <- get_latest_version_from_url("https://raw.githubusercontent.com/surveydown-dev/surveydown-ext/main/_extensions/surveydown-dev/surveydown/_extension.yml", "version: ")
+    # Get latest online version
+    latest_surveydown_version <- get_latest_version("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
 
     # Display version information
-    message("surveydown R package (local): ", local_pkg_version)
-    message("surveydown R package (latest): ",
-            if(is.null(latest_pkg_version)) "Unable to fetch" else latest_pkg_version)
+    message("surveydown (local): ", local_surveydown_version)
+    message("surveydown (latest): ",
+            if(is.null(latest_surveydown_version)) "Unable to fetch" else latest_surveydown_version)
 
-    if (is.null(local_ext_version)) {
-        message("surveydown Quarto ext (local): Not found")
-    } else {
-        message("surveydown Quarto ext (local): ", local_ext_version)
-    }
-    message("surveydown Quarto ext (latest): ",
-            if(is.null(latest_ext_version)) "Unable to fetch" else latest_ext_version)
-
-    # Check if updates are needed
-    if (is.null(latest_pkg_version) || is.null(latest_ext_version)) {
-        message("\nUnable to determine if updates are available.")
+    # Check if update is needed
+    if (is.null(latest_surveydown_version)) {
+        message("\nUnable to determine if an update is available.")
         message("Please ensure you have an active internet connection and try again later.")
     } else {
-        pkg_needs_update <- local_pkg_version < latest_pkg_version
-        ext_needs_update <- is.null(local_ext_version) || local_ext_version < latest_ext_version
+        pkg_needs_update <- local_surveydown_version < latest_surveydown_version
 
-        if (pkg_needs_update || ext_needs_update) {
-            message("\nUpdates are available. To update both the package and extension to the latest version, run: surveydown::sd_update_surveydown()")
+        if (pkg_needs_update) {
+            message("\nAn update is available. To update surveydown to the latest version, run: surveydown::sd_update()")
         } else {
-            message("\nBoth the R package and Quarto extension are up to date.")
+            message("\nsurveydown is up to date.")
         }
     }
 }
 
-get_latest_version_from_url <- function(url, pattern) {
+get_latest_version <- function(url, pattern) {
     tryCatch({
         content <- readLines(url)
         version_line <- grep(pattern, content, value = TRUE)
@@ -114,13 +95,4 @@ get_latest_version_from_url <- function(url, pattern) {
         message("Error occurred while fetching version from ", url, ": ", e$message)
         return(NULL)
     })
-}
-
-get_extension_version <- function(path = getwd()) {
-    ext_yaml <- file.path(path, "_extensions", "surveydown-dev", "surveydown", "_extension.yml")
-    if (!file.exists(ext_yaml)) {
-        return(NULL)
-    }
-    yaml_content <- yaml::read_yaml(ext_yaml)
-    return(yaml_content$version)
 }

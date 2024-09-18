@@ -129,3 +129,102 @@ quarto_render_temp <- function(input) {
     # Return the path to the temporary file
     return(temp_output_path)
 }
+
+#' Create a new survey template
+#'
+#' This function creates a new survey template by copying files from the package's
+#' template directory to a specified path. It handles file conflicts and provides
+#' appropriate warnings and feedback.
+#'
+#' @param path A character string specifying the directory where the survey template
+#'   should be created. Defaults to the current working directory.
+#'
+#' @return Invisible NULL. The function is called for its side effects of creating
+#'   files and providing user feedback.
+#'
+#' @details
+#' The function performs the following steps:
+#' \itemize{
+#'   \item If the specified path is the current working directory, it asks for user confirmation.
+#'   \item Creates the target directory if it doesn't exist.
+#'   \item Copies all files from the package's template directory to the target path.
+#'   \item Skips existing files and provides warnings for each skipped file.
+#'   \item Handles .Rproj files specially, skipping if any .Rproj file already exists in the target directory.
+#'   \item Provides feedback on whether files were copied or if all files already existed.
+#' }
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Create a survey template in the current working directory
+#' sd_create_survey()
+#'
+#' # Create a survey template in a specific directory
+#' sd_create_survey("path/to/my/survey")
+#' }
+sd_create_survey <- function(path = getwd()) {
+    # Check if using current directory and confirm with user
+    if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
+        stop("Operation aborted by the user.")
+    }
+
+    # Create the directory if it doesn't exist
+    dir.create(path, recursive = TRUE, showWarnings = FALSE)
+
+    # Get the path to the template folder and list files
+    template_path <- system.file("template", package = "surveydown")
+    template_files <- list.files(template_path, full.names = TRUE)
+
+    # Copy files, checking for conflicts
+    files_copied <- sapply(template_files, function(file) {
+        file_name <- basename(file)
+        target_file <- file.path(path, file_name)
+
+        if (file_name == "template.Rproj" && length(list.files(path, pattern = "\\.Rproj$"))) {
+            warning("Skipping the .Rproj since there is one.", call. = FALSE, immediate. = TRUE)
+            return(FALSE)
+        } else if (file.exists(target_file)) {
+            warning(paste("Skipping", file_name, "since it exists."), call. = FALSE, immediate. = TRUE)
+            return(FALSE)
+        } else {
+            file.copy(from = file, to = target_file, overwrite = FALSE)
+            return(TRUE)
+        }
+    })
+
+    # Provide feedback to the user
+    if (any(files_copied)) {
+        usethis::ui_done(paste("Survey template created at", path))
+    } else {
+        usethis::ui_done("Since all files exist, no file is added.")
+    }
+}
+
+#' Deploy a Surveydown App
+#'
+#' This function is a wrapper for `rsconnect::deployApp()` specifically designed
+#' for deploying Surveydown applications. It simplifies the deployment process
+#' by allowing you to specify just the app name.
+#'
+#' @param name A character string specifying the name of the app. Default is "survey".
+#'
+#' @return This function doesn't return a value; it deploys the app to Shiny Server.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Deploy with default name "survey"
+#' sd_deploy()
+#'
+#' # Deploy with a custom name
+#' sd_deploy("my_custom_survey")
+#' }
+#'
+#' @seealso \code{\link[rsconnect]{deployApp}}
+#'
+#' @importFrom rsconnect deployApp
+sd_deploy <- function(name = "survey") {
+    rsconnect::deployApp(appName = name)
+}
