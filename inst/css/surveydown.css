@@ -84,14 +84,14 @@ display=swap');
 /* Base styles */
 body {
   background-color: var(--body-background-color);
-  font-family: var(--body-font-family);
+  font-family: var(--theme-font, var(--body-font-family));
   padding-top: var(--progress-bar-height);
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
-  font-family: var(--heading-font-family);
+  font-family: var(--theme-font, var(--heading-font-family));
   margin-top: 0.5rem !important;
   margin-bottom: 0.5rem !important;
 }
@@ -187,6 +187,15 @@ p, .form-group, .control-label {
   flex-wrap: wrap;
 }
 
+/* Button styling */
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:focus {
+  background-color: var(--theme-color);
+  border-color: var(--theme-color);
+}
+
 /* Next button styling */
 .action-button {
   background-color: color-mix(in srgb, var(--theme-color) 70%, transparent);
@@ -199,6 +208,15 @@ p, .form-group, .control-label {
   background-color: var(--theme-color);
   border-color: var(--theme-color);
   color: #ffffff;
+}
+
+/* Link styling */
+a {
+  color: var(--theme-color);
+}
+
+a:hover {
+  color: color-mix(in srgb, var(--theme-color) 80%, black);
 }
 
 /* Utility classes */

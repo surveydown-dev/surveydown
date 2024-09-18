@@ -75,33 +75,12 @@ sd_ui <- function(
 
     # Custom CSS rule
     custom_css_rule <- sprintf("
-        :root {
-            --theme-color: %s;
-            --body-font-family: %s;
-            --heading-font-family: %s;
-        }
-        body {
-            font-family: var(--body-font-family);
-        }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: var(--heading-font-family);
-        }
-        .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:focus {
-            background-color: var(--%s-color);
-            border-color: var(--%s-color);
-        }
-        .form-control:focus {
-            border-color: var(--%s-color);
-            box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--%s-color) 25%%, transparent);
-        }
-        a {
-            color: var(--%s-color);
-        }
-        a:hover {
-            color: color-mix(in srgb, var(--%s-color) 80%%, black);
-        }
-    ", progress_color, body_font_family, heading_font_family,
-                               color_source, color_source, color_source, color_source, color_source, color_source)
+    :root {
+        --theme-color: var(--%s-color);
+        --theme-font: var(--%s-font-family);
+        --body-background-color: %s;
+    }
+", color_source, font_source, background)
 
     shiny::fluidPage(
         theme = if (!is.null(theme)) bslib::bs_theme(version = 5, bootswatch = theme) else bslib::bs_theme(version = 5),
