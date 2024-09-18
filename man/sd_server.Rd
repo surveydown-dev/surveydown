@@ -29,7 +29,6 @@ page navigation, database updates for survey responses, and admin functionality.
 \details{
 The \code{config} list should include the following elements:
 \itemize{
-\item \code{page_structure}: A list defining the structure of survey pages.
 \item \code{page_ids}: A vector of page identifiers.
 \item \code{question_ids}: A vector of question identifiers.
 \item \code{show_if}: A data frame defining conditions for showing questions.

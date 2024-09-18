@@ -40,13 +40,13 @@ Imports:
     quarto,
     remotes,
     RPostgres,
+    rsconnect,
     rvest,
     shiny,
     shinyjs,
     shinyWidgets,
     usethis,
     utils,
-    xml2,
-    yaml
+    xml2
 URL: https://github.com/surveydown-dev/surveydown
 BugReports: https://github.com/surveydown-dev/surveydown/issues

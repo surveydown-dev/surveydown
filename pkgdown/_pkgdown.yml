@@ -17,34 +17,42 @@ template:
       alt: "Logo for the surveydown package"
 
 reference:
-- title: Survey Setup
-- subtitle: Functions for setting up and creating surveys
+- title: Survey Config
+  contents:
+  - sd_config
+
+- title: Survey Data
+  contents:
+  - sd_database
+  - sd_get_data
+
+- title: Server
+  contents:
+  - sd_server
+  - sd_get_data
+  - sd_set_password
+  - sd_store_value
+  - sd_copy_value
+
+- title: Survey UI
+  contents:
+  - sd_ui
+  - sd_question
+  - sd_next
+  - sd_close
+  - sd_redirect
+  - sd_get_url_pars
+  - sd_display_question
+  - sd_display_value
+  - sd_output
+
+- title: Utilities
   contents:
   - sd_setup
   - sd_create_survey
-- title: "Survey Components"
-  desc: "Functions for defining survey questions, navigation, and storing values"
+  - sd_deploy
+
+- title: Version Control
   contents:
-  - sd_question
-  - sd_output
-  - sd_display_question
-  - sd_display_value
-  - sd_next
-  - sd_redirect
-  - sd_store_value
-  - sd_copy_value
-- title: "Configuration and Server"
-  desc: "Functions for configuring surveys and setting up the server"
-  contents:
-  - sd_config
-  - sd_database
-  - sd_get_data
-  - sd_get_url_pars
-  - sd_redirect
-  - sd_server
-  - sd_set_password
-- title: "Version Management"
-  desc: "Functions for managing package and extension versions"
-  contents:
-  - sd_version
   - sd_update
+  - sd_version

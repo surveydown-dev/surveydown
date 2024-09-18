@@ -1,6 +1,11 @@
 # surveydown (development version)
 
-
+- Removed the quarto extension.
+- `sd_create_survey()` changed to sourcing template directly from the package.
+- `sd_deploy()` as a wrapper function of `rsconnect::deployApp()` to deploy the survey.
+- `sd_update()` as a replacement of `sd_update_surveydown()` to update the package.
+- `sd_version()` as a replacement of `sd_check_versions()` to check for the current verion and the latest version.
+- `sd_close()` function to create a close button for the survey.
 
 # surveydown 0.2.4
 

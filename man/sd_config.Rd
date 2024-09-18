@@ -5,7 +5,7 @@
 \title{Configuration Function for surveydown Surveys}
 \usage{
 sd_config(
-  survey_qmd = "survey.qmd",
+  survey = "survey.qmd",
   skip_if = NULL,
   skip_if_custom = NULL,
   show_if = NULL,
@@ -13,12 +13,11 @@ sd_config(
   required_questions = NULL,
   all_questions_required = FALSE,
   start_page = NULL,
-  show_all_pages = FALSE,
   admin_page = FALSE
 )
 }
 \arguments{
-\item{survey_qmd}{Character string. The path to the survey .qmd file.}
+\item{survey}{Character string. The path to the survey .qmd file or .html file. If .qmd, the file will be rendered into a .html.}
 
 \item{skip_if}{A list of conditions under which certain pages should be skipped. Defaults to NULL.}
 
@@ -33,8 +32,6 @@ sd_config(
 \item{all_questions_required}{Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.}
 
 \item{start_page}{Character string. The ID of the page to start on. Defaults to NULL.}
-
-\item{show_all_pages}{Logical. Whether to show all pages initially. Defaults to FALSE.}
 
 \item{admin_page}{Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.}
 }
