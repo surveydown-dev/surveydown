@@ -33,72 +33,43 @@ sd_ui <- function(
         background  = '#f2f6f9',
         custom_css  = NULL
 ) {
-    # Convert theme, theme_color, and theme_font to lowercase if they're not NULL
-    theme <- if (!is.null(theme)) tolower(theme) else NULL
-    theme_color <- if (!is.null(theme_color)) tolower(theme_color) else NULL
-    theme_font <- if (!is.null(theme_font)) tolower(theme_font) else NULL
+    # Helper function to convert to lowercase if not NULL
+    to_lower <- function(x) if (!is.null(x)) tolower(x) else NULL
 
-    # Determine the color theme to use (theme_color takes precedence over theme)
-    color_source <- ifelse(!is.null(theme_color),
-                           theme_color,
-                           ifelse(!is.null(theme),
-                                  theme,
-                                  "cosmo"))
+    # Convert inputs to lowercase
+    theme       <- to_lower(theme)
+    theme_color <- to_lower(theme_color)
+    theme_font  <- to_lower(theme_font)
 
-    # Determine the font theme to use (theme_font takes precedence over theme)
-    font_source <- ifelse(!is.null(theme_font),
-                          theme_font,
-                          ifelse(!is.null(theme),
-                                 theme,
-                                 "raleway"))
+    # Determine color and font sources
+    color_source <- ifelse(!is.null(theme_color), theme_color,
+                           ifelse(!is.null(theme), theme, "cosmo"))
+    font_source  <- ifelse(!is.null(theme_font), theme_font,
+                           ifelse(!is.null(theme), theme, "raleway"))
 
-    # Determine the progress bar color
-    progress_color <- if (barcolor == 'theme') {
-        sprintf("var(--%s-color)", color_source)
-    } else if (grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {
-        barcolor
-    } else {
-        sprintf("var(--%s-color)", color_source)
-    }
-
-    # Determine the progress bar position
-    position <- switch(
-        barposition,
-        "bottom" = "bottom",
-        "none" = "none",
-        "top"
-    )
-
-    # Determine the font family
-    body_font_family <- sprintf("var(--%s-font-family)", font_source)
-    heading_font_family <- body_font_family
+    # Determine progress bar color
+    progress_color <- if (barcolor == 'theme' || !grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {sprintf("var(--%s-color)", color_source)} else {barcolor}
 
     # Custom CSS rule
     custom_css_rule <- sprintf("
-    :root {
-        --theme-color: var(--%s-color);
-        --theme-font: var(--%s-font-family);
-        --body-background-color: %s;
-    }
-", color_source, font_source, background)
+        :root {
+            --theme-color: %s;
+            --theme-font: var(--%s-font-family);
+            --body-background-color: %s;
+        }
+    ", progress_color, font_source, background)
 
     shiny::fluidPage(
-        theme = if (!is.null(theme)) bslib::bs_theme(version = 5, bootswatch = theme) else bslib::bs_theme(version = 5),
+        theme = bslib::bs_theme(version = 5, bootswatch = theme),
         shinyjs::useShinyjs(),
         load_resources("surveydown.css", type = "css"),
         shiny::tags$style(HTML(custom_css_rule)),
-        if (!is.null(custom_css)) {
-            shiny::includeCSS(custom_css)
-        },
-        load_resources(c("keep_alive.js",
-                         "page_nav.js",
-                         "required_questions.js",
-                         "update_progress.js"),
-                       type = "js"),
-        if (position != "none") {
+        if (!is.null(custom_css)) shiny::includeCSS(custom_css),
+        load_resources(c("keep_alive.js", "page_nav.js", "required_questions.js", "update_progress.js"), type = "js"),
+        if (barposition != "none") {
             shiny::tags$div(
                 id = "progressbar",
-                class = position,
+                class = barposition,
                 shiny::tags$div(id = "progress")
             )
         },

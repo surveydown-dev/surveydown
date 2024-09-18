@@ -75,8 +75,6 @@ display=swap');
   --progressbar-position: top;
   --body-background-color: #f2f6f9;
   --progress-bar-height: 10px;
-
-  /* Typography */
   --body-font-family: 'Raleway', sans-serif;
   --heading-font-family: 'Raleway', sans-serif;
 }
@@ -158,11 +156,11 @@ p, .form-group, .control-label {
   font-size: 1.1em;
 }
 
+/* Radio and checkbox styles */
 .radio {
   margin: 0.25rem 0;
 }
 
-/* Radio button styles */
 .radio label {
   padding-left: 25px;
   position: relative;
@@ -191,23 +189,21 @@ p, .form-group, .control-label {
 .btn-primary,
 .btn-primary:hover,
 .btn-primary:active,
-.btn-primary:focus {
+.btn-primary:focus,
+.action-button {
   background-color: var(--theme-color);
   border-color: var(--theme-color);
+  color: #ffffff;
 }
 
-/* Next button styling */
 .action-button {
   background-color: color-mix(in srgb, var(--theme-color) 70%, transparent);
-  border-color: var(--theme-color);
-  color: #ffffff;
   transition: background-color 0.3s ease;
 }
 
-.action-button:hover, .action-button:focus {
+.action-button:hover,
+.action-button:focus {
   background-color: var(--theme-color);
-  border-color: var(--theme-color);
-  color: #ffffff;
 }
 
 /* Link styling */
@@ -220,6 +216,7 @@ a:hover {
 }
 
 /* Utility classes */
-p:last-child, .form-group:last-child {
+p:last-child,
+.form-group:last-child {
   margin-bottom: 0;
 }
