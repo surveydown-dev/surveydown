@@ -16,14 +16,23 @@ load_resources <- function(files, type = c("css", "js"), package = "surveydown")
 #' This function creates the user interface for a surveydown survey,
 #' including necessary CSS and JavaScript files, and applies custom styling.
 #'
-#' @param barcolor Color of the progress bar. Can be a hex color or 'theme' to use the theme's primary color.
-#' @param barposition Position of the progress bar. Can be 'top', 'bottom', or 'none'.
-#' @param theme The name of the Bootswatch theme to use.
-#' @param background Background color of the body.
-#' @param custom_css Path to a custom CSS file to override default styles.
+#' @param barcolor Color of the progress bar. Can be a hex color or 'theme' to use the theme's primary color. Default is 'theme'.
+#' @param barposition Position of the progress bar. Can be 'top', 'bottom', or 'none'. Default is 'top'.
+#' @param theme The name of the Bootswatch theme to use. Default is NULL.
+#' @param theme_color The color theme to use. If specified, overrides the color from the Bootswatch theme. Default is NULL.
+#' @param theme_font The font theme to use. If specified, overrides the font from the Bootswatch theme. Default is NULL.
+#' @param background Background color of the body. Default is '#f2f6f9'.
+#' @param custom_css Path to a custom CSS file to override default styles. Default is NULL.
 #'
 #' @return A Shiny UI object
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' sd_ui()
+#' sd_ui(barcolor = "#FF0000", barposition = "bottom", theme = "flatly")
+#' sd_ui(theme_color = "darkly", theme_font = "roboto", background = "#FFFFFF")
+#' }
 sd_ui <- function(
         barcolor    = 'theme',
         barposition = 'top',
@@ -425,6 +434,42 @@ sd_next <- function(next_page = NULL, label = "Next") {
 # Generate Next Button ID
 make_next_button_id <- function(next_page) {
     return(paste0("next-", next_page))
+}
+
+#' Create a 'Close' Button to Exit the Survey
+#'
+#' This function creates a 'Close' button that, when clicked, will close the current browser tab or window.
+#' The button can be activated by clicking or by pressing the Enter key.
+#'
+#' @param label Character string. The label of the 'Close' button. Defaults to "Close".
+#'
+#' @details The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
+#'   will attempt to close the current browser tab or window. Note that for security reasons,
+#'   some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
+#'   In such cases, the button will prompt the user to close the tab manually.
+#'
+#' @return A Shiny action button UI element with associated JavaScript for closing the page and Enter key functionality.
+#'
+#' @examples
+#' sd_close()
+#' sd_close("Exit Survey")
+#'
+#' @export
+sd_close <- function(label = "Close") {
+    button_id <- "close-survey-button"
+
+    shiny::tagList(
+        shiny::div(
+            style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
+            shiny::actionButton(
+                inputId = button_id,
+                label = label,
+                style = "display: block; margin: auto;",
+                onclick = "window.close(); if (!window.closed) { alert('Please close this tab manually to exit the survey.'); }"
+            )
+        ),
+        shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
+    )
 }
 
 #' Create a Redirect Element for Shiny Applications
