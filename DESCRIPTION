@@ -46,5 +46,5 @@ Imports:
     usethis,
     utils,
     yaml
-URL: https://github.com/surveydown-dev/surveydown
+url: https://pkg.surveydown.org/
 BugReports: https://github.com/surveydown-dev/surveydown/issues
