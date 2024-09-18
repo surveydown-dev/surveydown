@@ -519,24 +519,29 @@ countdown_js <- function(delay, redirect_js, countdown_id, unique_id) {
 #' @examples
 #' # Examples here
 sd_get_url_pars <- function(...) {
-    session <- shiny::getDefaultReactiveDomain()
+    shiny::reactive({
+        session <- shiny::getDefaultReactiveDomain()
 
-    if (is.null(session)) {
-        stop("sd_get_url_pars() must be called from within a Shiny reactive context")
-    }
+        if (is.null(session)) {
+            stop("sd_get_url_pars() must be called from within a Shiny reactive context")
+        }
 
-    full_url <- session$clientData$url_search
-    parsed_query <- shiny::parseQueryString(full_url)
+        full_url <- session$clientData$url_search
+        parsed_query <- shiny::parseQueryString(full_url)
 
-    requested_params <- list(...)
+        requested_params <- list(...)
 
-    if (length(requested_params) == 0) {
-        return(parsed_query)
-    }
+        if (length(requested_params) == 0) {
+            return(parsed_query)
+        }
 
-    requested_params <- unlist(requested_params)
-    filtered_query <- parsed_query[requested_params]
-    filtered_query[!sapply(filtered_query, is.null)]
+        requested_params <- unlist(requested_params)
+        filtered_query <- parsed_query[requested_params]
+        filtered_query[!sapply(filtered_query, is.null)]
+    })()
+    # Extra parentheses is added so that the reactive expression is evaluated
+    # when the function is called
+
 }
 
 #' Create a placeholder for a reactive survey question

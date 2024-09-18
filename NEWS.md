@@ -1,6 +1,6 @@
 # surveydown (development version)
 
-
+- Modified `sd_get_url_pars()` to include `reactive()` with the `()` at the end, so now the function returns an evaluated reactive expression.
 
 # surveydown 0.2.4
 
