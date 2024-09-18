@@ -28,23 +28,37 @@ sd_ui <- function(
         barcolor    = 'theme',
         barposition = 'top',
         theme       = NULL,
+        theme_color = NULL,
+        theme_font  = NULL,
         background  = '#f2f6f9',
         custom_css  = NULL
 ) {
-    # Convert theme to lowercase if it's not NULL
+    # Convert theme, theme_color, and theme_font to lowercase if they're not NULL
     theme <- if (!is.null(theme)) tolower(theme) else NULL
+    theme_color <- if (!is.null(theme_color)) tolower(theme_color) else NULL
+    theme_font <- if (!is.null(theme_font)) tolower(theme_font) else NULL
+
+    # Determine the color theme to use (theme_color takes precedence over theme)
+    color_source <- ifelse(!is.null(theme_color),
+                           theme_color,
+                           ifelse(!is.null(theme),
+                                  theme,
+                                  "cosmo"))
+
+    # Determine the font theme to use (theme_font takes precedence over theme)
+    font_source <- ifelse(!is.null(theme_font),
+                          theme_font,
+                          ifelse(!is.null(theme),
+                                 theme,
+                                 "raleway"))
 
     # Determine the progress bar color
-    color <- if (barcolor == 'theme') {
-        if (is.null(theme)) {
-            "var(--cosmo-color)"  # Use cosmo color as default
-        } else {
-            sprintf("var(--%s-color)", tolower(theme))
-        }
+    progress_color <- if (barcolor == 'theme') {
+        sprintf("var(--%s-color)", color_source)
     } else if (grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {
         barcolor
     } else {
-        "var(--cosmo-color)"
+        sprintf("var(--%s-color)", color_source)
     }
 
     # Determine the progress bar position
@@ -55,13 +69,8 @@ sd_ui <- function(
         "top"
     )
 
-    # Determine the font family based on the theme
-    body_font_family <- if (is.null(theme)) {
-        "'Raleway', sans-serif"
-    } else {
-        sprintf("var(--%s-font-family)", tolower(theme))
-    }
-
+    # Determine the font family
+    body_font_family <- sprintf("var(--%s-font-family)", font_source)
     heading_font_family <- body_font_family
 
     # Custom CSS rule
@@ -71,7 +80,28 @@ sd_ui <- function(
             --body-font-family: %s;
             --heading-font-family: %s;
         }
-    ", color, body_font_family, heading_font_family)
+        body {
+            font-family: var(--body-font-family);
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--heading-font-family);
+        }
+        .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:focus {
+            background-color: var(--%s-color);
+            border-color: var(--%s-color);
+        }
+        .form-control:focus {
+            border-color: var(--%s-color);
+            box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--%s-color) 25%%, transparent);
+        }
+        a {
+            color: var(--%s-color);
+        }
+        a:hover {
+            color: color-mix(in srgb, var(--%s-color) 80%%, black);
+        }
+    ", progress_color, body_font_family, heading_font_family,
+                               color_source, color_source, color_source, color_source, color_source, color_source)
 
     shiny::fluidPage(
         theme = if (!is.null(theme)) bslib::bs_theme(version = 5, bootswatch = theme) else bslib::bs_theme(version = 5),
