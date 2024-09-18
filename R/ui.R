@@ -44,28 +44,36 @@ sd_ui <- function(
     # Determine color and font sources
     color_source <- ifelse(!is.null(theme_color), theme_color,
                            ifelse(!is.null(theme), theme, "cosmo"))
-    font_source  <- ifelse(!is.null(theme_font), theme_font,
-                           ifelse(!is.null(theme), theme, "raleway"))
+    font_source  <- ifelse(!is.null(theme_font), get_theme_font(theme_font),
+                           ifelse(!is.null(theme), get_theme_font(theme), "Raleway"))
+    font_source_with_fallback <- paste(font_source, "sans-serif", sep = ", ")
 
     # Determine progress bar color
-    progress_color <- if (barcolor == 'theme' || !grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {sprintf("var(--%s-color)", color_source)} else {barcolor}
+    progress_color <- if (barcolor == 'theme' || !grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {
+        sprintf("var(--%s-color)", color_source)
+    } else {
+        barcolor
+    }
 
     # Custom CSS rule
     custom_css_rule <- sprintf("
-        :root {
-            --theme-color: %s;
-            --theme-font: var(--%s-font-family);
-            --body-background-color: %s;
-        }
-    ", progress_color, font_source, background)
+    :root {
+      --theme-color: %s;
+      --theme-font: %s;
+      --body-background-color: %s;
+    }
+    body {
+      font-family: var(--theme-font);
+    }
+  ", progress_color, font_source_with_fallback, background)
 
     shiny::fluidPage(
         theme = bslib::bs_theme(version = 5, bootswatch = theme),
         shinyjs::useShinyjs(),
         load_resources("surveydown.css", type = "css"),
+        load_resources("fonts.css", type = "css"),
         shiny::tags$style(HTML(custom_css_rule)),
         if (!is.null(custom_css)) shiny::includeCSS(custom_css),
-        load_resources(c("keep_alive.js", "page_nav.js", "required_questions.js", "update_progress.js"), type = "js"),
         if (barposition != "none") {
             shiny::tags$div(
                 id = "progressbar",
@@ -78,6 +86,41 @@ sd_ui <- function(
             shiny::uiOutput("main")
         )
     )
+}
+
+get_theme_font <- function(theme) {
+    theme_font_mapping <- list(
+        cerulean  = "Helvetica Neue, Helvetica, Arial",
+        cosmo     = "Source Sans Pro",
+        cyborg    = "Roboto",
+        darkly    = "Lato",
+        flatly    = "Lato",
+        journal   = "News Cycle",
+        litera    = "Roboto",
+        lumen     = "Source Sans Pro",
+        lux       = "Nunito Sans",
+        materia   = "Roboto",
+        minty     = "Montserrat",
+        morph     = "Inter",
+        pulse     = "Roboto",
+        quartz    = "DM Sans",
+        readable  = "Raleway",
+        sandstone = "Roboto",
+        simplex   = "Open Sans",
+        sketchy   = "Neucha",
+        slate     = "Roboto",
+        spacelab  = "Open Sans",
+        superhero = "Lato",
+        united    = "Ubuntu",
+        vapor     = "Open Sans",
+        yeti      = "Open Sans"
+    )
+
+    if (is.null(theme) || !theme %in% names(theme_font_mapping)) {
+        return("Raleway")
+    } else {
+        return(theme_font_mapping[[theme]])
+    }
 }
 
 #' Create a survey question

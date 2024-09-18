@@ -1,19 +1,3 @@
-/* Import Fonts */
-@import url('https://fonts.googleapis.com/css2?\
-family=DM+Sans:ital,wght@0,400;0,700;1,400;1,700&\
-family=Inter:wght@400;700&\
-family=Lato:ital,wght@0,400;0,700;1,400;1,700&\
-family=Montserrat:ital,wght@0,400;0,700;1,400;1,700&\
-family=Neucha&\
-family=News+Cycle:wght@400;700&\
-family=Nunito+Sans:ital,wght@0,400;0,700;1,400;1,700&\
-family=Open+Sans:ital,wght@0,400;0,700;1,400;1,700&\
-family=Raleway:ital,wght@0,400;0,800;1,400;1,800&\
-family=Roboto:ital,wght@0,400;0,700;1,400;1,700&\
-family=Source+Sans+Pro:ital,wght@0,400;0,700;1,400;1,700&\
-family=Ubuntu:ital,wght@0,400;0,700;1,400;1,700&\
-display=swap');
-
 /* Root variables */
 :root {
   /* Theme colors */
@@ -43,53 +27,22 @@ display=swap');
   --vapor-color:     #9B59B6;
   --yeti-color:      #008CBA;
 
-  /* Font families for Bootswatch themes */
-  --default-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --cerulean-font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --cosmo-font-family: "Source Sans Pro", var(--default-font-family);
-  --cyborg-font-family: Roboto, var(--default-font-family);
-  --darkly-font-family: Lato, var(--default-font-family);
-  --flatly-font-family: Lato, var(--default-font-family);
-  --journal-font-family: "News Cycle", var(--default-font-family);
-  --litera-font-family: Roboto, var(--default-font-family);
-  --lumen-font-family: "Source Sans Pro", var(--default-font-family);
-  --lux-font-family: "Nunito Sans", var(--default-font-family);
-  --materia-font-family: Roboto, var(--default-font-family);
-  --minty-font-family: Montserrat, var(--default-font-family);
-  --morph-font-family: Inter, var(--default-font-family);
-  --pulse-font-family: Roboto, var(--default-font-family);
-  --quartz-font-family: "DM Sans", var(--default-font-family);
-  --readable-font-family: Raleway, var(--default-font-family);
-  --sandstone-font-family: Roboto, var(--default-font-family);
-  --simplex-font-family: "Open Sans", var(--default-font-family);
-  --sketchy-font-family: Neucha, var(--default-font-family);
-  --slate-font-family: Roboto, var(--default-font-family);
-  --spacelab-font-family: "Open Sans", var(--default-font-family);
-  --superhero-font-family: Lato, var(--default-font-family);
-  --united-font-family: Ubuntu, var(--default-font-family);
-  --vapor-font-family: "Open Sans", var(--default-font-family);
-  --yeti-font-family: "Open Sans", var(--default-font-family);
-
   /* Layout and theme variables */
   --theme-color: inherit;
   --progressbar-position: top;
   --body-background-color: #f2f6f9;
   --progress-bar-height: 10px;
-  --body-font-family: 'Raleway', sans-serif;
-  --heading-font-family: 'Raleway', sans-serif;
 }
 
 /* Base styles */
 body {
   background-color: var(--body-background-color);
-  font-family: var(--theme-font, var(--body-font-family));
   padding-top: var(--progress-bar-height);
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
-  font-family: var(--theme-font, var(--heading-font-family));
   margin-top: 0.5rem !important;
   margin-bottom: 0.5rem !important;
 }
