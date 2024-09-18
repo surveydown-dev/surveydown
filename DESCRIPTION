@@ -46,6 +46,7 @@ Imports:
     shinyWidgets,
     usethis,
     utils,
+    xml2,
     yaml
 URL: https://github.com/surveydown-dev/surveydown
 BugReports: https://github.com/surveydown-dev/surveydown/issues

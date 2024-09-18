@@ -309,7 +309,7 @@ sd_question <- function(
 
     # Wrap the output in a div with custom data attributes
     output_div <- shiny::tags$div(
-        id = paste("container-", id),
+        id = paste0("container-", id),
         `data-question-id` = id,
         class = "question-container",
         oninput = js_interaction,

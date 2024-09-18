@@ -152,6 +152,10 @@ sd_server <- function(input, output, session, config, db = NULL) {
     # Create admin page if admin_page is TRUE
     if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
 
+    # Add observers for show_if conditions
+    if (!is.null(show_if)) { basic_show_if_logic(input, show_if) }
+    if (!is.null(show_if_custom)) { custom_show_if_logic(input, show_if_custom) }
+
     # Data tracking ----
 
     # Format static data
@@ -247,8 +251,8 @@ sd_server <- function(input, output, session, config, db = NULL) {
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
 
-    # Create a reactive expression for the main content
-    main_content <- reactive({
+    # Render the current page
+    output$main <- shiny::renderUI({
         current_page <- get_current_page()
         shiny::tagList(
             shiny::tags$head(shiny::HTML(head_content)),
@@ -264,17 +268,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 )
             )
         )
-    })
-
-    # Render the current page
-    output$main <- shiny::renderUI({
-        main_content()
-    })
-
-    # Observer that handles the show_if when main output updates
-    observe({
-        main_content()
-        hide_show_if_questions(show_if, show_if_custom)
     })
 
     # Page navigation ----
@@ -302,11 +295,10 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
                 # Check if all required questions are answered
                 current_page <- get_current_page()
-                # all_required_answered <- check_all_required(
-                #     current_page$questions, current_page$required_questions,
-                #     input, show_if, show_if_custom
-                # )
-                all_required_answered <- TRUE
+                all_required_answered <- check_all_required(
+                    current_page$questions, current_page$required_questions,
+                    input, show_if, show_if_custom
+                )
 
                 if (all_required_answered) {
                     # Update the current page ID, then update the data
@@ -326,30 +318,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
         })
     })
 
-}
-
-hide_show_if_questions <- function(show_if, show_if_custom) {
-
-  if (!is.null(show_if)) {
-      print('showif_hide')
-    unique_targets <- unique(show_if$target)
-    for (target in unique_targets) {
-      shinyjs::runjs(sprintf("
-                $('#%s').closest('.question-container').hide();
-                $('#%s').hide();
-            ", target, target))
-    }
-  }
-
-  if (!is.null(show_if_custom)) {
-      print('showif_custom_hide')
-    lapply(show_if_custom, function(x) {
-      shinyjs::runjs(sprintf("
-                $('#%s').closest('.question-container').hide();
-                $('#%s').hide();
-            ", x$target, x$target))
-    })
-  }
 }
 
 # Handle basic show-if logic

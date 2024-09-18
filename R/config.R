@@ -28,76 +28,15 @@ sd_config <- function(
         start_page = NULL,
         admin_page = FALSE
 ) {
-    # Render the Quarto document to a temporary file
-    # Read and parse the rendered HTML file, then delete it
-    # temp_html <- quarto_render_temp(survey)
-    # html_content <- rvest::read_html(temp_html)
-    # unlink(temp_html)
 
-    # Check if the file exists
-    if (!file.exists(survey)) {
-        stop("The specified survey file does not exist.")
-    }
-
-    # Get the file extension
-    file_ext <- tools::file_ext(survey)
-
-    # Process based on file type
-    if (file_ext == "qmd") {
-        temp_html <- quarto_render_temp(survey)
-        html_content <- rvest::read_html(temp_html)
-        unlink(temp_html)
-    } else if (file_ext == "html") {
-        html_content <- rvest::read_html(survey)
-    } else {
-        stop("Invalid file type. Please provide either a .qmd or .html file.")
-    }
+    # Get the html content from the qmd file (or html if pre-rendered)
+    html_content <- get_html_content(survey)
 
     # Extract all divs with class "sd-page"
-    pages <- html_content |>
-        rvest::html_elements(".sd-page") |>
-        lapply(function(x) {
-            # Extract question containers within the page
-            question_containers <- rvest::html_elements(x, ".question-container")
-
-            # Process each question container and collect question IDs
-            question_ids <- character(0)
-            required_question_ids <- character(0)
-            processed_content <- as.character(x)
-
-            for (container in question_containers) {
-                question_id <- rvest::html_attr(container, "data-question-id")
-                question_ids <- c(question_ids, question_id)
-
-                # Determine if the question is required
-                is_required <- all_questions_required | (question_id %in% required_questions)
-
-                if (is_required) {
-                    # Store the required question
-                    required_question_ids <- c(required_question_ids, question_id)
-
-                    # Find the asterisk element & replace it with display:inline
-                    asterisk <- rvest::html_element(container, ".required-asterisk")
-                    # Replaces in place
-                    asterisk <- xml2::xml_set_attr(asterisk, "style", "display:inline; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;")
-                }
-
-                # Replace the original container with the modified one
-                processed_content <- sub(
-                    as.character(container),
-                    as.character(container),
-                    processed_content,
-                    fixed = TRUE
-                )
-            }
-
-            list(
-                id = rvest::html_attr(x, "id"),
-                content = processed_content,
-                questions = question_ids,
-                required_questions = required_question_ids
-            )
-        })
+    pages <- extract_html_pages(
+        html_content, required_questions, all_questions_required,
+        show_if, show_if_custom
+    )
 
     # Extract head content (for CSS and JS)
     head_content <- html_content |>
@@ -150,25 +89,99 @@ sd_config <- function(
     return(config)
 }
 
-# Get page nodes from HTML
-get_page_nodes <- function() {
-
-    # Get the list of .qmd files in the current working directory
-    qmd_files <- list.files(pattern = "\\.qmd$", full.names = TRUE)
-
-    # Check if there is exactly one .qmd file
-    if (length(qmd_files) == 1) {
-        qmd_file_name <- qmd_files[1]
-        html_file_name <- sub("\\.qmd$", ".html", qmd_file_name)
-
-        # Use the derived HTML file name to read the document with rvest
-        pages <- rvest::read_html(html_file_name) |>
-            rvest::html_nodes(".sd-page")
-        return(pages)
+get_html_content <- function(survey) {
+    # Check if the file exists
+    if (!file.exists(survey)) {
+        stop("The specified survey file does not exist.")
     }
 
-    stop("Error: {surveydown} requires that only one .qmd file in the directory.")
+    # Get the file extension
+    file_ext <- tools::file_ext(survey)
 
+    # Process based on file type
+    if (file_ext == "qmd") {
+        temp_html <- quarto_render_temp(survey)
+        html_content <- rvest::read_html(temp_html)
+        unlink(temp_html)
+    } else if (file_ext == "html") {
+        html_content <- rvest::read_html(survey)
+    } else {
+        stop("Invalid file type. Please provide either a .qmd or .html file.")
+    }
+    return(html_content)
+}
+
+get_show_if_targets <- function(show_if, show_if_custom) {
+    show_if_targets <- character(0)
+    if (!is.null(show_if)) {
+        show_if_targets <- unique(show_if$target)
+    }
+
+    show_if_custom_targets <- character(0)
+    if (!is.null(show_if_custom)) {
+        if (is.data.frame(show_if_custom)) {
+            show_if_custom_targets <- unique(show_if_custom$target)
+        } else if (is.list(show_if_custom)) {
+            show_if_custom_targets <- unique(sapply(show_if_custom, function(x) x$target))
+        }
+    }
+
+    return(unique(c(show_if_targets, show_if_custom_targets)))
+}
+
+extract_html_pages <- function(
+        html_content, required_questions, all_questions_required,
+        show_if, show_if_custom
+) {
+    # Get all target questions that should be initially hidden
+    all_hidden_targets <- get_show_if_targets(show_if, show_if_custom)
+
+    # Extract all divs with class "sd-page"
+    pages <- html_content |>
+        rvest::html_elements(".sd-page") |>
+        lapply(function(x) {
+            # Extract question containers within the page
+            question_containers <- rvest::html_elements(x, ".question-container")
+            # Process each question container and collect question IDs
+            question_ids <- character(0)
+            required_question_ids <- character(0)
+
+            for (i in seq_along(question_containers)) {
+                container <- question_containers[[i]]
+                question_id <- rvest::html_attr(container, "data-question-id")
+                question_ids <- c(question_ids, question_id)
+
+                # Determine if the question is required
+                is_required <- all_questions_required | (question_id %in% required_questions)
+                if (is_required) {
+                    # Store the required question
+                    required_question_ids <- c(required_question_ids, question_id)
+                    # Find the asterisk element & update its style
+                    asterisk <- rvest::html_element(container, ".required-asterisk")
+                    xml2::xml_attr(asterisk, "style") <- "display:inline; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;"
+                }
+
+                # Check if the question should be hidden
+                if (question_id %in% all_hidden_targets) {
+                    current_style <- xml2::xml_attr(container, "style")
+                    current_style <- if (is.na(current_style)) "" else current_style
+                    new_style <- paste(current_style, "display: none;", sep = " ")
+                    xml2::xml_attr(container, "style") <- new_style
+                }
+
+                # Update the container in the question_containers list
+                question_containers[[i]] <- container
+            }
+
+            list(
+                id = rvest::html_attr(x, "id"),
+                content = as.character(x),
+                questions = question_ids,
+                required_questions = required_question_ids
+            )
+        })
+
+    return(pages)
 }
 
 # Get question structure from HTML
