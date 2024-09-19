@@ -130,19 +130,15 @@ get_show_if_targets <- function(show_if, show_if_custom) {
 }
 
 extract_html_pages <- function(
-        html_content, required_questions, all_questions_required,
-        show_if, show_if_custom
+    html_content, required_questions, all_questions_required,
+    show_if, show_if_custom
 ) {
-    # Get all target questions that should be initially hidden
     all_hidden_targets <- get_show_if_targets(show_if, show_if_custom)
-
-    # Extract all divs with class "sd-page"
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
         lapply(function(x) {
-            # Extract question containers within the page
+            page_id <- rvest::html_attr(x, "id")
             question_containers <- rvest::html_elements(x, ".question-container")
-            # Process each question container and collect question IDs
             question_ids <- character(0)
             required_question_ids <- character(0)
 
@@ -150,18 +146,13 @@ extract_html_pages <- function(
                 container <- question_containers[[i]]
                 question_id <- rvest::html_attr(container, "data-question-id")
                 question_ids <- c(question_ids, question_id)
-
-                # Determine if the question is required
                 is_required <- all_questions_required | (question_id %in% required_questions)
                 if (is_required) {
-                    # Store the required question
                     required_question_ids <- c(required_question_ids, question_id)
-                    # Find the asterisk element & update its style
                     asterisk <- rvest::html_element(container, ".required-asterisk")
                     xml2::xml_attr(asterisk, "style") <- "display:inline; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;"
                 }
 
-                # Check if the question should be hidden
                 if (question_id %in% all_hidden_targets) {
                     current_style <- xml2::xml_attr(container, "style")
                     current_style <- if (is.na(current_style)) "" else current_style
@@ -169,18 +160,31 @@ extract_html_pages <- function(
                     xml2::xml_attr(container, "style") <- new_style
                 }
 
-                # Update the container in the question_containers list
                 question_containers[[i]] <- container
             }
 
+            # Update the 'Next' button ID and extract the next_page_id
+            next_button_id <- make_next_button_id(page_id)
+            next_button <- rvest::html_element(x, "#page_id_next")
+            if (is.na(next_button)) {
+                # No next button on this page
+                next_page_id <- NULL
+            } else {
+                xml2::xml_attr(next_button, "id") <- next_button_id
+                next_page_id <- rvest::html_attr(
+                    xml2::xml_parent(next_button), "data-next-page"
+                )
+            }
+
             list(
-                id = rvest::html_attr(x, "id"),
-                content = as.character(x),
+                id = page_id,
                 questions = question_ids,
-                required_questions = required_question_ids
+                required_questions = required_question_ids,
+                next_button_id = next_button_id,
+                next_page_id = next_page_id,
+                content = as.character(x)
             )
         })
-
     return(pages)
 }
 

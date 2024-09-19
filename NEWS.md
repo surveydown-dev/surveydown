@@ -1,5 +1,6 @@
 # surveydown (development version)
 
+- Heavily modified how `sd_next()` works to improve page navigation and ensure that each `sd_next()` button has a unique id based on the current page.
 - Removed the quarto extension.
 - `sd_create_survey()` changed to sourcing template directly from the package.
 - `sd_deploy()` as a wrapper function of `rsconnect::deployApp()` to deploy the survey.

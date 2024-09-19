@@ -272,43 +272,51 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Page navigation ----
 
-    # All it does is determine which page to set as the current page
-    # and then update the current_page_id() reactive value
+    # Determine which page is next, then update current_page_id() to it
     shiny::observe({
-        lapply(2:length(pages), function(i) {
-            current_page <- page_ids[i-1]
-            next_page <- page_ids[i]
-            current_ts_id <- page_ts_ids[i-1]
-            next_ts_id <- page_ts_ids[i]
-            next_button_id <- make_next_button_id(next_page)
+        lapply(pages, function(page) {
+            shiny::observeEvent(input[[page$next_button_id]], {
 
-            shiny::observeEvent(input[[next_button_id]], {
+                # Get current and next pages
+                current_page_id <- page$id
+                next_page_id <- get_default_next_page(page, page_ids)
 
-                # Update next page based on skip logic
-                next_page <- handle_skip_logic(input, skip_if, skip_if_custom, current_page, next_page)
-
-                # Find the correct timestamp ID after skip logic
-                next_ts_id <- page_ts_ids[which(page_ids == next_page)]
-
-                # Update timestamp for the next page
-                timestamps[[next_ts_id]] <- get_utc_timestamp()
-
-                # Check if all required questions are answered
-                current_page <- get_current_page()
-                all_required_answered <- check_all_required(
-                    current_page$questions, current_page$required_questions,
-                    input, show_if, show_if_custom
+                # Determine next page based on the current page and skip logic
+                next_page_id <- handle_skip_logic(
+                    input, skip_if, skip_if_custom,
+                    current_page_id, next_page_id
                 )
 
-                if (all_required_answered) {
-                    # Update the current page ID, then update the data
-                    current_page_id(next_page)
-                    update_data()
-                } else {
-                    shiny::showNotification("Please answer all required questions before proceeding.", type = "error")
+                if (!is.null(next_page_id)) {
+
+                    # Check if all required questions are answered
+                    all_required_answered <- check_all_required(
+                        page, input, show_if, show_if_custom
+                    )
+
+                    if (all_required_answered) {
+                        # Update the current page ID, then update the data
+                        current_page_id(next_page_id)
+                        # Update timestamp for the next page
+                        next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
+                        timestamps[[next_ts_id]] <- get_utc_timestamp()
+                        update_data()
+                    } else {
+                        shiny::showNotification(
+                            "Please answer all required questions before proceeding.",
+                            type = "error"
+                        )
+                    }
                 }
             })
         })
+    })
+
+    shiny::observe({
+        page <- get_current_page()
+        if (is.null(page$next_page_id)) {
+            update_progress_bar(length(question_ids))
+        }
     })
 
     # Ensure final update on session end
@@ -442,40 +450,57 @@ format_question_value <- function(val) {
     }
 }
 
+get_default_next_page <- function(page, page_ids) {
+    if (is.null(page$next_page_id)) { return(NULL) }
+    next_page_id <- page$next_page_id
+    if (next_page_id == "") {
+        # No next page specified, so just go to the next one
+        index <- which(page_ids == page$id) + 1
+        if (index <= length(page_ids)) {
+            return(page_ids[index])
+        } else {
+            return(NULL)  # No next page if we're on the last page
+        }
+    }
+    return(next_page_id)
+}
+
 # Handle overall skip logic
-handle_skip_logic <- function(input, skip_if, skip_if_custom, current_page, next_page) {
+handle_skip_logic <- function(
+  input, skip_if, skip_if_custom, current_page_id, next_page_id
+ ) {
+    if (is.null(next_page_id)) { return(next_page_id) }
     if (!is.null(skip_if)) {
-        next_page <- basic_skip_logic(input, skip_if, current_page, next_page)
+        next_page_id <- basic_skip_logic(
+            input, skip_if, current_page_id, next_page_id
+        )
     }
     if (!is.null(skip_if_custom)) {
-        next_page <- custom_skip_logic(input, skip_if_custom, current_page, next_page)
+        next_page_id <- custom_skip_logic(
+            input, skip_if_custom, current_page_id, next_page_id
+        )
     }
-    return(next_page)
+    return(next_page_id)
 }
 
 # Handle basic skip logic
-basic_skip_logic <- function(
-        input, skip_if, current_page, next_page
-) {
-
+basic_skip_logic <- function(input, skip_if, current_page_id, next_page_id) {
     for (i in 1:nrow(skip_if)) {
-        rule <- skip_if[i,]
-        val <- input[[rule$question_id]]
-        if (!is.null(val)) {
-            if ((val == rule$question_value) & (current_page != rule$target)) {
-                return(rule$target)
-            }
+      rule <- skip_if[i,]
+      val <- input[[rule$question_id]]
+      if (!is.null(val)) {
+        if ((val == rule$question_value) & (current_page_id != rule$target)) {
+          return(rule$target)
         }
+      }
     }
-
-    return(next_page)
+    return(next_page_id)
 }
 
 # Handle custom skip logic
 custom_skip_logic <- function(
-        input, skip_if_custom, current_page, next_page
-) {
-
+  input, skip_if_custom, current_page_id, next_page_id
+ ) {
     # Loop through each skip logic condition
     for (j in 1:length(skip_if_custom)) {
         rule <- skip_if_custom[[j]]
@@ -484,18 +509,17 @@ custom_skip_logic <- function(
         condition_result <- rule$condition(input)
 
         # Check if the condition is met
-        if (isTRUE(condition_result) & (current_page != rule$target)) {
+        if (isTRUE(condition_result) & (current_page_id != rule$target)) {
             return(rule$target)
         }
     }
-
-    return(next_page)
+    return(next_page_id)
 }
 
 # Check if all required questions are answered
-check_all_required <- function(
-    questions, questions_required, input, show_if, show_if_custom
-) {
+check_all_required <- function(page, input, show_if, show_if_custom) {
+    questions <- page$questions
+    questions_required <- page$required_questions
     results <- vapply(questions, function(q) {
         is_required <- q %in% questions_required
         is_visible <- is_question_visible(q, show_if, show_if_custom, input)

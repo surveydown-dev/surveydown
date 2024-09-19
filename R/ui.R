@@ -411,20 +411,16 @@ date_interaction <- function(output, id) {
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
-    if (is.null(next_page)) {
-        stop("You must specify the current_page for the 'Next' button.")
-    }
-
-    button_id <- make_next_button_id(next_page)
-
+    button_id <- "page_id_next"  # Placeholder ID
     shiny::tagList(
         shiny::div(
+            `data-next-page` = if (!is.null(next_page)) next_page else "",
             style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
             shiny::actionButton(
                 inputId = button_id,
                 label = label,
                 style = "display: block; margin: auto;",
-                onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
+                onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
             )
         ),
         shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
@@ -432,8 +428,8 @@ sd_next <- function(next_page = NULL, label = "Next") {
 }
 
 # Generate Next Button ID
-make_next_button_id <- function(next_page) {
-    return(paste0("next-", next_page))
+make_next_button_id <- function(page_id) {
+    return(paste0(page_id, "_next"))
 }
 
 #' Create a 'Close' Button to Exit the Survey
