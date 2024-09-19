@@ -250,6 +250,20 @@ sd_question <- function(
             status   = status
         )
 
+        js <- sprintf("
+      $('#%s .btn').on('click', function(e) {
+        e.preventDefault();
+        $('#%s .btn').removeClass('active');
+        $(this).addClass('active');
+        var $input = $(this).find('input[type=\"radio\"]');
+        $input.prop('checked', true);
+        $input.trigger('change');
+        Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+      });
+      $('#%s .btn input:checked').closest('.btn').addClass('active');
+    ", id, id, id, id)
+        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(js)))
+
     } else if (type == "mc_multiple_buttons") {
 
         output <- shinyWidgets::checkboxGroupButtons(
@@ -261,6 +275,13 @@ sd_question <- function(
             justified  = justified,
             width      = width
         )
+
+        js <- sprintf("
+      $('#%s .btn').on('click', function() {
+        $(this).toggleClass('active');
+      });
+    ", id)
+        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(js)))
 
     } else if (type == "text") {
 

@@ -129,13 +129,88 @@ p, .form-group, .control-label {
   background-color: var(--theme-color);
 }
 
-/* Button groups */
+/* Common styles for all button groups */
 .radio-group-buttons,
 .checkbox-group-buttons,
 .btn-group-container-sw {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Styles for multiple choice buttons (gap: 0.5rem) */
+.checkbox-group-buttons .btn-group-container-sw {
+  gap: 0.5rem;
+}
+
+/* Styles for single choice buttons (gap: 0) */
+.radio-group-buttons .btn-group-container-sw {
+  gap: 0;
+}
+
+/* Individual buttons */
+.radio-group-buttons .btn,
+.checkbox-group-buttons .btn {
+  background-color: #ffffff;
+  border: 1px solid var(--theme-color);
+  color: var(--theme-color);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  padding: 0.375rem 0.75rem;
+}
+
+/* Hide the original input */
+.radio-group-buttons .btn input[type="radio"],
+.checkbox-group-buttons .btn input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  top: 0;
+  margin: 0;
+  z-index: 1;
+}
+
+/* Style the label to look like a button */
+.radio-group-buttons .btn label,
+.checkbox-group-buttons .btn label {
+  display: inline-block;
+  margin: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+}
+
+/* Hover state */
+.radio-group-buttons .btn:hover,
+.checkbox-group-buttons .btn:hover {
+  background-color: color-mix(in srgb, var(--theme-color) 10%, transparent);
+}
+
+/* Active/selected state */
+.radio-group-buttons .btn.active,
+.checkbox-group-buttons .btn.active {
+  background-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
+  border-color: var(--theme-color);
+  color: #ffffff;
+}
+
+/* Click state */
+.radio-group-buttons .btn:active,
+.checkbox-group-buttons .btn:active {
+  background-color: var(--theme-color);
+  color: #ffffff;
+}
+
+/* Focus state */
+.radio-group-buttons .btn:focus,
+.checkbox-group-buttons .btn:focus {
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-color) 25%, transparent);
+  outline: none;
 }
 
 /* Button styling */
