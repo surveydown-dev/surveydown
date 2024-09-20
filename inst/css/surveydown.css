@@ -1,3 +1,6 @@
+/* Import Raleway font */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800&display=swap');
+
 /* Root variables */
 :root {
   /* Layout and theme variables */
@@ -6,11 +9,13 @@
   --progressbar-position: top;
   --progress-bar-height: 10px;
   --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
+  font-family: 'Raleway', sans-serif;
 }
 
-/* Body background color */
+/* Body */
 body {
   background-color: var(--body-background-color);
+  font-family: 'Raleway', sans-serif;
 }
 
 /* Typography */
@@ -29,6 +34,56 @@ p, .form-group, .control-label {
   max-width: 800px;
   margin: 0 auto !important;
   padding: 0 0 5px !important;
+}
+
+/* Button group styling */
+.radio-group-buttons,
+.checkbox-group-buttons,
+.btn-group-container-sw {
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.radio-group-buttons .btn,
+.checkbox-group-buttons .btn,
+.btn-group-container-sw .btn {
+  border: 1px solid var(--theme-color);
+  background-color: color-mix(in srgb, var(--theme-color) 10%, white);
+  color: var(--theme-color);
+  transition: all 0.3s ease;
+  margin-right: -1px;
+  position: relative;
+}
+
+.radio-group-buttons .btn:hover,
+.checkbox-group-buttons .btn:hover,
+.btn-group-container-sw .btn:hover {
+  z-index: 1;
+  background-color: color-mix(in srgb, var(--theme-color) 20%, white);
+}
+
+.radio-group-buttons .btn:first-child,
+.checkbox-group-buttons .btn:first-child,
+.btn-group-container-sw .btn:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.radio-group-buttons .btn:last-child,
+.checkbox-group-buttons .btn:last-child,
+.btn-group-container-sw .btn:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  margin-right: 0;
+}
+
+.radio-group-buttons .btn.active,
+.checkbox-group-buttons .btn.active,
+.btn-group-container-sw .btn.active {
+  background-color: color-mix(in srgb, var(--theme-color) 80%, white);
+  color: white;
+  z-index: 2;
 }
 
 /* Progress bar */
@@ -96,7 +151,7 @@ p, .form-group, .control-label {
   gap: 0.5rem;
 }
 
-/* Button styling */
+/* Page Navigation Buttons */
 .btn-primary,
 .btn-primary:hover,
 .btn-primary:active,
