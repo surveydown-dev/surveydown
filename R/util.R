@@ -1,30 +1,3 @@
-#' Required Set Up Function
-#'
-#' This function is required for any surveydown survey. It sets up a Shiny application with Bootstrap 5 and initializes Shinyjs for JavaScript functionalities.
-#'
-#' @details The function configures the Shiny application to use Bootstrap 5 for styling and enables
-#'   Shinyjs for JavaScript functionalities within the application.
-#'
-#' @return This function does not return a value. It is called for its side effects of setting up the Shiny application.
-#'
-#' @examples
-#' \dontrun{
-#'   ui <- fluidPage(
-#'     sd_setup(),
-#'     # Your UI elements here
-#'   )
-#'   server <- function(input, output, session) {
-#'     # Your server logic here
-#'   }
-#'   shinyApp(ui, server)
-#' }
-#'
-#' @export
-sd_setup <- function() {
-    shiny::shinyOptions(bootstrapTheme = bslib::bs_theme(version = 5L))
-    shinyjs::useShinyjs(rmd = TRUE)
-}
-
 # Convert Markdown to HTML
 markdown_to_html <- function(text) {
     if (is.null(text)) { return(text) }
@@ -59,8 +32,8 @@ list_name_md_to_html <- function(list) {
     for (folder in folders) { include_folder(folder) }
 
     # Add Quarto file folders to resource path
-    folders <- get_quarto_files_folders()
-    for (folder in folders) { include_folder(folder, create = TRUE) }
+    # folders <- get_quarto_files_folders()
+    # for (folder in folders) { include_folder(folder, create = TRUE) }
 
     # Print package data
     desc  <- utils::packageDescription(pkgname, libname)
@@ -77,7 +50,9 @@ get_quarto_files_folders <- function() {
     qmd_files <- find_quarto_files()
     self_contained <- qmd_files[sapply(qmd_files, is_self_contained)]
     self_contained <- tools::file_path_sans_ext(self_contained)
-    return(paste0(self_contained, "_files"))
+    if (length(self_contained) > 0) {
+        return(paste0(self_contained, "_files"))
+    }
 }
 
 find_quarto_files <- function(directory = ".") {

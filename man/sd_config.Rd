@@ -5,7 +5,7 @@
 \title{Configuration Function for surveydown Surveys}
 \usage{
 sd_config(
-  survey = "survey.qmd",
+  survey_file = "survey.qmd",
   skip_if = NULL,
   skip_if_custom = NULL,
   show_if = NULL,
@@ -17,7 +17,7 @@ sd_config(
 )
 }
 \arguments{
-\item{survey}{Character string. The path to the survey .qmd file or .html file. If .qmd, the file will be rendered into a .html.}
+\item{survey_file}{Character string. The path to the survey .qmd file or .html file. If .qmd, the file will be rendered into a .html.}
 
 \item{skip_if}{A list of conditions under which certain pages should be skipped. Defaults to NULL.}
 
