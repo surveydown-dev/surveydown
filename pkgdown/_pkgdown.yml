@@ -50,6 +50,7 @@ reference:
   contents:
   - sd_setup
   - sd_create_survey
+  - sd_include_folder
   - sd_deploy
 
 - title: Version Control
