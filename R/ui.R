@@ -458,7 +458,7 @@ make_next_button_id <- function(page_id) {
 #' This function creates a 'Close' button that, when clicked, will close the current browser tab or window.
 #' The button can be activated by clicking or by pressing the Enter key.
 #'
-#' @param label Character string. The label of the 'Close' button. Defaults to "Close".
+#' @param label Character string. The label of the 'Close' button. Defaults to "Exit Survey".
 #'
 #' @details The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
 #'   will attempt to close the current browser tab or window. Note that for security reasons,
@@ -472,7 +472,7 @@ make_next_button_id <- function(page_id) {
 #' sd_close("Exit Survey")
 #'
 #' @export
-sd_close <- function(label = "Close") {
+sd_close <- function(label = "Exit Survey") {
     button_id <- "close-survey-button"
 
     shiny::tagList(

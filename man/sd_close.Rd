@@ -4,10 +4,10 @@
 \alias{sd_close}
 \title{Create a 'Close' Button to Exit the Survey}
 \usage{
-sd_close(label = "Close")
+sd_close(label = "Exit Survey")
 }
 \arguments{
-\item{label}{Character string. The label of the 'Close' button. Defaults to "Close".}
+\item{label}{Character string. The label of the 'Close' button. Defaults to "Exit Survey".}
 }
 \value{
 A Shiny action button UI element with associated JavaScript for closing the page and Enter key functionality.
