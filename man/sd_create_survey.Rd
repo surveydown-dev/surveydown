@@ -4,11 +4,14 @@
 \alias{sd_create_survey}
 \title{Create a new survey template}
 \usage{
-sd_create_survey(path = getwd())
+sd_create_survey(path = getwd(), structure = "complete")
 }
 \arguments{
 \item{path}{A character string specifying the directory where the survey template
 should be created. Defaults to the current working directory.}
+
+\item{structure}{A character string specifying the template structure to use.
+Must be either "simple" or "complete". Defaults to "complete".}
 }
 \value{
 Invisible NULL. The function is called for its side effects of creating
@@ -23,8 +26,10 @@ appropriate warnings and feedback.
 The function performs the following steps:
 \itemize{
 \item If the specified path is the current working directory, it asks for user confirmation.
+\item Validates the specified structure ("simple" or "complete").
 \item Creates the target directory if it doesn't exist.
-\item Copies all files from the package's template directory to the target path.
+\item Copies all files from the package's template directory (based on the specified structure) to the target path.
+\item Preserves the directory structure of the template.
 \item Skips existing files and provides warnings for each skipped file.
 \item Handles .Rproj files specially, skipping if any .Rproj file already exists in the target directory.
 \item Provides feedback on whether files were copied or if all files already existed.
@@ -32,10 +37,13 @@ The function performs the following steps:
 }
 \examples{
 \dontrun{
-# Create a survey template in the current working directory
+# Create a complete survey template in the current working directory
 sd_create_survey()
 
-# Create a survey template in a specific directory
-sd_create_survey("path/to/my/survey")
+# Create a simple survey template in a specific directory
+sd_create_survey("path/to/my/survey", structure = "simple")
+
+# Create a complete survey template in a specific directory
+sd_create_survey("path/to/my/survey", structure = "complete")
 }
 }

@@ -1,0 +1,96 @@
+---
+format:
+  html:
+    self-contained: true
+echo: false
+message: false
+warning: false
+---
+
+```{r}
+devtools::load_all('../surveydown')
+```
+
+::: {#basic_showif .sd-page}
+
+# Demo survey of the `show_if` feature
+
+<center>
+<img src="www/logo.png" width=20%>
+</center>
+
+## Basic Conditional Display
+
+If the "**Other**" option is chosen, a question asking the other penguin type will appear.
+
+This is done by using the `show_if` argument in `sd_config()`.
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'penguins_basic',
+  label = "Which is your favorite type of penguin?",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo',
+    'Other'     = 'other'
+  )
+)
+
+sd_question(
+  type  = "text",
+  id    = "penguins_other_basic",
+  label = "Please specify the other penguin type:"
+)
+
+sd_next(next_page = 'custom_showif')
+```
+
+:::
+
+::: {#custom_showif .sd-page}
+
+## Custom Conditional Display
+
+Say that we want to have a more complicated show_if condition. Now there are 2 questions. Only if the user chooses both "**Other**" and "**Show**" will the other penguin question appear. This is done by using the `show_if_custom` argument in `sd_config()`. We also made a custom function called `show_other()` to facilitate the logic (see the server code chunk).
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'penguins_custom',
+  label = "Which is your favorite type of penguin?",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo',
+    'Other'     = 'other'
+  )
+)
+
+sd_question(
+  type  = 'mc',
+  id    = 'show_other_custom',
+  label = "Should we show the 'other' option question?",
+  option = c(
+    'Show' = 'show',
+    'Hide' = 'hide'
+  )
+)
+
+sd_question(
+  type  = "text",
+  id    = "penguins_other_custom",
+  label = "Please specify the other penguin type:"
+)
+
+sd_next(next_page = 'end')
+```
+
+:::
+
+::: {#end .sd-page}
+
+## This is the end of the demo survey showcasing the conditional display feature.
+
+:::
