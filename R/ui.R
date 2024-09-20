@@ -77,11 +77,11 @@ sd_ui <- function(
   ", progress_color, font_source_with_fallback, background)
 
     shiny::fluidPage(
-        theme = bslib::bs_theme(version = 5, bootswatch = theme),
+        # theme = bslib::bs_theme(version = 5, bootswatch = theme),
         shinyjs::useShinyjs(),
-        load_resources("surveydown.css", type = "css"),
-        load_resources("fonts.css", type = "css"),
-        shiny::tags$style(HTML(custom_css_rule)),
+        # load_resources("surveydown.css", type = "css"),
+        # load_resources("fonts.css", type = "css"),
+        # shiny::tags$style(HTML(custom_css_rule)),
         if (!is.null(custom_css)) shiny::includeCSS(custom_css),
         if (barposition != "none") {
             shiny::tags$div(

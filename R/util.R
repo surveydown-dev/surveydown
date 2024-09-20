@@ -32,8 +32,8 @@ list_name_md_to_html <- function(list) {
     for (folder in folders) { include_folder(folder) }
 
     # Add Quarto file folders to resource path
-    # folders <- get_quarto_files_folders()
-    # for (folder in folders) { include_folder(folder, create = TRUE) }
+    folders <- get_quarto_files_folders()
+    for (folder in folders) { include_folder(folder, create = TRUE) }
 
     # Print package data
     desc  <- utils::packageDescription(pkgname, libname)
@@ -48,7 +48,7 @@ list_name_md_to_html <- function(list) {
 
 get_quarto_files_folders <- function() {
     qmd_files <- find_quarto_files()
-    self_contained <- qmd_files[sapply(qmd_files, is_self_contained)]
+    self_contained <- qmd_files[!sapply(qmd_files, is_self_contained)]
     self_contained <- tools::file_path_sans_ext(self_contained)
     if (length(self_contained) > 0) {
         return(paste0(self_contained, "_files"))
