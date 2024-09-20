@@ -33,7 +33,11 @@ list_name_md_to_html <- function(list) {
 
     # Add Quarto file folders to resource path
     folders <- get_quarto_files_folders()
-    for (folder in folders) { include_folder(folder, create = TRUE) }
+    if (!is.null(folders)) {
+        for (folder in folders) {
+            include_folder(folder, create = TRUE)
+        }
+    }
 
     # Print package data
     desc  <- utils::packageDescription(pkgname, libname)
@@ -48,6 +52,7 @@ list_name_md_to_html <- function(list) {
 
 get_quarto_files_folders <- function() {
     qmd_files <- find_quarto_files()
+    if (is.null(qmd_files)) { return(NULL) }
     self_contained <- qmd_files[!sapply(qmd_files, is_self_contained)]
     self_contained <- tools::file_path_sans_ext(self_contained)
     if (length(self_contained) > 0) {
@@ -56,20 +61,13 @@ get_quarto_files_folders <- function() {
 }
 
 find_quarto_files <- function(directory = ".") {
-    # List all files in the specified directory
+    # List all files in the specified directory, then filter for qmd files
     all_files <- list.files(path = directory, full.names = TRUE)
-
-    # Filter for .qmd files
     quarto_files <- all_files[grep("\\.qmd$", all_files, ignore.case = TRUE)]
 
-    # Extract just the file names without the full path
-    quarto_file_names <- basename(quarto_files)
-
     # If no .qmd files found, return NULL with a warning
-    if (length(quarto_file_names) == 0) {
-        warning("No .qmd files found in the specified directory.")
-        return(NULL)
-    }
+    quarto_file_names <- basename(quarto_files)
+    if (length(quarto_file_names) == 0) { return(NULL) }
 
     return(quarto_file_names)
 }
