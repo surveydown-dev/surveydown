@@ -202,7 +202,7 @@ quarto_render_temp <- function(input) {
 #' @param path A character string specifying the directory where the survey template
 #'   should be created. Defaults to the current working directory.
 #' @param structure A character string specifying the template structure to use.
-#'   Must be either "simple" or "complete". Defaults to "complete".
+#'   Must be either "single" or "multi". Defaults to "multi".
 #'
 #' @return Invisible NULL. The function is called for its side effects of creating
 #'   files and providing user feedback.
@@ -211,7 +211,7 @@ quarto_render_temp <- function(input) {
 #' The function performs the following steps:
 #' \itemize{
 #'   \item If the specified path is the current working directory, it asks for user confirmation.
-#'   \item Validates the specified structure ("simple" or "complete").
+#'   \item Validates the specified structure ("single" or "multi").
 #'   \item Creates the target directory if it doesn't exist.
 #'   \item Copies all files from the package's template directory (based on the specified structure) to the target path.
 #'   \item Preserves the directory structure of the template.
@@ -224,24 +224,24 @@ quarto_render_temp <- function(input) {
 #'
 #' @examples
 #' \dontrun{
-#' # Create a complete survey template in the current working directory
+#' # Create a multi-page survey template in the current working directory
 #' sd_create_survey()
 #'
-#' # Create a simple survey template in a specific directory
-#' sd_create_survey("path/to/my/survey", structure = "simple")
+#' # Create a single-page survey template in a specific directory
+#' sd_create_survey("path/to/my/survey", structure = "single")
 #'
-#' # Create a complete survey template in a specific directory
-#' sd_create_survey("path/to/my/survey", structure = "complete")
+#' # Create a multi-page survey template in a specific directory
+#' sd_create_survey("path/to/my/survey", structure = "multi")
 #' }
-sd_create_survey <- function(path = getwd(), structure = "complete") {
+sd_create_survey <- function(path = getwd(), structure = "multi") {
     # Check if using current directory and confirm with user
     if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
         stop("Operation aborted by the user.")
     }
 
     # Validate the structure parameter
-    if (!structure %in% c("simple", "complete")) {
-        stop("Invalid structure. Choose either 'simple' or 'complete'.")
+    if (!structure %in% c("single", "multi")) {
+        stop("Invalid structure. Choose either 'single' or 'multi'.")
     }
 
     # Create the directory if it doesn't exist
@@ -277,7 +277,7 @@ sd_create_survey <- function(path = getwd(), structure = "complete") {
 
     # Provide feedback to the user
     if (any(files_copied)) {
-        usethis::ui_done(paste(structure, "template created at", path))
+        usethis::ui_done(paste(structure, "version of template created at", path))
     } else {
         usethis::ui_done("Since all files exist, no file was added.")
     }
