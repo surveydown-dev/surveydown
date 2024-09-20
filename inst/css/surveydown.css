@@ -5,6 +5,7 @@
   --body-background-color: #f2f6f9;
   --progressbar-position: top;
   --progress-bar-height: 10px;
+  --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
 }
 
 /* Body background color */

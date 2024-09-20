@@ -31,18 +31,22 @@ sd_ui <- function(
         barcolor    = NULL,
         barposition = 'top'
 ) {
-    # Determine progress bar color
-    progress_color <- if (is.null(barcolor)) {
-        "var(--bs-primary, #2780E3)"
-    } else if (grepl("^#[0-9A-Fa-f]{6}$", barcolor)) {
-        barcolor
-    } else {
-        stop("Invalid barcolor. Use NULL or a valid hex color.")
+    if (!is.null(barcolor)) {
+        if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
+            stop("Invalid barcolor. Use NULL or a valid hex color.")
+        }
     }
 
     shiny::fluidPage(
         shinyjs::useShinyjs(),
         load_resources("surveydown.css", type = "css"),
+        if (!is.null(barcolor)) {
+            shiny::tags$style(HTML(sprintf("
+                :root {
+                    --barcolor: %s;
+                }
+            ", barcolor)))
+        },
         if (barposition != "none") {
             shiny::tags$div(
                 id = "progressbar",
@@ -50,11 +54,6 @@ sd_ui <- function(
                 shiny::tags$div(id = "progress")
             )
         },
-        shiny::tags$style(HTML(sprintf("
-            :root {
-                --progress-color: color-mix(in srgb, %s 80%%, transparent);
-            }
-        ", progress_color))),
         shiny::tags$div(
             class = "content",
             shiny::uiOutput("main")
