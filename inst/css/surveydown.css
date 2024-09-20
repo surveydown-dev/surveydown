@@ -1,43 +1,15 @@
 /* Root variables */
 :root {
-  /* Theme colors */
-  --cerulean-color:  #2FA4E7;
-  --cosmo-color:     #2780E3;
-  --cyborg-color:    #2A9FD6;
-  --darkly-color:    #375A7F;
-  --flatly-color:    #18BC9C;
-  --journal-color:   #EB6864;
-  --litera-color:    #007BFF;
-  --lumen-color:     #F08D49;
-  --lux-color:       #343A40;
-  --materia-color:   #2196F3;
-  --minty-color:     #78C2AD;
-  --morph-color:     #218C74;
-  --paper-color:     #2196F3;
-  --pulse-color:     #593196;
-  --quartz-color:    #8C9EFF;
-  --readable-color:  #3273DC;
-  --sandstone-color: #93C54B;
-  --simplex-color:   #D9230F;
-  --sketchy-color:   #333333;
-  --slate-color:     #007AFF;
-  --spacelab-color:  #3398DC;
-  --superhero-color: #DF691A;
-  --united-color:    #E95420;
-  --vapor-color:     #9B59B6;
-  --yeti-color:      #008CBA;
-
   /* Layout and theme variables */
-  --theme-color: inherit;
-  --progressbar-position: top;
+  --theme-color: var(--bs-primary, #2780E3);
   --body-background-color: #f2f6f9;
+  --progressbar-position: top;
   --progress-bar-height: 10px;
 }
 
-/* Base styles */
+/* Body background color */
 body {
   background-color: var(--body-background-color);
-  padding-top: var(--progress-bar-height);
 }
 
 /* Typography */
@@ -79,7 +51,7 @@ p, .form-group, .control-label {
 #progressbar > div {
   width: 0%;
   height: 100%;
-  background-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
+  background-color: var(--progress-color);
   transition: width 0.4s ease;
 }
 
@@ -109,26 +81,6 @@ p, .form-group, .control-label {
   font-size: 1.1em;
 }
 
-/* Radio and checkbox styles */
-.radio {
-  margin: 0.25rem 0;
-}
-
-.radio label {
-  padding-left: 25px;
-  position: relative;
-}
-
-.radio input[type="radio"] {
-  position: absolute;
-  left: 0;
-}
-
-.radio input[type="radio"]:checked {
-  border-color: var(--theme-color);
-  background-color: var(--theme-color);
-}
-
 /* Common styles for all button groups */
 .radio-group-buttons,
 .checkbox-group-buttons,
@@ -141,76 +93,6 @@ p, .form-group, .control-label {
 /* Styles for multiple choice buttons (gap: 0.5rem) */
 .checkbox-group-buttons .btn-group-container-sw {
   gap: 0.5rem;
-}
-
-/* Styles for single choice buttons (gap: 0) */
-.radio-group-buttons .btn-group-container-sw {
-  gap: 0;
-}
-
-/* Individual buttons */
-.radio-group-buttons .btn,
-.checkbox-group-buttons .btn {
-  background-color: #ffffff;
-  border: 1px solid var(--theme-color);
-  color: var(--theme-color);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  padding: 0.375rem 0.75rem;
-}
-
-/* Hide the original input */
-.radio-group-buttons .btn input[type="radio"],
-.checkbox-group-buttons .btn input[type="checkbox"] {
-  position: absolute;
-  opacity: 0;
-  cursor: pointer;
-  height: 100%;
-  width: 100%;
-  left: 0;
-  top: 0;
-  margin: 0;
-  z-index: 1;
-}
-
-/* Style the label to look like a button */
-.radio-group-buttons .btn label,
-.checkbox-group-buttons .btn label {
-  display: inline-block;
-  margin: 0;
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-  color: inherit;
-}
-
-/* Hover state */
-.radio-group-buttons .btn:hover,
-.checkbox-group-buttons .btn:hover {
-  background-color: color-mix(in srgb, var(--theme-color) 10%, transparent);
-}
-
-/* Active/selected state */
-.radio-group-buttons .btn.active,
-.checkbox-group-buttons .btn.active {
-  background-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
-  border-color: var(--theme-color);
-  color: #ffffff;
-}
-
-/* Click state */
-.radio-group-buttons .btn:active,
-.checkbox-group-buttons .btn:active {
-  background-color: var(--theme-color);
-  color: #ffffff;
-}
-
-/* Focus state */
-.radio-group-buttons .btn:focus,
-.checkbox-group-buttons .btn:focus {
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-color) 25%, transparent);
-  outline: none;
 }
 
 /* Button styling */
@@ -235,10 +117,6 @@ p, .form-group, .control-label {
 }
 
 /* Link styling */
-a {
-  color: var(--theme-color);
-}
-
 a:hover {
   color: color-mix(in srgb, var(--theme-color) 80%, black);
 }
