@@ -53,10 +53,16 @@ list_name_md_to_html <- function(list) {
 #'
 #' @noRd
 .onAttach <- function(libname, pkgname) {
-    include_folder('images')
-    include_folder('css')
-    include_folder('js')
-    include_folder('www')
+
+    # Add special folders to resource path
+    folders <- c('images', 'css', 'js', 'www')
+    for (folder in folders) { include_folder(folder) }
+
+    # Add Quarto file folders to resource path
+    folders <- get_quarto_files_folders()
+    for (folder in folders) { include_folder(folder, create = TRUE) }
+
+    # Print package data
     desc  <- utils::packageDescription(pkgname, libname)
     packageStartupMessage(
         "Version:  ", desc$Version, "\n",
@@ -67,8 +73,46 @@ list_name_md_to_html <- function(list) {
     )
 }
 
-include_folder <- function(folder) {
-    if (dir.exists(folder)) { shiny::addResourcePath(folder, folder) }
+get_quarto_files_folders <- function() {
+    qmd_files <- find_quarto_files()
+    self_contained <- qmd_files[sapply(qmd_files, is_self_contained)]
+    self_contained <- tools::file_path_sans_ext(self_contained)
+    return(paste0(self_contained, "_files"))
+}
+
+find_quarto_files <- function(directory = ".") {
+    # List all files in the specified directory
+    all_files <- list.files(path = directory, full.names = TRUE)
+
+    # Filter for .qmd files
+    quarto_files <- all_files[grep("\\.qmd$", all_files, ignore.case = TRUE)]
+
+    # Extract just the file names without the full path
+    quarto_file_names <- basename(quarto_files)
+
+    # If no .qmd files found, return NULL with a warning
+    if (length(quarto_file_names) == 0) {
+        warning("No .qmd files found in the specified directory.")
+        return(NULL)
+    }
+
+    return(quarto_file_names)
+}
+
+is_self_contained <- function(x) {
+    result <- quarto::quarto_inspect(x)$formats$html$pandoc$`self-contained`
+    if (is.null(result)) { return(FALSE) }
+    return(result)
+}
+
+include_folder <- function(folder, create = FALSE) {
+    folder_exists <- dir.exists(folder)
+    if (folder_exists) {
+        shiny::addResourcePath(folder, folder)
+    } else if (create) {
+        dir.create(folder)
+        shiny::addResourcePath(folder, folder)
+    }
 }
 
 #' Include a folder to Shiny's resource path
@@ -92,7 +136,7 @@ include_folder <- function(folder) {
 #' }
 sd_include_folder <- function(folder) {
     # List of folders pre-included by the package
-    pre_included_folders <- c("images", "css", "js", "www")
+    pre_included_folders <- names(shiny::resourcePaths())
 
     if (folder %in% pre_included_folders) {
         message(paste("The folder", folder, "is already included by the package. No action needed."))

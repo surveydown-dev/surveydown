@@ -4,7 +4,7 @@
 #' page and question structures, conditional display settings, and navigation options.
 #' It also renders the Quarto document and extracts necessary information.
 #'
-#' @param survey Character string. The path to the survey .qmd file or .html file. If .qmd, the file will be rendered into a .html.
+#' @param survey_file Character string. The path to the survey .qmd file or .html file. If .qmd, the file will be rendered into a .html.
 #' @param skip_if A list of conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param skip_if_custom A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param show_if A list of conditions under which certain pages should be shown. Defaults to NULL.
@@ -18,7 +18,7 @@
 #'
 #' @export
 sd_config <- function(
-        survey = "survey.qmd",
+        survey_file = "survey.qmd",
         skip_if = NULL,
         skip_if_custom = NULL,
         show_if = NULL,
@@ -30,7 +30,7 @@ sd_config <- function(
 ) {
 
     # Get the html content from the qmd file (or html if pre-rendered)
-    html_content <- get_html_content(survey)
+    html_content <- get_html_content(survey_file)
 
     # Extract all divs with class "sd-page"
     pages <- extract_html_pages(
@@ -71,7 +71,6 @@ sd_config <- function(
 
     # Store all config settings
     config <- list(
-        question_structure = question_structure,
         page_ids = page_ids,
         question_ids = question_ids,
         question_values = question_values,
@@ -89,22 +88,22 @@ sd_config <- function(
     return(config)
 }
 
-get_html_content <- function(survey) {
+get_html_content <- function(survey_file) {
     # Check if the file exists
-    if (!file.exists(survey)) {
+    if (!file.exists(survey_file)) {
         stop("The specified survey file does not exist.")
     }
 
     # Get the file extension
-    file_ext <- tools::file_ext(survey)
+    file_ext <- tools::file_ext(survey_file)
 
     # Process based on file type
     if (file_ext == "qmd") {
-        temp_html <- quarto_render_temp(survey)
+        temp_html <- quarto_render_temp(survey_file)
         html_content <- rvest::read_html(temp_html)
         unlink(temp_html)
     } else if (file_ext == "html") {
-        html_content <- rvest::read_html(survey)
+        html_content <- rvest::read_html(survey_file)
     } else {
         stop("Invalid file type. Please provide either a .qmd or .html file.")
     }

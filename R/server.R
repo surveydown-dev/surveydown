@@ -27,7 +27,6 @@
 #'   \item \code{show_if_custom}: A list of custom show conditions.
 #'   \item \code{start_page}: The identifier of the starting page.
 #'   \item \code{question_required}: A vector of required question identifiers.
-#'   \item \code{all_questions_required}: A logical indicating if all questions are required.
 #'   \item \code{admin_page}: A logical indicating if an admin page should be included.
 #' }
 #'
