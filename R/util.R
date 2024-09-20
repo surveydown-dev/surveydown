@@ -53,6 +53,10 @@ list_name_md_to_html <- function(list) {
 #'
 #' @noRd
 .onAttach <- function(libname, pkgname) {
+    include_folder('images')
+    include_folder('css')
+    include_folder('js')
+    include_folder('www')
     desc  <- utils::packageDescription(pkgname, libname)
     packageStartupMessage(
         "Version:  ", desc$Version, "\n",
@@ -61,6 +65,48 @@ list_name_md_to_html <- function(list) {
         "https://github.com/jhelvy/surveydown/issues/41.\n\n",
         "Please cite our package in your publications, see:\ncitation(\"surveydown\")"
     )
+}
+
+include_folder <- function(folder) {
+    if (dir.exists(folder)) { shiny::addResourcePath(folder, folder) }
+}
+
+#' Include a folder to Shiny's resource path
+#'
+#' This function includes a specified folder to Shiny's resource path,
+#' making it accessible for serving static files in a Shiny application.
+#' It checks for pre-existing resource paths to avoid conflicts with
+#' folders already included by the package.
+#'
+#' @param folder A character string specifying the name of the folder to include.
+#'   This folder should exist in the root directory of your Shiny app.
+#'
+#' @return `NULL` invisibly. The function is called for its side effect of
+#'   adding a resource path to Shiny.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' sd_include_folder("custom_images")
+#' }
+sd_include_folder <- function(folder) {
+    # List of folders pre-included by the package
+    pre_included_folders <- c("images", "css", "js", "www")
+
+    if (folder %in% pre_included_folders) {
+        message(paste("The folder", folder, "is already included by the package. No action needed."))
+        return(invisible(NULL))
+    }
+
+    if (!dir.exists(folder)) {
+        stop(paste("The folder", folder, "does not exist in the current directory."))
+    }
+
+    shiny::addResourcePath(folder, folder)
+    message(paste("Successfully added", folder, "to Shiny's resource path."))
+
+    invisible(NULL)
 }
 
 # Convert Vector to JSON Array

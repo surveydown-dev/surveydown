@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+- Added `sd_include_folder()` function so users can add a folder to the shiny resource path.
+- Automatically include the `images`, `js`, `css`, and `www` folders to the shiny resource path when the package loads.
 - Heavily modified how `sd_next()` works to improve page navigation and ensure that each `sd_next()` button has a unique id based on the current page.
 - Removed the quarto extension.
 - `sd_create_survey()` changed to sourcing template directly from the package.
