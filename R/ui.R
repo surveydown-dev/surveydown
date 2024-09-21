@@ -179,6 +179,12 @@ sd_question <- function(
             status   = status
         )
 
+        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
+            $(document).on('click', '#%s .btn', function() {
+                %s
+            });
+        ", id, js_interaction))))
+
     } else if (type == "mc_multiple_buttons") {
 
         output <- shinyWidgets::checkboxGroupButtons(
@@ -190,6 +196,12 @@ sd_question <- function(
             justified  = justified,
             width      = width
         )
+
+        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
+            $(document).on('click', '#%s .btn', function() {
+                %s
+            });
+        ", id, js_interaction))))
 
     } else if (type == "text") {
 
