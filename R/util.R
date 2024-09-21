@@ -31,13 +31,10 @@ list_name_md_to_html <- function(list) {
     folders <- c('images', 'css', 'js', 'www')
     for (folder in folders) { include_folder(folder) }
 
-    # Add Quarto file folders to resource path
-    folders <- get_quarto_files_folders()
-    if (!is.null(folders)) {
-        for (folder in folders) {
-            include_folder(folder, create = TRUE)
-        }
-    }
+    # Add survey_files folder to resource path
+    # (if survey.qmd exists and it's not self contained)
+    folder <- get_survey_file_folder()
+    if (!is.null(folder)) { include_folder(folder, create = TRUE) }
 
     # Print package data
     desc  <- utils::packageDescription(pkgname, libname)
@@ -50,26 +47,18 @@ list_name_md_to_html <- function(list) {
     )
 }
 
-get_quarto_files_folders <- function() {
-    qmd_files <- find_quarto_files()
-    if (is.null(qmd_files)) { return(NULL) }
-    self_contained <- qmd_files[!sapply(qmd_files, is_self_contained)]
-    self_contained <- tools::file_path_sans_ext(self_contained)
-    if (length(self_contained) > 0) {
-        return(paste0(self_contained, "_files"))
+get_survey_file_folder <- function() {
+    if (!survey_file_exists()) { return(NULL) }
+    if (!is_self_contained("survey.qmd")) {
+        return("survey_files")
     }
+    return(NULL)
 }
 
-find_quarto_files <- function(directory = ".") {
-    # List all files in the specified directory, then filter for qmd files
-    all_files <- list.files(path = directory, full.names = TRUE)
-    quarto_files <- all_files[grep("\\.qmd$", all_files, ignore.case = TRUE)]
-
-    # If no .qmd files found, return NULL with a warning
-    quarto_file_names <- basename(quarto_files)
-    if (length(quarto_file_names) == 0) { return(NULL) }
-
-    return(quarto_file_names)
+survey_file_exists <- function() {
+    files <- basename(list.files(full.names = TRUE))
+    if ("survey.qmd" %in% files) { return(TRUE) }
+    return(FALSE)
 }
 
 is_self_contained <- function(x) {
@@ -85,6 +74,12 @@ include_folder <- function(folder, create = FALSE) {
     } else if (create) {
         dir.create(folder)
         shiny::addResourcePath(folder, folder)
+    }
+}
+
+check_survey_file_exists <- function() {
+    if (!survey_file_exists()) {
+        stop('Missing "survey.qmd" file. Your survey file must be named "survey.qmd"')
     }
 }
 

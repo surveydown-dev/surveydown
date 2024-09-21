@@ -31,15 +31,25 @@ sd_ui <- function(
         barcolor    = NULL,
         barposition = 'top'
 ) {
+    # Throw error if "survey.qmd" file missing
+    check_survey_file_exists()
+
     if (!is.null(barcolor)) {
         if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
             stop("Invalid barcolor. Use NULL or a valid hex color.")
         }
     }
 
+    # Get the theme from the survey.qmd file
+    theme <- get_theme()
+    if (theme == "default") {
+        # Configure default theme css settings
+    }
+
     shiny::fluidPage(
         shinyjs::useShinyjs(),
         load_resources("surveydown.css", type = "css"),
+        # Load default theme here if theme == "default"
         if (!is.null(barcolor)) {
             shiny::tags$style(HTML(sprintf("
                 :root {
@@ -59,6 +69,15 @@ sd_ui <- function(
             shiny::uiOutput("main")
         )
     )
+}
+
+get_theme <- function() {
+    x <- "survey.qmd"
+    theme <- quarto::quarto_inspect(x)$formats$html$metadata$theme
+    if (is.null(theme)) {
+        return("default")
+    }
+    return(theme)
 }
 
 #' Create a survey question

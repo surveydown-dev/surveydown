@@ -4,7 +4,7 @@
 #' page and question structures, conditional display settings, and navigation options.
 #' It also renders the Quarto document and extracts necessary information.
 #'
-#' @param survey_file Character string. The path to the survey .qmd file or .html file. If .qmd, the file will be rendered into a .html.
+#' @param use_html Logical. By default, sd_config() will render the "survey.qmd" file when loaded, which can be slow. User can render it first into a html file and set `use_html = TRUE` to use the pre-rendered file, which is faster when the app loads. Defaults to `FALSE`.
 #' @param skip_if A list of conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param skip_if_custom A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.
 #' @param show_if A list of conditions under which certain pages should be shown. Defaults to NULL.
@@ -18,16 +18,21 @@
 #'
 #' @export
 sd_config <- function(
-        survey_file = "survey.qmd",
-        skip_if = NULL,
-        skip_if_custom = NULL,
-        show_if = NULL,
-        show_if_custom = NULL,
-        required_questions = NULL,
-        all_questions_required = FALSE,
-        start_page = NULL,
-        admin_page = FALSE
+    use_html = FALSE,
+    skip_if = NULL,
+    skip_if_custom = NULL,
+    show_if = NULL,
+    show_if_custom = NULL,
+    required_questions = NULL,
+    all_questions_required = FALSE,
+    start_page = NULL,
+    admin_page = FALSE
 ) {
+    # Throw error if "survey.qmd" file missing
+    check_survey_file_exists()
+
+    survey_file <- "survey.qmd"
+    if (use_html) { survey_file <- "survey.html" }
 
     # Get the html content from the qmd file (or html if pre-rendered)
     html_content <- get_html_content(survey_file)
