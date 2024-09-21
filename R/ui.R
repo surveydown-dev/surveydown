@@ -42,12 +42,22 @@ sd_ui <- function(
 
     # Get the theme from the survey.qmd file
     theme <- get_theme()
+    default_theme_css <- ""
     if (theme == "default") {
-        # Configure default theme css settings
+        default_theme_css <- "
+        body, button, input, select, textarea {
+            font-family: 'Raleway', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+        }
+        "
     }
 
     shiny::fluidPage(
         shinyjs::useShinyjs(),
+        shiny::tags$style(HTML(default_theme_css)),
         load_resources("surveydown.css", type = "css"),
         # Load default theme here if theme == "default"
         if (!is.null(barcolor)) {

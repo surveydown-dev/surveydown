@@ -9,13 +9,11 @@
   --progressbar-position: top;
   --progress-bar-height: 10px;
   --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
-  font-family: 'Raleway', sans-serif;
 }
 
 /* Body */
 body {
   background-color: var(--body-background-color);
-  font-family: 'Raleway', sans-serif;
 }
 
 /* Typography */
