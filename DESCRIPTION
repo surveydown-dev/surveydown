@@ -30,7 +30,6 @@ Suggests:
     knitr,
     testthat
 Imports:
-    bslib,
     DBI,
     digest,
     DT,

@@ -4,30 +4,12 @@
 \alias{sd_ui}
 \title{Create the UI for a surveydown survey}
 \usage{
-sd_ui(
-  barcolor = "theme",
-  barposition = "top",
-  theme = NULL,
-  theme_color = NULL,
-  theme_font = NULL,
-  background = "#f2f6f9",
-  custom_css = NULL
-)
+sd_ui(barcolor = NULL, barposition = "top")
 }
 \arguments{
-\item{barcolor}{Color of the progress bar. Can be a hex color or 'theme' to use the theme's primary color. Default is 'theme'.}
+\item{barcolor}{Color of the progress bar. Can be a hex color or NULL to use the theme's primary color with 80\% opacity. Default is NULL.}
 
 \item{barposition}{Position of the progress bar. Can be 'top', 'bottom', or 'none'. Default is 'top'.}
-
-\item{theme}{The name of the Bootswatch theme to use. Default is NULL.}
-
-\item{theme_color}{The color theme to use. If specified, overrides the color from the Bootswatch theme. Default is NULL.}
-
-\item{theme_font}{The font theme to use. If specified, overrides the font from the Bootswatch theme. Default is NULL.}
-
-\item{background}{Background color of the body. Default is '#f2f6f9'.}
-
-\item{custom_css}{Path to a custom CSS file to override default styles. Default is NULL.}
 }
 \value{
 A Shiny UI object
@@ -39,7 +21,6 @@ including necessary CSS and JavaScript files, and applies custom styling.
 \examples{
 \dontrun{
 sd_ui()
-sd_ui(barcolor = "#FF0000", barposition = "bottom", theme = "flatly")
-sd_ui(theme_color = "darkly", theme_font = "roboto", background = "#FFFFFF")
+sd_ui(barcolor = "#FF0000", barposition = "bottom")
 }
 }

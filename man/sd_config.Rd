@@ -5,7 +5,7 @@
 \title{Configuration Function for surveydown Surveys}
 \usage{
 sd_config(
-  survey_file = "survey.qmd",
+  use_html = FALSE,
   skip_if = NULL,
   skip_if_custom = NULL,
   show_if = NULL,
@@ -17,7 +17,7 @@ sd_config(
 )
 }
 \arguments{
-\item{survey_file}{Character string. The path to the survey .qmd file or .html file. If .qmd, the file will be rendered into a .html.}
+\item{use_html}{Logical. By default, sd_config() will render the "survey.qmd" file when loaded, which can be slow. User can render it first into a html file and set \code{use_html = TRUE} to use the pre-rendered file, which is faster when the app loads. Defaults to \code{FALSE}.}
 
 \item{skip_if}{A list of conditions under which certain pages should be skipped. Defaults to NULL.}
 

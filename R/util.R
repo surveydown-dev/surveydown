@@ -197,7 +197,7 @@ quarto_render_temp <- function(input) {
 #' @param path A character string specifying the directory where the survey template
 #'   should be created. Defaults to the current working directory.
 #' @param structure A character string specifying the template structure to use.
-#'   Must be either "single" or "multi". Defaults to "multi".
+#'   Must be either "single" or "multi". Defaults to "single".
 #'
 #' @return Invisible NULL. The function is called for its side effects of creating
 #'   files and providing user feedback.
@@ -228,7 +228,7 @@ quarto_render_temp <- function(input) {
 #' # Create a multi-page survey template in a specific directory
 #' sd_create_survey("path/to/my/survey", structure = "multi")
 #' }
-sd_create_survey <- function(path = getwd(), structure = "multi") {
+sd_create_survey <- function(path = getwd(), structure = "single") {
     # Check if using current directory and confirm with user
     if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
         stop("Operation aborted by the user.")
