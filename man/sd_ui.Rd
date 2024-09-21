@@ -4,12 +4,7 @@
 \alias{sd_ui}
 \title{Create the UI for a surveydown survey}
 \usage{
-sd_ui(barcolor = NULL, barposition = "top")
-}
-\arguments{
-\item{barcolor}{Color of the progress bar. Can be a hex color or NULL to use the theme's primary color with 80\% opacity. Default is NULL.}
-
-\item{barposition}{Position of the progress bar. Can be 'top', 'bottom', or 'none'. Default is 'top'.}
+sd_ui()
 }
 \value{
 A Shiny UI object
@@ -17,10 +12,22 @@ A Shiny UI object
 \description{
 This function creates the user interface for a surveydown survey,
 including necessary CSS and JavaScript files, and applies custom styling.
+It retrieves theme and progress bar settings from the survey.qmd file.
+}
+\details{
+The function reads the following settings from the survey.qmd YAML header:
+\itemize{
+\item \code{theme}: The theme to be applied to the survey.
+\item \code{barcolor}: The color of the progress bar (should be a valid hex color).
+\item \code{barposition}: The position of the progress bar ('top', 'bottom', or 'none').
+}
+
+If \code{barcolor} is not specified or is NULL, the default theme color will be used.
+If \code{barposition} is not specified, it defaults to 'top'.
 }
 \examples{
 \dontrun{
-sd_ui()
-sd_ui(barcolor = "#FF0000", barposition = "bottom")
+# In your app.R or ui.R file:
+ui <- sd_ui()
 }
 }

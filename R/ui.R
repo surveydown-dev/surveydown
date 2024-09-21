@@ -15,30 +15,30 @@ load_resources <- function(files, type = c("css", "js"), package = "surveydown")
 #'
 #' This function creates the user interface for a surveydown survey,
 #' including necessary CSS and JavaScript files, and applies custom styling.
-#'
-#' @param barcolor Color of the progress bar. Can be a hex color or NULL to use the theme's primary color with 80% opacity. Default is NULL.
-#' @param barposition Position of the progress bar. Can be 'top', 'bottom', or 'none'. Default is 'top'.
+#' It retrieves theme and progress bar settings from the survey.qmd file.
 #'
 #' @return A Shiny UI object
 #' @export
 #'
+#' @details
+#' The function reads the following settings from the survey.qmd YAML header:
+#' \itemize{
+#'   \item \code{theme}: The theme to be applied to the survey.
+#'   \item \code{barcolor}: The color of the progress bar (should be a valid hex color).
+#'   \item \code{barposition}: The position of the progress bar ('top', 'bottom', or 'none').
+#' }
+#'
+#' If \code{barcolor} is not specified or is NULL, the default theme color will be used.
+#' If \code{barposition} is not specified, it defaults to 'top'.
+#'
 #' @examples
 #' \dontrun{
-#' sd_ui()
-#' sd_ui(barcolor = "#FF0000", barposition = "bottom")
+#' # In your app.R or ui.R file:
+#' ui <- sd_ui()
 #' }
-sd_ui <- function(
-        barcolor    = NULL,
-        barposition = 'top'
-) {
+sd_ui <- function() {
     # Throw error if "survey.qmd" file missing
     check_survey_file_exists()
-
-    if (!is.null(barcolor)) {
-        if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
-            stop("Invalid barcolor. Use NULL or a valid hex color.")
-        }
-    }
 
     # Get the theme from the survey.qmd file
     theme <- get_theme()
@@ -55,15 +55,18 @@ sd_ui <- function(
         "
     }
 
+    # Get progress bar settings from the survey.qmd file
+    barcolor <- get_barcolor()
+    barposition <- get_barposition()
+
     shiny::fluidPage(
         shinyjs::useShinyjs(),
         shiny::tags$style(HTML(default_theme_css)),
         load_resources("surveydown.css", type = "css"),
-        # Load default theme here if theme == "default"
         if (!is.null(barcolor)) {
             shiny::tags$style(HTML(sprintf("
                 :root {
-                    --barcolor: %s;
+                    --progress-color: %s;
                 }
             ", barcolor)))
         },
@@ -88,6 +91,26 @@ get_theme <- function() {
         return("default")
     }
     return(theme)
+}
+
+get_barcolor <- function() {
+    x <- "survey.qmd"
+    barcolor <- quarto::quarto_inspect(x)$formats$html$metadata$barcolor
+    if (!is.null(barcolor)) {
+        if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
+            stop("Invalid barcolor in YAML. Use a valid hex color.")
+        }
+    }
+    return(barcolor)
+}
+
+get_barposition <- function() {
+    x <- "survey.qmd"
+    barposition <- quarto::quarto_inspect(x)$formats$html$metadata$barposition
+    if (is.null(barposition)) {
+        return("top")
+    }
+    return(barposition)
 }
 
 #' Create a survey question

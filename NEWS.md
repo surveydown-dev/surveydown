@@ -1,11 +1,12 @@
 # surveydown (development version)
 
+- `sd_ui()` doesn't take in any inputs. Instead, the `barcolor`, `barposition`, and `theme` should all be defined in the YAML header of the `survey.qmd` file.
 - Require that the survey file be named `"survey.qmd"`.
 - Added `sd_include_folder()` function so users can add a folder to the shiny resource path.
 - Automatically include the `images`, `js`, `css`, and `www` folders as well as folders to quarto files to the shiny resource path when the package loads.
 - Heavily modified how `sd_next()` works to improve page navigation and ensure that each `sd_next()` button has a unique id based on the current page.
 - Removed the quarto extension.
-- `sd_create_survey()` changed to sourcing template directly from the package. Two parameters are provided. The first parameter is `path`, which defines the relative path of the target. If left blank, the path will be the current working directory. The second parameter is `structure`, which defines which structure of the template the user wants to choose, default as `"complete"` and can be changed to `"simple"`.
+- `sd_create_survey()` changed to sourcing template directly from the package. Two parameters are provided. The first parameter is `path`, which defines the relative path of the target. If left blank, the path will be the current working directory. The second parameter is `structure`, which defines which structure of the template the user wants to choose, default as `"single"` and can be changed to `"multi"`.
 - `sd_deploy()` as a wrapper function of `rsconnect::deployApp()` to deploy the survey.
 - `sd_update()` as a replacement of `sd_update_surveydown()` to update the package.
 - `sd_version()` as a replacement of `sd_check_versions()` to check for the current version and the latest version.
