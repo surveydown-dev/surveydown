@@ -1,87 +1,52 @@
 ---
-format:
-  html:
-    self-contained: true
 echo: false
-message: false
 warning: false
 ---
 
 ```{r}
-devtools::load_all('../surveydown')
+library(surveydown)
 ```
 
-::: {#basic_showif .sd-page}
+::: {#welcome .sd-page}
 
-# Demo survey of the `show_if` feature
+# Welcome to our survey!
 
-<center>
-<img src="www/logo.png" width=20%>
-</center>
+This is a simple demonstration of a surveydown survey. It has two pages with one question on each page.
 
-## Basic Conditional Display
-
-If the "**Other**" option is chosen, a question asking the other penguin type will appear.
-
-This is done by using the `show_if` argument in `sd_config()`.
+Here is a basic "multiple choice" question, created using `type = 'mc'` inside the `sd_question()` function:
 
 ```{r}
 sd_question(
   type  = 'mc',
-  id    = 'penguins_basic',
-  label = "Which is your favorite type of penguin?",
+  id    = 'penguins',
+  label = "Which type of penguin do you like the best?",
   option = c(
     'Adélie'    = 'adelie',
     'Chinstrap' = 'chinstrap',
-    'Gentoo'    = 'gentoo',
-    'Other'     = 'other'
+    'Gentoo'    = 'gentoo'
   )
 )
+```
 
-sd_question(
-  type  = "text",
-  id    = "penguins_other_basic",
-  label = "Please specify the other penguin type:"
-)
+You need to insert next buttons with `sd_next()` and set the `next_page` argument to the name of the page you want to go to next.
 
-sd_next(next_page = 'custom_showif')
+```{r}
+sd_next(next_page = 'page2')
 ```
 
 :::
 
-::: {#custom_showif .sd-page}
+::: {#page2 .sd-page}
 
-## Custom Conditional Display
+This is another page in your survey.
 
-Say that we want to have a more complicated show_if condition. Now there are 2 questions. Only if the user chooses both "**Other**" and "**Show**" will the other penguin question appear. This is done by using the `show_if_custom` argument in `sd_config()`. We also made a custom function called `show_other()` to facilitate the logic (see the server code chunk).
+{surveydown} supports many types of questions. For example, here is a simple `text` type question:
 
 ```{r}
 sd_question(
-  type  = 'mc',
-  id    = 'penguins_custom',
-  label = "Which is your favorite type of penguin?",
-  option = c(
-    'Adélie'    = 'adelie',
-    'Chinstrap' = 'chinstrap',
-    'Gentoo'    = 'gentoo',
-    'Other'     = 'other'
-  )
-)
-
-sd_question(
-  type  = 'mc',
-  id    = 'show_other_custom',
-  label = "Should we show the 'other' option question?",
-  option = c(
-    'Show' = 'show',
-    'Hide' = 'hide'
-  )
-)
-
-sd_question(
   type  = "text",
-  id    = "penguins_other_custom",
-  label = "Please specify the other penguin type:"
+  id    = "silly_word",
+  label = "Write a silly word here:"
 )
 
 sd_next(next_page = 'end')
@@ -91,6 +56,12 @@ sd_next(next_page = 'end')
 
 ::: {#end .sd-page}
 
-## This is the end of the demo survey showcasing the conditional display feature.
+## End
+
+This it the last page in the survey.
+
+```{r}
+sd_close("Exit Survey")
+```
 
 :::

@@ -1,9 +1,5 @@
 ---
-format:
-  html:
-    self-contained: true
 echo: false
-message: false
 warning: false
 ---
 

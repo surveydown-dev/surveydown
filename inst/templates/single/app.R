@@ -12,32 +12,31 @@ library(surveydown)
 # https://surveydown.org/store-data
 
 db <- sd_database(
-    host   = "",
-    dbname = "",
-    port   = "",
-    user   = "",
-    table  = "",
-    ignore = TRUE
+  host   = "",
+  dbname = "",
+  port   = "",
+  user   = "",
+  table  = "",
+  ignore = TRUE
 )
+
 
 # Server setup
 server <- function(input, output, session) {
 
-    # Config setup
-    config <- sd_config(
+  # Config setup
+  config <- sd_config(
+    # Config settings here...
+  )
 
-        # Config settings here...
-
-    )
-
-    # sd_server() initiates your survey - don't change it
-    sd_server(
-        input   = input,
-        output  = output,
-        session = session,
-        config  = config,
-        db      = db
-    )
+  # sd_server() initiates your survey - don't change it
+  sd_server(
+    input   = input,
+    output  = output,
+    session = session,
+    config  = config,
+    db      = db
+  )
 
 }
 
