@@ -20,9 +20,6 @@ db <- sd_database(
   ignore = TRUE
 )
 
-# UI setup
-ui <- sd_ui()
-
 # Server setup
 server <- function(input, output, session) {
 
@@ -41,4 +38,4 @@ server <- function(input, output, session) {
 }
 
 # shinyApp() initiates your app - don't change it
-shiny::shinyApp(ui = ui, server = server)
+shiny::shinyApp(ui = sd_ui(), server = server)

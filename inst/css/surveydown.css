@@ -27,11 +27,25 @@ p, .form-group, .control-label {
   margin-bottom: 0.5rem;
 }
 
+/* Unbolding question labels */
+.control-label, .radio label, .checkbox label {
+  font-weight: normal;
+  font-size: 1.1em;
+}
+
 /* Layout */
 .container-fluid .content {
   max-width: 800px;
   margin: 0 auto !important;
   padding: 0 0 5px !important;
+}
+
+/* Button styling */
+.radio-inline,
+.checkbox-inline,
+.radio label,
+.checkbox label {
+  padding-bottom: 0.25rem;
 }
 
 /* Button group styling */
@@ -84,6 +98,13 @@ p, .form-group, .control-label {
   z-index: 2;
 }
 
+/* Date range styling*/
+.shiny-date-range-input .input-group-addon {
+  background: none;
+  border: none;
+  padding: 0 10px 0 5px;
+}
+
 /* Progress bar */
 #progressbar {
   position: fixed;
@@ -129,10 +150,6 @@ p, .form-group, .control-label {
 .form-group > label.control-label {
   margin-top: 0;
   margin-bottom: 0.3rem;
-}
-
-.control-label, .radio label, .checkbox label {
-  font-size: 1.1em;
 }
 
 /* Common styles for all button groups */
