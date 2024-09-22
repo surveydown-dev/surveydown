@@ -41,7 +41,8 @@ sd_ui <- function() {
     check_survey_file_exists()
 
     # Get the theme from the survey.qmd file
-    theme <- get_theme()
+    metadata <- quarto::quarto_inspect("survey.qmd")
+    theme <- get_theme(metadata)
     default_theme_css <- ""
     if (theme == "default") {
         default_theme_css <- "
@@ -56,8 +57,8 @@ sd_ui <- function() {
     }
 
     # Get progress bar settings from the survey.qmd file
-    barcolor <- get_barcolor()
-    barposition <- get_barposition()
+    barcolor <- get_barcolor(metadata)
+    barposition <- get_barposition(metadata)
 
     shiny::fluidPage(
         shinyjs::useShinyjs(),
@@ -84,18 +85,17 @@ sd_ui <- function() {
     )
 }
 
-get_theme <- function() {
+get_theme <- function(metadata) {
     x <- "survey.qmd"
-    theme <- quarto::quarto_inspect(x)$formats$html$metadata$theme
+    theme <- metadata$formats$html$metadata$theme
     if (is.null(theme)) {
         return("default")
     }
     return(theme)
 }
 
-get_barcolor <- function() {
-    x <- "survey.qmd"
-    barcolor <- quarto::quarto_inspect(x)$formats$html$metadata$barcolor
+get_barcolor <- function(metadata) {
+    barcolor <- metadata$formats$html$metadata$barcolor
     if (!is.null(barcolor)) {
         if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
             stop("Invalid barcolor in YAML. Use a valid hex color.")
@@ -104,9 +104,8 @@ get_barcolor <- function() {
     return(barcolor)
 }
 
-get_barposition <- function() {
-    x <- "survey.qmd"
-    barposition <- quarto::quarto_inspect(x)$formats$html$metadata$barposition
+get_barposition <- function(metadata) {
+    barposition <- metadata$formats$html$metadata$barposition
     if (is.null(barposition)) {
         return("top")
     }
