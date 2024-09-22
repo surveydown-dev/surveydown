@@ -700,8 +700,7 @@ sd_get_url_pars <- function(...) {
 
 #' Create a placeholder for a reactive survey question
 #'
-#' This function creates a placeholder div for a reactive survey question in a Surveydown survey.
-#' It's used in conjunction with sd_question to allow for dynamic question rendering.
+#' This function is depreciated - use `sd_output()` instead.
 #'
 #' @param id A unique identifier for the question.
 #' @return A Shiny UI element that serves as a placeholder for the reactive question.
@@ -723,6 +722,7 @@ sd_display_question <- function(id) {
 
 #' Display the value of a survey question
 #'
+#' This function is depreciated - use `sd_output()` instead.
 #' @param id The ID of the question to display
 #' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
 #' @param wrapper A function to wrap the output

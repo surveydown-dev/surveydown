@@ -4,29 +4,32 @@
 #' page and question structures, conditional display settings, and navigation options.
 #' It also renders the Quarto document and extracts necessary information.
 #'
-#' @param use_html Logical. By default, sd_config() will render the "survey.qmd" file when loaded, which can be slow. User can render it first into a html file and set `use_html = TRUE` to use the pre-rendered file, which is faster when the app loads. Defaults to `FALSE`.
-#' @param skip_if A list of conditions under which certain pages should be skipped. Defaults to NULL.
-#' @param skip_if_custom A custom function to handle conditions under which certain pages should be skipped. Defaults to NULL.
-#' @param show_if A list of conditions under which certain pages should be shown. Defaults to NULL.
-#' @param show_if_custom A custom function to handle conditions under which certain pages should be shown. Defaults to NULL.
+#' @param use_html Logical. By default, sd_config() will render the
+#' `"survey.qmd"` file when loaded, which can be slow. Users can render it
+#' first into a html file and set `use_html = TRUE` to use the pre-rendered
+#' file, which is faster when the app loads. Defaults to `FALSE`.
 #' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.
 #' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
+#' @param skip_if A list of conditions & page targets created using the
+#' `sd_skip_if()` function defining pages to skip to if a condition is `TRUE`.
+#' Defaults to `NULL`.
+#' @param show_if A list of conditions & question targets created using the
+#' `sd_show_if()` function defining questions to show to if a condition is `TRUE`.
+#' Defaults to `NULL`.
 #'
 #' @return A list containing the configuration settings for the survey and rendered HTML content.
 #'
 #' @export
 sd_config <- function(
     use_html = FALSE,
-    skip_if = NULL,
-    skip_if_custom = NULL,
-    show_if = NULL,
-    show_if_custom = NULL,
     required_questions = NULL,
     all_questions_required = FALSE,
     start_page = NULL,
-    admin_page = FALSE
+    admin_page = FALSE,
+    skip_if = NULL,
+    show_if = NULL
 ) {
     # Throw error if "survey.qmd" file missing
     check_survey_file_exists()
@@ -39,8 +42,7 @@ sd_config <- function(
 
     # Extract all divs with class "sd-page"
     pages <- extract_html_pages(
-        html_content, required_questions, all_questions_required,
-        show_if, show_if_custom
+        html_content, required_questions, all_questions_required, show_if
     )
 
     # Extract head content (for CSS and JS)
@@ -70,24 +72,18 @@ sd_config <- function(
         stop("The specified start_page does not exist - check that you have not mis-spelled the id")
     }
 
-    # Convert show_if_custom and skip_if_custom to list of lists
-    show_if_custom <- convert_to_list_of_lists(show_if_custom)
-    skip_if_custom <- convert_to_list_of_lists(skip_if_custom)
-
     # Store all config settings
     config <- list(
+        pages = pages,
+        head_content = head_content,
         page_ids = page_ids,
         question_ids = question_ids,
         question_values = question_values,
         question_required = question_required,
-        skip_if_custom = skip_if_custom,
-        skip_if = skip_if,
-        show_if_custom = show_if_custom,
-        show_if = show_if,
         start_page = start_page,
         admin_page = admin_page,
-        pages = pages,
-        head_content = head_content
+        skip_if = skip_if,
+        show_if = show_if
     )
 
     return(config)
@@ -115,29 +111,82 @@ get_html_content <- function(survey_file) {
     return(html_content)
 }
 
-get_show_if_targets <- function(show_if, show_if_custom) {
-    show_if_targets <- character(0)
-    if (!is.null(show_if)) {
-        show_if_targets <- unique(show_if$target)
-    }
+#' Define skip conditions for survey pages
+#'
+#' @description
+#' This function is used to define conditions under which certain pages in the survey should be skipped.
+#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target page ID.
+#'
+#' @param ... One or more formulas defining skip conditions.
+#'   The left-hand side of each formula should be a condition based on input values,
+#'   and the right-hand side should be the ID of the page to skip to if the condition is met.
+#'
+#' @return A list of parsed conditions, where each element contains the condition and the target page ID.
+#'
+#' @examples
+#' sd_skip_if(
+#'   input$age < 18 ~ "underage_page",
+#'   input$country != "USA" ~ "international_page"
+#' )
+#'
+#' @seealso \code{\link{sd_show_if}}, \code{\link{sd_config}}
+#'
+#' @export
+sd_skip_if <- function(...) {
+    return(parse_conditions(...))
+}
 
-    show_if_custom_targets <- character(0)
-    if (!is.null(show_if_custom)) {
-        if (is.data.frame(show_if_custom)) {
-            show_if_custom_targets <- unique(show_if_custom$target)
-        } else if (is.list(show_if_custom)) {
-            show_if_custom_targets <- unique(sapply(show_if_custom, function(x) x$target))
+#' Define show conditions for survey questions
+#'
+#' @description
+#' This function is used to define conditions under which certain questions in the survey should be shown.
+#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
+#'
+#' @param ... One or more formulas defining show conditions.
+#'   The left-hand side of each formula should be a condition based on input values,
+#'   and the right-hand side should be the ID of the question to show if the condition is met.
+#'
+#' @return A list of parsed conditions, where each element contains the condition and the target question ID.
+#'
+#' @examples
+#' sd_show_if(
+#'   input$has_pets == "yes" ~ "pet_details",
+#'   input$employment == "employed" ~ "job_questions"
+#' )
+#'
+#' @seealso \code{\link{sd_skip_if}}, \code{\link{sd_config}}
+#'
+#' @export
+sd_show_if <- function(...) {
+    return(parse_conditions(...))
+}
+
+parse_conditions <- function(...) {
+    conditions <- list(...)
+    lapply(conditions, function(cond) {
+        if (!inherits(cond, "formula")) {
+            stop("Each condition must be a formula (condition ~ target)")
         }
-    }
+        list(
+            condition = cond[[2]],  # Left-hand side of the formula
+            target = eval(cond[[3]])  # Right-hand side of the formula
+        )
+    })
+}
 
-    return(unique(c(show_if_targets, show_if_custom_targets)))
+get_show_if_targets <- function(show_if) {
+    if (is.null(show_if)) { return(character(0)) }
+    return(get_unique_targets(show_if))
+}
+
+get_unique_targets <- function(a) {
+    return(unique(sapply(a, function(x) x$target)))
 }
 
 extract_html_pages <- function(
-    html_content, required_questions, all_questions_required,
-    show_if, show_if_custom
+    html_content, required_questions, all_questions_required, show_if
 ) {
-    all_hidden_targets <- get_show_if_targets(show_if, show_if_custom)
+    all_hidden_targets <- get_show_if_targets(show_if)
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
         lapply(function(x) {
@@ -230,53 +279,29 @@ get_question_structure <- function(html_content) {
 check_skip_show <- function(
     question_ids, question_values, page_ids, skip_if, show_if
 ) {
-    required_names <- c("question_id", "question_value", "target")
-
     if (!is.null(skip_if)) {
-        if (!is.data.frame(skip_if)) {
-            stop("skip_if must be a data frame or tibble.")
-        }
-        if (!all(required_names %in% names(skip_if))) {
-            stop("skip_if must contain the columns: question_id, question_value, and target.")
-        }
-        if (!all(skip_if$question_id %in% question_ids)) {
-            stop("All question_id values in skip_if must be valid question IDs.")
-        }
-        if (!all(skip_if$target %in% page_ids)) {
-            stop("All target values in skip_if must be valid page IDs.")
-        }
-        if (!all(skip_if$question_value %in% question_values)) {
-            stop("All question_value values in skip_if must be valid question values.")
+        skip_if_targets <- get_unique_targets(skip_if)
+        invalid_skip_targets <- setdiff(skip_if_targets, page_ids)
+        if (length(invalid_skip_targets) > 0) {
+            stop(sprintf(
+                "Invalid skip_if targets: %s. These must be valid page IDs.",
+                paste(invalid_skip_targets, collapse = ", "))
+            )
         }
     }
 
     if (!is.null(show_if)) {
-        if (!is.data.frame(show_if)) {
-            stop("show_if must be a data frame or tibble.")
-        }
-        if (!all(required_names %in% names(show_if))) {
-            stop("show_if must contain the columns: question_id, question_value, and target.")
-        }
-        if (!all(show_if$question_id %in% question_ids)) {
-            stop("All question_id values in show_if must be valid question IDs.")
-        }
-        if (!all(show_if$target %in% question_ids)) {
-            stop("All target values in show_if must be valid question IDs.")
-        }
-        if (!all(show_if$question_value %in% question_values)) {
-            stop("All question_value values in show_if must be valid question values.")
+        show_if_targets <- get_unique_targets(show_if)
+        invalid_show_targets <- setdiff(show_if_targets, question_ids)
+        if (length(invalid_show_targets) > 0) {
+            stop(sprintf(
+              "Invalid show_if targets: %s. These must be valid question IDs.",
+              paste(invalid_show_targets, collapse = ", "))
+            )
         }
     }
 
     return(TRUE)
-}
-
-convert_to_list_of_lists <- function(tbl) {
-    if (is.data.frame(tbl)) {
-        return(tibble_to_list_of_lists(tbl))
-    } else {
-        return(tbl)
-    }
 }
 
 check_ids <- function(page_ids, question_ids) {

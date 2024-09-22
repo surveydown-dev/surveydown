@@ -33,6 +33,9 @@ reference:
   - sd_set_password
   - sd_store_value
   - sd_copy_value
+  - sd_get_url_pars
+  - sd_show_if
+  - sd_skip_if
 
 - title: Survey UI
   contents:
@@ -41,16 +44,16 @@ reference:
   - sd_next
   - sd_close
   - sd_redirect
-  - sd_get_url_pars
+  - sd_output
   - sd_display_question
   - sd_display_value
-  - sd_output
 
 - title: Utilities
   contents:
   - sd_create_survey
   - sd_include_folder
   - sd_deploy
+  - sd_setup
 
 - title: Version Control
   contents:

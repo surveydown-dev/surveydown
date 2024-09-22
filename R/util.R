@@ -305,3 +305,26 @@ sd_create_survey <- function(path = getwd(), structure = "single") {
 sd_deploy <- function(name = "survey") {
     rsconnect::deployApp(appName = name)
 }
+
+#' Required Set Up Function
+#'
+#' This function is depreciated and no longer needed.
+#'
+#' @details The function configures the Shiny application to use Bootstrap 5 for styling and enables
+#'   Shinyjs for JavaScript functionalities within the application.
+#'
+#' @return This function does not return a value. It is called for its side effects of setting up the Shiny application.
+#'
+#' @examples
+#' \dontrun{
+#'   ui <- fluidPage(
+#'     sd_setup(),
+#'     # Your UI elements here
+#'   )
+#' }
+#'
+#' @export
+sd_setup <- function() {
+    # v0.3.0
+    .Deprecated("")
+}
