@@ -3,10 +3,10 @@
 
 # surveydown <a href='https://surveydown.org/'><img src='man/figures/logo.png' align="right" style="width: 120px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
 
-### Visit our main site [surveydown.org](https://surveydown.org) for more information!
-
 > Note: This is still an early-stage project. Use with caution, and
 > please give us feedback!
+
+### This site only documents the {surveydown} R package - visit our main site at [surveydown.org](https://surveydown.org) for more information!
 
 This package helps you create markdown-based surveys with [Quarto Shiny
 Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html).
