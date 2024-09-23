@@ -1,3 +1,6 @@
+# Create a new environment to store the pool
+.sd_env <- new.env(parent = emptyenv())
+
 #' Connect to a Supabase Database with Automatic Cleanup
 #'
 #' This function establishes a connection pool to a Supabase database and sets
@@ -56,18 +59,17 @@
 #'
 #' @export
 sd_database <- function(
-    host       = NULL,
-    dbname     = NULL,
-    port       = NULL,
-    user       = NULL,
-    table      = NULL,
-    password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
-    gssencmode = "prefer",
-    ignore     = FALSE,
-    min_size   = 1,
-    max_size   = Inf
+        host       = NULL,
+        dbname     = NULL,
+        port       = NULL,
+        user       = NULL,
+        table      = NULL,
+        password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
+        gssencmode = "prefer",
+        ignore     = FALSE,
+        min_size   = 1,
+        max_size   = Inf
 ) {
-
     if (ignore) {
         message("Database connection ignored. Saving data to local CSV file.")
         return(NULL)
@@ -96,9 +98,14 @@ sd_database <- function(
             maxSize = max_size
         )
 
+        # Store the pool in our custom environment
+        .sd_env$pool <- pool
+
         # Set up automatic cleanup when the Shiny session ends
         shiny::onStop(function() {
-            pool::poolClose(pool)
+            if (exists("pool", envir = .sd_env)) {
+                .sd_env$pool <- NULL
+            }
         })
 
         message("Successfully connected to the database.")
