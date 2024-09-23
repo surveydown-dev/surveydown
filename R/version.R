@@ -6,6 +6,7 @@
 #'
 #' @param force Logical; if TRUE, forces an update regardless of current versions.
 #' Defaults to FALSE.
+#' @param ... Optional arguments to pass on to `sd_update_extension()`
 #'
 #' @return No return value, called for side effects.
 #' @export
@@ -15,7 +16,7 @@
 #' sd_update_surveydown()
 #' sd_update_surveydown(force = TRUE)
 #' }
-sd_update_surveydown <- function(force = FALSE) {
+sd_update_surveydown <- function(force = FALSE, ...) {
     # Check R package version
     pkg_version <- utils::packageVersion("surveydown")
 
@@ -40,7 +41,7 @@ sd_update_surveydown <- function(force = FALSE) {
         )
 
         message("Updating surveydown Quarto extension...")
-        surveydown::sd_update_extension()
+        surveydown::sd_update_extension(...)
 
         message("Update complete.")
     } else {
