@@ -1,28 +1,4 @@
-#' Configuration Function for surveydown Surveys
-#'
-#' This function sets up the configuration for a surveydown survey, including
-#' page and question structures, conditional display settings, and navigation options.
-#' It also renders the Quarto document and extracts necessary information.
-#'
-#' @param use_html Logical. By default, sd_config() will render the
-#' `"survey.qmd"` file when loaded, which can be slow. Users can render it
-#' first into a html file and set `use_html = TRUE` to use the pre-rendered
-#' file, which is faster when the app loads. Defaults to `FALSE`.
-#' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.
-#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
-#' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
-#' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to FALSE.
-#' @param skip_if A list of conditions & page targets created using the
-#' `sd_skip_if()` function defining pages to skip to if a condition is `TRUE`.
-#' Defaults to `NULL`.
-#' @param show_if A list of conditions & question targets created using the
-#' `sd_show_if()` function defining questions to show to if a condition is `TRUE`.
-#' Defaults to `NULL`.
-#'
-#' @return A list containing the configuration settings for the survey and rendered HTML content.
-#'
-#' @export
-sd_config <- function(
+run_config <- function(
     use_html = FALSE,
     required_questions = NULL,
     all_questions_required = FALSE,
@@ -64,13 +40,13 @@ sd_config <- function(
     question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
     question_required <- if (all_questions_required) question_ids else required_questions
 
-    # Check skip_if and show_if inputs
-    check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
-
     # Check that start_page (if used) points to an actual page
     if (!is.null(start_page) && !(start_page %in% page_ids)) {
         stop("The specified start_page does not exist - check that you have not mis-spelled the id")
     }
+
+    # Check skip_if and show_if inputs
+    check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
 
     # Store all config settings
     config <- list(
@@ -81,9 +57,7 @@ sd_config <- function(
         question_values = question_values,
         question_required = question_required,
         start_page = start_page,
-        admin_page = admin_page,
-        skip_if = skip_if,
-        show_if = show_if
+        admin_page = admin_page
     )
 
     return(config)
@@ -111,82 +85,9 @@ get_html_content <- function(survey_file) {
     return(html_content)
 }
 
-#' Define skip conditions for survey pages
-#'
-#' @description
-#' This function is used to define conditions under which certain pages in the survey should be skipped.
-#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target page ID.
-#'
-#' @param ... One or more formulas defining skip conditions.
-#'   The left-hand side of each formula should be a condition based on input values,
-#'   and the right-hand side should be the ID of the page to skip to if the condition is met.
-#'
-#' @return A list of parsed conditions, where each element contains the condition and the target page ID.
-#'
-#' @examples
-#' sd_skip_if(
-#'   input$age < 18 ~ "underage_page",
-#'   input$country != "USA" ~ "international_page"
-#' )
-#'
-#' @seealso \code{\link{sd_show_if}}, \code{\link{sd_config}}
-#'
-#' @export
-sd_skip_if <- function(...) {
-    return(parse_conditions(...))
-}
-
-#' Define show conditions for survey questions
-#'
-#' @description
-#' This function is used to define conditions under which certain questions in the survey should be shown.
-#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
-#'
-#' @param ... One or more formulas defining show conditions.
-#'   The left-hand side of each formula should be a condition based on input values,
-#'   and the right-hand side should be the ID of the question to show if the condition is met.
-#'
-#' @return A list of parsed conditions, where each element contains the condition and the target question ID.
-#'
-#' @examples
-#' sd_show_if(
-#'   input$has_pets == "yes" ~ "pet_details",
-#'   input$employment == "employed" ~ "job_questions"
-#' )
-#'
-#' @seealso \code{\link{sd_skip_if}}, \code{\link{sd_config}}
-#'
-#' @export
-sd_show_if <- function(...) {
-    return(parse_conditions(...))
-}
-
-parse_conditions <- function(...) {
-    conditions <- list(...)
-    lapply(conditions, function(cond) {
-        if (!inherits(cond, "formula")) {
-            stop("Each condition must be a formula (condition ~ target)")
-        }
-        list(
-            condition = cond[[2]],  # Left-hand side of the formula
-            target = eval(cond[[3]])  # Right-hand side of the formula
-        )
-    })
-}
-
-get_show_if_targets <- function(show_if) {
-    if (is.null(show_if)) { return(character(0)) }
-    return(get_unique_targets(show_if))
-}
-
-get_unique_targets <- function(a) {
-    return(unique(sapply(a, function(x) x$target)))
-}
-
 extract_html_pages <- function(
     html_content, required_questions, all_questions_required, show_if
 ) {
-    all_hidden_targets <- get_show_if_targets(show_if)
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
         lapply(function(x) {
@@ -206,11 +107,13 @@ extract_html_pages <- function(
                     xml2::xml_attr(asterisk, "style") <- "display:inline; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;"
                 }
 
-                if (question_id %in% all_hidden_targets) {
-                    current_style <- xml2::xml_attr(container, "style")
-                    current_style <- if (is.na(current_style)) "" else current_style
-                    new_style <- paste(current_style, "display: none;", sep = " ")
-                    xml2::xml_attr(container, "style") <- new_style
+                if (!is.null(show_if)) {
+                    if (question_id %in% show_if$targets) {
+                        current_style <- xml2::xml_attr(container, "style")
+                        current_style <- if (is.na(current_style)) "" else current_style
+                        new_style <- paste(current_style, "display: none;", sep = " ")
+                        xml2::xml_attr(container, "style") <- new_style
+                    }
                 }
 
                 question_containers[[i]] <- container
@@ -280,8 +183,7 @@ check_skip_show <- function(
     question_ids, question_values, page_ids, skip_if, show_if
 ) {
     if (!is.null(skip_if)) {
-        skip_if_targets <- get_unique_targets(skip_if)
-        invalid_skip_targets <- setdiff(skip_if_targets, page_ids)
+        invalid_skip_targets <- setdiff(skip_if$targets, page_ids)
         if (length(invalid_skip_targets) > 0) {
             stop(sprintf(
                 "Invalid skip_if targets: %s. These must be valid page IDs.",
@@ -291,11 +193,10 @@ check_skip_show <- function(
     }
 
     if (!is.null(show_if)) {
-        show_if_targets <- get_unique_targets(show_if)
-        invalid_show_targets <- setdiff(show_if_targets, question_ids)
+        invalid_show_targets <- setdiff(show_if$targets, question_ids)
         if (length(invalid_show_targets) > 0) {
             stop(sprintf(
-              "Invalid show_if targets: %s. These must be valid question IDs.",
+              "Invalid show_if targets: %s. These must be question IDs defined in the survey.qmd file.",
               paste(invalid_show_targets, collapse = ", "))
             )
         }

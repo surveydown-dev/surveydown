@@ -17,14 +17,15 @@ template:
       alt: "Logo for the surveydown package"
 
 reference:
-- title: Survey Config
-  contents:
-  - sd_config
-
 - title: Survey Data
   contents:
   - sd_database
   - sd_get_data
+
+- title: Control Logic
+  contents:
+  - sd_show_if
+  - sd_skip_if
 
 - title: Server
   contents:
@@ -34,19 +35,17 @@ reference:
   - sd_store_value
   - sd_copy_value
   - sd_get_url_pars
-  - sd_show_if
-  - sd_skip_if
 
 - title: Survey UI
   contents:
-  - sd_ui
   - sd_question
   - sd_next
+  - sd_output
   - sd_close
   - sd_redirect
-  - sd_output
   - sd_display_question
   - sd_display_value
+  - sd_ui
 
 - title: Utilities
   contents:

@@ -1,7 +1,7 @@
 # surveydown (development version)
 
 - Introduced `sd_ui()` function to set placeholders for the shiny app ui.
-- Heavily revised how `skip_if` and `show_if` works, removing `skip_if_custom` and `show_if_custom`. Now they work similar to the `case_when()` function, where you provide the formula `condition ~ target` for each condition in either function.
+- Heavily revised how `skip_if` and `show_if` works, removing `skip_if_custom` and `show_if_custom`. Now they work similar to the `case_when()` function, where you provide the formula `condition ~ target` for each condition in either function. These are also provided globally inside the `server()` function using `sd_skip_if()` and `sd_show_if()`.
 - Require that the survey file be named `"survey.qmd"`.
 - Added `sd_include_folder()` function so users can add a folder to the shiny resource path.
 - Automatically include the `images`, `js`, `css`, and `www` folders as well as folders to quarto files to the shiny resource path when the package loads.

@@ -5,30 +5,22 @@
 #' It handles various operations such as conditional display, progress tracking,
 #' page navigation, and database updates for survey responses.
 #'
-#' @param input The Shiny input object.
-#' @param output The Shiny output object.
-#' @param session The Shiny session object.
-#' @param config A list containing configuration settings for the application.
 #' @param db A list containing database connection information created using
-#'        \code{\link{sd_database}} function. Defaults to \code{NULL}.
+#' \code{\link{sd_database}} function. Defaults to \code{NULL}.
+#' @param use_html Logical. By default, the `"survey.qmd"` file will be
+#' rendered when the app launches, which can be slow. Users can render it
+#' first into a html file and set `use_html = TRUE` to use the pre-rendered
+#' file, which is faster when the app loads. Defaults to `FALSE`.
+#' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.
+#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
+#' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
+#' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to `FALSE`.
 #'
 #' @import shiny
 #' @importFrom stats setNames
 #' @importFrom shiny reactiveValuesToList observeEvent renderText
 #'
 #' @details
-#' The \code{config} list should include the following elements:
-#' \itemize{
-#'   \item \code{pages}: A list of page objects containing page content and metadata.
-#'   \item \code{head_content}: HTML content for the <head> section.
-#'   \item \code{page_ids}: A vector of page identifiers.
-#'   \item \code{question_ids}: A vector of question identifiers.
-#'   \item \code{skip_if}: A list defining conditions for skipping pages.
-#'   \item \code{show_if}: A list defining conditions for showing questions.
-#'   \item \code{start_page}: The identifier of the starting page.
-#'   \item \code{admin_page}: A logical indicating if an admin page should be included.
-#'   \item \code{question_required}: A vector of required question identifiers.
-#' }
 #'
 #' The function performs the following tasks:
 #' \itemize{
@@ -56,19 +48,76 @@
 #'
 #' @examples
 #' \dontrun{
+#'   library(surveydown)
+#'   db <- sd_database()
+#'
 #'   shinyApp(
 #'     ui = sd_ui(),
 #'     server = function(input, output, session) {
-#'       sd_server(input, output, session, config = my_config, db = my_db)
+#'       sd_server(db = db)
 #'     }
 #'   )
 #' }
 #'
 #' @seealso
-#' \code{\link{sd_database}}, \code{\link{sd_config}}
+#' \code{\link{sd_database}}
 #'
 #' @export
-sd_server <- function(input, output, session, config, db = NULL) {
+sd_server <- function(
+    db = NULL,
+    use_html = FALSE,
+    required_questions = NULL,
+    all_questions_required = FALSE,
+    start_page = NULL,
+    admin_page = FALSE
+) {
+
+    # Get input, output, and session from the parent environment
+    parent_env <- parent.frame()
+    input <- get("input", envir = parent_env)
+    output <- get("output", envir = parent_env)
+    session <- get("session", envir = parent_env)
+
+    # Tag start time and unique session_id
+    time_start <- get_utc_timestamp()
+    session_id <- session$token
+
+    # Get any skip or show conditions
+    show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
+    skip_if <- shiny::getDefaultReactiveDomain()$userData$skip_if
+
+    # Run the configuration settings
+    config <- run_config(
+        use_html,
+        required_questions,
+        all_questions_required,
+        start_page,
+        admin_page,
+        skip_if,
+        show_if
+    )
+
+    # Set up show_if conditions
+    if (!is.null(show_if)) { set_show_if_conditions(show_if) }
+
+    # Initialize local variables ----
+
+    # Check if db is NULL (either left blank or specified with ignore = TRUE)
+    ignore_mode <- is.null(db)
+
+    # Create local objects from config file
+    pages        <- config$pages
+    head_content <- config$head_content
+    page_ids     <- config$page_ids
+    question_ids <- config$question_ids
+    start_page   <- config$start_page
+    admin_page   <- config$admin_page
+    question_required <- config$question_required
+
+    # Pre-compute timestamp IDs
+    page_ts_ids     <- paste0("time_p_", page_ids)
+    question_ts_ids <- paste0("time_q_", question_ids)
+    all_ts_ids      <- c(page_ts_ids, question_ts_ids)
 
     # Initialize local functions ----
 
@@ -105,31 +154,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
         }
     }
 
-    # Initialize local variables ----
-
-    # Tag start time and unique session_id
-    time_start <- get_utc_timestamp()
-    session_id <- session$token
-
-    # Check if db is NULL (either left blank or specified with ignore = TRUE)
-    ignore_mode <- is.null(db)
-
-    # Create local objects from config file
-    pages          <- config$pages
-    head_content   <- config$head_content
-    page_ids       <- config$page_ids
-    question_ids   <- config$question_ids
-    skip_if        <- config$skip_if
-    show_if        <- config$show_if
-    start_page     <- config$start_page
-    admin_page     <- config$admin_page
-    question_required <- config$question_required
-
-    # Pre-compute timestamp IDs
-    page_ts_ids     <- paste0("time_p_", page_ids)
-    question_ts_ids <- paste0("time_q_", question_ids)
-    all_ts_ids      <- c(page_ts_ids, question_ts_ids)
-
     # Initial settings ----
 
     # Keep-alive observer - this will be triggered every 60 seconds
@@ -139,9 +163,6 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
     # Create admin page if admin_page is TRUE
     if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
-
-    # Add observers for show_if conditions
-    if (!is.null(show_if)) { set_show_if_logic(input, show_if) }
 
     # Data tracking ----
 
@@ -276,11 +297,9 @@ sd_server <- function(input, output, session, config, db = NULL) {
                 if (!is.null(next_page_id)) {
 
                     # Check if all required questions are answered
-                    all_required_answered <- check_all_required(
-                        page, input, show_if
-                    )
+                    required_answered <- check_required(page, input, show_if)
 
-                    if (all_required_answered) {
+                    if (required_answered) {
                         # Update the current page ID, then update the data
                         current_page_id(next_page_id)
                         # Update timestamp for the next page
@@ -314,28 +333,114 @@ sd_server <- function(input, output, session, config, db = NULL) {
 
 }
 
-set_show_if_logic <- function(input, show_if) {
-    # Create a reactive expression for each condition
-    condition_reactives <- lapply(show_if, function(rule) {
+#' Define skip conditions for survey pages
+#'
+#' @description
+#' This function is used to define conditions under which certain pages in the survey should be skipped.
+#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target page ID.
+#'
+#' @param ... One or more formulas defining skip conditions.
+#'   The left-hand side of each formula should be a condition based on input values,
+#'   and the right-hand side should be the ID of the page to skip to if the condition is met.
+#'
+#' @return A list of parsed conditions, where each element contains the condition and the target page ID.
+#'
+#' @examples
+#' \dontrun{
+#' sd_skip_if(
+#'   as.numeric(input$age < 18) ~ "underage_page",
+#'   input$country != "USA" ~ "international_page"
+#' )
+#'}
+#' @seealso \code{\link{sd_show_if}}
+#'
+#' @export
+sd_skip_if <- function(...) {
+    conditions <- parse_conditions(...)
+
+    # Create a list in userData to store the skip_if targets
+    shiny::isolate({
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            stop("sd_skip_if must be called within a Shiny reactive context")
+        }
+        if (is.null(session$userData$skip_if)) {
+            session$userData$skip_if <- list()
+        }
+        session$userData$skip_if$conditions <- conditions
+        session$userData$skip_if$targets <- get_unique_targets(conditions)
+    })
+}
+
+#' Define show conditions for survey questions
+#'
+#' @description
+#' This function is used to define conditions under which certain questions in the survey should be shown.
+#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
+#'
+#' @param ... One or more formulas defining show conditions.
+#'   The left-hand side of each formula should be a condition based on input values,
+#'   and the right-hand side should be the ID of the question to show if the condition is met.
+#'
+#' @return A list of parsed conditions, where each element contains the condition and the target question ID.
+#'
+#' @examples
+#' \dontrun{
+#' sd_show_if(
+#'   input$has_pets == "yes" ~ "pet_details",
+#'   input$employment == "employed" ~ "job_questions"
+#' )
+#'}
+#' @seealso \code{\link{sd_skip_if}}
+#'
+#' @export
+sd_show_if <- function(...) {
+    conditions <- parse_conditions(...)
+
+    # Create a list in userData to store the show_if targets
+    shiny::isolate({
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            stop("sd_show_if must be called within a Shiny reactive context")
+        }
+        if (is.null(session$userData$show_if)) {
+            session$userData$show_if <- list()
+        }
+        session$userData$show_if$conditions <- conditions
+        session$userData$show_if$targets <- get_unique_targets(conditions)
+    })
+}
+
+set_show_if_conditions <- function(show_if) {
+    conditions <- show_if$conditions
+
+    # Group conditions by target
+    grouped_conditions <- split(conditions, sapply(conditions, function(rule) rule$target))
+
+    # Create a reactive expression for each group of conditions
+    condition_reactives <- lapply(grouped_conditions, function(group) {
         shiny::reactive({
-            tryCatch({
-                evaluate_condition(rule$condition, input)
-            }, error = function(e) {
-                warning(sprintf(
-                    "Error in show_if condition for target '%s': %s",
-                    rule$target, conditionMessage(e))
-                )
-                FALSE
+            results <- lapply(group, function(rule) {
+                tryCatch({
+                    evaluate_condition(rule)
+                }, error = function(e) {
+                    warning(sprintf(
+                        "Error in show_if condition for target '%s', condition '%s': %s",
+                        rule$target,
+                        deparse(rule$condition),
+                        conditionMessage(e)
+                    ))
+                    FALSE
+                })
             })
+            any(unlist(results))
         })
     })
 
-    # Create a single observer to handle all conditions
+    # Create a single observer to handle all condition groups
     shiny::observe({
-        for (i in seq_along(show_if)) {
-            condition_result <- condition_reactives[[i]]()
-            condition_met <- isTRUE(condition_result)
-            target <- show_if[[i]]$target
+        for (target in names(grouped_conditions)) {
+            condition_met <- condition_reactives[[target]]()
 
             if (condition_met) {
                 shinyjs::runjs(sprintf("
@@ -352,15 +457,28 @@ set_show_if_logic <- function(input, show_if) {
     })
 }
 
-evaluate_condition <- function(condition, input) {
-    tryCatch({
-        eval(condition, envir = list(input = input))
-    }, error = function(e) {
-        stop(sprintf(
-            "Error in evaluating condition: %s\nCondition: %s\nError: %s",
-            deparse(condition), conditionMessage(e))
+get_unique_targets <- function(a) {
+    return(unique(sapply(a, function(x) x$target)))
+}
+
+parse_conditions <- function(...) {
+    conditions <- list(...)
+    lapply(conditions, function(cond) {
+        if (!inherits(cond, "formula")) {
+            stop("Each condition must be a formula (condition ~ target)")
+        }
+        list(
+            condition = cond[[2]],  # Left-hand side of the formula
+            target = eval(cond[[3]])  # Right-hand side of the formula
         )
     })
+}
+
+evaluate_condition <- function(rule) {
+    isTRUE(eval(
+        rule$condition,
+        envir = list(input = shiny::getDefaultReactiveDomain()$input)
+    ))
 }
 
 # Function to get all stored values
@@ -442,13 +560,15 @@ get_default_next_page <- function(page, page_ids) {
 
 handle_skip_logic <- function(input, skip_if, current_page_id, next_page_id) {
     if (is.null(next_page_id) | is.null(skip_if)) { return(next_page_id) }
+
     # Loop through each skip logic condition
-    for (i in seq_along(skip_if)) {
-        rule <- skip_if[[i]]
+    conditions <- skip_if$conditions
+    for (i in seq_along(conditions)) {
+        rule <- conditions[[i]]
 
         # Evaluate the condition
         condition_result <- tryCatch({
-            evaluate_condition(rule$condition, input)
+            evaluate_condition(rule)
         }, error = function(e) {
             warning(sprintf(
                 "Error in skip_if condition for target '%s': %s",
@@ -458,29 +578,52 @@ handle_skip_logic <- function(input, skip_if, current_page_id, next_page_id) {
         })
 
         # Check if the condition is met
-        if (isTRUE(condition_result) & (current_page_id != rule$target)) {
+        if (condition_result & (current_page_id != rule$target)) {
+            print('test')
             return(rule$target)
         }
     }
     return(next_page_id)
 }
 
-# Check if all required questions are answered
-check_all_required <- function(page, input, show_if) {
-    questions <- page$questions
-    questions_required <- page$required_questions
-    results <- vapply(questions, function(q) {
-        is_required <- q %in% questions_required
+check_required <- function(page, input, show_if) {
+    results <- vapply(page$questions, function(q) {
+        if (!q %in% page$required_questions) return(TRUE)
         is_visible <- is_question_visible(q, show_if, input)
-        is_answered <- check_answer(q, input)
-
-        if (!is_required) return(TRUE)
         if (!is_visible) return(TRUE)
-        return(is_answered)
+        return(check_answer(q, input))
     }, logical(1))
+    return(all(results))
+}
 
-    all_required_answered <- all(results)
-    return(all_required_answered)
+is_question_visible <- function(q, show_if, input) {
+    if (is.null(show_if)) return(TRUE)
+
+    # Get all conditions for this question
+    question_conditions <- get_conditions_for_question(show_if$conditions, q)
+
+    # If there are no conditions, the question is always visible
+    if (length(question_conditions) == 0) return(TRUE)
+
+    # Check if any of the conditions are met
+    is_visible <- any(sapply(question_conditions, function(rule) {
+        tryCatch({
+            evaluate_condition(rule)
+        }, error = function(e) {
+            warning(sprintf(
+                "Error evaluating condition for question '%s': %s",
+                q, conditionMessage(e)
+            ))
+            FALSE
+        })
+    }))
+
+    return(is_visible)
+}
+
+# Helper function to get conditions for a specific question
+get_conditions_for_question <- function(conditions, q) {
+    Filter(function(rule) rule$target == q, conditions)
 }
 
 # Check if a single question is answered
@@ -492,19 +635,6 @@ check_answer <- function(q, input) {
     if (inherits(answer, "Date")) return(any(!is.na(answer)))
     if (is.list(answer)) return(any(!sapply(answer, is.null)))
     return(TRUE)  # Default to true for unknown types
-}
-
-# Check if a question is visible
-is_question_visible <- function(q, show_if, input) {
-
-    # Check show_if conditions
-    is_visible <- if (is.null(show_if)) TRUE else {
-        !any(sapply(show_if, function(rule) {
-            rule$target == q && !isTRUE(evaluate_condition(rule$condition, input))
-        }))
-    }
-
-    return(is_visible)
 }
 
 admin_enable <- function(input, output, session, db) {
