@@ -1,18 +1,14 @@
 server <- function(input, output, session) {
 
-  # Reactive definitions here...
+  # Define any conditional skip logic here (skip to page if a condition is true)
+  sd_skip_if()
 
-  config <- sd_config(
-    # Config settings here...
-  )
+  # Define any conditional display logic here (show a question if a condition is true)
+  sd_show_if()
 
-  # sd_server() initiates your survey - don't change it
+  # Database designation and other settings
   sd_server(
-    input   = input,
-    output  = output,
-    session = session,
-    config  = config,
-    db      = db
+    db = db
   )
 
 }

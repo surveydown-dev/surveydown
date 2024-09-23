@@ -376,43 +376,54 @@ sd_skip_if <- function(...) {
 #'
 #' @description
 #' This function is used to define conditions under which certain questions in the survey should be shown.
-#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
+#' It takes zero or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
+#' If called with no arguments, it will return NULL and set no conditions.
 #'
-#' @param ... One or more formulas defining show conditions.
+#' @param ... Zero or more formulas defining show conditions.
 #'   The left-hand side of each formula should be a condition based on input values,
 #'   and the right-hand side should be the ID of the question to show if the condition is met.
 #'
 #' @return A list of parsed conditions, where each element contains the condition and the target question ID.
+#'   Returns NULL if no conditions are provided.
 #'
 #' @examples
 #' \dontrun{
+#' # Set conditions
 #' sd_show_if(
 #'   input$has_pets == "yes" ~ "pet_details",
 #'   input$employment == "employed" ~ "job_questions"
 #' )
-#'}
+#'
+#' # Call with no conditions
+#' sd_show_if()
+#' }
+#'
 #' @seealso \code{\link{sd_skip_if}}
 #'
 #' @export
 sd_show_if <- function(...) {
-    conditions <- parse_conditions(...)
-
-    # Create a list in userData to store the show_if targets
-    shiny::isolate({
-        session <- shiny::getDefaultReactiveDomain()
-        if (is.null(session)) {
-            stop("sd_show_if must be called within a Shiny reactive context")
-        }
-        if (is.null(session$userData$show_if)) {
-            session$userData$show_if <- list()
-        }
-        session$userData$show_if$conditions <- conditions
-        session$userData$show_if$targets <- get_unique_targets(conditions)
-    })
+  conditions <- parse_conditions(...)
+  # Create a list in userData to store the show_if targets
+  shiny::isolate({
+    session <- shiny::getDefaultReactiveDomain()
+    if (is.null(session)) {
+      stop("sd_show_if must be called within a Shiny reactive context")
+    }
+    if (is.null(session$userData$show_if)) {
+      session$userData$show_if <- list()
+    }
+    session$userData$show_if$conditions <- conditions
+    session$userData$show_if$targets <- get_unique_targets(conditions)
+  })
 }
 
 set_show_if_conditions <- function(show_if) {
     conditions <- show_if$conditions
+
+    # Check if conditions is empty
+    if (length(conditions) == 0) {
+      return()
+    }
 
     # Group conditions by target
     grouped_conditions <- split(conditions, sapply(conditions, function(rule) rule$target))
@@ -579,7 +590,6 @@ handle_skip_logic <- function(input, skip_if, current_page_id, next_page_id) {
 
         # Check if the condition is met
         if (condition_result & (current_page_id != rule$target)) {
-            print('test')
             return(rule$target)
         }
     }
@@ -732,7 +742,7 @@ admin_enable <- function(input, output, session, db) {
         #Read table value in, change it from true to false
 
 
-        #Add in Sd_server if(survey_paused == TRUE)
+        #Add in sd_server if(survey_paused == TRUE)
         #Create and display a blank page that says the survey is pause
 
 

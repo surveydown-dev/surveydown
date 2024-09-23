@@ -24,18 +24,15 @@ db <- sd_database(
 # Server setup
 server <- function(input, output, session) {
 
-  # Config setup
-  config <- sd_config(
-    # Config settings here...
-  )
+  # Define any conditional skip logic here (skip to page if a condition is true)
+  sd_skip_if()
 
-  # sd_server() initiates your survey - don't change it
+  # Define any conditional display logic here (show a question if a condition is true)
+  sd_show_if()
+
+  # Database designation and other settings
   sd_server(
-    input   = input,
-    output  = output,
-    session = session,
-    config  = config,
-    db      = db
+    db = db
   )
 
 }
