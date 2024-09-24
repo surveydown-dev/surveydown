@@ -376,10 +376,10 @@ sd_skip_if <- function(...) {
 #'
 #' @description
 #' This function is used to define conditions under which certain questions in the survey should be shown.
-#' It takes zero or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
+#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
 #' If called with no arguments, it will return NULL and set no conditions.
 #'
-#' @param ... Zero or more formulas defining show conditions.
+#' @param ... One or more formulas defining show conditions.
 #'   The left-hand side of each formula should be a condition based on input values,
 #'   and the right-hand side should be the ID of the question to show if the condition is met.
 #'
@@ -388,14 +388,10 @@ sd_skip_if <- function(...) {
 #'
 #' @examples
 #' \dontrun{
-#' # Set conditions
 #' sd_show_if(
 #'   input$has_pets == "yes" ~ "pet_details",
 #'   input$employment == "employed" ~ "job_questions"
 #' )
-#'
-#' # Call with no conditions
-#' sd_show_if()
 #' }
 #'
 #' @seealso \code{\link{sd_skip_if}}

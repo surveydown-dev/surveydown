@@ -13,10 +13,12 @@ and the right-hand side should be the ID of the question to show if the conditio
 }
 \value{
 A list of parsed conditions, where each element contains the condition and the target question ID.
+Returns NULL if no conditions are provided.
 }
 \description{
 This function is used to define conditions under which certain questions in the survey should be shown.
 It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
+If called with no arguments, it will return NULL and set no conditions.
 }
 \examples{
 \dontrun{
@@ -25,6 +27,7 @@ sd_show_if(
   input$employment == "employed" ~ "job_questions"
 )
 }
+
 }
 \seealso{
 \code{\link{sd_skip_if}}

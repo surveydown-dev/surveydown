@@ -17,11 +17,9 @@ knitr::opts_chunk$set(
 
 # surveydown <a href='https://surveydown.org/'><img src='man/figures/logo.png' align="right" style="width: 120px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
 
-> Note: This is still an early-stage project. Use with caution, and please give us feedback!
+> Note: This site only documents the {surveydown} R package - visit our main site at [surveydown.org](https://surveydown.org) for more information!
 
-### This site only documents the {surveydown} R package - visit our main site at [surveydown.org](https://surveydown.org) for more information!
-
-This package helps you create markdown-based surveys with [Quarto Shiny Documents](https://quarto.org/docs/dashboards/interactivity/shiny-r.html). It brings together three open source technologies ([Quarto](https://quarto.org/), [shiny](https://shiny.posit.co/), and [supabase](https://supabase.com/)) to create dynamic, markdown-based surveys. Here's the basic concept:
+**surveydown** is a flexible, open-source platform for making surveys with [R](https://www.r-project.org/), [Quarto](https://quarto.org/), [Shiny](https://shiny.posit.co/), and [Supabase](https://supabase.com/).
 
 <br>
 <center>
@@ -29,41 +27,42 @@ This package helps you create markdown-based surveys with [Quarto Shiny Document
 </center>
 <br>
 
-1. Design your survey as a [Quarto shiny document](https://quarto.org/docs/dashboards/interactivity/shiny-r.html) using markdown and R code.
-2. Render your doc into a [shiny](https://shiny.posit.co/) app that can be hosted online and sent to respondents.
-3. Store your survey responses in a [supabase](https://supabase.com/) database.
+The basic concept is:
 
-The {surveydown} R package works in tandem with our [surveydown Quarto extension](https://github.com/surveydown-dev/surveydown-ext) to make everything work. 
+1. Design your survey as a [Quarto](https://quarto.org/) document using markdown and R code.
+2. Convert your survey into a [Shiny](https://shiny.posit.co/) app that can be hosted online and sent to respondents.
+3. Store your survey responses in a [Supabase](https://supabase.com/) database (or any Postgres database).
+
+The {surveydown} R package provides functions to bring this all together.
 
 **See the [documentation](https://surveydown.org) to get started making your own surveydown survey!**
 
 # Background & Motivation
 
-Most survey platforms (e.g., Google forms, Qualtrics, etc.) use drag-and-drop interfaces to design surveys, making version control and collaboration with others difficult. They're also not reproducible. 
+Most survey platforms (e.g., Google forms, Qualtrics, etc.) use drag-and-drop interfaces to design surveys, making version control and collaboration with others difficult. They're also not reproducible (others cannot easily reproduce a survey made on these platforms), and many require a paid subscription or license to use.
 
-As an open-source, markdown-based platform, surveydown was designed to address these problems. In surveydown, all survey content is created with plain text (markdown and R code) in a single .qmd file that renders into a shiny app. This makes your survey easy to reproduce, share, and version control with common tools like Git. The resulting shiny app for each survey can be hosted on a number of platforms, like [shinyapps.io](https://shinyapps.io/) or [huggingface](https://huggingface.co/), and the survey data collected is owned by the survey designer in a supabase account. Best of all, everything is open source and free :)
+The surveydown package was designed to address these problems. As an open-source, markdown-based platform, all survey content is defined with plain text (markdown and R code) in a `survey.qmd` file and an `app.R` file that renders your survey into a Shiny app that can be hosted online. This makes your survey easy to reproduce, share, and version control with common tools like Git. The survey data collected is also owned by the survey designer in a separate Postgres database (we recommend Supabase as a free and open-source database provider).
 
-If you're curious where this whole idea came from, check out this [blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/), which outlines more on the general idea and the motivation for it. The post is now outdated in terms of the overall design, but it provides something of an origin story and some of the motivation for developing this project.
+If you're curious where this whole idea came from, check out this [blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/), which outlines more on the general idea and the motivation for it. The post is now outdated in terms of the overall package design, but it provides something of an origin story and some of the motivation for developing this project.
 
 # TODO List
 
-This is a running list of things we're working on adding to the project:
+This is a running list of things we're working on / have already added to the project:
 
 - [x] show_if (conditionally display question)
 - [x] skip_if (conditionally skip to page)
 - [x] Set defaults for questions to not have any choices selected on launch.
 - [x] Ability to embed markdown inside choice options (like mc buttons in formr)
-- [x] Option for `preview = TRUE` (database is ignored)
-- [x] Export timestamps on each page in the data
-- [x] Export timestamps on each question interaction (since this will increase the data size considerably, maybe add this as `question_times = FALSE` argument)
+- [x] Option for `ignore = TRUE` setting (database connection is ignored)
+- [x] Automatically include timestamps on each page and question interaction in the data
 - [x] Option to start at a designated page, e.g. `start_page = 'page_name'`
-- [x] A `show_all = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be called `print_mode = TRUE`.
-- [x] Set up SCSS to be compatible with Quarto-supported bootstrap themes
-- [x] Add an optional progress bar
+- [ ] A `show_all_pages = TRUE` argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be a `sd_print_survey()` function to print it to pdf.
+- [x] Set up SCSS to be compatible with Quarto-supported bootstrap themes.
+- [x] Include an optional progress bar.
 - [x] Include input checks for `skip_if` and `show_if` (`question_id` exists, and data frame names are correct)
-- [x] Required questions (`required = TRUE`): post a popup if a question is required before allowing next button. Default should be `required = FALSE`.
+- [x] Required questions: post a popup if a question is required before allowing next button.
 - [x] Add a `sd_get_data()` function so the survey designer can obtain the current survey results from inside the app: https://shinysurveys.jdtrat.com/articles/get-survey-data.html
-- [x] Admin page w/password to preview / download data (see https://github.com/daattali/shinyforms)
+- [ ] Admin page w/password to preview / download data (see https://github.com/daattali/shinyforms)
 - [x] Ability to pass url parameters, e.g. for tracking users.
 - [x] Ability to redirect users to another url.
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
