@@ -1,66 +1,199 @@
-/* Progressbar */
-#progressbar {
-  background-color: #ECE8DF;
-  padding: 3px;
-  width: 100%;
-  position: fixed;
-  left: 0;
-  z-index: 1000;
-}
-#progressbar.POSITION_PLACEHOLDER {
-  POSITION_PLACEHOLDER: 0;
-}
-#progressbar > div {
-  width: 0%;
-  height: 10px;
-  border-radius: 0;
+/* Import Raleway font */
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800&display=swap');
+
+/* Root variables */
+:root {
+  /* Layout and theme variables */
+  --theme-color: var(--bs-primary, #2780E3);
+  --body-background-color: #f2f6f9;
+  --progressbar-position: top;
+  --progress-bar-height: 10px;
+  --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
 }
 
-/* Top padding */
+/* Body */
 body {
-  padding-top: 20px;
+  background-color: var(--body-background-color);
 }
 
-/* Question border */
-.form-group {
-  border: 1px solid #ddd;  /* Light gray border */
-  border-radius: 5px;      /* Rounded corners */
-  padding: 1rem;           /* Inner spacing */
-  background-color: #f9f9f9; /* Light background */
-}
-.question-container {
-  margin-bottom: 1rem;   /* Space between questions */
+/* Typography */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
 }
 
-/* Bottom margin of texts */
-p, h1, h2, h3, h4, h5, h6, .form-group, .control-label {
+p, .form-group, .control-label {
   margin-bottom: 0.5rem;
 }
-/* Margin of question label */
+
+/* Unbolding question labels */
+.control-label, .radio label, .checkbox label {
+  font-weight: normal;
+  font-size: 1.1em;
+}
+
+/* Layout */
+.container-fluid .content {
+  max-width: 800px;
+  margin: 0 auto !important;
+  padding: 0 0 5px !important;
+}
+
+/* Button styling */
+.radio-inline,
+.checkbox-inline,
+.radio label,
+.checkbox label {
+  padding-bottom: 0.25rem;
+}
+
+/* Button group styling */
+.radio-group-buttons,
+.checkbox-group-buttons,
+.btn-group-container-sw {
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.radio-group-buttons .btn,
+.checkbox-group-buttons .btn,
+.btn-group-container-sw .btn {
+  border: 1px solid var(--theme-color);
+  background-color: color-mix(in srgb, var(--theme-color) 10%, white);
+  color: var(--theme-color);
+  transition: all 0.3s ease;
+  margin-right: -1px;
+  position: relative;
+}
+
+.radio-group-buttons .btn:hover,
+.checkbox-group-buttons .btn:hover,
+.btn-group-container-sw .btn:hover {
+  z-index: 1;
+  background-color: color-mix(in srgb, var(--theme-color) 20%, white);
+}
+
+.radio-group-buttons .btn:first-child,
+.checkbox-group-buttons .btn:first-child,
+.btn-group-container-sw .btn:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.radio-group-buttons .btn:last-child,
+.checkbox-group-buttons .btn:last-child,
+.btn-group-container-sw .btn:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  margin-right: 0;
+}
+
+.radio-group-buttons .btn.active,
+.checkbox-group-buttons .btn.active,
+.btn-group-container-sw .btn.active {
+  background-color: color-mix(in srgb, var(--theme-color) 80%, white);
+  color: white;
+  z-index: 2;
+}
+
+/* Date range styling*/
+.shiny-date-range-input .input-group-addon {
+  background: none;
+  border: none;
+  padding: 0 10px 0 5px;
+}
+
+/* Progress bar */
+#progressbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: var(--progress-bar-height);
+  z-index: 1000;
+  background-color: #ECE8DF;
+}
+
+#progressbar.top {
+  top: 0;
+}
+
+#progressbar.bottom {
+  bottom: 0;
+}
+
+#progressbar > div {
+  width: 0%;
+  height: 100%;
+  background-color: var(--progress-color);
+  transition: width 0.4s ease;
+}
+
+/* Form elements */
+.form-group {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 1rem;
+  background-color: #f9f9f9;
+}
+
+.form-control:focus {
+  border-color: var(--theme-color);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-color) 25%, transparent);
+}
+
+.question-container {
+  margin-bottom: 1rem;
+}
+
 .form-group > label.control-label {
-  margin-top: 0rem;
+  margin-top: 0;
   margin-bottom: 0.3rem;
 }
 
-p:last-child, .form-group:last-child {
-  margin-bottom: 0rem;
-}
-
-/* Margin of question options */
-.radio {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
-}
-
-/* Center-align radio and checkbox button groups */
+/* Common styles for all button groups */
 .radio-group-buttons,
-.checkbox-group-buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+.checkbox-group-buttons,
 .btn-group-container-sw {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Styles for multiple choice buttons (gap: 0.5rem) */
+.checkbox-group-buttons .btn-group-container-sw {
+  gap: 0.5rem;
+}
+
+/* Page Navigation Buttons */
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:focus,
+.action-button {
+  background-color: var(--theme-color);
+  border-color: var(--theme-color);
+  color: #ffffff;
+}
+
+.action-button {
+  background-color: color-mix(in srgb, var(--theme-color) 70%, transparent);
+  transition: background-color 0.3s ease;
+}
+
+.action-button:hover,
+.action-button:focus {
+  background-color: var(--theme-color);
+}
+
+/* Link styling */
+a:hover {
+  color: color-mix(in srgb, var(--theme-color) 80%, black);
+}
+
+/* Utility classes */
+p:last-child,
+.form-group:last-child {
+  margin-bottom: 0;
 }

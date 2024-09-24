@@ -1,3 +1,118 @@
+# Load resource file from the surveydown package (CSS or JS)
+load_resource <- function(files, type = c("css", "js"), package = "surveydown") {
+    type <- match.arg(type)
+    sapply(files, function(file) {
+        path <- system.file(paste0(type, "/", file), package = package)
+        if (type == "css") {
+            shiny::includeCSS(path)
+        } else {
+            shiny::includeScript(path)
+        }
+    }, simplify = FALSE, USE.NAMES = FALSE)
+}
+
+#' Create the UI for a surveydown survey
+#'
+#' This function creates the user interface for a surveydown survey,
+#' including necessary CSS and JavaScript files, and applies custom styling.
+#' It retrieves theme and progress bar settings from the survey.qmd file.
+#'
+#' @return A Shiny UI object
+#' @export
+#'
+#' @details
+#' The function reads the following settings from the survey.qmd YAML header:
+#' \itemize{
+#'   \item \code{theme}: The theme to be applied to the survey.
+#'   \item \code{barcolor}: The color of the progress bar (should be a valid hex color).
+#'   \item \code{barposition}: The position of the progress bar ('top', 'bottom', or 'none').
+#' }
+#'
+#' If \code{barcolor} is not specified or is NULL, the default theme color will be used.
+#' If \code{barposition} is not specified, it defaults to 'top'.
+#'
+#' @examples
+#' \dontrun{
+#' # In your app.R or ui.R file:
+#' ui <- sd_ui()
+#' }
+sd_ui <- function() {
+    # Throw error if "survey.qmd" file missing
+    check_survey_file_exists()
+
+    # Get the theme from the survey.qmd file
+    metadata <- quarto::quarto_inspect("survey.qmd")
+    theme <- get_theme(metadata)
+    default_theme_css <- ""
+    if (theme == "default") {
+        default_theme_css <- "
+        body, button, input, select, textarea {
+            font-family: 'Raleway', sans-serif;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+        }
+        "
+    }
+
+    # Get progress bar settings from the survey.qmd file
+    barcolor <- get_barcolor(metadata)
+    barposition <- get_barposition(metadata)
+
+    shiny::fluidPage(
+        shinyjs::useShinyjs(),
+        shiny::tags$style(HTML(default_theme_css)),
+        load_resource("surveydown.css", type = "css"),
+        load_resource("keep_alive.js", type = "js"),
+        if (!is.null(barcolor)) {
+            shiny::tags$style(HTML(sprintf("
+                :root {
+                    --progress-color: %s;
+                }
+            ", barcolor)))
+        },
+        if (barposition != "none") {
+            shiny::tags$div(
+                id = "progressbar",
+                class = barposition,
+                shiny::tags$div(id = "progress")
+            )
+        },
+        shiny::tags$div(
+            class = "content",
+            shiny::uiOutput("main")
+        )
+    )
+}
+
+get_theme <- function(metadata) {
+    x <- "survey.qmd"
+    theme <- metadata$formats$html$metadata$theme
+    if (is.null(theme)) {
+        return("default")
+    }
+    return(theme)
+}
+
+get_barcolor <- function(metadata) {
+    barcolor <- metadata$formats$html$metadata$barcolor
+    if (!is.null(barcolor)) {
+        if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
+            stop("Invalid barcolor in YAML. Use a valid hex color.")
+        }
+    }
+    return(barcolor)
+}
+
+get_barposition <- function(metadata) {
+    barposition <- metadata$formats$html$metadata$barposition
+    if (is.null(barposition)) {
+        return("top")
+    }
+    return(barposition)
+}
+
 #' Create a survey question
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
@@ -116,6 +231,12 @@ sd_question <- function(
             status   = status
         )
 
+        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
+            $(document).on('click', '#%s .btn', function() {
+                %s
+            });
+        ", id, js_interaction))))
+
     } else if (type == "mc_multiple_buttons") {
 
         output <- shinyWidgets::checkboxGroupButtons(
@@ -127,6 +248,12 @@ sd_question <- function(
             justified  = justified,
             width      = width
         )
+
+        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
+            $(document).on('click', '#%s .btn', function() {
+                %s
+            });
+        ", id, js_interaction))))
 
     } else if (type == "text") {
 
@@ -227,7 +354,7 @@ sd_question <- function(
 
     # Wrap the output in a div with custom data attributes
     output_div <- shiny::tags$div(
-        id = paste("container-", id),
+        id = paste0("container-", id),
         `data-question-id` = id,
         class = "question-container",
         oninput = js_interaction,
@@ -277,11 +404,48 @@ date_interaction <- function(output, id) {
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
-    if (is.null(next_page)) {
-        stop("You must specify the current_page for the 'Next' button.")
-    }
+    button_id <- "page_id_next"  # Placeholder ID
+    shiny::tagList(
+        shiny::div(
+            `data-next-page` = if (!is.null(next_page)) next_page else "",
+            style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
+            shiny::actionButton(
+                inputId = button_id,
+                label = label,
+                style = "display: block; margin: auto;",
+                onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
+            )
+        ),
+        shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
+    )
+}
 
-    button_id <- make_next_button_id(next_page)
+# Generate Next Button ID
+make_next_button_id <- function(page_id) {
+    return(paste0(page_id, "_next"))
+}
+
+#' Create a 'Close' Button to Exit the Survey
+#'
+#' This function creates a 'Close' button that, when clicked, will close the current browser tab or window.
+#' The button can be activated by clicking or by pressing the Enter key.
+#'
+#' @param label Character string. The label of the 'Close' button. Defaults to "Exit Survey".
+#'
+#' @details The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
+#'   will attempt to close the current browser tab or window. Note that for security reasons,
+#'   some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
+#'   In such cases, the button will prompt the user to close the tab manually.
+#'
+#' @return A Shiny action button UI element with associated JavaScript for closing the page and Enter key functionality.
+#'
+#' @examples
+#' sd_close()
+#' sd_close("Exit Survey")
+#'
+#' @export
+sd_close <- function(label = "Exit Survey") {
+    button_id <- "close-survey-button"
 
     shiny::tagList(
         shiny::div(
@@ -290,16 +454,11 @@ sd_next <- function(next_page = NULL, label = "Next") {
                 inputId = button_id,
                 label = label,
                 style = "display: block; margin: auto;",
-                onclick = sprintf("Shiny.setInputValue('next_page', '%s');", next_page)
+                onclick = "window.close(); if (!window.closed) { alert('Please close this tab manually to exit the survey.'); }"
             )
         ),
         shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
     )
-}
-
-# Generate Next Button ID
-make_next_button_id <- function(next_page) {
-    return(paste0("next-", next_page))
 }
 
 #' Create a Redirect Element for Shiny Applications
@@ -546,8 +705,7 @@ sd_get_url_pars <- function(...) {
 
 #' Create a placeholder for a reactive survey question
 #'
-#' This function creates a placeholder div for a reactive survey question in a Surveydown survey.
-#' It's used in conjunction with sd_question to allow for dynamic question rendering.
+#' This function is depreciated - use `sd_output()` instead.
 #'
 #' @param id A unique identifier for the question.
 #' @return A Shiny UI element that serves as a placeholder for the reactive question.
@@ -569,6 +727,7 @@ sd_display_question <- function(id) {
 
 #' Display the value of a survey question
 #'
+#' This function is depreciated - use `sd_output()` instead.
 #' @param id The ID of the question to display
 #' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
 #' @param wrapper A function to wrap the output

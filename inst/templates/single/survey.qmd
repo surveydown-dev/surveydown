@@ -1,0 +1,67 @@
+---
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+
+::: {#welcome .sd-page}
+
+# Welcome to our survey!
+
+This is a simple demonstration of a surveydown survey. It has two pages with one question on each page.
+
+Here is a basic "multiple choice" question, created using `type = 'mc'` inside the `sd_question()` function:
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'penguins',
+  label = "Which type of penguin do you like the best?",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo'
+  )
+)
+```
+
+You need to insert next buttons with `sd_next()` and set the `next_page` argument to the name of the page you want to go to next.
+
+```{r}
+sd_next(next_page = 'page2')
+```
+
+:::
+
+::: {#page2 .sd-page}
+
+This is another page in your survey.
+
+{surveydown} supports many types of questions. For example, here is a simple `text` type question:
+
+```{r}
+sd_question(
+  type  = "text",
+  id    = "silly_word",
+  label = "Write a silly word here:"
+)
+
+sd_next(next_page = 'end')
+```
+
+:::
+
+::: {#end .sd-page}
+
+## End
+
+This it the last page in the survey.
+
+```{r}
+sd_close("Exit Survey")
+```
+
+:::

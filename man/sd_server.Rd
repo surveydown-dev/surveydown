@@ -4,19 +4,31 @@
 \alias{sd_server}
 \title{Server Logic for a surveydown survey}
 \usage{
-sd_server(input, output, session, config, db = NULL)
+sd_server(
+  db = NULL,
+  use_html = FALSE,
+  required_questions = NULL,
+  all_questions_required = FALSE,
+  start_page = NULL,
+  admin_page = FALSE
+)
 }
 \arguments{
-\item{input}{The Shiny input object.}
-
-\item{output}{The Shiny output object.}
-
-\item{session}{The Shiny session object.}
-
-\item{config}{A list containing configuration settings for the application.}
-
 \item{db}{A list containing database connection information created using
 \code{\link{sd_database}} function. Defaults to \code{NULL}.}
+
+\item{use_html}{Logical. By default, the \code{"survey.qmd"} file will be
+rendered when the app launches, which can be slow. Users can render it
+first into a html file and set \code{use_html = TRUE} to use the pre-rendered
+file, which is faster when the app loads. Defaults to \code{FALSE}.}
+
+\item{required_questions}{Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.}
+
+\item{all_questions_required}{Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.}
+
+\item{start_page}{Character string. The ID of the page to start on. Defaults to NULL.}
+
+\item{admin_page}{Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to \code{FALSE}.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for the Shiny application.
@@ -24,24 +36,9 @@ This function does not return a value; it sets up the server-side logic for the 
 \description{
 This function defines the server-side logic for a Shiny application used in surveydown.
 It handles various operations such as conditional display, progress tracking,
-page navigation, database updates for survey responses, and admin functionality.
+page navigation, and database updates for survey responses.
 }
 \details{
-The \code{config} list should include the following elements:
-\itemize{
-\item \code{page_structure}: A list defining the structure of survey pages.
-\item \code{page_ids}: A vector of page identifiers.
-\item \code{question_ids}: A vector of question identifiers.
-\item \code{show_if}: A data frame defining conditions for showing questions.
-\item \code{skip_if}: A data frame defining conditions for skipping pages.
-\item \code{skip_if_custom}: A list of custom skip conditions.
-\item \code{show_if_custom}: A list of custom show conditions.
-\item \code{start_page}: The identifier of the starting page.
-\item \code{question_required}: A vector of required question identifiers.
-\item \code{all_questions_required}: A logical indicating if all questions are required.
-\item \code{admin_page}: A logical indicating if an admin page should be included.
-}
-
 The function performs the following tasks:
 \itemize{
 \item Initializes variables and reactive values.
@@ -64,29 +61,23 @@ of the last answered question's index to the total number of questions.
 \section{Database Operations}{
 
 If \code{db} is provided, the function will update the database with survey responses.
-If \code{db} is \code{NULL} (pause mode), responses will be saved to a local CSV file.
+If \code{db} is \code{NULL} (ignore mode), responses will be saved to a local CSV file.
 }
 
 \examples{
 \dontrun{
-  shinyApp(
-    ui = sd_ui(),
-    server = function(input, output, session) {
-      sd_server(input, output, session, config = my_config, db = my_db)
-    }
-  )
+  library(surveydown)
+  db <- sd_database()
 
-  # With admin page enabled
-  my_config <- sd_config(admin_page = TRUE)
   shinyApp(
     ui = sd_ui(),
     server = function(input, output, session) {
-      sd_server(input, output, session, config = my_config, db = my_db)
+      sd_server(db = db)
     }
   )
 }
 
 }
 \seealso{
-\code{\link{sd_database}}, \code{\link{sd_question}}
+\code{\link{sd_database}}
 }

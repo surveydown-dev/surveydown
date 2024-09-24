@@ -19,7 +19,7 @@ sd_display_value(id, display_type = "inline", wrapper = NULL, ...)
 A Shiny UI element displaying the question's value
 }
 \description{
-Display the value of a survey question
+This function is depreciated - use \code{sd_output()} instead.
 }
 \examples{
 \dontrun{

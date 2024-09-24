@@ -1,0 +1,3 @@
+ui <- sd_ui(
+    # UI settings here...
+)

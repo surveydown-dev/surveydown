@@ -1,6 +1,6 @@
 Package: surveydown
 Title: Markdown-Based Surveys Using Quarto Shiny Documents
-Version: 0.2.4
+Version: 0.3.0
 Authors@R: c(
     person(given   = "John Paul",
            family  = "Helveston",
@@ -30,21 +30,22 @@ Suggests:
     knitr,
     testthat
 Imports:
-    bslib,
     DBI,
     digest,
     DT,
     htmltools,
     markdown,
     pool,
+    quarto,
     remotes,
     RPostgres,
+    rsconnect,
     rvest,
     shiny,
     shinyjs,
     shinyWidgets,
     usethis,
     utils,
-    yaml
-url: https://pkg.surveydown.org/
+    xml2
+URL: https://pkg.surveydown.org
 BugReports: https://github.com/surveydown-dev/surveydown/issues

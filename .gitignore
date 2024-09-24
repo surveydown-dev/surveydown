@@ -10,17 +10,13 @@ notes
 Meta
 .idea
 data.csv
-survey.qmd
-survey.Rproj
 _extensions
 survey.html
 survey_files
 choice_questions.csv
-images
 example.qmd
 .vdoc.r
 .Renviron
 example.html
 example_files
 example1.rmarkdown
-

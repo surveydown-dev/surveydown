@@ -10,7 +10,7 @@ sd_setup()
 This function does not return a value. It is called for its side effects of setting up the Shiny application.
 }
 \description{
-This function is required for any surveydown survey. It sets up a Shiny application with Bootstrap 5 and initializes Shinyjs for JavaScript functionalities.
+This function is depreciated and no longer needed.
 }
 \details{
 The function configures the Shiny application to use Bootstrap 5 for styling and enables
@@ -22,10 +22,6 @@ Shinyjs for JavaScript functionalities within the application.
     sd_setup(),
     # Your UI elements here
   )
-  server <- function(input, output, session) {
-    # Your server logic here
-  }
-  shinyApp(ui, server)
 }
 
 }
