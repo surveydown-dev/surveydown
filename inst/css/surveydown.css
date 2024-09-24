@@ -49,12 +49,14 @@ p, .form-group, .control-label {
 }
 
 /* Button group styling */
-.radio-group-buttons,
-.checkbox-group-buttons,
-.btn-group-container-sw {
-  display: inline-flex;
-  overflow: hidden;
-  border-radius: 4px;
+.radio-group-buttons .btn-group-container-sw,
+.checkbox-group-buttons .btn-group-container-sw {
+  display: flex;
+  row-gap: 5px;
+}
+
+.checkbox-group-buttons .btn-group-container-sw {
+  column-gap: 5px;
 }
 
 .radio-group-buttons .btn,
@@ -64,8 +66,6 @@ p, .form-group, .control-label {
   background-color: color-mix(in srgb, var(--theme-color) 10%, white);
   color: var(--theme-color);
   transition: all 0.3s ease;
-  margin-right: -1px;
-  position: relative;
 }
 
 .radio-group-buttons .btn:hover,
@@ -159,11 +159,6 @@ p, .form-group, .control-label {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-}
-
-/* Styles for multiple choice buttons (gap: 0.5rem) */
-.checkbox-group-buttons .btn-group-container-sw {
-  gap: 0.5rem;
 }
 
 /* Page Navigation Buttons */

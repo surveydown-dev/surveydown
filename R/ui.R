@@ -223,12 +223,13 @@ sd_question <- function(
     } else if (type == "mc_buttons") {
 
         output <- shinyWidgets::radioGroupButtons(
-            inputId  = id,
-            label    = markdown_to_html(label),
-            choices  = list_name_md_to_html(option),
-            selected = character(0),
-            width    = width,
-            status   = status
+            inputId    = id,
+            label      = markdown_to_html(label),
+            choices    = list_name_md_to_html(option),
+            direction  = direction,
+            selected   = character(0),
+            width      = width,
+            status     = status
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
