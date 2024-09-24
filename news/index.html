@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,26 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-<ul><li>Modified <code><a href="../reference/sd_get_url_pars.html">sd_get_url_pars()</a></code> to include <code>reactive()</code> with the <code>()</code> at the end, so now the function returns an evaluated reactive expression.</li>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="surveydown-030">surveydown 0.3.0<a class="anchor" aria-label="anchor" href="#surveydown-030"></a></h2>
+<ul><li>Introduced <code><a href="../reference/sd_ui.html">sd_ui()</a></code> function to set placeholders for the shiny app ui.</li>
+<li>Heavily revised how <code>skip_if</code> and <code>show_if</code> works, removing <code>skip_if_custom</code> and <code>show_if_custom</code>. Now they work similar to the <code>case_when()</code> function, where you provide the formula <code>condition ~ target</code> for each condition in either function. These are also provided globally inside the <code>server()</code> function using <code><a href="../reference/sd_skip_if.html">sd_skip_if()</a></code> and <code><a href="../reference/sd_show_if.html">sd_show_if()</a></code>.</li>
+<li>Require that the survey file be named <code>"survey.qmd"</code>.</li>
+<li>Added <code><a href="../reference/sd_include_folder.html">sd_include_folder()</a></code> function so users can add a folder to the shiny resource path.</li>
+<li>Automatically include the <code>images</code>, <code>js</code>, <code>css</code>, and <code>www</code> folders as well as folders to quarto files to the shiny resource path when the package loads.</li>
+<li>Heavily modified how <code><a href="../reference/sd_next.html">sd_next()</a></code> works to improve page navigation and ensure that each <code><a href="../reference/sd_next.html">sd_next()</a></code> button has a unique id based on the current page.</li>
+<li>Removed the quarto extension.</li>
+<li>
+<code><a href="../reference/sd_create_survey.html">sd_create_survey()</a></code> changed to sourcing template directly from the package. Two parameters are provided. The first parameter is <code>path</code>, which defines the relative path of the target. If left blank, the path will be the current working directory. The second parameter is <code>structure</code>, which defines which structure of the template the user wants to choose, default as <code>"single"</code> and can be changed to <code>"multi"</code>.</li>
+<li>
+<code><a href="../reference/sd_deploy.html">sd_deploy()</a></code> as a wrapper function of <code><a href="https://rstudio.github.io/rsconnect/reference/deployApp.html" class="external-link">rsconnect::deployApp()</a></code> to deploy the survey.</li>
+<li>
+<code><a href="../reference/sd_update.html">sd_update()</a></code> as a replacement of <code>sd_update_surveydown()</code> to update the package.</li>
+<li>
+<code><a href="../reference/sd_version.html">sd_version()</a></code> as a replacement of <code>sd_check_versions()</code> to check for the current version and the latest version.</li>
+<li>
+<code><a href="../reference/sd_close.html">sd_close()</a></code> function to create a close button for the survey.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.4" id="surveydown-024">surveydown 0.2.4<a class="anchor" aria-label="anchor" href="#surveydown-024"></a></h2>
@@ -106,7 +125,7 @@
 <li>The data fetching was not working to download the data as a CSV file in the admin page, now uses <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> and works.</li>
 <li>The <code>show_if_custom</code> logic was not working for multiple conditions, now it does.</li>
 <li>The <code>skip_if_custom</code> logic could error if a condition was <code>NULL</code> (fixed with <code><a href="https://rdrr.io/r/base/Logic.html" class="external-link">isTRUE()</a></code>).</li>
-<li>In <code><a href="../reference/sd_config.html">sd_config()</a></code>, items were being assigned with the <code>&lt;-</code> operator, causing them to be deleted when the thing being assigned was <code>NULL</code>. Now changed to <code>=</code>.</li>
+<li>In <code>sd_config()</code>, items were being assigned with the <code>&lt;-</code> operator, causing them to be deleted when the thing being assigned was <code>NULL</code>. Now changed to <code>=</code>.</li>
 </ul></li>
 </ul></div>
     <div class="section level2">
@@ -121,7 +140,7 @@
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.9" id="surveydown-009">surveydown 0.0.9<a class="anchor" aria-label="anchor" href="#surveydown-009"></a></h2>
-<ul><li>Required questions are now moved to <code><a href="../reference/sd_config.html">sd_config()</a></code> as a separate <code>required_questions</code> argument, instead of being defined in <code><a href="../reference/sd_question.html">sd_question()</a></code>.</li>
+<ul><li>Required questions are now moved to <code>sd_config()</code> as a separate <code>required_questions</code> argument, instead of being defined in <code><a href="../reference/sd_question.html">sd_question()</a></code>.</li>
 <li>Two new functions for supporting reactive questions: <code>sd_question_reactive()</code> and <code>sd_reactive_output()</code>.</li>
 <li>
 <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code> function to store variables into the database. For example, <code>sd_store_value(respondentID, "respID")</code> will store the value of <code>respondentID</code> into a column named <code>"respID"</code>. If the name is not provided, the column will be named as its original variable name, in this case, <code>respondentID</code>.</li>
@@ -135,7 +154,7 @@
 <ul><li>
 <code><a href="../reference/sd_database.html">sd_database()</a></code> function added with <code>pause</code> argument default to <code>FALSE</code>. If <code>pause = FALSE</code>, database will be properly connected; if <code>pause = TRUE</code>, a local CSV will be generated and survey results will be stored there.</li>
 <li>
-<code><a href="../reference/sd_config.html">sd_config()</a></code> function has <code>preview</code> removed due to <code>pause</code> in <code>sd_database</code>.</li>
+<code>sd_config()</code> function has <code>preview</code> removed due to <code>pause</code> in <code>sd_database</code>.</li>
 <li>For <code>pause = FALSE</code> (aka default), warning messages will be shown for missing or incorrect password, and will prompt the usage of <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code>.</li>
 <li>Initiation of the <code>admin_page</code> argument in <code>config.R</code>.</li>
 </ul></div>
@@ -159,11 +178,11 @@
 <ul><li>
 <code>create_survey()</code> changed to <code><a href="../reference/sd_create_survey.html">sd_create_survey()</a></code> for function name consistency.</li>
 <li>
-<code><a href="../reference/sd_update_extension.html">sd_update_extension()</a></code> function to update the surveydown Quarto extension.</li>
+<code>sd_update_extension()</code> function to update the surveydown Quarto extension.</li>
 <li>
-<code><a href="../reference/sd_check_versions.html">sd_check_versions()</a></code> function to check the version of both the R package and the Quarto extension. If any of them don’t match with the latest version, there will be a suggestion to run the <code><a href="../reference/sd_update_surveydown.html">sd_update_surveydown()</a></code> function.</li>
+<code>sd_check_versions()</code> function to check the version of both the R package and the Quarto extension. If any of them don’t match with the latest version, there will be a suggestion to run the <code>sd_update_surveydown()</code> function.</li>
 <li>
-<code><a href="../reference/sd_update_surveydown.html">sd_update_surveydown()</a></code> function to update both the R package and the Quarto extension.</li>
+<code>sd_update_surveydown()</code> function to update both the R package and the Quarto extension.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.4" id="surveydown-004">surveydown 0.0.4<a class="anchor" aria-label="anchor" href="#surveydown-004"></a></h2>

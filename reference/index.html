@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,14 +38,8 @@
     </div>
 
     <div class="section level2">
-      <h2 id="survey-setup">Survey Setup<a class="anchor" aria-label="anchor" href="#survey-setup"></a></h2>
+      <h2 id="survey-data">Survey Data<a class="anchor" aria-label="anchor" href="#survey-data"></a></h2>
 
-
-
-
-    </div><div class="section level2">
-
-      <h3 id="functions-for-setting-up-and-creating-surveys">Functions for setting up and creating surveys<a class="anchor" aria-label="anchor" href="#functions-for-setting-up-and-creating-surveys"></a></h3>
 
 
 
@@ -56,20 +50,90 @@
 
       <dl><dt>
 
-          <code><a href="sd_setup.html">sd_setup()</a></code>
+          <code><a href="sd_database.html">sd_database()</a></code>
 
         </dt>
-        <dd>Required Set Up Function</dd>
+        <dd>Connect to a Supabase Database with Automatic Cleanup</dd>
       </dl><dl><dt>
 
-          <code><a href="sd_create_survey.html">sd_create_survey()</a></code>
+          <code><a href="sd_get_data.html">sd_get_data()</a></code>
 
         </dt>
-        <dd>Create a Survey Template</dd>
+        <dd>Fetch data from a database table with automatic reactivity detection</dd>
       </dl></div><div class="section level2">
-      <h2 id="survey-components">Survey Components<a class="anchor" aria-label="anchor" href="#survey-components"></a></h2>
+      <h2 id="control-logic">Control Logic<a class="anchor" aria-label="anchor" href="#control-logic"></a></h2>
 
-      <div class="section-desc"><p>Functions for defining survey questions, navigation, and storing values</p></div>
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="sd_show_if.html">sd_show_if()</a></code>
+
+        </dt>
+        <dd>Define show conditions for survey questions</dd>
+      </dl><dl><dt>
+
+          <code><a href="sd_skip_if.html">sd_skip_if()</a></code>
+
+        </dt>
+        <dd>Define skip conditions for survey pages</dd>
+      </dl></div><div class="section level2">
+      <h2 id="server">Server<a class="anchor" aria-label="anchor" href="#server"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="sd_server.html">sd_server()</a></code>
+
+        </dt>
+        <dd>Server Logic for a surveydown survey</dd>
+      </dl><dl><dt>
+
+          <code><a href="sd_get_data.html">sd_get_data()</a></code>
+
+        </dt>
+        <dd>Fetch data from a database table with automatic reactivity detection</dd>
+      </dl><dl><dt>
+
+          <code><a href="sd_set_password.html">sd_set_password()</a></code>
+
+        </dt>
+        <dd>Set Password</dd>
+      </dl><dl><dt>
+
+          <code><a href="sd_store_value.html">sd_store_value()</a></code>
+
+        </dt>
+        <dd>Store a value</dd>
+      </dl><dl><dt>
+
+          <code><a href="sd_copy_value.html">sd_copy_value()</a></code>
+
+        </dt>
+        <dd>Create a copy of an input value</dd>
+      </dl><dl><dt>
+
+          <code><a href="sd_get_url_pars.html">sd_get_url_pars()</a></code>
+
+        </dt>
+        <dd>Get URL Parameters in a Shiny Application</dd>
+      </dl></div><div class="section level2">
+      <h2 id="survey-ui">Survey UI<a class="anchor" aria-label="anchor" href="#survey-ui"></a></h2>
+
+
 
 
     </div><div class="section level2">
@@ -85,10 +149,28 @@
         <dd>Create a survey question</dd>
       </dl><dl><dt>
 
+          <code><a href="sd_next.html">sd_next()</a></code>
+
+        </dt>
+        <dd>Create a 'Next' Button for Page Navigation</dd>
+      </dl><dl><dt>
+
           <code><a href="sd_output.html">sd_output()</a></code>
 
         </dt>
         <dd>Output Function for Displaying reactive objects and values</dd>
+      </dl><dl><dt>
+
+          <code><a href="sd_close.html">sd_close()</a></code>
+
+        </dt>
+        <dd>Create a 'Close' Button to Exit the Survey</dd>
+      </dl><dl><dt>
+
+          <code><a href="sd_redirect.html">sd_redirect()</a></code>
+
+        </dt>
+        <dd>Create a Redirect Element for Shiny Applications</dd>
       </dl><dl><dt>
 
           <code><a href="sd_display_question.html">sd_display_question()</a></code>
@@ -103,32 +185,14 @@
         <dd>Display the value of a survey question</dd>
       </dl><dl><dt>
 
-          <code><a href="sd_next.html">sd_next()</a></code>
+          <code><a href="sd_ui.html">sd_ui()</a></code>
 
         </dt>
-        <dd>Create a 'Next' Button for Page Navigation</dd>
-      </dl><dl><dt>
-
-          <code><a href="sd_redirect.html">sd_redirect()</a></code>
-
-        </dt>
-        <dd>Create a Redirect Element for Shiny Applications</dd>
-      </dl><dl><dt>
-
-          <code><a href="sd_store_value.html">sd_store_value()</a></code>
-
-        </dt>
-        <dd>Store a value</dd>
-      </dl><dl><dt>
-
-          <code><a href="sd_copy_value.html">sd_copy_value()</a></code>
-
-        </dt>
-        <dd>Create a copy of an input value</dd>
+        <dd>Create the UI for a surveydown survey</dd>
       </dl></div><div class="section level2">
-      <h2 id="configuration-and-server">Configuration and Server<a class="anchor" aria-label="anchor" href="#configuration-and-server"></a></h2>
+      <h2 id="utilities">Utilities<a class="anchor" aria-label="anchor" href="#utilities"></a></h2>
 
-      <div class="section-desc"><p>Functions for configuring surveys and setting up the server</p></div>
+
 
 
     </div><div class="section level2">
@@ -138,50 +202,32 @@
 
       <dl><dt>
 
-          <code><a href="sd_config.html">sd_config()</a></code>
+          <code><a href="sd_create_survey.html">sd_create_survey()</a></code>
 
         </dt>
-        <dd>Configuration Function for surveydown Surveys</dd>
+        <dd>Create a new survey template</dd>
       </dl><dl><dt>
 
-          <code><a href="sd_database.html">sd_database()</a></code>
+          <code><a href="sd_include_folder.html">sd_include_folder()</a></code>
 
         </dt>
-        <dd>Connect to a Supabase Database with Automatic Cleanup</dd>
+        <dd>Include a folder to Shiny's resource path</dd>
       </dl><dl><dt>
 
-          <code><a href="sd_get_data.html">sd_get_data()</a></code>
+          <code><a href="sd_deploy.html">sd_deploy()</a></code>
 
         </dt>
-        <dd>Fetch data from a database table with automatic reactivity detection</dd>
+        <dd>Deploy a Surveydown App</dd>
       </dl><dl><dt>
 
-          <code><a href="sd_get_url_pars.html">sd_get_url_pars()</a></code>
+          <code><a href="sd_setup.html">sd_setup()</a></code>
 
         </dt>
-        <dd>Get URL Parameters in a Shiny Application</dd>
-      </dl><dl><dt>
-
-          <code><a href="sd_redirect.html">sd_redirect()</a></code>
-
-        </dt>
-        <dd>Create a Redirect Element for Shiny Applications</dd>
-      </dl><dl><dt>
-
-          <code><a href="sd_server.html">sd_server()</a></code>
-
-        </dt>
-        <dd>Server Logic for a surveydown survey</dd>
-      </dl><dl><dt>
-
-          <code><a href="sd_set_password.html">sd_set_password()</a></code>
-
-        </dt>
-        <dd>Set Password</dd>
+        <dd>Required Set Up Function</dd>
       </dl></div><div class="section level2">
-      <h2 id="version-management">Version Management<a class="anchor" aria-label="anchor" href="#version-management"></a></h2>
+      <h2 id="version-control">Version Control<a class="anchor" aria-label="anchor" href="#version-control"></a></h2>
 
-      <div class="section-desc"><p>Functions for managing package and extension versions</p></div>
+
 
 
     </div><div class="section level2">
@@ -191,22 +237,16 @@
 
       <dl><dt>
 
-          <code><a href="sd_check_versions.html">sd_check_versions()</a></code>
+          <code><a href="sd_update.html">sd_update()</a></code>
 
         </dt>
-        <dd>Check Surveydown Versions</dd>
+        <dd>Update Surveydown Package</dd>
       </dl><dl><dt>
 
-          <code><a href="sd_update_extension.html">sd_update_extension()</a></code>
+          <code><a href="sd_version.html">sd_version()</a></code>
 
         </dt>
-        <dd>Update Survey Extension</dd>
-      </dl><dl><dt>
-
-          <code><a href="sd_update_surveydown.html">sd_update_surveydown()</a></code>
-
-        </dt>
-        <dd>Update Surveydown Package and Extension</dd>
+        <dd>Check Surveydown Version</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

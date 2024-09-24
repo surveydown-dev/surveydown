@@ -10,15 +10,16 @@
 <url><loc>https://pkg.surveydown.org/index.html</loc></url>
 <url><loc>https://pkg.surveydown.org/news/index.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/index.html</loc></url>
-<url><loc>https://pkg.surveydown.org/reference/sd_check_versions.html</loc></url>
-<url><loc>https://pkg.surveydown.org/reference/sd_config.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_close.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_copy_value.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_create_survey.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_database.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_deploy.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_display_question.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_display_value.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_get_data.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_get_url_pars.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_include_folder.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_next.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_output.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_question.html</loc></url>
@@ -26,8 +27,11 @@
 <url><loc>https://pkg.surveydown.org/reference/sd_server.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_set_password.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_setup.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_show_if.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_skip_if.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_store_value.html</loc></url>
-<url><loc>https://pkg.surveydown.org/reference/sd_update_extension.html</loc></url>
-<url><loc>https://pkg.surveydown.org/reference/sd_update_surveydown.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_ui.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_update.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_version.html</loc></url>
 </urlset>
 

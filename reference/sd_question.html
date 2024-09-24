@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -160,7 +160,7 @@
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">sd_question</span><span class="op">(</span><span class="st">"text"</span>, <span class="st">"name"</span>, <span class="st">"What is your name?"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div id="container- name" data-question-id="name" class="question-container" oninput="Shiny.setInputValue(&amp;#39;name_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div id="container-name" data-question-id="name" class="question-container" oninput="Shiny.setInputValue(&amp;#39;name_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;div class="form-group shiny-input-container" style="width:100%;"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;label class="control-label" id="name-label" for="name"&gt;&lt;p&gt;What is your name? &lt;span class='required-asterisk' style='display:none; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;'&gt;*&lt;/span&gt;&lt;/p&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/label&gt;</span>
@@ -168,7 +168,7 @@
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 <span class="r-in"><span><span class="fu">sd_question</span><span class="op">(</span><span class="st">"mc"</span>, <span class="st">"color"</span>, <span class="st">"What is your favorite color?"</span>, option <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Red"</span>, <span class="st">"Blue"</span>, <span class="st">"Green"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div id="container- color" data-question-id="color" class="question-container" oninput="Shiny.setInputValue(&amp;#39;color_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div id="container-color" data-question-id="color" class="question-container" oninput="Shiny.setInputValue(&amp;#39;color_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;div id="color" style="width:100%;" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="color-label"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;label class="control-label" id="color-label" for="color"&gt;&lt;p&gt;What is your favorite color? &lt;span class='required-asterisk' style='display:none; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;'&gt;*&lt;/span&gt;&lt;/p&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/label&gt;</span>
