@@ -110,12 +110,10 @@ extract_html_pages <- function(
                 if (!is.null(show_if)) {
                     if (question_id %in% show_if$targets) {
                         current_style <- xml2::xml_attr(container, "style")
-                        current_style <- if (is.na(current_style)) "" else current_style
-                        new_style <- paste(current_style, "display: none;", sep = " ")
+                        new_style <- gsub("display:\\s*block;", "display: none;", current_style, ignore.case = TRUE)
                         xml2::xml_attr(container, "style") <- new_style
                     }
                 }
-
                 question_containers[[i]] <- container
             }
 

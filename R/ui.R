@@ -800,7 +800,7 @@ sd_output <- function(id, type = NULL, display = "inline", wrapper = NULL, ...) 
         return(shiny::div(
             id = paste0("placeholder-", id),
             `data-question-id` = id,
-            class = "question-container reactive-question-placeholder",
+            class = "question-container",
             shiny::uiOutput(id)
         ))
     }
