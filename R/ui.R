@@ -1,12 +1,12 @@
-# Load multiple resource files (CSS or JS)
-load_resources <- function(files, type = c("css", "js"), package = "surveydown") {
+# Load resource file from the surveydown package (CSS or JS)
+load_resource <- function(files, type = c("css", "js"), package = "surveydown") {
     type <- match.arg(type)
     sapply(files, function(file) {
         path <- system.file(paste0(type, "/", file), package = package)
         if (type == "css") {
             shiny::includeCSS(path)
         } else {
-            shiny::tags$script(src = path)
+            shiny::includeScript(path)
         }
     }, simplify = FALSE, USE.NAMES = FALSE)
 }
@@ -63,7 +63,8 @@ sd_ui <- function() {
     shiny::fluidPage(
         shinyjs::useShinyjs(),
         shiny::tags$style(HTML(default_theme_css)),
-        load_resources("surveydown.css", type = "css"),
+        load_resource("surveydown.css", type = "css"),
+        load_resource("keep_alive.js", type = "js"),
         if (!is.null(barcolor)) {
             shiny::tags$style(HTML(sprintf("
                 :root {
