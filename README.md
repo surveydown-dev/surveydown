@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit this file -->
 
-# surveydown <a href='https://surveydown.org/'><img src='man/figures/logo.png' align="right" style="width: 120px;" alt="surveydown package logo: a hex shape with a large letter S and a down arrow"/></a>
+# surveydown
 
 > Note: This site only documents the {surveydown} R package - visit our
 > main site at [surveydown.org](https://surveydown.org) for more
@@ -13,7 +13,7 @@ with [R](https://www.r-project.org/), [Quarto](https://quarto.org/),
 
 <br>
 <center>
-<img src='man/figures/technologies.png' align="center" style="max-height:180px;" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
+<img src='man/figures/technologies.png' align="center" style="max-height:400px;" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
 </center>
 
 <br>
