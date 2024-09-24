@@ -52,6 +52,8 @@ p, .form-group, .control-label {
 .radio-group-buttons .btn-group-container-sw,
 .checkbox-group-buttons .btn-group-container-sw {
   display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
   row-gap: 5px;
 }
 
@@ -66,6 +68,8 @@ p, .form-group, .control-label {
   background-color: color-mix(in srgb, var(--theme-color) 10%, white);
   color: var(--theme-color);
   transition: all 0.3s ease;
+  white-space: normal;
+  word-wrap: break-word;
 }
 
 .radio-group-buttons .btn:hover,
@@ -150,15 +154,6 @@ p, .form-group, .control-label {
 .form-group > label.control-label {
   margin-top: 0;
   margin-bottom: 0.3rem;
-}
-
-/* Common styles for all button groups */
-.radio-group-buttons,
-.checkbox-group-buttons,
-.btn-group-container-sw {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
 /* Page Navigation Buttons */
