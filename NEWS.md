@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+# surveydown 0.3.0
+
 - Introduced `sd_ui()` function to set placeholders for the shiny app ui.
 - Heavily revised how `skip_if` and `show_if` works, removing `skip_if_custom` and `show_if_custom`. Now they work similar to the `case_when()` function, where you provide the formula `condition ~ target` for each condition in either function. These are also provided globally inside the `server()` function using `sd_skip_if()` and `sd_show_if()`.
 - Require that the survey file be named `"survey.qmd"`.
