@@ -194,7 +194,6 @@ sd_question <- function(
         output <- shiny::selectInput(
             inputId  = id,
             label    = markdown_to_html(label),
-            width    = width,
             choices  = option,
             multiple = FALSE,
             selected = FALSE
@@ -205,7 +204,6 @@ sd_question <- function(
         output <- shiny::radioButtons(
             inputId  = id,
             label    = markdown_to_html(label),
-            width    = width,
             choices  = option,
             selected = FALSE
         )
@@ -215,7 +213,6 @@ sd_question <- function(
         output <- shiny::checkboxGroupInput(
             inputId  = id,
             label    = markdown_to_html(label),
-            width    = width,
             choices  = option,
             selected = FALSE
         )
@@ -227,8 +224,7 @@ sd_question <- function(
             label      = markdown_to_html(label),
             choices    = list_name_md_to_html(option),
             direction  = direction,
-            selected   = character(0),
-            class      = "narrow-screen-vertical"
+            selected   = character(0)
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
@@ -245,8 +241,7 @@ sd_question <- function(
             choices    = list_name_md_to_html(option),
             direction  = direction,
             individual = individual,
-            justified  = FALSE,
-            class      = "narrow-screen-vertical"
+            justified  = FALSE
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
@@ -260,7 +255,6 @@ sd_question <- function(
         output <- shiny::textInput(
             inputId     = id,
             label       = markdown_to_html(label),
-            width       = width,
             placeholder = option
         )
 
@@ -269,7 +263,6 @@ sd_question <- function(
         output <- shiny::textAreaInput(
             inputId     = id,
             label       = markdown_to_html(label),
-            width       = width,
             height      = height,
             cols        = cols,
             value       = NULL,
@@ -283,7 +276,6 @@ sd_question <- function(
         output <- shiny::numericInput(
             inputId = id,
             label   = markdown_to_html(label),
-            width   = width,
             value   = NULL
         )
 
@@ -292,7 +284,6 @@ sd_question <- function(
         output <- shinyWidgets::sliderTextInput(
             inputId      = id,
             label        = markdown_to_html(label),
-            width        = width,
             choices      = option,
             selected     = selected,
             force_edges  = force_edges,
@@ -315,7 +306,6 @@ sd_question <- function(
         output <- shiny::dateInput(
             inputId            = id,
             label              = markdown_to_html(label),
-            width              = width,
             value              = NULL,
             min                = NULL,
             max                = NULL,
@@ -335,7 +325,6 @@ sd_question <- function(
         output <- shiny::dateRangeInput(
             inputId   = id,
             label     = markdown_to_html(label),
-            width     = width,
             start     = NULL,
             end       = NULL,
             min       = NULL,
@@ -352,15 +341,12 @@ sd_question <- function(
 
     }
 
-    # Check for the 2 types of buttons
-    is_button <- type %in% c("mc_buttons", "mc_multiple_buttons")
-
     # Wrap the output in a div with custom data attributes
     output_div <- shiny::tags$div(
         id = paste0("container-", id),
         `data-question-id` = id,
         class = "question-container",
-        style = if (is_button) sprintf("width: %s;", width),
+        style = sprintf("width: %s;", width),
         oninput = js_interaction,
         output
     )

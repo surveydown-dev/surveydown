@@ -149,18 +149,24 @@ p, .form-group, .control-label {
   background-color: #f9f9f9;
 }
 
+.form-group > label.control-label {
+  margin-top: 0;
+  margin-bottom: 0.3rem;
+}
+
 .form-control:focus {
   border-color: var(--theme-color);
   box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-color) 25%, transparent);
 }
 
 .question-container {
+  margin-left: auto;
+  margin-right: auto;
   margin-bottom: 1rem;
 }
 
-.form-group > label.control-label {
-  margin-top: 0;
-  margin-bottom: 0.3rem;
+.shiny-input-container:not(.shiny-input-container-inline) {
+  width: 100%;
 }
 
 /* Page Navigation Buttons */
