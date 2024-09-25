@@ -49,7 +49,7 @@ sd_question(
 
 \item{individual}{Logical. Whether buttons in a group should be individually styled. Defaults to TRUE.}
 
-\item{justified}{Logical. Whether buttons in a group should be justified. Defaults to FALSE.}
+\item{justified}{Logical. Whether buttons in a group should fill the width of the parent div. Defaults to FALSE.}
 
 \item{force_edges}{Logical. Whether to force edges for slider input. Defaults to TRUE.}
 

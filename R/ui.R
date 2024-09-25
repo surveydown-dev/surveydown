@@ -129,7 +129,7 @@ get_barposition <- function(metadata) {
 #' @param label_select Character string. The label for the select input. Defaults to "Choose an option...".
 #' @param grid Logical. Whether to show a grid for slider input. Defaults to TRUE.
 #' @param individual Logical. Whether buttons in a group should be individually styled. Defaults to TRUE.
-#' @param justified Logical. Whether buttons in a group should be justified. Defaults to FALSE.
+#' @param justified Logical. Whether buttons in a group should fill the width of the parent div. Defaults to FALSE.
 #' @param force_edges Logical. Whether to force edges for slider input. Defaults to TRUE.
 #' @param option List. Options for the select, radio, checkbox, and slider inputs.
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
@@ -227,8 +227,7 @@ sd_question <- function(
             label      = markdown_to_html(label),
             choices    = list_name_md_to_html(option),
             direction  = direction,
-            selected   = character(0),
-            status     = status
+            selected   = character(0)
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
@@ -245,7 +244,7 @@ sd_question <- function(
             choices    = list_name_md_to_html(option),
             direction  = direction,
             individual = individual,
-            justified  = justified
+            justified = TRUE
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
