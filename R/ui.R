@@ -244,7 +244,7 @@ sd_question <- function(
             choices    = list_name_md_to_html(option),
             direction  = direction,
             individual = individual,
-            justified = TRUE
+            justified = FALSE
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
