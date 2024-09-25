@@ -228,7 +228,6 @@ sd_question <- function(
             choices    = list_name_md_to_html(option),
             direction  = direction,
             selected   = character(0),
-            width      = width,
             status     = status
         )
 
@@ -246,8 +245,7 @@ sd_question <- function(
             choices    = list_name_md_to_html(option),
             direction  = direction,
             individual = individual,
-            justified  = justified,
-            width      = width
+            justified  = justified
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
@@ -353,11 +351,15 @@ sd_question <- function(
 
     }
 
+    # Check for the 2 types of buttons
+    is_button <- type %in% c("mc_buttons", "mc_multiple_buttons")
+
     # Wrap the output in a div with custom data attributes
     output_div <- shiny::tags$div(
         id = paste0("container-", id),
         `data-question-id` = id,
         class = "question-container",
+        style = if (is_button) sprintf("width: %s;", width),
         oninput = js_interaction,
         output
     )

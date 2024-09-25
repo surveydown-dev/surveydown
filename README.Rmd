@@ -76,8 +76,9 @@ This is a running list of things we're working on / have already added to the pr
   - [x] Multiple choice (button...like formr mc_button)
   - [x] Text area
   - [x] Date
+  - [x] Slider
   - [ ] Matrix
-  - [ ] Slider
+
 
 Resources / other related examples:
 

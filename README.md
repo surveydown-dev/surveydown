@@ -106,8 +106,8 @@ to the project:
   - [x] Multiple choice (button…like formr mc_button)
   - [x] Text area
   - [x] Date
+  - [x] Slider
   - [ ] Matrix
-  - [ ] Slider
 
 Resources / other related examples:
 
