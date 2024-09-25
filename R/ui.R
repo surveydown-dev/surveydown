@@ -227,7 +227,8 @@ sd_question <- function(
             label      = markdown_to_html(label),
             choices    = list_name_md_to_html(option),
             direction  = direction,
-            selected   = character(0)
+            selected   = character(0),
+            class      = "narrow-screen-vertical"
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
@@ -244,7 +245,8 @@ sd_question <- function(
             choices    = list_name_md_to_html(option),
             direction  = direction,
             individual = individual,
-            justified = FALSE
+            justified  = FALSE,
+            class      = "narrow-screen-vertical"
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("

@@ -102,6 +102,13 @@ p, .form-group, .control-label {
   z-index: 2;
 }
 
+@media screen and (max-width: 767px) {
+  .radio-group-buttons .btn-group-container-sw,
+  .checkbox-group-buttons .btn-group-container-sw {
+    flex-direction: column;
+  }
+}
+
 /* Date range styling*/
 .shiny-date-range-input .input-group-addon {
   background: none;
