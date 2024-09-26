@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+- Add `reactive` logical argument to `sd_get_data()` so that data can be reactively fetched in the server or not according to user control. Defaults to `FALSE`.
+- Modified messaging from `sd_set_password()` to not print out user's password and provide clearer instructions.
+
 # surveydown 0.3.0
 
 - Introduced `sd_ui()` function to set placeholders for the shiny app ui.

@@ -129,6 +129,7 @@ sd_database <- function(
 #'     \item db: A DBI database connection object
 #'     \item table: A string specifying the name of the table to query
 #'   }
+#' @param reactive Logical. If `TRUE`, will return a reactive expression to obtain the latest data continuously refreshed according to the `refresh_interval`. Defaults to `FALSE`.
 #' @param refresh_interval Numeric. The time interval (in seconds) between data refreshes
 #'   when in a reactive context. Default is `5` seconds. Ignored in non-reactive contexts.
 #'
@@ -152,7 +153,7 @@ sd_database <- function(
 #'   })
 #' }
 #' }
-sd_get_data <- function(db, refresh_interval = 5) {
+sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
     if (is.null(db)) {
         warning("Database is not connected, db is NULL")
         return(NULL)
@@ -162,14 +163,13 @@ sd_get_data <- function(db, refresh_interval = 5) {
             DBI::dbReadTable(conn, db$table)
         })
     }
-    if (!is.null(shiny::getDefaultReactiveDomain())) {
-        # In a reactive context
+    if (reactive) {
         return(shiny::reactive({
             shiny::invalidateLater(refresh_interval * 1000)
             fetch_data()
         }))
     } else {
-        # If not in a reactive context, just return the data
+        # If not in a reactive context, just return the data once
         return(fetch_data())
     }
 }
