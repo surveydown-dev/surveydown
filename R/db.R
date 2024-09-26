@@ -110,7 +110,7 @@ sd_database <- function(
                    "\n- host:    ", host,
                    "\n- dbname:  ", dbname,
                    "\n- port:    ", port,
-                   "\n- user:    ", user
+                   "\n- user:    ", user,
                    "\nTo update password, please use surveydown::sd_set_password().",
                    "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disable' in the sd_database() function."))
     })
