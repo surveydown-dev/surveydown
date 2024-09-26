@@ -42,6 +42,8 @@
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 <ul><li>Modified the <code>refresh_interval</code> argument in <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> as defaulting to <code>NULL</code>, which means the data will not be reactively fetched, regardless of the context it is used in. The data will only continuously refresh if <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> is called within a reactive context and <code>refresh_interval &gt; 0</code>.</li>
 <li>Modified messaging from <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> to not print out user’s password and provide clearer instructions.</li>
+<li>
+<code><a href="../reference/sd_show_password.html">sd_show_password()</a></code> to show stored password. The user will be prompted to double confirm. If there is no password, the user will be prompted so, along with a message of using <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> to create the password.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="surveydown-030">surveydown 0.3.0<a class="anchor" aria-label="anchor" href="#surveydown-030"></a></h2>

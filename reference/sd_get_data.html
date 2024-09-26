@@ -57,7 +57,7 @@ the data at specified intervals.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_get_data</span><span class="op">(</span><span class="va">db</span>, refresh_interval <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_get_data</span><span class="op">(</span><span class="va">db</span>, refresh_interval <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -72,7 +72,7 @@ the data at specified intervals.</p>
 
 <dt id="arg-refresh-interval">refresh_interval<a class="anchor" aria-label="anchor" href="#arg-refresh-interval"></a></dt>
 <dd><p>Numeric. The time interval (in seconds) between data refreshes
-when in a reactive context. Default is <code>5</code> seconds. Ignored in non-reactive contexts.</p></dd>
+when in a reactive context. Default is <code>NULL</code>, meaning the data will not refresh.</p></dd>
 
 </dl></div>
     <div class="section level2">
