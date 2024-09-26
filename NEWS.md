@@ -1,6 +1,6 @@
 # surveydown (development version)
 
-- Add `reactive` logical argument to `sd_get_data()` so that data can be reactively fetched in the server or not according to user control. Defaults to `FALSE`.
+- Modified the `refresh_interval` argument in `sd_get_data()` as defaulting to `NULL`, which means the data will not be reactively fetched, regardless of the context it is used in. The data will only continuously refresh if `sd_get_data()` is called within a reactive context and `refresh_interval > 0`.
 - Modified messaging from `sd_set_password()` to not print out user's password and provide clearer instructions.
 
 # surveydown 0.3.0

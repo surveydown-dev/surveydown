@@ -129,9 +129,8 @@ sd_database <- function(
 #'     \item db: A DBI database connection object
 #'     \item table: A string specifying the name of the table to query
 #'   }
-#' @param reactive Logical. If `TRUE`, will return a reactive expression to obtain the latest data continuously refreshed according to the `refresh_interval`. Defaults to `FALSE`.
 #' @param refresh_interval Numeric. The time interval (in seconds) between data refreshes
-#'   when in a reactive context. Default is `5` seconds. Ignored in non-reactive contexts.
+#'   when in a reactive context. Default is `NULL`, meaning the data will not refresh.
 #'
 #' @return In a non-reactive context, returns a data frame containing all rows and columns
 #'   from the specified table. In a reactive context, returns a reactive expression that,
@@ -153,7 +152,7 @@ sd_database <- function(
 #'   })
 #' }
 #' }
-sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
+sd_get_data <- function(db, refresh_interval = NULL) {
     if (is.null(db)) {
         warning("Database is not connected, db is NULL")
         return(NULL)
@@ -163,7 +162,16 @@ sd_get_data <- function(db, reactive = FALSE, refresh_interval = 5) {
             DBI::dbReadTable(conn, db$table)
         })
     }
-    if (reactive) {
+    if (!is.null(refresh_interval)) {
+        if (is.null(shiny::getDefaultReactiveDomain())) {
+            stop('If refresh_interval is set to a positive number, sd_get_data() must be called within a reactive context for the data to continously update in the server.')
+        }
+        if (!is.numeric(refresh_interval)) {
+            stop('refresh_interval must be a positive number')
+        }
+        if (refresh_interval < 0) {
+            stop('refresh_interval must be a positive number')
+        }
         return(shiny::reactive({
             shiny::invalidateLater(refresh_interval * 1000)
             fetch_data()
