@@ -80,7 +80,7 @@ sd_database <- function(
     }
 
     if (!nchar(password)) {
-        stop("Please define your password using surveydown::sd_set_password()")
+        stop("Please define your password using surveydown::sd_set_password(). If you just did this, restart R to make sure the environment variable that was created is visible to the current R session.")
     }
 
     tryCatch({
@@ -110,8 +110,7 @@ sd_database <- function(
                    "\n- host:    ", host,
                    "\n- dbname:  ", dbname,
                    "\n- port:    ", port,
-                   "\n- user:    ", user,
-                   "\n- password:", password,
+                   "\n- user:    ", user
                    "\nTo update password, please use surveydown::sd_set_password().",
                    "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disable' in the sd_database() function."))
     })
