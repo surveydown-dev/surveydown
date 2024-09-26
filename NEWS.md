@@ -2,6 +2,7 @@
 
 - Modified the `refresh_interval` argument in `sd_get_data()` as defaulting to `NULL`, which means the data will not be reactively fetched, regardless of the context it is used in. The data will only continuously refresh if `sd_get_data()` is called within a reactive context and `refresh_interval > 0`.
 - Modified messaging from `sd_set_password()` to not print out user's password and provide clearer instructions.
+- `sd_show_password()` to show stored password. The user will be prompted to double confirm. If there is no password, the user will be prompted so, along with a message of using `sd_set_password()` to create the password.
 
 # surveydown 0.3.0
 

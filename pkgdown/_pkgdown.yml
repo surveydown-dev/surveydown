@@ -32,6 +32,7 @@ reference:
   - sd_server
   - sd_get_data
   - sd_set_password
+  - sd_show_password
   - sd_store_value
   - sd_copy_value
   - sd_get_url_pars

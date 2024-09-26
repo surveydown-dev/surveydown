@@ -4,7 +4,7 @@
 \alias{sd_get_data}
 \title{Fetch data from a database table with automatic reactivity detection}
 \usage{
-sd_get_data(db, refresh_interval = 5)
+sd_get_data(db, refresh_interval = NULL)
 }
 \arguments{
 \item{db}{A list containing database connection details. Must have elements:
@@ -14,7 +14,7 @@ sd_get_data(db, refresh_interval = 5)
 }}
 
 \item{refresh_interval}{Numeric. The time interval (in seconds) between data refreshes
-when in a reactive context. Default is \code{5} seconds. Ignored in non-reactive contexts.}
+when in a reactive context. Default is \code{NULL}, meaning the data will not refresh.}
 }
 \value{
 In a non-reactive context, returns a data frame containing all rows and columns

@@ -823,6 +823,58 @@ sd_set_password <- function(password) {
     message("Password set successfully and .Renviron added to .gitignore.")
 }
 
+#' Show the Saved Survey Password
+#'
+#' This function displays the password saved in the .Renviron file under the
+#' SURVEYDOWN_PASSWORD variable. It includes a confirmation step to ensure
+#' the user wants to display the password in the console. If no password is found,
+#' it suggests using the sd_set_password() function to define a password.
+#'
+#' @return A character string containing the password if found and confirmed,
+#'         or a message if no password is saved along with a suggestion to set one.
+#'
+#' @importFrom usethis ui_yeah ui_info ui_oops ui_todo
+#'
+#' @examples
+#' \dontrun{
+#'   sd_show_password()
+#' }
+#'
+#' @export
+sd_show_password <- function() {
+  # Define the path to .Renviron file
+  renviron_path <- file.path(getwd(), ".Renviron")
+
+  # Check if .Renviron file exists
+  if (!file.exists(renviron_path)) {
+    usethis::ui_oops("No .Renviron file found. No password is saved.")
+    usethis::ui_todo("Use sd_set_password() to define a password.")
+    return(invisible(NULL))
+  }
+
+  # Read the content of .Renviron
+  env_content <- readLines(renviron_path)
+
+  # Find the line with SURVEYDOWN_PASSWORD
+  password_line <- grep("^SURVEYDOWN_PASSWORD=", env_content, value = TRUE)
+
+  if (length(password_line) == 0) {
+    usethis::ui_oops("No password found in .Renviron file.")
+    usethis::ui_todo("Use sd_set_password() to define a password.")
+    return(invisible(NULL))
+  }
+
+  # Extract the password
+  password <- sub("^SURVEYDOWN_PASSWORD=", "", password_line)
+
+  # Confirm with the user
+  if (usethis::ui_yeah("Are you sure you want to display your password in the console?")) {
+    usethis::ui_info("Your saved password is: {password}")
+  } else {
+    usethis::ui_info("Password display cancelled.")
+  }
+}
+
 #' Store a value
 #'
 #' This function allows storing additional values to be included in the survey data,
