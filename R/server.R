@@ -98,7 +98,22 @@ sd_server <- function(
     )
 
     # Set up show_if conditions
-    if (!is.null(show_if)) { set_show_if_conditions(show_if) }
+    show_if_results <- if (!is.null(show_if)) {
+        set_show_if_conditions(show_if)
+    } else {
+        shiny::reactive(list())
+    }
+    # Create an observer to handle visibility
+    shiny::observe({
+        results <- show_if_results()
+        for (target in names(results)) {
+            if (results[[target]]) {
+                shinyjs::show(target)
+            } else {
+                shinyjs::hide(target)
+            }
+        }
+    })
 
     # Initialize local variables ----
 
@@ -113,6 +128,7 @@ sd_server <- function(
     start_page   <- config$start_page
     admin_page   <- config$admin_page
     question_required <- config$question_required
+    page_id_to_index <- setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs
     page_ts_ids     <- paste0("time_p_", page_ids)
@@ -133,6 +149,7 @@ sd_server <- function(
 
     # Function to update the data
     update_data <- function() {
+        # Then get the latest data
         data_list <- latest_data()
         if (ignore_mode) {
             if (file.access('.', 2) == 0) {  # Check if current directory is writable
@@ -240,9 +257,20 @@ sd_server <- function(
                 as.character(question_vals[[local_id]])
             })
 
-            # Update data
-            update_data()
+            # Trigger show_if evaluation
+            show_if_results()
+
+            # Update data after a short delay
+            shiny::invalidateLater(100)
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
+    })
+
+    # Observer to update the data upon changes in the input
+    observe({
+        for(id in question_ids) {
+            input[[id]]
+        }
+        update_data()
     })
 
     # Page rendering ----
@@ -280,39 +308,39 @@ sd_server <- function(
 
     # Page navigation ----
 
+    check_required <- function(page) {
+        all(vapply(page$required_questions, function(q) {
+            is_visible <- is_question_visible(q)
+            !is_visible || check_answer(q, input)
+        }, logical(1)))
+    }
+
+    is_question_visible <- function(q) {
+        results <- show_if_results()
+        !q %in% names(results) || results[[q]]
+    }
+
     # Determine which page is next, then update current_page_id() to it
-    shiny::observe({
+    observe({
         lapply(pages, function(page) {
-            shiny::observeEvent(input[[page$next_button_id]], {
+            observeEvent(input[[page$next_button_id]], {
+                shiny::isolate({
+                    current_page_id <- page$id
+                    next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
+                    next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
 
-                # Get current and next pages
-                current_page_id <- page$id
-                next_page_id <- get_default_next_page(page, page_ids)
-
-                # Determine next page based on the current page and skip logic
-                next_page_id <- handle_skip_logic(
-                    input, skip_if, current_page_id, next_page_id
-                )
-
-                if (!is.null(next_page_id)) {
-
-                    # Check if all required questions are answered
-                    required_answered <- check_required(page, input, show_if)
-
-                    if (required_answered) {
-                        # Update the current page ID, then update the data
+                    if (!is.null(next_page_id) && check_required(page)) {
                         current_page_id(next_page_id)
-                        # Update timestamp for the next page
                         next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
                         timestamps[[next_ts_id]] <- get_utc_timestamp()
                         update_data()
-                    } else {
+                    } else if (!is.null(next_page_id)) {
                         shiny::showNotification(
                             "Please answer all required questions before proceeding.",
                             type = "error"
                         )
                     }
-                }
+                })
             })
         })
     })
@@ -416,9 +444,8 @@ sd_show_if <- function(...) {
 set_show_if_conditions <- function(show_if) {
     conditions <- show_if$conditions
 
-    # Check if conditions is empty
     if (length(conditions) == 0) {
-      return()
+        return(shiny::reactive(list()))
     }
 
     # Group conditions by target
@@ -444,23 +471,9 @@ set_show_if_conditions <- function(show_if) {
         })
     })
 
-    # Create a single observer to handle all condition groups
-    shiny::observe({
-        for (target in names(grouped_conditions)) {
-            condition_met <- condition_reactives[[target]]()
-
-            if (condition_met) {
-                shinyjs::runjs(sprintf("
-                    $('#%s').closest('.question-container').show();
-                    $('#%s').show();
-                ", target, target))
-            } else {
-                shinyjs::runjs(sprintf("
-                    $('#%s').closest('.question-container').hide();
-                    $('#%s').hide();
-                ", target, target))
-            }
-        }
+    # Return a reactive that contains all condition results
+    shiny::reactive({
+        lapply(condition_reactives, function(r) r())
     })
 }
 
@@ -550,16 +563,15 @@ format_question_value <- function(val) {
     }
 }
 
-get_default_next_page <- function(page, page_ids) {
-    if (is.null(page$next_page_id)) { return(NULL) }
+get_default_next_page <- function(page, page_ids, page_id_to_index) {
+    if (is.null(page$next_page_id)) return(NULL)
     next_page_id <- page$next_page_id
     if (next_page_id == "") {
-        # No next page specified, so just go to the next one
-        index <- which(page_ids == page$id) + 1
+        index <- page_id_to_index[page$id] + 1
         if (index <= length(page_ids)) {
             return(page_ids[index])
         } else {
-            return(NULL)  # No next page if we're on the last page
+            return(NULL)
         }
     }
     return(next_page_id)
@@ -590,46 +602,6 @@ handle_skip_logic <- function(input, skip_if, current_page_id, next_page_id) {
         }
     }
     return(next_page_id)
-}
-
-check_required <- function(page, input, show_if) {
-    results <- vapply(page$questions, function(q) {
-        if (!q %in% page$required_questions) return(TRUE)
-        is_visible <- is_question_visible(q, show_if, input)
-        if (!is_visible) return(TRUE)
-        return(check_answer(q, input))
-    }, logical(1))
-    return(all(results))
-}
-
-is_question_visible <- function(q, show_if, input) {
-    if (is.null(show_if)) return(TRUE)
-
-    # Get all conditions for this question
-    question_conditions <- get_conditions_for_question(show_if$conditions, q)
-
-    # If there are no conditions, the question is always visible
-    if (length(question_conditions) == 0) return(TRUE)
-
-    # Check if any of the conditions are met
-    is_visible <- any(sapply(question_conditions, function(rule) {
-        tryCatch({
-            evaluate_condition(rule)
-        }, error = function(e) {
-            warning(sprintf(
-                "Error evaluating condition for question '%s': %s",
-                q, conditionMessage(e)
-            ))
-            FALSE
-        })
-    }))
-
-    return(is_visible)
-}
-
-# Helper function to get conditions for a specific question
-get_conditions_for_question <- function(conditions, q) {
-    Filter(function(rule) rule$target == q, conditions)
 }
 
 # Check if a single question is answered
