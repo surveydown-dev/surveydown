@@ -148,9 +148,7 @@ sd_server <- function(
     }
 
     # Function to update the data
-    update_data <- function() {
-        # Then get the latest data
-        data_list <- latest_data()
+    update_data <- function(data_list) {
         if (ignore_mode) {
             if (file.access('.', 2) == 0) {  # Check if current directory is writable
                 tryCatch({
@@ -265,12 +263,10 @@ sd_server <- function(
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
     })
 
-    # Observer to update the data upon changes in the input
+    # Observer to update the data upon any change in the data
     observe({
-        for(id in question_ids) {
-            input[[id]]
-        }
-        update_data()
+        data_list <- latest_data()
+        update_data(data_list)
     })
 
     # Page rendering ----
@@ -328,12 +324,10 @@ sd_server <- function(
                     current_page_id <- page$id
                     next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
                     next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
-
                     if (!is.null(next_page_id) && check_required(page)) {
                         current_page_id(next_page_id)
                         next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
                         timestamps[[next_ts_id]] <- get_utc_timestamp()
-                        update_data()
                     } else if (!is.null(next_page_id)) {
                         shiny::showNotification(
                             "Please answer all required questions before proceeding.",
@@ -355,7 +349,8 @@ sd_server <- function(
     # Ensure final update on session end
     shiny::onSessionEnded(function() {
         shiny::isolate({
-            update_data()
+            data_list <- latest_data()
+            update_data(data_list)
         })
     })
 
