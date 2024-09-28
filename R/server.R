@@ -133,7 +133,7 @@ sd_server <- function(
     # Pre-compute timestamp IDs
     page_ts_ids     <- paste0("time_p_", page_ids)
     question_ts_ids <- paste0("time_q_", question_ids)
-    all_ts_ids      <- c(page_ts_ids, question_ts_ids)
+    all_ts_ids      <- c(page_ts_ids, question_ts_ids, 'time_last_interaction')
 
     # Initialize local functions ----
 
@@ -179,23 +179,21 @@ sd_server <- function(
     # Create admin page if admin_page is TRUE
     if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
 
-    # Data tracking ----
-
-    # Format static data
-    static_list <- list(
-        session_id = session_id,
-        time_start = time_start
-    )
-    static_list <- c(static_list, get_stored_vals(session))
-
     # Initialize values for progressbar
     load_js_file("update_progress.js")
     max_progress <- shiny::reactiveVal(0)
     last_answered_question <- shiny::reactiveVal(0)
 
-    # Initialize timestamps and question values
-    timestamps <- initialize_timestamps(page_ts_ids, question_ts_ids, time_start)
-    question_vals <- initialize_question_vals(question_ids)
+    # Data tracking ----
+
+    # Format static data
+    static_list <- list(session_id = session_id, time_start = time_start)
+    static_list <- c(static_list, get_stored_vals(session))
+
+    # Initialize the all_data reactive values
+    all_data <- initialize_all_data(
+        static_list, question_ids, question_ts_ids, page_ts_ids, time_start
+    )
 
     # Database table initialization
     if (!ignore_mode) {
@@ -203,11 +201,7 @@ sd_server <- function(
             DBI::dbExistsTable(conn, db$table)
         })
         time_ids <- c(all_ts_ids, 'time_last_interaction')
-        initial_data <- c(
-            static_list,
-            setNames(lapply(question_ids, function(id) NA), question_ids),
-            setNames(lapply(time_ids, function(id) NA), time_ids)
-        )
+        initial_data <- reactiveValuesToList(all_data)
         if (!table_exists) {
             create_table(initial_data, db$db, db$table)
         }
@@ -215,22 +209,24 @@ sd_server <- function(
         check_and_add_columns(initial_data, db$db, db$table)
     }
 
-    # Create a reactive expression for the latest data
     latest_data <- shiny::reactive({
         # Update timestamp of last interaction
-        timestamps$time_last_interaction <- get_utc_timestamp()
-        # Merge all lists
-        data <- c(
-            static_list,
-            reactiveValuesToList(question_vals),
-            reactiveValuesToList(timestamps)
-        )
+        all_data$time_last_interaction <- get_utc_timestamp()
+
+        # Convert reactiveValues to a regular list
+        data <- reactiveValuesToList(all_data)
+
         # Ensure all elements are of length 1, use "" for empty or NULL values
         data <- lapply(data, function(x) {
             if (length(x) == 0 || is.null(x) || (is.na(x) && !is.character(x))) "" else as.character(x)[1]
         })
-        data <- data[names(data) != ""]
-        return(data)
+
+        data[names(data) != ""]
+    })
+
+    # Observer to update the data upon any change in the data
+    observe({
+        update_data(latest_data())
     })
 
     # Main question observers ----
@@ -242,17 +238,17 @@ sd_server <- function(
 
         observeEvent(input[[local_id]], {
             # Update question value
-            question_vals[[local_id]] <- format_question_value(input[[local_id]])
+            all_data[[local_id]] <- format_question_value(input[[local_id]])
 
             # Update timestamp and progress if interacted
             if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                timestamps[[local_ts_id]] <- get_utc_timestamp()
+                all_data[[local_ts_id]] <- get_utc_timestamp()
                 update_progress_bar(index)
             }
 
             # Make value accessible in the UI
             output[[paste0(local_id, "_value")]] <- renderText({
-                as.character(question_vals[[local_id]])
+                as.character(all_data[[local_id]])
             })
 
             # Trigger show_if evaluation
@@ -261,12 +257,6 @@ sd_server <- function(
             # Update data after a short delay
             shiny::invalidateLater(100)
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
-    })
-
-    # Observer to update the data upon any change in the data
-    observe({
-        data_list <- latest_data()
-        update_data(data_list)
     })
 
     # Page rendering ----
@@ -327,7 +317,7 @@ sd_server <- function(
                     if (!is.null(next_page_id) && check_required(page)) {
                         current_page_id(next_page_id)
                         next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
-                        timestamps[[next_ts_id]] <- get_utc_timestamp()
+                        all_data[[next_ts_id]] <- get_utc_timestamp()
                     } else if (!is.null(next_page_id)) {
                         shiny::showNotification(
                             "Please answer all required questions before proceeding.",
@@ -339,6 +329,7 @@ sd_server <- function(
         })
     })
 
+    # Observer to max out the progress bar when we reach the last page
     shiny::observe({
         page <- get_current_page()
         if (is.null(page$next_page_id)) {
@@ -349,8 +340,7 @@ sd_server <- function(
     # Ensure final update on session end
     shiny::onSessionEnded(function() {
         shiny::isolate({
-            data_list <- latest_data()
-            update_data(data_list)
+            update_data(latest_data())
         })
     })
 
@@ -519,32 +509,36 @@ get_utc_timestamp <- function() {
     return(format(Sys.time(), tz = "UTC", usetz = TRUE))
 }
 
-# Initialize timestamps for pages and questions
-initialize_timestamps <- function(page_ts_ids, question_ts_ids, time_start) {
-    timestamps <- shiny::reactiveValues()
+initialize_all_data <- function(
+    static_list, question_ids, question_ts_ids, page_ts_ids, time_start
+) {
+    all_data <- shiny::reactiveValues()
 
-    # Initialize page timestamps
-    for (i in seq_along(page_ts_ids)) {
-        timestamps[[page_ts_ids[i]]] <- if (i == 1) get_utc_timestamp() else ""
+    # Initialize with static data
+    for (name in names(static_list)) {
+        all_data[[name]] <- static_list[[name]]
+    }
+
+    # Initialize question values
+    for (id in question_ids) {
+        all_data[[id]] <- ""
     }
 
     # Initialize question timestamps
-    for (ts_id in question_ts_ids) {
-        timestamps[[ts_id]] <- ""
+    for (id in question_ts_ids) {
+        all_data[[id]] <- ""
     }
 
-    # Initialize time of last interaction
-    timestamps[['time_last_interaction']] <- time_start
-
-    return(timestamps)
-}
-
-initialize_question_vals <- function(question_ids) {
-    vals <- shiny::reactiveValues()
-    for (id in question_ids) {
-        vals[[id]] <- ""  # Empty string instead of NA
+    # Initialize page timestamps
+    for (id in page_ts_ids) {
+        all_data[[id]] <- ""
     }
-    return(vals)
+
+    # Initialize time of first page and last interaction
+    all_data[[page_ts_ids[1]]] <- time_start
+    all_data[['time_last_interaction']] <- time_start
+
+    return(all_data)
 }
 
 # Helper function to format a single question value
