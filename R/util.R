@@ -162,32 +162,6 @@ tibble_to_list_of_lists <- function(tbl) {
   })
 }
 
-# Function to render Quarto document to a temporary file
-quarto_render_temp <- function(input) {
-
-    # Create a temporary directory
-    temp_dir <- tempdir()
-
-    # Get the output file path in the original directory
-    x <- quarto::quarto_inspect(input)
-    output_format <- names(x$formats)
-    original_output <- x$formats[[output_format]]$pandoc$`output-file`
-    original_output_path <- file.path(dirname(input), original_output)
-
-    # Render the Quarto document
-    quarto::quarto_render(input)
-
-    # Define the path for the temporary file
-    temp_output_path <- file.path(temp_dir, "temp_output.html")
-
-    # Copy the rendered file to the temporary location and delete the original
-    file.copy(from = original_output_path, to = temp_output_path, overwrite = TRUE)
-    file.remove(original_output_path)
-
-    # Return the path to the temporary file
-    return(temp_output_path)
-}
-
 #' Create a new survey template
 #'
 #' This function creates a new survey template by copying files from the package's
