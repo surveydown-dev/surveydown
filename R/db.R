@@ -303,7 +303,57 @@ sqlInterpolateList <- function(conn, sql, vars=list(), list_vars=list()) {
     DBI::sqlInterpolate(conn, sql, .dots=vars)
 }
 
-database_uploading <- function(data_list, db, table) {
+# database_uploading <- function(data_list, db, table) {
+#     if(is.null(db)) {
+#         return(warning("Databasing is not in use"))
+#     }
+#
+#     tryCatch({
+#         pool::poolWithTransaction(db, function(conn) {
+#             # Get the actual columns in the table
+#             existing_cols <- DBI::dbListFields(conn, table)
+#
+#             # Filter data_list to only include existing columns
+#             data_list <- data_list[names(data_list) %in% existing_cols]
+#
+#             # Ensure session_id is the first column
+#             cols <- c("session_id", setdiff(names(data_list), "session_id"))
+#             data_list <- data_list[cols]
+#
+#             # Prepare the placeholders
+#             placeholders <- paste0("?", names(data_list))
+#
+#             # Prepare the update set
+#             update_cols <- setdiff(cols, "session_id")
+#             update_set <- paste(sapply(update_cols, function(col) {
+#                 sprintf('"%s" = EXCLUDED."%s"', col, col)
+#             }), collapse = ", ")
+#
+#             # Prepare the SQL query template
+#             query_template <- sprintf(
+#                 'INSERT INTO "%s" ("%s") VALUES (%s) ON CONFLICT (session_id) DO UPDATE SET %s',
+#                 table,
+#                 paste(cols, collapse = '", "'),
+#                 paste(placeholders, collapse = ", "),
+#                 update_set
+#             )
+#
+#             # Use sqlInterpolateList to safely insert values
+#             query <- sqlInterpolateList(
+#                 conn,
+#                 query_template,
+#                 list_vars = data_list
+#             )
+#
+#             # Execute the query
+#             DBI::dbExecute(conn, query)
+#         })
+#     }, error = function(e) {
+#         warning("Error in database operation: ", e$message)
+#         print(e)  # Print the full error for debugging
+#     })
+
+database_uploading <- function(data_list, db, table, changed_fields) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
     }
@@ -313,8 +363,13 @@ database_uploading <- function(data_list, db, table) {
             # Get the actual columns in the table
             existing_cols <- DBI::dbListFields(conn, table)
 
-            # Filter data_list to only include existing columns
-            data_list <- data_list[names(data_list) %in% existing_cols]
+            # Filter data_list to only include existing columns and changed fields
+            data_list <- data_list[names(data_list) %in% c("session_id", intersect(changed_fields, existing_cols))]
+
+            # If there's nothing to update (only session_id), return early
+            if (length(data_list) <= 1) {
+                return()
+            }
 
             # Ensure session_id is the first column
             cols <- c("session_id", setdiff(names(data_list), "session_id"))

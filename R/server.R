@@ -147,8 +147,7 @@ sd_server <- function(
         }
     }
 
-    # Function to update the data
-    update_data <- function(data_list) {
+    update_data <- function(data_list, changed_fields) {
         if (ignore_mode) {
             if (file.access('.', 2) == 0) {  # Check if current directory is writable
                 tryCatch({
@@ -165,8 +164,10 @@ sd_server <- function(
                 message("Running in a non-writable environment.")
             }
         } else {
-            database_uploading(data_list, db$db, db$table)
+            database_uploading(data_list, db$db, db$table, changed_fields)
         }
+        # Reset changed_fields after updating the data
+        changed_fields(character(0))
     }
 
     # Initial settings ----
@@ -209,6 +210,7 @@ sd_server <- function(
         check_and_add_columns(initial_data, db$db, db$table)
     }
 
+    # Reactive expression that returns a list of the latest data
     latest_data <- shiny::reactive({
         # Update timestamp of last interaction
         all_data$time_last_interaction <- get_utc_timestamp()
@@ -226,8 +228,12 @@ sd_server <- function(
 
     # Observer to update the data upon any change in the data
     observe({
-        update_data(latest_data())
+        data <- latest_data()
+        update_data(data, changed_fields())
     })
+
+    # Reactive value to track which fields have changed
+    changed_fields <- shiny::reactiveVal(character(0))
 
     # Main question observers ----
     # (one created for each question)
@@ -240,9 +246,13 @@ sd_server <- function(
             # Update question value
             all_data[[local_id]] <- format_question_value(input[[local_id]])
 
+            # Update tracker of which fields changed
+            changed_fields(c(changed_fields(), local_id))
+
             # Update timestamp and progress if interacted
             if (!is.null(input[[paste0(local_id, "_interacted")]])) {
                 all_data[[local_ts_id]] <- get_utc_timestamp()
+                changed_fields(c(changed_fields(), local_ts_id))
                 update_progress_bar(index)
             }
 
@@ -315,9 +325,15 @@ sd_server <- function(
                     next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
                     next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
                     if (!is.null(next_page_id) && check_required(page)) {
+                        # Set the current page as the next page
                         current_page_id(next_page_id)
+
+                        # Update the page time stamp
                         next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
                         all_data[[next_ts_id]] <- get_utc_timestamp()
+
+                        # Update tracker of which fields changed
+                        changed_fields(c(changed_fields(), next_ts_id))
                     } else if (!is.null(next_page_id)) {
                         shiny::showNotification(
                             "Please answer all required questions before proceeding.",
