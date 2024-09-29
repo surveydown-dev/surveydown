@@ -149,7 +149,7 @@ sd_server <- function(
     }
 
     update_data <- function(data_list, changed_fields = NULL, time_last = FALSE) {
-        if (is.null(changed_fields)) {
+        if (length(changed_fields) == 0) {
             changed_fields = names(data_list)
         }
         if (time_last) {
@@ -200,7 +200,7 @@ sd_server <- function(
     )
     all_data <- do.call(shiny::reactiveValues, initial_data)
 
-    # Database table initialization
+    # Initialize database table
     if (!ignore_mode) {
         table_exists <- pool::poolWithTransaction(db$db, function(conn) {
             DBI::dbExistsTable(conn, db$table)
@@ -208,8 +208,6 @@ sd_server <- function(
         if (!table_exists) {
             create_table(initial_data, db$db, db$table)
         }
-        # Check if there are any new columns, update DB accordingly
-        check_and_add_columns(initial_data, db$db, db$table)
     }
 
     # Reactive expression that returns a list of the latest data
