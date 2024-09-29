@@ -45,6 +45,11 @@ run_config <- function(
         stop("The specified start_page does not exist - check that you have not mis-spelled the id")
     }
 
+    # Set the start page
+    if (is.null(start_page)) {
+        start_page <- page_ids[1]
+    }
+
     # Check skip_if and show_if inputs
     check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
 

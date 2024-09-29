@@ -133,7 +133,8 @@ sd_server <- function(
     # Pre-compute timestamp IDs
     page_ts_ids     <- paste0("time_p_", page_ids)
     question_ts_ids <- paste0("time_q_", question_ids)
-    all_ts_ids      <- c(page_ts_ids, question_ts_ids, 'time_last_interaction')
+    start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
+    all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
 
     # Initialize local functions ----
 
@@ -147,7 +148,13 @@ sd_server <- function(
         }
     }
 
-    update_data <- function(data_list, changed_fields) {
+    update_data <- function(data_list, changed_fields = NULL, time_last = FALSE) {
+        if (is.null(changed_fields)) {
+            changed_fields = names(data_list)
+        }
+        if (time_last) {
+            data_list[['time_end']] <- get_utc_timestamp()
+        }
         if (ignore_mode) {
             if (file.access('.', 2) == 0) {  # Check if current directory is writable
                 tryCatch({
@@ -187,22 +194,17 @@ sd_server <- function(
 
     # Data tracking ----
 
-    # Format static data
-    static_list <- list(session_id = session_id, time_start = time_start)
-    static_list <- c(static_list, get_stored_vals(session))
-
     # Initialize the all_data reactive values
-    all_data <- initialize_all_data(
-        static_list, question_ids, question_ts_ids, page_ts_ids, time_start
+    initial_data <- get_initial_data(
+        session, session_id, time_start, all_ids, start_page_ts_id
     )
+    all_data <- do.call(shiny::reactiveValues, initial_data)
 
     # Database table initialization
     if (!ignore_mode) {
         table_exists <- pool::poolWithTransaction(db$db, function(conn) {
             DBI::dbExistsTable(conn, db$table)
         })
-        time_ids <- c(all_ts_ids, 'time_last_interaction')
-        initial_data <- reactiveValuesToList(all_data)
         if (!table_exists) {
             create_table(initial_data, db$db, db$table)
         }
@@ -212,9 +214,6 @@ sd_server <- function(
 
     # Reactive expression that returns a list of the latest data
     latest_data <- shiny::reactive({
-        # Update timestamp of last interaction
-        all_data$time_last_interaction <- get_utc_timestamp()
-
         # Convert reactiveValues to a regular list
         data <- reactiveValuesToList(all_data)
 
@@ -271,13 +270,9 @@ sd_server <- function(
 
     # Page rendering ----
 
-    # Create reactive values for the current page ID
-    current_page_id <- shiny::reactiveVal(page_ids[1])
-
-    # Start from start_page (if specified)
-    if (!is.null(start_page)) {
-        current_page_id(start_page)
-    }
+    # Create reactive values for the start page ID
+    # (defaults to first page if NULL...see run_config() function)
+    current_page_id <- shiny::reactiveVal(start_page)
 
     get_current_page <- reactive({
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
@@ -356,7 +351,7 @@ sd_server <- function(
     # Ensure final update on session end
     shiny::onSessionEnded(function() {
         shiny::isolate({
-            update_data(latest_data())
+            update_data(latest_data(), time_last = TRUE)
         })
     })
 
@@ -525,36 +520,21 @@ get_utc_timestamp <- function() {
     return(format(Sys.time(), tz = "UTC", usetz = TRUE))
 }
 
-initialize_all_data <- function(
-    static_list, question_ids, question_ts_ids, page_ts_ids, time_start
+get_initial_data <- function(
+    session, session_id, time_start, all_ids, start_page_ts_id
 ) {
-    all_data <- shiny::reactiveValues()
-
     # Initialize with static data
-    for (name in names(static_list)) {
-        all_data[[name]] <- static_list[[name]]
-    }
+    data <- c(
+        list(session_id = session_id, time_start = time_start),
+        get_stored_vals(session)
+    )
 
-    # Initialize question values
-    for (id in question_ids) {
-        all_data[[id]] <- ""
-    }
+    # Initialize question & timestamp values
+    for (id in all_ids) { data[[id]] <- "" }
+    data[[start_page_ts_id]] <- time_start
+    data[['time_end']] <- ""
 
-    # Initialize question timestamps
-    for (id in question_ts_ids) {
-        all_data[[id]] <- ""
-    }
-
-    # Initialize page timestamps
-    for (id in page_ts_ids) {
-        all_data[[id]] <- ""
-    }
-
-    # Initialize time of first page and last interaction
-    all_data[[page_ts_ids[1]]] <- time_start
-    all_data[['time_last_interaction']] <- time_start
-
-    return(all_data)
+    return(data)
 }
 
 # Helper function to format a single question value
