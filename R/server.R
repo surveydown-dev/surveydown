@@ -531,6 +531,7 @@ get_initial_data <- function(
 
     # Initialize question & timestamp values
     for (id in all_ids) { data[[id]] <- "" }
+    data[['time_start']] <- time_start
     data[[start_page_ts_id]] <- time_start
     data[['time_end']] <- ""
 
