@@ -45,6 +45,11 @@ run_config <- function(
         stop("The specified start_page does not exist - check that you have not mis-spelled the id")
     }
 
+    # Set the start page
+    if (is.null(start_page)) {
+        start_page <- page_ids[1]
+    }
+
     # Check skip_if and show_if inputs
     check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
 
@@ -64,25 +69,8 @@ run_config <- function(
 }
 
 get_html_content <- function(survey_file) {
-    # Check if the file exists
-    if (!file.exists(survey_file)) {
-        stop("The specified survey file does not exist.")
-    }
-
-    # Get the file extension
-    file_ext <- tools::file_ext(survey_file)
-
-    # Process based on file type
-    if (file_ext == "qmd") {
-        temp_html <- quarto_render_temp(survey_file)
-        html_content <- rvest::read_html(temp_html)
-        unlink(temp_html)
-    } else if (file_ext == "html") {
-        html_content <- rvest::read_html(survey_file)
-    } else {
-        stop("Invalid file type. Please provide either a .qmd or .html file.")
-    }
-    return(html_content)
+    if (survey_file == 'survey.qmd') { quarto::quarto_render(survey_file) }
+    return(rvest::read_html('survey.html'))
 }
 
 extract_html_pages <- function(

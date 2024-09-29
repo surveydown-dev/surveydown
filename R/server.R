@@ -98,7 +98,22 @@ sd_server <- function(
     )
 
     # Set up show_if conditions
-    if (!is.null(show_if)) { set_show_if_conditions(show_if) }
+    show_if_results <- if (!is.null(show_if)) {
+        set_show_if_conditions(show_if)
+    } else {
+        shiny::reactive(list())
+    }
+    # Create an observer to handle visibility
+    shiny::observe({
+        results <- show_if_results()
+        for (target in names(results)) {
+            if (results[[target]]) {
+                shinyjs::show(target)
+            } else {
+                shinyjs::hide(target)
+            }
+        }
+    })
 
     # Initialize local variables ----
 
@@ -113,11 +128,13 @@ sd_server <- function(
     start_page   <- config$start_page
     admin_page   <- config$admin_page
     question_required <- config$question_required
+    page_id_to_index <- setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs
     page_ts_ids     <- paste0("time_p_", page_ids)
     question_ts_ids <- paste0("time_q_", question_ids)
-    all_ts_ids      <- c(page_ts_ids, question_ts_ids)
+    start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
+    all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
 
     # Initialize local functions ----
 
@@ -131,9 +148,13 @@ sd_server <- function(
         }
     }
 
-    # Function to update the data
-    update_data <- function() {
-        data_list <- latest_data()
+    update_data <- function(data_list, changed_fields = NULL, time_last = FALSE) {
+        if (length(changed_fields) == 0) {
+            changed_fields = names(data_list)
+        }
+        if (time_last) {
+            data_list[['time_end']] <- get_utc_timestamp()
+        }
         if (ignore_mode) {
             if (file.access('.', 2) == 0) {  # Check if current directory is writable
                 tryCatch({
@@ -150,8 +171,10 @@ sd_server <- function(
                 message("Running in a non-writable environment.")
             }
         } else {
-            database_uploading(data_list, db$db, db$table)
+            database_uploading(data_list, db$db, db$table, changed_fields)
         }
+        # Reset changed_fields after updating the data
+        changed_fields(character(0))
     }
 
     # Initial settings ----
@@ -164,59 +187,50 @@ sd_server <- function(
     # Create admin page if admin_page is TRUE
     if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
 
-    # Data tracking ----
-
-    # Format static data
-    static_list <- list(
-        session_id = session_id,
-        time_start = time_start
-    )
-    static_list <- c(static_list, get_stored_vals(session))
-
     # Initialize values for progressbar
     load_js_file("update_progress.js")
     max_progress <- shiny::reactiveVal(0)
     last_answered_question <- shiny::reactiveVal(0)
 
-    # Initialize timestamps and question values
-    timestamps <- initialize_timestamps(page_ts_ids, question_ts_ids, time_start)
-    question_vals <- initialize_question_vals(question_ids)
+    # Data tracking ----
 
-    # Database table initialization
+    # Initialize the all_data reactive values
+    initial_data <- get_initial_data(
+        session, session_id, time_start, all_ids, start_page_ts_id
+    )
+    all_data <- do.call(shiny::reactiveValues, initial_data)
+
+    # Initialize database table
     if (!ignore_mode) {
         table_exists <- pool::poolWithTransaction(db$db, function(conn) {
             DBI::dbExistsTable(conn, db$table)
         })
-        time_ids <- c(all_ts_ids, 'time_last_interaction')
-        initial_data <- c(
-            static_list,
-            setNames(lapply(question_ids, function(id) NA), question_ids),
-            setNames(lapply(time_ids, function(id) NA), time_ids)
-        )
         if (!table_exists) {
             create_table(initial_data, db$db, db$table)
         }
-        # Check if there are any new columns, update DB accordingly
-        check_and_add_columns(initial_data, db$db, db$table)
     }
 
-    # Create a reactive expression for the latest data
+    # Reactive expression that returns a list of the latest data
     latest_data <- shiny::reactive({
-        # Update timestamp of last interaction
-        timestamps$time_last_interaction <- get_utc_timestamp()
-        # Merge all lists
-        data <- c(
-            static_list,
-            reactiveValuesToList(question_vals),
-            reactiveValuesToList(timestamps)
-        )
+        # Convert reactiveValues to a regular list
+        data <- reactiveValuesToList(all_data)
+
         # Ensure all elements are of length 1, use "" for empty or NULL values
         data <- lapply(data, function(x) {
             if (length(x) == 0 || is.null(x) || (is.na(x) && !is.character(x))) "" else as.character(x)[1]
         })
-        data <- data[names(data) != ""]
-        return(data)
+
+        data[names(data) != ""]
     })
+
+    # Observer to update the data upon any change in the data
+    observe({
+        data <- latest_data()
+        update_data(data, changed_fields())
+    })
+
+    # Reactive value to track which fields have changed
+    changed_fields <- shiny::reactiveVal(character(0))
 
     # Main question observers ----
     # (one created for each question)
@@ -227,33 +241,36 @@ sd_server <- function(
 
         observeEvent(input[[local_id]], {
             # Update question value
-            question_vals[[local_id]] <- format_question_value(input[[local_id]])
+            all_data[[local_id]] <- format_question_value(input[[local_id]])
+
+            # Update tracker of which fields changed
+            changed_fields(c(changed_fields(), local_id))
 
             # Update timestamp and progress if interacted
             if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                timestamps[[local_ts_id]] <- get_utc_timestamp()
+                all_data[[local_ts_id]] <- get_utc_timestamp()
+                changed_fields(c(changed_fields(), local_ts_id))
                 update_progress_bar(index)
             }
 
             # Make value accessible in the UI
             output[[paste0(local_id, "_value")]] <- renderText({
-                as.character(question_vals[[local_id]])
+                as.character(all_data[[local_id]])
             })
 
-            # Update data
-            update_data()
+            # Trigger show_if evaluation
+            show_if_results()
+
+            # Update data after a short delay
+            shiny::invalidateLater(100)
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
     })
 
     # Page rendering ----
 
-    # Create reactive values for the current page ID
-    current_page_id <- shiny::reactiveVal(page_ids[1])
-
-    # Start from start_page (if specified)
-    if (!is.null(start_page)) {
-        current_page_id(start_page)
-    }
+    # Create reactive values for the start page ID
+    # (defaults to first page if NULL...see run_config() function)
+    current_page_id <- shiny::reactiveVal(start_page)
 
     get_current_page <- reactive({
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
@@ -280,43 +297,48 @@ sd_server <- function(
 
     # Page navigation ----
 
+    check_required <- function(page) {
+        all(vapply(page$required_questions, function(q) {
+            is_visible <- is_question_visible(q)
+            !is_visible || check_answer(q, input)
+        }, logical(1)))
+    }
+
+    is_question_visible <- function(q) {
+        results <- show_if_results()
+        !q %in% names(results) || results[[q]]
+    }
+
     # Determine which page is next, then update current_page_id() to it
-    shiny::observe({
+    observe({
         lapply(pages, function(page) {
-            shiny::observeEvent(input[[page$next_button_id]], {
-
-                # Get current and next pages
-                current_page_id <- page$id
-                next_page_id <- get_default_next_page(page, page_ids)
-
-                # Determine next page based on the current page and skip logic
-                next_page_id <- handle_skip_logic(
-                    input, skip_if, current_page_id, next_page_id
-                )
-
-                if (!is.null(next_page_id)) {
-
-                    # Check if all required questions are answered
-                    required_answered <- check_required(page, input, show_if)
-
-                    if (required_answered) {
-                        # Update the current page ID, then update the data
+            observeEvent(input[[page$next_button_id]], {
+                shiny::isolate({
+                    current_page_id <- page$id
+                    next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
+                    next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
+                    if (!is.null(next_page_id) && check_required(page)) {
+                        # Set the current page as the next page
                         current_page_id(next_page_id)
-                        # Update timestamp for the next page
+
+                        # Update the page time stamp
                         next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
-                        timestamps[[next_ts_id]] <- get_utc_timestamp()
-                        update_data()
-                    } else {
+                        all_data[[next_ts_id]] <- get_utc_timestamp()
+
+                        # Update tracker of which fields changed
+                        changed_fields(c(changed_fields(), next_ts_id))
+                    } else if (!is.null(next_page_id)) {
                         shiny::showNotification(
                             "Please answer all required questions before proceeding.",
                             type = "error"
                         )
                     }
-                }
+                })
             })
         })
     })
 
+    # Observer to max out the progress bar when we reach the last page
     shiny::observe({
         page <- get_current_page()
         if (is.null(page$next_page_id)) {
@@ -327,7 +349,7 @@ sd_server <- function(
     # Ensure final update on session end
     shiny::onSessionEnded(function() {
         shiny::isolate({
-            update_data()
+            update_data(latest_data(), time_last = TRUE)
         })
     })
 
@@ -416,9 +438,8 @@ sd_show_if <- function(...) {
 set_show_if_conditions <- function(show_if) {
     conditions <- show_if$conditions
 
-    # Check if conditions is empty
     if (length(conditions) == 0) {
-      return()
+        return(shiny::reactive(list()))
     }
 
     # Group conditions by target
@@ -444,23 +465,9 @@ set_show_if_conditions <- function(show_if) {
         })
     })
 
-    # Create a single observer to handle all condition groups
-    shiny::observe({
-        for (target in names(grouped_conditions)) {
-            condition_met <- condition_reactives[[target]]()
-
-            if (condition_met) {
-                shinyjs::runjs(sprintf("
-                    $('#%s').closest('.question-container').show();
-                    $('#%s').show();
-                ", target, target))
-            } else {
-                shinyjs::runjs(sprintf("
-                    $('#%s').closest('.question-container').hide();
-                    $('#%s').hide();
-                ", target, target))
-            }
-        }
+    # Return a reactive that contains all condition results
+    shiny::reactive({
+        lapply(condition_reactives, function(r) r())
     })
 }
 
@@ -511,32 +518,22 @@ get_utc_timestamp <- function() {
     return(format(Sys.time(), tz = "UTC", usetz = TRUE))
 }
 
-# Initialize timestamps for pages and questions
-initialize_timestamps <- function(page_ts_ids, question_ts_ids, time_start) {
-    timestamps <- shiny::reactiveValues()
+get_initial_data <- function(
+    session, session_id, time_start, all_ids, start_page_ts_id
+) {
+    # Initialize with static data
+    data <- c(
+        list(session_id = session_id, time_start = time_start),
+        get_stored_vals(session)
+    )
 
-    # Initialize page timestamps
-    for (i in seq_along(page_ts_ids)) {
-        timestamps[[page_ts_ids[i]]] <- if (i == 1) get_utc_timestamp() else ""
-    }
+    # Initialize question & timestamp values
+    for (id in all_ids) { data[[id]] <- "" }
+    data[['time_start']] <- time_start
+    data[[start_page_ts_id]] <- time_start
+    data[['time_end']] <- ""
 
-    # Initialize question timestamps
-    for (ts_id in question_ts_ids) {
-        timestamps[[ts_id]] <- ""
-    }
-
-    # Initialize time of last interaction
-    timestamps[['time_last_interaction']] <- time_start
-
-    return(timestamps)
-}
-
-initialize_question_vals <- function(question_ids) {
-    vals <- shiny::reactiveValues()
-    for (id in question_ids) {
-        vals[[id]] <- ""  # Empty string instead of NA
-    }
-    return(vals)
+    return(data)
 }
 
 # Helper function to format a single question value
@@ -550,16 +547,15 @@ format_question_value <- function(val) {
     }
 }
 
-get_default_next_page <- function(page, page_ids) {
-    if (is.null(page$next_page_id)) { return(NULL) }
+get_default_next_page <- function(page, page_ids, page_id_to_index) {
+    if (is.null(page$next_page_id)) return(NULL)
     next_page_id <- page$next_page_id
     if (next_page_id == "") {
-        # No next page specified, so just go to the next one
-        index <- which(page_ids == page$id) + 1
+        index <- page_id_to_index[page$id] + 1
         if (index <= length(page_ids)) {
             return(page_ids[index])
         } else {
-            return(NULL)  # No next page if we're on the last page
+            return(NULL)
         }
     }
     return(next_page_id)
@@ -590,46 +586,6 @@ handle_skip_logic <- function(input, skip_if, current_page_id, next_page_id) {
         }
     }
     return(next_page_id)
-}
-
-check_required <- function(page, input, show_if) {
-    results <- vapply(page$questions, function(q) {
-        if (!q %in% page$required_questions) return(TRUE)
-        is_visible <- is_question_visible(q, show_if, input)
-        if (!is_visible) return(TRUE)
-        return(check_answer(q, input))
-    }, logical(1))
-    return(all(results))
-}
-
-is_question_visible <- function(q, show_if, input) {
-    if (is.null(show_if)) return(TRUE)
-
-    # Get all conditions for this question
-    question_conditions <- get_conditions_for_question(show_if$conditions, q)
-
-    # If there are no conditions, the question is always visible
-    if (length(question_conditions) == 0) return(TRUE)
-
-    # Check if any of the conditions are met
-    is_visible <- any(sapply(question_conditions, function(rule) {
-        tryCatch({
-            evaluate_condition(rule)
-        }, error = function(e) {
-            warning(sprintf(
-                "Error evaluating condition for question '%s': %s",
-                q, conditionMessage(e)
-            ))
-            FALSE
-        })
-    }))
-
-    return(is_visible)
-}
-
-# Helper function to get conditions for a specific question
-get_conditions_for_question <- function(conditions, q) {
-    Filter(function(rule) rule$target == q, conditions)
 }
 
 # Check if a single question is answered
