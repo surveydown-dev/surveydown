@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,10 +40,15 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-<ul><li>Modified the <code>refresh_interval</code> argument in <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> as defaulting to <code>NULL</code>, which means the data will not be reactively fetched, regardless of the context it is used in. The data will only continuously refresh if <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> is called within a reactive context and <code>refresh_interval &gt; 0</code>.</li>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.1" id="surveydown-031">surveydown 0.3.1<a class="anchor" aria-label="anchor" href="#surveydown-031"></a></h2>
+<ul><li>Improved efficiency in <code>database_uploading()</code> so only the changed fields get written, and also the writing happens after checking the <code>show_if</code> conditions (addresses <a href="https://github.com/surveydown-dev/surveydown/issues/100" class="external-link">#100</a>).</li>
+<li>Modified default rendering behavior to not delete the rendered html file.</li>
+<li>Modified the <code>refresh_interval</code> argument in <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> as defaulting to <code>NULL</code>, which means the data will not be reactively fetched, regardless of the context it is used in. The data will only continuously refresh if <code><a href="../reference/sd_get_data.html">sd_get_data()</a></code> is called within a reactive context and <code>refresh_interval &gt; 0</code>.</li>
 <li>Modified messaging from <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> to not print out user’s password and provide clearer instructions.</li>
 <li>
-<code><a href="../reference/sd_show_password.html">sd_show_password()</a></code> to show stored password. The user will be prompted to double confirm. If there is no password, the user will be prompted so, along with a message of using <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> to create the password.</li>
+<code><a href="../reference/sd_show_password.html">sd_show_password()</a></code> added to show a stored password. The user will be prompted to double confirm that they want to show it. If there is no password, the user will be prompted so, along with a message of using <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> to create the password.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="surveydown-030">surveydown 0.3.0<a class="anchor" aria-label="anchor" href="#surveydown-030"></a></h2>
