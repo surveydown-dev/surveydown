@@ -1,6 +1,8 @@
 # surveydown (development version)
 
-- Improved efficiency in `database_uploading()` so only the changed fields get written.
+# surveydown 0.3.1
+
+- Improved efficiency in `database_uploading()` so only the changed fields get written, and also the writing happens after checking the `show_if` conditions (addresses #100).
 - Modified default rendering behavior to not delete the rendered html file.
 - Modified the `refresh_interval` argument in `sd_get_data()` as defaulting to `NULL`, which means the data will not be reactively fetched, regardless of the context it is used in. The data will only continuously refresh if `sd_get_data()` is called within a reactive context and `refresh_interval > 0`.
 - Modified messaging from `sd_set_password()` to not print out user's password and provide clearer instructions.
