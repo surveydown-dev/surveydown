@@ -3,7 +3,6 @@
 
 /* Root variables */
 :root {
-  /* Layout and theme variables */
   --theme-color: var(--bs-primary, #2780E3);
   --body-background-color: #f2f6f9;
   --progressbar-position: top;
@@ -11,9 +10,15 @@
   --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
 }
 
-/* Body */
+/* Layout */
 body {
   background-color: var(--body-background-color);
+}
+
+.container-fluid .content {
+  max-width: 800px;
+  margin: 0 auto !important;
+  padding: 0 0 5px !important;
 }
 
 /* Typography */
@@ -27,20 +32,41 @@ p, .form-group, .control-label {
   margin-bottom: 0.5rem;
 }
 
-/* Unbolding question labels */
 .control-label, .radio label, .checkbox label {
   font-weight: normal;
   font-size: 1.1em;
 }
 
-/* Layout */
-.container-fluid .content {
-  max-width: 800px;
-  margin: 0 auto !important;
-  padding: 0 0 5px !important;
+/* Form elements */
+.form-group {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  margin-bottom: 1rem;
 }
 
-/* Button styling */
+.form-group > label.control-label {
+  margin-top: 0;
+  margin-bottom: 0.3rem;
+}
+
+.form-control:focus {
+  border-color: var(--theme-color);
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-color) 25%, transparent);
+}
+
+.question-container {
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+}
+
+.shiny-input-container:not(.shiny-input-container-inline) {
+  width: 100%;
+}
+
+/* Radio and Checkbox styling */
 .radio-inline,
 .checkbox-inline,
 .radio label,
@@ -48,7 +74,6 @@ p, .form-group, .control-label {
   padding-bottom: 0.25rem;
 }
 
-/* Button group styling */
 .radio-group-buttons .btn-group-container-sw,
 .checkbox-group-buttons .btn-group-container-sw {
   display: flex;
@@ -102,14 +127,7 @@ p, .form-group, .control-label {
   z-index: 2;
 }
 
-@media screen and (max-width: 767px) {
-  .radio-group-buttons .btn-group-container-sw,
-  .checkbox-group-buttons .btn-group-container-sw {
-    flex-direction: column;
-  }
-}
-
-/* Date range styling*/
+/* Date range styling */
 .shiny-date-range-input .input-group-addon {
   background: none;
   border: none;
@@ -141,35 +159,7 @@ p, .form-group, .control-label {
   transition: width 0.4s ease;
 }
 
-/* Form elements */
-.form-group {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 1rem;
-  background-color: #f9f9f9;
-}
-
-.form-group > label.control-label {
-  margin-top: 0;
-  margin-bottom: 0.3rem;
-}
-
-.form-control:focus {
-  border-color: var(--theme-color);
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-color) 25%, transparent);
-}
-
-.question-container {
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 1rem;
-}
-
-.shiny-input-container:not(.shiny-input-container-inline) {
-  width: 100%;
-}
-
-/* Page Navigation Buttons */
+/* Buttons */
 .btn-primary,
 .btn-primary:hover,
 .btn-primary:active,
@@ -190,7 +180,7 @@ p, .form-group, .control-label {
   background-color: var(--theme-color);
 }
 
-/* Link styling */
+/* Links */
 a:hover {
   color: color-mix(in srgb, var(--theme-color) 80%, black);
 }
@@ -199,4 +189,12 @@ a:hover {
 p:last-child,
 .form-group:last-child {
   margin-bottom: 0;
+}
+
+/* Media Queries */
+@media screen and (max-width: 767px) {
+  .radio-group-buttons .btn-group-container-sw,
+  .checkbox-group-buttons .btn-group-container-sw {
+    flex-direction: column;
+  }
 }
