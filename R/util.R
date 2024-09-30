@@ -422,7 +422,7 @@ question_templates <- function(type = "mc") {
 #'
 #' This function inserts a template for a surveydown question at the current cursor position
 #' in the active RStudio document. It supports various question types and automatically
-#' removes the function call after inserting the template.
+#' removes the function call before inserting the template if it exists in the document.
 #'
 #' @param type A character string specifying the type of question template to insert.
 #'   Default is "mc" (multiple choice). Available options are:
@@ -440,8 +440,13 @@ question_templates <- function(type = "mc") {
 #'     \item "daterange": Date range input
 #'   }
 #'
-#' @return This function does not return a value. It inserts text into the active document
-#'   as a side effect.
+#' @details
+#' The function performs the following steps:
+#' 1. Checks for and removes any existing `sd_add_question()` function call in the document.
+#' 2. Inserts the appropriate question template at the current cursor position.
+#'
+#' @return This function does not return a value. It modifies the active document
+#'   as a side effect by inserting text and potentially removing a function call.
 #'
 #' @examples
 #' \dontrun{
@@ -463,31 +468,41 @@ sd_add_question <- function(type = "mc") {
 
   # Get the current document context
   context <- rstudioapi::getActiveDocumentContext()
-  # Get the current cursor position
-  cursor <- context$selection[[1]]$range$start
-  # Insert the template
-  rstudioapi::insertText(location = cursor, text = template)
-  # Find the line containing the function call
+  # Get all lines of the document
   lines <- context$contents
+  # Find the line containing the function call
   call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+
   if (length(call_line) > 0) {
     # Remove the line containing the function call
     rstudioapi::modifyRange(
       c(call_line, 1, call_line + 1, 1),
       ""
     )
+    # Update the context after removal
+    context <- rstudioapi::getActiveDocumentContext()
   }
+
+  # Get the current cursor position
+  cursor <- context$selection[[1]]$range$start
+  # Insert the template
+  rstudioapi::insertText(location = cursor, text = template)
 }
 
 #' Add a Page Template to the Current Document
 #'
 #' This function inserts a template for a surveydown page at the current cursor position
 #' in the active RStudio document. It provides a basic structure for a new page, including
-#' a title, content area, and a next button.
+#' a title, content area, and a next button. If the function call exists in the document,
+#' it will be removed before inserting the template.
 #'
 #' @details
 #' IMPORTANT: This function should be run outside any division or R code chunk in your Quarto document.
 #' Running it inside a division or code chunk may result in incorrect page structure.
+#'
+#' The function performs the following steps:
+#' 1. Checks for and removes any existing `sd_add_page()` function call in the document.
+#' 2. Inserts a template at the current cursor position.
 #'
 #' The template includes:
 #' - A div with class 'sd-page' and a placeholder ID
@@ -495,8 +510,8 @@ sd_add_question <- function(type = "mc") {
 #' - A placeholder for page contents
 #' - An R code chunk with a placeholder for questions and a next button
 #'
-#' @return This function does not return a value. It inserts text into the active document
-#'   as a side effect.
+#' @return This function does not return a value. It modifies the active document
+#'   as a side effect by inserting text and potentially removing a function call.
 #'
 #' @examples
 #' \dontrun{
@@ -529,15 +544,9 @@ sd_next()
 '
   # Get the current document context
   context <- rstudioapi::getActiveDocumentContext()
-
-  # Get the current cursor position
-  cursor <- context$selection[[1]]$range$start
-
-  # Insert the template
-  rstudioapi::insertText(location = cursor, text = template)
-
-  # Find the line containing the function call
+  # Get all lines of the document
   lines <- context$contents
+  # Find the line containing the function call
   call_line <- which(grepl("sd_add_page\\(\\)", lines))
 
   if (length(call_line) > 0) {
@@ -546,5 +555,12 @@ sd_next()
       c(call_line, 1, call_line + 1, 1),
       ""
     )
+    # Update the context after removal
+    context <- rstudioapi::getActiveDocumentContext()
   }
+
+  # Get the current cursor position
+  cursor <- context$selection[[1]]$range$start
+  # Insert the template
+  rstudioapi::insertText(location = cursor, text = template)
 }

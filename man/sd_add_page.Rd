@@ -7,17 +7,24 @@
 sd_add_page()
 }
 \value{
-This function does not return a value. It inserts text into the active document
-as a side effect.
+This function does not return a value. It modifies the active document
+as a side effect by inserting text and potentially removing a function call.
 }
 \description{
 This function inserts a template for a surveydown page at the current cursor position
 in the active RStudio document. It provides a basic structure for a new page, including
-a title, content area, and a next button.
+a title, content area, and a next button. If the function call exists in the document,
+it will be removed before inserting the template.
 }
 \details{
 IMPORTANT: This function should be run outside any division or R code chunk in your Quarto document.
 Running it inside a division or code chunk may result in incorrect page structure.
+
+The function performs the following steps:
+\enumerate{
+\item Checks for and removes any existing \code{sd_add_page()} function call in the document.
+\item Inserts a template at the current cursor position.
+}
 
 The template includes:
 \itemize{

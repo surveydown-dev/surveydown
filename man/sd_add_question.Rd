@@ -24,13 +24,20 @@ Default is "mc" (multiple choice). Available options are:
 }}
 }
 \value{
-This function does not return a value. It inserts text into the active document
-as a side effect.
+This function does not return a value. It modifies the active document
+as a side effect by inserting text and potentially removing a function call.
 }
 \description{
 This function inserts a template for a surveydown question at the current cursor position
 in the active RStudio document. It supports various question types and automatically
-removes the function call after inserting the template.
+removes the function call before inserting the template if it exists in the document.
+}
+\details{
+The function performs the following steps:
+\enumerate{
+\item Checks for and removes any existing \code{sd_add_question()} function call in the document.
+\item Inserts the appropriate question template at the current cursor position.
+}
 }
 \examples{
 \dontrun{
