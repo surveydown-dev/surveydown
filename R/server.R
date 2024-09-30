@@ -269,6 +269,22 @@ sd_server <- function(
     # Create reactive values for the start page ID
     # (defaults to first page if NULL...see run_config() function)
 
+    admin_data <- if (config$admin_page) {
+        admin_enable(input, output, session, db, current_page_id, admin_state, pages)
+    } else {
+        list(admin_make_content = function() {}, admin_table_state = reactiveVal(NULL))
+    }
+
+    make_pause_page <- function() {
+        div(
+            id = "pause-page",
+            class = "sd-page",
+            h2("Survey Paused"),
+            p("The survey is currently paused. Please check back later.")
+        )
+    }
+
+
     current_page_id <- reactiveVal(start_page %||% pages[[1]]$id)
     admin_state <- reactiveVal("login")
 
@@ -277,22 +293,35 @@ sd_server <- function(
         !is.null(query[['admin']])
     })
 
+    #Logic for getting the current page, if statements needed for the admin section
     get_current_page <- reactive({
-        if (is_admin_page() && config$admin_page) {
+        admin_state <- admin_data$admin_table_state()
+        is_admin <- is_admin_page()
+
+        if (!is.null(admin_state) &&
+            !is.null(admin_state$PauseSurvey) &&
+            isTRUE(admin_state$PauseSurvey) &&
+            !isTRUE(is_admin)) {
+            return(list(id = "pause-page", content = make_pause_page()))
+        }
+
+        if (isTRUE(is_admin) && isTRUE(config$admin_page)) {
             if (admin_state() == "login") {
                 return(list(id = "admin_login", content = admin_make_login()))
             } else if (admin_state() == "content") {
-                return(list(id = "admin_content", content = admin_make_content()))
+                return(list(id = "admin_content", content = admin_data$admin_make_content()))
             }
         }
-        page_index <- which(sapply(pages, function(p) p$id == current_page_id()))
+
+        current_id <- current_page_id()
+        page_index <- which(sapply(pages, function(p) p$id == current_id))
         if (length(page_index) == 0) {
             return(pages[[1]])
         }
         pages[[page_index]]
     })
 
-    # Update the page rendering logic
+    #Main page rendering
     output$main <- renderUI({
         current_page <- get_current_page()
         tagList(
@@ -304,7 +333,7 @@ sd_server <- function(
                     tags$div(
                         id = "quarto-content",
                         role = "main",
-                        if (current_page$id %in% c("admin_login", "admin_content")) {
+                        if (current_page$id %in% c("admin_login", "admin_content", "pause-page")) {
                             current_page$content
                         } else {
                             HTML(current_page$content)
@@ -315,10 +344,18 @@ sd_server <- function(
         )
     })
 
-    # Create admin page if admin_page is TRUE
-    if (config$admin_page) {
-        admin_enable(input, output, session, db, current_page_id, admin_state, pages)
-    }
+    # Observer to handle PauseDB
+    observe({
+        admin_table <- admin_data$admin_table_state()
+        if (!is.null(db) &&
+            !is.null(admin_table) &&
+            !is.null(admin_table$PauseDB)) {
+            db$ignore <- isTRUE(as.logical(admin_table$PauseDB))
+        } else if (!is.null(db)) {
+            db$ignore <- FALSE
+        }
+    })
+
 
     # Page navigation ----
 
@@ -639,22 +676,33 @@ admin_make_login <- function() {
     )
 }
 
-admin_make_content <- function() {
-    div(
-        id = "admin-content",
-        class = "sd-page",
-        h2("Admin Page"),
-        actionButton("admin_pause_survey", "Pause Survey"),
-        actionButton("admin_pause_db", "Pause DB"),
-        downloadButton("admin_download_data", "Download Data"),
-        actionButton("admin_back_to_survey_content", "Back to Survey"),
-        hr(),
-        h3("Survey Data"),
-        DT::DTOutput("survey_data_table")
-    )
-}
-
 admin_enable <- function(input, output, session, db, current_page_id, admin_state, pages) {
+    admin_table_state <- reactiveVal(NULL)
+
+    # Function to get current admin state
+    get_admin_state <- function() {
+        if (is.null(db) || is.null(db$db) || is.null(db$table)) return(NULL)
+        tryCatch({
+            result <- DBI::dbGetQuery(db$db, sprintf("SELECT PauseDB, PauseSurvey FROM %s_admin LIMIT 1", db$table))
+            if (nrow(result) == 0) {
+                DBI::dbExecute(db$db, sprintf("INSERT INTO %s_admin (PauseDB, PauseSurvey) VALUES (FALSE, FALSE)", db$table))
+                return(data.frame(PauseDB = FALSE, PauseSurvey = FALSE))
+            }
+            # Ensure PauseDB and PauseSurvey are logical values
+            result$PauseDB <- as.logical(result$PauseDB)
+            result$PauseSurvey <- as.logical(result$PauseSurvey)
+            return(result)
+        }, error = function(e) {
+            message("Error fetching admin state: ", e$message)
+            return(data.frame(PauseDB = FALSE, PauseSurvey = FALSE))
+        })
+    }
+
+    # Initialize admin_table_state
+    observe({
+        admin_table_state(get_admin_state())
+    })
+
     # Function to return to survey
     return_to_survey <- function() {
         admin_state("survey")
@@ -677,24 +725,38 @@ admin_enable <- function(input, output, session, db, current_page_id, admin_stat
         }
     })
 
-    # Back to survey button on login page
+    # Back to survey buttons
     observeEvent(input$admin_back_to_survey_login, {
         return_to_survey()
     })
-
-    # Back to survey button on admin content page
     observeEvent(input$admin_back_to_survey_content, {
         return_to_survey()
     })
 
-    # Pause Survey functionality
+    # Pause/Unpause Survey functionality
     observeEvent(input$admin_pause_survey, {
-        showNotification("Survey pause functionality not yet implemented", type = "warning")
+        current_state <- admin_table_state()
+        if (!is.null(current_state) && !is.null(current_state$PauseSurvey)) {
+            new_state <- !as.logical(current_state$PauseSurvey)
+            DBI::dbExecute(db$db, sprintf(
+                "UPDATE %s_admin SET PauseSurvey = %s",
+                db$table, ifelse(new_state, "TRUE", "FALSE")
+            ))
+            admin_table_state(get_admin_state())
+        }
     })
 
-    # Pause DB functionality
+    # Pause/Unpause DB functionality
     observeEvent(input$admin_pause_db, {
-        showNotification("Database pause functionality not yet implemented", type = "warning")
+        current_state <- admin_table_state()
+        if (!is.null(current_state) && !is.null(current_state$PauseDB)) {
+            new_state <- !as.logical(current_state$PauseDB)
+            DBI::dbExecute(db$db, sprintf(
+                "UPDATE %s_admin SET PauseDB = %s",
+                db$table, ifelse(new_state, "TRUE", "FALSE")
+            ))
+            admin_table_state(get_admin_state())
+        }
     })
 
     # Download Data button functionality
@@ -707,8 +769,32 @@ admin_enable <- function(input, output, session, db, current_page_id, admin_stat
             write.csv(data, file, row.names = FALSE)
         }
     )
-}
 
+    # Modify admin_make_content to include dynamic button labels
+    admin_make_content <- function() {
+        current_state <- admin_table_state()
+        div(
+            id = "admin-content",
+            class = "sd-page",
+            h2("Admin Page"),
+            actionButton("admin_pause_survey",
+                         ifelse(isTRUE(current_state$PauseSurvey), "Unpause Survey", "Pause Survey")),
+            actionButton("admin_pause_db",
+                         ifelse(isTRUE(current_state$PauseDB), "Unpause DB", "Pause DB")),
+            downloadButton("admin_download_data", "Download Data"),
+            actionButton("admin_back_to_survey_content", "Back to Survey"),
+            hr(),
+            h3("Survey Data"),
+            DT::DTOutput("survey_data_table")
+        )
+    }
+
+    # Return the modified admin_make_content function and admin_table_state
+    return(list(
+        admin_make_content = admin_make_content,
+        admin_table_state = admin_table_state
+    ))
+}
 
 
 
