@@ -40,6 +40,7 @@ Imports:
     remotes,
     RPostgres,
     rsconnect,
+    rstudioapi,
     rvest,
     shiny,
     shinyjs,

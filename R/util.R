@@ -302,3 +302,249 @@ sd_setup <- function() {
     # v0.3.0
     .Deprecated("")
 }
+
+question_templates <- function(type = "mc") {
+  templates <- list(
+    mc = 'sd_question(
+  type   = "mc",
+  id     = "like_apple",
+  label  = "Do you like apple?",
+  option = c(
+    "Yes" = "yes",
+    "No"  = "no"
+  )
+)
+
+',
+    text = 'sd_question(
+  type  = "text",
+  id    = "apple_text",
+  label = "Write a type of apple:"
+)
+
+',
+    textarea = 'sd_question(
+  type  = "textarea",
+  id    = "apple_textarea",
+  label = "What do you like about apple?"
+)
+
+',
+    numeric = 'sd_question(
+  type  = "numeric",
+  id    = "apple_numeric",
+  label = "How many apple(s) do you eat per day?"
+)
+
+',
+    mc_buttons = 'sd_question(
+  type   = "mc_buttons",
+  id     = "apple_mc_buttons",
+  label  = "Which apple do you prefer most?",
+  option = c(
+    "Fuji"       = "fuji",
+    "Gala"       = "gala",
+    "Honeycrisp" = "honeycrisp"
+  )
+)
+
+',
+    mc_multiple = 'sd_question(
+  type  = "mc_multiple",
+  id    = "apple_mc_multiple",
+  label = "What are your favorite apple types (select all that apply)?",
+  option = c(
+    "Fuji"       = "fuji",
+    "Gala"       = "gala",
+    "Honeycrisp" = "honeycrisp"
+  )
+)
+
+',
+    mc_multiple_buttons = 'sd_question(
+  type  = "mc_multiple_buttons",
+  id    = "apple_mc_multiple_buttons",
+  label = "What are your favorite apple types (select all that apply)?",
+  option = c(
+    "Fuji"       = "fuji",
+    "Gala"       = "gala",
+    "Honeycrisp" = "honeycrisp"
+  )
+)
+
+',
+    select = 'sd_question(
+  type  = "select",
+  id    = "apple_select",
+  label = "Which apple do you prefer most?",
+  option = c(
+    "Fuji"       = "fuji",
+    "Gala"       = "gala",
+    "Honeycrisp" = "honeycrisp"
+  )
+)
+
+',
+    slider = 'sd_question(
+  type  = "slider",
+  id    = "apple_slider",
+  label = "To what extent do you like apple?",
+  option = c(
+    "Don\'t Like"    = "dont_like",
+    "Somewhat Like" = "somewhat",
+    "Neutral"       = "neutral",
+    "Like"          = "like",
+    "Strongly Like" = "strongly_like"
+  )
+)
+
+',
+    date = 'sd_question(
+  type  = "date",
+  id    = "apple_date",
+  label = "What is the last day you had apple?"
+)
+
+',
+    daterange = 'sd_question(
+  type  = "daterange",
+  id    = "vacation_daterange",
+  label = "Please select the date range of your upcoming vacation."
+)
+
+'
+  )
+
+  return(templates[[type]])
+}
+
+#' Add a Question Template to the Current Document
+#'
+#' This function inserts a template for a surveydown question at the current cursor position
+#' in the active RStudio document. It supports various question types and automatically
+#' removes the function call after inserting the template.
+#'
+#' @param type A character string specifying the type of question template to insert.
+#'   Default is "mc" (multiple choice). Available options are:
+#'   \itemize{
+#'     \item "mc": Multiple choice (single selection)
+#'     \item "select": Dropdown selection
+#'     \item "mc_multiple": Multiple choice (multiple selections)
+#'     \item "mc_buttons": Multiple choice with button layout (single selection)
+#'     \item "mc_multiple_buttons": Multiple choice with button layout (multiple selections)
+#'     \item "text": Short text input
+#'     \item "textarea": Long text input
+#'     \item "numeric": Numeric input
+#'     \item "slider": Slider input
+#'     \item "date": Date input
+#'     \item "daterange": Date range input
+#'   }
+#'
+#' @return This function does not return a value. It inserts text into the active document
+#'   as a side effect.
+#'
+#' @examples
+#' \dontrun{
+#' # Insert a default multiple choice question template
+#' sd_add_question()
+#'
+#' # Insert a text input question template
+#' sd_add_question("text")
+#'
+#' # Insert a slider question template
+#' sd_add_question("slider")
+#' }
+#'
+#' @import rstudioapi
+#'
+#' @export
+sd_add_question <- function(type = "mc") {
+  template <- question_templates(type)
+
+  # Get the current document context
+  context <- rstudioapi::getActiveDocumentContext()
+  # Get the current cursor position
+  cursor <- context$selection[[1]]$range$start
+  # Insert the template
+  rstudioapi::insertText(location = cursor, text = template)
+  # Find the line containing the function call
+  lines <- context$contents
+  call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+  if (length(call_line) > 0) {
+    # Remove the line containing the function call
+    rstudioapi::modifyRange(
+      c(call_line, 1, call_line + 1, 1),
+      ""
+    )
+  }
+}
+
+#' Add a Page Template to the Current Document
+#'
+#' This function inserts a template for a surveydown page at the current cursor position
+#' in the active RStudio document. It provides a basic structure for a new page, including
+#' a title, content area, and a next button.
+#'
+#' @details
+#' IMPORTANT: This function should be run outside any division or R code chunk in your Quarto document.
+#' Running it inside a division or code chunk may result in incorrect page structure.
+#'
+#' The template includes:
+#' - A div with class 'sd-page' and a placeholder ID
+#' - A placeholder for the page title
+#' - A placeholder for page contents
+#' - An R code chunk with a placeholder for questions and a next button
+#'
+#' @return This function does not return a value. It inserts text into the active document
+#'   as a side effect.
+#'
+#' @examples
+#' \dontrun{
+#' # Insert a new page template
+#' sd_add_page()
+#' }
+#'
+#' @import rstudioapi
+#'
+#' @export
+sd_add_page <- function() {
+  # Display a pop-up notice
+  message("Note: Run this function outside division or code chunk.")
+
+  template <- '::: {#page_id .sd-page}
+
+# Page Title
+
+Page contents...
+
+```{r}
+# Insert your question here...
+
+# Next button
+sd_next()
+```
+
+:::
+
+'
+  # Get the current document context
+  context <- rstudioapi::getActiveDocumentContext()
+
+  # Get the current cursor position
+  cursor <- context$selection[[1]]$range$start
+
+  # Insert the template
+  rstudioapi::insertText(location = cursor, text = template)
+
+  # Find the line containing the function call
+  lines <- context$contents
+  call_line <- which(grepl("sd_add_page\\(\\)", lines))
+
+  if (length(call_line) > 0) {
+    # Remove the line containing the function call
+    rstudioapi::modifyRange(
+      c(call_line, 1, call_line + 1, 1),
+      ""
+    )
+  }
+}

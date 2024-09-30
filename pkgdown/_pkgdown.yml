@@ -54,6 +54,8 @@ reference:
   - sd_include_folder
   - sd_deploy
   - sd_setup
+  - sd_add_page
+  - sd_add_question
 
 - title: Version Control
   contents:
