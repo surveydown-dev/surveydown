@@ -279,34 +279,27 @@ sd_server <- function(
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
     })
 
-    # Page rendering ----
+    # Admin setup ----
 
-    # Create reactive values for the start page ID
-    # (defaults to first page if NULL...see run_config() function)
-
-    admin_data <- if (config$admin_page) {
+    admin_data <- if (admin_page) {
         admin_enable(input, output, session, db, current_page_id, admin_state, pages)
     } else {
         list(admin_make_content = function() {}, admin_table_state = reactiveVal(NULL))
     }
 
-    make_pause_page <- function() {
-        div(
-            id = "pause-page",
-            class = "sd-page",
-            h2("Survey Paused"),
-            p("The survey is currently paused. Please check back later.")
-        )
-    }
-
-
-    current_page_id <- reactiveVal(start_page %||% pages[[1]]$id)
-    admin_state <- reactiveVal("login")
-
     is_admin_page <- reactive({
         query <- parseQueryString(session$clientData$url_search)
         !is.null(query[['admin']])
     })
+
+    admin_state <- reactiveVal("login")
+
+    # Page rendering ----
+
+    # Create reactive values for the start page ID
+    # (defaults to first page if NULL...see run_config() function)
+
+    current_page_id <- reactiveVal(start_page)
 
     #Logic for getting the current page, if statements needed for the admin section
     get_current_page <- reactive({
@@ -322,7 +315,8 @@ sd_server <- function(
             return(list(id = "pause-page", content = make_pause_page()))
         }
 
-        if (isTRUE(is_admin) && config$admin_page) {
+
+        if (isTRUE(is_admin) && isTrue(config$admin_page)) {
             if (admin_state() == "login") {
                 return(list(id = "admin_login", content = admin_make_login()))
             } else if (admin_state() == "content") {
@@ -340,6 +334,11 @@ sd_server <- function(
     #Main page rendering
     output$main <- renderUI({
         current_page <- get_current_page()
+        page_content <- current_page$content
+        print(current_page$id)
+        if (! current_page$id %in% c("admin_login", "admin_content", "pause-page")) {
+            page_content <- HTML(page_content)
+        }
         tagList(
             tags$head(HTML(head_content)),
             tags$div(
@@ -349,11 +348,7 @@ sd_server <- function(
                     tags$div(
                         id = "quarto-content",
                         role = "main",
-                        if (current_page$id %in% c("admin_login", "admin_content", "pause-page")) {
-                            current_page$content
-                        } else {
-                            HTML(current_page$content)
-                        }
+                        page_content
                     )
                 )
             )
@@ -376,7 +371,6 @@ sd_server <- function(
             db$ignore <- FALSE
         }
     })
-
 
     # Page navigation ----
 
@@ -424,7 +418,10 @@ sd_server <- function(
     # Observer to max out the progress bar when we reach the last page
     shiny::observe({
         page <- get_current_page()
-        if (is.null(page$next_page_id)) {
+        if (
+            is.null(page$next_page_id) &
+            (! page$id %in% c('pause-page', 'admin_login', 'admin_content'))
+        ) {
             update_progress_bar(length(question_ids))
         }
     })
@@ -697,7 +694,16 @@ admin_make_login <- function() {
     )
 }
 
-admin_enable <- function(input, output, session, db, current_page_id, admin_state, pages) {
+make_pause_page <- function() {
+    div(
+        id = "pause-page",
+        class = "sd-page",
+        h2("Survey Paused"),
+        p("The survey is currently paused. Please check back later.")
+    )
+}
+
+admin_enable <- function(input, output, session, db, current_page_id, admin_state, start_page) {
     admin_table_state <- reactiveVal(NULL)
 
     # Function to get current admin state
@@ -733,6 +739,9 @@ admin_enable <- function(input, output, session, db, current_page_id, admin_stat
             # If survey is not paused, go to first page
             current_page_id(pages[[1]]$id)
         }
+
+        current_page_id(start_page)  # Set to the start page (usually first page)
+
         updateQueryString("?", mode = "replace")
     }
 
