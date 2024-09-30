@@ -281,8 +281,8 @@ sd_server <- function(
 
     # Admin setup ----
 
-    admin_data <- if (admin_page) {
-        admin_enable(input, output, session, db, current_page_id, admin_state, pages)
+    admin_data <- if (config$admin_page) {
+        admin_enable(input, output, session, db, current_page_id, admin_state, pages, start_page)
     } else {
         list(admin_make_content = function() {}, admin_table_state = reactiveVal(NULL))
     }
@@ -316,7 +316,7 @@ sd_server <- function(
         }
 
 
-        if (isTRUE(is_admin) && isTrue(config$admin_page)) {
+        if (isTRUE(is_admin) && (config$admin_page)) {
             if (admin_state() == "login") {
                 return(list(id = "admin_login", content = admin_make_login()))
             } else if (admin_state() == "content") {
@@ -703,7 +703,7 @@ make_pause_page <- function() {
     )
 }
 
-admin_enable <- function(input, output, session, db, current_page_id, admin_state, start_page) {
+admin_enable <- function(input, output, session, db, current_page_id, admin_state, pages, start_page) {
     admin_table_state <- reactiveVal(NULL)
 
     # Function to get current admin state
@@ -730,19 +730,28 @@ admin_enable <- function(input, output, session, db, current_page_id, admin_stat
 
     # Function to return to survey
     return_to_survey <- function() {
-        current_state <- admin_table_state()
-        admin_state("survey")
-        if (current_state$pausesurvey) {
-            # If survey is paused, go to pause page
-            current_page_id("pause-page")
-        } else {
-            # If survey is not paused, go to first page
-            current_page_id(pages[[1]]$id)
-        }
+        tryCatch({
+            current_state <- admin_table_state()
+            admin_state("survey")
 
-        current_page_id(start_page)  # Set to the start page (usually first page)
+            if (is.null(current_state) || is.null(current_state$pausesurvey)) {
+                message("Warning: Unable to determine survey pause state. Defaulting to start page.")
+                current_page_id(start_page)
+            } else if (isTRUE(current_state$pausesurvey)) {
+                message("Survey is paused. Redirecting to pause page.")
+                current_page_id("pause-page")
+            } else {
+                message("Survey is not paused. Redirecting to start page.")
+                current_page_id(start_page)
+            }
 
-        updateQueryString("?", mode = "replace")
+            updateQueryString("?", mode = "replace")
+        }, error = function(e) {
+            message("Error in return_to_survey: ", e$message)
+            # Fallback to start page if an error occurs
+            current_page_id(start_page)
+            updateQueryString("?", mode = "replace")
+        })
     }
 
     # Observe for admin login attempt
