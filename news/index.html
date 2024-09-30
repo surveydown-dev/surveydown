@@ -40,7 +40,11 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-</div>
+<ul><li>
+<code><a href="../reference/sd_add_question.html">sd_add_question()</a></code> to instantly create a question template. Defaults to type of <code>"mc"</code> but also accepts all other types (<code>"text"</code>, <code>"textarea"</code>, <code>"numeric"</code>, etc.). The function call will delete itself after running.</li>
+<li>
+<code><a href="../reference/sd_add_page.html">sd_add_page()</a></code> to instantly create a page template. Make sure to run this function outside any division or code chunk. The function call will delete itself after running.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.1" id="surveydown-031">surveydown 0.3.1<a class="anchor" aria-label="anchor" href="#surveydown-031"></a></h2>
 <ul><li>Improved efficiency in <code>database_uploading()</code> so only the changed fields get written, and also the writing happens after checking the <code>show_if</code> conditions (addresses <a href="https://github.com/surveydown-dev/surveydown/issues/100" class="external-link">#100</a>).</li>
