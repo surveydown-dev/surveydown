@@ -212,9 +212,8 @@ create_table <- function(data_list, db, table) {
     )
 
     # Create admin table query
-    admin_table <- paste0(table, '_admin')
     create_admin_table_query <- paste0(
-        'CREATE TABLE IF NOT EXISTS "', admin_table, '" (
+        'CREATE TABLE IF NOT EXISTS "', table, '_admin" (
             id SERIAL PRIMARY KEY,
             PauseDB BOOLEAN DEFAULT FALSE,
             PauseSurvey BOOLEAN DEFAULT FALSE
@@ -232,11 +231,11 @@ create_table <- function(data_list, db, table) {
         DBI::dbExecute(conn, create_admin_table_query)
 
         # Insert initial row in admin table if it's empty
-        result <- DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s" LIMIT 1', admin_table))
+        result <- DBI::dbGetQuery(conn, sprintf("SELECT * FROM %s_admin LIMIT 1", table))
         if (nrow(result) == 0) {
             DBI::dbExecute(conn, sprintf(
-                'INSERT INTO "%s" (PauseDB, PauseSurvey) VALUES (FALSE, FALSE)',
-                admin_table
+                "INSERT INTO %s_admin (PauseDB, PauseSurvey) VALUES (FALSE, FALSE)",
+                table
             ))
         }
     })
