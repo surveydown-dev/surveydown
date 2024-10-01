@@ -241,7 +241,8 @@ sd_server <- function(
 
         observeEvent(input[[local_id]], {
             # Update question value
-            all_data[[local_id]] <- format_question_value(input[[local_id]])
+            formatted_value <- format_question_value(input[[local_id]])
+            all_data[[local_id]] <- formatted_value
 
             # Update tracker of which fields changed
             changed_fields(c(changed_fields(), local_id))
@@ -254,9 +255,7 @@ sd_server <- function(
             }
 
             # Make value accessible in the UI
-            output[[paste0(local_id, "_value")]] <- renderText({
-                as.character(all_data[[local_id]])
-            })
+            output[[paste0(local_id, "_value")]] <- renderText({ formatted_value })
 
             # Trigger show_if evaluation
             show_if_results()
@@ -862,7 +861,12 @@ sd_store_value <- function(value, id = NULL) {
         if (is.null(session$userData$stored_values)) {
             session$userData$stored_values <- list()
         }
-        session$userData$stored_values[[id]] <- format_question_value(value)
+        formatted_value <- format_question_value(value)
+        session$userData$stored_values[[id]] <- formatted_value
+
+        # Make value accessible in the UI
+        output <- shiny::getDefaultReactiveDomain()$output
+        output[[paste0(id, "_value")]] <- renderText({ formatted_value })
     })
 
     invisible(NULL)
