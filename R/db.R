@@ -194,7 +194,7 @@ r_to_sql_type <- function(r_type) {
 }
 
 create_table <- function(data_list, db, table) {
-    # Create column definitions for main table
+    # Create column definitions
     col_def <- sapply(names(data_list), function(col_name) {
         r_type <- typeof(data_list[[col_name]])
         sql_type <- r_to_sql_type(r_type)
@@ -211,38 +211,17 @@ create_table <- function(data_list, db, table) {
         'CREATE TABLE IF NOT EXISTS "', table, '" (', col_def_str, ")"
     )
 
-    # Create admin table query
-    admin_table <- paste0(table, '_admin')
-    create_admin_table_query <- paste0(
-        'CREATE TABLE IF NOT EXISTS "', admin_table, '" (
-            id SERIAL PRIMARY KEY,
-            PauseDB BOOLEAN DEFAULT FALSE,
-            PauseSurvey BOOLEAN DEFAULT FALSE
-        )'
-    )
-
     pool::poolWithTransaction(db, function(conn) {
-        # Create the main table
+        # Create the table
         DBI::dbExecute(conn, create_table_query)
 
         # Enable Row Level Security
         DBI::dbExecute(conn, paste0('ALTER TABLE "', table, '" ENABLE ROW LEVEL SECURITY;'))
-
-        # Create the admin table
-        DBI::dbExecute(conn, create_admin_table_query)
-
-        # Insert initial row in admin table if it's empty
-        result <- DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s" LIMIT 1', admin_table))
-        if (nrow(result) == 0) {
-            DBI::dbExecute(conn, sprintf(
-                'INSERT INTO "%s" (PauseDB, PauseSurvey) VALUES (FALSE, FALSE)',
-                admin_table
-            ))
-        }
     })
 
-    message(paste("Tables", table, "and", paste0(table, "_admin"), "created in the database."))
+    message(paste("Table", table, "created in the database."))
 }
+
 # Solution found in this issue:
 # https://github.com/r-dbi/DBI/issues/193
 sqlInterpolateList <- function(conn, sql, vars=list(), list_vars=list()) {
