@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,8 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-<ul><li>Bug fix: make stored values accessible with <code><a href="../reference/sd_output.html">sd_output()</a></code> with <code>type = 'value'</code> argument. Previously only question values could be displayed in the UI with <code><a href="../reference/sd_output.html">sd_output()</a></code>.</li>
+<ul><li>Added <code><a href="../reference/sd_completion_code.html">sd_completion_code()</a></code> function.</li>
+<li>Bug fix: make stored values accessible with <code><a href="../reference/sd_output.html">sd_output()</a></code> with <code>type = 'value'</code> argument. Previously only question values could be displayed in the UI with <code><a href="../reference/sd_output.html">sd_output()</a></code>.</li>
 <li>
 <code><a href="../reference/sd_add_question.html">sd_add_question()</a></code> to instantly create a question template. Defaults to type of <code>"mc"</code> but also accepts all other types (<code>"text"</code>, <code>"textarea"</code>, <code>"numeric"</code>, etc.). The function call will delete itself after running.</li>
 <li>
