@@ -1,5 +1,6 @@
 # surveydown (development version)
 
+- Added `sd_completion_code()` function.
 - Bug fix: make stored values accessible with `sd_output()` with `type = 'value'` argument. Previously only question values could be displayed in the UI with `sd_output()`.
 - `sd_add_question()` to instantly create a question template. Defaults to type of `"mc"` but also accepts all other types (`"text"`, `"textarea"`, `"numeric"`, etc.). The function call will delete itself after running.
 - `sd_add_page()` to instantly create a page template. Make sure to run this function outside any division or code chunk. The function call will delete itself after running.
