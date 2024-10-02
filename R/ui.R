@@ -173,7 +173,8 @@ sd_question <- function(
   force_edges  = TRUE,
   option       = NULL,
   placeholder  = NULL,
-  resize       = NULL
+  resize       = NULL,
+  row          = NULL
 ) {
 
     output <- NULL
@@ -339,6 +340,33 @@ sd_question <- function(
 
         output <- date_interaction(output, id)
 
+    } else if (type == "matrix") {
+        header <- shiny::tags$tr(
+            shiny::tags$th(""),
+            lapply(names(option), function(opt) shiny::tags$th(opt))
+        )
+        rows <- lapply(names(row), function(q_id) {
+            full_id <- paste(id, q_id, sep = "_")
+            shiny::tags$tr(
+                shiny::tags$td(row[[q_id]]),
+                shiny::tags$td(
+                    colspan = length(option),
+                    sd_question(
+                        type = "mc",
+                        id = full_id,
+                        label = NULL,
+                        option = option,
+                        direction = "horizontal"
+                    )
+                )
+            )
+        })
+
+        output <- shiny::tags$table(
+            class = "matrix-question",
+            header,
+            shiny::tags$tbody(rows)
+        )
     }
 
     # Wrap the output in a div with custom data attributes

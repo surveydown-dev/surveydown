@@ -198,3 +198,53 @@ p:last-child,
     flex-direction: column;
   }
 }
+
+/* Matrix question styling */
+.matrix-question-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.matrix-question {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.matrix-question th, .matrix-question td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.matrix-question th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.matrix-question .shiny-options-group {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.matrix-question .shiny-options-group .radio {
+    margin: 0;
+    flex: 1;
+    text-align: center;
+}
+
+.matrix-question .shiny-options-group .radio label {
+    padding-left: 0;
+    display: inline-block;
+}
+
+.matrix-question .shiny-options-group .radio input {
+    margin: 0;
+    position: relative;
+    top: 2px;
+}
+
+/* Hide radio button labels */
+.matrix-question .shiny-options-group .radio span {
+    display: none;
+}
