@@ -39,8 +39,8 @@ function scrollBehavior(element, duration) {
   const start = window.pageYOffset;
   const elementRect = element.getBoundingClientRect();
   const elementTop = elementRect.top + start;
-  const centerOffset = window.innerHeight / 2 - elementRect.height / 2;
-  const target = elementTop - centerOffset;
+  const lowerMiddleOffset = window.innerHeight * 0.75 - elementRect.height / 2;
+  const target = elementTop - lowerMiddleOffset;
   const startTime = performance.now();
 
   function animate(currentTime) {
