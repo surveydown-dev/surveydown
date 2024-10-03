@@ -92,7 +92,12 @@ extract_html_pages <- function(
                 if (is_required) {
                     required_question_ids <- c(required_question_ids, question_id)
                     asterisk <- rvest::html_element(container, ".required-asterisk")
-                    xml2::xml_attr(asterisk, "style") <- "display:inline; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;"
+                    xml2::xml_attr(asterisk, "style") <- "display: inline; color: red; font-size: 1.5em; position: absolute; top: 0; right: 0.5em;"
+
+                    # Set the container's position to relative
+                    current_style <- xml2::xml_attr(container, "style")
+                    new_style <- paste(current_style, "position: relative;", sep = " ")
+                    xml2::xml_attr(container, "style") <- new_style
                 }
 
                 if (!is.null(show_if)) {

@@ -175,7 +175,8 @@ sd_question <- function(
   force_edges  = TRUE,
   option       = NULL,
   placeholder  = NULL,
-  resize       = NULL
+  resize       = NULL,
+  row          = NULL
 ) {
 
     output <- NULL
@@ -341,27 +342,67 @@ sd_question <- function(
 
         output <- date_interaction(output, id)
 
+    } else if (type == "matrix") {
+      header <- shiny::tags$tr(
+        shiny::tags$th(""),
+        lapply(names(option), function(opt) shiny::tags$th(opt))
+      )
+      rows <- lapply(names(row), function(q_id) {
+        full_id <- paste(id, q_id, sep = "_")
+        shiny::tags$tr(
+          shiny::tags$td(row[[q_id]]),
+          shiny::tags$td(
+            colspan = length(option),
+            sd_question(
+              type = "mc",
+              id = full_id,
+              label = NULL,
+              option = option,
+              direction = "horizontal"
+            )
+          )
+        )
+      })
+
+      output <- shiny::div(
+        class = "matrix-question-container",
+        shiny::tags$label(class = "control-label", markdown_to_html(label)),
+        shiny::tags$table(
+          class = "matrix-question",
+          header,
+          shiny::tags$tbody(rows)
+        )
+      )
+
+      # Return the matrix output directly
+      return(output)
     }
 
-    # Wrap the output in a div with custom data attributes
+    # Modify the output_div creation
     output_div <- shiny::tags$div(
-        id = paste0("container-", id),
-        `data-question-id` = id,
-        class = "question-container",
-        style = sprintf("width: %s;", width),
-        oninput = js_interaction,
+      id = paste0("container-", id),
+      `data-question-id` = id,
+      class = "question-container",
+      style = sprintf("width: %s;", width),
+      oninput = js_interaction,
+      if (type == "matrix") {
         output
+      } else {
+        shiny::div(output)
+      }
     )
 
     if (!is.null(shiny::getDefaultReactiveDomain())) {
-        # In a reactive context, directly add to output with renderUI
-        shiny::isolate({
-            output <- shiny::getDefaultReactiveDomain()$output
-            output[[id]] <- shiny::renderUI({ output_div })
+      # In a reactive context, directly add to output with renderUI
+      shiny::isolate({
+        output <- shiny::getDefaultReactiveDomain()$output
+        output[[id]] <- shiny::renderUI({
+          output_div
         })
+      })
     } else {
-        # If not in a reactive context, just return the element
-        return(output_div)
+      # If not in a reactive context, just return the element
+      return(output_div)
     }
 }
 

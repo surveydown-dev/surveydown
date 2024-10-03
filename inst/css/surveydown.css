@@ -198,3 +198,87 @@ p:last-child,
     flex-direction: column;
   }
 }
+
+/* Matrix question styling */
+.matrix-question-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.matrix-question-container .form-group {
+    border: none;
+    background-color: transparent;
+    padding: 0;
+}
+
+.matrix-question {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 18px;
+}
+
+.matrix-question th, .matrix-question td {
+    padding: 0;
+    text-align: center;
+    border: none;
+    height: 10px;
+    vertical-align: middle;
+}
+
+.table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
+  vertical-align: middle;
+  padding: 4px;
+}
+
+.matrix-question th {
+    background-color: transparent;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.table {
+  --bs-table-striped-bg: #f9f9f9;
+}
+
+.matrix-question tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.matrix-question tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.matrix-question .shiny-options-group {
+    display: flex;
+    justify-content: center; /* Center the radio buttons */
+    width: 100%;
+}
+
+.matrix-question .shiny-options-group .radio {
+    margin: 0;
+    flex: 1;
+    text-align: center;
+}
+
+.matrix-question .shiny-options-group .radio label {
+    padding-left: 0;
+    display: inline-block;
+}
+
+.matrix-question .shiny-options-group .radio input {
+    margin: 0;
+    position: relative;
+    top: 2px;
+}
+
+/* Hide radio button labels */
+.matrix-question .shiny-options-group .radio span {
+    display: none;
+}
+
+/* Style for the sub-question labels */
+.matrix-question td:first-child {
+    text-align: left;
+    font-weight: normal;
+    padding-left: 15px; /* Add some left padding */
+}
