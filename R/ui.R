@@ -372,18 +372,22 @@ sd_question <- function(
         )
       )
 
-      # For matrix questions, we'll return the output directly
+      # Return the matrix output directly
       return(output)
     }
 
-    # Modify the output_div creation (only for non-matrix questions)
+    # Modify the output_div creation
     output_div <- shiny::tags$div(
       id = paste0("container-", id),
       `data-question-id` = id,
       class = "question-container",
       style = sprintf("width: %s;", width),
       oninput = js_interaction,
-      output
+      if (type == "matrix") {
+        output
+      } else {
+        shiny::div(output)
+      }
     )
 
     if (!is.null(shiny::getDefaultReactiveDomain())) {
@@ -391,16 +395,12 @@ sd_question <- function(
       shiny::isolate({
         output <- shiny::getDefaultReactiveDomain()$output
         output[[id]] <- shiny::renderUI({
-          if (type == "matrix") {
-            output
-          } else {
-            output_div
-          }
+          output_div
         })
       })
     } else {
       # If not in a reactive context, just return the element
-      return(if (type == "matrix") output else output_div)
+      return(output_div)
     }
 }
 
