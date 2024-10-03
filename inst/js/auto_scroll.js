@@ -31,8 +31,32 @@ function autoScrollToNextQuestion(currentQuestionId) {
   }
 
   if (nextQuestion) {
-    nextQuestion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    scrollBehavior(nextQuestion, 400); // 400ms = 0.4 seconds
   }
+}
+
+function scrollBehavior(element, duration) {
+  const start = window.pageYOffset;
+  const elementRect = element.getBoundingClientRect();
+  const elementTop = elementRect.top + start;
+  const centerOffset = window.innerHeight / 2 - elementRect.height / 2;
+  const target = elementTop - centerOffset;
+  const startTime = performance.now();
+
+  function animate(currentTime) {
+    const elapsedTime = currentTime - startTime;
+    const progress = Math.min(elapsedTime / duration, 1);
+    window.scrollTo(0, start + (target - start) * easeInOutQuad(progress));
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  function easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  }
+
+  requestAnimationFrame(animate);
 }
 
 // Function to handle page changes
@@ -44,7 +68,9 @@ function handlePageChange() {
 $(document).on('shiny:inputchanged', function(event) {
   if (event.name.endsWith('_interacted')) {
     const questionId = event.name.replace('_interacted', '');
-    autoScrollToNextQuestion(questionId);
+    setTimeout(() => {
+      autoScrollToNextQuestion(questionId);
+    }, 400); // 400ms = 0.4 second delay
   }
 });
 
