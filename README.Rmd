@@ -77,7 +77,7 @@ This is a running list of things we're working on / have already added to the pr
   - [x] Text area
   - [x] Date
   - [x] Slider
-  - [ ] Matrix
+  - [x] Matrix
 
 
 Resources / other related examples:

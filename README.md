@@ -107,7 +107,7 @@ to the project:
   - [x] Text area
   - [x] Date
   - [x] Slider
-  - [ ] Matrix
+  - [x] Matrix
 
 Resources / other related examples:
 
