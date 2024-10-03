@@ -12,9 +12,12 @@ with [R](https://www.r-project.org/), [Quarto](https://quarto.org/),
 [Shiny](https://shiny.posit.co/), and [Supabase](https://supabase.com/).
 
 <br>
-<center>
-<img src='man/figures/technologies.png' align="center" style="max-height:400px;" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
-</center>
+
+<div align="center">
+
+<img src='man/figures/technologies.png' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
+
+</div>
 
 <br>
 
