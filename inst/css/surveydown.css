@@ -205,25 +205,52 @@ p:last-child,
     overflow-x: auto;
 }
 
+.matrix-question-container .form-group {
+    border: none;
+    background-color: transparent;
+    padding: 0;
+}
+
 .matrix-question {
     width: 100%;
     border-collapse: collapse;
+    font-size: 18px;
 }
 
 .matrix-question th, .matrix-question td {
-    padding: 8px;
+    padding: 0;
     text-align: center;
-    border: 1px solid #ddd;
+    border: none;
+    height: 10px;
+    vertical-align: middle;
+}
+
+.table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
+  vertical-align: middle;
+  padding: 4px;
 }
 
 .matrix-question th {
-    background-color: #f2f2f2;
+    background-color: transparent;
     font-weight: bold;
+    font-size: 18px;
+}
+
+.table {
+  --bs-table-striped-bg: #f9f9f9;
+}
+
+.matrix-question tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.matrix-question tr:nth-child(odd) {
+    background-color: #f9f9f9;
 }
 
 .matrix-question .shiny-options-group {
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Center the radio buttons */
     width: 100%;
 }
 
@@ -247,4 +274,11 @@ p:last-child,
 /* Hide radio button labels */
 .matrix-question .shiny-options-group .radio span {
     display: none;
+}
+
+/* Style for the sub-question labels */
+.matrix-question td:first-child {
+    text-align: left;
+    font-weight: normal;
+    padding-left: 15px; /* Add some left padding */
 }
