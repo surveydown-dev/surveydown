@@ -36,7 +36,7 @@ load_resource <- function(files, type = c("css", "js"), package = "surveydown") 
 #' # In your app.R or ui.R file:
 #' ui <- sd_ui()
 #' }
-sd_ui <- function() {
+sd_ui <- function(auto_scroll = TRUE) {      #code added
     # Throw error if "survey.qmd" file missing
     check_survey_file_exists()
 
@@ -65,6 +65,8 @@ sd_ui <- function() {
         shiny::tags$style(HTML(default_theme_css)),
         load_resource("surveydown.css", type = "css"),
         load_resource("keep_alive.js", type = "js"),
+        load_resource("auto_scroll.js", type = "js"), # code line added
+        shiny::tags$script(sprintf("updateSurveydownConfig({autoScrollEnabled: %s});", tolower(auto_scroll))),  # code line added
         if (!is.null(barcolor)) {
             shiny::tags$style(HTML(sprintf("
                 :root {
