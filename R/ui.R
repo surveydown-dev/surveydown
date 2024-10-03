@@ -119,7 +119,7 @@ get_barposition <- function(metadata) {
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
 #'
-#' @param type Specifies the type of question. Possible values are "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea", "numeric", "slider", "date", and "daterange".
+#' @param type Specifies the type of question. Possible values are "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea", "numeric", "slider", "date", "daterange", and "matrix".
 #' @param id A unique identifier for the question, which will be used as the variable name in the resulting survey data.
 #' @param label Character string. The label for the UI element, which can be formatted with markdown.
 #' @param cols Integer. Number of columns for the textarea input. Defaults to 80.
@@ -136,6 +136,7 @@ get_barposition <- function(metadata) {
 #' @param option List. Options for the select, radio, checkbox, and slider inputs.
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
+#' @param row List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.
 #'
 #' @details
 #' The function supports various question types:
@@ -150,12 +151,25 @@ get_barposition <- function(metadata) {
 #' - "slider": Slider input
 #' - "date": Date input
 #' - "daterange": Date range input
+#' - "matrix": Matrix-style question with rows and columns
 #'
-#' @return A Shiny UI element wrapped in a div with a  data attribute for question ID.
+#' For "matrix" type questions, use the `row` parameter to define the rows of the matrix.
+#' Each element in the `row` list should have a name (used as the row ID) and a value (used as the row label).
+#'
+#' @return A Shiny UI element wrapped in a div with a data attribute for question ID.
 #'
 #' @examples
 #' sd_question("text", "name", "What is your name?")
 #' sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
+#'
+#' # Example of a matrix question
+#' sd_question("matrix", "satisfaction", "Rate your satisfaction with the following:",
+#'             option = c("Unsatisfied" = 1,
+#'                        "Neutral" = 2,
+#'                        "Satisfied" = 3),
+#'             row = list(service = "Customer Service",
+#'                        quality = "Product Quality",
+#'                        price = "Price"))
 #'
 #' @export
 sd_question <- function(

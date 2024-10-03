@@ -1,5 +1,13 @@
 # surveydown (development version)
 
+# surveydown 0.3.3
+
+- `sd_server()` now has a new parameter called `auto_scroll`. It's default to `TRUE`, which enables auto scrolling that tracks the user's input, can be turned off by changing to `FALSE`. Thanks to the contribution from [Zain Hoda](https://github.com/zainhoda1).
+- `sd_question()` now has the `"matrix"` type. The [documentation page](https://surveydown.org/question-types#matrix) is updated.
+- Asterisk, as an indication of required questions, is now moved to the top right corner of question containers.
+
+# surveydown 0.3.2
+
 - Added `sd_completion_code()` function.
 - Bug fix: make stored values accessible with `sd_output()` with `type = 'value'` argument. Previously only question values could be displayed in the UI with `sd_output()`.
 - `sd_add_question()` to instantly create a question template. Defaults to type of `"mc"` but also accepts all other types (`"text"`, `"textarea"`, `"numeric"`, etc.). The function call will delete itself after running.

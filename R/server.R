@@ -15,6 +15,7 @@
 #' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to `FALSE`.
+#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to TRUE.
 #'
 #' @import shiny
 #' @importFrom stats setNames
@@ -31,6 +32,7 @@
 #'   \item Manages required questions.
 #'   \item Performs database operations or saves to a local CSV file in preview mode.
 #'   \item Sets up admin functionality if enabled in the configuration.
+#'   \item Controls auto-scrolling behavior based on the `auto_scroll` parameter.
 #' }
 #'
 #' @section Progress Bar:
@@ -43,6 +45,11 @@
 #' If \code{db} is provided, the function will update the database with survey responses.
 #' If \code{db} is \code{NULL} (ignore mode), responses will be saved to a local CSV file.
 #'
+#' @section Auto-Scrolling:
+#' When `auto_scroll` is TRUE, the survey will automatically scroll to the next question
+#' after the current question is answered. This behavior can be disabled by setting
+#' `auto_scroll` to FALSE.
+#'
 #' @return
 #' This function does not return a value; it sets up the server-side logic for the Shiny application.
 #'
@@ -54,13 +61,13 @@
 #'   shinyApp(
 #'     ui = sd_ui(),
 #'     server = function(input, output, session) {
-#'       sd_server(db = db)
+#'       sd_server(db = db, auto_scroll = TRUE)
 #'     }
 #'   )
 #' }
 #'
 #' @seealso
-#' \code{\link{sd_database}}
+#' \code{\link{sd_database}}, \code{\link{sd_ui}}
 #'
 #' @export
 sd_server <- function(

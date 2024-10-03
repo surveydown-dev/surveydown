@@ -21,11 +21,12 @@ sd_question(
   force_edges = TRUE,
   option = NULL,
   placeholder = NULL,
-  resize = NULL
+  resize = NULL,
+  row = NULL
 )
 }
 \arguments{
-\item{type}{Specifies the type of question. Possible values are "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea", "numeric", "slider", "date", and "daterange".}
+\item{type}{Specifies the type of question. Possible values are "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea", "numeric", "slider", "date", "daterange", and "matrix".}
 
 \item{id}{A unique identifier for the question, which will be used as the variable name in the resulting survey data.}
 
@@ -58,9 +59,11 @@ sd_question(
 \item{placeholder}{Character string. Placeholder text for text and textarea inputs.}
 
 \item{resize}{Character string. Resize option for textarea input. Defaults to NULL.}
+
+\item{row}{List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.}
 }
 \value{
-A Shiny UI element wrapped in a div with a  data attribute for question ID.
+A Shiny UI element wrapped in a div with a data attribute for question ID.
 }
 \description{
 This function creates various types of survey questions for use in a Surveydown survey.
@@ -79,10 +82,23 @@ The function supports various question types:
 \item "slider": Slider input
 \item "date": Date input
 \item "daterange": Date range input
+\item "matrix": Matrix-style question with rows and columns
 }
+
+For "matrix" type questions, use the \code{row} parameter to define the rows of the matrix.
+Each element in the \code{row} list should have a name (used as the row ID) and a value (used as the row label).
 }
 \examples{
 sd_question("text", "name", "What is your name?")
 sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
+
+# Example of a matrix question
+sd_question("matrix", "satisfaction", "Rate your satisfaction with the following:",
+            option = c("Unsatisfied" = 1,
+                       "Neutral" = 2,
+                       "Satisfied" = 3),
+            row = list(service = "Customer Service",
+                       quality = "Product Quality",
+                       price = "Price"))
 
 }
