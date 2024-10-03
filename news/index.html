@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,17 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.3" id="surveydown-033">surveydown 0.3.3<a class="anchor" aria-label="anchor" href="#surveydown-033"></a></h2>
+<ul><li>
+<code><a href="../reference/sd_server.html">sd_server()</a></code> now has a new parameter called <code>auto_scroll</code>. It’s default to <code>TRUE</code>, which enables auto scrolling that tracks the user’s input, can be turned off by changing to <code>FALSE</code>. Thanks to the contribution from <a href="https://github.com/zainhoda1" class="external-link">Zain Hoda</a>.</li>
+<li>
+<code><a href="../reference/sd_question.html">sd_question()</a></code> now has the <code>"matrix"</code> type. The <a href="https://surveydown.org/question-types#matrix" class="external-link">documentation page</a> is updated.</li>
+<li>Asterisk, as an indication of required questions, is now moved to the top right corner of question containers.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.2" id="surveydown-032">surveydown 0.3.2<a class="anchor" aria-label="anchor" href="#surveydown-032"></a></h2>
 <ul><li>Added <code><a href="../reference/sd_completion_code.html">sd_completion_code()</a></code> function.</li>
 <li>Bug fix: make stored values accessible with <code><a href="../reference/sd_output.html">sd_output()</a></code> with <code>type = 'value'</code> argument. Previously only question values could be displayed in the UI with <code><a href="../reference/sd_output.html">sd_output()</a></code>.</li>
 <li>

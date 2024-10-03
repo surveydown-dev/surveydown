@@ -11,7 +11,7 @@ page navigation, and database updates for survey responses."><meta property="og:
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,8 @@ page navigation, and database updates for survey responses.</p>
 <span>  required_questions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  all_questions_required <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  start_page <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  admin_page <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  admin_page <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  auto_scroll <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -92,6 +93,10 @@ file, which is faster when the app loads. Defaults to <code>FALSE</code>.</p></d
 <dt id="arg-admin-page">admin_page<a class="anchor" aria-label="anchor" href="#arg-admin-page"></a></dt>
 <dd><p>Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to <code>FALSE</code>.</p></dd>
 
+
+<dt id="arg-auto-scroll">auto_scroll<a class="anchor" aria-label="anchor" href="#arg-auto-scroll"></a></dt>
+<dd><p>Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to TRUE.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -106,6 +111,7 @@ file, which is faster when the app loads. Defaults to <code>FALSE</code>.</p></d
 <li><p>Manages required questions.</p></li>
 <li><p>Performs database operations or saves to a local CSV file in preview mode.</p></li>
 <li><p>Sets up admin functionality if enabled in the configuration.</p></li>
+<li><p>Controls auto-scrolling behavior based on the <code>auto_scroll</code> parameter.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="progress-bar">Progress Bar<a class="anchor" aria-label="anchor" href="#progress-bar"></a></h2>
@@ -124,8 +130,16 @@ of the last answered question's index to the total number of questions.</p>
 If <code>db</code> is <code>NULL</code> (ignore mode), responses will be saved to a local CSV file.</p>
     </div>
     <div class="section level2">
+    <h2 id="auto-scrolling">Auto-Scrolling<a class="anchor" aria-label="anchor" href="#auto-scrolling"></a></h2>
+
+
+<p>When <code>auto_scroll</code> is TRUE, the survey will automatically scroll to the next question
+after the current question is answered. This behavior can be disabled by setting
+<code>auto_scroll</code> to FALSE.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="sd_database.html">sd_database</a></code></p></div>
+    <div class="dont-index"><p><code><a href="sd_database.html">sd_database</a></code>, <code><a href="sd_ui.html">sd_ui</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -137,7 +151,7 @@ If <code>db</code> is <code>NULL</code> (ignore mode), responses will be saved t
 <span class="r-in"><span>  <span class="fu">shinyApp</span><span class="op">(</span></span></span>
 <span class="r-in"><span>    ui <span class="op">=</span> <span class="fu"><a href="sd_ui.html">sd_ui</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>    server <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span></span>
-<span class="r-in"><span>      <span class="fu">sd_server</span><span class="op">(</span>db <span class="op">=</span> <span class="va">db</span><span class="op">)</span></span></span>
+<span class="r-in"><span>      <span class="fu">sd_server</span><span class="op">(</span>db <span class="op">=</span> <span class="va">db</span>, auto_scroll <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span>    <span class="op">}</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
