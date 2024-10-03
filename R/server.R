@@ -69,7 +69,8 @@ sd_server <- function(
     required_questions = NULL,
     all_questions_required = FALSE,
     start_page = NULL,
-    admin_page = FALSE
+    admin_page = FALSE,
+    auto_scroll = TRUE
 ) {
 
     # Get input, output, and session from the parent environment
@@ -85,6 +86,9 @@ sd_server <- function(
     # Get any skip or show conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
     skip_if <- shiny::getDefaultReactiveDomain()$userData$skip_if
+
+    # Auto scroll
+    session$sendCustomMessage("updateSurveydownConfig", list(autoScrollEnabled = auto_scroll))
 
     # Run the configuration settings
     config <- run_config(

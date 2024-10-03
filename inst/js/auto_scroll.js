@@ -60,3 +60,8 @@ $(document).on('shiny:value', function(event) {
 function updateSurveydownConfig(config) {
   window.surveydownConfig = {...window.surveydownConfig, ...config};
 }
+
+// Add Shiny message handler
+Shiny.addCustomMessageHandler("updateSurveydownConfig", function(message) {
+  updateSurveydownConfig(message);
+});
