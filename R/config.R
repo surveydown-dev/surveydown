@@ -74,7 +74,7 @@ get_html_content <- function(survey_file) {
 }
 
 extract_html_pages <- function(
-        html_content, required_questions, all_questions_required, show_if
+    html_content, required_questions, all_questions_required, show_if
 ) {
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
@@ -108,7 +108,7 @@ extract_html_pages <- function(
                 if (!is.null(show_if)) {
                     if (question_id %in% show_if$targets) {
                         current_style <- xml2::xml_attr(container, "style")
-                        new_style <- gsub("display:\\s*block;", "display: none;", current_style, ignore.case = TRUE)
+                        new_style <- paste(current_style, "display: none;", sep = " ")
                         xml2::xml_attr(container, "style") <- new_style
                     }
                 }

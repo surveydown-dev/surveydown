@@ -139,6 +139,9 @@ sd_server <- function(
 
     # Set up show_if conditions ----
 
+    # Track if show_if conditions should be re-evaluated
+    show_if_trigger <- shiny::reactiveVal(0)
+
     # Reactive values storing status of show_if conditions
     show_if_results <- set_show_if_conditions(show_if)
 
@@ -149,6 +152,9 @@ sd_server <- function(
 
     # Observer to hide/show based on show_if condition results
     shiny::observe({
+
+        # Run if the trigger or condition results change
+        show_if_trigger()
         results <- show_if_results()
 
         # Update question visibility based on show_if results
@@ -161,9 +167,9 @@ sd_server <- function(
         # Show or hide question
         for (target in names(results)) {
             if (results[[target]]) {
-                shinyjs::show(target)
+                shinyjs::show(paste0('container-', target))
             } else {
-                shinyjs::hide(target)
+                shinyjs::hide(paste0('container-', target))
             }
         }
     })
@@ -272,25 +278,29 @@ sd_server <- function(
         local_ts_id <- question_ts_ids[index]
 
         observeEvent(input[[local_id]], {
+            # Tag event time
+            timestamp <- get_utc_timestamp()
+
             # Update question value
             formatted_value <- format_question_value(input[[local_id]])
             all_data[[local_id]] <- formatted_value
 
-            # Update tracker of which fields changed
-            changed_fields(c(changed_fields(), local_id))
+            # Trigger show_if evaluation
+            show_if_trigger(show_if_trigger() + 1)
 
             # Update timestamp and progress if interacted
+            changed <- local_id
             if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                all_data[[local_ts_id]] <- get_utc_timestamp()
-                changed_fields(c(changed_fields(), local_ts_id))
+                all_data[[local_ts_id]] <- timestamp
+                changed <- c(changed, local_ts_id)
                 update_progress_bar(index)
             }
 
+            # Update tracker of which fields changed
+            changed_fields(c(changed_fields(), changed))
+
             # Make value accessible in the UI
             output[[paste0(local_id, "_value")]] <- renderText({ formatted_value })
-
-            # Trigger show_if evaluation
-            show_if_results()
 
             # Update data after a short delay
             shiny::invalidateLater(100)
