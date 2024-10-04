@@ -198,10 +198,10 @@ sd_question <- function(
     # Check if question if answered
     js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
 
-    # Always add red asterisk for required questions, but hide it initially
+    # Add asterisk to label for all questions
     label <- paste0(
-        label,
-        " <span class='required-asterisk' style='display:none; color: red; font-size: 1.5em; vertical-align: middle; position: relative; top: 0.1em;'>*</span>"
+      label,
+      " <span class='required-asterisk' style='display: inline; color: red; font-size: 1.5em; position: absolute; top: 0; right: 0.5em;'>*</span>"
     )
 
     if (type ==  "select") {
@@ -397,7 +397,7 @@ sd_question <- function(
       id = paste0("container-", id),
       `data-question-id` = id,
       class = "question-container",
-      style = sprintf("width: %s;", width),
+      style = sprintf("width: %s; position: relative;", width),
       oninput = js_interaction,
       if (type == "matrix") {
         output

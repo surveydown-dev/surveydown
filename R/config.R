@@ -74,7 +74,7 @@ get_html_content <- function(survey_file) {
 }
 
 extract_html_pages <- function(
-    html_content, required_questions, all_questions_required, show_if
+        html_content, required_questions, all_questions_required, show_if
 ) {
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
@@ -89,17 +89,23 @@ extract_html_pages <- function(
                 question_id <- rvest::html_attr(container, "data-question-id")
                 question_ids <- c(question_ids, question_id)
                 is_required <- all_questions_required | (question_id %in% required_questions)
-                if (is_required) {
-                    required_question_ids <- c(required_question_ids, question_id)
-                    asterisk <- rvest::html_element(container, ".required-asterisk")
-                    xml2::xml_attr(asterisk, "style") <- "display: inline; color: red; font-size: 1.5em; position: absolute; top: 0; right: 0.5em;"
 
-                    # Set the container's position to relative
-                    current_style <- xml2::xml_attr(container, "style")
-                    new_style <- paste(current_style, "position: relative;", sep = " ")
-                    xml2::xml_attr(container, "style") <- new_style
+                # Inverse logic for asterisk display
+                asterisk <- rvest::html_element(container, ".required-asterisk")
+                if (!is_required) {
+                    xml2::xml_attr(asterisk, "style") <- "display: none;"
                 }
 
+                # Set the container's position to relative (unchanged)
+                current_style <- xml2::xml_attr(container, "style")
+                new_style <- paste(current_style, "position: relative;", sep = " ")
+                xml2::xml_attr(container, "style") <- new_style
+
+                if (is_required) {
+                    required_question_ids <- c(required_question_ids, question_id)
+                }
+
+                # Rest of the function remains unchanged
                 if (!is.null(show_if)) {
                     if (question_id %in% show_if$targets) {
                         current_style <- xml2::xml_attr(container, "style")
