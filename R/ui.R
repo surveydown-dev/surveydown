@@ -497,20 +497,8 @@ make_next_button_id <- function(page_id) {
 #' sd_close("Exit Survey", "Are you sure you want to exit? Your progress will not be saved.")
 #'
 #' @export
-sd_close <- function(label = "Exit Survey", confirm_message = "Are you sure you want to exit the survey?") {
+sd_close <- function(label = "Exit Survey") {
   button_id <- "close-survey-button"
-
-  close_script <- sprintf(
-    "function closeAndConfirm() {
-            if (confirm('%s')) {
-                window.close();
-                if (!window.closed) {
-                    alert('Please close this tab manually to exit the survey.');
-                }
-            }
-        }",
-    confirm_message
-  )
 
   shiny::tagList(
     shiny::div(
@@ -520,10 +508,18 @@ sd_close <- function(label = "Exit Survey", confirm_message = "Are you sure you 
         label = label,
         class = "sd-enter-button",
         style = "display: block; margin: auto;",
-        onclick = "closeAndConfirm();"
+        onclick = "console.log('Exit button clicked'); Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
       )
     ),
-    shiny::tags$script(shiny::HTML(close_script))
+    shiny::tags$script(shiny::HTML("
+      Shiny.addCustomMessageHandler('closeWindow', function(message) {
+        console.log('Closing window');
+        window.close();
+        if (!window.closed) {
+          alert('Please close this tab manually to exit the survey.');
+        }
+      });
+    "))
   )
 }
 

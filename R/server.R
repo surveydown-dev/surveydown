@@ -385,6 +385,48 @@ sd_server <- function(
         }
     })
 
+    # Add this new observer for the exit survey modal
+    observeEvent(input$show_exit_modal, {
+      showModal(modalDialog(
+        title = "Before you go...",
+        sd_question(
+          type   = 'mc_buttons',
+          id     = 'survey_rating',
+          label  = "Rate your survey experience from 1-poor to 5-excellent.",
+          option = c(
+            "1" = "1",
+            "2" = "2",
+            "3" = "3",
+            "4" = "4",
+            "5" = "5"
+          )
+        ),
+        footer = tagList(
+          modalButton("Cancel"),
+          actionButton("submit_rating", "Submit and Exit")
+        )
+      ))
+    })
+
+    # Add this observer to handle the rating submission
+    observeEvent(input$submit_rating, {
+      # Save the rating
+      rating <- input$survey_rating
+      all_data[['exit_survey_rating']] <- rating
+      changed_fields(c(changed_fields(), 'exit_survey_rating'))
+
+      # Update data immediately
+      isolate({
+        update_data(latest_data(), time_last = TRUE)
+      })
+
+      # Close the modal
+      removeModal()
+
+      # Send a message to close the window
+      session$sendCustomMessage("closeWindow", list())
+    })
+
     # Ensure final update on session end
     shiny::onSessionEnded(function() {
         shiny::isolate({

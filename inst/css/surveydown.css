@@ -291,3 +291,16 @@ p:last-child,
 div:where(.swal2-container) .swal2-html-container {
   padding: 0 2em;
 }
+
+.modal {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.modal-backdrop {
+  opacity: 0.5 !important;
+}
+
+.modal-dialog {
+  z-index: 1050 !important;
+}
