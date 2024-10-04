@@ -287,3 +287,7 @@ p:last-child,
 .swal2-popup {
   font-size: 1rem !important;
 }
+
+div:where(.swal2-container) .swal2-html-container {
+  padding: 0 2em;
+}
