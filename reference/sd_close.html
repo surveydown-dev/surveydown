@@ -86,11 +86,10 @@ In such cases, the button will prompt the user to close the tab manually.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">sd_close</span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div style="margin-top: 0.5rem; margin-bottom: 0.5rem;"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;button class="btn btn-default action-button sd-enter-button" id="close-survey-button" onclick="console.log(&amp;#39;Exit button clicked&amp;#39;); Shiny.setInputValue(&amp;#39;show_exit_modal&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});" style="display: block; margin: auto;" type="button"&gt;Exit Survey&lt;/button&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;button class="btn btn-default action-button sd-enter-button" id="close-survey-button" onclick="Shiny.setInputValue(&amp;#39;show_exit_modal&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});" style="display: block; margin: auto;" type="button"&gt;Exit Survey&lt;/button&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;script&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       Shiny.addCustomMessageHandler('closeWindow', function(message) {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         console.log('Closing window');</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         window.close();</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         if (!window.closed) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           alert('Please close this tab manually to exit the survey.');</span>
