@@ -175,6 +175,12 @@ get_question_structure <- function(html_content) {
     return(question_structure)
 }
 
+get_output_ids <- function() {
+    output <- shiny::getDefaultReactiveDomain()$output
+    outs <- outputOptions(output)
+    return(names(outs))
+}
+
 check_skip_show <- function(
     question_ids, question_values, page_ids, skip_if, show_if
 ) {
@@ -189,7 +195,11 @@ check_skip_show <- function(
     }
 
     if (!is.null(show_if)) {
-        invalid_show_targets <- setdiff(show_if$targets, question_ids)
+        # Get any potential question_ids from the output
+        invalid_show_targets <- setdiff(
+            show_if$targets,
+            c(question_ids, get_output_ids())
+        )
         if (length(invalid_show_targets) > 0) {
             stop(sprintf(
               "Invalid show_if targets: %s. These must be question IDs defined in the survey.qmd file.",

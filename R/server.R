@@ -116,27 +116,9 @@ sd_server <- function(
         show_if
     )
 
-    # Set up show_if conditions
-    show_if_results <- if (!is.null(show_if)) {
-        set_show_if_conditions(show_if)
-    } else {
-        shiny::reactive(list())
-    }
-    # Create an observer to handle visibility
-    shiny::observe({
-        results <- show_if_results()
-        for (target in names(results)) {
-            if (results[[target]]) {
-                shinyjs::show(target)
-            } else {
-                shinyjs::hide(target)
-            }
-        }
-    })
-
     # Initialize local variables ----
 
-    # Check if db is NULL (either left blank or specified with ignore = TRUE)
+    # Check if db is NULL (either blank or specified with ignore = TRUE)
     ignore_mode <- is.null(db)
 
     # Create local objects from config file
@@ -154,6 +136,23 @@ sd_server <- function(
     question_ts_ids <- paste0("time_q_", question_ids)
     start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
     all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
+
+    # Set up show_if conditions ----
+
+    # Reactive values storing status of show_if conditions
+    show_if_results <- set_show_if_conditions(show_if)
+
+    # Observer to hide/show based on show_if condition results
+    shiny::observe({
+        results <- show_if_results()
+        for (target in names(results)) {
+            if (results[[target]]) {
+                shinyjs::show(target)
+            } else {
+                shinyjs::hide(target)
+            }
+        }
+    })
 
     # Initialize local functions ----
 
@@ -456,11 +455,12 @@ sd_show_if <- function(...) {
 }
 
 set_show_if_conditions <- function(show_if) {
+
+    if (is.null(show_if)) { shiny::reactive(list()) }
+
     conditions <- show_if$conditions
 
-    if (length(conditions) == 0) {
-        return(shiny::reactive(list()))
-    }
+    if (length(conditions) == 0) { shiny::reactive(list()) }
 
     # Group conditions by target
     grouped_conditions <- split(conditions, sapply(conditions, function(rule) rule$target))
