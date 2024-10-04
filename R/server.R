@@ -142,9 +142,23 @@ sd_server <- function(
     # Reactive values storing status of show_if conditions
     show_if_results <- set_show_if_conditions(show_if)
 
+    # Reactive values storing the visibility state of all questions
+    question_visibility <- shiny::reactiveVal(
+        setNames(rep(TRUE, length(question_ids)), question_ids)
+    )
+
     # Observer to hide/show based on show_if condition results
     shiny::observe({
         results <- show_if_results()
+
+        # Update question visibility based on show_if results
+        current_visibility <- question_visibility()
+        for (target in names(results)) {
+            current_visibility[target] <- results[[target]]
+        }
+        question_visibility(current_visibility)
+
+        # Show or hide question
         for (target in names(results)) {
             if (results[[target]]) {
                 shinyjs::show(target)
@@ -315,15 +329,11 @@ sd_server <- function(
     # Page navigation ----
 
     check_required <- function(page) {
-      all(vapply(page$required_questions, function(q) {
-        is_visible <- is_question_visible(q)
-        !is_visible || check_answer(q, input)
+      required_questions <- page$required_questions
+      is_visible <- question_visibility()[required_questions]
+      all(vapply(required_questions, function(q) {
+        !is_visible[q] || check_answer(q, input)
       }, logical(1)))
-    }
-
-    is_question_visible <- function(q) {
-        results <- show_if_results()
-        !q %in% names(results) || results[[q]]
     }
 
     # Determine which page is next, then update current_page_id() to it
