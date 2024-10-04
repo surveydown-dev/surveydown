@@ -475,31 +475,42 @@ make_next_button_id <- function(page_id) {
     return(paste0(page_id, "_next"))
 }
 
-#' Create a 'Close' Button to Exit the Survey with Confirmation
+#' Create a 'Close' Button to Exit the Survey
 #'
-#' This function creates a 'Close' button that, when clicked, will prompt for confirmation
-#' before attempting to close the current browser tab or window.
-#' The button can be activated by clicking or by pressing the Enter key when visible.
+#' This function creates a 'Close' button that, when clicked, will trigger the exit process
+#' for the survey. Depending on the server-side configuration, this may show a rating question
+#' or a simple confirmation dialog before attempting to close the current browser tab or window.
 #'
 #' @param label Character string. The label of the 'Close' button. Defaults to "Exit Survey".
-#' @param confirm_message Character string. The message to display in the confirmation dialog.
-#'   Defaults to "Are you sure you want to exit the survey?".
 #'
-#' @details The function generates a Shiny action button that, when clicked, displays a confirmation dialog.
-#'   If confirmed, it attempts to close the current browser tab or window. Note that for security reasons,
-#'   some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
-#'   In such cases, the button will prompt the user to close the tab manually.
+#' @return A Shiny tagList containing the 'Close' button UI element and associated JavaScript for the exit process.
 #'
-#' @return A Shiny tagList containing the 'Close' button UI element and associated JavaScript for confirmation.
+#' @details
+#' The function generates a Shiny action button that, when clicked, triggers the 'show_exit_modal' event.
+#' The server-side logic (controlled by the `rate_survey` parameter in `sd_server()`) determines
+#' whether to show a rating question or a simple confirmation dialog.
+#'
+#' The function also includes a custom message handler for closing the window. This is necessary
+#' because some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
+#' In such cases, the user will be prompted to close the tab manually.
+#'
+#' @note The actual behavior of the exit process (whether to show a rating question or not)
+#' is controlled by the `rate_survey` parameter in the `sd_server()` function, not in this UI function.
 #'
 #' @examples
+#' \dontrun{
+#' # In your UI code:
 #' sd_close()
-#' sd_close("Exit Survey", "Are you sure you want to exit? Your progress will not be saved.")
+#'
+#' # With a custom label:
+#' sd_close("Finish and Exit")
+#' }
+#'
+#' @seealso \code{\link{sd_server}}
 #'
 #' @export
 sd_close <- function(label = "Exit Survey") {
   button_id <- "close-survey-button"
-
   shiny::tagList(
     shiny::div(
       style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
@@ -508,12 +519,11 @@ sd_close <- function(label = "Exit Survey") {
         label = label,
         class = "sd-enter-button",
         style = "display: block; margin: auto;",
-        onclick = "console.log('Exit button clicked'); Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
+        onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
       )
     ),
     shiny::tags$script(shiny::HTML("
       Shiny.addCustomMessageHandler('closeWindow', function(message) {
-        console.log('Closing window');
         window.close();
         if (!window.closed) {
           alert('Please close this tab manually to exit the survey.');

@@ -292,6 +292,7 @@ div:where(.swal2-container) .swal2-html-container {
   padding: 0 2em;
 }
 
+/* Exit pop-up */
 .modal {
   display: block !important;
   opacity: 1 !important;
@@ -303,4 +304,9 @@ div:where(.swal2-container) .swal2-html-container {
 
 .modal-dialog {
   z-index: 1050 !important;
+}
+
+.modal-body .shiny-input-container .control-label {
+  text-align: center;
+  width: 100%;
 }

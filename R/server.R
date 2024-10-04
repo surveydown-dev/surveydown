@@ -3,7 +3,7 @@
 #' @description
 #' This function defines the server-side logic for a Shiny application used in surveydown.
 #' It handles various operations such as conditional display, progress tracking,
-#' page navigation, and database updates for survey responses.
+#' page navigation, database updates for survey responses, and exit survey functionality.
 #'
 #' @param db A list containing database connection information created using
 #' \code{\link{sd_database}} function. Defaults to \code{NULL}.
@@ -16,6 +16,7 @@
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to `FALSE`.
 #' @param auto_scroll Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to TRUE.
+#' @param rate_survey Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to FALSE.
 #'
 #' @import shiny
 #' @import shinyWidgets
@@ -35,6 +36,7 @@
 #'   \item Sets up admin functionality if enabled in the configuration.
 #'   \item Controls auto-scrolling behavior based on the `auto_scroll` parameter.
 #'   \item Uses sweetalert for warning messages when required questions are not answered.
+#'   \item Handles the exit survey process based on the `rate_survey` parameter.
 #' }
 #'
 #' @section Progress Bar:
@@ -52,10 +54,9 @@
 #' after the current question is answered. This behavior can be disabled by setting
 #' `auto_scroll` to FALSE.
 #'
-#' @section Warning Messages:
-#' The function uses sweetalert to display warning messages when users attempt to proceed
-#' without answering all required questions. This provides a more user-friendly experience
-#' compared to standard Shiny notifications.
+#' @section Exit Survey:
+#' When `rate_survey` is TRUE, the function will show a rating question when the user attempts to exit the survey.
+#' When FALSE, it will show a simple confirmation dialog. The rating, if provided, is saved with the survey data.
 #'
 #' @return
 #' This function does not return a value; it sets up the server-side logic for the Shiny application.
@@ -69,7 +70,7 @@
 #'   shinyApp(
 #'     ui = sd_ui(),
 #'     server = function(input, output, session) {
-#'       sd_server(db = db, auto_scroll = TRUE)
+#'       sd_server(db = db, auto_scroll = TRUE, rate_survey = TRUE)
 #'     }
 #'   )
 #' }
@@ -85,7 +86,8 @@ sd_server <- function(
     all_questions_required = FALSE,
     start_page = NULL,
     admin_page = FALSE,
-    auto_scroll = TRUE
+    auto_scroll = TRUE,
+    rate_survey = FALSE
 ) {
 
     # Get input, output, and session from the parent environment
@@ -382,45 +384,59 @@ sd_server <- function(
         }
     })
 
-    # Add this new observer for the exit survey modal
+    # Survey rating ----
+    # Observer for the exit survey modal
     observeEvent(input$show_exit_modal, {
-      showModal(modalDialog(
-        title = "Before you go...",
-        sd_question(
-          type   = 'mc_buttons',
-          id     = 'survey_rating',
-          label  = "Rate your survey experience from 1-poor to 5-excellent.",
-          option = c(
-            "1" = "1",
-            "2" = "2",
-            "3" = "3",
-            "4" = "4",
-            "5" = "5"
+      if (rate_survey) {
+        showModal(modalDialog(
+          title = "Before you go...",
+          sd_question(
+            type   = 'mc_buttons',
+            id     = 'survey_rating',
+            label  = "Rate your survey experience:<br><small>(from 1-poor to 5-excellent)</small>",
+            option = c(
+              "1" = "1",
+              "2" = "2",
+              "3" = "3",
+              "4" = "4",
+              "5" = "5"
+            )
+          ),
+          footer = tagList(
+            modalButton("Cancel"),
+            actionButton("submit_rating", "Submit and Exit")
           )
-        ),
-        footer = tagList(
-          modalButton("Cancel"),
-          actionButton("submit_rating", "Submit and Exit")
-        )
-      ))
+        ))
+      } else {
+        showModal(modalDialog(
+          title = "Confirm Exit",
+          "Are you sure you want to exit the survey?",
+          footer = tagList(
+            modalButton("Cancel"),
+            actionButton("confirm_exit", "Exit")
+          )
+        ))
+      }
     })
 
-    # Add this observer to handle the rating submission
+    # Observer to handle the rating submission or exit confirmation
     observeEvent(input$submit_rating, {
       # Save the rating
       rating <- input$survey_rating
       all_data[['exit_survey_rating']] <- rating
       changed_fields(c(changed_fields(), 'exit_survey_rating'))
-
       # Update data immediately
       isolate({
         update_data(latest_data(), time_last = TRUE)
       })
-
-      # Close the modal
+      # Close the modal and the window
       removeModal()
+      session$sendCustomMessage("closeWindow", list())
+    })
 
-      # Send a message to close the window
+    observeEvent(input$confirm_exit, {
+      # Close the modal and the window
+      removeModal()
       session$sendCustomMessage("closeWindow", list())
     })
 
