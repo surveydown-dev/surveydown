@@ -282,3 +282,8 @@ p:last-child,
     font-weight: normal;
     padding-left: 15px; /* Add some left padding */
 }
+
+/* SweetAlert custom styling */
+.swal2-popup {
+  font-size: 1rem !important;
+}

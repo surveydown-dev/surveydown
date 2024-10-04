@@ -18,6 +18,7 @@
 #' @param auto_scroll Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to TRUE.
 #'
 #' @import shiny
+#' @import shinyWidgets
 #' @importFrom stats setNames
 #' @importFrom shiny reactiveValuesToList observeEvent renderText
 #'
@@ -33,6 +34,7 @@
 #'   \item Performs database operations or saves to a local CSV file in preview mode.
 #'   \item Sets up admin functionality if enabled in the configuration.
 #'   \item Controls auto-scrolling behavior based on the `auto_scroll` parameter.
+#'   \item Uses sweetalert for warning messages when required questions are not answered.
 #' }
 #'
 #' @section Progress Bar:
@@ -50,12 +52,18 @@
 #' after the current question is answered. This behavior can be disabled by setting
 #' `auto_scroll` to FALSE.
 #'
+#' @section Warning Messages:
+#' The function uses sweetalert to display warning messages when users attempt to proceed
+#' without answering all required questions. This provides a more user-friendly experience
+#' compared to standard Shiny notifications.
+#'
 #' @return
 #' This function does not return a value; it sets up the server-side logic for the Shiny application.
 #'
 #' @examples
 #' \dontrun{
 #'   library(surveydown)
+#'   library(shinyWidgets)
 #'   db <- sd_database()
 #'
 #'   shinyApp(
@@ -308,10 +316,10 @@ sd_server <- function(
     # Page navigation ----
 
     check_required <- function(page) {
-        all(vapply(page$required_questions, function(q) {
-            is_visible <- is_question_visible(q)
-            !is_visible || check_answer(q, input)
-        }, logical(1)))
+      all(vapply(page$required_questions, function(q) {
+        is_visible <- is_question_visible(q)
+        !is_visible || check_answer(q, input)
+      }, logical(1)))
     }
 
     is_question_visible <- function(q) {
@@ -321,31 +329,33 @@ sd_server <- function(
 
     # Determine which page is next, then update current_page_id() to it
     observe({
-        lapply(pages, function(page) {
-            observeEvent(input[[page$next_button_id]], {
-                shiny::isolate({
-                    current_page_id <- page$id
-                    next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
-                    next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
-                    if (!is.null(next_page_id) && check_required(page)) {
-                        # Set the current page as the next page
-                        current_page_id(next_page_id)
+      lapply(pages, function(page) {
+        observeEvent(input[[page$next_button_id]], {
+          shiny::isolate({
+            current_page_id <- page$id
+            next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
+            next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
+            if (!is.null(next_page_id) && check_required(page)) {
+              # Set the current page as the next page
+              current_page_id(next_page_id)
 
-                        # Update the page time stamp
-                        next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
-                        all_data[[next_ts_id]] <- get_utc_timestamp()
+              # Update the page time stamp
+              next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
+              all_data[[next_ts_id]] <- get_utc_timestamp()
 
-                        # Update tracker of which fields changed
-                        changed_fields(c(changed_fields(), next_ts_id))
-                    } else if (!is.null(next_page_id)) {
-                        shiny::showNotification(
-                            "Please answer all required questions before proceeding.",
-                            type = "error"
-                        )
-                    }
-                })
-            })
+              # Update tracker of which fields changed
+              changed_fields(c(changed_fields(), next_ts_id))
+            } else if (!is.null(next_page_id)) {
+              shinyWidgets::sendSweetAlert(
+                session = session,
+                title = "Warning",
+                text = "Please answer all required questions before proceeding.",
+                type = "warning"
+              )
+            }
+          })
         })
+      })
     })
 
     # Observer to max out the progress bar when we reach the last page

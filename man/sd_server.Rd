@@ -52,6 +52,7 @@ The function performs the following tasks:
 \item Performs database operations or saves to a local CSV file in preview mode.
 \item Sets up admin functionality if enabled in the configuration.
 \item Controls auto-scrolling behavior based on the \code{auto_scroll} parameter.
+\item Uses sweetalert for warning messages when required questions are not answered.
 }
 }
 \section{Progress Bar}{
@@ -75,9 +76,17 @@ after the current question is answered. This behavior can be disabled by setting
 \code{auto_scroll} to FALSE.
 }
 
+\section{Warning Messages}{
+
+The function uses sweetalert to display warning messages when users attempt to proceed
+without answering all required questions. This provides a more user-friendly experience
+compared to standard Shiny notifications.
+}
+
 \examples{
 \dontrun{
   library(surveydown)
+  library(shinyWidgets)
   db <- sd_database()
 
   shinyApp(
