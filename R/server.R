@@ -137,10 +137,7 @@ sd_server <- function(
     start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
     all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
 
-    # Set up show_if conditions ----
-
-    # Track if show_if conditions should be re-evaluated
-    show_if_trigger <- shiny::reactiveVal(0)
+    # show_if conditions ----
 
     # Reactive values storing status of show_if conditions
     show_if_results <- set_show_if_conditions(show_if)
@@ -150,28 +147,27 @@ sd_server <- function(
         setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
-    # Observer to hide/show based on show_if condition results
+    # Create a new observer for show/hide logic
     shiny::observe({
+        # This will re-run whenever the page changes or is re-rendered
+        current_page_id()
 
-        # Run if the trigger or condition results change
-        show_if_trigger()
+        # Add a small delay to ensure DOM is updated
+        shiny::invalidateLater(10)
+
         results <- show_if_results()
-
-        # Update question visibility based on show_if results
         current_visibility <- question_visibility()
+
         for (target in names(results)) {
             current_visibility[target] <- results[[target]]
-        }
-        question_visibility(current_visibility)
-
-        # Show or hide question
-        for (target in names(results)) {
             if (results[[target]]) {
                 shinyjs::show(paste0('container-', target))
             } else {
                 shinyjs::hide(paste0('container-', target))
             }
         }
+
+        question_visibility(current_visibility)
     })
 
     # Initialize local functions ----
@@ -285,9 +281,6 @@ sd_server <- function(
             formatted_value <- format_question_value(input[[local_id]])
             all_data[[local_id]] <- formatted_value
 
-            # Trigger show_if evaluation
-            show_if_trigger(show_if_trigger() + 1)
-
             # Update timestamp and progress if interacted
             changed <- local_id
             if (!is.null(input[[paste0(local_id, "_interacted")]])) {
@@ -317,7 +310,7 @@ sd_server <- function(
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
 
-    # Render the current page
+    # Render main page content when current page changes
     output$main <- shiny::renderUI({
         current_page <- get_current_page()
         shiny::tagList(
@@ -351,6 +344,10 @@ sd_server <- function(
       lapply(pages, function(page) {
         observeEvent(input[[page$next_button_id]], {
           shiny::isolate({
+            # Grab the time stamp of the page turn
+            timestamp <- get_utc_timestamp()
+
+            # Figure out page ids
             current_page_id <- page$id
             next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
             next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
@@ -360,7 +357,7 @@ sd_server <- function(
 
               # Update the page time stamp
               next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
-              all_data[[next_ts_id]] <- get_utc_timestamp()
+              all_data[[next_ts_id]] <- timestamp
 
               # Update tracker of which fields changed
               changed_fields(c(changed_fields(), next_ts_id))
