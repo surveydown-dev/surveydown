@@ -43,6 +43,9 @@
 <ul><li>Bug fix: reactive questions now work with show_if conditions too</li>
 <li>Bug fix: show_if conditions now work even if the target question is on a different page.</li>
 <li>Bug fix: reactive question ids (those defined in the server) were not being considered in <code>check_skip_show()</code> checks, so you’d get an error that the question id was invalid.</li>
+<li>
+<code><a href="../reference/sd_server.html">sd_server()</a></code> accepts a new parameter called <code>"rate_survey"</code>, default to <code>FALSE</code>. If <code>TRUE</code>, the Exit button will trigger a rating question. If <code>FALSE</code>, the Exit button will only trigger a double confirmation to ensure the user really wants to exit.</li>
+<li>Now the survey will check if there exists an <code><a href="../reference/sd_close.html">sd_close()</a></code> function call.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.3" id="surveydown-033">surveydown 0.3.3<a class="anchor" aria-label="anchor" href="#surveydown-033"></a></h2>
