@@ -10,14 +10,14 @@ run_config <- function(
     # Throw error if "survey.qmd" file missing
     check_survey_file_exists()
 
+    # Always check for sd_close() in survey.qmd
+    sd_close_present <- check_sd_close("survey.qmd")
+
     survey_file <- "survey.qmd"
     if (use_html) { survey_file <- "survey.html" }
 
     # Get the html content from the qmd file (or html if pre-rendered)
     html_content <- get_html_content(survey_file)
-
-    # Check for sd_close() call
-    sd_close_present <- check_sd_close(html_content)
 
     # Extract all divs with class "sd-page"
     pages <- extract_html_pages(
@@ -37,7 +37,7 @@ run_config <- function(
     page_ids <- sapply(pages, function(p) p$id)
     question_ids <- names(question_structure)
 
-    # Check for duplicate or overlapping IDs
+    # Check for duplicate, overlapping, or pre-defined IDs
     check_ids(page_ids, question_ids)
 
     question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
@@ -71,13 +71,19 @@ run_config <- function(
     return(config)
 }
 
-check_sd_close <- function(html_content) {
-    script_tags <- rvest::html_elements(html_content, "script")
-    sd_close_present <- any(sapply(script_tags, function(tag) {
-        grepl("sd_close\\(\\)", rvest::html_text(tag))
-    }))
+check_sd_close <- function(survey_file) {
+    if (!file.exists(survey_file)) {
+        stop(paste("The file", survey_file, "does not exist."))
+    }
+
+    # Read the content of survey.qmd
+    qmd_content <- readLines(survey_file, warn = FALSE)
+
+    # Check for sd_close() call
+    sd_close_present <- any(grepl("sd_close\\(\\)", qmd_content))
+
     if (!sd_close_present) {
-        message("\u274C No sd_close() call found in the survey file. This may cause issues with data submission.")
+        message("\u274C No sd_close() call found in ", survey_file, ". This may cause issues with data submission.")
     }
     return(sd_close_present)
 }
@@ -236,5 +242,13 @@ check_ids <- function(page_ids, question_ids) {
     duplicate_question_ids <- question_ids[duplicated(question_ids)]
     if (length(duplicate_question_ids) > 0) {
         stop("Duplicate question IDs found: ", paste(duplicate_question_ids, collapse = ", "))
+    }
+
+    # Check for restricted IDs
+    restricted_ids <- c("session_id", "time_start", "time_end", "exit_survey_rating")
+    used_restricted_ids <- intersect(restricted_ids, question_ids)
+    if (length(used_restricted_ids) > 0) {
+        stop("Restricted question IDs found: ", paste(used_restricted_ids, collapse = ", "),
+             ". These IDs are reserved and should not be used for survey questions.")
     }
 }
