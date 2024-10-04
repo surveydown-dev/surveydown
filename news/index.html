@@ -46,6 +46,7 @@
 <li>
 <code><a href="../reference/sd_server.html">sd_server()</a></code> accepts a new parameter called <code>"rate_survey"</code>, default to <code>FALSE</code>. If <code>TRUE</code>, the Exit button will trigger a rating question. If <code>FALSE</code>, the Exit button will only trigger a double confirmation to ensure the user really wants to exit.</li>
 <li>Now the survey will check if there exists an <code><a href="../reference/sd_close.html">sd_close()</a></code> function call.</li>
+<li>Now the survey will check if the reserved question IDs are used, including <code>session_id</code>, <code>time_start</code>, <code>time_end</code>, and <code>exit_survey_rating</code>. There could be more in the future.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.3" id="surveydown-033">surveydown 0.3.3<a class="anchor" aria-label="anchor" href="#surveydown-033"></a></h2>
