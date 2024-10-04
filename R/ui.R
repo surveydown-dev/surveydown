@@ -67,6 +67,7 @@ sd_ui <- function() {
         load_resource("keep_alive.js", type = "js"),
         load_resource("auto_scroll.js", type = "js"),
         shiny::tags$script("var surveydownConfig = {};"),
+        shiny::tags$script(shiny::HTML(enter_key_js())),
         if (!is.null(barcolor)) {
             shiny::tags$style(HTML(sprintf("
                 :root {
@@ -435,36 +436,36 @@ date_interaction <- function(output, id) {
 #' Create a 'Next' Button for Page Navigation
 #'
 #' This function creates a 'Next' button for navigating to the specified next page in a Surveydown survey.
-#' The button can be activated by clicking or by pressing the Enter key.
+#' The button can be activated by clicking or by pressing the Enter key when visible.
 #'
 #' @param next_page Character string. The ID of the next page to navigate to. This parameter is required.
 #' @param label Character string. The label of the 'Next' button. Defaults to "Next".
 #'
 #' @details The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
 #'   sets the input value to the specified next page ID, facilitating page navigation within the Shiny application.
-#'   The button is styled to appear centered on the page. The Enter key functionality is only active when the button is visible.
+#'   The button is styled to appear centered on the page and includes a class for Enter key functionality.
 #'
-#' @return A Shiny action button UI element with associated JavaScript for Enter key functionality.
+#' @return A Shiny tagList containing the 'Next' button UI element.
 #'
 #' @examples
 #' sd_next("page2", "Continue to Next Section")
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
-    button_id <- "page_id_next"  # Placeholder ID
-    shiny::tagList(
-        shiny::div(
-            `data-next-page` = if (!is.null(next_page)) next_page else "",
-            style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
-            shiny::actionButton(
-                inputId = button_id,
-                label = label,
-                style = "display: block; margin: auto;",
-                onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
-            )
-        ),
-        shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
+  button_id <- "page_id_next"  # Placeholder ID
+  shiny::tagList(
+    shiny::div(
+      `data-next-page` = if (!is.null(next_page)) next_page else "",
+      style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
+      shiny::actionButton(
+        inputId = button_id,
+        label = label,
+        class = "sd-enter-button",
+        style = "display: block; margin: auto;",
+        onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
+      )
     )
+  )
 }
 
 # Generate Next Button ID
@@ -472,40 +473,56 @@ make_next_button_id <- function(page_id) {
     return(paste0(page_id, "_next"))
 }
 
-#' Create a 'Close' Button to Exit the Survey
+#' Create a 'Close' Button to Exit the Survey with Confirmation
 #'
-#' This function creates a 'Close' button that, when clicked, will close the current browser tab or window.
-#' The button can be activated by clicking or by pressing the Enter key.
+#' This function creates a 'Close' button that, when clicked, will prompt for confirmation
+#' before attempting to close the current browser tab or window.
+#' The button can be activated by clicking or by pressing the Enter key when visible.
 #'
 #' @param label Character string. The label of the 'Close' button. Defaults to "Exit Survey".
+#' @param confirm_message Character string. The message to display in the confirmation dialog.
+#'   Defaults to "Are you sure you want to exit the survey?".
 #'
-#' @details The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
-#'   will attempt to close the current browser tab or window. Note that for security reasons,
+#' @details The function generates a Shiny action button that, when clicked, displays a confirmation dialog.
+#'   If confirmed, it attempts to close the current browser tab or window. Note that for security reasons,
 #'   some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
 #'   In such cases, the button will prompt the user to close the tab manually.
 #'
-#' @return A Shiny action button UI element with associated JavaScript for closing the page and Enter key functionality.
+#' @return A Shiny tagList containing the 'Close' button UI element and associated JavaScript for confirmation.
 #'
 #' @examples
 #' sd_close()
-#' sd_close("Exit Survey")
+#' sd_close("Exit Survey", "Are you sure you want to exit? Your progress will not be saved.")
 #'
 #' @export
-sd_close <- function(label = "Exit Survey") {
-    button_id <- "close-survey-button"
+sd_close <- function(label = "Exit Survey", confirm_message = "Are you sure you want to exit the survey?") {
+  button_id <- "close-survey-button"
 
-    shiny::tagList(
-        shiny::div(
-            style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
-            shiny::actionButton(
-                inputId = button_id,
-                label = label,
-                style = "display: block; margin: auto;",
-                onclick = "window.close(); if (!window.closed) { alert('Please close this tab manually to exit the survey.'); }"
-            )
-        ),
-        shiny::tags$script(shiny::HTML(enter_key_js(button_id)))
-    )
+  close_script <- sprintf(
+    "function closeAndConfirm() {
+            if (confirm('%s')) {
+                window.close();
+                if (!window.closed) {
+                    alert('Please close this tab manually to exit the survey.');
+                }
+            }
+        }",
+    confirm_message
+  )
+
+  shiny::tagList(
+    shiny::div(
+      style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
+      shiny::actionButton(
+        inputId = button_id,
+        label = label,
+        class = "sd-enter-button",
+        style = "display: block; margin: auto;",
+        onclick = "closeAndConfirm();"
+      )
+    ),
+    shiny::tags$script(shiny::HTML(close_script))
+  )
 }
 
 #' Create a Redirect Element for Shiny Applications
@@ -654,21 +671,18 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 }
 
 # Enter Key JS
-enter_key_js <- function(button_id) {
-    sprintf("
-    $(document).ready(function() {
-        var buttonId = '%s';
-        $(document).on('keydown', function(event) {
-            if (event.key === 'Enter' && !event.repeat) {
-                var $button = $('#' + buttonId);
-                if ($button.is(':visible')) {
-                    $button.click();
-                    event.preventDefault();
-                }
+enter_key_js <- function() {
+  "
+    $(document).on('keydown', function(event) {
+        if (event.key === 'Enter' && !event.repeat) {
+            var $visibleButton = $('.sd-enter-button:visible').first();
+            if ($visibleButton.length) {
+                $visibleButton.click();
+                event.preventDefault();
             }
-        });
+        }
     });
-    ", button_id)
+    "
 }
 
 # Countdown JS

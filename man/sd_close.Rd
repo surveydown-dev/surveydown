@@ -2,28 +2,35 @@
 % Please edit documentation in R/ui.R
 \name{sd_close}
 \alias{sd_close}
-\title{Create a 'Close' Button to Exit the Survey}
+\title{Create a 'Close' Button to Exit the Survey with Confirmation}
 \usage{
-sd_close(label = "Exit Survey")
+sd_close(
+  label = "Exit Survey",
+  confirm_message = "Are you sure you want to exit the survey?"
+)
 }
 \arguments{
 \item{label}{Character string. The label of the 'Close' button. Defaults to "Exit Survey".}
+
+\item{confirm_message}{Character string. The message to display in the confirmation dialog.
+Defaults to "Are you sure you want to exit the survey?".}
 }
 \value{
-A Shiny action button UI element with associated JavaScript for closing the page and Enter key functionality.
+A Shiny tagList containing the 'Close' button UI element and associated JavaScript for confirmation.
 }
 \description{
-This function creates a 'Close' button that, when clicked, will close the current browser tab or window.
-The button can be activated by clicking or by pressing the Enter key.
+This function creates a 'Close' button that, when clicked, will prompt for confirmation
+before attempting to close the current browser tab or window.
+The button can be activated by clicking or by pressing the Enter key when visible.
 }
 \details{
-The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
-will attempt to close the current browser tab or window. Note that for security reasons,
+The function generates a Shiny action button that, when clicked, displays a confirmation dialog.
+If confirmed, it attempts to close the current browser tab or window. Note that for security reasons,
 some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
 In such cases, the button will prompt the user to close the tab manually.
 }
 \examples{
 sd_close()
-sd_close("Exit Survey")
+sd_close("Exit Survey", "Are you sure you want to exit? Your progress will not be saved.")
 
 }
