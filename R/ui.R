@@ -61,31 +61,33 @@ sd_ui <- function() {
     barposition <- get_barposition(metadata)
 
     shiny::fluidPage(
-        shinyjs::useShinyjs(),
-        shiny::tags$style(HTML(default_theme_css)),
-        load_resource("surveydown.css", type = "css"),
-        load_resource("keep_alive.js", type = "js"),
-        load_resource("auto_scroll.js", type = "js"),
-        shiny::tags$script("var surveydownConfig = {};"),
-        shiny::tags$script(shiny::HTML(enter_key_js())),
-        if (!is.null(barcolor)) {
-            shiny::tags$style(HTML(sprintf("
+      shinyjs::useShinyjs(),
+      shiny::tags$head(
+        shiny::tags$script(shiny::HTML(enter_key_js()))
+      ),
+      shiny::tags$style(HTML(default_theme_css)),
+      load_resource("surveydown.css", type = "css"),
+      load_resource("keep_alive.js", type = "js"),
+      load_resource("auto_scroll.js", type = "js"),
+      shiny::tags$script("var surveydownConfig = {};"),
+      if (!is.null(barcolor)) {
+        shiny::tags$style(HTML(sprintf("
                 :root {
                     --progress-color: %s;
                 }
             ", barcolor)))
-        },
-        if (barposition != "none") {
-            shiny::tags$div(
-                id = "progressbar",
-                class = barposition,
-                shiny::tags$div(id = "progress")
-            )
-        },
+      },
+      if (barposition != "none") {
         shiny::tags$div(
-            class = "content",
-            shiny::uiOutput("main")
+          id = "progressbar",
+          class = barposition,
+          shiny::tags$div(id = "progress")
         )
+      },
+      shiny::tags$div(
+        class = "content",
+        shiny::uiOutput("main")
+      )
     )
 }
 
@@ -673,14 +675,16 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 # Enter Key JS
 enter_key_js <- function() {
   "
-    $(document).on('keydown', function(event) {
-        if (event.key === 'Enter' && !event.repeat) {
-            var $visibleButton = $('.sd-enter-button:visible').first();
-            if ($visibleButton.length) {
-                $visibleButton.click();
-                event.preventDefault();
+    $(document).on('shiny:sessioninitialized', function() {
+        $(document).on('keydown', function(event) {
+            if (event.key === 'Enter' && !event.repeat) {
+                var $visibleButton = $('.sd-enter-button:visible').first();
+                if ($visibleButton.length) {
+                    $visibleButton.click();
+                    event.preventDefault();
+                }
             }
-        }
+        });
     });
     "
 }
