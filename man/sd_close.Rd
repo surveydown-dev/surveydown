@@ -2,35 +2,44 @@
 % Please edit documentation in R/ui.R
 \name{sd_close}
 \alias{sd_close}
-\title{Create a 'Close' Button to Exit the Survey with Confirmation}
+\title{Create a 'Close' Button to Exit the Survey}
 \usage{
-sd_close(
-  label = "Exit Survey",
-  confirm_message = "Are you sure you want to exit the survey?"
-)
+sd_close(label = "Exit Survey")
 }
 \arguments{
 \item{label}{Character string. The label of the 'Close' button. Defaults to "Exit Survey".}
-
-\item{confirm_message}{Character string. The message to display in the confirmation dialog.
-Defaults to "Are you sure you want to exit the survey?".}
 }
 \value{
-A Shiny tagList containing the 'Close' button UI element and associated JavaScript for confirmation.
+A Shiny tagList containing the 'Close' button UI element and associated JavaScript for the exit process.
 }
 \description{
-This function creates a 'Close' button that, when clicked, will prompt for confirmation
-before attempting to close the current browser tab or window.
-The button can be activated by clicking or by pressing the Enter key when visible.
+This function creates a 'Close' button that, when clicked, will trigger the exit process
+for the survey. Depending on the server-side configuration, this may show a rating question
+or a simple confirmation dialog before attempting to close the current browser tab or window.
 }
 \details{
-The function generates a Shiny action button that, when clicked, displays a confirmation dialog.
-If confirmed, it attempts to close the current browser tab or window. Note that for security reasons,
-some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
-In such cases, the button will prompt the user to close the tab manually.
+The function generates a Shiny action button that, when clicked, triggers the 'show_exit_modal' event.
+The server-side logic (controlled by the \code{rate_survey} parameter in \code{sd_server()}) determines
+whether to show a rating question or a simple confirmation dialog.
+
+The function also includes a custom message handler for closing the window. This is necessary
+because some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
+In such cases, the user will be prompted to close the tab manually.
+}
+\note{
+The actual behavior of the exit process (whether to show a rating question or not)
+is controlled by the \code{rate_survey} parameter in the \code{sd_server()} function, not in this UI function.
 }
 \examples{
+\dontrun{
+# In your UI code:
 sd_close()
-sd_close("Exit Survey", "Are you sure you want to exit? Your progress will not be saved.")
 
+# With a custom label:
+sd_close("Finish and Exit")
+}
+
+}
+\seealso{
+\code{\link{sd_server}}
 }

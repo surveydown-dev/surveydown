@@ -16,6 +16,9 @@ run_config <- function(
     # Get the html content from the qmd file (or html if pre-rendered)
     html_content <- get_html_content(survey_file)
 
+    # Check for sd_close() call
+    sd_close_present <- check_sd_close(html_content)
+
     # Extract all divs with class "sd-page"
     pages <- extract_html_pages(
         html_content, required_questions, all_questions_required, show_if
@@ -66,6 +69,17 @@ run_config <- function(
     )
 
     return(config)
+}
+
+check_sd_close <- function(html_content) {
+    script_tags <- rvest::html_elements(html_content, "script")
+    sd_close_present <- any(sapply(script_tags, function(tag) {
+        grepl("sd_close\\(\\)", rvest::html_text(tag))
+    }))
+    if (!sd_close_present) {
+        message("\u274C No sd_close() call found in the survey file. This may cause issues with data submission.")
+    }
+    return(sd_close_present)
 }
 
 get_html_content <- function(survey_file) {

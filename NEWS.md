@@ -3,6 +3,8 @@
 - Bug fix: reactive questions now work with show_if conditions too
 - Bug fix: show_if conditions now work even if the target question is on a different page.
 - Bug fix: reactive question ids (those defined in the server) were not being considered in `check_skip_show()` checks, so you'd get an error that the question id was invalid.
+- `sd_server()` accepts a new parameter called `"rate_survey"`, default to `FALSE`. If `TRUE`, the Exit button will trigger a rating question. If `FALSE`, the Exit button will only trigger a double confirmation to ensure the user really wants to exit.
+- Now the survey will check if there exists an `sd_close()` function call.
 
 # surveydown 0.3.3
 

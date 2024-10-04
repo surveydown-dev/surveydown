@@ -11,7 +11,8 @@ sd_server(
   all_questions_required = FALSE,
   start_page = NULL,
   admin_page = FALSE,
-  auto_scroll = TRUE
+  auto_scroll = TRUE,
+  rate_survey = FALSE
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ file, which is faster when the app loads. Defaults to \code{FALSE}.}
 \item{admin_page}{Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to \code{FALSE}.}
 
 \item{auto_scroll}{Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to TRUE.}
+
+\item{rate_survey}{Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to FALSE.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for the Shiny application.
@@ -39,7 +42,7 @@ This function does not return a value; it sets up the server-side logic for the 
 \description{
 This function defines the server-side logic for a Shiny application used in surveydown.
 It handles various operations such as conditional display, progress tracking,
-page navigation, and database updates for survey responses.
+page navigation, database updates for survey responses, and exit survey functionality.
 }
 \details{
 The function performs the following tasks:
@@ -53,6 +56,7 @@ The function performs the following tasks:
 \item Sets up admin functionality if enabled in the configuration.
 \item Controls auto-scrolling behavior based on the \code{auto_scroll} parameter.
 \item Uses sweetalert for warning messages when required questions are not answered.
+\item Handles the exit survey process based on the \code{rate_survey} parameter.
 }
 }
 \section{Progress Bar}{
@@ -76,11 +80,10 @@ after the current question is answered. This behavior can be disabled by setting
 \code{auto_scroll} to FALSE.
 }
 
-\section{Warning Messages}{
+\section{Exit Survey}{
 
-The function uses sweetalert to display warning messages when users attempt to proceed
-without answering all required questions. This provides a more user-friendly experience
-compared to standard Shiny notifications.
+When \code{rate_survey} is TRUE, the function will show a rating question when the user attempts to exit the survey.
+When FALSE, it will show a simple confirmation dialog. The rating, if provided, is saved with the survey data.
 }
 
 \examples{
@@ -92,7 +95,7 @@ compared to standard Shiny notifications.
   shinyApp(
     ui = sd_ui(),
     server = function(input, output, session) {
-      sd_server(db = db, auto_scroll = TRUE)
+      sd_server(db = db, auto_scroll = TRUE, rate_survey = TRUE)
     }
   )
 }
