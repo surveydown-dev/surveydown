@@ -90,13 +90,13 @@ extract_html_pages <- function(
                 question_ids <- c(question_ids, question_id)
                 is_required <- all_questions_required | (question_id %in% required_questions)
 
-                # Inverse logic for asterisk display
+                # Asterisk display
                 asterisk <- rvest::html_element(container, ".required-asterisk")
                 if (!is_required) {
                     xml2::xml_attr(asterisk, "style") <- "display: none;"
                 }
 
-                # Set the container's position to relative (unchanged)
+                # Set the container's position to relative
                 current_style <- xml2::xml_attr(container, "style")
                 new_style <- paste(current_style, "position: relative;", sep = " ")
                 xml2::xml_attr(container, "style") <- new_style
@@ -105,7 +105,6 @@ extract_html_pages <- function(
                     required_question_ids <- c(required_question_ids, question_id)
                 }
 
-                # Rest of the function remains unchanged
                 if (!is.null(show_if)) {
                     if (question_id %in% show_if$targets) {
                         current_style <- xml2::xml_attr(container, "style")
