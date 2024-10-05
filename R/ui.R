@@ -397,13 +397,9 @@ sd_question <- function(
       id = paste0("container-", id),
       `data-question-id` = id,
       class = "question-container",
-      style = sprintf("width: %s; position: relative;", width),
+      style = sprintf("width: %s;", width),
       oninput = js_interaction,
-      if (type == "matrix") {
-        output
-      } else {
-        shiny::div(output)
-      }
+      output
     )
 
     if (!is.null(shiny::getDefaultReactiveDomain())) {
@@ -869,7 +865,8 @@ sd_output <- function(id, type = NULL, display = "inline", wrapper = NULL, ...) 
             id = paste0("placeholder-", id),
             `data-question-id` = id,
             class = "question-container",
-            shiny::uiOutput(id)
+            shiny::uiOutput(id),
+            shiny::tags$span(class = "hidden-asterisk", "*")
         ))
     }
 
