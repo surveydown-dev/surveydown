@@ -201,11 +201,8 @@ sd_question <- function(
     # Check if question if answered
     js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
 
-    # Add asterisk to label for all questions
-    label <- paste0(
-      label,
-      " <span class='required-asterisk' style='display: inline; color: red; font-size: 1.5em; position: absolute; top: 0; right: 0.5em;'>*</span>"
-    )
+    # Initially hide asterisk for all questions
+    label <- paste0(label," <span class='hidden-asterisk'>*</span>")
 
     if (type ==  "select") {
         option <- c("", option)

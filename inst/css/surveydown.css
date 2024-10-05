@@ -66,6 +66,16 @@ p, .form-group, .control-label {
   width: 100%;
 }
 
+/* Hidden Asterisk */
+.hidden-asterisk {
+  display: none;
+  color: red;
+  font-size: 1.5em;
+  position: absolute;
+  top: 0;
+  right: 0.5em;
+}
+
 /* Radio and Checkbox styling */
 .radio-inline,
 .checkbox-inline,
