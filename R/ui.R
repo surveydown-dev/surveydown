@@ -201,8 +201,11 @@ sd_question <- function(
     # Check if question if answered
     js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
 
-    # Initially hide asterisk for all questions
-    label <- paste0(label," <span class='hidden-asterisk'>*</span>")
+    # Create label with hidden asterisk
+    label <- shiny::tagList(
+      markdown_to_html(label),
+      shiny::tags$span(class = "hidden-asterisk", "*")
+    )
 
     if (type ==  "select") {
         option <- c("", option)
@@ -210,7 +213,7 @@ sd_question <- function(
 
         output <- shiny::selectInput(
             inputId  = id,
-            label    = markdown_to_html(label),
+            label    = label,
             choices  = option,
             multiple = FALSE,
             selected = FALSE
@@ -220,7 +223,7 @@ sd_question <- function(
 
         output <- shiny::radioButtons(
             inputId  = id,
-            label    = markdown_to_html(label),
+            label    = label,
             choices  = option,
             selected = FALSE
         )
@@ -229,7 +232,7 @@ sd_question <- function(
 
         output <- shiny::checkboxGroupInput(
             inputId  = id,
-            label    = markdown_to_html(label),
+            label    = label,
             choices  = option,
             selected = FALSE
         )
@@ -237,11 +240,11 @@ sd_question <- function(
     } else if (type == "mc_buttons") {
 
         output <- shinyWidgets::radioGroupButtons(
-            inputId    = id,
-            label      = markdown_to_html(label),
-            choices    = list_name_md_to_html(option),
-            direction  = direction,
-            selected   = character(0)
+            inputId   = id,
+            label     = label,
+            choices   = list_name_md_to_html(option),
+            direction = direction,
+            selected  = character(0)
         )
 
         output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
@@ -254,7 +257,7 @@ sd_question <- function(
 
         output <- shinyWidgets::checkboxGroupButtons(
             inputId    = id,
-            label      = markdown_to_html(label),
+            label      = label,
             choices    = list_name_md_to_html(option),
             direction  = direction,
             individual = individual,
@@ -271,7 +274,7 @@ sd_question <- function(
 
         output <- shiny::textInput(
             inputId     = id,
-            label       = markdown_to_html(label),
+            label       = label,
             placeholder = option
         )
 
@@ -279,7 +282,7 @@ sd_question <- function(
 
         output <- shiny::textAreaInput(
             inputId     = id,
-            label       = markdown_to_html(label),
+            label       = label,
             height      = height,
             cols        = cols,
             value       = NULL,
@@ -292,7 +295,7 @@ sd_question <- function(
 
         output <- shiny::numericInput(
             inputId = id,
-            label   = markdown_to_html(label),
+            label   = label,
             value   = NULL
         )
 
@@ -300,7 +303,7 @@ sd_question <- function(
 
         output <- shinyWidgets::sliderTextInput(
             inputId      = id,
-            label        = markdown_to_html(label),
+            label        = label,
             choices      = option,
             selected     = selected,
             force_edges  = force_edges,
@@ -322,7 +325,7 @@ sd_question <- function(
 
         output <- shiny::dateInput(
             inputId            = id,
-            label              = markdown_to_html(label),
+            label              = label,
             value              = NULL,
             min                = NULL,
             max                = NULL,
@@ -341,7 +344,7 @@ sd_question <- function(
 
         output <- shiny::dateRangeInput(
             inputId   = id,
-            label     = markdown_to_html(label),
+            label     = label,
             start     = NULL,
             end       = NULL,
             min       = NULL,
@@ -380,7 +383,7 @@ sd_question <- function(
 
       output <- shiny::div(
         class = "matrix-question-container",
-        shiny::tags$label(class = "control-label", markdown_to_html(label)),
+        shiny::tags$label(class = "control-label", label),
         shiny::tags$table(
           class = "matrix-question",
           header,
