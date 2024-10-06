@@ -149,17 +149,13 @@ sd_server <- function(
         setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
-    # Check for interaction
-    interaction_occurred <- shiny::reactiveVal(FALSE)
-    shiny::observeEvent(show_if_results(), {
-      interaction_occurred(TRUE)
-    })
-
-    # Observer for show/hide logic
+    # Create a new observer for show/hide logic
     shiny::observe({
         # This will re-run whenever the page changes or is re-rendered
         current_page_id()
-        shiny::req(interaction_occurred())
+
+        # Add a small delay to ensure DOM is updated
+        shiny::invalidateLater(50)
 
         results <- show_if_results()
         current_visibility <- question_visibility()
@@ -172,10 +168,8 @@ sd_server <- function(
                 shinyjs::hide(paste0('container-', target))
             }
         }
-        question_visibility(current_visibility)
 
-        # Reset the interaction flag
-        interaction_occurred(FALSE)
+        question_visibility(current_visibility)
     })
 
     # Initialize local functions ----
@@ -305,9 +299,6 @@ sd_server <- function(
 
             # Update data after a short delay
             shiny::invalidateLater(100)
-
-            # Trigger the show/hide logic
-            interaction_occurred(TRUE)
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
     })
 
