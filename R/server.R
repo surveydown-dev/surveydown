@@ -155,7 +155,7 @@ sd_server <- function(
         current_page_id()
 
         # Add a small delay to ensure DOM is updated
-        shiny::invalidateLater(10)
+        shiny::invalidateLater(50)
 
         results <- show_if_results()
         current_visibility <- question_visibility()

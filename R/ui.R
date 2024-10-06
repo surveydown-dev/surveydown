@@ -392,7 +392,7 @@ sd_question <- function(
       return(output)
     }
 
-    # Modify the output_div creation
+    # Create wrapper div
     output_div <- shiny::tags$div(
       id = paste0("container-", id),
       `data-question-id` = id,
@@ -405,9 +405,10 @@ sd_question <- function(
     if (!is.null(shiny::getDefaultReactiveDomain())) {
       # In a reactive context, directly add to output with renderUI
       shiny::isolate({
+        output_div <- shiny::tags$div(output)
         output <- shiny::getDefaultReactiveDomain()$output
         output[[id]] <- shiny::renderUI({
-          output_div
+            output_div
         })
       })
     } else {
@@ -823,6 +824,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' @param id Character string. A unique identifier for the output element.
 #' @param type Character string. Specifies the type of output. Can be "question", "value", or `NULL.`
 #'   If `NULL`, the function behaves like `shiny::uiOutput()`.
+#' @param width Character string. The width of the UI element. Defaults to "100%".
 #' @param display Character string. Specifies the display type for "value" outputs.
 #'   Can be "inline", "text", "verbatim", or "ui". Only used when `type = "value"`.
 #' @param wrapper Function. A function to wrap the output. Only used when `type = "value"`.
@@ -854,17 +856,29 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' }
 #'
 #' @export
-sd_output <- function(id, type = NULL, display = "inline", wrapper = NULL, ...) {
+sd_output <- function(
+    id,
+    type = NULL,
+    width = "100%",
+    display = "inline",
+    wrapper = NULL,
+    ...
+) {
     if (is.null(type)) {
         # If only id is provided, behave like shiny::uiOutput
         return(shiny::uiOutput(id, ...))
     }
 
     if (type == "question") {
-        return(shiny::div(
-            id = paste0("placeholder-", id),
+
+        # Create wrapper div
+        js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
+        return(shiny::tags$div(
+            id = paste0("container-", id),
             `data-question-id` = id,
             class = "question-container",
+            style = sprintf("width: %s;", width),
+            oninput = js_interaction,
             shiny::uiOutput(id),
             shiny::tags$span(class = "hidden-asterisk", "*")
         ))
