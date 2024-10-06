@@ -4,13 +4,22 @@
 \alias{sd_output}
 \title{Output Function for Displaying reactive objects and values}
 \usage{
-sd_output(id, type = NULL, display = "inline", wrapper = NULL, ...)
+sd_output(
+  id,
+  type = NULL,
+  width = "100\%",
+  display = "inline",
+  wrapper = NULL,
+  ...
+)
 }
 \arguments{
 \item{id}{Character string. A unique identifier for the output element.}
 
 \item{type}{Character string. Specifies the type of output. Can be "question", "value", or \code{NULL.}
 If \code{NULL}, the function behaves like \code{shiny::uiOutput()}.}
+
+\item{width}{Character string. The width of the UI element. Defaults to "100\%".}
 
 \item{display}{Character string. Specifies the display type for "value" outputs.
 Can be "inline", "text", "verbatim", or "ui". Only used when \code{type = "value"}.}

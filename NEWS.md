@@ -6,6 +6,8 @@
 - `sd_server()` accepts a new parameter called `"rate_survey"`, default to `FALSE`. If `TRUE`, the Exit button will trigger a rating question. If `FALSE`, the Exit button will only trigger a double confirmation to ensure the user really wants to exit.
 - Now the survey will check if there exists an `sd_close()` function call.
 - Now the survey will check if the reserved question IDs are used, including `session_id`, `time_start`, `time_end`, and `exit_survey_rating`. There could be more in the future.
+- Now the `sd_output()` function will take care of the styling setting of reactive questions. For example, `sd_output(id = "some_question_id", type = "question", width = "80%")` will define with of 80% for a reactive question.
+- Now the `sd_show_if()` can take care of cross-page conditional reactive questions.
 
 # surveydown 0.3.3
 

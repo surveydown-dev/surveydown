@@ -141,35 +141,39 @@ sd_server <- function(
 
     # show_if conditions ----
 
-    # Reactive values storing status of show_if conditions
-    show_if_results <- set_show_if_conditions(show_if)
+    # Function to apply show/hide logic
+    apply_show_hide_logic <- function() {
+      show_if_results <- set_show_if_conditions(show_if)()
+      current_visibility <- question_visibility()
 
-    # Reactive values storing the visibility state of all questions
+      for (target in names(show_if_results)) {
+        current_visibility[target] <- show_if_results[[target]]
+        if (show_if_results[[target]]) {
+          shinyjs::show(paste0('container-', target))
+        } else {
+          shinyjs::hide(paste0('container-', target))
+        }
+      }
+
+      question_visibility(current_visibility)
+    }
+
     question_visibility <- shiny::reactiveVal(
-        setNames(rep(TRUE, length(question_ids)), question_ids)
+      setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
-    # Create a new observer for show/hide logic
+    # Observer for all question inputs
     shiny::observe({
-        # This will re-run whenever the page changes or is re-rendered
-        current_page_id()
+      shiny::reactiveValuesToList(input)
+      apply_show_hide_logic()
+    })
 
-        # Add a small delay to ensure DOM is updated
-        shiny::invalidateLater(50)
-
-        results <- show_if_results()
-        current_visibility <- question_visibility()
-
-        for (target in names(results)) {
-            current_visibility[target] <- results[[target]]
-            if (results[[target]]) {
-                shinyjs::show(paste0('container-', target))
-            } else {
-                shinyjs::hide(paste0('container-', target))
-            }
-        }
-
-        question_visibility(current_visibility)
+    # Observer for reactive questions
+    shiny::observe({
+      for (condition in show_if$conditions) {
+        shiny::req(input[[condition$target]])
+      }
+      apply_show_hide_logic()
     })
 
     # Initialize local functions ----
