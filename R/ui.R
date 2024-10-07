@@ -202,10 +202,7 @@ sd_question <- function(
     js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
 
     # Create label with hidden asterisk
-    label <- shiny::tagList(
-      markdown_to_html(label),
-      shiny::tags$span(class = "hidden-asterisk", "*")
-    )
+    label <- markdown_to_html(label)
 
     if (type ==  "select") {
         option <- c("", option)
@@ -396,23 +393,14 @@ sd_question <- function(
     }
 
     # Create wrapper div
-    output_div <- shiny::tags$div(
-      id = paste0("container-", id),
-      `data-question-id` = id,
-      class = "question-container",
-      style = sprintf("width: %s;", width),
-      oninput = js_interaction,
-      output
-    )
+    output_div <- make_question_container(id, output, width)
 
     if (!is.null(shiny::getDefaultReactiveDomain())) {
       # In a reactive context, directly add to output with renderUI
       shiny::isolate({
         output_div <- shiny::tags$div(output)
         output <- shiny::getDefaultReactiveDomain()$output
-        output[[id]] <- shiny::renderUI({
-            output_div
-        })
+        output[[id]] <- shiny::renderUI({ output_div })
       })
     } else {
       # If not in a reactive context, just return the element
@@ -430,6 +418,23 @@ date_interaction <- function(output, id) {
         id, id
     )
     shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(js_code)))
+}
+
+make_question_container <- function(id, object, width) {
+    # Check if question if answered
+    js_interaction <- sprintf(
+        "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
+        id
+    )
+    return(shiny::tags$div(
+        id = paste0("container-", id),
+        `data-question-id` = id,
+        class = "question-container",
+        style = sprintf("width: %s;", width),
+        oninput = js_interaction,
+        object,
+        shiny::tags$span(class = "hidden-asterisk", "*")
+    ))
 }
 
 #' Create a 'Next' Button for Page Navigation
@@ -873,18 +878,7 @@ sd_output <- function(
     }
 
     if (type == "question") {
-
-        # Create wrapper div
-        js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
-        return(shiny::tags$div(
-            id = paste0("container-", id),
-            `data-question-id` = id,
-            class = "question-container",
-            style = sprintf("width: %s;", width),
-            oninput = js_interaction,
-            shiny::uiOutput(id),
-            shiny::tags$span(class = "hidden-asterisk", "*")
-        ))
+        return(make_question_container(id, shiny::uiOutput(id), width))
     }
 
     if (type == "value") {
