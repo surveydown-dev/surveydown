@@ -141,39 +141,25 @@ sd_server <- function(
 
     # show_if conditions ----
 
-    # Function to apply show/hide logic
-    apply_show_hide_logic <- function() {
-      show_if_results <- set_show_if_conditions(show_if)()
-      current_visibility <- question_visibility()
-
-      for (target in names(show_if_results)) {
-        current_visibility[target] <- show_if_results[[target]]
-        if (show_if_results[[target]]) {
-          shinyjs::show(paste0('container-', target))
-        } else {
-          shinyjs::hide(paste0('container-', target))
-        }
-      }
-
-      question_visibility(current_visibility)
-    }
-
+    # Reactive to store visibility status of all questions
     question_visibility <- shiny::reactiveVal(
       setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
-    # Observer for all question inputs
+    # Observer to apply show_if conditions and update question_visibility
     shiny::observe({
       shiny::reactiveValuesToList(input)
-      apply_show_hide_logic()
-    })
-
-    # Observer for reactive questions
-    shiny::observe({
-      for (condition in show_if$conditions) {
-        shiny::req(input[[condition$target]])
+      show_if_results <- set_show_if_conditions(show_if)()
+      current_visibility <- question_visibility()
+      for (target in names(show_if_results)) {
+          current_visibility[target] <- show_if_results[[target]]
+          if (show_if_results[[target]]) {
+              shinyjs::show(paste0('container-', target))
+          } else {
+              shinyjs::hide(paste0('container-', target))
+          }
       }
-      apply_show_hide_logic()
+      question_visibility(current_visibility)
     })
 
     # Initialize local functions ----
@@ -534,39 +520,26 @@ sd_show_if <- function(...) {
 }
 
 set_show_if_conditions <- function(show_if) {
-  if (is.null(show_if) || length(show_if$conditions) == 0) {
-    return(shiny::reactive(list()))
-  }
-
-  conditions <- show_if$conditions
-
-  # Group conditions by target
-  grouped_conditions <- split(conditions, sapply(conditions, function(rule) rule$target))
-
-  # Create a reactive expression for each group of conditions
-  condition_reactives <- lapply(grouped_conditions, function(group) {
+    if (is.null(show_if) || length(show_if$conditions) == 0) {
+        return(shiny::reactive(list()))
+    }
     shiny::reactive({
-      results <- lapply(group, function(rule) {
-        tryCatch({
-          evaluate_condition(rule)
-        }, error = function(e) {
-          warning(sprintf(
-            "Error in show_if condition for target '%s', condition '%s': %s",
-            rule$target,
-            deparse(rule$condition),
-            conditionMessage(e)
-          ))
-          FALSE
+        results <- lapply(show_if$conditions, function(rule) {
+            result <- tryCatch({
+                evaluate_condition(rule)
+            }, error = function(e) {
+                warning(sprintf(
+                    "Error in show_if condition for target '%s', condition '%s': %s",
+                    rule$target,
+                    deparse(rule$condition),
+                    conditionMessage(e)
+                ))
+                FALSE
+            })
+            setNames(list(result), rule$target)
         })
-      })
-      any(unlist(results))
+        do.call(c, results)
     })
-  })
-
-  # Return a reactive that contains all condition results
-  shiny::reactive({
-    lapply(condition_reactives, function(r) r())
-  })
 }
 
 get_unique_targets <- function(a) {
