@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+# surveydown 0.3.4
+
 - Bug fix: reactive questions now work with show_if conditions too
 - Bug fix: show_if conditions now work even if the target question is on a different page.
 - Bug fix: reactive question ids (those defined in the server) were not being considered in `check_skip_show()` checks, so you'd get an error that the question id was invalid.
