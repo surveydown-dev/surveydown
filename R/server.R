@@ -286,9 +286,6 @@ sd_server <- function(
 
             # Make value accessible in the UI
             output[[paste0(local_id, "_value")]] <- renderText({ formatted_value })
-
-            # Update data after a short delay
-            shiny::invalidateLater(100)
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
     })
 
