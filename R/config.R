@@ -94,7 +94,7 @@ get_html_content <- function(survey_file) {
 }
 
 extract_html_pages <- function(
-        html_content, required_questions, all_questions_required, show_if
+    html_content, required_questions, all_questions_required, show_if
 ) {
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
