@@ -141,18 +141,39 @@ sd_server <- function(
 
     # show_if conditions ----
 
-    # Reactive to store visibility status of all questions based on show_if
-    question_visibility <- create_visibility_reactive(show_if, question_ids)
+    # Function to apply show/hide logic
+    apply_show_hide_logic <- function() {
+      show_if_results <- set_show_if_conditions(show_if)()
+      current_visibility <- question_visibility()
 
-    # Observer to hide/show based on question visibility
-    shiny::observe({
-        for (id in question_ids) {
-            if (question_visibility[[id]]) {
-                shinyjs::show(id)
-            } else {
-                shinyjs::hide(id)
-            }
+      for (target in names(show_if_results)) {
+        current_visibility[target] <- show_if_results[[target]]
+        if (show_if_results[[target]]) {
+          shinyjs::show(paste0('container-', target))
+        } else {
+          shinyjs::hide(paste0('container-', target))
         }
+      }
+
+      question_visibility(current_visibility)
+    }
+
+    question_visibility <- shiny::reactiveVal(
+      setNames(rep(TRUE, length(question_ids)), question_ids)
+    )
+
+    # Observer for all question inputs
+    shiny::observe({
+      shiny::reactiveValuesToList(input)
+      apply_show_hide_logic()
+    })
+
+    # Observer for reactive questions
+    shiny::observe({
+      for (condition in show_if$conditions) {
+        shiny::req(input[[condition$target]])
+      }
+      apply_show_hide_logic()
     })
 
     # Initialize local functions ----
@@ -291,23 +312,13 @@ sd_server <- function(
     # (defaults to first page if NULL...see run_config() function)
     current_page_id <- shiny::reactiveVal(start_page)
 
-    get_current_page <- function(question_visibility) {
-        id <- shiny::isolate(current_page_id())
-        current_page <- pages[[which(sapply(pages, function(p) p$id == id))]]
-        question_ids <- current_page$questions
-        # Update visibility of any show_if target questions
-        visibility <- shiny::isolate({
-            sapply(question_ids, function(id) question_visibility[[id]])
-        })
-        current_page$content <- update_question_visibility(
-            current_page, show_if, visibility
-        )
-        return(current_page)
-    }
+    get_current_page <- reactive({
+        pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
+    })
 
     # Render main page content when current page changes
     output$main <- shiny::renderUI({
-        current_page <- get_current_page(question_visibility)
+        current_page <- get_current_page()
         shiny::tagList(
             shiny::tags$head(shiny::HTML(head_content)),
             shiny::tags$div(
@@ -326,9 +337,9 @@ sd_server <- function(
 
     # Page navigation ----
 
-    check_required <- function(page, question_visibility) {
+    check_required <- function(page) {
       required_questions <- page$required_questions
-      is_visible <- question_visibility[[required_questions]]
+      is_visible <- question_visibility()[required_questions]
       all(vapply(required_questions, function(q) {
         !is_visible[q] || check_answer(q, input)
       }, logical(1)))
@@ -346,10 +357,7 @@ sd_server <- function(
             current_page_id <- page$id
             next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
             next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
-            if (
-                !is.null(next_page_id) #&&
-                # check_required(page, question_visibility)
-            ) {
+            if (!is.null(next_page_id) && check_required(page)) {
               # Set the current page as the next page
               current_page_id(next_page_id)
 
@@ -374,7 +382,7 @@ sd_server <- function(
 
     # Observer to max out the progress bar when we reach the last page
     shiny::observe({
-        page <- get_current_page(question_visibility)
+        page <- get_current_page()
         if (is.null(page$next_page_id)) {
             update_progress_bar(length(question_ids))
         }
@@ -443,27 +451,6 @@ sd_server <- function(
         })
     })
 
-}
-
-update_question_visibility <- function(page, show_if, visibility) {
-    if (is.null(show_if) || length(show_if$targets) == 0) {
-        return(page$content)  # No changes needed if there are no show_if targets
-    }
-    parsed_html <- xml2::read_html(page$content)
-    for (question_id in page$questions) {
-        if (question_id %in% show_if$targets) {
-            container <- xml2::xml_find_first(
-                parsed_html,
-                sprintf("//div[@data-question-id='%s']", question_id)
-            )
-            current_style <- xml2::xml_attr(container, "style")
-            if (visibility[question_id]) {
-                new_style <- gsub("display:\\s*none;", "", current_style)
-                xml2::xml_attr(container, "style") <- new_style
-            }
-        }
-    }
-    as.character(parsed_html)
 }
 
 #' Define skip conditions for survey pages
@@ -546,43 +533,40 @@ sd_show_if <- function(...) {
   })
 }
 
-create_visibility_reactive <- function(show_if, question_ids) {
-    # Initialize reactiveValues with all questions visible
-    visibility <- shiny::reactiveValues()
-    for (id in question_ids) {
-        visibility[[id]] <- TRUE
-    }
+set_show_if_conditions <- function(show_if) {
+  if (is.null(show_if) || length(show_if$conditions) == 0) {
+    return(shiny::reactive(list()))
+  }
 
-    if (is.null(show_if) || length(show_if$conditions) == 0) {
-        return(visibility)
-    }
+  conditions <- show_if$conditions
 
-    conditions <- show_if$conditions
-    # Group conditions by target
-    grouped_conditions <- split(conditions, sapply(conditions, function(rule) rule$target))
+  # Group conditions by target
+  grouped_conditions <- split(conditions, sapply(conditions, function(rule) rule$target))
 
-    # Create an observer for each group of conditions
-    lapply(grouped_conditions, function(group) {
-        target <- group[[1]]$target
-        shiny::observe({
-            results <- lapply(group, function(rule) {
-                tryCatch({
-                    evaluate_condition(rule)
-                }, error = function(e) {
-                    warning(sprintf(
-                        "Error in show_if condition for target '%s', condition '%s': %s",
-                        rule$target,
-                        deparse(rule$condition),
-                        conditionMessage(e)
-                    ))
-                    FALSE
-                })
-            })
-            visibility[[target]] <- any(unlist(results))
+  # Create a reactive expression for each group of conditions
+  condition_reactives <- lapply(grouped_conditions, function(group) {
+    shiny::reactive({
+      results <- lapply(group, function(rule) {
+        tryCatch({
+          evaluate_condition(rule)
+        }, error = function(e) {
+          warning(sprintf(
+            "Error in show_if condition for target '%s', condition '%s': %s",
+            rule$target,
+            deparse(rule$condition),
+            conditionMessage(e)
+          ))
+          FALSE
         })
+      })
+      any(unlist(results))
     })
+  })
 
-    return(visibility)
+  # Return a reactive that contains all condition results
+  shiny::reactive({
+    lapply(condition_reactives, function(r) r())
+  })
 }
 
 get_unique_targets <- function(a) {
