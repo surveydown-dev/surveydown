@@ -213,112 +213,115 @@ Each element in the <code>row</code> list should have a name (used as the row ID
 <span class="r-in"><span>            row <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>service <span class="op">=</span> <span class="st">"Customer Service"</span>,</span></span>
 <span class="r-in"><span>                       quality <span class="op">=</span> <span class="st">"Product Quality"</span>,</span></span>
 <span class="r-in"><span>                       price <span class="op">=</span> <span class="st">"Price"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div class="matrix-question-container"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;label class="control-label"&gt;&lt;p&gt;Rate your satisfaction with the following:&lt;/p&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;div id="container-satisfaction" data-question-id="satisfaction" class="question-container" style="width: 100%;" oninput="Shiny.setInputValue(&amp;#39;satisfaction_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;div class="matrix-question-container"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;label class="control-label"&gt;&lt;p&gt;Rate your satisfaction with the following:&lt;/p&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;table class="matrix-question"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th&gt;&lt;/th&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th&gt;Unsatisfied&lt;/th&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th&gt;Neutral&lt;/th&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;th&gt;Satisfied&lt;/th&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;/tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;tbody&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;table class="matrix-question"&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;td&gt;Customer Service&lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;td colspan="3"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;div id="container-satisfaction_service" data-question-id="satisfaction_service" class="question-container" style="width: 100%;" oninput="Shiny.setInputValue(&amp;#39;satisfaction_service_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;div id="satisfaction_service" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="satisfaction_service-label"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;label class="control-label shiny-label-null" for="satisfaction_service" id="satisfaction_service-label"&gt;&lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;div class="shiny-options-group"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_service" value="1"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Unsatisfied&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_service" value="2"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Neutral&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_service" value="3"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Satisfied&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;th&gt;&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;th&gt;Unsatisfied&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;th&gt;Neutral&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;th&gt;Satisfied&lt;/th&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;/tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;tbody&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;td&gt;Customer Service&lt;/td&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;td colspan="3"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;div id="container-satisfaction_service" data-question-id="satisfaction_service" class="question-container" style="width: 100%;" oninput="Shiny.setInputValue(&amp;#39;satisfaction_service_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;div id="satisfaction_service" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="satisfaction_service-label"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;label class="control-label shiny-label-null" for="satisfaction_service" id="satisfaction_service-label"&gt;&lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="shiny-options-group"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_service" value="1"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Unsatisfied&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_service" value="2"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Neutral&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_service" value="3"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Satisfied&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;span class="hidden-asterisk"&gt;*&lt;/span&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;span class="hidden-asterisk"&gt;*&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;/tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;td&gt;Product Quality&lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;td colspan="3"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;div id="container-satisfaction_quality" data-question-id="satisfaction_quality" class="question-container" style="width: 100%;" oninput="Shiny.setInputValue(&amp;#39;satisfaction_quality_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;div id="satisfaction_quality" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="satisfaction_quality-label"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;label class="control-label shiny-label-null" for="satisfaction_quality" id="satisfaction_quality-label"&gt;&lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;div class="shiny-options-group"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_quality" value="1"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Unsatisfied&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_quality" value="2"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Neutral&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_quality" value="3"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Satisfied&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;/td&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;/tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;td&gt;Product Quality&lt;/td&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;td colspan="3"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;div id="container-satisfaction_quality" data-question-id="satisfaction_quality" class="question-container" style="width: 100%;" oninput="Shiny.setInputValue(&amp;#39;satisfaction_quality_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;div id="satisfaction_quality" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="satisfaction_quality-label"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;label class="control-label shiny-label-null" for="satisfaction_quality" id="satisfaction_quality-label"&gt;&lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="shiny-options-group"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_quality" value="1"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Unsatisfied&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_quality" value="2"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Neutral&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_quality" value="3"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Satisfied&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;span class="hidden-asterisk"&gt;*&lt;/span&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;span class="hidden-asterisk"&gt;*&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;/tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;td&gt;Price&lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;td colspan="3"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;div id="container-satisfaction_price" data-question-id="satisfaction_price" class="question-container" style="width: 100%;" oninput="Shiny.setInputValue(&amp;#39;satisfaction_price_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;div id="satisfaction_price" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="satisfaction_price-label"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;label class="control-label shiny-label-null" for="satisfaction_price" id="satisfaction_price-label"&gt;&lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;div class="shiny-options-group"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_price" value="1"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Unsatisfied&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_price" value="2"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Neutral&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="radio"&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;label&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;input type="radio" name="satisfaction_price" value="3"/&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;span&gt;Satisfied&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;/td&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;/tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;td&gt;Price&lt;/td&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;td colspan="3"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;div id="container-satisfaction_price" data-question-id="satisfaction_price" class="question-container" style="width: 100%;" oninput="Shiny.setInputValue(&amp;#39;satisfaction_price_interacted&amp;#39;, true, {priority: &amp;#39;event&amp;#39;});"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;div id="satisfaction_price" class="form-group shiny-input-radiogroup shiny-input-container" role="radiogroup" aria-labelledby="satisfaction_price-label"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;label class="control-label shiny-label-null" for="satisfaction_price" id="satisfaction_price-label"&gt;&lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;div class="shiny-options-group"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_price" value="1"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Unsatisfied&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_price" value="2"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Neutral&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;div class="radio"&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;input type="radio" name="satisfaction_price" value="3"/&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                       &lt;span&gt;Satisfied&lt;/span&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                     &lt;/label&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                 &lt;/div&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;span class="hidden-asterisk"&gt;*&lt;/span&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>             &lt;span class="hidden-asterisk"&gt;*&lt;/span&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;/div&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;/td&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;/tr&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;/tbody&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;/table&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           &lt;/td&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         &lt;/tr&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &lt;/tbody&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     &lt;/table&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;/div&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   &lt;span class="hidden-asterisk"&gt;*&lt;/span&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;/div&gt;</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
