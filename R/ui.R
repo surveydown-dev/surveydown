@@ -387,9 +387,6 @@ sd_question <- function(
           shiny::tags$tbody(rows)
         )
       )
-
-      # Return the matrix output directly
-      return(output)
     }
 
     # Create wrapper div

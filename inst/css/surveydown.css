@@ -279,7 +279,7 @@ p:last-child,
 .matrix-question .shiny-options-group .radio input {
     margin: 0;
     position: relative;
-    top: 2px;
+    top: 1rem; /* radio button position */
 }
 
 /* Hide radio button labels */
