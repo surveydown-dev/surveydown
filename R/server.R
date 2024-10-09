@@ -249,12 +249,6 @@ sd_server <- function(
         data[names(data) != ""]
     })
 
-    # Observer to update the data upon any change in the data
-    observe({
-        data <- latest_data()
-        update_data(data, changed_fields())
-    })
-
     # Reactive value to track which fields have changed
     changed_fields <- shiny::reactiveVal(character(0))
 
@@ -366,6 +360,7 @@ sd_server <- function(
     # Observer to max out the progress bar when we reach the last page
     shiny::observe({
         page <- get_current_page()
+        update_data(data, changed_fields())
         if (is.null(page$next_page_id)) {
             update_progress_bar(length(question_ids))
         }
