@@ -252,7 +252,7 @@ sd_server <- function(
     })
 
     # Reactive value to track which fields have changed
-    changed_fields <- shiny::reactiveVal(character(0))
+    changed_fields <- shiny::reactiveVal(names(initial_data))
 
     # Main question observers ----
     # (one created for each question)
@@ -432,7 +432,6 @@ sd_server <- function(
             update_data(time_last = TRUE)
         })
     })
-
 }
 
 #' Define skip conditions for survey pages
