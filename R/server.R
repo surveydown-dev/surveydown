@@ -174,9 +174,11 @@ sd_server <- function(
         }
     }
 
-    update_data <- function(data_list, changed_fields = NULL, time_last = FALSE) {
-        if (length(changed_fields) == 0) {
-            changed_fields = names(data_list)
+    update_data <- function(time_last = FALSE) {
+        data_list <- latest_data()
+        fields <- changed_fields()
+        if (length(fields) == 0) {
+            fields = names(data_list)
         }
         if (time_last) {
             data_list[['time_end']] <- get_utc_timestamp()
@@ -197,7 +199,7 @@ sd_server <- function(
                 message("Running in a non-writable environment.")
             }
         } else {
-            database_uploading(data_list, db$db, db$table, changed_fields)
+            database_uploading(data_list, db$db, db$table, fields)
         }
         # Reset changed_fields after updating the data
         changed_fields(character(0))
@@ -344,6 +346,9 @@ sd_server <- function(
 
               # Update tracker of which fields changed
               changed_fields(c(changed_fields(), next_ts_id))
+
+              # Update data
+              update_data()
             } else if (!is.null(next_page_id)) {
               shinyWidgets::sendSweetAlert(
                 session = session,
@@ -360,7 +365,6 @@ sd_server <- function(
     # Observer to max out the progress bar when we reach the last page
     shiny::observe({
         page <- get_current_page()
-        update_data(data, changed_fields())
         if (is.null(page$next_page_id)) {
             update_progress_bar(length(question_ids))
         }
@@ -409,7 +413,7 @@ sd_server <- function(
       changed_fields(c(changed_fields(), 'exit_survey_rating'))
       # Update data immediately
       isolate({
-        update_data(latest_data(), time_last = TRUE)
+        update_data(time_last = TRUE)
       })
       # Close the modal and the window
       removeModal()
@@ -425,7 +429,7 @@ sd_server <- function(
     # Ensure final update on session end
     shiny::onSessionEnded(function() {
         shiny::isolate({
-            update_data(latest_data(), time_last = TRUE)
+            update_data(time_last = TRUE)
         })
     })
 
