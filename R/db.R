@@ -244,11 +244,21 @@ database_uploading <- function(data_list, db, table, changed_fields) {
     if(is.null(db)) {
         return(warning("Databasing is not in use"))
     }
-
     tryCatch({
         pool::poolWithTransaction(db, function(conn) {
             # Get the actual columns in the table
             existing_cols <- DBI::dbListFields(conn, table)
+
+            # Check for new fields
+            new_fields <- setdiff(names(data_list), existing_cols)
+            if (length(new_fields) > 0) {
+                # Add new fields to the table
+                for (field in new_fields) {
+                    DBI::dbExecute(conn, sprintf('ALTER TABLE "%s" ADD COLUMN "%s" TEXT', table, field))
+                }
+                # Update existing_cols
+                existing_cols <- c(existing_cols, new_fields)
+            }
 
             # Filter data_list to only include existing columns and changed fields
             data_list <- data_list[names(data_list) %in% c("session_id", intersect(changed_fields, existing_cols))]
