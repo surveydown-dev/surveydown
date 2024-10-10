@@ -11,7 +11,7 @@ sd_server(
   all_questions_required = FALSE,
   start_page = NULL,
   admin_page = FALSE,
-  auto_scroll = TRUE,
+  auto_scroll = FALSE,
   rate_survey = FALSE
 )
 }
@@ -24,7 +24,7 @@ rendered when the app launches, which can be slow. Users can render it
 first into a html file and set \code{use_html = TRUE} to use the pre-rendered
 file, which is faster when the app loads. Defaults to \code{FALSE}.}
 
-\item{required_questions}{Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.}
+\item{required_questions}{Vector of character strings. The IDs of questions that must be answered. Defaults to \code{NULL}.}
 
 \item{all_questions_required}{Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.}
 
@@ -32,9 +32,9 @@ file, which is faster when the app loads. Defaults to \code{FALSE}.}
 
 \item{admin_page}{Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to \code{FALSE}.}
 
-\item{auto_scroll}{Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to TRUE.}
+\item{auto_scroll}{Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to \code{FALSE}.}
 
-\item{rate_survey}{Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to FALSE.}
+\item{rate_survey}{Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to \code{FALSE}.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for the Shiny application.

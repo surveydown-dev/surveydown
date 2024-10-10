@@ -6,17 +6,17 @@
 #' page navigation, database updates for survey responses, and exit survey functionality.
 #'
 #' @param db A list containing database connection information created using
-#' \code{\link{sd_database}} function. Defaults to \code{NULL}.
+#' \code{\link{sd_database}} function. Defaults to `NULL`.
 #' @param use_html Logical. By default, the `"survey.qmd"` file will be
 #' rendered when the app launches, which can be slow. Users can render it
 #' first into a html file and set `use_html = TRUE` to use the pre-rendered
 #' file, which is faster when the app loads. Defaults to `FALSE`.
-#' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.
+#' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to `NULL`.
 #' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
 #' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to `FALSE`.
-#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to TRUE.
-#' @param rate_survey Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to FALSE.
+#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to `FALSE`.
+#' @param rate_survey Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to `FALSE`.
 #'
 #' @import shiny
 #' @import shinyWidgets
@@ -86,7 +86,7 @@ sd_server <- function(
     all_questions_required = FALSE,
     start_page = NULL,
     admin_page = FALSE,
-    auto_scroll = TRUE,
+    auto_scroll = FALSE,
     rate_survey = FALSE
 ) {
 
