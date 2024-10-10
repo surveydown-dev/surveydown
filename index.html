@@ -87,6 +87,42 @@
 <p><strong>See the <a href="https://surveydown.org" class="external-link">documentation</a> to get started making your own surveydown survey!</strong></p>
 </div>
 <div class="section level1">
+<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h1>
+<div class="section level2">
+<h2 id="install-r--quarto">Install R &amp; Quarto<a class="anchor" aria-label="anchor" href="#install-r--quarto"></a>
+</h2>
+<p>You need both:</p>
+<ul>
+<li>Install <a href="https://CRAN.R-project.org/" class="external-link">R</a>
+</li>
+<li>Install <a href="https://quarto.org/" class="external-link">Quarto</a>
+</li>
+</ul>
+<p>We also recommend working with an IDE that has good support for R, Quarto, and Shiny.</p>
+<p><a href="https://www.rstudio.com/categories/rstudio-ide/" class="external-link">RStudio</a> is great, and we also like <a href="https://code.visualstudio.com" class="external-link">VSCode</a> and <a href="https://github.com/posit-dev/positron" class="external-link">Positron</a>.</p>
+</div>
+<div class="section level2">
+<h2 id="install-the-surveydown-r-package">Install the {surveydown} R package<a class="anchor" aria-label="anchor" href="#install-the-surveydown-r-package"></a>
+</h2>
+<p>The {surveydown} R package is not yet on CRAN, but you can install the development version from GitHub with the following command in your R console:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"surveydown-dev/surveydown"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="version-control">Version Control<a class="anchor" aria-label="anchor" href="#version-control"></a>
+</h2>
+<p>We made some R functions to make it easier to keep your R package.</p>
+<p>To <em>check</em> which version of the {surveydown} package you have installed, run:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_version.html">sd_version</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>To <em>update</em> to the latest version of the {surveydown} package, run:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_update.html">sd_update</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level1">
 <h1 id="background--motivation">Background &amp; Motivation<a class="anchor" aria-label="anchor" href="#background--motivation"></a>
 </h1>
 <p>Most survey platforms (e.g., Google forms, Qualtrics, etc.) use drag-and-drop interfaces to design surveys, making version control and collaboration with others difficult. They’re also not reproducible (others cannot easily reproduce a survey made on these platforms), and many require a paid subscription or license to use.</p>
@@ -111,11 +147,11 @@
 <li><label><input type="checkbox" checked>Include input checks for <code>skip_if</code> and <code>show_if</code> (<code>question_id</code> exists, and data frame names are correct)</label></li>
 <li><label><input type="checkbox" checked>Required questions: post a popup if a question is required before allowing next button.</label></li>
 <li><label><input type="checkbox" checked>Add a <code><a href="reference/sd_get_data.html">sd_get_data()</a></code> function so the survey designer can obtain the current survey results from inside the app: <a href="https://shinysurveys.jdtrat.com/articles/get-survey-data.html" class="external-link uri">https://shinysurveys.jdtrat.com/articles/get-survey-data.html</a></label></li>
-<li><label><input type="checkbox">Admin page w/password to preview / download data (see <a href="https://github.com/daattali/shinyforms" class="external-link uri">https://github.com/daattali/shinyforms</a>)</label></li>
 <li><label><input type="checkbox" checked>Ability to pass url parameters, e.g. for tracking users.</label></li>
 <li><label><input type="checkbox" checked>Ability to redirect users to another url.</label></li>
+<li><label><input type="checkbox">Admin page w/password to preview / download data (see <a href="https://github.com/daattali/shinyforms" class="external-link uri">https://github.com/daattali/shinyforms</a>)</label></li>
 <li><label><input type="checkbox">Form validation: Make sure the user inputs the correct type depending on the question type. (see <a href="https://shiny.posit.co/r/reference/shiny/0.14/validate.html" class="external-link uri">https://shiny.posit.co/r/reference/shiny/0.14/validate.html</a>)</label></li>
-<li><label><input type="checkbox">Deal with cookies so users who close the browser can start back where they left off.</label></li>
+<li><label><input type="checkbox">Leverage cookies so users who close the browser can start back where they left off.</label></li>
 <li>Question types:
 <ul class="task-list">
 <li><label><input type="checkbox" checked>Multiple choice (single choice)</label></li>
@@ -145,7 +181,7 @@
 <h2 id="citation-information">Citation Information<a class="anchor" aria-label="anchor" href="#citation-information"></a>
 </h2>
 <p>If you use this package for in a publication, please cite it! You can get the citation by typing <code>citation("surveydown")</code> into R:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"surveydown"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
