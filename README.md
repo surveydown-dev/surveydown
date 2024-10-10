@@ -36,6 +36,50 @@ together.
 **See the [documentation](https://surveydown.org) to get started making
 your own surveydown survey!**
 
+# Installation
+
+## Install R & Quarto
+
+You need both:
+
+- Install [R](https://CRAN.R-project.org/)
+- Install [Quarto](https://quarto.org/)
+
+We also recommend working with an IDE that has good support for R,
+Quarto, and Shiny.
+
+[RStudio](https://www.rstudio.com/categories/rstudio-ide/) is great, and
+we also like [VSCode](https://code.visualstudio.com) and
+[Positron](https://github.com/posit-dev/positron).
+
+## Install the {surveydown} R package
+
+The {surveydown} R package is not yet on CRAN, but you can install the
+development version from GitHub with the following command in your R
+console:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("surveydown-dev/surveydown")
+```
+
+## Version Control
+
+We made some R functions to make it easier to keep your R package.
+
+To *check* which version of the {surveydown} package you have installed,
+run:
+
+``` r
+surveydown::sd_version()
+```
+
+To *update* to the latest version of the {surveydown} package, run:
+
+``` r
+surveydown::sd_update()
+```
+
 # Background & Motivation
 
 Most survey platforms (e.g., Google forms, Qualtrics, etc.) use
@@ -91,14 +135,14 @@ to the project:
 - [x] Add a `sd_get_data()` function so the survey designer can obtain
   the current survey results from inside the app:
   <https://shinysurveys.jdtrat.com/articles/get-survey-data.html>
-- [ ] Admin page w/password to preview / download data (see
-  <https://github.com/daattali/shinyforms>)
 - [x] Ability to pass url parameters, e.g. for tracking users.
 - [x] Ability to redirect users to another url.
+- [ ] Admin page w/password to preview / download data (see
+  <https://github.com/daattali/shinyforms>)
 - [ ] Form validation: Make sure the user inputs the correct type
   depending on the question type. (see
   <https://shiny.posit.co/r/reference/shiny/0.14/validate.html>)
-- [ ] Deal with cookies so users who close the browser can start back
+- [ ] Leverage cookies so users who close the browser can start back
   where they left off.
 - Question types:
   - [x] Multiple choice (single choice)
