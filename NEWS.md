@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+- The database updating is simplified to only write to the database on each page turn and after the survey closes.
+
 # surveydown 0.3.4
 
 - Bug fix: reactive questions now work with show_if conditions too
