@@ -3,7 +3,7 @@ pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   surveydown: surveydown.html
-last_built: 2024-10-10T10:17Z
+last_built: 2024-10-10T10:20Z
 urls:
   reference: https://pkg.surveydown.org/reference
   article: https://pkg.surveydown.org/articles

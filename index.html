@@ -89,31 +89,24 @@
 <div class="section level1">
 <h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h1>
-<div class="section level2">
-<h2 id="install-r--quarto">Install R &amp; Quarto<a class="anchor" aria-label="anchor" href="#install-r--quarto"></a>
-</h2>
-<p>You need both:</p>
-<ul>
-<li>Install <a href="https://CRAN.R-project.org/" class="external-link">R</a>
-</li>
-<li>Install <a href="https://quarto.org/" class="external-link">Quarto</a>
-</li>
-</ul>
-<p>We also recommend working with an IDE that has good support for R, Quarto, and Shiny.</p>
-<p><a href="https://www.rstudio.com/categories/rstudio-ide/" class="external-link">RStudio</a> is great, and we also like <a href="https://code.visualstudio.com" class="external-link">VSCode</a> and <a href="https://github.com/posit-dev/positron" class="external-link">Positron</a>.</p>
+<div class="section level3">
+<h3 id="install-r--quarto">Install <a href="https://CRAN.R-project.org/" class="external-link">R</a> &amp; <a href="https://quarto.org/" class="external-link">Quarto</a>
+<a class="anchor" aria-label="anchor" href="#install-r--quarto"></a>
+</h3>
+<p>We also recommend working with an IDE that has good support for R, Quarto, and Shiny. <a href="https://www.rstudio.com/categories/rstudio-ide/" class="external-link">RStudio</a> is great, and we also like <a href="https://code.visualstudio.com" class="external-link">VSCode</a> and <a href="https://github.com/posit-dev/positron" class="external-link">Positron</a>.</p>
 </div>
-<div class="section level2">
-<h2 id="install-the-surveydown-r-package">Install the {surveydown} R package<a class="anchor" aria-label="anchor" href="#install-the-surveydown-r-package"></a>
-</h2>
+<div class="section level3">
+<h3 id="install-the-surveydown-r-package">Install the {surveydown} R package<a class="anchor" aria-label="anchor" href="#install-the-surveydown-r-package"></a>
+</h3>
 <p>The {surveydown} R package is not yet on CRAN, but you can install the development version from GitHub with the following command in your R console:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"surveydown-dev/surveydown"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="version-control">Version Control<a class="anchor" aria-label="anchor" href="#version-control"></a>
-</h2>
-<p>We made some R functions to make it easier to keep your R package.</p>
+<div class="section level3">
+<h3 id="version-control">Version Control<a class="anchor" aria-label="anchor" href="#version-control"></a>
+</h3>
+<p>We made some functions to make it easier to keep your R package up to date.</p>
 <p>To <em>check</em> which version of the {surveydown} package you have installed, run:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_version.html">sd_version</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
