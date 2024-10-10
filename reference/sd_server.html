@@ -11,7 +11,7 @@ page navigation, database updates for survey responses, and exit survey function
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,7 +58,7 @@ page navigation, database updates for survey responses, and exit survey function
 <span>  all_questions_required <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  start_page <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  admin_page <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  auto_scroll <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  auto_scroll <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  rate_survey <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -80,7 +80,7 @@ file, which is faster when the app loads. Defaults to <code>FALSE</code>.</p></d
 
 
 <dt id="arg-required-questions">required_questions<a class="anchor" aria-label="anchor" href="#arg-required-questions"></a></dt>
-<dd><p>Vector of character strings. The IDs of questions that must be answered. Defaults to NULL.</p></dd>
+<dd><p>Vector of character strings. The IDs of questions that must be answered. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-all-questions-required">all_questions_required<a class="anchor" aria-label="anchor" href="#arg-all-questions-required"></a></dt>
@@ -96,11 +96,11 @@ file, which is faster when the app loads. Defaults to <code>FALSE</code>.</p></d
 
 
 <dt id="arg-auto-scroll">auto_scroll<a class="anchor" aria-label="anchor" href="#arg-auto-scroll"></a></dt>
-<dd><p>Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to TRUE.</p></dd>
+<dd><p>Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-rate-survey">rate_survey<a class="anchor" aria-label="anchor" href="#arg-rate-survey"></a></dt>
-<dd><p>Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to FALSE.</p></dd>
+<dd><p>Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to <code>FALSE</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
