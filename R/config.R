@@ -79,8 +79,8 @@ check_sd_close <- function(survey_file) {
     # Read the content of survey.qmd
     qmd_content <- readLines(survey_file, warn = FALSE)
 
-    # Check for sd_close() call
-    sd_close_present <- any(grepl("sd_close\\(\\)", qmd_content))
+    # Check for sd_close() call with any parameters
+    sd_close_present <- any(grepl("sd_close\\s*\\(.*\\)", qmd_content))
 
     if (!sd_close_present) {
         message("\u274C No sd_close() call found in ", survey_file, ". This may cause issues with data submission.")
