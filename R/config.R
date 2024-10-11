@@ -89,8 +89,25 @@ check_sd_close <- function(survey_file) {
 }
 
 get_html_content <- function(survey_file) {
-    if (survey_file == 'survey.qmd') { quarto::quarto_render(survey_file) }
-    return(rvest::read_html('survey.html'))
+    if (survey_file == 'survey.qmd') {
+        tryCatch(
+            {
+                quarto::quarto_render(survey_file)
+            },
+            error = function(e) {
+                stop("Error rendering survey.qmd file. Please review and revise your survey.qmd file. Also, try rendering it directly to check for errors in your survey.qmd file. Error details: ", e$message)
+            }
+        )
+    }
+
+    tryCatch(
+        {
+            return(rvest::read_html('survey.html'))
+        },
+        error = function(e) {
+            stop("Error reading survey.html file. Please ensure the file exists and has no errors. Error details: ", e$message)
+        }
+    )
 }
 
 extract_html_pages <- function(

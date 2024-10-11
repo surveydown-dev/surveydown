@@ -75,12 +75,12 @@ sd_database <- function(
 
     # Authentication/Checks for NULL Values
     if (is.null(host) | is.null(dbname) | is.null(port) | is.null(user) | is.null(table)) {
-        message("One or more of the required parameters are NULL, so the database is NOT connected; writing to local data.csv file instead.")
+        message("One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local data.csv file *for previewing purposes only*.")
         return(NULL)
     }
 
     if (!nchar(password)) {
-        stop("Please define your password using surveydown::sd_set_password(). If you just did this, restart R to make sure the environment variable that was created is visible to the current R session.")
+        stop("Please define your password using surveydown::sd_set_password().\n If you just did this, RESTART the R session to make sure the password environment variable is loaded.")
     }
 
     tryCatch({

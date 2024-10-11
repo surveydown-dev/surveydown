@@ -831,7 +831,8 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #'   If `NULL`, the function behaves like `shiny::uiOutput()`.
 #' @param width Character string. The width of the UI element. Defaults to "100%".
 #' @param display Character string. Specifies the display type for "value" outputs.
-#'   Can be "inline", "text", "verbatim", or "ui". Only used when `type = "value"`.
+#'   Can be "text", "verbatim", or "ui". Only used when `type = "value"`.
+#' @param inline Logical. Whether to render the output inline. Defaults to `TRUE`.
 #' @param wrapper Function. A function to wrap the output. Only used when `type = "value"`.
 #' @param ... Additional arguments passed to the underlying Shiny functions or the wrapper function.
 #'
@@ -850,7 +851,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' sd_output('cbc1', type = 'question')
 #'
 #' # Display the value of a survey question inline
-#' sd_output('cbc1', type = 'value', display = 'inline')
+#' sd_output('cbc1', type = 'value', inline = TRUE)
 #'
 #' # Use as a simple uiOutput
 #' sd_output('redirect')
@@ -865,13 +866,14 @@ sd_output <- function(
     id,
     type = NULL,
     width = "100%",
-    display = "inline",
+    display = "text",
+    inline = TRUE,
     wrapper = NULL,
     ...
 ) {
     if (is.null(type)) {
         # If only id is provided, behave like shiny::uiOutput
-        return(shiny::uiOutput(id, ...))
+        return(shiny::uiOutput(id, inline = inline, ...))
     }
 
     if (type == "question") {
@@ -881,17 +883,17 @@ sd_output <- function(
     if (type == "value") {
         value_id <- paste0(id, "_value")
 
-        if (!is.null(display) && !display %in% c("inline", "text", "verbatim", "ui")) {
-            stop("Invalid display type. Choose 'inline', 'text', 'verbatim', or 'ui'.")
+        if (!display %in% c("text", "verbatim", "ui")) {
+            stop("Invalid display type. Choose 'text', 'verbatim', or 'ui'.")
         }
 
         output <- switch(
             display,
-            "inline" = shiny::textOutput(value_id, inline = TRUE),
-            "text" = shiny::textOutput(value_id),
-            "verbatim" = shiny::verbatimTextOutput(value_id),
-            "ui" = shiny::uiOutput(value_id),
-            shiny::uiOutput(value_id)  # Default to uiOutput if display is not specified
+            "text" = shiny::textOutput(value_id, inline = inline),
+            "verbatim" = shiny::verbatimTextOutput(value_id, inline = inline),
+            "ui" = shiny::uiOutput(value_id, inline = inline),
+            # Default to textOutput if display is not specified
+            shiny::textOutput(value_id, inline = inline)
         )
 
         if (!is.null(wrapper)) {
