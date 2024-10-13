@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+- Bug fix: `auto_scroll` now works better and smoother.
+- Bug fix: the enter key will not trigger page turn if working on textarea.
+
 # surveydown 0.3.5
 
 - The database updating is simplified to only write to the database on each page turn and after the survey closes.
