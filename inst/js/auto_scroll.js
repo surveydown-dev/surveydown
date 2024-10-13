@@ -54,7 +54,9 @@ function handlePageChange() {
 $(document).on('shiny:inputchanged', function(event) {
   if (event.name.endsWith('_interacted')) {
     const questionId = event.name.replace('_interacted', '');
-    autoScrollToCurrentQuestion(questionId);
+    setTimeout(() => {
+      autoScrollToCurrentQuestion(questionId);
+    }, 400); // 400ms delay
   }
 });
 
