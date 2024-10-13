@@ -49,7 +49,8 @@
 <span>  <span class="va">id</span>,</span>
 <span>  type <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  width <span class="op">=</span> <span class="st">"100%"</span>,</span>
-<span>  display <span class="op">=</span> <span class="st">"inline"</span>,</span>
+<span>  display <span class="op">=</span> <span class="st">"text"</span>,</span>
+<span>  inline <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  wrapper <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -74,7 +75,11 @@ If <code>NULL</code>, the function behaves like <code><a href="https://rdrr.io/p
 
 <dt id="arg-display">display<a class="anchor" aria-label="anchor" href="#arg-display"></a></dt>
 <dd><p>Character string. Specifies the display type for "value" outputs.
-Can be "inline", "text", "verbatim", or "ui". Only used when <code>type = "value"</code>.</p></dd>
+Can be "text", "verbatim", or "ui". Only used when <code>type = "value"</code>.</p></dd>
+
+
+<dt id="arg-inline">inline<a class="anchor" aria-label="anchor" href="#arg-inline"></a></dt>
+<dd><p>Logical. Whether to render the output inline. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-wrapper">wrapper<a class="anchor" aria-label="anchor" href="#arg-wrapper"></a></dt>
@@ -104,7 +109,7 @@ with the display style determined by the <code>display</code> parameter.</p></li
 <span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'cbc1'</span>, type <span class="op">=</span> <span class="st">'question'</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Display the value of a survey question inline</span></span></span>
-<span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'cbc1'</span>, type <span class="op">=</span> <span class="st">'value'</span>, display <span class="op">=</span> <span class="st">'inline'</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'cbc1'</span>, type <span class="op">=</span> <span class="st">'value'</span>, inline <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use as a simple uiOutput</span></span></span>
 <span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'redirect'</span><span class="op">)</span></span></span>
