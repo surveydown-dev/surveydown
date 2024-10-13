@@ -689,8 +689,8 @@ enter_key_js <- function() {
         $(document).on('keydown', function(event) {
             if (event.key === 'Enter' && !event.repeat) {
                 var $activeElement = $(document.activeElement);
-                // Check if the active element is not a textarea
-                if (!$activeElement.is('textarea')) {
+                // Check if the active element is not one of the excluded input types
+                if (!$activeElement.is('textarea, input[type=\"text\"], input[type=\"number\"], select, input[type=\"date\"]')) {
                     var $visibleButton = $('.sd-enter-button:visible').first();
                     if ($visibleButton.length) {
                         $visibleButton.click();

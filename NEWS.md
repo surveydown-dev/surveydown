@@ -1,7 +1,7 @@
 # surveydown (development version)
 
 - Bug fix: `auto_scroll` now works better and smoother.
-- Bug fix: the enter key will not trigger page turn if working on textarea.
+- Bug fix: the enter key will not trigger page turn if working on `text`, `textarea`, `numeric`, `select`, `date`, and `daterange`.
 
 # surveydown 0.3.5
 
