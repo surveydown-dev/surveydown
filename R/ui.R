@@ -688,10 +688,14 @@ enter_key_js <- function() {
     $(document).on('shiny:sessioninitialized', function() {
         $(document).on('keydown', function(event) {
             if (event.key === 'Enter' && !event.repeat) {
-                var $visibleButton = $('.sd-enter-button:visible').first();
-                if ($visibleButton.length) {
-                    $visibleButton.click();
-                    event.preventDefault();
+                var $activeElement = $(document.activeElement);
+                // Check if the active element is not a textarea
+                if (!$activeElement.is('textarea')) {
+                    var $visibleButton = $('.sd-enter-button:visible').first();
+                    if ($visibleButton.length) {
+                        $visibleButton.click();
+                        event.preventDefault();
+                    }
                 }
             }
         });
