@@ -686,21 +686,24 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 enter_key_js <- function() {
   "
     $(document).on('shiny:sessioninitialized', function() {
+        var isModalOpen = false;
+        $(document).on('shown.bs.modal hidden.bs.modal', function(e) {
+            isModalOpen = e.type === 'shown';
+        });
+
         $(document).on('keydown', function(event) {
-            if (event.key === 'Enter' && !event.repeat) {
-                var $activeElement = $(document.activeElement);
-                // Check if the active element is not one of the excluded input types
-                if (!$activeElement.is('textarea, input[type=\"text\"], input[type=\"number\"], select, input[type=\"date\"]')) {
-                    var $visibleButton = $('.sd-enter-button:visible').first();
-                    if ($visibleButton.length) {
-                        $visibleButton.click();
-                        event.preventDefault();
-                    }
+            if (event.key === 'Enter' && !event.repeat &&
+                !$(event.target).is('textarea, input[type=\"text\"], input[type=\"number\"], select, input[type=\"date\"]')) {
+                event.preventDefault();
+                if (isModalOpen) {
+                    $('#submit_rating').click();
+                } else {
+                    $('.sd-enter-button:visible').first().click();
                 }
             }
         });
     });
-    "
+  "
 }
 
 # Countdown JS
