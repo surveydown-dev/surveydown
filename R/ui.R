@@ -696,7 +696,10 @@ enter_key_js <- function() {
                 !$(event.target).is('textarea, input[type=\"text\"], input[type=\"number\"], select, input[type=\"date\"]')) {
                 event.preventDefault();
                 if (isModalOpen) {
-                    $('#submit_rating').click();
+                    var $exitButton = $('.modal.show .modal-footer .btn:contains(\"Submit and Exit\"), .modal.show .modal-footer .btn:contains(\"Exit\")').first();
+                    if ($exitButton.length) {
+                        $exitButton.click();
+                    }
                 } else {
                     $('.sd-enter-button:visible').first().click();
                 }
