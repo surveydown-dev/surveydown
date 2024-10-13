@@ -93,12 +93,15 @@ sd_question("text", "name", "What is your name?")
 sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
 
 # Example of a matrix question
-sd_question("matrix", "satisfaction", "Rate your satisfaction with the following:",
-            option = c("Unsatisfied" = 1,
-                       "Neutral" = 2,
-                       "Satisfied" = 3),
-            row = list(service = "Customer Service",
-                       quality = "Product Quality",
-                       price = "Price"))
+sd_question(
+  type = "matrix",
+  id   = "satisfaction",
+  label = "Rate your satisfaction with the following:",
+  row = c("Customer Service" = "service",
+          "Product Quality"  = "quality",
+          "Price"            = "price"),
+  option = c("Unsatisfied" = 1,
+             "Neutral"     = 2,
+             "Satisfied"   = 3))
 
 }

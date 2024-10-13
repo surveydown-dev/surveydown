@@ -8,7 +8,8 @@ sd_output(
   id,
   type = NULL,
   width = "100\%",
-  display = "inline",
+  display = "text",
+  inline = TRUE,
   wrapper = NULL,
   ...
 )
@@ -22,7 +23,9 @@ If \code{NULL}, the function behaves like \code{shiny::uiOutput()}.}
 \item{width}{Character string. The width of the UI element. Defaults to "100\%".}
 
 \item{display}{Character string. Specifies the display type for "value" outputs.
-Can be "inline", "text", "verbatim", or "ui". Only used when \code{type = "value"}.}
+Can be "text", "verbatim", or "ui". Only used when \code{type = "value"}.}
+
+\item{inline}{Logical. Whether to render the output inline. Defaults to \code{TRUE}.}
 
 \item{wrapper}{Function. A function to wrap the output. Only used when \code{type = "value"}.}
 
@@ -49,7 +52,7 @@ with the display style determined by the \code{display} parameter.
 sd_output('cbc1', type = 'question')
 
 # Display the value of a survey question inline
-sd_output('cbc1', type = 'value', display = 'inline')
+sd_output('cbc1', type = 'value', inline = TRUE)
 
 # Use as a simple uiOutput
 sd_output('redirect')

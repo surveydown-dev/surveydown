@@ -166,13 +166,16 @@ get_barposition <- function(metadata) {
 #' sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
 #'
 #' # Example of a matrix question
-#' sd_question("matrix", "satisfaction", "Rate your satisfaction with the following:",
-#'             option = c("Unsatisfied" = 1,
-#'                        "Neutral" = 2,
-#'                        "Satisfied" = 3),
-#'             row = list(service = "Customer Service",
-#'                        quality = "Product Quality",
-#'                        price = "Price"))
+#' sd_question(
+#'   type = "matrix",
+#'   id   = "satisfaction",
+#'   label = "Rate your satisfaction with the following:",
+#'   row = c("Customer Service" = "service",
+#'           "Product Quality"  = "quality",
+#'           "Price"            = "price"),
+#'   option = c("Unsatisfied" = 1,
+#'              "Neutral"     = 2,
+#'              "Satisfied"   = 3))
 #'
 #' @export
 sd_question <- function(
@@ -361,10 +364,10 @@ sd_question <- function(
         shiny::tags$th(""),
         lapply(names(option), function(opt) shiny::tags$th(opt))
       )
-      rows <- lapply(names(row), function(q_id) {
+      rows <- lapply(row, function(q_id) {
         full_id <- paste(id, q_id, sep = "_")
         shiny::tags$tr(
-          shiny::tags$td(row[[q_id]]),
+          shiny::tags$td(names(row)[row == q_id]),
           shiny::tags$td(
             colspan = length(option),
             sd_question(
@@ -387,6 +390,8 @@ sd_question <- function(
           shiny::tags$tbody(rows)
         )
       )
+
+      return(output)
     }
 
     # Create wrapper div
