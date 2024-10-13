@@ -11,36 +11,22 @@ function scrollToPageTop() {
   });
 }
 
-// Function to auto-scroll to the next question
-function autoScrollToNextQuestion(currentQuestionId) {
+// Function to auto-scroll to the current question
+function autoScrollToCurrentQuestion(currentQuestionId) {
   if (!window.surveydownConfig.autoScrollEnabled) return;
 
   const currentContainer = document.getElementById(`container-${currentQuestionId}`);
   if (!currentContainer) return;
 
-  const allQuestions = document.querySelectorAll('.question-container');
-  let nextQuestion = null;
-
-  for (let i = 0; i < allQuestions.length; i++) {
-    if (allQuestions[i] === currentContainer) {
-      if (i < allQuestions.length - 1) {
-        nextQuestion = allQuestions[i + 1];
-        break;
-      }
-    }
-  }
-
-  if (nextQuestion) {
-    scrollBehavior(nextQuestion, 400); // 400ms = 0.4 seconds
-  }
+  scrollBehavior(currentContainer, 400); // 400ms duration
 }
 
 function scrollBehavior(element, duration) {
   const start = window.pageYOffset;
   const elementRect = element.getBoundingClientRect();
   const elementTop = elementRect.top + start;
-  const lowerMiddleOffset = window.innerHeight * 0.75 - elementRect.height / 2;
-  const target = elementTop - lowerMiddleOffset;
+  const upperMiddleOffset = window.innerHeight * 0.4 - elementRect.height / 2;
+  const target = elementTop - upperMiddleOffset;
   const startTime = performance.now();
 
   function animate(currentTime) {
@@ -68,9 +54,7 @@ function handlePageChange() {
 $(document).on('shiny:inputchanged', function(event) {
   if (event.name.endsWith('_interacted')) {
     const questionId = event.name.replace('_interacted', '');
-    setTimeout(() => {
-      autoScrollToNextQuestion(questionId);
-    }, 400); // 400ms = 0.4 second delay
+    autoScrollToCurrentQuestion(questionId);
   }
 });
 
