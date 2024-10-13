@@ -25,7 +25,7 @@ function scrollBehavior(element, duration) {
   const start = window.pageYOffset;
   const elementRect = element.getBoundingClientRect();
   const elementTop = elementRect.top + start;
-  const upperMiddleOffset = window.innerHeight * 0.4 - elementRect.height / 2;
+  const upperMiddleOffset = window.innerHeight * 0.35 - elementRect.height / 2;
   const target = elementTop - upperMiddleOffset;
   const startTime = performance.now();
 
@@ -50,21 +50,26 @@ function handlePageChange() {
   scrollToPageTop();
 }
 
-// Modify the existing question interaction logic
-$(document).on('shiny:inputchanged', function(event) {
-  if (event.name.endsWith('_interacted')) {
-    const questionId = event.name.replace('_interacted', '');
-    setTimeout(() => {
-      autoScrollToCurrentQuestion(questionId);
-    }, 400); // 400ms delay
+// Function to handle scrolling for both click and focus events
+function handleInteraction(event) {
+  const container = event.target.closest('[id^="container-"]');
+  if (container) {
+    const questionId = container.id.replace('container-', '');
+    autoScrollToCurrentQuestion(questionId);
   }
-});
+}
+
+// Event listener for clicks
+document.addEventListener('click', handleInteraction);
+
+// Event listener for focus events
+document.addEventListener('focusin', handleInteraction);
 
 // Listen for page changes
 $(document).on('shiny:value', function(event) {
   if (event.name === 'main') {
     // Use setTimeout to ensure the new page content is rendered
-    setTimeout(handlePageChange, 100);
+    setTimeout(handlePageChange, 200);
   }
 });
 
