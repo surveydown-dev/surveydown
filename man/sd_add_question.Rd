@@ -4,7 +4,7 @@
 \alias{sd_add_question}
 \title{Add a Question Template to the Current Document}
 \usage{
-sd_add_question(type = "mc")
+sd_add_question(type = "mc", chunk = FALSE)
 }
 \arguments{
 \item{type}{A character string specifying the type of question template to insert.
@@ -22,6 +22,8 @@ Default is "mc" (multiple choice). Available options are:
 \item "date": Date input
 \item "daterange": Date range input
 }}
+
+\item{chunk}{Logical. If \code{TRUE}, the code will be generated with the R code chunk wrapper. Defaults to \code{FALSE}.}
 }
 \value{
 This function does not return a value. It modifies the active document

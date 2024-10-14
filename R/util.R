@@ -77,12 +77,6 @@ include_folder <- function(folder, create = FALSE) {
     }
 }
 
-check_survey_file_exists <- function() {
-    if (!survey_file_exists()) {
-        stop('Missing "survey.qmd" file. Your survey file must be named "survey.qmd"')
-    }
-}
-
 #' Include a folder to Shiny's resource path
 #'
 #' This function includes a specified folder to Shiny's resource path,
@@ -439,7 +433,7 @@ question_templates <- function(type = "mc") {
 #'     \item "date": Date input
 #'     \item "daterange": Date range input
 #'   }
-#'
+#' @param chunk Logical. If `TRUE`, the code will be generated with the R code chunk wrapper. Defaults to `FALSE`.
 #' @details
 #' The function performs the following steps:
 #' 1. Checks for and removes any existing `sd_add_question()` function call in the document.
@@ -463,8 +457,11 @@ question_templates <- function(type = "mc") {
 #' @import rstudioapi
 #'
 #' @export
-sd_add_question <- function(type = "mc") {
+sd_add_question <- function(type = "mc", chunk = FALSE) {
   template <- question_templates(type)
+  if (chunk) {
+      template <- paste0("```{r}\n", template, "```\n")
+  }
 
   # Get the current document context
   context <- rstudioapi::getActiveDocumentContext()
