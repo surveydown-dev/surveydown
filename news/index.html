@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,6 +40,9 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.6" id="surveydown-036">surveydown 0.3.6<a class="anchor" aria-label="anchor" href="#surveydown-036"></a></h2>
 <ul><li>
 <code><a href="../reference/sd_add_question.html">sd_add_question()</a></code> now has a <code>chunk</code> argument, if <code>TRUE</code> it will include the outer chunk wrapper. Default is <code>FALSE</code>.</li>
 <li>The <code>matrix</code> question type now will have its root question id shown in the data sheet. This id is essential in other logic, for example it can be used as a handle for the <code><a href="../reference/sd_show_if.html">sd_show_if()</a></code> logic. This root id is also removed from the <code>all_question_required</code> logic, since it’s only a handle and doesn’t provide option to answer.</li>
