@@ -37,8 +37,11 @@ load_resource <- function(files, type = c("css", "js"), package = "surveydown") 
 #' ui <- sd_ui()
 #' }
 sd_ui <- function() {
+
     # Throw error if "survey.qmd" file missing
-    check_survey_file_exists()
+    if (!survey_file_exists()) {
+      stop('Missing "survey.qmd" file. Your survey file must be named "survey.qmd"')
+    }
 
     # Get the theme from the survey.qmd file
     metadata <- quarto::quarto_inspect("survey.qmd")
@@ -390,8 +393,6 @@ sd_question <- function(
           shiny::tags$tbody(rows)
         )
       )
-
-      return(output)
     }
 
     # Create wrapper div

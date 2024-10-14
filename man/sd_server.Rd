@@ -6,7 +6,6 @@
 \usage{
 sd_server(
   db = NULL,
-  use_html = FALSE,
   required_questions = NULL,
   all_questions_required = FALSE,
   start_page = NULL,
@@ -18,11 +17,6 @@ sd_server(
 \arguments{
 \item{db}{A list containing database connection information created using
 \code{\link{sd_database}} function. Defaults to \code{NULL}.}
-
-\item{use_html}{Logical. By default, the \code{"survey.qmd"} file will be
-rendered when the app launches, which can be slow. Users can render it
-first into a html file and set \code{use_html = TRUE} to use the pre-rendered
-file, which is faster when the app loads. Defaults to \code{FALSE}.}
 
 \item{required_questions}{Vector of character strings. The IDs of questions that must be answered. Defaults to \code{NULL}.}
 

@@ -1,5 +1,4 @@
 run_config <- function(
-    use_html = FALSE,
     required_questions = NULL,
     all_questions_required = FALSE,
     start_page = NULL,
@@ -7,17 +6,11 @@ run_config <- function(
     skip_if = NULL,
     show_if = NULL
 ) {
-    # Throw error if "survey.qmd" file missing
-    check_survey_file_exists()
-
     # Always check for sd_close() in survey.qmd
     sd_close_present <- check_sd_close("survey.qmd")
 
-    survey_file <- "survey.qmd"
-    if (use_html) { survey_file <- "survey.html" }
-
-    # Get the html content from the qmd file (or html if pre-rendered)
-    html_content <- get_html_content(survey_file)
+    # Get the html content from the survey.qmd file
+    html_content <- get_html_content()
 
     # Extract all divs with class "sd-page"
     pages <- extract_html_pages(
@@ -41,7 +34,14 @@ run_config <- function(
     check_ids(page_ids, question_ids)
 
     question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
-    question_required <- if (all_questions_required) question_ids else required_questions
+
+    # Determine required questions, excluding matrix question IDs
+    if (all_questions_required) {
+        matrix_question_ids <- names(which(sapply(question_structure, `[[`, "is_matrix")))
+        question_required <- setdiff(question_ids, matrix_question_ids)
+    } else {
+        question_required <- required_questions
+    }
 
     # Check that start_page (if used) points to an actual page
     if (!is.null(start_page) && !(start_page %in% page_ids)) {
@@ -88,18 +88,23 @@ check_sd_close <- function(survey_file) {
     return(sd_close_present)
 }
 
-get_html_content <- function(survey_file) {
-    if (survey_file == 'survey.qmd') {
-        tryCatch(
-            {
-                quarto::quarto_render(survey_file)
-            },
-            error = function(e) {
-                stop("Error rendering survey.qmd file. Please review and revise your survey.qmd file. Also, try rendering it directly to check for errors in your survey.qmd file. Error details: ", e$message)
-            }
-        )
+get_html_content <- function() {
+    survey_qmd <- 'survey.qmd'
+    survey_html <- 'survey.html'
+
+    # Render the qmd if it hasn't been rendered yet
+    if (!file.exists(survey_html)) {
+        render_qmd("'survey.html' file not detected - rendering the 'survey.qmd' file")
     }
 
+    # Render the qmd if the html file is older, meaning it hasn't been updated
+    time_qmd <- file.info(survey_qmd)$mtime
+    time_html <- file.info(survey_html)$mtime
+    if (time_qmd > time_html) {
+        render_qmd("Rendering the 'survey.qmd' file since updates were detected that are not present in the 'survey.html' file")
+    }
+
+    # Once rendered, return the parsed html content
     tryCatch(
         {
             return(rvest::read_html('survey.html'))
@@ -110,8 +115,20 @@ get_html_content <- function(survey_file) {
     )
 }
 
+render_qmd <- function(x) {
+    message(x)
+    tryCatch(
+        {
+            quarto::quarto_render("survey.qmd")
+        },
+        error = function(e) {
+            stop("Error rendering survey.qmd file. Please review and revise your survey.qmd file. Also, try rendering it directly to check for errors in your survey.qmd file. Error details: ", e$message)
+        }
+    )
+}
+
 extract_html_pages <- function(
-        html_content, required_questions, all_questions_required, show_if
+    html_content, required_questions, all_questions_required, show_if
 ) {
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
@@ -125,7 +142,18 @@ extract_html_pages <- function(
                 container <- question_containers[[i]]
                 question_id <- rvest::html_attr(container, "data-question-id")
                 question_ids <- c(question_ids, question_id)
-                is_required <- all_questions_required | (question_id %in% required_questions)
+
+                # Check if it's a matrix question
+                is_matrix <- length(rvest::html_elements(container, ".matrix-question")) > 0
+
+                # Determine if the question is required
+                is_required <- if (is_matrix) {
+                    FALSE  # Matrix questions are not required by default
+                } else if (all_questions_required) {
+                    TRUE
+                } else {
+                    question_id %in% required_questions
+                }
 
                 # Track required questions and display asterisk
                 if (is_required) {
@@ -171,19 +199,17 @@ extract_html_pages <- function(
 
 # Get question structure from HTML
 get_question_structure <- function(html_content) {
-
     question_nodes <- rvest::html_nodes(html_content, "[data-question-id]")
 
-    # Initialize a named list to hold the results
     question_structure <- list()
     all_question_ids <- character()
 
-    # Iterate over each question node to get the question details
     for (question_node in question_nodes) {
         question_id <- rvest::html_attr(question_node, "data-question-id")
-
-        # Add the question ID to our list of all IDs
         all_question_ids <- c(all_question_ids, question_id)
+
+        # Check if it's a matrix question
+        is_matrix <- length(rvest::html_nodes(question_node, ".matrix-question")) > 0
 
         # Extract the options for the question
         option_nodes <- question_node |>
@@ -193,10 +219,11 @@ get_question_structure <- function(html_content) {
             rvest::html_attr(opt, "value")
         })
 
-        # Store the options for this question in a named list
+        # Store the options and type for this question in a named list
         question_structure[[question_id]] <- list(
             id = question_id,
-            options = options
+            options = options,
+            is_matrix = is_matrix
         )
     }
 

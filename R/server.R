@@ -7,10 +7,6 @@
 #'
 #' @param db A list containing database connection information created using
 #' \code{\link{sd_database}} function. Defaults to `NULL`.
-#' @param use_html Logical. By default, the `"survey.qmd"` file will be
-#' rendered when the app launches, which can be slow. Users can render it
-#' first into a html file and set `use_html = TRUE` to use the pre-rendered
-#' file, which is faster when the app loads. Defaults to `FALSE`.
 #' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to `NULL`.
 #' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
 #' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
@@ -81,7 +77,6 @@
 #' @export
 sd_server <- function(
     db = NULL,
-    use_html = FALSE,
     required_questions = NULL,
     all_questions_required = FALSE,
     start_page = NULL,
@@ -109,7 +104,6 @@ sd_server <- function(
 
     # Run the configuration settings
     config <- run_config(
-        use_html,
         required_questions,
         all_questions_required,
         start_page,
