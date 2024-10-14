@@ -393,8 +393,6 @@ sd_question <- function(
           shiny::tags$tbody(rows)
         )
       )
-
-      return(output)
     }
 
     # Create wrapper div
