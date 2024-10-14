@@ -1,5 +1,4 @@
 run_config <- function(
-    use_html = FALSE,
     required_questions = NULL,
     all_questions_required = FALSE,
     start_page = NULL,
@@ -13,11 +12,8 @@ run_config <- function(
     # Always check for sd_close() in survey.qmd
     sd_close_present <- check_sd_close("survey.qmd")
 
-    survey_file <- "survey.qmd"
-    if (use_html) { survey_file <- "survey.html" }
-
-    # Get the html content from the qmd file (or html if pre-rendered)
-    html_content <- get_html_content(survey_file)
+    # Get the html content from the survey.qmd file
+    html_content <- get_html_content()
 
     # Extract all divs with class "sd-page"
     pages <- extract_html_pages(
@@ -88,18 +84,23 @@ check_sd_close <- function(survey_file) {
     return(sd_close_present)
 }
 
-get_html_content <- function(survey_file) {
-    if (survey_file == 'survey.qmd') {
-        tryCatch(
-            {
-                quarto::quarto_render(survey_file)
-            },
-            error = function(e) {
-                stop("Error rendering survey.qmd file. Please review and revise your survey.qmd file. Also, try rendering it directly to check for errors in your survey.qmd file. Error details: ", e$message)
-            }
-        )
+get_html_content <- function() {
+    survey_qmd <- 'survey.qmd'
+    survey_html <- 'survey.html'
+
+    # Render the qmd if it hasn't been rendered yet
+    if (!file.exists(survey_html)) {
+        render_qmd("'survey.html' file not detected - rendering the 'survey.qmd' file")
     }
 
+    # Render the qmd if the html file is older, meaning it hasn't been updated
+    time_qmd <- file.info(survey_qmd)$mtime
+    time_html <- file.info(survey_html)$mtime
+    if (time_qmd > time_html) {
+        render_qmd("Rendering the 'survey.qmd' file since updates were detected that are not present in the 'survey.html' file")
+    }
+
+    # Once rendered, return the parsed html content
     tryCatch(
         {
             return(rvest::read_html('survey.html'))
@@ -110,8 +111,20 @@ get_html_content <- function(survey_file) {
     )
 }
 
+render_qmd <- function(x) {
+    message(x)
+    tryCatch(
+        {
+            quarto::quarto_render("survey.qmd")
+        },
+        error = function(e) {
+            stop("Error rendering survey.qmd file. Please review and revise your survey.qmd file. Also, try rendering it directly to check for errors in your survey.qmd file. Error details: ", e$message)
+        }
+    )
+}
+
 extract_html_pages <- function(
-        html_content, required_questions, all_questions_required, show_if
+    html_content, required_questions, all_questions_required, show_if
 ) {
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
