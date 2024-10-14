@@ -6,11 +6,6 @@ run_config <- function(
     skip_if = NULL,
     show_if = NULL
 ) {
-    # Throw error if "survey.qmd" file missing
-    if (!survey_file_exists()) {
-        stop('Missing "survey.qmd" file. Your survey file must be named "survey.qmd"')
-    }
-
     # Always check for sd_close() in survey.qmd
     sd_close_present <- check_sd_close("survey.qmd")
 

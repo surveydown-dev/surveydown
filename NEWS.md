@@ -1,5 +1,6 @@
 # surveydown (development version)
 
+- `sd_add_question()` now has a `chunk` argument, if `TRUE` it will include the outer chunk wrapper. Default is `FALSE`.
 - Removed the `use_html` argument in `sd_server()`. Now the survey.qmd file will always be rendered when the app runs only if one of two conditions are met: 1) the survey.html file is not detected, or 2) the survey.html file is outdated. Otherwise, it will use the rendered survey.html file.
 - Bug fix: `auto_scroll` now works better and smoother.
 - Bug fix: the enter key will not trigger page turn if working on `text`, `textarea`, `numeric`, `select`, `date`, and `daterange`.
