@@ -65,11 +65,9 @@ sd_ui <- function() {
 
     shiny::fluidPage(
       shinyjs::useShinyjs(),
-      shiny::tags$head(
-        shiny::tags$script(shiny::HTML(enter_key_js()))
-      ),
       shiny::tags$style(HTML(default_theme_css)),
       load_resource("surveydown.css", type = "css"),
+      load_resource("enter_key.js", type = "js"),
       load_resource("keep_alive.js", type = "js"),
       load_resource("auto_scroll.js", type = "js"),
       shiny::tags$script("var surveydownConfig = {};"),
@@ -681,33 +679,6 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
     }
 
     return(element)
-}
-
-# Enter Key JS
-enter_key_js <- function() {
-  "
-    $(document).on('shiny:sessioninitialized', function() {
-        var isModalOpen = false;
-        $(document).on('shown.bs.modal hidden.bs.modal', function(e) {
-            isModalOpen = e.type === 'shown';
-        });
-
-        $(document).on('keydown', function(event) {
-            if (event.key === 'Enter' && !event.repeat &&
-                !$(event.target).is('textarea, input[type=\"text\"], input[type=\"number\"], select, input[type=\"date\"]')) {
-                event.preventDefault();
-                if (isModalOpen) {
-                    var $exitButton = $('.modal.show .modal-footer .btn:contains(\"Submit and Exit\"), .modal.show .modal-footer .btn:contains(\"Exit\")').first();
-                    if ($exitButton.length) {
-                        $exitButton.click();
-                    }
-                } else {
-                    $('.sd-enter-button:visible').first().click();
-                }
-            }
-        });
-    });
-  "
 }
 
 # Countdown JS
