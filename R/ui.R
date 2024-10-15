@@ -1,14 +1,23 @@
-# Load resource file from the surveydown package (CSS or JS)
-load_resource <- function(files, type = c("css", "js"), package = "surveydown") {
-    type <- match.arg(type)
-    sapply(files, function(file) {
-        path <- system.file(paste0(type, "/", file), package = package)
-        if (type == "css") {
-            shiny::includeCSS(path)
-        } else {
-            shiny::includeScript(path)
-        }
-    }, simplify = FALSE, USE.NAMES = FALSE)
+# Load resource files
+load_resource <- function(..., package = "surveydown") {
+  files <- c(...)
+  lapply(files, function(file) {
+    file_type <- tolower(tools::file_ext(file))
+    if (!(file_type %in% c("css", "js"))) {
+      stop(paste("Unsupported file type:", file_type, "for file:", file))
+    }
+    path <- system.file(paste0(file_type, "/", file), package = package)
+    if (file.exists(path)) {
+      if (file_type == "css") {
+        shiny::includeCSS(path)
+      } else {
+        shiny::includeScript(path)
+      }
+    } else {
+      warning(paste("File not found:", file, "in package:", package))
+      NULL
+    }
+  })
 }
 
 #' Create the UI for a surveydown survey
@@ -53,12 +62,15 @@ sd_ui <- function() {
 
     shiny::fluidPage(
       shinyjs::useShinyjs(),
-      load_resource("enter_key.js", type = "js"),
-      load_resource("keep_alive.js", type = "js"),
-      load_resource("auto_scroll.js", type = "js"),
-      load_resource("surveydown.css", type = "css"),
+      load_resource(
+        "auto_scroll.js",
+        "countdown.js",
+        "enter_key.js",
+        "keep_alive.js",
+        "surveydown.css"
+      ),
       if (theme == "default") {
-        load_resource("default_theme.css", type = "css")
+        load_resource("default_theme.css")
       },
       shiny::tags$script("var surveydownConfig = {};"),
       if (!is.null(barcolor)) {
@@ -598,23 +610,6 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
         paste0("window.location.href = '", url, "';")
     }
 
-    # Styling for the container
-    container_style <- "
-        display: inline-block;
-        text-align: center;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        padding: 0.5rem 0.5rem;
-        background-color: #f9f9f9;
-        margin: 0.5rem 0.5rem;
-        "
-
-    # Wrapper for centering the container
-    wrapper_style <- "
-        text-align: center;
-        margin: 0.5rem 0.5rem;
-        "
-
     # Create button or text element
     if (button) {
         element <- shiny::actionButton(
@@ -631,10 +626,10 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
         countdown_id <- paste0("countdown_", id)
         element <- shiny::tagList(
             shiny::div(
-                style = wrapper_style,
+                class = "sd-wrapper",
                 shiny::div(
                     id = id,
-                    style = container_style,
+                    class = "sd-container",
                     element,
                     shiny::p(
                         style = "margin: 0.5rem 0 0 0;",
@@ -645,14 +640,20 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
                     )
                 )
             ),
-            shiny::tags$script(shiny::HTML(countdown_js(delay, redirect_js, countdown_id, id)))
+            shiny::tags$script(shiny::HTML(sprintf(
+              "startCountdown(%d, function() { %s }, '%s', '%s');",
+              delay,
+              redirect_js,
+              countdown_id,
+              id
+            )))
         )
     } else if (!button) {
-        # If there's no delay and it's not a button, we need to inform the user that no action is possible
+        # If no delay and no button, inform the user that no action is possible
         element <- shiny::div(
-            style = wrapper_style,
+            class = "sd-wrapper",
             shiny::div(
-                style = container_style,
+                class = "sd-container",
                 element,
                 shiny::p(style = "margin: 0.5rem 0 0 0;", "Error: This text won't trigger any redirection...")
             )
@@ -660,53 +661,15 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
     } else {
         # If it's a button without delay, just wrap it in the styled container
         element <- shiny::div(
-            style = wrapper_style,
+            class = "sd-wrapper",
             shiny::div(
-                style = container_style,
+                class = "sd-container",
                 element
             )
         )
     }
 
     return(element)
-}
-
-# Countdown JS
-countdown_js <- function(delay, redirect_js, countdown_id, unique_id) {
-    sprintf(
-        "
-    $(document).ready(function() {
-      var countdown = %d;
-      var countdownTimer;
-
-      function startCountdown() {
-        countdownTimer = setInterval(function() {
-          countdown--;
-          if (countdown <= 0) {
-            clearInterval(countdownTimer);
-            %s
-          } else {
-            $('#%s').text(countdown);
-          }
-        }, 1000);
-      }
-
-      // Start countdown when this element becomes visible
-      var observer = new IntersectionObserver(function(entries) {
-        if(entries[0].isIntersecting === true) {
-          startCountdown();
-          observer.disconnect();
-        }
-      }, { threshold: [0] });
-
-      observer.observe(document.getElementById('%s'));
-    });
-    ",
-        delay,
-        redirect_js,
-        countdown_id,
-        unique_id
-    )
 }
 
 #' Get URL Parameters in a Shiny Application
