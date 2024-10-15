@@ -46,18 +46,6 @@ sd_ui <- function() {
     # Get the theme from the survey.qmd file
     metadata <- quarto::quarto_inspect("survey.qmd")
     theme <- get_theme(metadata)
-    default_theme_css <- ""
-    if (theme == "default") {
-        default_theme_css <- "
-        body, button, input, select, textarea {
-            font-family: 'Raleway', sans-serif;
-        }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Raleway', sans-serif;
-            font-weight: 800;
-        }
-        "
-    }
 
     # Get progress bar settings from the survey.qmd file
     barcolor <- get_barcolor(metadata)
@@ -65,11 +53,13 @@ sd_ui <- function() {
 
     shiny::fluidPage(
       shinyjs::useShinyjs(),
-      shiny::tags$style(HTML(default_theme_css)),
-      load_resource("surveydown.css", type = "css"),
       load_resource("enter_key.js", type = "js"),
       load_resource("keep_alive.js", type = "js"),
       load_resource("auto_scroll.js", type = "js"),
+      load_resource("surveydown.css", type = "css"),
+      if (theme == "default") {
+        load_resource("default_theme.css", type = "css")
+      },
       shiny::tags$script("var surveydownConfig = {};"),
       if (!is.null(barcolor)) {
         shiny::tags$style(HTML(sprintf("

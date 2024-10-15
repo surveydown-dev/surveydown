@@ -10,6 +10,22 @@
   --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
 }
 
+/* Styles for container and wrapper */
+.sd-container {
+    display: inline-block;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 0.5rem;
+    background-color: #f9f9f9;
+    margin: 0.5rem;
+}
+
+.sd-wrapper {
+    text-align: center;
+    margin: 0.5rem;
+}
+
 /* Layout */
 body {
   background-color: var(--body-background-color);
