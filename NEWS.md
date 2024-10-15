@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+- `sd_update()` now directly force update the package without checking for version difference anymore.
+
 # surveydown 0.3.6
 
 - `sd_add_question()` now has a `chunk` argument, if `TRUE` it will include the outer chunk wrapper. Default is `FALSE`.

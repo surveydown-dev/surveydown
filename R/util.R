@@ -564,11 +564,8 @@ sd_next()
 
 #' Update Surveydown Package
 #'
-#' This function checks and updates surveydown.
-#' It ensures that the package is up-to-date.
-#'
-#' @param force Logical; if TRUE, forces an update regardless of current version.
-#' Defaults to FALSE.
+#' This function directly updates the surveydown package to the latest version
+#' from GitHub, without checking the current version.
 #'
 #' @return No return value, called for side effects.
 #' @export
@@ -576,32 +573,11 @@ sd_next()
 #' @examples
 #' \dontrun{
 #' sd_update()
-#' sd_update(force = TRUE)
 #' }
-sd_update <- function(force = FALSE) {
-    # Check surveydown version
-    surveydown_version <- utils::packageVersion("surveydown")
-
-    # Check latest version
-    latest_version <- get_latest_version("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
-
-    if (is.null(latest_version)) {
-        message("Unable to fetch the latest version. Please check your internet connection.")
-        return(invisible())
-    }
-
-    if (force || surveydown_version < latest_version) {
-        message("Updating surveydown and all dependencies...")
-        remotes::install_github(
-            "surveydown-dev/surveydown",
-            force = TRUE,
-            dependencies = TRUE,
-            upgrade = "always"
-        )
-        message("Update complete.")
-    } else {
-        message("surveydown is up-to-date.")
-    }
+sd_update <- function() {
+  message("Updating surveydown to the latest version...")
+  remotes::install_github("surveydown-dev/surveydown", force = TRUE)
+  message("Update complete.")
 }
 
 #' Check Surveydown Version

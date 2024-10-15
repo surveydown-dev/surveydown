@@ -4,22 +4,17 @@
 \alias{sd_update}
 \title{Update Surveydown Package}
 \usage{
-sd_update(force = FALSE)
-}
-\arguments{
-\item{force}{Logical; if TRUE, forces an update regardless of current version.
-Defaults to FALSE.}
+sd_update()
 }
 \value{
 No return value, called for side effects.
 }
 \description{
-This function checks and updates surveydown.
-It ensures that the package is up-to-date.
+This function directly updates the surveydown package to the latest version
+from GitHub, without checking the current version.
 }
 \examples{
 \dontrun{
 sd_update()
-sd_update(force = TRUE)
 }
 }
