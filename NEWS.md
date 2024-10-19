@@ -1,54 +1,55 @@
 # surveydown (development version)
 
-- `sd_update()` now directly force update the package without checking for version difference anymore.
+- Enhance: `sd_update()` now directly force update the package without checking for version difference anymore.
+- New: `sd_is_answered()` function to check if a question is answered or not and returns `TRUE` or `FALSE` accordingly. For `"matrix"` type, only if all sub-questions are answered will it be marked as `TRUE`.
 
 # surveydown 0.3.6
 
-- `sd_add_question()` now has a `chunk` argument, if `TRUE` it will include the outer chunk wrapper. Default is `FALSE`.
-- The `matrix` question type now will have its root question id shown in the data sheet. This id is essential in other logic, for example it can be used as a handle for the `sd_show_if()` logic. This root id is also removed from the `all_question_required` logic, since it's only a handle and doesn't provide option to answer.
-- Removed the `use_html` argument in `sd_server()`. Now the survey.qmd file will always be rendered when the app runs only if one of two conditions are met: 1) the survey.html file is not detected, or 2) the survey.html file is outdated. Otherwise, it will use the rendered survey.html file.
+- Enhance: `sd_add_question()` now has a `chunk` argument, if `TRUE` it will include the outer chunk wrapper. Default is `FALSE`.
+- Enhance: The `matrix` question type now will have its root question id shown in the data sheet. This id is essential in other logic, for example it can be used as a handle for the `sd_show_if()` logic. This root id is also removed from the `all_question_required` logic, since it's only a handle and doesn't provide option to answer.
+- Enhance: Removed the `use_html` argument in `sd_server()`. Now the survey.qmd file will always be rendered when the app runs only if one of two conditions are met: 1) the survey.html file is not detected, or 2) the survey.html file is outdated. Otherwise, it will use the rendered survey.html file.
 - Bug fix: `auto_scroll` now works better and smoother.
 - Bug fix: the enter key will not trigger page turn if working on `text`, `textarea`, `numeric`, `select`, `date`, and `daterange`.
 - Enhance: the Enter key can now used to trigger the "Submit and Exit" button for the rating pop-up modal.
 
 # surveydown 0.3.5
 
-- The database updating is simplified to only write to the database on each page turn and after the survey closes.
+- Enhance: The database updating is simplified to only write to the database on each page turn and after the survey closes.
 - Bug fix: if you added new questions or values to the survey after creating the initial database table, those new values would not have been added to the table. Now they are added.
-- `auto_scroll` changed to `FALSE` by default.
+- Enhance: `auto_scroll` changed to `FALSE` by default.
 
 # surveydown 0.3.4
 
 - Bug fix: reactive questions now work with show_if conditions too
 - Bug fix: show_if conditions now work even if the target question is on a different page.
 - Bug fix: reactive question ids (those defined in the server) were not being considered in `check_skip_show()` checks, so you'd get an error that the question id was invalid.
-- `sd_server()` accepts a new parameter called `"rate_survey"`, default to `FALSE`. If `TRUE`, the Exit button will trigger a rating question. If `FALSE`, the Exit button will only trigger a double confirmation to ensure the user really wants to exit.
-- Now the survey will check if there exists an `sd_close()` function call.
-- Now the survey will check if the reserved question IDs are used, including `session_id`, `time_start`, `time_end`, and `exit_survey_rating`. There could be more in the future.
-- Now the `sd_output()` function will take care of the styling setting of reactive questions. For example, `sd_output(id = "some_question_id", type = "question", width = "80%")` will define with of 80% for a reactive question.
-- Now the `sd_show_if()` can take care of cross-page conditional reactive questions.
+- Enhance: `sd_server()` accepts a new parameter called `"rate_survey"`, default to `FALSE`. If `TRUE`, the Exit button will trigger a rating question. If `FALSE`, the Exit button will only trigger a double confirmation to ensure the user really wants to exit.
+- Enhance: Now the survey will check if there exists an `sd_close()` function call.
+- Enhance: Now the survey will check if the reserved question IDs are used, including `session_id`, `time_start`, `time_end`, and `exit_survey_rating`. There could be more in the future.
+- Enhance: Now the `sd_output()` function will take care of the styling setting of reactive questions. For example, `sd_output(id = "some_question_id", type = "question", width = "80%")` will define with of 80% for a reactive question.
+- Enhance: Now the `sd_show_if()` can take care of cross-page conditional reactive questions.
 
 # surveydown 0.3.3
 
-- `sd_server()` now has a new parameter called `auto_scroll`. It's default to `TRUE`, which enables auto scrolling that tracks the user's input, can be turned off by changing to `FALSE`. Thanks to the contribution from [Zain Hoda](https://github.com/zainhoda1).
-- `sd_question()` now has the `"matrix"` type. The [documentation page](https://surveydown.org/question-types#matrix) is updated.
-- Asterisk, as an indication of required questions, is now moved to the top right corner of question containers.
-- Replaced the default shiny alert with `sweetalert`. 
+- Enhance: `sd_server()` now has a new parameter called `auto_scroll`. It's default to `TRUE`, which enables auto scrolling that tracks the user's input, can be turned off by changing to `FALSE`. Thanks to the contribution from [Zain Hoda](https://github.com/zainhoda1).
+- Enhance: `sd_question()` now has the `"matrix"` type. The [documentation page](https://surveydown.org/question-types#matrix) is updated.
+- Enhance: Asterisk, as an indication of required questions, is now moved to the top right corner of question containers.
+- Enhance: Replaced the default shiny alert with `sweetalert`. 
 
 # surveydown 0.3.2
 
-- Added `sd_completion_code()` function.
+- New: Added `sd_completion_code()` function.
 - Bug fix: make stored values accessible with `sd_output()` with `type = 'value'` argument. Previously only question values could be displayed in the UI with `sd_output()`.
-- `sd_add_question()` to instantly create a question template. Defaults to type of `"mc"` but also accepts all other types (`"text"`, `"textarea"`, `"numeric"`, etc.). The function call will delete itself after running.
-- `sd_add_page()` to instantly create a page template. Make sure to run this function outside any division or code chunk. The function call will delete itself after running.
+- New: `sd_add_question()` to instantly create a question template. Defaults to type of `"mc"` but also accepts all other types (`"text"`, `"textarea"`, `"numeric"`, etc.). The function call will delete itself after running.
+- New: `sd_add_page()` to instantly create a page template. Make sure to run this function outside any division or code chunk. The function call will delete itself after running.
 
 # surveydown 0.3.1
 
-- Improved efficiency in `database_uploading()` so only the changed fields get written, and also the writing happens after checking the `show_if` conditions (addresses #100).
-- Modified default rendering behavior to not delete the rendered html file.
-- Modified the `refresh_interval` argument in `sd_get_data()` as defaulting to `NULL`, which means the data will not be reactively fetched, regardless of the context it is used in. The data will only continuously refresh if `sd_get_data()` is called within a reactive context and `refresh_interval > 0`.
-- Modified messaging from `sd_set_password()` to not print out user's password and provide clearer instructions.
-- `sd_show_password()` added to show a stored password. The user will be prompted to double confirm that they want to show it. If there is no password, the user will be prompted so, along with a message of using `sd_set_password()` to create the password.
+- Enhance: Improved efficiency in `database_uploading()` so only the changed fields get written, and also the writing happens after checking the `show_if` conditions (addresses #100).
+- Enhance: Modified default rendering behavior to not delete the rendered html file.
+- Enhance: Modified the `refresh_interval` argument in `sd_get_data()` as defaulting to `NULL`, which means the data will not be reactively fetched, regardless of the context it is used in. The data will only continuously refresh if `sd_get_data()` is called within a reactive context and `refresh_interval > 0`.
+- Enhance: Modified messaging from `sd_set_password()` to not print out user's password and provide clearer instructions.
+- New: `sd_show_password()` added to show a stored password. The user will be prompted to double confirm that they want to show it. If there is no password, the user will be prompted so, along with a message of using `sd_set_password()` to create the password.
 
 # surveydown 0.3.0
 

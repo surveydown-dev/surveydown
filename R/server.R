@@ -968,3 +968,53 @@ sd_copy_value <- function(id, id_copy) {
     })
     invisible(NULL)
 }
+
+#' Check if a question is answered
+#'
+#' This function checks if a given question has been answered by the user.
+#' For matrix questions, it checks if all sub-questions are answered.
+#'
+#' @param question_id The ID of the question to check.
+#' @return A logical value: TRUE if the question is answered, FALSE otherwise.
+#'
+#' @examples
+#' \dontrun{
+#' if(sd_is_answered("car_preference")) {
+#'   # Do something when all sub-questions of the matrix are answered
+#' }
+#' }
+#'
+#' @export
+sd_is_answered <- function(question_id) {
+  # Get the Shiny session
+  session <- shiny::getDefaultReactiveDomain()
+
+  if (is.null(session)) {
+    stop("sd_is_answered() must be called from within a Shiny reactive context")
+  }
+
+  # Access the input object from the session
+  input <- session$input
+
+  # Check if it's a matrix question (ends with a number)
+  if (!grepl("_\\d+$", question_id)) {
+    # It's potentially a matrix question, check all sub-questions
+    sub_questions <- grep(paste0("^", question_id, "_"), names(input), value = TRUE)
+
+    if (length(sub_questions) > 0) {
+      # It's confirmed to be a matrix question
+      return(all(sapply(sub_questions, function(sq) !is.null(input[[sq]]) && nzchar(input[[sq]]))))
+    }
+  }
+
+  # For non-matrix questions or individual sub-questions
+  if (is.null(input[[question_id]])) return(FALSE)
+
+  if (is.list(input[[question_id]])) {
+    # For questions that can have multiple answers (e.g., checkboxes)
+    return(length(input[[question_id]]) > 0 && any(nzchar(unlist(input[[question_id]]))))
+  } else {
+    # For single-answer questions
+    return(!is.null(input[[question_id]]) && nzchar(input[[question_id]]))
+  }
+}
