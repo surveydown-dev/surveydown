@@ -1027,16 +1027,24 @@ sd_copy_value <- function(id, id_copy) {
 #' Check if a question is answered
 #'
 #' This function checks if a given question has been answered by the user.
-#' For matrix questions, it checks if all sub-questions are answered.
+#' For matrix questions, it checks if all sub-questions (rows) are answered.
 #'
 #' @param question_id The ID of the question to check.
-#' @return A logical value: TRUE if the question is answered, FALSE otherwise.
+#' @return A logical value: `TRUE` if the question is answered, `FALSE`
+#' otherwise.
 #'
 #' @examples
-#' \dontrun{
-#' if(sd_is_answered("car_preference")) {
-#'   # Do something when all sub-questions of the matrix are answered
-#' }
+#' \dontrun {
+#'   # Example of code in the app.R file
+#'   library(surveydown)
+#'
+#'   server <- function(input, output, session) {
+#'
+#'     if (sd_is_answered("car_preference")) {
+#'       # Do something only if the "car_preference" question is answered
+#'     }
+#'
+#'   }
 #' }
 #'
 #' @export
