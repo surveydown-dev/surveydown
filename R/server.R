@@ -452,6 +452,7 @@ sd_server <- function(
 #'
 #' @examples
 #' \dontrun {
+#'   # Example of implementing sd_skip_if in the Shiny server in the app.R file
 #'   library(surveydown)
 #'
 #'   server <- function(input, output, session) {
@@ -491,24 +492,32 @@ sd_skip_if <- function(...) {
 #' @description
 #' This function is used to define conditions under which certain questions in the survey should be shown.
 #' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
-#' If called with no arguments, it will return NULL and set no conditions.
+#' If called with no arguments, it will return `NULL` and set no conditions.
 #'
 #' @param ... One or more formulas defining show conditions.
 #'   The left-hand side of each formula should be a condition based on input values,
 #'   and the right-hand side should be the ID of the question to show if the condition is met.
 #'
 #' @return A list of parsed conditions, where each element contains the condition and the target question ID.
-#'   Returns NULL if no conditions are provided.
+#'   Returns `NULL` if no conditions are provided.
 #'
 #' @examples
-#' \dontrun{
-#' sd_show_if(
-#'   input$has_pets == "yes" ~ "pet_details",
-#'   input$employment == "employed" ~ "job_questions"
-#' )
-#' }
+#' \dontrun {
+#'   # Example of implementing sd_show_if in the Shiny server in the app.R file
+#'   library(surveydown)
 #'
-#' @seealso \code{\link{sd_skip_if}}
+#'   server <- function(input, output, session) {
+#'
+#'     # Assuming there are questions with the id values "has_pets" and
+#'     # "employment" and pages with the id values "underage_page" and "international_page"
+#'
+#'     sd_show_if(
+#'       input$has_pets == "yes" ~ "pet_details",
+#'       input$employment == "employed" ~ "job_questions"
+#'     )
+#'   }
+#' }
+#' @seealso `sd_skip_if()`
 #'
 #' @export
 sd_show_if <- function(...) {
