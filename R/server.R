@@ -977,23 +977,34 @@ sd_store_value <- function(value, id = NULL) {
     invisible(NULL)
 }
 
-#' Create a copy of an input value
+#' Create a copy of a value
 #'
-#' This function creates a copy of an input value and makes it available as a new output.
-#' The new output can then be displayed using sd_display_value().
+#' This function creates a copy of an input value and makes it available as a
+#' new output. The new output can then be displayed using `sd_output()`.
 #'
-#' @param id The ID of the input value to copy
-#' @param id_copy The ID for the new copy (must be different from id)
+#' @param id Character string. The ID of the input value to copy.
+#' @param id_copy Character string. The ID for the new copy (must be different
+#'   from `id`).
 #'
-#' @return NULL invisibly. This function is called for its side effects.
+#' @return `NULL` invisibly. This function is called for its side effects.
 #'
 #' @examples
-#' \dontrun{
-#' sd_copy_value(id = "respondent_name", id_copy = "resp_name2")
+#' \dontrun {
+#'   # Example of copying a response name in the Shiny server in the app.R file
+#'   library(surveydown)
 #'
-#' # Then in UI:
-#' # sd_display_value("resp_name2")
+#'   server <- function(input, output, session) {
+#'
+#'     # Assuming there is a question with the id values "name"
+#'     sd_copy_value(id = "name", id_copy = "name2")
+#'
+#'   }
+#'
+#' # Then in survey.qmd file:
+#' # sd_output("name2")
 #' }
+#'
+#' @seealso `sd_output()` for displaying the copied value
 #'
 #' @export
 sd_copy_value <- function(id, id_copy) {
