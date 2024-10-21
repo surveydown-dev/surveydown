@@ -139,8 +139,6 @@ sd_database <- function(
 #' reactive expression that, when called, returns the most recent data from
 #' the specified database table.
 #'
-#' @export
-#'
 #' @examples
 #' # Non-reactive context example
 #' \dontrun{
@@ -167,6 +165,7 @@ sd_database <- function(
 #'     })
 #'   }
 #' }
+#' @export
 sd_get_data <- function(db, refresh_interval = NULL) {
     if (is.null(db)) {
         warning("Database is not connected, db is NULL")
