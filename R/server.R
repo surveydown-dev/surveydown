@@ -1,26 +1,28 @@
-#' Server Logic for a surveydown survey
+#' Server logic for a surveydown survey
 #'
 #' @description
-#' This function defines the server-side logic for a Shiny application used in surveydown.
-#' It handles various operations such as conditional display, progress tracking,
-#' page navigation, database updates for survey responses, and exit survey functionality.
+#' This function defines the server-side logic for a Shiny application used in
+#' surveydown. It handles various operations such as conditional display,
+#' progress tracking, page navigation, database updates for survey responses,
+#' and exit survey functionality.
 #'
 #' @param db A list containing database connection information created using
-#' \code{\link{sd_database}} function. Defaults to `NULL`.
-#' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to `NULL`.
-#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
-#' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
-#' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to `FALSE`.
-#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to `FALSE`.
-#' @param rate_survey Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to `FALSE`.
-#'
-#' @import shiny
-#' @import shinyWidgets
-#' @importFrom stats setNames
-#' @importFrom shiny reactiveValuesToList observeEvent renderText
+#'   `sd_database()` function. Defaults to `NULL`.
+#' @param required_questions Vector of character strings. The IDs of questions
+#'   that must be answered. Defaults to `NULL`.
+#' @param all_questions_required Logical. If `TRUE`, all questions in the
+#'   survey will be required. Defaults to `FALSE`.
+#' @param start_page Character string. The ID of the page to start on.
+#'   Defaults to `NULL`.
+#' @param admin_page Logical. Whether to include an admin page for viewing and
+#'   downloading survey data. Defaults to `FALSE`.
+#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
+#'   question after answering. Defaults to `FALSE`.
+#' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
+#'   the survey. If `FALSE`, shows a simple confirmation dialog.
+#'   Defaults to `FALSE`.
 #'
 #' @details
-#'
 #' The function performs the following tasks:
 #' \itemize{
 #'   \item Initializes variables and reactive values.
@@ -28,51 +30,54 @@
 #'   \item Tracks answered questions and updates the progress bar.
 #'   \item Handles page navigation and skip logic.
 #'   \item Manages required questions.
-#'   \item Performs database operations or saves to a local CSV file in preview mode.
-#'   \item Sets up admin functionality if enabled in the configuration.
-#'   \item Controls auto-scrolling behavior based on the `auto_scroll` parameter.
-#'   \item Uses sweetalert for warning messages when required questions are not answered.
-#'   \item Handles the exit survey process based on the `rate_survey` parameter.
+#'   \item Performs database operation.
+#'   \item Sets up admin functionality if enabled with the `admin_page` argument.
+#'   \item Controls auto-scrolling behavior based on the `auto_scroll` argument.
+#'   \item Uses sweetalert for warning messages when required questions are not
+#'         answered.
+#'   \item Handles the exit survey process based on the `rate_survey` argument.
 #' }
 #'
 #' @section Progress Bar:
-#' The progress bar is updated based on the last answered question. It will jump to the
-#' percentage corresponding to the last answered question and will never decrease,
-#' even if earlier questions are answered later. The progress is calculated as the ratio
-#' of the last answered question's index to the total number of questions.
+#' The progress bar is updated based on the last answered question. It will jump
+#' to the percentage corresponding to the last answered question and will never
+#' decrease, even if earlier questions are answered later. The progress is
+#' calculated as the ratio of the last answered question's index to the total
+#' number of questions.
 #'
 #' @section Database Operations:
-#' If \code{db} is provided, the function will update the database with survey responses.
-#' If \code{db} is \code{NULL} (ignore mode), responses will be saved to a local CSV file.
+#' If `db` is provided, the function will update the database with survey
+#' responses. If `db` is `NULL` (ignore mode), responses will be saved to a local
+#' CSV file.
 #'
 #' @section Auto-Scrolling:
-#' When `auto_scroll` is TRUE, the survey will automatically scroll to the next question
-#' after the current question is answered. This behavior can be disabled by setting
-#' `auto_scroll` to FALSE.
+#' When `auto_scroll` is `TRUE`, the survey will automatically scroll to the next
+#' question after the current question is answered. This behavior can be disabled
+#' by setting `auto_scroll` to `FALSE`.
 #'
 #' @section Exit Survey:
-#' When `rate_survey` is TRUE, the function will show a rating question when the user attempts to exit the survey.
-#' When FALSE, it will show a simple confirmation dialog. The rating, if provided, is saved with the survey data.
+#' When `rate_survey` is `TRUE`, the function will show a rating question when
+#' the user attempts to exit the survey. When `FALSE`, it will show a simple
+#' confirmation dialog. The rating, if provided, is saved with the survey data.
 #'
 #' @return
-#' This function does not return a value; it sets up the server-side logic for the Shiny application.
+#' This function does not return a value; it sets up the server-side logic for
+#' the Shiny application.
 #'
 #' @examples
-#' \dontrun{
+#' \dontrun {
 #'   library(surveydown)
-#'   library(shinyWidgets)
-#'   db <- sd_database()
 #'
-#'   shinyApp(
-#'     ui = sd_ui(),
-#'     server = function(input, output, session) {
-#'       sd_server(db = db, auto_scroll = TRUE, rate_survey = TRUE)
-#'     }
-#'   )
+#'   # Define the server logic for a surveydown app
+#'   server <- function(input, output, session) {
+#'     sd_server(
+#'       db = db
+#'     )
+#'   }
 #' }
 #'
 #' @seealso
-#' \code{\link{sd_database}}, \code{\link{sd_ui}}
+#' `sd_database()`, `sd_ui()`
 #'
 #' @export
 sd_server <- function(
@@ -125,7 +130,7 @@ sd_server <- function(
     start_page   <- config$start_page
     admin_page   <- config$admin_page
     question_required <- config$question_required
-    page_id_to_index <- setNames(seq_along(page_ids), page_ids)
+    page_id_to_index <- stats::setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs
     page_ts_ids     <- paste0("time_p_", page_ids)
@@ -137,7 +142,7 @@ sd_server <- function(
 
     # Reactive to store visibility status of all questions
     question_visibility <- shiny::reactiveVal(
-      setNames(rep(TRUE, length(question_ids)), question_ids)
+      stats::setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
     # Observer to apply show_if conditions and update question_visibility
@@ -235,7 +240,7 @@ sd_server <- function(
     # Reactive expression that returns a list of the latest data
     latest_data <- shiny::reactive({
         # Convert reactiveValues to a regular list
-        data <- reactiveValuesToList(all_data)
+        data <- shiny::reactiveValuesToList(all_data)
 
         # Ensure all elements are of length 1, use "" for empty or NULL values
         data <- lapply(data, function(x) {
@@ -255,7 +260,7 @@ sd_server <- function(
         local_id <- question_ids[index]
         local_ts_id <- question_ts_ids[index]
 
-        observeEvent(input[[local_id]], {
+        shiny::observeEvent(input[[local_id]], {
             # Tag event time
             timestamp <- get_utc_timestamp()
 
@@ -275,7 +280,9 @@ sd_server <- function(
             changed_fields(c(changed_fields(), changed))
 
             # Make value accessible in the UI
-            output[[paste0(local_id, "_value")]] <- renderText({ formatted_value })
+            output[[paste0(local_id, "_value")]] <- shiny::renderText({
+                formatted_value
+            })
         }, ignoreNULL = FALSE, ignoreInit = TRUE)
     })
 
@@ -321,7 +328,7 @@ sd_server <- function(
     # Determine which page is next, then update current_page_id() to it
     observe({
       lapply(pages, function(page) {
-        observeEvent(input[[page$next_button_id]], {
+        shiny::observeEvent(input[[page$next_button_id]], {
           shiny::isolate({
             # Grab the time stamp of the page turn
             timestamp <- get_utc_timestamp()
@@ -366,7 +373,7 @@ sd_server <- function(
 
     # Survey rating ----
     # Observer for the exit survey modal
-    observeEvent(input$show_exit_modal, {
+    shiny::observeEvent(input$show_exit_modal, {
       if (rate_survey) {
         showModal(modalDialog(
           title = "Before you go...",
@@ -400,7 +407,7 @@ sd_server <- function(
     })
 
     # Observer to handle the rating submission or exit confirmation
-    observeEvent(input$submit_rating, {
+    shiny::observeEvent(input$submit_rating, {
       # Save the rating
       rating <- input$survey_rating
       all_data[['exit_survey_rating']] <- rating
@@ -414,7 +421,7 @@ sd_server <- function(
       session$sendCustomMessage("closeWindow", list())
     })
 
-    observeEvent(input$confirm_exit, {
+    shiny::observeEvent(input$confirm_exit, {
       # Close the modal and the window
       removeModal()
       session$sendCustomMessage("closeWindow", list())
@@ -525,7 +532,7 @@ set_show_if_conditions <- function(show_if) {
                 ))
                 FALSE
             })
-            setNames(list(result), rule$target)
+            stats::setNames(list(result), rule$target)
         })
         do.call(c, results)
     })
@@ -927,7 +934,7 @@ sd_store_value <- function(value, id = NULL) {
 
         # Make value accessible in the UI
         output <- shiny::getDefaultReactiveDomain()$output
-        output[[paste0(id, "_value")]] <- renderText({ formatted_value })
+        output[[paste0(id, "_value")]] <- shiny::renderText({ formatted_value })
     })
 
     invisible(NULL)
