@@ -879,13 +879,14 @@ sd_set_password <- function(password) {
 
 #' Show the Saved Survey Password
 #'
-#' This function displays the password saved in the .Renviron file under the
-#' SURVEYDOWN_PASSWORD variable. It includes a confirmation step to ensure
+#' This function displays the password saved in the `.Renviron` file under the
+#' `SURVEYDOWN_PASSWORD` variable. It includes a confirmation step to ensure
 #' the user wants to display the password in the console. If no password is
-#' found, it suggests using the sd_set_password() function to define a password.
+#' found, it suggests using the `sd_set_password()` function to define a
+#' password.
 #'
 #' @return A character string containing the password if found and confirmed,
-#' or a message if no password is saved along with a suggestion to set one.
+#'   or a message if no password is saved along with a suggestion to set one.
 #'
 #' @examples
 #' if (interactive()) {
@@ -927,20 +928,27 @@ sd_show_password <- function() {
   }
 }
 
-#' Store a value
+#' Store a value in the survey data
 #'
-#' This function allows storing additional values to be included in the survey data,
-#' such as respondent IDs or other data.
+#' This function allows storing additional values to be included in the survey
+#' data, such as respondent IDs or other metadata.
 #'
-#' @param value The raid value to be stored.
-#' @param id (Optional) The id (name) of the value in the data.
-#'             If not provided, the id of the `value` variable will be used.
+#' @param value The value to be stored. This can be any R object that can be
+#'   coerced to a character string.
+#' @param id (Optional) Character string. The id (name) of the value in the
+#'   data. If not provided, the name of the `value` variable will be used.
 #'
-#' @return NULL (invisibly)
+#' @return `NULL` (invisibly)
 #'
 #' @examples
-#' \dontrun{
+#' if (interactive()) {
+#'   # Create a respondent ID to store
+#'   respondentID <- 42
+#'
+#'   # Store the respondentID
 #'   sd_store_value(respondentID)
+#'
+#'   # Store the respondentID as the variable "respID"
 #'   sd_store_value(respondentID, "respID")
 #' }
 #'
