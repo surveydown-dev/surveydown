@@ -800,22 +800,32 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
-#' Set Password
+#' Set password for surveydown survey
 #'
-#' This function sets the supabase password in the .Renviron file and adds .Renviron to .gitignore.
+#' This function sets your surveydown password, which is used to access
+#' the PostgreSQL data (e.g. Supabase). The password is saved in a `.Renviron`
+#' file and adds `.Renviron` to `.gitignore`.
 #'
-#' @param password Character string. The password to be set for Supabase connection.
+#' @param password Character string. The password to be set for the database
+#'   connection.
 #'
 #' @details The function performs the following actions:
-#'   1. Creates a .Renviron file in the root directory if it doesn't exist.
-#'   2. Adds or updates the SURVEYDOWN_PASSWORD entry in the .Renviron file.
-#'   3. Adds .Renviron to .gitignore if it's not already there.
+#'   1. Creates a `.Renviron` file in the root directory if it doesn't exist.
+#'   2. Adds or updates the `SURVEYDOWN_PASSWORD` entry in the `.Renviron` file.
+#'   3. Adds `.Renviron` to `.gitignore` if it's not already there.
 #'
 #' @return None. The function is called for its side effects.
 #'
 #' @examples
 #' \dontrun{
-#'   sd_set_password("your_SURVEYDOWN_PASSWORD")
+#'   # Set a temporary password for demonstration
+#'   temp_password <- paste0(sample(letters, 10, replace = TRUE), collapse = "")
+#'
+#'   # Set the password
+#'   sd_set_password(temp_password)
+#'
+#'   # After restarting R, verify the password was set
+#'   cat("Password is :", Sys.getenv('SURVEYDOWN_PASSWORD'))
 #' }
 #'
 #' @export
