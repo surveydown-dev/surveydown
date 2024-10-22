@@ -2,28 +2,40 @@
 % Please edit documentation in R/server.R
 \name{sd_copy_value}
 \alias{sd_copy_value}
-\title{Create a copy of an input value}
+\title{Create a copy of a value}
 \usage{
 sd_copy_value(id, id_copy)
 }
 \arguments{
-\item{id}{The ID of the input value to copy}
+\item{id}{Character string. The ID of the input value to copy.}
 
-\item{id_copy}{The ID for the new copy (must be different from id)}
+\item{id_copy}{Character string. The ID for the new copy (must be different
+from \code{id}).}
 }
 \value{
-NULL invisibly. This function is called for its side effects.
+\code{NULL} invisibly. This function is called for its side effects.
 }
 \description{
-This function creates a copy of an input value and makes it available as a new output.
-The new output can then be displayed using sd_display_value().
+This function creates a copy of an input value and makes it available as a
+new output. The new output can then be displayed using \code{sd_output()}.
 }
 \examples{
-\dontrun{
-sd_copy_value(id = "respondent_name", id_copy = "resp_name2")
+\dontrun {
+  # Example of copying a response name in the Shiny server in the app.R file
+  library(surveydown)
 
-# Then in UI:
-# sd_display_value("resp_name2")
+  server <- function(input, output, session) {
+
+    # Assuming there is a question with the id values "name"
+    sd_copy_value(id = "name", id_copy = "name2")
+
+  }
+
+# Then in survey.qmd file:
+# sd_output("name2")
 }
 
+}
+\seealso{
+\code{sd_output()} for displaying the copied value
 }

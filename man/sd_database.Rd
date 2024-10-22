@@ -2,7 +2,7 @@
 % Please edit documentation in R/db.R
 \name{sd_database}
 \alias{sd_database}
-\title{Connect to a Supabase Database with Automatic Cleanup}
+\title{Connect to a PostgreSQL Database with Automatic Cleanup}
 \usage{
 sd_database(
   host = NULL,
@@ -34,7 +34,8 @@ the Supabase database.}
 connection. NOTE: While you can provide a hard-coded password here, we do
 NOT recommend doing so for security purposes. Instead, you should establish
 a password with \code{surveydown::sd_set_password()}, which will create a local
-.Renviron file that stores you password as a SURVEYDOWN_PASSWORD environment
+\code{.Renviron} file that stores your password as a \code{SURVEYDOWN_PASSWORD}
+environment
 variable. The \code{password} argument uses this as the default value, so if you
 set a password properly with \code{surveydown::sd_set_password()}, then you can
 safely ignore using the \code{password} argument here.}
@@ -45,42 +46,41 @@ connection details are correct but still cannot access the database,
 consider setting this to \code{"disable"}. This can be necessary if you're on a
 secure connection, such as a VPN.}
 
-\item{ignore}{Logical. If TRUE, data will be saved to a local CSV file instead of the database. Defaults to FALSE.}
+\item{ignore}{Logical. If \code{TRUE}, data will be saved to a local CSV file
+instead of the database. Defaults to \code{FALSE}.}
 
-\item{min_size}{Integer. The minimum number of connections in the pool. Defaults to 1.}
+\item{min_size}{Integer. The minimum number of connections in the pool.
+Defaults to 1.}
 
-\item{max_size}{Integer. The maximum number of connections in the pool. Defaults to Inf.}
+\item{max_size}{Integer. The maximum number of connections in the pool.
+Defaults to \code{Inf}.}
 }
 \value{
-A list containing the database connection pool (\code{db}) and the table name (\code{table}),
-or NULL if in ignore mode or if there's an error.
+A list containing the database connection pool (\code{db}) and the table
+name (\code{table}), or \code{NULL} if in ignore mode or if there's an error.
 }
 \description{
-This function establishes a connection pool to a Supabase database and sets
-up automatic cleanup when the Shiny session ends.
+This function establishes a connection pool to a PostgreSQL database
+(e.g. Supabase) and sets up automatic cleanup when the Shiny session ends.
 }
 \examples{
-\dontrun{
+if (interactive()) {
   # Assuming SURVEYDOWN_PASSWORD is set in .Renviron
-  db_connection <- sd_database(
-    host       = "aws-0-us-west-1.pooler.supabase.com",
-    dbname     = "postgres",
-    port       = "6---",
-    user       = "postgres.k----------i",
-    table = "your-table-name",
-    ignore      = FALSE
+  db <- sd_database(
+    host   = "aws-0-us-west-1.pooler.supabase.com",
+    dbname = "postgres",
+    port   = "6---",
+    user   = "postgres.k----------i",
+    table  = "your-table-name",
+    ignore = FALSE
   )
 
-  # Explicitly providing the password
-  db_connection <- sd_database(
-    host       = "aws-0-us-west-1.pooler.supabase.com",
-    dbname     = "postgres",
-    port       = "6---",
-    user       = "postgres.k----------i",
-    table = "your-table-name",
-    password   = "your-password",
-    ignore      = FALSE
-  )
+  # Print the structure of the connection
+  str(db)
+
+  # Close the connection pool when done
+  if (!is.null(db)) {
+    pool::poolClose(db$db)
+  }
 }
-
 }

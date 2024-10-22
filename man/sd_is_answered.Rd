@@ -10,17 +10,25 @@ sd_is_answered(question_id)
 \item{question_id}{The ID of the question to check.}
 }
 \value{
-A logical value: TRUE if the question is answered, FALSE otherwise.
+A logical value: \code{TRUE} if the question is answered, \code{FALSE}
+otherwise.
 }
 \description{
 This function checks if a given question has been answered by the user.
-For matrix questions, it checks if all sub-questions are answered.
+For matrix questions, it checks if all sub-questions (rows) are answered.
 }
 \examples{
-\dontrun{
-if(sd_is_answered("car_preference")) {
-  # Do something when all sub-questions of the matrix are answered
-}
+\dontrun {
+  # Example of code in the app.R file
+  library(surveydown)
+
+  server <- function(input, output, session) {
+
+    if (sd_is_answered("car_preference")) {
+      # Do something only if the "car_preference" question is answered
+    }
+
+  }
 }
 
 }

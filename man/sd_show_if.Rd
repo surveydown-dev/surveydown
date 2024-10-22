@@ -13,22 +13,30 @@ and the right-hand side should be the ID of the question to show if the conditio
 }
 \value{
 A list of parsed conditions, where each element contains the condition and the target question ID.
-Returns NULL if no conditions are provided.
+Returns \code{NULL} if no conditions are provided.
 }
 \description{
 This function is used to define conditions under which certain questions in the survey should be shown.
 It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
-If called with no arguments, it will return NULL and set no conditions.
+If called with no arguments, it will return \code{NULL} and set no conditions.
 }
 \examples{
-\dontrun{
-sd_show_if(
-  input$has_pets == "yes" ~ "pet_details",
-  input$employment == "employed" ~ "job_questions"
-)
-}
+\dontrun {
+  # Example of implementing sd_show_if in the Shiny server in the app.R file
+  library(surveydown)
 
+  server <- function(input, output, session) {
+
+    # Assuming there are questions with the id values "has_pets" and
+    # "employment" and pages with the id values "underage_page" and "international_page"
+
+    sd_show_if(
+      input$has_pets == "yes" ~ "pet_details",
+      input$employment == "employed" ~ "job_questions"
+    )
+  }
+}
 }
 \seealso{
-\code{\link{sd_skip_if}}
+\code{sd_skip_if()}
 }

@@ -11,14 +11,15 @@ A character string containing the password if found and confirmed,
 or a message if no password is saved along with a suggestion to set one.
 }
 \description{
-This function displays the password saved in the .Renviron file under the
-SURVEYDOWN_PASSWORD variable. It includes a confirmation step to ensure
-the user wants to display the password in the console. If no password is found,
-it suggests using the sd_set_password() function to define a password.
+This function displays the password saved in the \code{.Renviron} file under the
+\code{SURVEYDOWN_PASSWORD} variable. It includes a confirmation step to ensure
+the user wants to display the password in the console. If no password is
+found, it suggests using the \code{sd_set_password()} function to define a
+password.
 }
 \examples{
-\dontrun{
-  sd_show_password()
+if (interactive()) {
+  surveydown::sd_show_password()
 }
 
 }
