@@ -36,26 +36,39 @@ load_resource <- function(..., package = "surveydown") {
 #'   \item `barposition`: The position of the progress bar (`'top'`, `'bottom'`, or `'none'`).
 #' }
 #'
-#' If `barcolor` is not specified or is `NULL`, the default theme color will be used.
-#' If `barposition` is not specified, it defaults to 'top'.
+#' If `barcolor` is not specified or is `NULL`, the default theme color will be
+#' used. If `barposition` is not specified, it defaults to 'top'.
 #'
 #' @examples
 #' if (interactive()) {
 #'   library(surveydown)
 #'
 #'   # Create a minimal survey.qmd file for demonstration
-#'   writeLines(
-#'     c("---",
-#'       "theme: default",
-#'       "barcolor: '#4CAF50'",
-#'       "barposition: top",
-#'       "---",
-#'       "",
-#'       "# Sample Survey",
-#'       "",
-#'       "This is a sample survey."),
-#'     "survey.qmd"
-#'   )
+#'   survey <- "---
+#' theme: default
+#' echo: false
+#' warning: false
+#' barcolor: '#4CAF50'
+#' barposition: top
+#' ---
+#'
+#' ```{r}
+#' library(surveydown)
+#' ```
+#' ::: {#page_id .sd-page}
+#'
+#' This is a sample survey
+#'
+#' ```{r}
+#' sd_question(
+#'   type  = 'text',
+#'   id    = 'apple_text',
+#'   label = 'Write a type of apple'
+#' )
+#' ```
+#'
+#' :::"
+#'   writeLines(survey, "survey.qmd")
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -63,10 +76,7 @@ load_resource <- function(..., package = "surveydown") {
 #'   }
 #'
 #'   # Run the Shiny app
-#'   shinyApp(ui = sd_ui(), server)
-#'
-#'   # Clean up
-#'   file.remove("survey.qmd")
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @seealso `sd_server()` for creating the server-side logic of the survey
