@@ -27,24 +27,51 @@ load_resource <- function(..., package = "surveydown") {
 #' It retrieves theme and progress bar settings from the survey.qmd file.
 #'
 #' @return A Shiny UI object
-#' @export
 #'
 #' @details
 #' The function reads the following settings from the survey.qmd YAML header:
 #' \itemize{
-#'   \item \code{theme}: The theme to be applied to the survey.
-#'   \item \code{barcolor}: The color of the progress bar (should be a valid hex color).
-#'   \item \code{barposition}: The position of the progress bar ('top', 'bottom', or 'none').
+#'   \item `theme`: The theme to be applied to the survey.
+#'   \item `barcolor`: The color of the progress bar (should be a valid hex color).
+#'   \item `barposition`: The position of the progress bar (`'top'`, `'bottom'`, or `'none'`).
 #' }
 #'
-#' If \code{barcolor} is not specified or is NULL, the default theme color will be used.
-#' If \code{barposition} is not specified, it defaults to 'top'.
+#' If `barcolor` is not specified or is `NULL`, the default theme color will be used.
+#' If `barposition` is not specified, it defaults to 'top'.
 #'
 #' @examples
-#' \dontrun{
-#' # In your app.R or ui.R file:
-#' ui <- sd_ui()
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   writeLines(
+#'     c("---",
+#'       "theme: default",
+#'       "barcolor: '#4CAF50'",
+#'       "barposition: top",
+#'       "---",
+#'       "",
+#'       "# Sample Survey",
+#'       "",
+#'       "This is a sample survey."),
+#'     "survey.qmd"
+#'   )
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shinyApp(ui = sd_ui(), server)
+#'
+#'   # Clean up
+#'   file.remove("survey.qmd")
 #' }
+#'
+#' @seealso `sd_server()` for creating the server-side logic of the survey
+#'
+#' @export
 sd_ui <- function() {
 
     # Throw error if "survey.qmd" file missing
