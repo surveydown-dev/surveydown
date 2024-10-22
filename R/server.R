@@ -112,6 +112,9 @@ sd_server <- function(
         show_if
     )
 
+    # Access question_structure
+    question_structure <- config$question_structure
+
     # Initialize local variables ----
 
     # Check if db is NULL (either blank or specified with ignore = TRUE)
@@ -252,31 +255,66 @@ sd_server <- function(
     # (one created for each question)
 
     lapply(seq_along(question_ids), function(index) {
-        local_id <- question_ids[index]
-        local_ts_id <- question_ts_ids[index]
+        local({
+            local_id <- question_ids[index]
+            local_ts_id <- question_ts_ids[index]
 
-        observeEvent(input[[local_id]], {
-            # Tag event time
-            timestamp <- get_utc_timestamp()
+            observeEvent(input[[local_id]], {
+                # Tag event time
+                timestamp <- get_utc_timestamp()
 
-            # Update question value
-            formatted_value <- format_question_value(input[[local_id]])
-            all_data[[local_id]] <- formatted_value
+                # Update question value
+                formatted_value <- format_question_value(input[[local_id]])
+                all_data[[local_id]] <- formatted_value
 
-            # Update timestamp and progress if interacted
-            changed <- local_id
-            if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                all_data[[local_ts_id]] <- timestamp
-                changed <- c(changed, local_ts_id)
-                update_progress_bar(index)
-            }
+                # Update timestamp and progress if interacted
+                changed <- local_id
+                if (!is.null(input[[paste0(local_id, "_interacted")]])) {
+                    all_data[[local_ts_id]] <- timestamp
+                    changed <- c(changed, local_ts_id)
+                    update_progress_bar(index)
+                }
 
-            # Update tracker of which fields changed
-            changed_fields(c(changed_fields(), changed))
+                # Update tracker of which fields changed
+                changed_fields(c(changed_fields(), changed))
 
-            # Make value accessible in the UI
-            output[[paste0(local_id, "_value")]] <- renderText({ formatted_value })
-        }, ignoreNULL = FALSE, ignoreInit = TRUE)
+                # Get the labels and values for the current question from question structure
+                question_info <- question_structure[[local_id]]
+
+                label_question <- question_info$label_question
+                options <- question_info$options
+                label_options <- question_info$label_options
+
+                if (length(options) == length(label_options)) {
+                names(options) <- label_options
+                }
+
+                # For the selected value(s), get the corresponding label(s)
+                value <- input[[local_id]]
+
+                if (is.null(value) || length(value) == 0) {
+                label_option <- ""
+                } else {
+                label_option <- options[options %in% value] |>
+                    names() |>
+                    paste(collapse = ", ")
+                }
+
+                output[[paste0(local_id, "_value")]] <- renderText({
+                    formatted_value
+                })
+
+                output[[paste0(local_id, "_label_option")]] <- renderText({
+                    label_option
+                })
+
+                output[[paste0(local_id, "_label_question")]] <- renderText({
+                    label_question
+                })
+            },
+            ignoreNULL = FALSE,
+            ignoreInit = TRUE)
+        })
     })
 
     # Page rendering ----

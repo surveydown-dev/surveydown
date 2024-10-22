@@ -767,7 +767,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' Output Function for Displaying reactive objects and values
 #'
 #' @param id Character string. A unique identifier for the output element.
-#' @param type Character string. Specifies the type of output. Can be "question", "value", or `NULL.`
+#' @param type Character string. Specifies the type of output. Can be "question", "label_question", "value", "label_option", or `NULL.`
 #'   If `NULL`, the function behaves like `shiny::uiOutput()`.
 #' @param width Character string. The width of the UI element. Defaults to "100%".
 #' @param display Character string. Specifies the display type for "value" outputs.
@@ -782,7 +782,11 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' The function behaves differently based on the `type` parameter:
 #' - If `type` is `NULL`, it acts like `shiny::uiOutput()`.
 #' - If `type` is `"question"`, it creates a placeholder for a reactive survey question.
-#' - If `type` is `"value"`, it creates an output to display the value of a survey question,
+#' - If `type` is `"value"`, it creates an output to display the value of a survey question, 
+#'   with the display style determined by the `display` parameter.
+#' - If `type` is `"label_option"`, it creates an output to display the label of the value of a survey question,
+#'   with the display style determined by the `display` parameter.
+#' - If `type` is `"label_question"`, it creates an output to display the survey question,
 #'   with the display style determined by the `display` parameter.
 #'
 #' @examples
@@ -793,6 +797,9 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' # Display the value of a survey question inline
 #' sd_output('cbc1', type = 'value', inline = TRUE)
 #'
+#' # Display the label of the choosen question value (from the list of options)
+#' sd_output('cbc1', type = 'label_option')
+#' 
 #' # Use as a simple uiOutput
 #' sd_output('redirect')
 #'
@@ -820,27 +827,26 @@ sd_output <- function(
         return(make_question_container(id, shiny::uiOutput(id), width))
     }
 
-    if (type == "value") {
-        value_id <- paste0(id, "_value")
-
-        if (!display %in% c("text", "verbatim", "ui")) {
-            stop("Invalid display type. Choose 'text', 'verbatim', or 'ui'.")
-        }
-
-        output <- switch(
-            display,
-            "text" = shiny::textOutput(value_id, inline = inline),
-            "verbatim" = shiny::verbatimTextOutput(value_id, inline = inline),
-            "ui" = shiny::uiOutput(value_id, inline = inline),
-            # Default to textOutput if display is not specified
-            shiny::textOutput(value_id, inline = inline)
-        )
-
-        if (!is.null(wrapper)) {
-            output <- wrapper(output, ...)
-        }
-
-        return(output)
+    if (type %in% c("value", "label_option", "label_question")) {
+      type_id <- paste0(id, "_", type)
+  
+      if (!display %in% c("text", "verbatim", "ui")) {
+        stop("Invalid display type. Choose 'text', 'verbatim', or 'ui'.")
+      }
+  
+      output <- switch(display,
+        "text" = shiny::textOutput(type_id, inline = inline),
+        "verbatim" = shiny::verbatimTextOutput(type_id, inline = inline),
+        "ui" = shiny::uiOutput(type_id, inline = inline),
+        # Default to textOutput if display is not specified
+        shiny::textOutput(type_id, inline = inline)
+      )
+  
+      if (!is.null(wrapper)) {
+        output <- wrapper(output, ...)
+      }
+  
+      return(output)
     }
 
     stop("Invalid type. Choose 'question' or 'value'.")
