@@ -18,7 +18,7 @@ This function checks if a given question has been answered by the user.
 For matrix questions, it checks if all sub-questions (rows) are answered.
 }
 \examples{
-\dontrun {
+\dontrun{
   # Example of code in the app.R file
   library(surveydown)
 

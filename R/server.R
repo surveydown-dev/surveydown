@@ -65,7 +65,7 @@
 #' the Shiny application.
 #'
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #'   library(surveydown)
 #'
 #'   # Define the server logic for a surveydown app
@@ -292,7 +292,7 @@ sd_server <- function(
     # (defaults to first page if NULL...see run_config() function)
     current_page_id <- shiny::reactiveVal(start_page)
 
-    get_current_page <- reactive({
+    get_current_page <- shiny::reactive({
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
 
@@ -326,7 +326,7 @@ sd_server <- function(
     }
 
     # Determine which page is next, then update current_page_id() to it
-    observe({
+    shiny::observe({
       lapply(pages, function(page) {
         shiny::observeEvent(input[[page$next_button_id]], {
           shiny::isolate({
@@ -375,7 +375,7 @@ sd_server <- function(
     # Observer for the exit survey modal
     shiny::observeEvent(input$show_exit_modal, {
       if (rate_survey) {
-        showModal(modalDialog(
+        shiny::showModal(shiny::modalDialog(
           title = "Before you go...",
           sd_question(
             type   = 'mc_buttons',
@@ -389,18 +389,18 @@ sd_server <- function(
               "5" = "5"
             )
           ),
-          footer = tagList(
-            modalButton("Cancel"),
-            actionButton("submit_rating", "Submit and Exit")
+          footer = shiny::tagList(
+            shiny::modalButton("Cancel"),
+            shiny::actionButton("submit_rating", "Submit and Exit")
           )
         ))
       } else {
-        showModal(modalDialog(
+        shiny::showModal(shiny::modalDialog(
           title = "Confirm Exit",
           "Are you sure you want to exit the survey?",
-          footer = tagList(
-            modalButton("Cancel"),
-            actionButton("confirm_exit", "Exit")
+          footer = shiny::tagList(
+            shiny::modalButton("Cancel"),
+            shiny::actionButton("confirm_exit", "Exit")
           )
         ))
       }
@@ -413,17 +413,17 @@ sd_server <- function(
       all_data[['exit_survey_rating']] <- rating
       changed_fields(c(changed_fields(), 'exit_survey_rating'))
       # Update data immediately
-      isolate({
+      shiny::isolate({
         update_data(time_last = TRUE)
       })
       # Close the modal and the window
-      removeModal()
+      shiny::removeModal()
       session$sendCustomMessage("closeWindow", list())
     })
 
     shiny::observeEvent(input$confirm_exit, {
       # Close the modal and the window
-      removeModal()
+      shiny::removeModal()
       session$sendCustomMessage("closeWindow", list())
     })
 
@@ -451,7 +451,7 @@ sd_server <- function(
 #' condition and the target page ID.
 #'
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #'   # Example of implementing sd_skip_if in the Shiny server in the app.R file
 #'   library(surveydown)
 #'
@@ -502,7 +502,7 @@ sd_skip_if <- function(...) {
 #'   Returns `NULL` if no conditions are provided.
 #'
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #'   # Example of implementing sd_show_if in the Shiny server in the app.R file
 #'   library(surveydown)
 #'
@@ -725,14 +725,14 @@ admin_enable <- function(input, output, session, db) {
     }
 
     # Observe for URL change
-    url_reactive <- reactive({
+    url_reactive <- shiny::reactive({
         session$clientData$url_search
     })
 
     # Observe changes to the URL
     shiny::observe({
         url <- url_reactive()
-        query <- parseQueryString(url)
+        query <- shiny::parseQueryString(url)
         admin_param <- query[['admin']]
         if(!is.null(admin_param)) {
             show_admin_section()
@@ -989,7 +989,7 @@ sd_store_value <- function(value, id = NULL) {
 #' @return `NULL` invisibly. This function is called for its side effects.
 #'
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #'   # Example of copying a response name in the Shiny server in the app.R file
 #'   library(surveydown)
 #'
@@ -1034,7 +1034,7 @@ sd_copy_value <- function(id, id_copy) {
 #' otherwise.
 #'
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #'   # Example of code in the app.R file
 #'   library(surveydown)
 #'

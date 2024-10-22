@@ -59,7 +59,7 @@ sd_output('redirect')
 
 # Use with a wrapper function
 sd_output('age', type = 'value', display = 'text',
-          wrapper = function(x) tags$strong(x))
+          wrapper = function(x) shiny::tags$strong(x))
 }
 
 }

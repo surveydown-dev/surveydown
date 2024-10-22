@@ -111,7 +111,7 @@ sd_ui <- function() {
       },
       shiny::tags$script("var surveydownConfig = {};"),
       if (!is.null(barcolor)) {
-        shiny::tags$style(HTML(sprintf("
+        shiny::tags$style(shiny::HTML(sprintf("
                 :root {
                     --progress-color: %s;
                 }
@@ -593,8 +593,6 @@ sd_close <- function(label = "Exit Survey") {
 #' @return In a reactive context, returns a function that when called, renders the
 #'   redirect element. In a non-reactive context, returns the redirect element directly.
 #'
-#' @importFrom shiny renderUI tags HTML actionButton
-#' @importFrom digest digest
 #' @export
 #'
 #' @examples
@@ -719,7 +717,6 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 #'
 #' @return A reactive expression that returns a list of URL parameters.
 #'
-#' @importFrom shiny reactive getDefaultReactiveDomain parseQueryString
 #' @export
 #'
 #' @examples
@@ -787,12 +784,12 @@ sd_display_question <- function(id) {
 #' # Deprecated:
 #' sd_display_value("name")
 #' sd_display_value("age", display_type = "text")
-#' sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
+#' sd_display_value("email", display_type = "inline", wrapper = function(x) shiny::tags$strong(x))
 #'
 #' # Use instead:
 #' sd_output("name", type = "value")
 #' sd_output("age", type = "value", display = "text")
-#' sd_output("email", type = "value", display = "inline", wrapper = function(x) tags$strong(x))
+#' sd_output("email", type = "value", display = "inline", wrapper = function(x) shiny::tags$strong(x))
 #' }
 #'
 #' @export
@@ -835,7 +832,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #'
 #' # Use with a wrapper function
 #' sd_output('age', type = 'value', display = 'text',
-#'           wrapper = function(x) tags$strong(x))
+#'           wrapper = function(x) shiny::tags$strong(x))
 #' }
 #'
 #' @export

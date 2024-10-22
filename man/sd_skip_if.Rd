@@ -22,7 +22,7 @@ survey should be skipped. It takes one or more formulas where the left-hand
 side is the condition and the right-hand side is the target page ID.
 }
 \examples{
-\dontrun {
+\dontrun{
   # Example of implementing sd_skip_if in the Shiny server in the app.R file
   library(surveydown)
 

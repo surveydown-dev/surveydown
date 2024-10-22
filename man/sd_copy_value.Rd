@@ -20,7 +20,7 @@ This function creates a copy of an input value and makes it available as a
 new output. The new output can then be displayed using \code{sd_output()}.
 }
 \examples{
-\dontrun {
+\dontrun{
   # Example of copying a response name in the Shiny server in the app.R file
   library(surveydown)
 

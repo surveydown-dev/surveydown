@@ -21,7 +21,7 @@ It takes one or more formulas where the left-hand side is the condition and the 
 If called with no arguments, it will return \code{NULL} and set no conditions.
 }
 \examples{
-\dontrun {
+\dontrun{
   # Example of implementing sd_show_if in the Shiny server in the app.R file
   library(surveydown)
 

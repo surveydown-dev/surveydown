@@ -31,7 +31,6 @@ Suggests:
     testthat
 Imports:
     DBI,
-    digest,
     DT,
     htmltools,
     markdown,

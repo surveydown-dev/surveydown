@@ -269,7 +269,6 @@ sd_create_survey <- function(path = getwd(), structure = "single") {
 #'
 #' @seealso \code{\link[rsconnect]{deployApp}}
 #'
-#' @importFrom rsconnect deployApp
 sd_deploy <- function(name = "survey") {
     rsconnect::deployApp(appName = name)
 }

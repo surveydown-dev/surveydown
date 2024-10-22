@@ -233,7 +233,7 @@ get_question_structure <- function(html_content) {
 
 get_output_ids <- function() {
     output <- shiny::getDefaultReactiveDomain()$output
-    outs <- outputOptions(output)
+    outs <- shiny::outputOptions(output)
     return(names(outs))
 }
 

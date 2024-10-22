@@ -94,7 +94,7 @@ confirmation dialog. The rating, if provided, is saved with the survey data.
 }
 
 \examples{
-\dontrun {
+\dontrun{
   library(surveydown)
 
   # Define the server logic for a surveydown app
