@@ -800,7 +800,10 @@ sd_question(
 )
 ```
 
-Your input is `r sd_output('apple_text', type = 'value')`.
+For the question `r sd_output('apple_text', type = 'label_question')`:
+
+- Your _value_ of your chosen input is `r sd_output('apple_text', type = 'value')`.
+- The _label_ of your chosen input is `r sd_output('apple_text', type = 'label_option')`.
 
 :::",
   sd_is_answered = "---

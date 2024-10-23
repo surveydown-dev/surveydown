@@ -8,43 +8,24 @@ sd_skip_if(...)
 }
 \arguments{
 \item{...}{One or more formulas defining skip conditions.
-The left-hand side of each formula should be a condition based on input
-values, and the right-hand side should be the ID of the page to skip to if
-the condition is met.}
+The left-hand side of each formula should be a condition based on input values,
+and the right-hand side should be the ID of the page to skip to if the condition is met.}
 }
 \value{
-A list of parsed conditions, where each element contains the
-condition and the target page ID.
+A list of parsed conditions, where each element contains the condition and the target page ID.
 }
 \description{
-This function is used to define conditions under which certain pages in the
-survey should be skipped. It takes one or more formulas where the left-hand
-side is the condition and the right-hand side is the target page ID.
+This function is used to define conditions under which certain pages in the survey should be skipped.
+It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target page ID.
 }
 \examples{
-if (interactive()) {
-  library(surveydown)
-
-  # Create a minimal survey.qmd file for demonstration
-  sd_demo_qmd(type = "sd_skip_if")
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-
-    # Skip to page based on input
-    sd_skip_if(
-      input$fav_fruit == "orange" ~ "orange_page",
-      input$fav_fruit == "other" ~ "other_page"
-      )
-
-    sd_server()
-  }
-
-  # Run the Shiny app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+\dontrun{
+sd_skip_if(
+  as.numeric(input$age < 18) ~ "underage_page",
+  input$country != "USA" ~ "international_page"
+)
 }
-
 }
 \seealso{
-\code{sd_show_if()}
+\code{\link{sd_show_if}}
 }

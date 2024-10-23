@@ -74,7 +74,7 @@ sd_ui <- function() {
       },
       shiny::tags$script("var surveydownConfig = {};"),
       if (!is.null(barcolor)) {
-        shiny::tags$style(HTML(sprintf("
+        shiny::tags$style(htmltools::HTML(sprintf("
                 :root {
                     --progress-color: %s;
                 }
@@ -250,7 +250,7 @@ sd_question <- function(
             selected  = character(0)
         )
 
-        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
+        output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
@@ -267,7 +267,7 @@ sd_question <- function(
             justified  = FALSE
         )
 
-        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
+        output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
@@ -420,7 +420,7 @@ date_interaction <- function(output, id) {
          }, 1000);",  # 1000 ms delay
         id, id
     )
-    shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(js_code)))
+    shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_code)))
 }
 
 make_question_container <- function(id, object, width) {
@@ -527,7 +527,7 @@ sd_close <- function(label = "Exit Survey") {
         onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
       )
     ),
-    shiny::tags$script(shiny::HTML("
+    shiny::tags$script(htmltools::HTML("
       Shiny.addCustomMessageHandler('closeWindow', function(message) {
         window.close();
         if (!window.closed) {
@@ -556,8 +556,6 @@ sd_close <- function(label = "Exit Survey") {
 #' @return In a reactive context, returns a function that when called, renders the
 #'   redirect element. In a non-reactive context, returns the redirect element directly.
 #'
-#' @importFrom shiny renderUI tags HTML actionButton
-#' @importFrom digest digest
 #' @export
 #'
 #' @examples
@@ -640,7 +638,7 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
                     )
                 )
             ),
-            shiny::tags$script(shiny::HTML(sprintf(
+            shiny::tags$script(htmltools::HTML(sprintf(
               "startCountdown(%d, function() { %s }, '%s', '%s');",
               delay,
               redirect_js,

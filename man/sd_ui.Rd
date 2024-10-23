@@ -19,29 +19,15 @@ The function reads the following settings from the survey.qmd YAML header:
 \itemize{
 \item \code{theme}: The theme to be applied to the survey.
 \item \code{barcolor}: The color of the progress bar (should be a valid hex color).
-\item \code{barposition}: The position of the progress bar (\code{'top'}, \code{'bottom'}, or \code{'none'}).
+\item \code{barposition}: The position of the progress bar ('top', 'bottom', or 'none').
 }
 
-If \code{barcolor} is not specified or is \code{NULL}, the default theme color will be
-used. If \code{barposition} is not specified, it defaults to 'top'.
+If \code{barcolor} is not specified or is NULL, the default theme color will be used.
+If \code{barposition} is not specified, it defaults to 'top'.
 }
 \examples{
-if (interactive()) {
-  library(surveydown)
-
-  # Create a minimal survey.qmd file for demonstration
-  sd_demo_qmd(type = "sd_ui")
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-    sd_server()
-  }
-
-  # Run the Shiny app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+\dontrun{
+# In your app.R or ui.R file:
+ui <- sd_ui()
 }
-
-}
-\seealso{
-\code{sd_server()} for creating the server-side logic of the survey
 }

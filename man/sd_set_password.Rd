@@ -2,40 +2,30 @@
 % Please edit documentation in R/server.R
 \name{sd_set_password}
 \alias{sd_set_password}
-\title{Set password for surveydown survey}
+\title{Set Password}
 \usage{
 sd_set_password(password)
 }
 \arguments{
-\item{password}{Character string. The password to be set for the database
-connection.}
+\item{password}{Character string. The password to be set for Supabase connection.}
 }
 \value{
 None. The function is called for its side effects.
 }
 \description{
-This function sets your surveydown password, which is used to access
-the PostgreSQL data (e.g. Supabase). The password is saved in a \code{.Renviron}
-file and adds \code{.Renviron} to \code{.gitignore}.
+This function sets the supabase password in the .Renviron file and adds .Renviron to .gitignore.
 }
 \details{
 The function performs the following actions:
 \enumerate{
-\item Creates a \code{.Renviron} file in the root directory if it doesn't exist.
-\item Adds or updates the \code{SURVEYDOWN_PASSWORD} entry in the \code{.Renviron} file.
-\item Adds \code{.Renviron} to \code{.gitignore} if it's not already there.
+\item Creates a .Renviron file in the root directory if it doesn't exist.
+\item Adds or updates the SURVEYDOWN_PASSWORD entry in the .Renviron file.
+\item Adds .Renviron to .gitignore if it's not already there.
 }
 }
 \examples{
 \dontrun{
-  # Set a temporary password for demonstration
-  temp_password <- paste0(sample(letters, 10, replace = TRUE), collapse = "")
-
-  # Set the password
-  sd_set_password(temp_password)
-
-  # After restarting R, verify the password was set
-  cat("Password is :", Sys.getenv('SURVEYDOWN_PASSWORD'))
+  sd_set_password("your_SURVEYDOWN_PASSWORD")
 }
 
 }

@@ -2,44 +2,28 @@
 % Please edit documentation in R/server.R
 \name{sd_copy_value}
 \alias{sd_copy_value}
-\title{Create a copy of a value}
+\title{Create a copy of an input value}
 \usage{
 sd_copy_value(id, id_copy)
 }
 \arguments{
-\item{id}{Character string. The ID of the input value to copy.}
+\item{id}{The ID of the input value to copy}
 
-\item{id_copy}{Character string. The ID for the new copy (must be different
-from \code{id}).}
+\item{id_copy}{The ID for the new copy (must be different from id)}
 }
 \value{
-\code{NULL} invisibly. This function is called for its side effects.
+NULL invisibly. This function is called for its side effects.
 }
 \description{
-This function creates a copy of an input value and makes it available as a
-new output. The new output can then be displayed using \code{sd_output()}.
+This function creates a copy of an input value and makes it available as a new output.
+The new output can then be displayed using sd_display_value().
 }
 \examples{
-if (interactive()) {
-  library(surveydown)
+\dontrun{
+sd_copy_value(id = "respondent_name", id_copy = "resp_name2")
 
-  # Create a minimal survey.qmd file for demonstration
-  sd_demo_qmd(type = "basic")
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-
-    # Make a copy of the "name" variable to call its value a second time
-    sd_copy_value(id = "name", id_copy = "name_copy")
-
-    sd_server()
-  }
-
-  # Run the Shiny app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+# Then in UI:
+# sd_display_value("resp_name2")
 }
 
-}
-\seealso{
-\code{sd_output()} for displaying the copied value
 }

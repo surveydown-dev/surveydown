@@ -24,19 +24,6 @@ sets the input value to the specified next page ID, facilitating page navigation
 The button is styled to appear centered on the page and includes a class for Enter key functionality.
 }
 \examples{
-if (interactive()) {
-  library(surveydown)
-
-  # Create a minimal survey.qmd file for demonstration
-  sd_demo_qmd(type = "sd_next")
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-    sd_server()
-  }
-
-  # Run the Shiny app
-  shiny::shinyApp(ui = sd_ui(), server = server)
-}
+sd_next("page2", "Continue to Next Section")
 
 }

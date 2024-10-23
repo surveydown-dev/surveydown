@@ -89,19 +89,19 @@ For "matrix" type questions, use the \code{row} parameter to define the rows of 
 Each element in the \code{row} list should have a name (used as the row ID) and a value (used as the row label).
 }
 \examples{
-if (interactive()) {
-  library(surveydown)
+sd_question("text", "name", "What is your name?")
+sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
 
-  # Create a minimal survey.qmd file for demonstration
-  sd_demo_qmd(type = "basic")
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-    sd_server()
-  }
-
-  # Run the Shiny app
-  shiny::shinyApp(ui = sd_ui(), server = server)
-}
+# Example of a matrix question
+sd_question(
+  type = "matrix",
+  id   = "satisfaction",
+  label = "Rate your satisfaction with the following:",
+  row = c("Customer Service" = "service",
+          "Product Quality"  = "quality",
+          "Price"            = "price"),
+  option = c("Unsatisfied" = 1,
+             "Neutral"     = 2,
+             "Satisfied"   = 3))
 
 }

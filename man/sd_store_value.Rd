@@ -2,33 +2,26 @@
 % Please edit documentation in R/server.R
 \name{sd_store_value}
 \alias{sd_store_value}
-\title{Store a value in the survey data}
+\title{Store a value}
 \usage{
 sd_store_value(value, id = NULL)
 }
 \arguments{
-\item{value}{The value to be stored. This can be any R object that can be
-coerced to a character string.}
+\item{value}{The raid value to be stored.}
 
-\item{id}{(Optional) Character string. The id (name) of the value in the
-data. If not provided, the name of the \code{value} variable will be used.}
+\item{id}{(Optional) The id (name) of the value in the data.
+If not provided, the id of the \code{value} variable will be used.}
 }
 \value{
-\code{NULL} (invisibly)
+NULL (invisibly)
 }
 \description{
-This function allows storing additional values to be included in the survey
-data, such as respondent IDs or other metadata.
+This function allows storing additional values to be included in the survey data,
+such as respondent IDs or other data.
 }
 \examples{
-if (interactive()) {
-  # Create a respondent ID to store
-  respondentID <- 42
-
-  # Store the respondentID
+\dontrun{
   sd_store_value(respondentID)
-
-  # Store the respondentID as the variable "respID"
   sd_store_value(respondentID, "respID")
 }
 

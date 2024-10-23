@@ -31,19 +31,12 @@ The actual behavior of the exit process (whether to show a rating question or no
 is controlled by the \code{rate_survey} parameter in the \code{sd_server()} function, not in this UI function.
 }
 \examples{
-if (interactive()) {
-  library(surveydown)
+\dontrun{
+# In your UI code:
+sd_close()
 
-  # Create a minimal survey.qmd file for demonstration
-  sd_demo_qmd(type = "sd_close")
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-    sd_server()
-  }
-
-  # Run the Shiny app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+# With a custom label:
+sd_close("Finish and Exit")
 }
 
 }
