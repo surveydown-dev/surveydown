@@ -145,7 +145,7 @@ sd_server <- function(
     start_page         <- config$start_page
     admin_page         <- config$admin_page
     question_required  <- config$question_required
-    page_id_to_index   <- setNames(seq_along(page_ids), page_ids)
+    page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs
     page_ts_ids      <- paste0("time_p_", page_ids)
@@ -157,7 +157,7 @@ sd_server <- function(
 
     # Reactive to store visibility status of all questions
     question_visibility <- shiny::reactiveVal(
-      setNames(rep(TRUE, length(question_ids)), question_ids)
+      stats::setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
     # Observer to apply show_if conditions and update question_visibility
@@ -255,7 +255,7 @@ sd_server <- function(
     # Reactive expression that returns a list of the latest data
     latest_data <- shiny::reactive({
         # Convert reactiveValues to a regular list
-        data <- reactiveValuesToList(all_data)
+        data <- shiny::reactiveValuesToList(all_data)
 
         # Ensure all elements are of length 1, use "" for empty or NULL values
         data <- lapply(data, function(x) {
@@ -276,7 +276,7 @@ sd_server <- function(
             local_id <- question_ids[index]
             local_ts_id <- question_ts_ids[index]
 
-            observeEvent(input[[local_id]], {
+            shiny::observeEvent(input[[local_id]], {
                 # Tag event time
                 timestamp <- get_utc_timestamp()
 
@@ -315,13 +315,13 @@ sd_server <- function(
                 }
 
                 # Store the values and labels in output
-                output[[paste0(local_id, "_value")]] <- renderText({
+                output[[paste0(local_id, "_value")]] <- shiny::renderText({
                     formatted_value
                 })
-                output[[paste0(local_id, "_label_option")]] <- renderText({
+                output[[paste0(local_id, "_label_option")]] <- shiny::renderText({
                     label_option
                 })
-                output[[paste0(local_id, "_label_question")]] <- renderText({
+                output[[paste0(local_id, "_label_question")]] <- shiny::renderText({
                     label_question
                 })
             },
@@ -336,7 +336,7 @@ sd_server <- function(
     # (defaults to first page if NULL...see run_config() function)
     current_page_id <- shiny::reactiveVal(start_page)
 
-    get_current_page <- reactive({
+    get_current_page <- shiny::reactive({
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
 
@@ -370,9 +370,9 @@ sd_server <- function(
     }
 
     # Determine which page is next, then update current_page_id() to it
-    observe({
+    shiny::observe({
       lapply(pages, function(page) {
-        observeEvent(input[[page$next_button_id]], {
+        shiny::observeEvent(input[[page$next_button_id]], {
           shiny::isolate({
             # Grab the time stamp of the page turn
             timestamp <- get_utc_timestamp()
@@ -417,9 +417,9 @@ sd_server <- function(
 
     # Survey rating ----
     # Observer for the exit survey modal
-    observeEvent(input$show_exit_modal, {
+    shiny::observeEvent(input$show_exit_modal, {
       if (rate_survey) {
-        showModal(modalDialog(
+        shiny::showModal(shiny::modalDialog(
           title = "Before you go...",
           sd_question(
             type   = 'mc_buttons',
@@ -433,41 +433,41 @@ sd_server <- function(
               "5" = "5"
             )
           ),
-          footer = tagList(
-            modalButton("Cancel"),
-            actionButton("submit_rating", "Submit and Exit")
+          footer = shiny::tagList(
+            shiny::modalButton("Cancel"),
+            shiny::actionButton("submit_rating", "Submit and Exit")
           )
         ))
       } else {
-        showModal(modalDialog(
+        shiny::showModal(shiny::modalDialog(
           title = "Confirm Exit",
           "Are you sure you want to exit the survey?",
-          footer = tagList(
-            modalButton("Cancel"),
-            actionButton("confirm_exit", "Exit")
+          footer = shiny::tagList(
+            shiny::modalButton("Cancel"),
+            shiny::actionButton("confirm_exit", "Exit")
           )
         ))
       }
     })
 
     # Observer to handle the rating submission or exit confirmation
-    observeEvent(input$submit_rating, {
+    shiny::observeEvent(input$submit_rating, {
       # Save the rating
       rating <- input$survey_rating
       all_data[['exit_survey_rating']] <- rating
       changed_fields(c(changed_fields(), 'exit_survey_rating'))
       # Update data immediately
-      isolate({
+      shiny::isolate({
         update_data(time_last = TRUE)
       })
       # Close the modal and the window
-      removeModal()
+      shiny::removeModal()
       session$sendCustomMessage("closeWindow", list())
     })
 
-    observeEvent(input$confirm_exit, {
+    shiny::observeEvent(input$confirm_exit, {
       # Close the modal and the window
-      removeModal()
+      shiny::removeModal()
       session$sendCustomMessage("closeWindow", list())
     })
 
@@ -609,7 +609,7 @@ set_show_if_conditions <- function(show_if) {
                 ))
                 FALSE
             })
-            setNames(list(result), rule$target)
+            stats::setNames(list(result), rule$target)
         })
         do.call(c, results)
     })
@@ -781,14 +781,14 @@ admin_enable <- function(input, output, session, db) {
     }
 
     # Observe for URL change
-    url_reactive <- reactive({
+    url_reactive <- shiny::reactive({
         session$clientData$url_search
     })
 
     # Observe changes to the URL
     shiny::observe({
         url <- url_reactive()
-        query <- parseQueryString(url)
+        query <- shiny::parseQueryString(url)
         admin_param <- query[['admin']]
         if(!is.null(admin_param)) {
             show_admin_section()
@@ -945,7 +945,7 @@ sd_set_password <- function(password) {
 #'   or a message if no password is saved along with a suggestion to set one.
 #'
 #' @examples
-#' \dontrun {
+#' \dontrun{
 #'   surveydown::sd_show_password()
 #' }
 #'
@@ -1041,7 +1041,7 @@ sd_store_value <- function(value, id = NULL) {
 
         # Make value accessible in the UI
         output <- shiny::getDefaultReactiveDomain()$output
-        output[[paste0(id, "_value")]] <- renderText({ formatted_value })
+        output[[paste0(id, "_value")]] <- shiny::renderText({ formatted_value })
     })
 
     invisible(NULL)

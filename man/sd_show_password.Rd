@@ -18,7 +18,7 @@ found, it suggests using the \code{sd_set_password()} function to define a
 password.
 }
 \examples{
-\dontrun {
+\dontrun{
   surveydown::sd_show_password()
 }
 

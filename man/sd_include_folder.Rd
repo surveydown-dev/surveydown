@@ -21,12 +21,14 @@ It checks for pre-existing resource paths to avoid conflicts with
 folders already included by the package.
 }
 \examples{
-library(shiny)
+if (interactive()) {
+  library(shiny)
 
-# Create an "images" folder
-dir.create("images")
+  # Create an "images" folder
+  dir.create("images")
 
-# Include the folder in the shiny resource path
-sd_include_folder("images")
+  # Include the folder in the shiny resource path
+  sd_include_folder("images")
+}
 
 }
