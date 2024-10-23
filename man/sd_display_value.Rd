@@ -21,17 +21,3 @@ A Shiny UI element displaying the question's value
 \description{
 This function is depreciated - use \code{sd_output()} instead.
 }
-\examples{
-\dontrun{
-# Deprecated:
-sd_display_value("name")
-sd_display_value("age", display_type = "text")
-sd_display_value("email", display_type = "inline", wrapper = function(x) shiny::tags$strong(x))
-
-# Use instead:
-sd_output("name", type = "value")
-sd_output("age", type = "value", display = "text")
-sd_output("email", type = "value", display = "inline", wrapper = function(x) shiny::tags$strong(x))
-}
-
-}

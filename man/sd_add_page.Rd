@@ -35,9 +35,9 @@ The template includes:
 }
 }
 \examples{
-\dontrun{
-# Insert a new page template
-sd_add_page()
+if (interactive()) {
+  # Insert a new page template
+  sd_add_page()
 }
 
 }

@@ -42,15 +42,15 @@ The function performs the following steps:
 }
 }
 \examples{
-\dontrun{
-# Insert a default multiple choice question template
-sd_add_question()
+if (interactive()) {
+  # Insert a default multiple choice question template
+  sd_add_question()
 
-# Insert a text input question template
-sd_add_question("text")
+  # Insert a text input question template
+  sd_add_question("text")
 
-# Insert a slider question template
-sd_add_question("slider")
+  # Insert a slider question template
+  sd_add_question("slider")
 }
 
 }

@@ -16,12 +16,3 @@ This function is depreciated and no longer needed.
 The function configures the Shiny application to use Bootstrap 5 for styling and enables
 Shinyjs for JavaScript functionalities within the application.
 }
-\examples{
-\dontrun{
-  ui <- fluidPage(
-    sd_setup(),
-    # Your UI elements here
-  )
-}
-
-}

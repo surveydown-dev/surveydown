@@ -186,15 +186,20 @@ tibble_to_list_of_lists <- function(tbl) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Create a multi-page survey template in the current working directory
-#' sd_create_survey()
+#' if (interactive()) {
+#'   # Create a temporary directory for examples
+#'   temp_dir <- tempdir()
 #'
-#' # Create a single-page survey template in a specific directory
-#' sd_create_survey("path/to/my/survey", structure = "single")
+#'   # Create a multi-page survey template in a temporary directory
+#'   sd_create_survey()
 #'
-#' # Create a multi-page survey template in a specific directory
-#' sd_create_survey("path/to/my/survey", structure = "multi")
+#'   # Create a single-page survey template
+#'   sd_create_survey(file.path(temp_dir, "single_survey"),
+#'                   structure = "single")
+#'
+#'   # Create a multi-page survey template
+#'   sd_create_survey(file.path(temp_dir, "multi_survey"),
+#'                   structure = "multi")
 #' }
 sd_create_survey <- function(path = getwd(), structure = "single") {
     # Check if using current directory and confirm with user
@@ -281,14 +286,6 @@ sd_deploy <- function(name = "survey") {
 #'   Shinyjs for JavaScript functionalities within the application.
 #'
 #' @return This function does not return a value. It is called for its side effects of setting up the Shiny application.
-#'
-#' @examples
-#' \dontrun{
-#'   ui <- fluidPage(
-#'     sd_setup(),
-#'     # Your UI elements here
-#'   )
-#' }
 #'
 #' @export
 sd_setup <- function() {
@@ -442,15 +439,15 @@ question_templates <- function(type = "mc") {
 #'   as a side effect by inserting text and potentially removing a function call.
 #'
 #' @examples
-#' \dontrun{
-#' # Insert a default multiple choice question template
-#' sd_add_question()
+#' if (interactive()) {
+#'   # Insert a default multiple choice question template
+#'   sd_add_question()
 #'
-#' # Insert a text input question template
-#' sd_add_question("text")
+#'   # Insert a text input question template
+#'   sd_add_question("text")
 #'
-#' # Insert a slider question template
-#' sd_add_question("slider")
+#'   # Insert a slider question template
+#'   sd_add_question("slider")
 #' }
 #'
 #' @import rstudioapi
@@ -510,9 +507,9 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
 #'   as a side effect by inserting text and potentially removing a function call.
 #'
 #' @examples
-#' \dontrun{
-#' # Insert a new page template
-#' sd_add_page()
+#' if (interactive()) {
+#'   # Insert a new page template
+#'   sd_add_page()
 #' }
 #'
 #' @import rstudioapi

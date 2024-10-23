@@ -36,14 +36,19 @@ The function performs the following steps:
 }
 }
 \examples{
-\dontrun{
-# Create a multi-page survey template in the current working directory
-sd_create_survey()
+if (interactive()) {
+  # Create a temporary directory for examples
+  temp_dir <- tempdir()
 
-# Create a single-page survey template in a specific directory
-sd_create_survey("path/to/my/survey", structure = "single")
+  # Create a multi-page survey template in a temporary directory
+  sd_create_survey()
 
-# Create a multi-page survey template in a specific directory
-sd_create_survey("path/to/my/survey", structure = "multi")
+  # Create a single-page survey template
+  sd_create_survey(file.path(temp_dir, "single_survey"),
+                  structure = "single")
+
+  # Create a multi-page survey template
+  sd_create_survey(file.path(temp_dir, "multi_survey"),
+                  structure = "multi")
 }
 }

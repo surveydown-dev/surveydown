@@ -730,15 +730,6 @@ sd_get_url_pars <- function(...) {
 #' @param id A unique identifier for the question.
 #' @return A Shiny UI element that serves as a placeholder for the reactive question.
 #'
-#' @examples
-#' \dontrun{
-#' # Deprecated:
-#' sd_display_question("name")
-#'
-#' # Use instead:
-#' sd_output("name", type = "question")
-#' }
-#'
 #' @export
 sd_display_question <- function(id) {
   # v0.2.1
@@ -754,19 +745,6 @@ sd_display_question <- function(id) {
 #' @param ... Additional arguments passed to the wrapper function
 #'
 #' @return A Shiny UI element displaying the question's value
-#'
-#' @examples
-#' \dontrun{
-#' # Deprecated:
-#' sd_display_value("name")
-#' sd_display_value("age", display_type = "text")
-#' sd_display_value("email", display_type = "inline", wrapper = function(x) shiny::tags$strong(x))
-#'
-#' # Use instead:
-#' sd_output("name", type = "value")
-#' sd_output("age", type = "value", display = "text")
-#' sd_output("email", type = "value", display = "inline", wrapper = function(x) shiny::tags$strong(x))
-#' }
 #'
 #' @export
 sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
