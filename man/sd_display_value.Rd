@@ -9,7 +9,8 @@ sd_display_value(id, display_type = "inline", wrapper = NULL, ...)
 \arguments{
 \item{id}{The ID of the question to display}
 
-\item{display_type}{The type of display. Can be "inline" (default), "text", "verbatim", or "ui".}
+\item{display_type}{The type of display. Can be \code{"inline"} (default),
+\code{"text"}, \code{"verbatim"}, or \code{"ui"}.}
 
 \item{wrapper}{A function to wrap the output}
 
@@ -20,18 +21,4 @@ A Shiny UI element displaying the question's value
 }
 \description{
 This function is depreciated - use \code{sd_output()} instead.
-}
-\examples{
-\dontrun{
-# Deprecated:
-sd_display_value("name")
-sd_display_value("age", display_type = "text")
-sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
-
-# Use instead:
-sd_output("name", type = "value")
-sd_output("age", type = "value", display = "text")
-sd_output("email", type = "value", display = "inline", wrapper = function(x) tags$strong(x))
-}
-
 }

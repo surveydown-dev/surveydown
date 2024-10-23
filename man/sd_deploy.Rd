@@ -7,10 +7,12 @@
 sd_deploy(name = "survey")
 }
 \arguments{
-\item{name}{A character string specifying the name of the app. Default is "survey".}
+\item{name}{A character string specifying the name of the app. Defaults to
+\code{"survey"}.}
 }
 \value{
-This function doesn't return a value; it deploys the app to Shiny Server.
+This function does not return a value; it deploys the app to a Shiny
+Server.
 }
 \description{
 This function is a wrapper for \code{rsconnect::deployApp()} specifically designed
@@ -19,11 +21,11 @@ by allowing you to specify just the app name.
 }
 \examples{
 \dontrun{
-# Deploy with default name "survey"
-sd_deploy()
+  # Deploy with default name "survey"
+  sd_deploy()
 
-# Deploy with a custom name
-sd_deploy("my_custom_survey")
+  # Deploy with a custom name
+  sd_deploy("my_custom_survey")
 }
 
 }

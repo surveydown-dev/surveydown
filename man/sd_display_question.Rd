@@ -10,18 +10,9 @@ sd_display_question(id)
 \item{id}{A unique identifier for the question.}
 }
 \value{
-A Shiny UI element that serves as a placeholder for the reactive question.
+A Shiny UI element that serves as a placeholder for the reactive
+question.
 }
 \description{
 This function is depreciated - use \code{sd_output()} instead.
-}
-\examples{
-\dontrun{
-# Deprecated:
-sd_display_question("name")
-
-# Use instead:
-sd_output("name", type = "question")
-}
-
 }

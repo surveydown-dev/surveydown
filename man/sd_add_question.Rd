@@ -7,7 +7,8 @@
 sd_add_question(type = "mc", chunk = FALSE)
 }
 \arguments{
-\item{type}{A character string specifying the type of question template to insert.
+\item{type}{A character string specifying the type of question template to
+insert.
 Default is \code{"mc"} (multiple choice). Available options are:
 \itemize{
 \item \code{"mc"}: Multiple choice (single selection)
@@ -23,16 +24,19 @@ Default is \code{"mc"} (multiple choice). Available options are:
 \item \code{"daterange"}: Date range input
 }}
 
-\item{chunk}{Logical. If \code{TRUE}, the code will be generated with the R code chunk wrapper. Defaults to \code{FALSE}.}
+\item{chunk}{Logical. If \code{TRUE}, the code will be generated with the R code
+chunk wrapper. Defaults to \code{FALSE}.}
 }
 \value{
-This function does not return a value. It modifies the active document
-as a side effect by inserting text and potentially removing a function call.
+This function does not return a value. It modifies the active
+document as a side effect by inserting text and potentially removing a
+function call.
 }
 \description{
-This function inserts a template for a surveydown question at the current cursor position
-in the active RStudio document. It supports various question types and automatically
-removes the function call before inserting the template if it exists in the document.
+This function inserts a template for a surveydown question at the current
+cursor position in the active RStudio document. It supports various question
+types and automatically removes the function call before inserting the
+template if it exists in the document.
 }
 \details{
 The function performs the following steps:
@@ -43,6 +47,8 @@ The function performs the following steps:
 }
 \examples{
 if (interactive()) {
+  library(surveydown)
+
   # Insert a default multiple choice question template
   sd_add_question()
 

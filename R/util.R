@@ -92,13 +92,16 @@ include_folder <- function(folder, create = FALSE) {
 #' @return `NULL` invisibly. The function is called for its side effect of
 #'   adding a resource path to Shiny.
 #'
-#' @export
-#'
 #' @examples
-#' if (interactive()) {
-#'   library(shiny)
-#'   sd_include_folder("custom_images")
-#' }
+#' library(shiny)
+#'
+#' # Create an "images" folder
+#' dir.create("images")
+#'
+#' # Include the folder in the shiny resource path
+#' sd_include_folder("images")
+#'
+#' @export
 sd_include_folder <- function(folder) {
     # List of folders pre-included by the package
     pre_included_folders <- names(shiny::resourcePaths())
@@ -443,6 +446,8 @@ question_templates <- function(type = "mc") {
 #'
 #' @examples
 #' if (interactive()) {
+#'   library(surveydown)
+#'
 #'   # Insert a default multiple choice question template
 #'   sd_add_question()
 #'
@@ -512,6 +517,8 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
 #'
 #' @examples
 #' if (interactive()) {
+#'   library(surveydown)
+#'
 #'   # Insert a new page template
 #'   sd_add_page()
 #' }
@@ -590,7 +597,7 @@ sd_update <- function() {
 #' @export
 #'
 #' @examples
-#' sd_version()
+#' surveydown::sd_version()
 sd_version <- function() {
     # Get local version
     local_surveydown_version <- utils::packageVersion("surveydown")
@@ -647,6 +654,7 @@ get_latest_version <- function(url, pattern) {
 #'   * `"sd_ui"`: Survey with UI customization (theme, bar color, position)
 #'   * `"sd_next"`: Multi-page survey with navigation
 #'   * `"sd_close"`: Survey with exit button
+#'   * `"sd_redirect"`: Survey with redirect buttons
 #'   * `"sd_output"`: Survey demonstrating value output
 #'   * `"sd_is_answered"`: Survey with multiple question types
 #'   * `"sd_copy_value"`: Survey showing value copying
@@ -779,6 +787,61 @@ This is the end of the survey.
 
 ```{r}
 sd_close('Exit Survey')
+```
+
+:::",
+  sd_redirect = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+
+::: {#page_id .sd-page}
+
+This is a sample survey with redirect buttons
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'screening_question',
+  label = '**Which page do you want to go to?**',
+  option = c(
+    'Static redirect button' = 'end_1',
+    'Reactive redirect button based on url pars' = 'end_2'
+  )
+)
+
+sd_next()
+```
+
+:::
+
+::: {#end_page_1 .sd-page}
+
+This it the normal ending page with a static redirect button to google.com
+
+```{r}
+sd_redirect(
+  id     = 'redirect',
+  url    = 'https://www.google.com',
+  label  = 'Click to Google or Wait for 10 Seconds',
+  button = TRUE,
+  delay  = 10
+)
+```
+
+:::
+
+::: {#end_page_2 .sd-page}
+
+This is a reactive redirect button that contains a customized redirect url, including url parameters and an indicator of `status=0`.
+
+```{r}
+sd_output('redirect_url_pars')
 ```
 
 :::",

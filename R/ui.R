@@ -589,29 +589,51 @@ sd_close <- function(label = "Exit Survey") {
 #' @return In a reactive context, returns a function that when called, renders the
 #'   redirect element. In a non-reactive context, returns the redirect element directly.
 #'
-#' @export
-#'
 #' @examples
-#' \dontrun{
-#' # Basic usage with a button
-#' sd_redirect("my_button", "https://example.com")
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # Create a text link instead of a button
-#' sd_redirect("my_link", "https://example.com", button = FALSE, label = "Visit Example")
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_redirect")
 #'
-#' # Add a 5-second delay before redirection
-#' sd_redirect("delayed_redirect", "https://example.com", delay = 5)
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
 #'
-#' # Open the link in a new tab
-#' sd_redirect("new_tab_link", "https://example.com", newtab = TRUE)
+#'     # Reactive expression that generates a url with an id variable
+#'     # parsed from the url
+#'     url_redirect <- reactive({
+#'       params <- sd_get_url_pars()
+#'       id <- params["id"]
+#'       return(paste0("https://www.google.com?id=", id))
+#'     })
+#'
+#'     # Create the redirect button
+#'     sd_redirect(
+#'       id = "redirect_url_pars",
+#'       url = url_redirect(),
+#'       button = TRUE,
+#'       label = "Redirect"
+#'     )
+#'
+#'     sd_skip_if(
+#'       input$screening_question == "end_1" ~ "end_page_1",
+#'       input$screening_question == "end_1" ~ "end_page_2",
+#'     )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
+#' @export
 sd_redirect <- function(
-        id,
-        url,
-        button = TRUE,
-        label  = "Click here",
-        delay  = NULL,
-        newtab = FALSE
+    id,
+    url,
+    button = TRUE,
+    label  = "Click here",
+    delay  = NULL,
+    newtab = FALSE
 ) {
     if (!is.null(shiny::getDefaultReactiveDomain())) {
         # In a reactive context, directly add to output with renderUI
@@ -713,10 +735,44 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 #'
 #' @return A reactive expression that returns a list of URL parameters.
 #'
-#' @export
-#'
 #' @examples
-#' # Examples here
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_redirect")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Reactive expression that generates a url with an id variable
+#'     # parsed from the url
+#'     url_redirect <- reactive({
+#'       params <- sd_get_url_pars()
+#'       id <- params["id"]
+#'       return(paste0("https://www.google.com?id=", id))
+#'     })
+#'
+#'     # Create the redirect button
+#'     sd_redirect(
+#'       id = "redirect_url_pars",
+#'       url = url_redirect(),
+#'       button = TRUE,
+#'       label = "Redirect"
+#'     )
+#'
+#'     sd_skip_if(
+#'       input$screening_question == "end_1" ~ "end_page_1",
+#'       input$screening_question == "end_1" ~ "end_page_2",
+#'     )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' }
+#' @export
 sd_get_url_pars <- function(...) {
     shiny::reactive({
         session <- shiny::getDefaultReactiveDomain()
@@ -740,7 +796,6 @@ sd_get_url_pars <- function(...) {
     })()
     # Extra parentheses is added so that the reactive expression is evaluated
     # when the function is called
-
 }
 
 #' Create a placeholder for a reactive survey question
@@ -832,11 +887,11 @@ sd_output <- function(
 
     if (type %in% c("value", "label_option", "label_question")) {
       type_id <- paste0(id, "_", type)
-  
+
       if (!display %in% c("text", "verbatim", "ui")) {
         stop("Invalid display type. Choose 'text', 'verbatim', or 'ui'.")
       }
-  
+
       output <- switch(display,
         "text" = shiny::textOutput(type_id, inline = inline),
         "verbatim" = shiny::verbatimTextOutput(type_id, inline = inline),
@@ -844,11 +899,11 @@ sd_output <- function(
         # Default to textOutput if display is not specified
         shiny::textOutput(type_id, inline = inline)
       )
-  
+
       if (!is.null(wrapper)) {
         output <- wrapper(output, ...)
       }
-  
+
       return(output)
     }
 
@@ -866,6 +921,8 @@ sd_output <- function(
 #' @return A character string representing the random completion code.
 #'
 #' @examples
+#' library(surveydown)
+#'
 #' sd_completion_code()  # generates a 6-digit code
 #' sd_completion_code(digits = 8)  # generates an 8-digit code
 #' sd_completion_code(digits = 4)  # generates a 4-digit code

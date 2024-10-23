@@ -15,6 +15,6 @@ from GitHub, without checking the current version.
 }
 \examples{
 \dontrun{
-sd_update()
+  sd_update()
 }
 }

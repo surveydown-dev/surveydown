@@ -508,7 +508,7 @@ sd_server <- function(
 #'     sd_skip_if(
 #'       input$fav_fruit == "orange" ~ "orange_page",
 #'       input$fav_fruit == "other" ~ "other_page"
-#'       )
+#'     )
 #'
 #'     sd_server()
 #'   }
@@ -560,8 +560,8 @@ sd_skip_if <- function(...) {
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
-#'     sd_show_if(
 #'
+#'     sd_show_if(
 #'       # If "Other" is chosen, show the conditional question
 #'       input$fav_fruit == "other" ~ "fav_fruit_other"
 #'     )
@@ -945,7 +945,7 @@ sd_set_password <- function(password) {
 #'   or a message if no password is saved along with a suggestion to set one.
 #'
 #' @examples
-#' if (interactive()) {
+#' \dontrun {
 #'   surveydown::sd_show_password()
 #' }
 #'
@@ -998,14 +998,28 @@ sd_show_password <- function() {
 #'
 #' @examples
 #' if (interactive()) {
-#'   # Create a respondent ID to store
-#'   respondentID <- 42
+#'   library(surveydown)
 #'
-#'   # Store the respondentID
-#'   sd_store_value(respondentID)
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "basic")
 #'
-#'   # Store the respondentID as the variable "respID"
-#'   sd_store_value(respondentID, "respID")
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Create a respondent ID to store
+#'     respondentID <- 42
+#'
+#'     # Store the respondentID
+#'     sd_store_value(respondentID)
+#'
+#'     # Store the respondentID as the variable "respID"
+#'     sd_store_value(respondentID, "respID")
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @export
@@ -1102,8 +1116,8 @@ sd_copy_value <- function(id, id_copy) {
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
-#'     sd_show_if(
 #'
+#'     sd_show_if(
 #'       # If "apple_text" is answered, show the conditional question
 #'       sd_is_answered("apple_text") ~ "other_fruit"
 #'     )

@@ -7,12 +7,14 @@
 sd_setup()
 }
 \value{
-This function does not return a value. It is called for its side effects of setting up the Shiny application.
+This function does not return a value. It is called for its side
+effects of setting up the Shiny application.
 }
 \description{
 This function is depreciated and no longer needed.
 }
 \details{
-The function configures the Shiny application to use Bootstrap 5 for styling and enables
-Shinyjs for JavaScript functionalities within the application.
+The function configures the Shiny application to use Bootstrap 5
+for styling and enables Shinyjs for JavaScript functionalities within the
+application.
 }

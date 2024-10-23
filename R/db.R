@@ -142,20 +142,15 @@ sd_database <- function(
 #' @examples
 #' # Non-reactive context example
 #' \dontrun{
-#'   # Assuming you have a database connection called db created using
-#'   # sd_database()
-#'
-#'   # Fetch data
-#'   data <- sd_get_data(db)
-#'   head(data)
-#' }
-#'
-#' # Reactive context example (inside a surveydown app)
-#' \dontrun{
 #'   library(surveydown)
 #'
 #'   # Assuming you have a database connection called db created using
-#'   # sd_database()
+#'   # sd_database(), you can fetch data with:
+#'
+#'   data <- sd_get_data(db)
+#'   head(data)
+#'
+#'   # Reactive context example (inside a surveydown app)
 #'
 #'   server <- function(input, output, session) {
 #'     data <- sd_get_data(db, refresh_interval = 10)

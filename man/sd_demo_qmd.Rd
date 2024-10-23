@@ -7,12 +7,14 @@
 sd_demo_qmd(type = "basic")
 }
 \arguments{
-\item{type}{Character string. The type of test survey to create. Options include:
+\item{type}{Character string. The type of test survey to create.
+Options include:
 \itemize{
 \item \code{"basic"} (default): Basic survey with a text question
 \item \code{"sd_ui"}: Survey with UI customization (theme, bar color, position)
 \item \code{"sd_next"}: Multi-page survey with navigation
 \item \code{"sd_close"}: Survey with exit button
+\item \code{"sd_redirect"}: Survey with redirect buttons
 \item \code{"sd_output"}: Survey demonstrating value output
 \item \code{"sd_is_answered"}: Survey with multiple question types
 \item \code{"sd_copy_value"}: Survey showing value copying

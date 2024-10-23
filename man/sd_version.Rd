@@ -17,5 +17,5 @@ version available on GitHub and provides information about whether an update
 is needed.
 }
 \examples{
-sd_version()
+surveydown::sd_version()
 }

@@ -18,5 +18,40 @@ This function retrieves URL parameters from the current Shiny session.
 It must be called from within a Shiny reactive context.
 }
 \examples{
-# Examples here
+if (interactive()) {
+  library(surveydown)
+
+  # Create a minimal survey.qmd file for demonstration
+  sd_demo_qmd(type = "sd_redirect")
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+
+    # Reactive expression that generates a url with an id variable
+    # parsed from the url
+    url_redirect <- reactive({
+      params <- sd_get_url_pars()
+      id <- params["id"]
+      return(paste0("https://www.google.com?id=", id))
+    })
+
+    # Create the redirect button
+    sd_redirect(
+      id = "redirect_url_pars",
+      url = url_redirect(),
+      button = TRUE,
+      label = "Redirect"
+    )
+
+    sd_skip_if(
+      input$screening_question == "end_1" ~ "end_page_1",
+      input$screening_question == "end_1" ~ "end_page_2",
+    )
+
+    sd_server()
+  }
+
+  # Run the Shiny app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+}
 }

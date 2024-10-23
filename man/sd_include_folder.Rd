@@ -7,8 +7,8 @@
 sd_include_folder(folder)
 }
 \arguments{
-\item{folder}{A character string specifying the name of the folder to include.
-This folder should exist in the root directory of your Shiny app.}
+\item{folder}{A character string specifying the name of the folder to
+include. This folder should exist in the root directory of your Shiny app.}
 }
 \value{
 \code{NULL} invisibly. The function is called for its side effect of
@@ -21,7 +21,12 @@ It checks for pre-existing resource paths to avoid conflicts with
 folders already included by the package.
 }
 \examples{
-\dontrun{
-sd_include_folder("custom_images")
-}
+library(shiny)
+
+# Create an "images" folder
+dir.create("images")
+
+# Include the folder in the shiny resource path
+sd_include_folder("images")
+
 }

@@ -10,17 +10,33 @@ sd_is_answered(question_id)
 \item{question_id}{The ID of the question to check.}
 }
 \value{
-A logical value: TRUE if the question is answered, FALSE otherwise.
+A logical value: \code{TRUE} if the question is answered, \code{FALSE}
+otherwise.
 }
 \description{
 This function checks if a given question has been answered by the user.
-For matrix questions, it checks if all sub-questions are answered.
+For matrix questions, it checks if all sub-questions (rows) are answered.
 }
 \examples{
-\dontrun{
-if(sd_is_answered("car_preference")) {
-  # Do something when all sub-questions of the matrix are answered
-}
+if (interactive()) {
+  library(surveydown)
+
+  # Create a minimal survey.qmd file for demonstration
+  sd_demo_qmd(type = "sd_is_answered")
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+
+    sd_show_if(
+      # If "apple_text" is answered, show the conditional question
+      sd_is_answered("apple_text") ~ "other_fruit"
+    )
+
+    sd_server()
+  }
+
+  # Run the Shiny app
+  shiny::shinyApp(ui = sd_ui(), server = server)
 }
 
 }
