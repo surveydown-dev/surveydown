@@ -17,7 +17,7 @@ sd_output(
 \arguments{
 \item{id}{Character string. A unique identifier for the output element.}
 
-\item{type}{Character string. Specifies the type of output. Can be "question", "value", or \code{NULL.}
+\item{type}{Character string. Specifies the type of output. Can be "question", "label_question", "value", "label_option", or \code{NULL.}
 If \code{NULL}, the function behaves like \code{shiny::uiOutput()}.}
 
 \item{width}{Character string. The width of the UI element. Defaults to "100\%".}
@@ -44,6 +44,10 @@ The function behaves differently based on the \code{type} parameter:
 \item If \code{type} is \code{"question"}, it creates a placeholder for a reactive survey question.
 \item If \code{type} is \code{"value"}, it creates an output to display the value of a survey question,
 with the display style determined by the \code{display} parameter.
+\item If \code{type} is \code{"label_option"}, it creates an output to display the label of the value of a survey question,
+with the display style determined by the \code{display} parameter.
+\item If \code{type} is \code{"label_question"}, it creates an output to display the survey question,
+with the display style determined by the \code{display} parameter.
 }
 }
 \examples{
@@ -53,6 +57,9 @@ sd_output('cbc1', type = 'question')
 
 # Display the value of a survey question inline
 sd_output('cbc1', type = 'value', inline = TRUE)
+
+# Display the label of the choosen question value (from the list of options)
+sd_output('cbc1', type = 'label_option')
 
 # Use as a simple uiOutput
 sd_output('redirect')

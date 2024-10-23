@@ -42,8 +42,8 @@ your own surveydown survey!**
 
 We also recommend working with an IDE that has good support for R,
 Quarto, and Shiny.
-[RStudio](https://www.rstudio.com/categories/rstudio-ide/) is great, and
-we also like [VSCode](https://code.visualstudio.com) and
+[RStudio](https://posit.co/products/open-source/rstudio/) is great, and
+we also like [VSCode](https://code.visualstudio.com/) and
 [Positron](https://github.com/posit-dev/positron).
 
 ### Install the {surveydown} R package

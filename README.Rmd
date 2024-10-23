@@ -41,7 +41,7 @@ The {surveydown} R package provides functions to bring this all together.
 
 ### Install [R](https://CRAN.R-project.org/) & [Quarto](https://quarto.org/)
 
-We also recommend working with an IDE that has good support for R, Quarto, and Shiny. [RStudio](https://www.rstudio.com/categories/rstudio-ide/) is great, and we also like [VSCode](https://code.visualstudio.com) and [Positron](https://github.com/posit-dev/positron).
+We also recommend working with an IDE that has good support for R, Quarto, and Shiny. [RStudio](https://posit.co/products/open-source/rstudio/) is great, and we also like [VSCode](https://code.visualstudio.com/) and [Positron](https://github.com/posit-dev/positron).
 
 ### Install the {surveydown} R package
 
