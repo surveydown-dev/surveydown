@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+# surveydown 0.3.7
+
+- Updated `sd_output()` to now be able to output the chosen question values, chosen question option label(s), and the question label itself. Addresses feature request #128.
 - `sd_update()` now directly force update the package without checking for version difference anymore.
 
 # surveydown 0.3.6
