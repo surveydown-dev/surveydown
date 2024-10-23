@@ -1,26 +1,28 @@
-#' Server Logic for a surveydown survey
+#' Server logic for a surveydown survey
 #'
 #' @description
-#' This function defines the server-side logic for a Shiny application used in surveydown.
-#' It handles various operations such as conditional display, progress tracking,
-#' page navigation, database updates for survey responses, and exit survey functionality.
+#' This function defines the server-side logic for a Shiny application used in
+#' surveydown. It handles various operations such as conditional display,
+#' progress tracking, page navigation, database updates for survey responses,
+#' and exit survey functionality.
 #'
 #' @param db A list containing database connection information created using
-#' \code{\link{sd_database}} function. Defaults to `NULL`.
-#' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to `NULL`.
-#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
-#' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
-#' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to `FALSE`.
-#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to `FALSE`.
-#' @param rate_survey Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to `FALSE`.
-#'
-#' @import shiny
-#' @import shinyWidgets
-#' @importFrom stats setNames
-#' @importFrom shiny reactiveValuesToList observeEvent renderText
+#'   `sd_database()` function. Defaults to `NULL`.
+#' @param required_questions Vector of character strings. The IDs of questions
+#'   that must be answered. Defaults to `NULL`.
+#' @param all_questions_required Logical. If `TRUE`, all questions in the
+#'   survey will be required. Defaults to `FALSE`.
+#' @param start_page Character string. The ID of the page to start on.
+#'   Defaults to `NULL`.
+#' @param admin_page Logical. Whether to include an admin page for viewing and
+#'   downloading survey data. Defaults to `FALSE`.
+#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
+#'   question after answering. Defaults to `FALSE`.
+#' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
+#'   the survey. If `FALSE`, shows a simple confirmation dialog.
+#'   Defaults to `FALSE`.
 #'
 #' @details
-#'
 #' The function performs the following tasks:
 #' \itemize{
 #'   \item Initializes variables and reactive values.
@@ -28,51 +30,68 @@
 #'   \item Tracks answered questions and updates the progress bar.
 #'   \item Handles page navigation and skip logic.
 #'   \item Manages required questions.
-#'   \item Performs database operations or saves to a local CSV file in preview mode.
-#'   \item Sets up admin functionality if enabled in the configuration.
-#'   \item Controls auto-scrolling behavior based on the `auto_scroll` parameter.
-#'   \item Uses sweetalert for warning messages when required questions are not answered.
-#'   \item Handles the exit survey process based on the `rate_survey` parameter.
+#'   \item Performs database operation.
+#'   \item Sets up admin functionality if enabled with the `admin_page` argument.
+#'   \item Controls auto-scrolling behavior based on the `auto_scroll` argument.
+#'   \item Uses sweetalert for warning messages when required questions are not
+#'         answered.
+#'   \item Handles the exit survey process based on the `rate_survey` argument.
 #' }
 #'
 #' @section Progress Bar:
-#' The progress bar is updated based on the last answered question. It will jump to the
-#' percentage corresponding to the last answered question and will never decrease,
-#' even if earlier questions are answered later. The progress is calculated as the ratio
-#' of the last answered question's index to the total number of questions.
+#' The progress bar is updated based on the last answered question. It will jump
+#' to the percentage corresponding to the last answered question and will never
+#' decrease, even if earlier questions are answered later. The progress is
+#' calculated as the ratio of the last answered question's index to the total
+#' number of questions.
 #'
 #' @section Database Operations:
-#' If \code{db} is provided, the function will update the database with survey responses.
-#' If \code{db} is \code{NULL} (ignore mode), responses will be saved to a local CSV file.
+#' If `db` is provided, the function will update the database with survey
+#' responses. If `db` is `NULL` (ignore mode), responses will be saved to a local
+#' CSV file.
 #'
 #' @section Auto-Scrolling:
-#' When `auto_scroll` is TRUE, the survey will automatically scroll to the next question
-#' after the current question is answered. This behavior can be disabled by setting
-#' `auto_scroll` to FALSE.
+#' When `auto_scroll` is `TRUE`, the survey will automatically scroll to the next
+#' question after the current question is answered. This behavior can be disabled
+#' by setting `auto_scroll` to `FALSE`.
 #'
 #' @section Exit Survey:
-#' When `rate_survey` is TRUE, the function will show a rating question when the user attempts to exit the survey.
-#' When FALSE, it will show a simple confirmation dialog. The rating, if provided, is saved with the survey data.
+#' When `rate_survey` is `TRUE`, the function will show a rating question when
+#' the user attempts to exit the survey. When `FALSE`, it will show a simple
+#' confirmation dialog. The rating, if provided, is saved with the survey data.
 #'
 #' @return
-#' This function does not return a value; it sets up the server-side logic for the Shiny application.
+#' This function does not return a value; it sets up the server-side logic for
+#' the Shiny application.
 #'
 #' @examples
-#' \dontrun{
+#' if (interactive()) {
 #'   library(surveydown)
-#'   library(shinyWidgets)
-#'   db <- sd_database()
 #'
-#'   shinyApp(
-#'     ui = sd_ui(),
-#'     server = function(input, output, session) {
-#'       sd_server(db = db, auto_scroll = TRUE, rate_survey = TRUE)
-#'     }
-#'   )
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "basic")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # sd_server() accepts these following parameters
+#'     sd_server(
+#'       db = NULL,
+#'       required_questions = NULL,
+#'       all_questions_required = FALSE,
+#'       start_page = NULL,
+#'       admin_page = FALSE,
+#'       auto_scroll = FALSE,
+#'       rate_survey = FALSE
+#'     )
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @seealso
-#' \code{\link{sd_database}}, \code{\link{sd_ui}}
+#' `sd_database()`, `sd_ui()`
 #'
 #' @export
 sd_server <- function(
@@ -463,23 +482,42 @@ sd_server <- function(
 #' Define skip conditions for survey pages
 #'
 #' @description
-#' This function is used to define conditions under which certain pages in the survey should be skipped.
-#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target page ID.
+#' This function is used to define conditions under which certain pages in the
+#' survey should be skipped. It takes one or more formulas where the left-hand
+#' side is the condition and the right-hand side is the target page ID.
 #'
 #' @param ... One or more formulas defining skip conditions.
-#'   The left-hand side of each formula should be a condition based on input values,
-#'   and the right-hand side should be the ID of the page to skip to if the condition is met.
+#'   The left-hand side of each formula should be a condition based on input
+#'   values, and the right-hand side should be the ID of the page to skip to if
+#'   the condition is met.
 #'
-#' @return A list of parsed conditions, where each element contains the condition and the target page ID.
+#' @return A list of parsed conditions, where each element contains the
+#' condition and the target page ID.
 #'
 #' @examples
-#' \dontrun{
-#' sd_skip_if(
-#'   as.numeric(input$age < 18) ~ "underage_page",
-#'   input$country != "USA" ~ "international_page"
-#' )
-#'}
-#' @seealso \code{\link{sd_show_if}}
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_skip_if")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Skip to page based on input
+#'     sd_skip_if(
+#'       input$fav_fruit == "orange" ~ "orange_page",
+#'       input$fav_fruit == "other" ~ "other_page"
+#'       )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' }
+#'
+#' @seealso `sd_show_if()`
 #'
 #' @export
 sd_skip_if <- function(...) {
@@ -504,24 +542,38 @@ sd_skip_if <- function(...) {
 #' @description
 #' This function is used to define conditions under which certain questions in the survey should be shown.
 #' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
-#' If called with no arguments, it will return NULL and set no conditions.
+#' If called with no arguments, it will return `NULL` and set no conditions.
 #'
 #' @param ... One or more formulas defining show conditions.
 #'   The left-hand side of each formula should be a condition based on input values,
 #'   and the right-hand side should be the ID of the question to show if the condition is met.
 #'
 #' @return A list of parsed conditions, where each element contains the condition and the target question ID.
-#'   Returns NULL if no conditions are provided.
+#'   Returns `NULL` if no conditions are provided.
 #'
 #' @examples
-#' \dontrun{
-#' sd_show_if(
-#'   input$has_pets == "yes" ~ "pet_details",
-#'   input$employment == "employed" ~ "job_questions"
-#' )
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_show_if")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_show_if(
+#'
+#'       # If "Other" is chosen, show the conditional question
+#'       input$fav_fruit == "other" ~ "fav_fruit_other"
+#'     )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
-#' @seealso \code{\link{sd_skip_if}}
+#' @seealso `sd_skip_if()`
 #'
 #' @export
 sd_show_if <- function(...) {
@@ -804,22 +856,32 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
-#' Set Password
+#' Set password for surveydown survey
 #'
-#' This function sets the supabase password in the .Renviron file and adds .Renviron to .gitignore.
+#' This function sets your surveydown password, which is used to access
+#' the PostgreSQL data (e.g. Supabase). The password is saved in a `.Renviron`
+#' file and adds `.Renviron` to `.gitignore`.
 #'
-#' @param password Character string. The password to be set for Supabase connection.
+#' @param password Character string. The password to be set for the database
+#'   connection.
 #'
 #' @details The function performs the following actions:
-#'   1. Creates a .Renviron file in the root directory if it doesn't exist.
-#'   2. Adds or updates the SURVEYDOWN_PASSWORD entry in the .Renviron file.
-#'   3. Adds .Renviron to .gitignore if it's not already there.
+#'   1. Creates a `.Renviron` file in the root directory if it doesn't exist.
+#'   2. Adds or updates the `SURVEYDOWN_PASSWORD` entry in the `.Renviron` file.
+#'   3. Adds `.Renviron` to `.gitignore` if it's not already there.
 #'
 #' @return None. The function is called for its side effects.
 #'
 #' @examples
 #' \dontrun{
-#'   sd_set_password("your_SURVEYDOWN_PASSWORD")
+#'   # Set a temporary password for demonstration
+#'   temp_password <- paste0(sample(letters, 10, replace = TRUE), collapse = "")
+#'
+#'   # Set the password
+#'   sd_set_password(temp_password)
+#'
+#'   # After restarting R, verify the password was set
+#'   cat("Password is :", Sys.getenv('SURVEYDOWN_PASSWORD'))
 #' }
 #'
 #' @export
@@ -873,19 +935,18 @@ sd_set_password <- function(password) {
 
 #' Show the Saved Survey Password
 #'
-#' This function displays the password saved in the .Renviron file under the
-#' SURVEYDOWN_PASSWORD variable. It includes a confirmation step to ensure
-#' the user wants to display the password in the console. If no password is found,
-#' it suggests using the sd_set_password() function to define a password.
+#' This function displays the password saved in the `.Renviron` file under the
+#' `SURVEYDOWN_PASSWORD` variable. It includes a confirmation step to ensure
+#' the user wants to display the password in the console. If no password is
+#' found, it suggests using the `sd_set_password()` function to define a
+#' password.
 #'
 #' @return A character string containing the password if found and confirmed,
-#'         or a message if no password is saved along with a suggestion to set one.
-#'
-#' @importFrom usethis ui_yeah ui_info ui_oops ui_todo
+#'   or a message if no password is saved along with a suggestion to set one.
 #'
 #' @examples
-#' \dontrun{
-#'   sd_show_password()
+#' if (interactive()) {
+#'   surveydown::sd_show_password()
 #' }
 #'
 #' @export
@@ -923,20 +984,27 @@ sd_show_password <- function() {
   }
 }
 
-#' Store a value
+#' Store a value in the survey data
 #'
-#' This function allows storing additional values to be included in the survey data,
-#' such as respondent IDs or other data.
+#' This function allows storing additional values to be included in the survey
+#' data, such as respondent IDs or other metadata.
 #'
-#' @param value The raid value to be stored.
-#' @param id (Optional) The id (name) of the value in the data.
-#'             If not provided, the id of the `value` variable will be used.
+#' @param value The value to be stored. This can be any R object that can be
+#'   coerced to a character string.
+#' @param id (Optional) Character string. The id (name) of the value in the
+#'   data. If not provided, the name of the `value` variable will be used.
 #'
-#' @return NULL (invisibly)
+#' @return `NULL` (invisibly)
 #'
 #' @examples
-#' \dontrun{
+#' if (interactive()) {
+#'   # Create a respondent ID to store
+#'   respondentID <- 42
+#'
+#'   # Store the respondentID
 #'   sd_store_value(respondentID)
+#'
+#'   # Store the respondentID as the variable "respID"
 #'   sd_store_value(respondentID, "respID")
 #' }
 #'
@@ -965,23 +1033,38 @@ sd_store_value <- function(value, id = NULL) {
     invisible(NULL)
 }
 
-#' Create a copy of an input value
+#' Create a copy of a value
 #'
-#' This function creates a copy of an input value and makes it available as a new output.
-#' The new output can then be displayed using sd_display_value().
+#' This function creates a copy of an input value and makes it available as a
+#' new output. The new output can then be displayed using `sd_output()`.
 #'
-#' @param id The ID of the input value to copy
-#' @param id_copy The ID for the new copy (must be different from id)
+#' @param id Character string. The ID of the input value to copy.
+#' @param id_copy Character string. The ID for the new copy (must be different
+#'   from `id`).
 #'
-#' @return NULL invisibly. This function is called for its side effects.
+#' @return `NULL` invisibly. This function is called for its side effects.
 #'
 #' @examples
-#' \dontrun{
-#' sd_copy_value(id = "respondent_name", id_copy = "resp_name2")
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # Then in UI:
-#' # sd_display_value("resp_name2")
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "basic")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Make a copy of the "name" variable to call its value a second time
+#'     sd_copy_value(id = "name", id_copy = "name_copy")
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
+#'
+#' @seealso `sd_output()` for displaying the copied value
 #'
 #' @export
 sd_copy_value <- function(id, id_copy) {
@@ -1004,16 +1087,32 @@ sd_copy_value <- function(id, id_copy) {
 #' Check if a question is answered
 #'
 #' This function checks if a given question has been answered by the user.
-#' For matrix questions, it checks if all sub-questions are answered.
+#' For matrix questions, it checks if all sub-questions (rows) are answered.
 #'
 #' @param question_id The ID of the question to check.
-#' @return A logical value: TRUE if the question is answered, FALSE otherwise.
+#' @return A logical value: `TRUE` if the question is answered, `FALSE`
+#' otherwise.
 #'
 #' @examples
-#' \dontrun{
-#' if(sd_is_answered("car_preference")) {
-#'   # Do something when all sub-questions of the matrix are answered
-#' }
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_is_answered")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_show_if(
+#'
+#'       # If "apple_text" is answered, show the conditional question
+#'       sd_is_answered("apple_text") ~ "other_fruit"
+#'     )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @export
