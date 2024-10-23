@@ -1,28 +1,26 @@
-#' Server logic for a surveydown survey
+#' Server Logic for a surveydown survey
 #'
 #' @description
-#' This function defines the server-side logic for a Shiny application used in
-#' surveydown. It handles various operations such as conditional display,
-#' progress tracking, page navigation, database updates for survey responses,
-#' and exit survey functionality.
+#' This function defines the server-side logic for a Shiny application used in surveydown.
+#' It handles various operations such as conditional display, progress tracking,
+#' page navigation, database updates for survey responses, and exit survey functionality.
 #'
 #' @param db A list containing database connection information created using
-#'   `sd_database()` function. Defaults to `NULL`.
-#' @param required_questions Vector of character strings. The IDs of questions
-#'   that must be answered. Defaults to `NULL`.
-#' @param all_questions_required Logical. If `TRUE`, all questions in the
-#'   survey will be required. Defaults to `FALSE`.
-#' @param start_page Character string. The ID of the page to start on.
-#'   Defaults to `NULL`.
-#' @param admin_page Logical. Whether to include an admin page for viewing and
-#'   downloading survey data. Defaults to `FALSE`.
-#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
-#'   question after answering. Defaults to `FALSE`.
-#' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
-#'   the survey. If `FALSE`, shows a simple confirmation dialog.
-#'   Defaults to `FALSE`.
+#' \code{\link{sd_database}} function. Defaults to `NULL`.
+#' @param required_questions Vector of character strings. The IDs of questions that must be answered. Defaults to `NULL`.
+#' @param all_questions_required Logical. If TRUE, all questions in the survey will be required. Defaults to FALSE.
+#' @param start_page Character string. The ID of the page to start on. Defaults to NULL.
+#' @param admin_page Logical. Whether to include an admin page for viewing and downloading survey data. Defaults to `FALSE`.
+#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next question after answering. Defaults to `FALSE`.
+#' @param rate_survey Logical. If TRUE, shows a rating question when exiting the survey. If FALSE, shows a simple confirmation dialog. Defaults to `FALSE`.
+#'
+#' @import shiny
+#' @import shinyWidgets
+#' @importFrom stats setNames
+#' @importFrom shiny reactiveValuesToList observeEvent renderText
 #'
 #' @details
+#'
 #' The function performs the following tasks:
 #' \itemize{
 #'   \item Initializes variables and reactive values.
@@ -30,68 +28,51 @@
 #'   \item Tracks answered questions and updates the progress bar.
 #'   \item Handles page navigation and skip logic.
 #'   \item Manages required questions.
-#'   \item Performs database operation.
-#'   \item Sets up admin functionality if enabled with the `admin_page` argument.
-#'   \item Controls auto-scrolling behavior based on the `auto_scroll` argument.
-#'   \item Uses sweetalert for warning messages when required questions are not
-#'         answered.
-#'   \item Handles the exit survey process based on the `rate_survey` argument.
+#'   \item Performs database operations or saves to a local CSV file in preview mode.
+#'   \item Sets up admin functionality if enabled in the configuration.
+#'   \item Controls auto-scrolling behavior based on the `auto_scroll` parameter.
+#'   \item Uses sweetalert for warning messages when required questions are not answered.
+#'   \item Handles the exit survey process based on the `rate_survey` parameter.
 #' }
 #'
 #' @section Progress Bar:
-#' The progress bar is updated based on the last answered question. It will jump
-#' to the percentage corresponding to the last answered question and will never
-#' decrease, even if earlier questions are answered later. The progress is
-#' calculated as the ratio of the last answered question's index to the total
-#' number of questions.
+#' The progress bar is updated based on the last answered question. It will jump to the
+#' percentage corresponding to the last answered question and will never decrease,
+#' even if earlier questions are answered later. The progress is calculated as the ratio
+#' of the last answered question's index to the total number of questions.
 #'
 #' @section Database Operations:
-#' If `db` is provided, the function will update the database with survey
-#' responses. If `db` is `NULL` (ignore mode), responses will be saved to a local
-#' CSV file.
+#' If \code{db} is provided, the function will update the database with survey responses.
+#' If \code{db} is \code{NULL} (ignore mode), responses will be saved to a local CSV file.
 #'
 #' @section Auto-Scrolling:
-#' When `auto_scroll` is `TRUE`, the survey will automatically scroll to the next
-#' question after the current question is answered. This behavior can be disabled
-#' by setting `auto_scroll` to `FALSE`.
+#' When `auto_scroll` is TRUE, the survey will automatically scroll to the next question
+#' after the current question is answered. This behavior can be disabled by setting
+#' `auto_scroll` to FALSE.
 #'
 #' @section Exit Survey:
-#' When `rate_survey` is `TRUE`, the function will show a rating question when
-#' the user attempts to exit the survey. When `FALSE`, it will show a simple
-#' confirmation dialog. The rating, if provided, is saved with the survey data.
+#' When `rate_survey` is TRUE, the function will show a rating question when the user attempts to exit the survey.
+#' When FALSE, it will show a simple confirmation dialog. The rating, if provided, is saved with the survey data.
 #'
 #' @return
-#' This function does not return a value; it sets up the server-side logic for
-#' the Shiny application.
+#' This function does not return a value; it sets up the server-side logic for the Shiny application.
 #'
 #' @examples
-#' if (interactive()) {
+#' \dontrun{
 #'   library(surveydown)
+#'   library(shinyWidgets)
+#'   db <- sd_database()
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "basic")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # sd_server() accepts these following parameters
-#'     sd_server(
-#'       db = NULL,
-#'       required_questions = NULL,
-#'       all_questions_required = FALSE,
-#'       start_page = NULL,
-#'       admin_page = FALSE,
-#'       auto_scroll = FALSE,
-#'       rate_survey = FALSE
-#'     )
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'   shinyApp(
+#'     ui = sd_ui(),
+#'     server = function(input, output, session) {
+#'       sd_server(db = db, auto_scroll = TRUE, rate_survey = TRUE)
+#'     }
+#'   )
 #' }
 #'
 #' @seealso
-#' `sd_database()`, `sd_ui()`
+#' \code{\link{sd_database}}, \code{\link{sd_ui}}
 #'
 #' @export
 sd_server <- function(
@@ -137,18 +118,19 @@ sd_server <- function(
     ignore_mode <- is.null(db)
 
     # Create local objects from config file
-    pages        <- config$pages
-    head_content <- config$head_content
-    page_ids     <- config$page_ids
-    question_ids <- config$question_ids
-    start_page   <- config$start_page
-    admin_page   <- config$admin_page
-    question_required <- config$question_required
-    page_id_to_index <- stats::setNames(seq_along(page_ids), page_ids)
+    pages              <- config$pages
+    head_content       <- config$head_content
+    page_ids           <- config$page_ids
+    question_ids       <- config$question_ids
+    question_structure <- config$question_structure
+    start_page         <- config$start_page
+    admin_page         <- config$admin_page
+    question_required  <- config$question_required
+    page_id_to_index   <- setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs
-    page_ts_ids     <- paste0("time_p_", page_ids)
-    question_ts_ids <- paste0("time_q_", question_ids)
+    page_ts_ids      <- paste0("time_p_", page_ids)
+    question_ts_ids  <- paste0("time_q_", question_ids)
     start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
     all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
 
@@ -156,7 +138,7 @@ sd_server <- function(
 
     # Reactive to store visibility status of all questions
     question_visibility <- shiny::reactiveVal(
-      stats::setNames(rep(TRUE, length(question_ids)), question_ids)
+      setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
     # Observer to apply show_if conditions and update question_visibility
@@ -254,7 +236,7 @@ sd_server <- function(
     # Reactive expression that returns a list of the latest data
     latest_data <- shiny::reactive({
         # Convert reactiveValues to a regular list
-        data <- shiny::reactiveValuesToList(all_data)
+        data <- reactiveValuesToList(all_data)
 
         # Ensure all elements are of length 1, use "" for empty or NULL values
         data <- lapply(data, function(x) {
@@ -271,33 +253,62 @@ sd_server <- function(
     # (one created for each question)
 
     lapply(seq_along(question_ids), function(index) {
-        local_id <- question_ids[index]
-        local_ts_id <- question_ts_ids[index]
+        local({
+            local_id <- question_ids[index]
+            local_ts_id <- question_ts_ids[index]
 
-        shiny::observeEvent(input[[local_id]], {
-            # Tag event time
-            timestamp <- get_utc_timestamp()
+            observeEvent(input[[local_id]], {
+                # Tag event time
+                timestamp <- get_utc_timestamp()
 
-            # Update question value
-            formatted_value <- format_question_value(input[[local_id]])
-            all_data[[local_id]] <- formatted_value
+                # Update question value
+                value <- input[[local_id]]
+                formatted_value <- format_question_value(value)
+                all_data[[local_id]] <- formatted_value
 
-            # Update timestamp and progress if interacted
-            changed <- local_id
-            if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                all_data[[local_ts_id]] <- timestamp
-                changed <- c(changed, local_ts_id)
-                update_progress_bar(index)
-            }
+                # Update timestamp and progress if interacted
+                changed <- local_id
+                if (!is.null(input[[paste0(local_id, "_interacted")]])) {
+                    all_data[[local_ts_id]] <- timestamp
+                    changed <- c(changed, local_ts_id)
+                    update_progress_bar(index)
+                }
 
-            # Update tracker of which fields changed
-            changed_fields(c(changed_fields(), changed))
+                # Update tracker of which fields changed
+                changed_fields(c(changed_fields(), changed))
 
-            # Make value accessible in the UI
-            output[[paste0(local_id, "_value")]] <- shiny::renderText({
-                formatted_value
-            })
-        }, ignoreNULL = FALSE, ignoreInit = TRUE)
+                # Get question labels and values from question structure
+                question_info <- question_structure[[local_id]]
+                label_question <- question_info$label_question
+                label_options  <- question_info$label_options
+                options        <- question_info$options
+
+                # For the selected value(s), get the corresponding label(s)
+                if (length(options) == length(label_options)) {
+                  names(options) <- label_options
+                }
+                if (is.null(value) || length(value) == 0) {
+                  label_option <- ""
+                } else {
+                  label_option <- options[options %in% value] |>
+                    names() |>
+                    paste(collapse = ", ")
+                }
+
+                # Store the values and labels in output
+                output[[paste0(local_id, "_value")]] <- renderText({
+                    formatted_value
+                })
+                output[[paste0(local_id, "_label_option")]] <- renderText({
+                    label_option
+                })
+                output[[paste0(local_id, "_label_question")]] <- renderText({
+                    label_question
+                })
+            },
+            ignoreNULL = FALSE,
+            ignoreInit = TRUE)
+        })
     })
 
     # Page rendering ----
@@ -306,7 +317,7 @@ sd_server <- function(
     # (defaults to first page if NULL...see run_config() function)
     current_page_id <- shiny::reactiveVal(start_page)
 
-    get_current_page <- shiny::reactive({
+    get_current_page <- reactive({
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
 
@@ -340,9 +351,9 @@ sd_server <- function(
     }
 
     # Determine which page is next, then update current_page_id() to it
-    shiny::observe({
+    observe({
       lapply(pages, function(page) {
-        shiny::observeEvent(input[[page$next_button_id]], {
+        observeEvent(input[[page$next_button_id]], {
           shiny::isolate({
             # Grab the time stamp of the page turn
             timestamp <- get_utc_timestamp()
@@ -387,9 +398,9 @@ sd_server <- function(
 
     # Survey rating ----
     # Observer for the exit survey modal
-    shiny::observeEvent(input$show_exit_modal, {
+    observeEvent(input$show_exit_modal, {
       if (rate_survey) {
-        shiny::showModal(shiny::modalDialog(
+        showModal(modalDialog(
           title = "Before you go...",
           sd_question(
             type   = 'mc_buttons',
@@ -403,41 +414,41 @@ sd_server <- function(
               "5" = "5"
             )
           ),
-          footer = shiny::tagList(
-            shiny::modalButton("Cancel"),
-            shiny::actionButton("submit_rating", "Submit and Exit")
+          footer = tagList(
+            modalButton("Cancel"),
+            actionButton("submit_rating", "Submit and Exit")
           )
         ))
       } else {
-        shiny::showModal(shiny::modalDialog(
+        showModal(modalDialog(
           title = "Confirm Exit",
           "Are you sure you want to exit the survey?",
-          footer = shiny::tagList(
-            shiny::modalButton("Cancel"),
-            shiny::actionButton("confirm_exit", "Exit")
+          footer = tagList(
+            modalButton("Cancel"),
+            actionButton("confirm_exit", "Exit")
           )
         ))
       }
     })
 
     # Observer to handle the rating submission or exit confirmation
-    shiny::observeEvent(input$submit_rating, {
+    observeEvent(input$submit_rating, {
       # Save the rating
       rating <- input$survey_rating
       all_data[['exit_survey_rating']] <- rating
       changed_fields(c(changed_fields(), 'exit_survey_rating'))
       # Update data immediately
-      shiny::isolate({
+      isolate({
         update_data(time_last = TRUE)
       })
       # Close the modal and the window
-      shiny::removeModal()
+      removeModal()
       session$sendCustomMessage("closeWindow", list())
     })
 
-    shiny::observeEvent(input$confirm_exit, {
+    observeEvent(input$confirm_exit, {
       # Close the modal and the window
-      shiny::removeModal()
+      removeModal()
       session$sendCustomMessage("closeWindow", list())
     })
 
@@ -452,42 +463,23 @@ sd_server <- function(
 #' Define skip conditions for survey pages
 #'
 #' @description
-#' This function is used to define conditions under which certain pages in the
-#' survey should be skipped. It takes one or more formulas where the left-hand
-#' side is the condition and the right-hand side is the target page ID.
+#' This function is used to define conditions under which certain pages in the survey should be skipped.
+#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target page ID.
 #'
 #' @param ... One or more formulas defining skip conditions.
-#'   The left-hand side of each formula should be a condition based on input
-#'   values, and the right-hand side should be the ID of the page to skip to if
-#'   the condition is met.
+#'   The left-hand side of each formula should be a condition based on input values,
+#'   and the right-hand side should be the ID of the page to skip to if the condition is met.
 #'
-#' @return A list of parsed conditions, where each element contains the
-#' condition and the target page ID.
+#' @return A list of parsed conditions, where each element contains the condition and the target page ID.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_skip_if")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Skip to page based on input
-#'     sd_skip_if(
-#'       input$fav_fruit == "orange" ~ "orange_page",
-#'       input$fav_fruit == "other" ~ "other_page"
-#'       )
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#' }
-#'
-#' @seealso `sd_show_if()`
+#' \dontrun{
+#' sd_skip_if(
+#'   as.numeric(input$age < 18) ~ "underage_page",
+#'   input$country != "USA" ~ "international_page"
+#' )
+#'}
+#' @seealso \code{\link{sd_show_if}}
 #'
 #' @export
 sd_skip_if <- function(...) {
@@ -512,38 +504,24 @@ sd_skip_if <- function(...) {
 #' @description
 #' This function is used to define conditions under which certain questions in the survey should be shown.
 #' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
-#' If called with no arguments, it will return `NULL` and set no conditions.
+#' If called with no arguments, it will return NULL and set no conditions.
 #'
 #' @param ... One or more formulas defining show conditions.
 #'   The left-hand side of each formula should be a condition based on input values,
 #'   and the right-hand side should be the ID of the question to show if the condition is met.
 #'
 #' @return A list of parsed conditions, where each element contains the condition and the target question ID.
-#'   Returns `NULL` if no conditions are provided.
+#'   Returns NULL if no conditions are provided.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_show_if")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'     sd_show_if(
-#'
-#'       # If "Other" is chosen, show the conditional question
-#'       input$fav_fruit == "other" ~ "fav_fruit_other"
-#'     )
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' \dontrun{
+#' sd_show_if(
+#'   input$has_pets == "yes" ~ "pet_details",
+#'   input$employment == "employed" ~ "job_questions"
+#' )
 #' }
 #'
-#' @seealso `sd_skip_if()`
+#' @seealso \code{\link{sd_skip_if}}
 #'
 #' @export
 sd_show_if <- function(...) {
@@ -579,7 +557,7 @@ set_show_if_conditions <- function(show_if) {
                 ))
                 FALSE
             })
-            stats::setNames(list(result), rule$target)
+            setNames(list(result), rule$target)
         })
         do.call(c, results)
     })
@@ -751,14 +729,14 @@ admin_enable <- function(input, output, session, db) {
     }
 
     # Observe for URL change
-    url_reactive <- shiny::reactive({
+    url_reactive <- reactive({
         session$clientData$url_search
     })
 
     # Observe changes to the URL
     shiny::observe({
         url <- url_reactive()
-        query <- shiny::parseQueryString(url)
+        query <- parseQueryString(url)
         admin_param <- query[['admin']]
         if(!is.null(admin_param)) {
             show_admin_section()
@@ -826,32 +804,22 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
-#' Set password for surveydown survey
+#' Set Password
 #'
-#' This function sets your surveydown password, which is used to access
-#' the PostgreSQL data (e.g. Supabase). The password is saved in a `.Renviron`
-#' file and adds `.Renviron` to `.gitignore`.
+#' This function sets the supabase password in the .Renviron file and adds .Renviron to .gitignore.
 #'
-#' @param password Character string. The password to be set for the database
-#'   connection.
+#' @param password Character string. The password to be set for Supabase connection.
 #'
 #' @details The function performs the following actions:
-#'   1. Creates a `.Renviron` file in the root directory if it doesn't exist.
-#'   2. Adds or updates the `SURVEYDOWN_PASSWORD` entry in the `.Renviron` file.
-#'   3. Adds `.Renviron` to `.gitignore` if it's not already there.
+#'   1. Creates a .Renviron file in the root directory if it doesn't exist.
+#'   2. Adds or updates the SURVEYDOWN_PASSWORD entry in the .Renviron file.
+#'   3. Adds .Renviron to .gitignore if it's not already there.
 #'
 #' @return None. The function is called for its side effects.
 #'
 #' @examples
 #' \dontrun{
-#'   # Set a temporary password for demonstration
-#'   temp_password <- paste0(sample(letters, 10, replace = TRUE), collapse = "")
-#'
-#'   # Set the password
-#'   sd_set_password(temp_password)
-#'
-#'   # After restarting R, verify the password was set
-#'   cat("Password is :", Sys.getenv('SURVEYDOWN_PASSWORD'))
+#'   sd_set_password("your_SURVEYDOWN_PASSWORD")
 #' }
 #'
 #' @export
@@ -905,18 +873,19 @@ sd_set_password <- function(password) {
 
 #' Show the Saved Survey Password
 #'
-#' This function displays the password saved in the `.Renviron` file under the
-#' `SURVEYDOWN_PASSWORD` variable. It includes a confirmation step to ensure
-#' the user wants to display the password in the console. If no password is
-#' found, it suggests using the `sd_set_password()` function to define a
-#' password.
+#' This function displays the password saved in the .Renviron file under the
+#' SURVEYDOWN_PASSWORD variable. It includes a confirmation step to ensure
+#' the user wants to display the password in the console. If no password is found,
+#' it suggests using the sd_set_password() function to define a password.
 #'
 #' @return A character string containing the password if found and confirmed,
-#'   or a message if no password is saved along with a suggestion to set one.
+#'         or a message if no password is saved along with a suggestion to set one.
+#'
+#' @importFrom usethis ui_yeah ui_info ui_oops ui_todo
 #'
 #' @examples
-#' if (interactive()) {
-#'   surveydown::sd_show_password()
+#' \dontrun{
+#'   sd_show_password()
 #' }
 #'
 #' @export
@@ -954,27 +923,20 @@ sd_show_password <- function() {
   }
 }
 
-#' Store a value in the survey data
+#' Store a value
 #'
-#' This function allows storing additional values to be included in the survey
-#' data, such as respondent IDs or other metadata.
+#' This function allows storing additional values to be included in the survey data,
+#' such as respondent IDs or other data.
 #'
-#' @param value The value to be stored. This can be any R object that can be
-#'   coerced to a character string.
-#' @param id (Optional) Character string. The id (name) of the value in the
-#'   data. If not provided, the name of the `value` variable will be used.
+#' @param value The raid value to be stored.
+#' @param id (Optional) The id (name) of the value in the data.
+#'             If not provided, the id of the `value` variable will be used.
 #'
-#' @return `NULL` (invisibly)
+#' @return NULL (invisibly)
 #'
 #' @examples
-#' if (interactive()) {
-#'   # Create a respondent ID to store
-#'   respondentID <- 42
-#'
-#'   # Store the respondentID
+#' \dontrun{
 #'   sd_store_value(respondentID)
-#'
-#'   # Store the respondentID as the variable "respID"
 #'   sd_store_value(respondentID, "respID")
 #' }
 #'
@@ -997,44 +959,29 @@ sd_store_value <- function(value, id = NULL) {
 
         # Make value accessible in the UI
         output <- shiny::getDefaultReactiveDomain()$output
-        output[[paste0(id, "_value")]] <- shiny::renderText({ formatted_value })
+        output[[paste0(id, "_value")]] <- renderText({ formatted_value })
     })
 
     invisible(NULL)
 }
 
-#' Create a copy of a value
+#' Create a copy of an input value
 #'
-#' This function creates a copy of an input value and makes it available as a
-#' new output. The new output can then be displayed using `sd_output()`.
+#' This function creates a copy of an input value and makes it available as a new output.
+#' The new output can then be displayed using sd_display_value().
 #'
-#' @param id Character string. The ID of the input value to copy.
-#' @param id_copy Character string. The ID for the new copy (must be different
-#'   from `id`).
+#' @param id The ID of the input value to copy
+#' @param id_copy The ID for the new copy (must be different from id)
 #'
-#' @return `NULL` invisibly. This function is called for its side effects.
+#' @return NULL invisibly. This function is called for its side effects.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
+#' \dontrun{
+#' sd_copy_value(id = "respondent_name", id_copy = "resp_name2")
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "basic")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Make a copy of the "name" variable to call its value a second time
-#'     sd_copy_value(id = "name", id_copy = "name_copy")
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' # Then in UI:
+#' # sd_display_value("resp_name2")
 #' }
-#'
-#' @seealso `sd_output()` for displaying the copied value
 #'
 #' @export
 sd_copy_value <- function(id, id_copy) {
@@ -1057,32 +1004,16 @@ sd_copy_value <- function(id, id_copy) {
 #' Check if a question is answered
 #'
 #' This function checks if a given question has been answered by the user.
-#' For matrix questions, it checks if all sub-questions (rows) are answered.
+#' For matrix questions, it checks if all sub-questions are answered.
 #'
 #' @param question_id The ID of the question to check.
-#' @return A logical value: `TRUE` if the question is answered, `FALSE`
-#' otherwise.
+#' @return A logical value: TRUE if the question is answered, FALSE otherwise.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_is_answered")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'     sd_show_if(
-#'
-#'       # If "apple_text" is answered, show the conditional question
-#'       sd_is_answered("apple_text") ~ "other_fruit"
-#'     )
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' \dontrun{
+#' if(sd_is_answered("car_preference")) {
+#'   # Do something when all sub-questions of the matrix are answered
+#' }
 #' }
 #'
 #' @export

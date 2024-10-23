@@ -27,37 +27,24 @@ load_resource <- function(..., package = "surveydown") {
 #' It retrieves theme and progress bar settings from the survey.qmd file.
 #'
 #' @return A Shiny UI object
+#' @export
 #'
 #' @details
 #' The function reads the following settings from the survey.qmd YAML header:
 #' \itemize{
-#'   \item `theme`: The theme to be applied to the survey.
-#'   \item `barcolor`: The color of the progress bar (should be a valid hex color).
-#'   \item `barposition`: The position of the progress bar (`'top'`, `'bottom'`, or `'none'`).
+#'   \item \code{theme}: The theme to be applied to the survey.
+#'   \item \code{barcolor}: The color of the progress bar (should be a valid hex color).
+#'   \item \code{barposition}: The position of the progress bar ('top', 'bottom', or 'none').
 #' }
 #'
-#' If `barcolor` is not specified or is `NULL`, the default theme color will be
-#' used. If `barposition` is not specified, it defaults to 'top'.
+#' If \code{barcolor} is not specified or is NULL, the default theme color will be used.
+#' If \code{barposition} is not specified, it defaults to 'top'.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_ui")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'     sd_server()
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' \dontrun{
+#' # In your app.R or ui.R file:
+#' ui <- sd_ui()
 #' }
-#'
-#' @seealso `sd_server()` for creating the server-side logic of the survey
-#'
-#' @export
 sd_ui <- function() {
 
     # Throw error if "survey.qmd" file missing
@@ -87,7 +74,7 @@ sd_ui <- function() {
       },
       shiny::tags$script("var surveydownConfig = {};"),
       if (!is.null(barcolor)) {
-        shiny::tags$style(shiny::HTML(sprintf("
+        shiny::tags$style(HTML(sprintf("
                 :root {
                     --progress-color: %s;
                 }
@@ -178,20 +165,20 @@ get_barposition <- function(metadata) {
 #' @return A Shiny UI element wrapped in a div with a data attribute for question ID.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
+#' sd_question("text", "name", "What is your name?")
+#' sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "basic")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'     sd_server()
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#' }
+#' # Example of a matrix question
+#' sd_question(
+#'   type = "matrix",
+#'   id   = "satisfaction",
+#'   label = "Rate your satisfaction with the following:",
+#'   row = c("Customer Service" = "service",
+#'           "Product Quality"  = "quality",
+#'           "Price"            = "price"),
+#'   option = c("Unsatisfied" = 1,
+#'              "Neutral"     = 2,
+#'              "Satisfied"   = 3))
 #'
 #' @export
 sd_question <- function(
@@ -468,20 +455,7 @@ make_question_container <- function(id, object, width) {
 #' @return A Shiny tagList containing the 'Next' button UI element.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_next")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'     sd_server()
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#' }
+#' sd_next("page2", "Continue to Next Section")
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
@@ -529,19 +503,12 @@ make_next_button_id <- function(page_id) {
 #' is controlled by the `rate_survey` parameter in the `sd_server()` function, not in this UI function.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
+#' \dontrun{
+#' # In your UI code:
+#' sd_close()
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_close")
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'     sd_server()
-#'   }
-#'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' # With a custom label:
+#' sd_close("Finish and Exit")
 #' }
 #'
 #' @seealso \code{\link{sd_server}}
@@ -589,6 +556,8 @@ sd_close <- function(label = "Exit Survey") {
 #' @return In a reactive context, returns a function that when called, renders the
 #'   redirect element. In a non-reactive context, returns the redirect element directly.
 #'
+#' @importFrom shiny renderUI tags HTML actionButton
+#' @importFrom digest digest
 #' @export
 #'
 #' @examples
@@ -713,6 +682,7 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 #'
 #' @return A reactive expression that returns a list of URL parameters.
 #'
+#' @importFrom shiny reactive getDefaultReactiveDomain parseQueryString
 #' @export
 #'
 #' @examples
@@ -750,6 +720,15 @@ sd_get_url_pars <- function(...) {
 #' @param id A unique identifier for the question.
 #' @return A Shiny UI element that serves as a placeholder for the reactive question.
 #'
+#' @examples
+#' \dontrun{
+#' # Deprecated:
+#' sd_display_question("name")
+#'
+#' # Use instead:
+#' sd_output("name", type = "question")
+#' }
+#'
 #' @export
 sd_display_question <- function(id) {
   # v0.2.1
@@ -766,6 +745,19 @@ sd_display_question <- function(id) {
 #'
 #' @return A Shiny UI element displaying the question's value
 #'
+#' @examples
+#' \dontrun{
+#' # Deprecated:
+#' sd_display_value("name")
+#' sd_display_value("age", display_type = "text")
+#' sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
+#'
+#' # Use instead:
+#' sd_output("name", type = "value")
+#' sd_output("age", type = "value", display = "text")
+#' sd_output("email", type = "value", display = "inline", wrapper = function(x) tags$strong(x))
+#' }
+#'
 #' @export
 sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
   # v0.2.1
@@ -775,7 +767,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' Output Function for Displaying reactive objects and values
 #'
 #' @param id Character string. A unique identifier for the output element.
-#' @param type Character string. Specifies the type of output. Can be "question", "value", or `NULL.`
+#' @param type Character string. Specifies the type of output. Can be "question", "label_question", "value", "label_option", or `NULL.`
 #'   If `NULL`, the function behaves like `shiny::uiOutput()`.
 #' @param width Character string. The width of the UI element. Defaults to "100%".
 #' @param display Character string. Specifies the display type for "value" outputs.
@@ -790,23 +782,30 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' The function behaves differently based on the `type` parameter:
 #' - If `type` is `NULL`, it acts like `shiny::uiOutput()`.
 #' - If `type` is `"question"`, it creates a placeholder for a reactive survey question.
-#' - If `type` is `"value"`, it creates an output to display the value of a survey question,
+#' - If `type` is `"value"`, it creates an output to display the value of a survey question, 
+#'   with the display style determined by the `display` parameter.
+#' - If `type` is `"label_option"`, it creates an output to display the label of the value of a survey question,
+#'   with the display style determined by the `display` parameter.
+#' - If `type` is `"label_question"`, it creates an output to display the survey question,
 #'   with the display style determined by the `display` parameter.
 #'
 #' @examples
-#' if (interactive()) {
-#'   library(surveydown)
+#' \dontrun{
+#' # Create a placeholder for a reactive question
+#' sd_output('cbc1', type = 'question')
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_output")
+#' # Display the value of a survey question inline
+#' sd_output('cbc1', type = 'value', inline = TRUE)
 #'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'     sd_server()
-#'   }
+#' # Display the label of the choosen question value (from the list of options)
+#' sd_output('cbc1', type = 'label_option')
+#' 
+#' # Use as a simple uiOutput
+#' sd_output('redirect')
 #'
-#'   # Run the Shiny app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' # Use with a wrapper function
+#' sd_output('age', type = 'value', display = 'text',
+#'           wrapper = function(x) tags$strong(x))
 #' }
 #'
 #' @export
@@ -828,27 +827,26 @@ sd_output <- function(
         return(make_question_container(id, shiny::uiOutput(id), width))
     }
 
-    if (type == "value") {
-        value_id <- paste0(id, "_value")
-
-        if (!display %in% c("text", "verbatim", "ui")) {
-            stop("Invalid display type. Choose 'text', 'verbatim', or 'ui'.")
-        }
-
-        output <- switch(
-            display,
-            "text" = shiny::textOutput(value_id, inline = inline),
-            "verbatim" = shiny::verbatimTextOutput(value_id, inline = inline),
-            "ui" = shiny::uiOutput(value_id, inline = inline),
-            # Default to textOutput if display is not specified
-            shiny::textOutput(value_id, inline = inline)
-        )
-
-        if (!is.null(wrapper)) {
-            output <- wrapper(output, ...)
-        }
-
-        return(output)
+    if (type %in% c("value", "label_option", "label_question")) {
+      type_id <- paste0(id, "_", type)
+  
+      if (!display %in% c("text", "verbatim", "ui")) {
+        stop("Invalid display type. Choose 'text', 'verbatim', or 'ui'.")
+      }
+  
+      output <- switch(display,
+        "text" = shiny::textOutput(type_id, inline = inline),
+        "verbatim" = shiny::verbatimTextOutput(type_id, inline = inline),
+        "ui" = shiny::uiOutput(type_id, inline = inline),
+        # Default to textOutput if display is not specified
+        shiny::textOutput(type_id, inline = inline)
+      )
+  
+      if (!is.null(wrapper)) {
+        output <- wrapper(output, ...)
+      }
+  
+      return(output)
     }
 
     stop("Invalid type. Choose 'question' or 'value'.")
