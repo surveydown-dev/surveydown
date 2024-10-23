@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Character string. Specifies the type of output. Can be "question", "value", or <code>NULL.</code>
+<dd><p>Character string. Specifies the type of output. Can be "question", "label_question", "value", "label_option", or <code>NULL.</code>
 If <code>NULL</code>, the function behaves like <code><a href="https://rdrr.io/pkg/shiny/man/htmlOutput.html" class="external-link">shiny::uiOutput()</a></code>.</p></dd>
 
 
@@ -100,6 +100,10 @@ Can be "text", "verbatim", or "ui". Only used when <code>type = "value"</code>.<
 <li><p>If <code>type</code> is <code>"question"</code>, it creates a placeholder for a reactive survey question.</p></li>
 <li><p>If <code>type</code> is <code>"value"</code>, it creates an output to display the value of a survey question,
 with the display style determined by the <code>display</code> parameter.</p></li>
+<li><p>If <code>type</code> is <code>"label_option"</code>, it creates an output to display the label of the value of a survey question,
+with the display style determined by the <code>display</code> parameter.</p></li>
+<li><p>If <code>type</code> is <code>"label_question"</code>, it creates an output to display the survey question,
+with the display style determined by the <code>display</code> parameter.</p></li>
 </ul></div>
 
     <div class="section level2">
@@ -110,6 +114,9 @@ with the display style determined by the <code>display</code> parameter.</p></li
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Display the value of a survey question inline</span></span></span>
 <span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'cbc1'</span>, type <span class="op">=</span> <span class="st">'value'</span>, inline <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Display the label of the choosen question value (from the list of options)</span></span></span>
+<span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'cbc1'</span>, type <span class="op">=</span> <span class="st">'label_option'</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Use as a simple uiOutput</span></span></span>
 <span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'redirect'</span><span class="op">)</span></span></span>

@@ -32,7 +32,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -85,116 +85,123 @@
 <p>The main documentation for surveydown is at <a href="https://surveydown.org/" class="external-link">https://surveydown.org/</a>. We recommend
 navigating there for more detailed documentation about the R package and
 how to use it in a Quarto shiny document.</p>
+<div class="section level3">
+<h3 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
+</h3>
+<p>Every surveydown survey is composed of a <em>survey</em> and an
+<em>app</em>, defined in two separate files:</p>
+<ul>
+<li>
+<code>survey.qmd</code>: A Quarto document that contains the survey
+content (pages, questions, etc), which renders to an HTML file.</li>
+<li>
+<code>app.R</code>: An R script defining a Shiny app that contains
+the global settings (libraries, database configuration, etc.) and server
+configuration options (e.g., conditional skipping / display, etc.).</li>
+</ul>
+<p><strong>These files must be named <code>survey.qmd</code> and
+<code>app.R</code></strong>.</p>
+<p>The <a href="https://pkg.surveydown.org">{surveydown}</a> R package
+provides a set of functions for defining the survey content and
+configuration options. Each function starts with <code>sd_</code> to
+make them easy to identify.</p>
+<p>The platform is based on some basic principles:</p>
+<ul>
+<li>Add content to your <code>survey.qmd</code> file using markdown text
+(or in RStudio use the visual editor).</li>
+<li>Define survey questions in R code chunks with the
+<code><a href="../reference/sd_question.html">sd_question()</a></code> function.</li>
+<li>Define pages using fences (<code>:::</code>), with navigation
+buttons handled using the <code><a href="../reference/sd_next.html">sd_next()</a></code> function.</li>
+<li>Add rich functionality to your survey using a variety of <a href="https://surveydown.org/server-options" class="external-link">server options</a> and <a href="https://surveydown.org/conditional-control" class="external-link">conditional control
+logic</a> in the <code>server()</code> function in the
+<code>app.R</code> file.</li>
+<li>Store your respondent data in a database (see <a href="https://surveydown.org/store-data" class="external-link">Store Data</a>).</li>
+</ul>
+<p>This approach ensures a flexible survey platform that is fully
+reproducible and easy to customize.</p>
+<p>The remaining steps on this page will guide you through the process
+of creating a surveydown survey.</p>
 </div>
-<div class="section level2">
-<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
-</h2>
-<p>In surveydown, your entire survey is designed using markdown and R
-code in a single Quarto document (a <code>.qmd</code> file). The
-{surveydown} R package provides a set of functions for defining the
-survey content and configuration options. Each function starts with
-<code>sd_</code> to make them easy to identify.</p>
-<p>You can add content to your survey using markdown formatting, or in
-RStudio you can edit with the visual editor. Survey questions are
-defined in R code chunks with the <code><a href="../reference/sd_question.html">sd_question()</a></code> function.
-Pages are defined using fences (<code>:::</code>), and navigation
-buttons handled with the <code><a href="../reference/sd_next.html">sd_next()</a></code> function. You can modify
-the configuration options in the server code chunk (the last code chunk
-at the bottom of the .qmd file) with the <code>sd_config()</code>
-function, and you can configure the database with the
-<code><a href="../reference/sd_database.html">sd_database()</a></code>. Details on each of these steps are provided
-in separate guides in the documentation.</p>
-<p>This introduction covers the basic steps to get started with
-surveydown.</p>
-</div>
-<div class="section level2">
-<h2 id="install">1. Install<a class="anchor" aria-label="anchor" href="#install"></a>
-</h2>
-<p>See the <a href="https://surveydown.org/installation" class="external-link">installation</a>
-documentation.</p>
-</div>
-<div class="section level2">
-<h2 id="start-with-a-template">2. Start with a template<a class="anchor" aria-label="anchor" href="#start-with-a-template"></a>
-</h2>
-<p>In the R console, run the following to to setup a template
-survey:</p>
+<div class="section level3">
+<h3 id="install">1. Install<a class="anchor" aria-label="anchor" href="#install"></a>
+</h3>
+<p>The {surveydown} R package is not yet on CRAN, but you can install
+the development version from GitHub with the following command in your R
+console:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_create_survey.html">sd_create_survey</a></span><span class="op">(</span><span class="st">"path/to/folder"</span><span class="op">)</span></span></code></pre></div>
-<p>This will create a folder located at <code>"path/to/folder"</code>
-with the following files:</p>
-<ul>
-<li>
-<code>example.qmd</code>: a template survey you should edit.</li>
-<li>
-<code>example.Rproj</code>: An RStudio project file (helpful if
-you’re working in RStudio)</li>
-<li>
-<code>_extensions</code>: A folder with the <a href="https://github.com/surveydown-dev/surveydown-ext" class="external-link">surveydown
-Quarto extension</a> needed to make everything work (don’t modify
-this).</li>
-</ul>
+<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"surveydown-dev/surveydown"</span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="add-content">3. Add content<a class="anchor" aria-label="anchor" href="#add-content"></a>
-</h2>
+<div class="section level3">
+<h3 id="start-with-a-template">2. Start with a template<a class="anchor" aria-label="anchor" href="#start-with-a-template"></a>
+</h3>
+<p>See the <a href="https://surveydown.org/template" class="external-link">Template</a>
+page.</p>
+</div>
+<div class="section level3">
+<h3 id="add-survey-content-in-your-survey-qmd-file">3. Add survey content in your <code>survey.qmd</code> file<a class="anchor" aria-label="anchor" href="#add-survey-content-in-your-survey-qmd-file"></a>
+</h3>
 <p>See the <a href="https://surveydown.org/survey-components" class="external-link">Survey
-Components</a> documentation for details on adding content to your
-survey, like text, images, etc. with markdown and / or code chunks. As a
-quick overview:</p>
+Components</a> page for details on the main components in a surveydown
+survey. For a quick overview, here’s how you add pages and
+questions:</p>
 <ul>
-<li>Add pages using fences, like this:</li>
+<li>Add pages with fences, like this:</li>
 </ul>
-<pre><code>::: {#page1 .sd-page}
-
-Page 1 content here
-
-:::</code></pre>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="sc">:::</span> {<span class="co">#page1 .sd-page}</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>Page <span class="dv">1</span> content here</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="sc">:::</span></span></code></pre></div>
 <ul>
 <li>Add questions with the <code><a href="../reference/sd_question.html">sd_question()</a></code> function in code
-chunks (see <code>vignette("questions")</code> for supported question
-types). For example:</li>
+chunks (see the <a href="https://surveydown.org/question-types" class="external-link">Question
+Types</a> page for more on the types of questions supported). For
+example, here’s a multiple choice question:</li>
 </ul>
-<pre><code>```{r}
-sd_question(
-  type  = 'mc',
-  id    = 'penguins',
-  label = "Which is your favorite type of penguin?",
-  option = c(
-    'Adélie'    = 'adelie',
-    'Chinstrap' = 'chinstrap',
-    'Gentoo'    = 'gentoo'
-  )
-)
-```</code></pre>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/sd_question.html">sd_question</a></span><span class="op">(</span></span>
+<span>  type  <span class="op">=</span> <span class="st">'mc'</span>,</span>
+<span>  id    <span class="op">=</span> <span class="st">'penguins'</span>,</span>
+<span>  label <span class="op">=</span> <span class="st">"Which is your favorite type of penguin?"</span>,</span>
+<span>  option <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">'Adélie'</span>    <span class="op">=</span> <span class="st">'adelie'</span>,</span>
+<span>    <span class="st">'Chinstrap'</span> <span class="op">=</span> <span class="st">'chinstrap'</span>,</span>
+<span>    <span class="st">'Gentoo'</span>    <span class="op">=</span> <span class="st">'gentoo'</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="add-configuration-options">4. Add configuration options<a class="anchor" aria-label="anchor" href="#add-configuration-options"></a>
-</h2>
-<p>In the server chunk (bottom of qmd file), add control logic to your
-survey with the <code>sd_config()</code> function. See the <a href="https://surveydown.org/config-options" class="external-link">Configuration Options</a>
-documentation for more details.</p>
+<div class="section level3">
+<h3 id="add-control-options">4. Add control options<a class="anchor" aria-label="anchor" href="#add-control-options"></a>
+</h3>
+<p>In the <code>server()</code> function in the <code>app.R</code> file,
+add rich functionality to your survey using a variety of <a href="https://surveydown.org/server-options" class="external-link">server options</a> and <a href="https://surveydown.org/conditional-control" class="external-link">conditional control
+logic</a>.</p>
 </div>
-<div class="section level2">
-<h2 id="setup-your-database">5. Setup your database<a class="anchor" aria-label="anchor" href="#setup-your-database"></a>
-</h2>
-<p>Also in the server chunk, setup your database with the
-<code><a href="../reference/sd_database.html">sd_database()</a></code> function, or leave it blank to preview / edit
-your survey without database connected. See the <a href="https://surveydown.org/store-data" class="external-link">Store Data</a> documentation
-for more details.</p>
+<div class="section level3">
+<h3 id="setup-your-database">5. Setup your database<a class="anchor" aria-label="anchor" href="#setup-your-database"></a>
+</h3>
+<p>In the global settings at the top of the <code>app.R</code> file,
+setup your database with the <code><a href="../reference/sd_database.html">sd_database()</a></code> function. You
+can also leave it blank to preview / edit your survey without database
+connected, or set <code>ignore = TRUE</code> to run the survey without
+storing data. See the <a href="https://surveydown.org/store-data" class="external-link">Store
+Data</a> page for more details.</p>
 </div>
-<div class="section level2">
-<h2 id="locally-preview">6. Locally preview<a class="anchor" aria-label="anchor" href="#locally-preview"></a>
-</h2>
-<p>Preview your survey by clicking the “Run Document” button in RStudio
-or in your terminal running the command
-<code>quarto serve survey_file_name.qmd</code>.</p>
+<div class="section level3">
+<h3 id="locally-preview">6. Locally preview<a class="anchor" aria-label="anchor" href="#locally-preview"></a>
+</h3>
+<p>Preview your survey by clicking the “Run App” button in RStudio or in
+your R console running the <code>runApp()</code> command.</p>
 </div>
-<div class="section level2">
-<h2 id="deploy">7. Deploy<a class="anchor" aria-label="anchor" href="#deploy"></a>
-</h2>
-<p>Deploy your survey by hosting it on your favorite server, like
-shinyapps.io, huggingface, etc. See the <a href="https://surveydown.org/deployment" class="external-link">Deployment</a> documentation
-for more details.</p>
+<div class="section level3">
+<h3 id="deploy">7. Deploy<a class="anchor" aria-label="anchor" href="#deploy"></a>
+</h3>
+<p>Deploy your survey by hosting it on your favorite server, like {{&lt;
+var shinyapps &gt;}}, {{&lt; var huggingface &gt;}}, <a href="https://connect.posit.cloud/" class="external-link">Posit Connect Cloud</a>, <a href="https://www.heroku.com/" class="external-link">Heroku</a>, etc. See the <a href="https://surveydown.org/deployment" class="external-link">Deployment</a> page for more
+details.</p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
