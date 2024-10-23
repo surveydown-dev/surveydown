@@ -65,7 +65,8 @@ run_config <- function(
         question_values = question_values,
         question_required = question_required,
         start_page = start_page,
-        admin_page = admin_page
+        admin_page = admin_page,
+        question_structure = question_structure
     )
 
     return(config)
@@ -211,18 +212,31 @@ get_question_structure <- function(html_content) {
         # Check if it's a matrix question
         is_matrix <- length(rvest::html_nodes(question_node, ".matrix-question")) > 0
 
-        # Extract the options for the question
-        option_nodes <- question_node |>
-            rvest::html_nodes("input[type='radio']")
-
-        options <- sapply(option_nodes, function(opt) {
-            rvest::html_attr(opt, "value")
-        })
-
+        ## Extract the question text (label)
+        label_question <- question_node |>
+            rvest::html_nodes("p") |>
+            rvest::html_text(trim = TRUE)
+    
+        # Extract the options for the question (for mc, *_multi, *_buttons, and select)
+        options <- question_node |>
+            rvest::html_nodes("input[type='radio'], input[type='checkbox'], option") |>
+            rvest::html_attr("value") |>
+            {
+            \(x) if (length(x) == 0) "" else x
+            }()
+    
+        # Extract the option labels of the question (for mc, *_multi, *_buttons, and select)
+        label_options <- question_node |>
+            rvest::html_nodes("label>span, button, option") |>
+            rvest::html_text(trim = TRUE) # |>
+        # {\(x) if(length(x) == 0) "" else x }()
+    
         # Store the options and type for this question in a named list
         question_structure[[question_id]] <- list(
             id = question_id,
+            label_question = label_question,
             options = options,
+            label_options = label_options,
             is_matrix = is_matrix
         )
     }
