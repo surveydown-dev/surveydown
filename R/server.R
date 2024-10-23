@@ -112,27 +112,25 @@ sd_server <- function(
         show_if
     )
 
-    # Access question_structure
-    question_structure <- config$question_structure
-
     # Initialize local variables ----
 
     # Check if db is NULL (either blank or specified with ignore = TRUE)
     ignore_mode <- is.null(db)
 
     # Create local objects from config file
-    pages        <- config$pages
-    head_content <- config$head_content
-    page_ids     <- config$page_ids
-    question_ids <- config$question_ids
-    start_page   <- config$start_page
-    admin_page   <- config$admin_page
-    question_required <- config$question_required
-    page_id_to_index <- setNames(seq_along(page_ids), page_ids)
+    pages              <- config$pages
+    head_content       <- config$head_content
+    page_ids           <- config$page_ids
+    question_ids       <- config$question_ids
+    question_structure <- config$question_structure
+    start_page         <- config$start_page
+    admin_page         <- config$admin_page
+    question_required  <- config$question_required
+    page_id_to_index   <- setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs
-    page_ts_ids     <- paste0("time_p_", page_ids)
-    question_ts_ids <- paste0("time_q_", question_ids)
+    page_ts_ids      <- paste0("time_p_", page_ids)
+    question_ts_ids  <- paste0("time_q_", question_ids)
     start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
     all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
 
@@ -264,7 +262,8 @@ sd_server <- function(
                 timestamp <- get_utc_timestamp()
 
                 # Update question value
-                formatted_value <- format_question_value(input[[local_id]])
+                value <- input[[local_id]]
+                formatted_value <- format_question_value(value)
                 all_data[[local_id]] <- formatted_value
 
                 # Update timestamp and progress if interacted
@@ -278,36 +277,31 @@ sd_server <- function(
                 # Update tracker of which fields changed
                 changed_fields(c(changed_fields(), changed))
 
-                # Get the labels and values for the current question from question structure
+                # Get question labels and values from question structure
                 question_info <- question_structure[[local_id]]
-
                 label_question <- question_info$label_question
-                options <- question_info$options
-                label_options <- question_info$label_options
-
-                if (length(options) == length(label_options)) {
-                names(options) <- label_options
-                }
+                label_options  <- question_info$label_options
+                options        <- question_info$options
 
                 # For the selected value(s), get the corresponding label(s)
-                value <- input[[local_id]]
-
+                if (length(options) == length(label_options)) {
+                  names(options) <- label_options
+                }
                 if (is.null(value) || length(value) == 0) {
-                label_option <- ""
+                  label_option <- ""
                 } else {
-                label_option <- options[options %in% value] |>
+                  label_option <- options[options %in% value] |>
                     names() |>
                     paste(collapse = ", ")
                 }
 
+                # Store the values and labels in output
                 output[[paste0(local_id, "_value")]] <- renderText({
                     formatted_value
                 })
-
                 output[[paste0(local_id, "_label_option")]] <- renderText({
                     label_option
                 })
-
                 output[[paste0(local_id, "_label_question")]] <- renderText({
                     label_question
                 })
