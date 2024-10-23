@@ -635,3 +635,65 @@ get_latest_version <- function(url, pattern) {
         return(NULL)
     })
 }
+
+#' Compose a minimum temporary survey demo qmd file for testing
+#'
+#' This function creates a temporary survey.qmd file with predefined content
+#' for testing and demonstration purposes.
+#'
+#' @param type Character string. The type of test survey to create. Currently
+#'   supports "basic" (default).
+#'
+#' @return Invisibly returns the path to the created file.
+#'
+#' @examples
+#' if (interactive()) {
+#'   # Create a basic test survey
+#'   sd_demo_qmd()
+#'
+#'   # Create a specific type of test survey
+#'   sd_demo_qmd(type = "basic")
+#' }
+#'
+#' @export
+sd_demo_qmd <- function(type = "basic") {
+  # Define different survey templates
+  surveys <- list(
+    basic = "---
+theme: default
+echo: false
+warning: false
+barcolor: '#4CAF50'
+barposition: top
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'apple_text',
+  label = 'Write a type of apple'
+)
+```
+
+:::"
+  )
+
+  # Validate survey type
+  if (!type %in% names(surveys)) {
+    stop("Invalid survey type. Currently supported types: ",
+         paste(names(surveys), collapse = ", "))
+  }
+
+  # Get the selected survey content and write to file
+  writeLines(surveys[[type]], "survey.qmd")
+
+  # Return the file path invisibly
+  invisible("survey.qmd")
+}

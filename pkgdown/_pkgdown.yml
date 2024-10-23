@@ -58,6 +58,7 @@ reference:
   - sd_setup
   - sd_add_page
   - sd_add_question
+  - sd_demo_qmd
 
 - title: Version Control
   contents:

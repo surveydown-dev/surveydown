@@ -2,6 +2,7 @@
 
 - Enhance: `sd_update()` now directly force update the package without checking for version difference anymore.
 - New: `sd_is_answered()` function to check if a question is answered or not and returns `TRUE` or `FALSE` accordingly. For `"matrix"` type, only if all sub-questions are answered will it be marked as `TRUE`.
+- New: `sd_demo_qmd()` function to create a temporary minimum demo survey qmd file for testing. It accepts arguments like `"basic"`, `"show_if"`, `"skip_if"` to satisfy different testing scenarios.
 
 # surveydown 0.3.6
 

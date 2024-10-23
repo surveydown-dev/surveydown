@@ -30,31 +30,7 @@ if (interactive()) {
   library(surveydown)
 
   # Create a minimal survey.qmd file for demonstration
-  survey <- "---
-theme: default
-echo: false
-warning: false
-barcolor: '#4CAF50'
-barposition: top
----
-
-```{r}
-library(surveydown)
-```
-::: {#page_id .sd-page}
-
-This is a sample survey
-
-```{r}
-sd_question(
-  type  = 'text',
-  id    = 'apple_text',
-  label = 'Write a type of apple'
-)
-```
-
-:::"
-  writeLines(survey, "survey.qmd")
+  sd_demo_qmd(type = "basic")
 
   # Define a minimal server
   server <- function(input, output, session) {
