@@ -21,21 +21,27 @@ It takes one or more formulas where the left-hand side is the condition and the 
 If called with no arguments, it will return \code{NULL} and set no conditions.
 }
 \examples{
-\dontrun{
-  # Example of implementing sd_show_if in the Shiny server in the app.R file
+if (interactive()) {
   library(surveydown)
 
+  # Create a minimal survey.qmd file for demonstration
+  sd_demo_qmd(type = "sd_show_if")
+
+  # Define a minimal server
   server <- function(input, output, session) {
-
-    # Assuming there are questions with the id values "has_pets" and
-    # "employment" and pages with the id values "underage_page" and "international_page"
-
     sd_show_if(
-      input$has_pets == "yes" ~ "pet_details",
-      input$employment == "employed" ~ "job_questions"
+
+      # If "Other" is chosen, show the conditional question
+      input$fav_fruit == "other" ~ "fav_fruit_other"
     )
+
+    sd_server()
   }
+
+  # Run the Shiny app
+  shiny::shinyApp(ui = sd_ui(), server = server)
 }
+
 }
 \seealso{
 \code{sd_skip_if()}

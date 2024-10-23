@@ -30,7 +30,7 @@ if (interactive()) {
   library(surveydown)
 
   # Create a minimal survey.qmd file for demonstration
-  sd_demo_qmd(type = "basic")
+  sd_demo_qmd(type = "sd_ui")
 
   # Define a minimal server
   server <- function(input, output, session) {

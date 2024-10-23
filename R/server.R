@@ -65,15 +65,29 @@
 #' the Shiny application.
 #'
 #' @examples
-#' \dontrun{
+#' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Define the server logic for a surveydown app
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "basic")
+#'
+#'   # Define a minimal server
 #'   server <- function(input, output, session) {
+#'
+#'     # sd_server() accepts these following parameters
 #'     sd_server(
-#'       db = db
+#'       db = NULL,
+#'       required_questions = NULL,
+#'       all_questions_required = FALSE,
+#'       start_page = NULL,
+#'       admin_page = FALSE,
+#'       auto_scroll = FALSE,
+#'       rate_survey = FALSE
 #'     )
 #'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @seealso
@@ -451,20 +465,26 @@ sd_server <- function(
 #' condition and the target page ID.
 #'
 #' @examples
-#' \dontrun{
-#'   # Example of implementing sd_skip_if in the Shiny server in the app.R file
+#' if (interactive()) {
 #'   library(surveydown)
 #'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_skip_if")
+#'
+#'   # Define a minimal server
 #'   server <- function(input, output, session) {
 #'
-#'     # Assuming there are questions with the id values "age" and "country"
-#'     # an pages with the id values "underage_page" and "international_page"
-#'
+#'     # Skip to page based on input
 #'     sd_skip_if(
-#'       input$age < 18 ~ "underage_page",
-#'       input$country != "USA" ~ "international_page"
-#'     )
+#'       input$fav_fruit == "orange" ~ "orange_page",
+#'       input$fav_fruit == "other" ~ "other_page"
+#'       )
+#'
+#'     sd_server()
 #'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @seealso `sd_show_if()`
@@ -502,21 +522,27 @@ sd_skip_if <- function(...) {
 #'   Returns `NULL` if no conditions are provided.
 #'
 #' @examples
-#' \dontrun{
-#'   # Example of implementing sd_show_if in the Shiny server in the app.R file
+#' if (interactive()) {
 #'   library(surveydown)
 #'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_show_if")
+#'
+#'   # Define a minimal server
 #'   server <- function(input, output, session) {
-#'
-#'     # Assuming there are questions with the id values "has_pets" and
-#'     # "employment" and pages with the id values "underage_page" and "international_page"
-#'
 #'     sd_show_if(
-#'       input$has_pets == "yes" ~ "pet_details",
-#'       input$employment == "employed" ~ "job_questions"
+#'
+#'       # If "Other" is chosen, show the conditional question
+#'       input$fav_fruit == "other" ~ "fav_fruit_other"
 #'     )
+#'
+#'     sd_server()
 #'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
+#'
 #' @seealso `sd_skip_if()`
 #'
 #' @export
@@ -989,19 +1015,23 @@ sd_store_value <- function(value, id = NULL) {
 #' @return `NULL` invisibly. This function is called for its side effects.
 #'
 #' @examples
-#' \dontrun{
-#'   # Example of copying a response name in the Shiny server in the app.R file
+#' if (interactive()) {
 #'   library(surveydown)
 #'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "basic")
+#'
+#'   # Define a minimal server
 #'   server <- function(input, output, session) {
 #'
-#'     # Assuming there is a question with the id values "name"
-#'     sd_copy_value(id = "name", id_copy = "name2")
+#'     # Make a copy of the "name" variable to call its value a second time
+#'     sd_copy_value(id = "name", id_copy = "name_copy")
 #'
+#'     sd_server()
 #'   }
 #'
-#' # Then in survey.qmd file:
-#' # sd_output("name2")
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @seealso `sd_output()` for displaying the copied value
@@ -1034,17 +1064,25 @@ sd_copy_value <- function(id, id_copy) {
 #' otherwise.
 #'
 #' @examples
-#' \dontrun{
-#'   # Example of code in the app.R file
+#' if (interactive()) {
 #'   library(surveydown)
 #'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_is_answered")
+#'
+#'   # Define a minimal server
 #'   server <- function(input, output, session) {
+#'     sd_show_if(
 #'
-#'     if (sd_is_answered("car_preference")) {
-#'       # Do something only if the "car_preference" question is answered
-#'     }
+#'       # If "apple_text" is answered, show the conditional question
+#'       sd_is_answered("apple_text") ~ "other_fruit"
+#'     )
 #'
+#'     sd_server()
 #'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @export

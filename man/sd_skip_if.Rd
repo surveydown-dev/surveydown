@@ -22,20 +22,26 @@ survey should be skipped. It takes one or more formulas where the left-hand
 side is the condition and the right-hand side is the target page ID.
 }
 \examples{
-\dontrun{
-  # Example of implementing sd_skip_if in the Shiny server in the app.R file
+if (interactive()) {
   library(surveydown)
 
+  # Create a minimal survey.qmd file for demonstration
+  sd_demo_qmd(type = "sd_skip_if")
+
+  # Define a minimal server
   server <- function(input, output, session) {
 
-    # Assuming there are questions with the id values "age" and "country"
-    # an pages with the id values "underage_page" and "international_page"
-
+    # Skip to page based on input
     sd_skip_if(
-      input$age < 18 ~ "underage_page",
-      input$country != "USA" ~ "international_page"
-    )
+      input$fav_fruit == "orange" ~ "orange_page",
+      input$fav_fruit == "other" ~ "other_page"
+      )
+
+    sd_server()
   }
+
+  # Run the Shiny app
+  shiny::shinyApp(ui = sd_ui(), server = server)
 }
 
 }

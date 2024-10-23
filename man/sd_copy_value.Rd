@@ -20,19 +20,23 @@ This function creates a copy of an input value and makes it available as a
 new output. The new output can then be displayed using \code{sd_output()}.
 }
 \examples{
-\dontrun{
-  # Example of copying a response name in the Shiny server in the app.R file
+if (interactive()) {
   library(surveydown)
 
+  # Create a minimal survey.qmd file for demonstration
+  sd_demo_qmd(type = "basic")
+
+  # Define a minimal server
   server <- function(input, output, session) {
 
-    # Assuming there is a question with the id values "name"
-    sd_copy_value(id = "name", id_copy = "name2")
+    # Make a copy of the "name" variable to call its value a second time
+    sd_copy_value(id = "name", id_copy = "name_copy")
 
+    sd_server()
   }
 
-# Then in survey.qmd file:
-# sd_output("name2")
+  # Run the Shiny app
+  shiny::shinyApp(ui = sd_ui(), server = server)
 }
 
 }

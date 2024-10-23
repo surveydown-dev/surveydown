@@ -47,19 +47,19 @@ with the display style determined by the \code{display} parameter.
 }
 }
 \examples{
-\dontrun{
-# Create a placeholder for a reactive question
-sd_output('cbc1', type = 'question')
+if (interactive()) {
+  library(surveydown)
 
-# Display the value of a survey question inline
-sd_output('cbc1', type = 'value', inline = TRUE)
+  # Create a minimal survey.qmd file for demonstration
+  sd_demo_qmd(type = "sd_output")
 
-# Use as a simple uiOutput
-sd_output('redirect')
+  # Define a minimal server
+  server <- function(input, output, session) {
+    sd_server()
+  }
 
-# Use with a wrapper function
-sd_output('age', type = 'value', display = 'text',
-          wrapper = function(x) shiny::tags$strong(x))
+  # Run the Shiny app
+  shiny::shinyApp(ui = sd_ui(), server = server)
 }
 
 }

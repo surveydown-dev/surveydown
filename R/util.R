@@ -415,19 +415,19 @@ question_templates <- function(type = "mc") {
 #' removes the function call before inserting the template if it exists in the document.
 #'
 #' @param type A character string specifying the type of question template to insert.
-#'   Default is "mc" (multiple choice). Available options are:
+#'   Default is `"mc"` (multiple choice). Available options are:
 #'   \itemize{
-#'     \item "mc": Multiple choice (single selection)
-#'     \item "select": Dropdown selection
-#'     \item "mc_multiple": Multiple choice (multiple selections)
-#'     \item "mc_buttons": Multiple choice with button layout (single selection)
-#'     \item "mc_multiple_buttons": Multiple choice with button layout (multiple selections)
-#'     \item "text": Short text input
-#'     \item "textarea": Long text input
-#'     \item "numeric": Numeric input
-#'     \item "slider": Slider input
-#'     \item "date": Date input
-#'     \item "daterange": Date range input
+#'     \item `"mc"`: Multiple choice (single selection)
+#'     \item `"select"`: Dropdown selection
+#'     \item `"mc_multiple"`: Multiple choice (multiple selections)
+#'     \item `"mc_buttons"`: Multiple choice with button layout (single selection)
+#'     \item `"mc_multiple_buttons"`: Multiple choice with button layout (multiple selections)
+#'     \item `"text"`: Short text input
+#'     \item `"textarea"`: Long text input
+#'     \item `"numeric"`: Numeric input
+#'     \item `"slider"`: Slider input
+#'     \item `"date"`: Date input
+#'     \item `"daterange"`: Date range input
 #'   }
 #' @param chunk Logical. If `TRUE`, the code will be generated with the R code chunk wrapper. Defaults to `FALSE`.
 #' @details
@@ -636,20 +636,32 @@ get_latest_version <- function(url, pattern) {
 #' Compose a minimum temporary survey demo qmd file for testing
 #'
 #' This function creates a temporary survey.qmd file with predefined content
-#' for testing and demonstration purposes.
+#' for testing and demonstration purposes. Different types of survey templates
+#' are available to demonstrate various surveydown features.
 #'
-#' @param type Character string. The type of test survey to create. Currently
-#'   supports "basic" (default).
+#' @param type Character string. The type of test survey to create. Options include:
+#'   * `"basic"` (default): Basic survey with a text question
+#'   * `"sd_ui"`: Survey with UI customization (theme, bar color, position)
+#'   * `"sd_next"`: Multi-page survey with navigation
+#'   * `"sd_close"`: Survey with exit button
+#'   * `"sd_output"`: Survey demonstrating value output
+#'   * `"sd_is_answered"`: Survey with multiple question types
+#'   * `"sd_copy_value"`: Survey showing value copying
+#'   * `"sd_show_if"`: Survey with conditional questions
+#'   * `"sd_skip_if"`: Survey with conditional page navigation
 #'
-#' @return Invisibly returns the path to the created file.
+#' @return Invisibly returns the path to the created file (survey.qmd).
 #'
 #' @examples
 #' if (interactive()) {
 #'   # Create a basic test survey
 #'   sd_demo_qmd()
 #'
-#'   # Create a specific type of test survey
-#'   sd_demo_qmd(type = "basic")
+#'   # Create a survey demonstrating conditional navigation
+#'   sd_demo_qmd(type = "sd_skip_if")
+#'
+#'   # Create a survey showing value output
+#'   sd_demo_qmd(type = "sd_output")
 #' }
 #'
 #' @export
@@ -657,6 +669,29 @@ sd_demo_qmd <- function(type = "basic") {
   # Define different survey templates
   surveys <- list(
     basic = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'apple_text',
+  label = 'Write a type of apple'
+)
+```
+
+:::",
+  sd_ui = "---
+format: html
 theme: default
 echo: false
 warning: false
@@ -679,7 +714,253 @@ sd_question(
 )
 ```
 
-:::"
+:::",
+  sd_next = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'apple_text',
+  label = 'Write a type of apple'
+)
+
+sd_next()
+```
+
+:::
+
+::: {#page_id_2 .sd-page}
+
+This is another page.
+
+:::",
+  sd_close = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'apple_text',
+  label = 'Write a type of apple'
+)
+
+sd_next()
+```
+
+:::
+
+::: {#end .sd-page}
+
+This is the end of the survey.
+
+```{r}
+sd_close('Exit Survey')
+```
+
+:::",
+  sd_output = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'apple_text',
+  label = 'Write a type of apple'
+)
+```
+
+Your input is `r sd_output('apple_text', type = 'value')`.
+
+:::",
+  sd_is_answered = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'apple_text',
+  label = 'Write a type of apple'
+)
+
+sd_question(
+  type  = 'mc',
+  id    = 'other_fruit',
+  label = 'Do you also like other fruits?',
+  option = c(
+    'Yes' = 'yes',
+    'No'  = 'no'
+  )
+)
+```
+
+:::",
+  sd_copy_value = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'name',
+  label = 'What is your name?'
+)
+```
+
+Welcome, `r sd_output('name', type = 'value')`!
+
+Is it alright if we call you `r sd_output('name_copy', type = 'value')`?
+
+:::",
+  sd_show_if = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type   = 'mc',
+  id     = 'fav_fruit',
+  label  = 'What is your favorite fruit?',
+  option = c(
+    'Apple'  = 'apple',
+    'Orange' = 'orange',
+    'Other'  = 'other'
+  )
+)
+
+sd_question(
+  type   = 'text',
+  id     = 'fav_fruit_other',
+  label  = 'Type in your favorite fruit:'
+)
+```
+
+:::",
+  sd_skip_if = "---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type   = 'mc',
+  id     = 'fav_fruit',
+  label  = 'What is your favorite fruit?',
+  option = c(
+    'Apple'  = 'apple',
+    'Orange' = 'orange',
+    'Other'  = 'other'
+  )
+)
+
+sd_next()
+```
+
+:::
+
+::: {#apple_page .sd-page}
+
+```{r}
+sd_question(
+  type   = 'text',
+  id     = 'apple_text',
+  label  = 'Tell us something about apple:'
+)
+```
+
+:::
+
+::: {#orange_page .sd-page}
+
+```{r}
+sd_question(
+  type   = 'text',
+  id     = 'orange_text',
+  label  = 'Tell us something about orange:'
+)
+```
+
+:::
+
+::: {#other_page .sd-page}
+
+```{r}
+sd_question(
+  type   = 'text',
+  id     = 'other_text',
+  label  = 'What is your favorite fruit?'
+)
+```
+
+:::
+
+"
   )
 
   # Validate survey type

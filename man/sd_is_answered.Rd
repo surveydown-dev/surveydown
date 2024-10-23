@@ -18,17 +18,25 @@ This function checks if a given question has been answered by the user.
 For matrix questions, it checks if all sub-questions (rows) are answered.
 }
 \examples{
-\dontrun{
-  # Example of code in the app.R file
+if (interactive()) {
   library(surveydown)
 
+  # Create a minimal survey.qmd file for demonstration
+  sd_demo_qmd(type = "sd_is_answered")
+
+  # Define a minimal server
   server <- function(input, output, session) {
+    sd_show_if(
 
-    if (sd_is_answered("car_preference")) {
-      # Do something only if the "car_preference" question is answered
-    }
+      # If "apple_text" is answered, show the conditional question
+      sd_is_answered("apple_text") ~ "other_fruit"
+    )
 
+    sd_server()
   }
+
+  # Run the Shiny app
+  shiny::shinyApp(ui = sd_ui(), server = server)
 }
 
 }

@@ -94,15 +94,29 @@ confirmation dialog. The rating, if provided, is saved with the survey data.
 }
 
 \examples{
-\dontrun{
+if (interactive()) {
   library(surveydown)
 
-  # Define the server logic for a surveydown app
+  # Create a minimal survey.qmd file for demonstration
+  sd_demo_qmd(type = "basic")
+
+  # Define a minimal server
   server <- function(input, output, session) {
+
+    # sd_server() accepts these following parameters
     sd_server(
-      db = db
+      db = NULL,
+      required_questions = NULL,
+      all_questions_required = FALSE,
+      start_page = NULL,
+      admin_page = FALSE,
+      auto_scroll = FALSE,
+      rate_survey = FALSE
     )
   }
+
+  # Run the Shiny app
+  shiny::shinyApp(ui = sd_ui(), server = server)
 }
 
 }

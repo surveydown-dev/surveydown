@@ -7,23 +7,37 @@
 sd_demo_qmd(type = "basic")
 }
 \arguments{
-\item{type}{Character string. The type of test survey to create. Currently
-supports "basic" (default).}
+\item{type}{Character string. The type of test survey to create. Options include:
+\itemize{
+\item \code{"basic"} (default): Basic survey with a text question
+\item \code{"sd_ui"}: Survey with UI customization (theme, bar color, position)
+\item \code{"sd_next"}: Multi-page survey with navigation
+\item \code{"sd_close"}: Survey with exit button
+\item \code{"sd_output"}: Survey demonstrating value output
+\item \code{"sd_is_answered"}: Survey with multiple question types
+\item \code{"sd_copy_value"}: Survey showing value copying
+\item \code{"sd_show_if"}: Survey with conditional questions
+\item \code{"sd_skip_if"}: Survey with conditional page navigation
+}}
 }
 \value{
-Invisibly returns the path to the created file.
+Invisibly returns the path to the created file (survey.qmd).
 }
 \description{
 This function creates a temporary survey.qmd file with predefined content
-for testing and demonstration purposes.
+for testing and demonstration purposes. Different types of survey templates
+are available to demonstrate various surveydown features.
 }
 \examples{
 if (interactive()) {
   # Create a basic test survey
   sd_demo_qmd()
 
-  # Create a specific type of test survey
-  sd_demo_qmd(type = "basic")
+  # Create a survey demonstrating conditional navigation
+  sd_demo_qmd(type = "sd_skip_if")
+
+  # Create a survey showing value output
+  sd_demo_qmd(type = "sd_output")
 }
 
 }

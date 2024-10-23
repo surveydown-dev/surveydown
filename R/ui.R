@@ -44,7 +44,7 @@ load_resource <- function(..., package = "surveydown") {
 #'   library(surveydown)
 #'
 #'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "basic")
+#'   sd_demo_qmd(type = "sd_ui")
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -178,20 +178,20 @@ get_barposition <- function(metadata) {
 #' @return A Shiny UI element wrapped in a div with a data attribute for question ID.
 #'
 #' @examples
-#' sd_question("text", "name", "What is your name?")
-#' sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # Example of a matrix question
-#' sd_question(
-#'   type = "matrix",
-#'   id   = "satisfaction",
-#'   label = "Rate your satisfaction with the following:",
-#'   row = c("Customer Service" = "service",
-#'           "Product Quality"  = "quality",
-#'           "Price"            = "price"),
-#'   option = c("Unsatisfied" = 1,
-#'              "Neutral"     = 2,
-#'              "Satisfied"   = 3))
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "basic")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' }
 #'
 #' @export
 sd_question <- function(
@@ -468,7 +468,20 @@ make_question_container <- function(id, object, width) {
 #' @return A Shiny tagList containing the 'Next' button UI element.
 #'
 #' @examples
-#' sd_next("page2", "Continue to Next Section")
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_next")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#' }
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
@@ -516,12 +529,19 @@ make_next_button_id <- function(page_id) {
 #' is controlled by the `rate_survey` parameter in the `sd_server()` function, not in this UI function.
 #'
 #' @examples
-#' \dontrun{
-#' # In your UI code:
-#' sd_close()
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # With a custom label:
-#' sd_close("Finish and Exit")
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_close")
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @seealso \code{\link{sd_server}}
@@ -774,19 +794,19 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #'   with the display style determined by the `display` parameter.
 #'
 #' @examples
-#' \dontrun{
-#' # Create a placeholder for a reactive question
-#' sd_output('cbc1', type = 'question')
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # Display the value of a survey question inline
-#' sd_output('cbc1', type = 'value', inline = TRUE)
+#'   # Create a minimal survey.qmd file for demonstration
+#'   sd_demo_qmd(type = "sd_output")
 #'
-#' # Use as a simple uiOutput
-#' sd_output('redirect')
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
 #'
-#' # Use with a wrapper function
-#' sd_output('age', type = 'value', display = 'text',
-#'           wrapper = function(x) shiny::tags$strong(x))
+#'   # Run the Shiny app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
 #' }
 #'
 #' @export
