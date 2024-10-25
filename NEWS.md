@@ -1,5 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.4.0
+
+- All examples updated to include run-able examples (where possible).
+- Added example survey.qmd files in inst/examples (for use in function examples).
+- All roxygen documentation reviewed for errors / typos.
+
 # surveydown 0.3.7
 
 - Updated `sd_output()` to now be able to output the chosen question values, chosen question option label(s), and the question label itself. Addresses feature request #128.
