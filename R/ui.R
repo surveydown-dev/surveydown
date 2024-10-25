@@ -43,8 +43,15 @@ load_resource <- function(..., package = "surveydown") {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "basic")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_ui.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -53,6 +60,9 @@ load_resource <- function(..., package = "surveydown") {
 #'
 #'   # Run the Shiny app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
 #'
 #' @seealso `sd_server()` for creating the server-side logic of the survey
@@ -181,8 +191,15 @@ get_barposition <- function(metadata) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "basic")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "basic_survey.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -191,6 +208,9 @@ get_barposition <- function(metadata) {
 #'
 #'   # Run the Shiny app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
 #'
 #' @export
@@ -471,8 +491,15 @@ make_question_container <- function(id, object, width) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_next")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_next.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -481,6 +508,9 @@ make_question_container <- function(id, object, width) {
 #'
 #'   # Run the Shiny app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
 #'
 #' @export
@@ -532,8 +562,15 @@ make_next_button_id <- function(page_id) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_close")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_close.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -542,6 +579,9 @@ make_next_button_id <- function(page_id) {
 #'
 #'   # Run the Shiny app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
 #'
 #' @seealso \code{\link{sd_server}}
@@ -593,8 +633,15 @@ sd_close <- function(label = "Exit Survey") {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_redirect")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_redirect.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -625,6 +672,9 @@ sd_close <- function(label = "Exit Survey") {
 #'
 #'   # Run the Shiny app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
 #' @export
 sd_redirect <- function(
@@ -739,8 +789,15 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_redirect")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_redirect.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -771,7 +828,11 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 #'
 #'   # Run the Shiny app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
+#'
 #' @export
 sd_get_url_pars <- function(...) {
     shiny::reactive({
@@ -854,8 +915,15 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Create a minimal survey.qmd file for demonstration
-#'   sd_demo_qmd(type = "sd_output")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_output.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
@@ -864,6 +932,9 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #'
 #'   # Run the Shiny app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
 #'
 #' @export

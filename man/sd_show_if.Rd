@@ -24,8 +24,15 @@ If called with no arguments, it will return \code{NULL} and set no conditions.
 if (interactive()) {
   library(surveydown)
 
-  # Create a minimal survey.qmd file for demonstration
-  sd_demo_qmd(type = "sd_show_if")
+  # Get path to example survey file
+  survey_path <- system.file("examples", "sd_show_if.qmd",
+                             package = "surveydown")
+
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
 
   # Define a minimal server
   server <- function(input, output, session) {
@@ -40,6 +47,9 @@ if (interactive()) {
 
   # Run the Shiny app
   shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
 }
 
 }

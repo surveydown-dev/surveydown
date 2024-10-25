@@ -1,0 +1,27 @@
+---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'apple_text',
+  label = 'Write a type of apple'
+)
+```
+
+For the question `r sd_output('apple_text', type = 'label_question')`:
+
+- Your _value_ of your chosen input is `r sd_output('apple_text', type = 'value')`.
+- The _label_ of your chosen input is `r sd_output('apple_text', type = 'label_option')`.
+
+:::
