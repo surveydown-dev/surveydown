@@ -8,4 +8,4 @@
 
 ## Notes
 * This is a new release.
-* This is the first time submitted to CRAN
+* Title casing error in previous submission corrected
