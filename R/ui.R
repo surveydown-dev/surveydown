@@ -26,7 +26,7 @@ load_resource <- function(..., package = "surveydown") {
 #' including necessary CSS and JavaScript files, and applies custom styling.
 #' It retrieves theme and progress bar settings from the survey.qmd file.
 #'
-#' @return A Shiny UI object
+#' @return A 'shiny' UI object
 #'
 #' @details
 #' The function reads the following settings from the survey.qmd YAML header:
@@ -58,7 +58,7 @@ load_resource <- function(..., package = "surveydown") {
 #'     sd_server()
 #'   }
 #'
-#'   # Run the Shiny app
+#'   # Run the app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
 #'
 #'   # Clean up
@@ -182,10 +182,12 @@ get_barposition <- function(metadata) {
 #' - "daterange": Date range input
 #' - "matrix": Matrix-style question with rows and columns
 #'
-#' For "matrix" type questions, use the `row` parameter to define the rows of the matrix.
-#' Each element in the `row` list should have a name (used as the row ID) and a value (used as the row label).
+#' For "matrix" type questions, use the `row` parameter to define the rows of
+#' the matrix. Each element in the `row` list should have a name (used as the
+#' row ID) and a value (used as the row label).
 #'
-#' @return A Shiny UI element wrapped in a div with a data attribute for question ID.
+#' @return A 'shiny' UI element wrapped in a div with a data attribute for
+#' question ID.
 #'
 #' @examples
 #' if (interactive()) {
@@ -206,7 +208,7 @@ get_barposition <- function(metadata) {
 #'     sd_server()
 #'   }
 #'
-#'   # Run the Shiny app
+#'   # Run the app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
 #'
 #'   # Clean up
@@ -481,11 +483,13 @@ make_question_container <- function(id, object, width) {
 #' @param next_page Character string. The ID of the next page to navigate to. This parameter is required.
 #' @param label Character string. The label of the 'Next' button. Defaults to "Next".
 #'
-#' @details The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
-#'   sets the input value to the specified next page ID, facilitating page navigation within the Shiny application.
-#'   The button is styled to appear centered on the page and includes a class for Enter key functionality.
+#' @details The function generates a 'shiny' action button that, when clicked
+#' or when the Enter key is pressed, sets the input value to the specified next
+#' page ID, facilitating page navigation within the Shiny application. The
+#' button is styled to appear centered on the page and includes a class for
+#' Enter key functionality.
 #'
-#' @return A Shiny tagList containing the 'Next' button UI element.
+#' @return A 'shiny' tagList containing the 'Next' button UI element.
 #'
 #' @examples
 #' if (interactive()) {
@@ -506,7 +510,7 @@ make_question_container <- function(id, object, width) {
 #'     sd_server()
 #'   }
 #'
-#'   # Run the Shiny app
+#'   # Run the app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
 #'
 #'   # Clean up
@@ -544,19 +548,23 @@ make_next_button_id <- function(page_id) {
 #'
 #' @param label Character string. The label of the 'Close' button. Defaults to "Exit Survey".
 #'
-#' @return A Shiny tagList containing the 'Close' button UI element and associated JavaScript for the exit process.
+#' @return A 'shiny' tagList containing the 'Close' button UI element and
+#' associated JavaScript for the exit process.
 #'
 #' @details
-#' The function generates a Shiny action button that, when clicked, triggers the 'show_exit_modal' event.
-#' The server-side logic (controlled by the `rate_survey` parameter in `sd_server()`) determines
-#' whether to show a rating question or a simple confirmation dialog.
+#' The function generates a 'shiny' action button that, when clicked, triggers
+#' the 'show_exit_modal' event. The server-side logic (controlled by the
+#' `rate_survey` parameter in `sd_server()`) determines whether to show a
+#' rating question or a simple confirmation dialog.
 #'
-#' The function also includes a custom message handler for closing the window. This is necessary
-#' because some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
-#' In such cases, the user will be prompted to close the tab manually.
+#' The function also includes a custom message handler for closing the window.
+#' This is necessary because some browsers may not allow JavaScript to close
+#' windows that were not opened by JavaScript. In such cases, the user will be
+#' prompted to close the tab manually.
 #'
-#' @note The actual behavior of the exit process (whether to show a rating question or not)
-#' is controlled by the `rate_survey` parameter in the `sd_server()` function, not in this UI function.
+#' @note The actual behavior of the exit process (whether to show a rating
+#' question or not) is controlled by the `rate_survey` parameter in the
+#' `sd_server()` function, not in this UI function.
 #'
 #' @examples
 #' if (interactive()) {
@@ -577,7 +585,7 @@ make_next_button_id <- function(page_id) {
 #'     sd_server()
 #'   }
 #'
-#'   # Run the Shiny app
+#'   # Run the app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
 #'
 #'   # Clean up
@@ -611,23 +619,28 @@ sd_close <- function(label = "Exit Survey") {
   )
 }
 
-#' Create a Redirect Element for Shiny Applications
+#' Create a Redirect Element for 'shiny' Applications
 #'
-#' This function creates a UI element that redirects the user to a specified URL.
-#' It can be used in both reactive and non-reactive contexts within Shiny applications.
+#' This function creates a UI element that redirects the user to a specified
+#' URL. It can be used in both reactive and non-reactive contexts within
+#' 'shiny' applications.
 #'
-#' @param id A character string of a unique id to be used to identify the redirect button in the survey body.
+#' @param id A character string of a unique id to be used to identify the
+#'   redirect button in the survey body.
 #' @param url A character string specifying the URL to redirect to.
-#' @param button A logical value indicating whether to create a button (TRUE) or
-#'   a text element (FALSE) for the redirect. Default is TRUE.
-#' @param label A character string for the button or text label. Default is "Click here".
+#' @param button A logical value indicating whether to create a button (`TRUE`)
+#'   or a text element (`FALSE`) for the redirect. Default is `TRUE`.
+#' @param label A character string for the button or text label. Default is
+#'   "Click here".
 #' @param delay An optional numeric value specifying the delay in seconds before
-#'   automatic redirection. If NULL (default), no automatic redirection occurs.
-#' @param newtab A logical value indicating whether to open the URL in a new tab (TRUE)
-#'   or in the current tab (FALSE). Default is FALSE.
+#'   automatic redirection. If `NULL` (default), no automatic redirection
+#'   occurs.
+#' @param newtab A logical value indicating whether to open the URL in a new
+#'   tab (`TRUE`) or in the current tab (`FALSE`). Default is `FALSE`.
 #'
-#' @return In a reactive context, returns a function that when called, renders the
-#'   redirect element. In a non-reactive context, returns the redirect element directly.
+#' @return In a reactive context, returns a function that when called, renders
+#' the redirect element. In a non-reactive context, returns the redirect
+#' element directly.
 #'
 #' @examples
 #' if (interactive()) {
@@ -670,7 +683,7 @@ sd_close <- function(label = "Exit Survey") {
 #'     sd_server()
 #'   }
 #'
-#'   # Run the Shiny app
+#'   # Run the app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
 #'
 #'   # Clean up
@@ -775,10 +788,10 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
     return(element)
 }
 
-#' Get URL Parameters in a Shiny Application
+#' Get URL Parameters in a 'shiny' Application
 #'
-#' This function retrieves URL parameters from the current Shiny session.
-#' It must be called from within a Shiny reactive context.
+#' This function retrieves URL parameters from the current 'shiny' session.
+#' It must be called from within a 'shiny' reactive context.
 #'
 #' @param ... Optional. Names of specific URL parameters to retrieve.
 #'   If none are specified, all URL parameters are returned.
@@ -826,7 +839,7 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
 #'     sd_server()
 #'   }
 #'
-#'   # Run the Shiny app
+#'   # Run the app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
 #'
 #'   # Clean up
@@ -864,7 +877,7 @@ sd_get_url_pars <- function(...) {
 #' This function is depreciated - use `sd_output()` instead.
 #'
 #' @param id A unique identifier for the question.
-#' @return A Shiny UI element that serves as a placeholder for the reactive
+#' @return A 'shiny' UI element that serves as a placeholder for the reactive
 #' question.
 #'
 #' @export
@@ -882,7 +895,7 @@ sd_display_question <- function(id) {
 #' @param wrapper A function to wrap the output
 #' @param ... Additional arguments passed to the wrapper function
 #'
-#' @return A Shiny UI element displaying the question's value
+#' @return A 'shiny' UI element displaying the question's value
 #'
 #' @export
 sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
@@ -893,16 +906,23 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' Output Function for Displaying reactive objects and values
 #'
 #' @param id Character string. A unique identifier for the output element.
-#' @param type Character string. Specifies the type of output. Can be "question", "value", or `NULL.`
-#'   If `NULL`, the function behaves like `shiny::uiOutput()`.
-#' @param width Character string. The width of the UI element. Defaults to "100%".
-#' @param display Character string. Specifies the display type for "value" outputs.
-#'   Can be "text", "verbatim", or "ui". Only used when `type = "value"`.
-#' @param inline Logical. Whether to render the output inline. Defaults to `TRUE`.
-#' @param wrapper Function. A function to wrap the output. Only used when `type = "value"`.
-#' @param ... Additional arguments passed to the underlying Shiny functions or the wrapper function.
+#' @param type Character string. Specifies the type of output. Can be
+#'   `"question"`, `"value"`, or `NULL.` If `NULL`, the function behaves like
+#'   `shiny::uiOutput()`.
+#' @param width Character string. The width of the UI element. Defaults to
+#'   `"100%"`.
+#' @param display Character string. Specifies the display type for `"value"`
+#'    outputs. Can be `"text"`, `"verbatim"`, or `"ui"`. Only used when
+#'   `type = "value"`.
+#' @param inline Logical. Whether to render the output inline. Defaults to
+#'   `TRUE`.
+#' @param wrapper Function. A function to wrap the output. Only used when
+#'   `type = "value"`.
+#' @param ... Additional arguments passed to the underlying 'shiny' functions
+#'   or the wrapper function.
 #'
-#' @return A Shiny UI element, the type of which depends on the input parameters.
+#' @return A 'shiny' UI element, the type of which depends on the input
+#' parameters.
 #'
 #' @details
 #' The function behaves differently based on the `type` parameter:
@@ -930,7 +950,7 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #'     sd_server()
 #'   }
 #'
-#'   # Run the Shiny app
+#'   # Run the app
 #'   shiny::shinyApp(ui = sd_ui(), server = server)
 #'
 #'   # Clean up

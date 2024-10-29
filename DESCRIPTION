@@ -1,5 +1,5 @@
 Package: surveydown
-Title: Markdown-Based Surveys Using Quarto and Shiny
+Title: Markdown-Based Surveys Using 'Quarto' and 'shiny'
 Version: 0.4.0
 Authors@R: c(
     person(given   = "John Paul",
@@ -17,7 +17,7 @@ Authors@R: c(
            role    = c("aut", "cph"),
            email   = "buneabt@yahoo.com",
            comment = c(ORCID = "0009-0006-2942-0588")))
-Description: Generate surveys using markdown and R code chunks. Surveys are composed of two files: a survey.qmd file containing the survey content (pages, questions, etc), and an app.R file defining a Shiny app with global settings (libraries, database configuration, etc.) and server configuration options (e.g., conditional skipping / display, etc.). Survey data collected from respondents is stored in a PostgreSQL database. Features include controls for conditional skip logic (skip to a page based on an answer to a question), conditional display logic (display a question based on an answer to a question), a customizable progress bar, and a wide variety of question types, including multiple choice (single choice and multiple choices), select, text, numeric, multiple choice buttons, text area, and dates.
+Description: Generate surveys using markdown and R code chunks. Surveys are composed of two files: a survey.qmd file containing the survey content (pages, questions, etc), and an app.R file defining a 'shiny' app with global settings (libraries, database configuration, etc.) and server configuration options (e.g., conditional skipping / display, etc.). Survey data collected from respondents is stored in a 'PostgreSQL' database. Features include controls for conditional skip logic (skip to a page based on an answer to a question), conditional display logic (display a question based on an answer to a question), a customizable progress bar, and a wide variety of question types, including multiple choice (single choice and multiple choices), select, text, numeric, multiple choice buttons, text area, and dates.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

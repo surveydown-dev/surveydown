@@ -1,7 +1,7 @@
 #' Connect to a PostgreSQL Database with Automatic Cleanup
 #'
 #' This function establishes a connection pool to a PostgreSQL database
-#' (e.g. Supabase) and sets up automatic cleanup when the Shiny session ends.
+#' (e.g. Supabase) and sets up automatic cleanup when the 'shiny' session ends.
 #'
 #' @param host Character string. The host address of the Supabase database.
 #' @param dbname Character string. The name of the Supabase database.
@@ -120,7 +120,7 @@ sd_database <- function(
 #'
 #' This function retrieves all data from a specified table in a database.
 #' It automatically detects whether it's being used in a reactive context
-#' (e.g., within a Shiny application) and behaves accordingly. In a reactive
+#' (e.g., within a 'shiny' application) and behaves accordingly. In a reactive
 #' context, it returns a reactive expression that automatically refreshes
 #' the data at specified intervals.
 #'

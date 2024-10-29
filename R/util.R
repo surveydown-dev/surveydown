@@ -20,7 +20,7 @@ list_name_md_to_html <- function(list) {
 #'
 #' This function is called when the package is attached.
 #' It displays version number, authors, and citation information.
-#' It also adds some folders to the shiny resource path with
+#' It also adds some folders to the 'shiny' resource path with
 #' shiny::addResourcePath()
 #'
 #' @param libname The library where the package is installed
@@ -79,18 +79,19 @@ include_folder <- function(folder, create = FALSE) {
     }
 }
 
-#' Include a folder to Shiny's resource path
+#' Include a folder to the 'shiny' resource path
 #'
-#' This function includes a specified folder to Shiny's resource path,
-#' making it accessible for serving static files in a Shiny application.
+#' This function includes a specified folder to the 'shiny' resource path,
+#' making it accessible for serving static files in a 'shiny' application.
 #' It checks for pre-existing resource paths to avoid conflicts with
 #' folders already included by the package.
 #'
 #' @param folder A character string specifying the name of the folder to
-#'   include. This folder should exist in the root directory of your Shiny app.
+#'   include. This folder should exist in the root directory of your 'shiny'
+#'   app.
 #'
 #' @return `NULL` invisibly. The function is called for its side effect of
-#'   adding a resource path to Shiny.
+#'   adding a resource path to 'shiny'.
 #'
 #' @examples
 #' if (interactive()) {
@@ -260,8 +261,8 @@ sd_create_survey <- function(path = getwd(), structure = "single") {
 #' @param name A character string specifying the name of the app. Defaults to
 #'    `"survey"`.
 #'
-#' @return This function does not return a value; it deploys the app to a Shiny
-#' Server.
+#' @return This function does not return a value; it deploys the app to a
+#' 'shiny' server.
 #'
 #' @export
 #'
@@ -284,12 +285,12 @@ sd_deploy <- function(name = "survey") {
 #'
 #' This function is depreciated and no longer needed.
 #'
-#' @details The function configures the Shiny application to use Bootstrap 5
-#'   for styling and enables Shinyjs for JavaScript functionalities within the
-#'   application.
+#' @details The function configures the 'shiny' application to use Bootstrap 5
+#'   for styling and enables 'shinyjs' for JavaScript functionalities within
+#'   the application.
 #'
 #' @return This function does not return a value. It is called for its side
-#' effects of setting up the Shiny application.
+#' effects of setting up the 'shiny' application.
 #'
 #' @export
 sd_setup <- function() {
