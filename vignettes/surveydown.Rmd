@@ -68,7 +68,7 @@ See the [Survey Components](https://surveydown.org/survey-components) page for d
 
 - Add pages with fences, like this:
 
-```{r}
+```
 ::: {#page1 .sd-page}
 
 Page 1 content here

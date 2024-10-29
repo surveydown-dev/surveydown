@@ -11,8 +11,8 @@ sd_deploy(name = "survey")
 \code{"survey"}.}
 }
 \value{
-This function does not return a value; it deploys the app to a Shiny
-Server.
+This function does not return a value; it deploys the app to a
+'shiny' server.
 }
 \description{
 This function is a wrapper for \code{rsconnect::deployApp()} specifically designed

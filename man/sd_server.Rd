@@ -39,10 +39,10 @@ Defaults to \code{FALSE}.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
-the Shiny application.
+the 'shiny' application.
 }
 \description{
-This function defines the server-side logic for a Shiny application used in
+This function defines the server-side logic for a 'shiny' application used in
 surveydown. It handles various operations such as conditional display,
 progress tracking, page navigation, database updates for survey responses,
 and exit survey functionality.
@@ -122,7 +122,7 @@ if (interactive()) {
     )
   }
 
-  # Run the Shiny app
+  # Run the app
   shiny::shinyApp(ui = sd_ui(), server = server)
 
   # Clean up

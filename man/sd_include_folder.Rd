@@ -2,21 +2,22 @@
 % Please edit documentation in R/util.R
 \name{sd_include_folder}
 \alias{sd_include_folder}
-\title{Include a folder to Shiny's resource path}
+\title{Include a folder to the 'shiny' resource path}
 \usage{
 sd_include_folder(folder)
 }
 \arguments{
 \item{folder}{A character string specifying the name of the folder to
-include. This folder should exist in the root directory of your Shiny app.}
+include. This folder should exist in the root directory of your 'shiny'
+app.}
 }
 \value{
 \code{NULL} invisibly. The function is called for its side effect of
-adding a resource path to Shiny.
+adding a resource path to 'shiny'.
 }
 \description{
-This function includes a specified folder to Shiny's resource path,
-making it accessible for serving static files in a Shiny application.
+This function includes a specified folder to the 'shiny' resource path,
+making it accessible for serving static files in a 'shiny' application.
 It checks for pre-existing resource paths to avoid conflicts with
 folders already included by the package.
 }

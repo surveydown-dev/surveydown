@@ -7,7 +7,7 @@
 sd_ui()
 }
 \value{
-A Shiny UI object
+A 'shiny' UI object
 }
 \description{
 This function creates the user interface for a surveydown survey,
@@ -44,7 +44,7 @@ if (interactive()) {
     sd_server()
   }
 
-  # Run the Shiny app
+  # Run the app
   shiny::shinyApp(ui = sd_ui(), server = server)
 
   # Clean up

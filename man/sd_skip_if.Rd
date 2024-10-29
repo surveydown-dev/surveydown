@@ -47,7 +47,7 @@ if (interactive()) {
     sd_server()
   }
 
-  # Run the Shiny app
+  # Run the app
   shiny::shinyApp(ui = sd_ui(), server = server)
 
   # Clean up

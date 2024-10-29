@@ -10,7 +10,7 @@ sd_display_question(id)
 \item{id}{A unique identifier for the question.}
 }
 \value{
-A Shiny UI element that serves as a placeholder for the reactive
+A 'shiny' UI element that serves as a placeholder for the reactive
 question.
 }
 \description{

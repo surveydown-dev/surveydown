@@ -63,7 +63,8 @@ sd_question(
 \item{row}{List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.}
 }
 \value{
-A Shiny UI element wrapped in a div with a data attribute for question ID.
+A 'shiny' UI element wrapped in a div with a data attribute for
+question ID.
 }
 \description{
 This function creates various types of survey questions for use in a Surveydown survey.
@@ -85,8 +86,9 @@ The function supports various question types:
 \item "matrix": Matrix-style question with rows and columns
 }
 
-For "matrix" type questions, use the \code{row} parameter to define the rows of the matrix.
-Each element in the \code{row} list should have a name (used as the row ID) and a value (used as the row label).
+For "matrix" type questions, use the \code{row} parameter to define the rows of
+the matrix. Each element in the \code{row} list should have a name (used as the
+row ID) and a value (used as the row label).
 }
 \examples{
 if (interactive()) {
@@ -107,7 +109,7 @@ if (interactive()) {
     sd_server()
   }
 
-  # Run the Shiny app
+  # Run the app
   shiny::shinyApp(ui = sd_ui(), server = server)
 
   # Clean up

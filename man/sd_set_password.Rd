@@ -15,7 +15,7 @@ None. The function is called for its side effects.
 }
 \description{
 This function sets your surveydown password, which is used to access
-the PostgreSQL data (e.g. Supabase). The password is saved in a \code{.Renviron}
+the 'PostgreSQL' data (e.g. Supabase). The password is saved in a \code{.Renviron}
 file and adds \code{.Renviron} to \code{.gitignore}.
 }
 \details{

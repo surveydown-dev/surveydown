@@ -2,7 +2,7 @@
 % Please edit documentation in R/db.R
 \name{sd_database}
 \alias{sd_database}
-\title{Connect to a PostgreSQL Database with Automatic Cleanup}
+\title{Connect to a 'PostgreSQL' Database with Automatic Cleanup}
 \usage{
 sd_database(
   host = NULL,
@@ -60,8 +60,8 @@ A list containing the database connection pool (\code{db}) and the table
 name (\code{table}), or \code{NULL} if in ignore mode or if there's an error.
 }
 \description{
-This function establishes a connection pool to a PostgreSQL database
-(e.g. Supabase) and sets up automatic cleanup when the Shiny session ends.
+This function establishes a connection pool to a 'PostgreSQL' database
+(e.g. Supabase) and sets up automatic cleanup when the 'shiny' session ends.
 }
 \examples{
 if (interactive()) {

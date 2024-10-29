@@ -10,7 +10,8 @@ sd_close(label = "Exit Survey")
 \item{label}{Character string. The label of the 'Close' button. Defaults to "Exit Survey".}
 }
 \value{
-A Shiny tagList containing the 'Close' button UI element and associated JavaScript for the exit process.
+A 'shiny' tagList containing the 'Close' button UI element and
+associated JavaScript for the exit process.
 }
 \description{
 This function creates a 'Close' button that, when clicked, will trigger the exit process
@@ -18,17 +19,20 @@ for the survey. Depending on the server-side configuration, this may show a rati
 or a simple confirmation dialog before attempting to close the current browser tab or window.
 }
 \details{
-The function generates a Shiny action button that, when clicked, triggers the 'show_exit_modal' event.
-The server-side logic (controlled by the \code{rate_survey} parameter in \code{sd_server()}) determines
-whether to show a rating question or a simple confirmation dialog.
+The function generates a 'shiny' action button that, when clicked, triggers
+the 'show_exit_modal' event. The server-side logic (controlled by the
+\code{rate_survey} parameter in \code{sd_server()}) determines whether to show a
+rating question or a simple confirmation dialog.
 
-The function also includes a custom message handler for closing the window. This is necessary
-because some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
-In such cases, the user will be prompted to close the tab manually.
+The function also includes a custom message handler for closing the window.
+This is necessary because some browsers may not allow JavaScript to close
+windows that were not opened by JavaScript. In such cases, the user will be
+prompted to close the tab manually.
 }
 \note{
-The actual behavior of the exit process (whether to show a rating question or not)
-is controlled by the \code{rate_survey} parameter in the \code{sd_server()} function, not in this UI function.
+The actual behavior of the exit process (whether to show a rating
+question or not) is controlled by the \code{rate_survey} parameter in the
+\code{sd_server()} function, not in this UI function.
 }
 \examples{
 if (interactive()) {
@@ -49,7 +53,7 @@ if (interactive()) {
     sd_server()
   }
 
-  # Run the Shiny app
+  # Run the app
   shiny::shinyApp(ui = sd_ui(), server = server)
 
   # Clean up

@@ -2,7 +2,7 @@
 % Please edit documentation in R/ui.R
 \name{sd_redirect}
 \alias{sd_redirect}
-\title{Create a Redirect Element for Shiny Applications}
+\title{Create a Redirect Element for 'shiny' Applications}
 \usage{
 sd_redirect(
   id,
@@ -14,28 +14,33 @@ sd_redirect(
 )
 }
 \arguments{
-\item{id}{A character string of a unique id to be used to identify the redirect button in the survey body.}
+\item{id}{A character string of a unique id to be used to identify the
+redirect button in the survey body.}
 
 \item{url}{A character string specifying the URL to redirect to.}
 
-\item{button}{A logical value indicating whether to create a button (TRUE) or
-a text element (FALSE) for the redirect. Default is TRUE.}
+\item{button}{A logical value indicating whether to create a button (\code{TRUE})
+or a text element (\code{FALSE}) for the redirect. Default is \code{TRUE}.}
 
-\item{label}{A character string for the button or text label. Default is "Click here".}
+\item{label}{A character string for the button or text label. Default is
+"Click here".}
 
 \item{delay}{An optional numeric value specifying the delay in seconds before
-automatic redirection. If NULL (default), no automatic redirection occurs.}
+automatic redirection. If \code{NULL} (default), no automatic redirection
+occurs.}
 
-\item{newtab}{A logical value indicating whether to open the URL in a new tab (TRUE)
-or in the current tab (FALSE). Default is FALSE.}
+\item{newtab}{A logical value indicating whether to open the URL in a new
+tab (\code{TRUE}) or in the current tab (\code{FALSE}). Default is \code{FALSE}.}
 }
 \value{
-In a reactive context, returns a function that when called, renders the
-redirect element. In a non-reactive context, returns the redirect element directly.
+In a reactive context, returns a function that when called, renders
+the redirect element. In a non-reactive context, returns the redirect
+element directly.
 }
 \description{
-This function creates a UI element that redirects the user to a specified URL.
-It can be used in both reactive and non-reactive contexts within Shiny applications.
+This function creates a UI element that redirects the user to a specified
+URL. It can be used in both reactive and non-reactive contexts within
+'shiny' applications.
 }
 \examples{
 if (interactive()) {
@@ -78,7 +83,7 @@ if (interactive()) {
     sd_server()
   }
 
-  # Run the Shiny app
+  # Run the app
   shiny::shinyApp(ui = sd_ui(), server = server)
 
   # Clean up

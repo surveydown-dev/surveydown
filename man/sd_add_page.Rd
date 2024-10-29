@@ -20,7 +20,7 @@ the template.
 }
 \details{
 IMPORTANT: This function should be run outside any division or R code chunk
-in your Quarto document. Running it inside a division or code chunk may
+in your 'Quarto' document. Running it inside a division or code chunk may
 result in an incorrect page structure.
 
 The function performs the following steps:

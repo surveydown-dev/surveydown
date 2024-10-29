@@ -27,7 +27,7 @@ the specified database table.
 \description{
 This function retrieves all data from a specified table in a database.
 It automatically detects whether it's being used in a reactive context
-(e.g., within a Shiny application) and behaves accordingly. In a reactive
+(e.g., within a 'shiny' application) and behaves accordingly. In a reactive
 context, it returns a reactive expression that automatically refreshes
 the data at specified intervals.
 }

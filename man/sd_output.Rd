@@ -17,22 +17,29 @@ sd_output(
 \arguments{
 \item{id}{Character string. A unique identifier for the output element.}
 
-\item{type}{Character string. Specifies the type of output. Can be "question", "value", or \code{NULL.}
-If \code{NULL}, the function behaves like \code{shiny::uiOutput()}.}
+\item{type}{Character string. Specifies the type of output. Can be
+\code{"question"}, \code{"value"}, or \code{NULL.} If \code{NULL}, the function behaves like
+\code{shiny::uiOutput()}.}
 
-\item{width}{Character string. The width of the UI element. Defaults to "100\%".}
+\item{width}{Character string. The width of the UI element. Defaults to
+\code{"100\%"}.}
 
-\item{display}{Character string. Specifies the display type for "value" outputs.
-Can be "text", "verbatim", or "ui". Only used when \code{type = "value"}.}
+\item{display}{Character string. Specifies the display type for \code{"value"}
+outputs. Can be \code{"text"}, \code{"verbatim"}, or \code{"ui"}. Only used when
+\code{type = "value"}.}
 
-\item{inline}{Logical. Whether to render the output inline. Defaults to \code{TRUE}.}
+\item{inline}{Logical. Whether to render the output inline. Defaults to
+\code{TRUE}.}
 
-\item{wrapper}{Function. A function to wrap the output. Only used when \code{type = "value"}.}
+\item{wrapper}{Function. A function to wrap the output. Only used when
+\code{type = "value"}.}
 
-\item{...}{Additional arguments passed to the underlying Shiny functions or the wrapper function.}
+\item{...}{Additional arguments passed to the underlying 'shiny' functions
+or the wrapper function.}
 }
 \value{
-A Shiny UI element, the type of which depends on the input parameters.
+A 'shiny' UI element, the type of which depends on the input
+parameters.
 }
 \description{
 Output Function for Displaying reactive objects and values
@@ -65,7 +72,7 @@ if (interactive()) {
     sd_server()
   }
 
-  # Run the Shiny app
+  # Run the app
   shiny::shinyApp(ui = sd_ui(), server = server)
 
   # Clean up

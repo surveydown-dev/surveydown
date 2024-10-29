@@ -2,7 +2,7 @@
 % Please edit documentation in R/ui.R
 \name{sd_get_url_pars}
 \alias{sd_get_url_pars}
-\title{Get URL Parameters in a Shiny Application}
+\title{Get URL Parameters in a 'shiny' Application}
 \usage{
 sd_get_url_pars(...)
 }
@@ -14,8 +14,8 @@ If none are specified, all URL parameters are returned.}
 A reactive expression that returns a list of URL parameters.
 }
 \description{
-This function retrieves URL parameters from the current Shiny session.
-It must be called from within a Shiny reactive context.
+This function retrieves URL parameters from the current 'shiny' session.
+It must be called from within a 'shiny' reactive context.
 }
 \examples{
 if (interactive()) {
@@ -58,7 +58,7 @@ if (interactive()) {
     sd_server()
   }
 
-  # Run the Shiny app
+  # Run the app
   shiny::shinyApp(ui = sd_ui(), server = server)
 
   # Clean up

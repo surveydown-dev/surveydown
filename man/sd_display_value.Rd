@@ -17,7 +17,7 @@ sd_display_value(id, display_type = "inline", wrapper = NULL, ...)
 \item{...}{Additional arguments passed to the wrapper function}
 }
 \value{
-A Shiny UI element displaying the question's value
+A 'shiny' UI element displaying the question's value
 }
 \description{
 This function is depreciated - use \code{sd_output()} instead.

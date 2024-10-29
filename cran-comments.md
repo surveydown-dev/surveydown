@@ -8,4 +8,5 @@
 
 ## Notes
 * This is a new release.
-* Title casing error in previous submission corrected
+* Corrected use of software names in quotes
+* Modified vignette to avoid including unexecutable code
