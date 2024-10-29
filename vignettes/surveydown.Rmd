@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 
 # Main Documentation
 
-The main documentation for surveydown is at [https://surveydown.org/](https://surveydown.org/). We recommend navigating there for more detailed documentation about the R package and how to use it in a Quarto shiny document.
+The main documentation for surveydown is at [https://surveydown.org/](https://surveydown.org/). We recommend navigating there for more detailed documentation about the R package and how to use it to build dynamic surveys.
 
 ## Overview
 

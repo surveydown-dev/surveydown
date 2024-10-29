@@ -8,6 +8,6 @@
 
 ## Notes
 * This is a new release.
-* Corrected use of software names in quotes
+* Corrected use of software names by putting them in quotes
 * Modified vignette to avoid including unexecutable code
 * Removed functions that install packages
