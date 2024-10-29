@@ -5,6 +5,8 @@
 - All examples updated to include run-able examples (where possible).
 - Added example survey.qmd files in inst/examples (for use in function examples).
 - All roxygen documentation reviewed for errors / typos.
+- Removed `sd_update()` function
+- Removed `sd_deploy()` function
 
 # surveydown 0.3.7
 

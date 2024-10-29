@@ -252,35 +252,6 @@ sd_create_survey <- function(path = getwd(), structure = "single") {
     }
 }
 
-#' Deploy a Surveydown App
-#'
-#' This function is a wrapper for `rsconnect::deployApp()` specifically designed
-#' for deploying Surveydown applications. It simplifies the deployment process
-#' by allowing you to specify just the app name.
-#'
-#' @param name A character string specifying the name of the app. Defaults to
-#'    `"survey"`.
-#'
-#' @return This function does not return a value; it deploys the app to a
-#' 'shiny' server.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#'   # Deploy with default name "survey"
-#'   sd_deploy()
-#'
-#'   # Deploy with a custom name
-#'   sd_deploy("my_custom_survey")
-#' }
-#'
-#' @seealso \code{\link[rsconnect]{deployApp}}
-#'
-sd_deploy <- function(name = "survey") {
-    rsconnect::deployApp(appName = name)
-}
-
 #' Required Set Up Function
 #'
 #' This function is depreciated and no longer needed.
@@ -568,24 +539,6 @@ sd_next()
   cursor <- context$selection[[1]]$range$start
   # Insert the template
   rstudioapi::insertText(location = cursor, text = template)
-}
-
-#' Update Surveydown Package
-#'
-#' This function directly updates the surveydown package to the latest version
-#' from GitHub, without checking the current version.
-#'
-#' @return No return value, called for side effects.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#'   sd_update()
-#' }
-sd_update <- function() {
-  message("Updating surveydown to the latest version...")
-  remotes::install_github("surveydown-dev/surveydown", force = TRUE)
-  message("Update complete.")
 }
 
 #' Check Surveydown Version
