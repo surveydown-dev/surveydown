@@ -1,6 +1,6 @@
-#' Connect to a PostgreSQL Database with Automatic Cleanup
+#' Connect to a 'PostgreSQL' Database with Automatic Cleanup
 #'
-#' This function establishes a connection pool to a PostgreSQL database
+#' This function establishes a connection pool to a 'PostgreSQL' database
 #' (e.g. Supabase) and sets up automatic cleanup when the 'shiny' session ends.
 #'
 #' @param host Character string. The host address of the Supabase database.

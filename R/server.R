@@ -889,7 +889,7 @@ admin_enable <- function(input, output, session, db) {
 #' Set password for surveydown survey
 #'
 #' This function sets your surveydown password, which is used to access
-#' the PostgreSQL data (e.g. Supabase). The password is saved in a `.Renviron`
+#' the 'PostgreSQL' data (e.g. Supabase). The password is saved in a `.Renviron`
 #' file and adds `.Renviron` to `.gitignore`.
 #'
 #' @param password Character string. The password to be set for the database
