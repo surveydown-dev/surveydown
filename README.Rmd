@@ -39,39 +39,7 @@ The {surveydown} R package provides functions to bring this all together.
 
 # Installation
 
-### Install [R](https://CRAN.R-project.org/) & [Quarto](https://quarto.org/)
-
-We also recommend working with an IDE that has good support for R, Quarto, and Shiny. [RStudio](https://posit.co/products/open-source/rstudio/) is great, and we also like [VSCode](https://code.visualstudio.com/) and [Positron](https://github.com/posit-dev/positron).
-
-### Install the {surveydown} R package
-
-The {surveydown} R package is not yet on CRAN, but you can install the development version from GitHub with the following command in your R console:
-
-```{r}
-#| eval: false
-
-# install.packages("remotes")
-remotes::install_github("surveydown-dev/surveydown")
-```
-
-### Version Control
-
-We made some functions to make it easier to keep your R package up to date.
-
-To _check_ which version of the {surveydown} package you have installed, run:
-
-```{r}
-#| eval: false
-
-surveydown::sd_version()
-```
-
-To _update_ to the latest version of the {surveydown} package, run:
-
-```{r}
-#| eval: false
-
-surveydown::sd_update()
+```{r, child="man/rmdchunks/installation.Rmd"}
 ```
 
 # Background & Motivation
