@@ -3,6 +3,15 @@
 
 # surveydown
 
+<!-- badges: start -->
+
+[![CRAN
+status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project.org/package=surveydown)
+[![](http://cranlogs.r-pkg.org/badges/grand-total/surveydown?color=blue)](https://cran.r-project.org/package=surveydown)
+[![CRAN RStudio mirror
+downloads](http://cranlogs.r-pkg.org/badges/surveydown)](https://cran.r-project.org/package=surveydown)
+<!-- badges: end -->
+
 > Note: This site only documents the {surveydown} R package - visit our
 > main site at [surveydown.org](https://surveydown.org) for more
 > information!
@@ -51,13 +60,24 @@ we also like [VSCode](https://code.visualstudio.com/) and
 
 ### Install the {surveydown} R package
 
-The {surveydown} R package is not yet on CRAN, but you can install the
-development version from GitHub with the following command in your R
-console:
+You can install {surveydown} from CRAN in your R console:
+
+``` r
+install.packages("surveydown")
+```
+
+or you can install the development version from
+[GitHub](https://github.com/surveydown-dev/surveydown):
 
 ``` r
 # install.packages("pak")
 pak::pak('surveydown-dev/surveydown')
+```
+
+Load the package with:
+
+``` r
+library(surveydown)
 ```
 
 You can also check which version you have installed:
