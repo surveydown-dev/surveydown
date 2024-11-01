@@ -32,7 +32,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,7 +84,7 @@
 </h2>
 <p>The main documentation for surveydown is at <a href="https://surveydown.org/" class="external-link">https://surveydown.org/</a>. We recommend
 navigating there for more detailed documentation about the R package and
-how to use it in a Quarto shiny document.</p>
+how to use it to build dynamic surveys.</p>
 <div class="section level3">
 <h3 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h3>
@@ -124,14 +124,36 @@ reproducible and easy to customize.</p>
 of creating a surveydown survey.</p>
 </div>
 <div class="section level3">
-<h3 id="install">1. Install<a class="anchor" aria-label="anchor" href="#install"></a>
+<h3 id="installation">1. Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h3>
-<p>The {surveydown} R package is not yet on CRAN, but you can install
-the development version from GitHub with the following command in your R
-console:</p>
+<div class="section level4">
+<h4 id="install-r-quarto">Install R &amp; Quarto<a class="anchor" aria-label="anchor" href="#install-r-quarto"></a>
+</h4>
+<ul>
+<li><a href="https://CRAN.R-project.org/" class="external-link">R</a></li>
+<li><a href="https://quarto.org/" class="external-link">Quarto</a></li>
+</ul>
+<p>We also recommend working with an IDE that has good support for R,
+Quarto, and Shiny. <a href="https://posit.co/products/open-source/rstudio/" class="external-link">RStudio</a> is
+great, and we also like <a href="https://code.visualstudio.com/" class="external-link">VSCode</a> and <a href="https://github.com/posit-dev/positron" class="external-link">Positron</a>.</p>
+</div>
+<div class="section level4">
+<h4 id="install-the-surveydown-r-package">Install the {surveydown} R package<a class="anchor" aria-label="anchor" href="#install-the-surveydown-r-package"></a>
+</h4>
+<p>You can install {surveydown} from CRAN in your R console:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># install.packages("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"surveydown-dev/surveydown"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"surveydown"</span><span class="op">)</span></span></code></pre></div>
+<p>or you can install the development version from <a href="https://github.com/surveydown-dev/surveydown" class="external-link">GitHub</a>:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu">pak</span><span class="op">(</span><span class="st">'surveydown-dev/surveydown'</span><span class="op">)</span></span></code></pre></div>
+<p>Load the package with:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pkg.surveydown.org">surveydown</a></span><span class="op">)</span></span></code></pre></div>
+<p>You can also check which version you have installed:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="../reference/sd_version.html">sd_version</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level3">
 <h3 id="start-with-a-template">2. Start with a template<a class="anchor" aria-label="anchor" href="#start-with-a-template"></a>
@@ -149,18 +171,18 @@ questions:</p>
 <ul>
 <li>Add pages with fences, like this:</li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="sc">:::</span> {<span class="co">#page1 .sd-page}</span></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>Page <span class="dv">1</span> content here</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="sc">:::</span></span></code></pre></div>
+<pre><code>::: {#page1 .sd-page}
+
+Page 1 content here
+
+:::</code></pre>
 <ul>
 <li>Add questions with the <code><a href="../reference/sd_question.html">sd_question()</a></code> function in code
 chunks (see the <a href="https://surveydown.org/question-types" class="external-link">Question
 Types</a> page for more on the types of questions supported). For
 example, here’s a multiple choice question:</li>
 </ul>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/sd_question.html">sd_question</a></span><span class="op">(</span></span>
 <span>  type  <span class="op">=</span> <span class="st">'mc'</span>,</span>
 <span>  id    <span class="op">=</span> <span class="st">'penguins'</span>,</span>
@@ -193,7 +215,7 @@ Data</a> page for more details.</p>
 <h3 id="locally-preview">6. Locally preview<a class="anchor" aria-label="anchor" href="#locally-preview"></a>
 </h3>
 <p>Preview your survey by clicking the “Run App” button in RStudio or in
-your R console running the <code>runApp()</code> command.</p>
+your R console running the <code><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp()</a></code> command.</p>
 </div>
 <div class="section level3">
 <h3 id="deploy">7. Deploy<a class="anchor" aria-label="anchor" href="#deploy"></a>

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,7 +57,8 @@
 
 
 <dt id="arg-display-type">display_type<a class="anchor" aria-label="anchor" href="#arg-display-type"></a></dt>
-<dd><p>The type of display. Can be "inline" (default), "text", "verbatim", or "ui".</p></dd>
+<dd><p>The type of display. Can be <code>"inline"</code> (default),
+<code>"text"</code>, <code>"verbatim"</code>, or <code>"ui"</code>.</p></dd>
 
 
 <dt id="arg-wrapper">wrapper<a class="anchor" aria-label="anchor" href="#arg-wrapper"></a></dt>
@@ -70,25 +71,9 @@
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A Shiny UI element displaying the question's value</p>
+    <p>A 'shiny' UI element displaying the question's value</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Deprecated:</span></span></span>
-<span class="r-in"><span><span class="fu">sd_display_value</span><span class="op">(</span><span class="st">"name"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">sd_display_value</span><span class="op">(</span><span class="st">"age"</span>, display_type <span class="op">=</span> <span class="st">"text"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">sd_display_value</span><span class="op">(</span><span class="st">"email"</span>, display_type <span class="op">=</span> <span class="st">"inline"</span>, wrapper <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">tags</span><span class="op">$</span><span class="fu">strong</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Use instead:</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="sd_output.html">sd_output</a></span><span class="op">(</span><span class="st">"name"</span>, type <span class="op">=</span> <span class="st">"value"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="sd_output.html">sd_output</a></span><span class="op">(</span><span class="st">"age"</span>, type <span class="op">=</span> <span class="st">"value"</span>, display <span class="op">=</span> <span class="st">"text"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="sd_output.html">sd_output</a></span><span class="op">(</span><span class="st">"email"</span>, type <span class="op">=</span> <span class="st">"value"</span>, display <span class="op">=</span> <span class="st">"inline"</span>, wrapper <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">tags</span><span class="op">$</span><span class="fu">strong</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

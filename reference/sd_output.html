@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,34 +65,41 @@
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Character string. Specifies the type of output. Can be "question", "label_question", "value", "label_option", or <code>NULL.</code>
-If <code>NULL</code>, the function behaves like <code><a href="https://rdrr.io/pkg/shiny/man/htmlOutput.html" class="external-link">shiny::uiOutput()</a></code>.</p></dd>
+<dd><p>Character string. Specifies the type of output. Can be
+<code>"question"</code>, <code>"value"</code>, or <code>NULL.</code> If <code>NULL</code>, the function behaves like
+<code><a href="https://rdrr.io/pkg/shiny/man/htmlOutput.html" class="external-link">shiny::uiOutput()</a></code>.</p></dd>
 
 
 <dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
-<dd><p>Character string. The width of the UI element. Defaults to "100%".</p></dd>
+<dd><p>Character string. The width of the UI element. Defaults to
+<code>"100%"</code>.</p></dd>
 
 
 <dt id="arg-display">display<a class="anchor" aria-label="anchor" href="#arg-display"></a></dt>
-<dd><p>Character string. Specifies the display type for "value" outputs.
-Can be "text", "verbatim", or "ui". Only used when <code>type = "value"</code>.</p></dd>
+<dd><p>Character string. Specifies the display type for <code>"value"</code>
+outputs. Can be <code>"text"</code>, <code>"verbatim"</code>, or <code>"ui"</code>. Only used when
+<code>type = "value"</code>.</p></dd>
 
 
 <dt id="arg-inline">inline<a class="anchor" aria-label="anchor" href="#arg-inline"></a></dt>
-<dd><p>Logical. Whether to render the output inline. Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether to render the output inline. Defaults to
+<code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-wrapper">wrapper<a class="anchor" aria-label="anchor" href="#arg-wrapper"></a></dt>
-<dd><p>Function. A function to wrap the output. Only used when <code>type = "value"</code>.</p></dd>
+<dd><p>Function. A function to wrap the output. Only used when
+<code>type = "value"</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments passed to the underlying Shiny functions or the wrapper function.</p></dd>
+<dd><p>Additional arguments passed to the underlying 'shiny' functions
+or the wrapper function.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A Shiny UI element, the type of which depends on the input parameters.</p>
+    <p>A 'shiny' UI element, the type of which depends on the input
+parameters.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -100,31 +107,34 @@ Can be "text", "verbatim", or "ui". Only used when <code>type = "value"</code>.<
 <li><p>If <code>type</code> is <code>"question"</code>, it creates a placeholder for a reactive survey question.</p></li>
 <li><p>If <code>type</code> is <code>"value"</code>, it creates an output to display the value of a survey question,
 with the display style determined by the <code>display</code> parameter.</p></li>
-<li><p>If <code>type</code> is <code>"label_option"</code>, it creates an output to display the label of the value of a survey question,
-with the display style determined by the <code>display</code> parameter.</p></li>
-<li><p>If <code>type</code> is <code>"label_question"</code>, it creates an output to display the survey question,
-with the display style determined by the <code>display</code> parameter.</p></li>
 </ul></div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="co"># Create a placeholder for a reactive question</span></span></span>
-<span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'cbc1'</span>, type <span class="op">=</span> <span class="st">'question'</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pkg.surveydown.org">surveydown</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Display the value of a survey question inline</span></span></span>
-<span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'cbc1'</span>, type <span class="op">=</span> <span class="st">'value'</span>, inline <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Get path to example survey file</span></span></span>
+<span class="r-in"><span>  <span class="va">survey_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"examples"</span>, <span class="st">"sd_output.qmd"</span>,</span></span>
+<span class="r-in"><span>                             package <span class="op">=</span> <span class="st">"surveydown"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Display the label of the choosen question value (from the list of options)</span></span></span>
-<span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'cbc1'</span>, type <span class="op">=</span> <span class="st">'label_option'</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Copy to a temporary directory</span></span></span>
+<span class="r-in"><span>  <span class="va">temp_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="va">survey_path</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">temp_dir</span>, <span class="st">"survey.qmd"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">orig_dir</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">getwd</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">setwd</a></span><span class="op">(</span><span class="va">temp_dir</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Use as a simple uiOutput</span></span></span>
-<span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'redirect'</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="co"># Define a minimal server</span></span></span>
+<span class="r-in"><span>  <span class="va">server</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">input</span>, <span class="va">output</span>, <span class="va">session</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="sd_server.html">sd_server</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Use with a wrapper function</span></span></span>
-<span class="r-in"><span><span class="fu">sd_output</span><span class="op">(</span><span class="st">'age'</span>, type <span class="op">=</span> <span class="st">'value'</span>, display <span class="op">=</span> <span class="st">'text'</span>,</span></span>
-<span class="r-in"><span>          wrapper <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">tags</span><span class="op">$</span><span class="fu">strong</span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-in"><span>  <span class="co"># Run the app</span></span></span>
+<span class="r-in"><span>  <span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/shinyApp.html" class="external-link">shinyApp</a></span><span class="op">(</span>ui <span class="op">=</span> <span class="fu"><a href="sd_ui.html">sd_ui</a></span><span class="op">(</span><span class="op">)</span>, server <span class="op">=</span> <span class="va">server</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Clean up</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/getwd.html" class="external-link">setwd</a></span><span class="op">(</span><span class="va">orig_dir</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>
