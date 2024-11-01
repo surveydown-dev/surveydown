@@ -8,8 +8,9 @@
 [![CRAN
 status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project.org/package=surveydown)
 [![](http://cranlogs.r-pkg.org/badges/grand-total/surveydown?color=blue)](https://cran.r-project.org/package=surveydown)
-[![CRAN RStudio mirror
-downloads](http://cranlogs.r-pkg.org/badges/surveydown)](https://cran.r-project.org/package=surveydown)
+[![metacran
+downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
+
 <!-- badges: end -->
 
 > Note: This site only documents the {surveydown} R package - visit our
