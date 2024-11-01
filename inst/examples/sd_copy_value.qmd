@@ -1,0 +1,26 @@
+---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'name',
+  label = 'What is your name?'
+)
+```
+
+Welcome, `r sd_output('name', type = 'value')`!
+
+Is it alright if we call you `r sd_output('name_copy', type = 'value')`?
+
+:::

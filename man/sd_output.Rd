@@ -17,22 +17,29 @@ sd_output(
 \arguments{
 \item{id}{Character string. A unique identifier for the output element.}
 
-\item{type}{Character string. Specifies the type of output. Can be "question", "label_question", "value", "label_option", or \code{NULL.}
-If \code{NULL}, the function behaves like \code{shiny::uiOutput()}.}
+\item{type}{Character string. Specifies the type of output. Can be
+\code{"question"}, \code{"value"}, or \code{NULL.} If \code{NULL}, the function behaves like
+\code{shiny::uiOutput()}.}
 
-\item{width}{Character string. The width of the UI element. Defaults to "100\%".}
+\item{width}{Character string. The width of the UI element. Defaults to
+\code{"100\%"}.}
 
-\item{display}{Character string. Specifies the display type for "value" outputs.
-Can be "text", "verbatim", or "ui". Only used when \code{type = "value"}.}
+\item{display}{Character string. Specifies the display type for \code{"value"}
+outputs. Can be \code{"text"}, \code{"verbatim"}, or \code{"ui"}. Only used when
+\code{type = "value"}.}
 
-\item{inline}{Logical. Whether to render the output inline. Defaults to \code{TRUE}.}
+\item{inline}{Logical. Whether to render the output inline. Defaults to
+\code{TRUE}.}
 
-\item{wrapper}{Function. A function to wrap the output. Only used when \code{type = "value"}.}
+\item{wrapper}{Function. A function to wrap the output. Only used when
+\code{type = "value"}.}
 
-\item{...}{Additional arguments passed to the underlying Shiny functions or the wrapper function.}
+\item{...}{Additional arguments passed to the underlying 'shiny' functions
+or the wrapper function.}
 }
 \value{
-A Shiny UI element, the type of which depends on the input parameters.
+A 'shiny' UI element, the type of which depends on the input
+parameters.
 }
 \description{
 Output Function for Displaying reactive objects and values
@@ -44,29 +51,32 @@ The function behaves differently based on the \code{type} parameter:
 \item If \code{type} is \code{"question"}, it creates a placeholder for a reactive survey question.
 \item If \code{type} is \code{"value"}, it creates an output to display the value of a survey question,
 with the display style determined by the \code{display} parameter.
-\item If \code{type} is \code{"label_option"}, it creates an output to display the label of the value of a survey question,
-with the display style determined by the \code{display} parameter.
-\item If \code{type} is \code{"label_question"}, it creates an output to display the survey question,
-with the display style determined by the \code{display} parameter.
 }
 }
 \examples{
-\dontrun{
-# Create a placeholder for a reactive question
-sd_output('cbc1', type = 'question')
+if (interactive()) {
+  library(surveydown)
 
-# Display the value of a survey question inline
-sd_output('cbc1', type = 'value', inline = TRUE)
+  # Get path to example survey file
+  survey_path <- system.file("examples", "sd_output.qmd",
+                             package = "surveydown")
 
-# Display the label of the choosen question value (from the list of options)
-sd_output('cbc1', type = 'label_option')
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
 
-# Use as a simple uiOutput
-sd_output('redirect')
+  # Define a minimal server
+  server <- function(input, output, session) {
+    sd_server()
+  }
 
-# Use with a wrapper function
-sd_output('age', type = 'value', display = 'text',
-          wrapper = function(x) tags$strong(x))
+  # Run the app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
 }
 
 }

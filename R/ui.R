@@ -26,25 +26,48 @@ load_resource <- function(..., package = "surveydown") {
 #' including necessary CSS and JavaScript files, and applies custom styling.
 #' It retrieves theme and progress bar settings from the survey.qmd file.
 #'
-#' @return A Shiny UI object
-#' @export
+#' @return A 'shiny' UI object
 #'
 #' @details
 #' The function reads the following settings from the survey.qmd YAML header:
 #' \itemize{
-#'   \item \code{theme}: The theme to be applied to the survey.
-#'   \item \code{barcolor}: The color of the progress bar (should be a valid hex color).
-#'   \item \code{barposition}: The position of the progress bar ('top', 'bottom', or 'none').
+#'   \item `theme`: The theme to be applied to the survey.
+#'   \item `barcolor`: The color of the progress bar (should be a valid hex color).
+#'   \item `barposition`: The position of the progress bar (`'top'`, `'bottom'`, or `'none'`).
 #' }
 #'
-#' If \code{barcolor} is not specified or is NULL, the default theme color will be used.
-#' If \code{barposition} is not specified, it defaults to 'top'.
+#' If `barcolor` is not specified or is `NULL`, the default theme color will be
+#' used. If `barposition` is not specified, it defaults to 'top'.
 #'
 #' @examples
-#' \dontrun{
-#' # In your app.R or ui.R file:
-#' ui <- sd_ui()
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_ui.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
+#'
+#' @seealso `sd_server()` for creating the server-side logic of the survey
+#'
+#' @export
 sd_ui <- function() {
 
     # Throw error if "survey.qmd" file missing
@@ -74,7 +97,7 @@ sd_ui <- function() {
       },
       shiny::tags$script("var surveydownConfig = {};"),
       if (!is.null(barcolor)) {
-        shiny::tags$style(HTML(sprintf("
+        shiny::tags$style(htmltools::HTML(sprintf("
                 :root {
                     --progress-color: %s;
                 }
@@ -159,26 +182,38 @@ get_barposition <- function(metadata) {
 #' - "daterange": Date range input
 #' - "matrix": Matrix-style question with rows and columns
 #'
-#' For "matrix" type questions, use the `row` parameter to define the rows of the matrix.
-#' Each element in the `row` list should have a name (used as the row ID) and a value (used as the row label).
+#' For "matrix" type questions, use the `row` parameter to define the rows of
+#' the matrix. Each element in the `row` list should have a name (used as the
+#' row ID) and a value (used as the row label).
 #'
-#' @return A Shiny UI element wrapped in a div with a data attribute for question ID.
+#' @return A 'shiny' UI element wrapped in a div with a data attribute for
+#' question ID.
 #'
 #' @examples
-#' sd_question("text", "name", "What is your name?")
-#' sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # Example of a matrix question
-#' sd_question(
-#'   type = "matrix",
-#'   id   = "satisfaction",
-#'   label = "Rate your satisfaction with the following:",
-#'   row = c("Customer Service" = "service",
-#'           "Product Quality"  = "quality",
-#'           "Price"            = "price"),
-#'   option = c("Unsatisfied" = 1,
-#'              "Neutral"     = 2,
-#'              "Satisfied"   = 3))
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "basic_survey.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
+#' }
 #'
 #' @export
 sd_question <- function(
@@ -250,7 +285,7 @@ sd_question <- function(
             selected  = character(0)
         )
 
-        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
+        output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
@@ -267,7 +302,7 @@ sd_question <- function(
             justified  = FALSE
         )
 
-        output <- shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(sprintf("
+        output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
@@ -420,7 +455,7 @@ date_interaction <- function(output, id) {
          }, 1000);",  # 1000 ms delay
         id, id
     )
-    shiny::tagAppendChild(output, shiny::tags$script(shiny::HTML(js_code)))
+    shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_code)))
 }
 
 make_question_container <- function(id, object, width) {
@@ -448,14 +483,39 @@ make_question_container <- function(id, object, width) {
 #' @param next_page Character string. The ID of the next page to navigate to. This parameter is required.
 #' @param label Character string. The label of the 'Next' button. Defaults to "Next".
 #'
-#' @details The function generates a Shiny action button that, when clicked or when the Enter key is pressed,
-#'   sets the input value to the specified next page ID, facilitating page navigation within the Shiny application.
-#'   The button is styled to appear centered on the page and includes a class for Enter key functionality.
+#' @details The function generates a 'shiny' action button that, when clicked
+#' or when the Enter key is pressed, sets the input value to the specified next
+#' page ID, facilitating page navigation within the Shiny application. The
+#' button is styled to appear centered on the page and includes a class for
+#' Enter key functionality.
 #'
-#' @return A Shiny tagList containing the 'Next' button UI element.
+#' @return A 'shiny' tagList containing the 'Next' button UI element.
 #'
 #' @examples
-#' sd_next("page2", "Continue to Next Section")
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_next.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
+#' }
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
@@ -488,27 +548,48 @@ make_next_button_id <- function(page_id) {
 #'
 #' @param label Character string. The label of the 'Close' button. Defaults to "Exit Survey".
 #'
-#' @return A Shiny tagList containing the 'Close' button UI element and associated JavaScript for the exit process.
+#' @return A 'shiny' tagList containing the 'Close' button UI element and
+#' associated JavaScript for the exit process.
 #'
 #' @details
-#' The function generates a Shiny action button that, when clicked, triggers the 'show_exit_modal' event.
-#' The server-side logic (controlled by the `rate_survey` parameter in `sd_server()`) determines
-#' whether to show a rating question or a simple confirmation dialog.
+#' The function generates a 'shiny' action button that, when clicked, triggers
+#' the 'show_exit_modal' event. The server-side logic (controlled by the
+#' `rate_survey` parameter in `sd_server()`) determines whether to show a
+#' rating question or a simple confirmation dialog.
 #'
-#' The function also includes a custom message handler for closing the window. This is necessary
-#' because some browsers may not allow JavaScript to close windows that were not opened by JavaScript.
-#' In such cases, the user will be prompted to close the tab manually.
+#' The function also includes a custom message handler for closing the window.
+#' This is necessary because some browsers may not allow JavaScript to close
+#' windows that were not opened by JavaScript. In such cases, the user will be
+#' prompted to close the tab manually.
 #'
-#' @note The actual behavior of the exit process (whether to show a rating question or not)
-#' is controlled by the `rate_survey` parameter in the `sd_server()` function, not in this UI function.
+#' @note The actual behavior of the exit process (whether to show a rating
+#' question or not) is controlled by the `rate_survey` parameter in the
+#' `sd_server()` function, not in this UI function.
 #'
 #' @examples
-#' \dontrun{
-#' # In your UI code:
-#' sd_close()
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # With a custom label:
-#' sd_close("Finish and Exit")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_close.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
 #'
 #' @seealso \code{\link{sd_server}}
@@ -527,7 +608,7 @@ sd_close <- function(label = "Exit Survey") {
         onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
       )
     ),
-    shiny::tags$script(shiny::HTML("
+    shiny::tags$script(htmltools::HTML("
       Shiny.addCustomMessageHandler('closeWindow', function(message) {
         window.close();
         if (!window.closed) {
@@ -538,49 +619,84 @@ sd_close <- function(label = "Exit Survey") {
   )
 }
 
-#' Create a Redirect Element for Shiny Applications
+#' Create a Redirect Element for 'shiny' Applications
 #'
-#' This function creates a UI element that redirects the user to a specified URL.
-#' It can be used in both reactive and non-reactive contexts within Shiny applications.
+#' This function creates a UI element that redirects the user to a specified
+#' URL. It can be used in both reactive and non-reactive contexts within
+#' 'shiny' applications.
 #'
-#' @param id A character string of a unique id to be used to identify the redirect button in the survey body.
+#' @param id A character string of a unique id to be used to identify the
+#'   redirect button in the survey body.
 #' @param url A character string specifying the URL to redirect to.
-#' @param button A logical value indicating whether to create a button (TRUE) or
-#'   a text element (FALSE) for the redirect. Default is TRUE.
-#' @param label A character string for the button or text label. Default is "Click here".
+#' @param button A logical value indicating whether to create a button (`TRUE`)
+#'   or a text element (`FALSE`) for the redirect. Default is `TRUE`.
+#' @param label A character string for the button or text label. Default is
+#'   "Click here".
 #' @param delay An optional numeric value specifying the delay in seconds before
-#'   automatic redirection. If NULL (default), no automatic redirection occurs.
-#' @param newtab A logical value indicating whether to open the URL in a new tab (TRUE)
-#'   or in the current tab (FALSE). Default is FALSE.
+#'   automatic redirection. If `NULL` (default), no automatic redirection
+#'   occurs.
+#' @param newtab A logical value indicating whether to open the URL in a new
+#'   tab (`TRUE`) or in the current tab (`FALSE`). Default is `FALSE`.
 #'
-#' @return In a reactive context, returns a function that when called, renders the
-#'   redirect element. In a non-reactive context, returns the redirect element directly.
-#'
-#' @importFrom shiny renderUI tags HTML actionButton
-#' @importFrom digest digest
-#' @export
+#' @return In a reactive context, returns a function that when called, renders
+#' the redirect element. In a non-reactive context, returns the redirect
+#' element directly.
 #'
 #' @examples
-#' \dontrun{
-#' # Basic usage with a button
-#' sd_redirect("my_button", "https://example.com")
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # Create a text link instead of a button
-#' sd_redirect("my_link", "https://example.com", button = FALSE, label = "Visit Example")
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_redirect.qmd",
+#'                              package = "surveydown")
 #'
-#' # Add a 5-second delay before redirection
-#' sd_redirect("delayed_redirect", "https://example.com", delay = 5)
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
-#' # Open the link in a new tab
-#' sd_redirect("new_tab_link", "https://example.com", newtab = TRUE)
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Reactive expression that generates a url with an id variable
+#'     # parsed from the url
+#'     url_redirect <- reactive({
+#'       params <- sd_get_url_pars()
+#'       id <- params["id"]
+#'       return(paste0("https://www.google.com?id=", id))
+#'     })
+#'
+#'     # Create the redirect button
+#'     sd_redirect(
+#'       id = "redirect_url_pars",
+#'       url = url_redirect(),
+#'       button = TRUE,
+#'       label = "Redirect"
+#'     )
+#'
+#'     sd_skip_if(
+#'       input$screening_question == "end_1" ~ "end_page_1",
+#'       input$screening_question == "end_1" ~ "end_page_2",
+#'     )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
+#' @export
 sd_redirect <- function(
-        id,
-        url,
-        button = TRUE,
-        label  = "Click here",
-        delay  = NULL,
-        newtab = FALSE
+    id,
+    url,
+    button = TRUE,
+    label  = "Click here",
+    delay  = NULL,
+    newtab = FALSE
 ) {
     if (!is.null(shiny::getDefaultReactiveDomain())) {
         # In a reactive context, directly add to output with renderUI
@@ -640,7 +756,7 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
                     )
                 )
             ),
-            shiny::tags$script(shiny::HTML(sprintf(
+            shiny::tags$script(htmltools::HTML(sprintf(
               "startCountdown(%d, function() { %s }, '%s', '%s');",
               delay,
               redirect_js,
@@ -672,21 +788,65 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
     return(element)
 }
 
-#' Get URL Parameters in a Shiny Application
+#' Get URL Parameters in a 'shiny' Application
 #'
-#' This function retrieves URL parameters from the current Shiny session.
-#' It must be called from within a Shiny reactive context.
+#' This function retrieves URL parameters from the current 'shiny' session.
+#' It must be called from within a 'shiny' reactive context.
 #'
 #' @param ... Optional. Names of specific URL parameters to retrieve.
 #'   If none are specified, all URL parameters are returned.
 #'
 #' @return A reactive expression that returns a list of URL parameters.
 #'
-#' @importFrom shiny reactive getDefaultReactiveDomain parseQueryString
-#' @export
-#'
 #' @examples
-#' # Examples here
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_redirect.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Reactive expression that generates a url with an id variable
+#'     # parsed from the url
+#'     url_redirect <- reactive({
+#'       params <- sd_get_url_pars()
+#'       id <- params["id"]
+#'       return(paste0("https://www.google.com?id=", id))
+#'     })
+#'
+#'     # Create the redirect button
+#'     sd_redirect(
+#'       id = "redirect_url_pars",
+#'       url = url_redirect(),
+#'       button = TRUE,
+#'       label = "Redirect"
+#'     )
+#'
+#'     sd_skip_if(
+#'       input$screening_question == "end_1" ~ "end_page_1",
+#'       input$screening_question == "end_1" ~ "end_page_2",
+#'     )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
+#' }
+#'
+#' @export
 sd_get_url_pars <- function(...) {
     shiny::reactive({
         session <- shiny::getDefaultReactiveDomain()
@@ -710,7 +870,6 @@ sd_get_url_pars <- function(...) {
     })()
     # Extra parentheses is added so that the reactive expression is evaluated
     # when the function is called
-
 }
 
 #' Create a placeholder for a reactive survey question
@@ -718,16 +877,8 @@ sd_get_url_pars <- function(...) {
 #' This function is depreciated - use `sd_output()` instead.
 #'
 #' @param id A unique identifier for the question.
-#' @return A Shiny UI element that serves as a placeholder for the reactive question.
-#'
-#' @examples
-#' \dontrun{
-#' # Deprecated:
-#' sd_display_question("name")
-#'
-#' # Use instead:
-#' sd_output("name", type = "question")
-#' }
+#' @return A 'shiny' UI element that serves as a placeholder for the reactive
+#' question.
 #'
 #' @export
 sd_display_question <- function(id) {
@@ -739,24 +890,12 @@ sd_display_question <- function(id) {
 #'
 #' This function is depreciated - use `sd_output()` instead.
 #' @param id The ID of the question to display
-#' @param display_type The type of display. Can be "inline" (default), "text", "verbatim", or "ui".
+#' @param display_type The type of display. Can be `"inline"` (default),
+#'   `"text"`, `"verbatim"`, or `"ui"`.
 #' @param wrapper A function to wrap the output
 #' @param ... Additional arguments passed to the wrapper function
 #'
-#' @return A Shiny UI element displaying the question's value
-#'
-#' @examples
-#' \dontrun{
-#' # Deprecated:
-#' sd_display_value("name")
-#' sd_display_value("age", display_type = "text")
-#' sd_display_value("email", display_type = "inline", wrapper = function(x) tags$strong(x))
-#'
-#' # Use instead:
-#' sd_output("name", type = "value")
-#' sd_output("age", type = "value", display = "text")
-#' sd_output("email", type = "value", display = "inline", wrapper = function(x) tags$strong(x))
-#' }
+#' @return A 'shiny' UI element displaying the question's value
 #'
 #' @export
 sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
@@ -767,45 +906,55 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' Output Function for Displaying reactive objects and values
 #'
 #' @param id Character string. A unique identifier for the output element.
-#' @param type Character string. Specifies the type of output. Can be "question", "label_question", "value", "label_option", or `NULL.`
-#'   If `NULL`, the function behaves like `shiny::uiOutput()`.
-#' @param width Character string. The width of the UI element. Defaults to "100%".
-#' @param display Character string. Specifies the display type for "value" outputs.
-#'   Can be "text", "verbatim", or "ui". Only used when `type = "value"`.
-#' @param inline Logical. Whether to render the output inline. Defaults to `TRUE`.
-#' @param wrapper Function. A function to wrap the output. Only used when `type = "value"`.
-#' @param ... Additional arguments passed to the underlying Shiny functions or the wrapper function.
+#' @param type Character string. Specifies the type of output. Can be
+#'   `"question"`, `"value"`, or `NULL.` If `NULL`, the function behaves like
+#'   `shiny::uiOutput()`.
+#' @param width Character string. The width of the UI element. Defaults to
+#'   `"100%"`.
+#' @param display Character string. Specifies the display type for `"value"`
+#'    outputs. Can be `"text"`, `"verbatim"`, or `"ui"`. Only used when
+#'   `type = "value"`.
+#' @param inline Logical. Whether to render the output inline. Defaults to
+#'   `TRUE`.
+#' @param wrapper Function. A function to wrap the output. Only used when
+#'   `type = "value"`.
+#' @param ... Additional arguments passed to the underlying 'shiny' functions
+#'   or the wrapper function.
 #'
-#' @return A Shiny UI element, the type of which depends on the input parameters.
+#' @return A 'shiny' UI element, the type of which depends on the input
+#' parameters.
 #'
 #' @details
 #' The function behaves differently based on the `type` parameter:
 #' - If `type` is `NULL`, it acts like `shiny::uiOutput()`.
 #' - If `type` is `"question"`, it creates a placeholder for a reactive survey question.
-#' - If `type` is `"value"`, it creates an output to display the value of a survey question, 
-#'   with the display style determined by the `display` parameter.
-#' - If `type` is `"label_option"`, it creates an output to display the label of the value of a survey question,
-#'   with the display style determined by the `display` parameter.
-#' - If `type` is `"label_question"`, it creates an output to display the survey question,
+#' - If `type` is `"value"`, it creates an output to display the value of a survey question,
 #'   with the display style determined by the `display` parameter.
 #'
 #' @examples
-#' \dontrun{
-#' # Create a placeholder for a reactive question
-#' sd_output('cbc1', type = 'question')
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # Display the value of a survey question inline
-#' sd_output('cbc1', type = 'value', inline = TRUE)
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_output.qmd",
+#'                              package = "surveydown")
 #'
-#' # Display the label of the choosen question value (from the list of options)
-#' sd_output('cbc1', type = 'label_option')
-#' 
-#' # Use as a simple uiOutput
-#' sd_output('redirect')
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
 #'
-#' # Use with a wrapper function
-#' sd_output('age', type = 'value', display = 'text',
-#'           wrapper = function(x) tags$strong(x))
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
 #' }
 #'
 #' @export
@@ -829,11 +978,11 @@ sd_output <- function(
 
     if (type %in% c("value", "label_option", "label_question")) {
       type_id <- paste0(id, "_", type)
-  
+
       if (!display %in% c("text", "verbatim", "ui")) {
         stop("Invalid display type. Choose 'text', 'verbatim', or 'ui'.")
       }
-  
+
       output <- switch(display,
         "text" = shiny::textOutput(type_id, inline = inline),
         "verbatim" = shiny::verbatimTextOutput(type_id, inline = inline),
@@ -841,11 +990,11 @@ sd_output <- function(
         # Default to textOutput if display is not specified
         shiny::textOutput(type_id, inline = inline)
       )
-  
+
       if (!is.null(wrapper)) {
         output <- wrapper(output, ...)
       }
-  
+
       return(output)
     }
 
@@ -854,15 +1003,17 @@ sd_output <- function(
 
 #' Generate a Random Completion Code
 #'
-#' This function generates a random completion code with a specified number of digits.
-#' The code is returned as a character string.
+#' This function generates a random completion code with a specified number of
+#' digits. The code is returned as a character string.
 #'
-#' @param digits An integer specifying the number of digits in the completion code.
-#'   Must be a positive integer. Default is 6.
+#' @param digits An integer specifying the number of digits in the completion
+#'   code. Must be a positive integer. Default is 6.
 #'
 #' @return A character string representing the random completion code.
 #'
 #' @examples
+#' library(surveydown)
+#'
 #' sd_completion_code()  # generates a 6-digit code
 #' sd_completion_code(digits = 8)  # generates an 8-digit code
 #' sd_completion_code(digits = 4)  # generates a 4-digit code

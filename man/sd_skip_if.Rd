@@ -8,24 +8,53 @@ sd_skip_if(...)
 }
 \arguments{
 \item{...}{One or more formulas defining skip conditions.
-The left-hand side of each formula should be a condition based on input values,
-and the right-hand side should be the ID of the page to skip to if the condition is met.}
+The left-hand side of each formula should be a condition based on input
+values, and the right-hand side should be the ID of the page to skip to if
+the condition is met.}
 }
 \value{
-A list of parsed conditions, where each element contains the condition and the target page ID.
+A list of parsed conditions, where each element contains the
+condition and the target page ID.
 }
 \description{
-This function is used to define conditions under which certain pages in the survey should be skipped.
-It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target page ID.
+This function is used to define conditions under which certain pages in the
+survey should be skipped. It takes one or more formulas where the left-hand
+side is the condition and the right-hand side is the target page ID.
 }
 \examples{
-\dontrun{
-sd_skip_if(
-  as.numeric(input$age < 18) ~ "underage_page",
-  input$country != "USA" ~ "international_page"
-)
+if (interactive()) {
+  library(surveydown)
+
+  # Get path to example survey file
+  survey_path <- system.file("examples", "sd_skip_if.qmd",
+                             package = "surveydown")
+
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+
+    # Skip to page based on input
+    sd_skip_if(
+      input$fav_fruit == "orange" ~ "orange_page",
+      input$fav_fruit == "other" ~ "other_page"
+    )
+
+    sd_server()
+  }
+
+  # Run the app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
 }
+
 }
 \seealso{
-\code{\link{sd_show_if}}
+\code{sd_show_if()}
 }

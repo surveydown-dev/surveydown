@@ -7,32 +7,36 @@
 sd_add_question(type = "mc", chunk = FALSE)
 }
 \arguments{
-\item{type}{A character string specifying the type of question template to insert.
-Default is "mc" (multiple choice). Available options are:
+\item{type}{A character string specifying the type of question template to
+insert.
+Default is \code{"mc"} (multiple choice). Available options are:
 \itemize{
-\item "mc": Multiple choice (single selection)
-\item "select": Dropdown selection
-\item "mc_multiple": Multiple choice (multiple selections)
-\item "mc_buttons": Multiple choice with button layout (single selection)
-\item "mc_multiple_buttons": Multiple choice with button layout (multiple selections)
-\item "text": Short text input
-\item "textarea": Long text input
-\item "numeric": Numeric input
-\item "slider": Slider input
-\item "date": Date input
-\item "daterange": Date range input
+\item \code{"mc"}: Multiple choice (single selection)
+\item \code{"select"}: Dropdown selection
+\item \code{"mc_multiple"}: Multiple choice (multiple selections)
+\item \code{"mc_buttons"}: Multiple choice with button layout (single selection)
+\item \code{"mc_multiple_buttons"}: Multiple choice with button layout (multiple selections)
+\item \code{"text"}: Short text input
+\item \code{"textarea"}: Long text input
+\item \code{"numeric"}: Numeric input
+\item \code{"slider"}: Slider input
+\item \code{"date"}: Date input
+\item \code{"daterange"}: Date range input
 }}
 
-\item{chunk}{Logical. If \code{TRUE}, the code will be generated with the R code chunk wrapper. Defaults to \code{FALSE}.}
+\item{chunk}{Logical. If \code{TRUE}, the code will be generated with the R code
+chunk wrapper. Defaults to \code{FALSE}.}
 }
 \value{
-This function does not return a value. It modifies the active document
-as a side effect by inserting text and potentially removing a function call.
+This function does not return a value. It modifies the active
+document as a side effect by inserting text and potentially removing a
+function call.
 }
 \description{
-This function inserts a template for a surveydown question at the current cursor position
-in the active RStudio document. It supports various question types and automatically
-removes the function call before inserting the template if it exists in the document.
+This function inserts a template for a surveydown question at the current
+cursor position in the active RStudio document. It supports various question
+types and automatically removes the function call before inserting the
+template if it exists in the document.
 }
 \details{
 The function performs the following steps:
@@ -42,15 +46,17 @@ The function performs the following steps:
 }
 }
 \examples{
-\dontrun{
-# Insert a default multiple choice question template
-sd_add_question()
+if (interactive()) {
+  library(surveydown)
 
-# Insert a text input question template
-sd_add_question("text")
+  # Insert a default multiple choice question template
+  sd_add_question()
 
-# Insert a slider question template
-sd_add_question("slider")
+  # Insert a text input question template
+  sd_add_question("text")
+
+  # Insert a slider question template
+  sd_add_question("slider")
 }
 
 }

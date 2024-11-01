@@ -7,39 +7,49 @@
 sd_get_data(db, refresh_interval = NULL)
 }
 \arguments{
-\item{db}{A list containing database connection details. Must have elements:
+\item{db}{A list containing database connection details created using
+\code{sd_database()}. Must have elements:
 \itemize{
-\item db: A DBI database connection object
-\item table: A string specifying the name of the table to query
+\item \code{db}: A \code{DBI} database connection object
+\item \code{table}: A string specifying the name of the table to query
 }}
 
-\item{refresh_interval}{Numeric. The time interval (in seconds) between data refreshes
-when in a reactive context. Default is \code{NULL}, meaning the data will not refresh.}
+\item{refresh_interval}{Numeric. The time interval (in seconds) between data
+refreshes when in a reactive context. Default is \code{NULL}, meaning the data
+will not refresh.}
 }
 \value{
-In a non-reactive context, returns a data frame containing all rows and columns
-from the specified table. In a reactive context, returns a reactive expression that,
-when called, returns the most recent data from the specified database table.
+In a non-reactive context, returns a data frame containing all rows
+and columns from the specified table. In a reactive context, returns a
+reactive expression that, when called, returns the most recent data from
+the specified database table.
 }
 \description{
 This function retrieves all data from a specified table in a database.
 It automatically detects whether it's being used in a reactive context
-(e.g., within a Shiny application) and behaves accordingly. In a reactive
+(e.g., within a 'shiny' application) and behaves accordingly. In a reactive
 context, it returns a reactive expression that automatically refreshes
 the data at specified intervals.
 }
 \examples{
+# Non-reactive context example
 \dontrun{
-# Non-reactive context
-db <- list(db = DBI::dbConnect(...), table = "my_table")
-data <- sd_get_data(db)
+  library(surveydown)
 
-# Reactive context (inside a Shiny server function)
-server <- function(input, output, session) {
-  data <- sd_get_data(db, refresh_interval = 10)
-  output$table <- renderTable({
-    data()  # Note the parentheses to retrieve the reactive value
-  })
-}
+  # Assuming you have a database connection called db created using
+  # sd_database(), you can fetch data with:
+
+  data <- sd_get_data(db)
+  head(data)
+
+  # Reactive context example (inside a surveydown app)
+
+  server <- function(input, output, session) {
+    data <- sd_get_data(db, refresh_interval = 10)
+
+    output$data_table <- renderTable({
+      data()  # Note the parentheses to retrieve the reactive value
+    })
+  }
 }
 }

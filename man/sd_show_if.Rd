@@ -13,22 +13,46 @@ and the right-hand side should be the ID of the question to show if the conditio
 }
 \value{
 A list of parsed conditions, where each element contains the condition and the target question ID.
-Returns NULL if no conditions are provided.
+Returns \code{NULL} if no conditions are provided.
 }
 \description{
 This function is used to define conditions under which certain questions in the survey should be shown.
 It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
-If called with no arguments, it will return NULL and set no conditions.
+If called with no arguments, it will return \code{NULL} and set no conditions.
 }
 \examples{
-\dontrun{
-sd_show_if(
-  input$has_pets == "yes" ~ "pet_details",
-  input$employment == "employed" ~ "job_questions"
-)
+if (interactive()) {
+  library(surveydown)
+
+  # Get path to example survey file
+  survey_path <- system.file("examples", "sd_show_if.qmd",
+                             package = "surveydown")
+
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+
+    sd_show_if(
+      # If "Other" is chosen, show the conditional question
+      input$fav_fruit == "other" ~ "fav_fruit_other"
+    )
+
+    sd_server()
+  }
+
+  # Run the app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
 }
 
 }
 \seealso{
-\code{\link{sd_skip_if}}
+\code{sd_skip_if()}
 }

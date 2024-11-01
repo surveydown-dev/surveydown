@@ -18,8 +18,10 @@ list_name_md_to_html <- function(list) {
 
 #' Display Package Information on Attach
 #'
-#' This function is called when the package is attached. It displays version number,
-#' authors, and citation information.
+#' This function is called when the package is attached.
+#' It displays version number, authors, and citation information.
+#' It also adds some folders to the 'shiny' resource path with
+#' shiny::addResourcePath()
 #'
 #' @param libname The library where the package is installed
 #' @param pkgname The name of the package
@@ -77,25 +79,32 @@ include_folder <- function(folder, create = FALSE) {
     }
 }
 
-#' Include a folder to Shiny's resource path
+#' Include a folder to the 'shiny' resource path
 #'
-#' This function includes a specified folder to Shiny's resource path,
-#' making it accessible for serving static files in a Shiny application.
+#' This function includes a specified folder to the 'shiny' resource path,
+#' making it accessible for serving static files in a 'shiny' application.
 #' It checks for pre-existing resource paths to avoid conflicts with
 #' folders already included by the package.
 #'
-#' @param folder A character string specifying the name of the folder to include.
-#'   This folder should exist in the root directory of your Shiny app.
+#' @param folder A character string specifying the name of the folder to
+#'   include. This folder should exist in the root directory of your 'shiny'
+#'   app.
 #'
 #' @return `NULL` invisibly. The function is called for its side effect of
-#'   adding a resource path to Shiny.
-#'
-#' @export
+#'   adding a resource path to 'shiny'.
 #'
 #' @examples
-#' \dontrun{
-#' sd_include_folder("custom_images")
+#' if (interactive()) {
+#'   library(shiny)
+#'
+#'   # Create an "images" folder
+#'   dir.create("images")
+#'
+#'   # Include the folder in the shiny resource path
+#'   sd_include_folder("images")
 #' }
+#'
+#' @export
 sd_include_folder <- function(folder) {
     # List of folders pre-included by the package
     pre_included_folders <- names(shiny::resourcePaths())
@@ -158,23 +167,23 @@ tibble_to_list_of_lists <- function(tbl) {
 
 #' Create a new survey template
 #'
-#' This function creates a new survey template by copying files from the package's
-#' template directory to a specified path. It handles file conflicts and provides
-#' appropriate warnings and feedback.
+#' This function creates a new survey template by copying files from the
+#' package's template directory to a specified path. It handles file conflicts
+#' and provides appropriate warnings and feedback.
 #'
-#' @param path A character string specifying the directory where the survey template
-#'   should be created. Defaults to the current working directory.
+#' @param path A character string specifying the directory where the survey
+#'   template should be created. Defaults to the current working directory.
 #' @param structure A character string specifying the template structure to use.
-#'   Must be either "single" or "multi". Defaults to "single".
+#'   Must be either `"single"` or `"multi"`. Defaults to `"single"`.
 #'
-#' @return Invisible NULL. The function is called for its side effects of creating
-#'   files and providing user feedback.
+#' @return Invisible `NULL`. The function is called for its side effects of
+#'   creating files and providing user feedback.
 #'
 #' @details
 #' The function performs the following steps:
 #' \itemize{
 #'   \item If the specified path is the current working directory, it asks for user confirmation.
-#'   \item Validates the specified structure ("single" or "multi").
+#'   \item Validates the specified structure (`"single"` or `"multi"`).
 #'   \item Creates the target directory if it doesn't exist.
 #'   \item Copies all files from the package's template directory (based on the specified structure) to the target path.
 #'   \item Preserves the directory structure of the template.
@@ -186,15 +195,12 @@ tibble_to_list_of_lists <- function(tbl) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Create a multi-page survey template in the current working directory
-#' sd_create_survey()
+#' if (interactive()) {
+#'   # Create a single-page survey template
+#'   sd_create_survey(structure = "single")
 #'
-#' # Create a single-page survey template in a specific directory
-#' sd_create_survey("path/to/my/survey", structure = "single")
-#'
-#' # Create a multi-page survey template in a specific directory
-#' sd_create_survey("path/to/my/survey", structure = "multi")
+#'   # Create a multi-page survey template
+#'   sd_create_survey(structure = "multi")
 #' }
 sd_create_survey <- function(path = getwd(), structure = "single") {
     # Check if using current directory and confirm with user
@@ -246,50 +252,16 @@ sd_create_survey <- function(path = getwd(), structure = "single") {
     }
 }
 
-#' Deploy a Surveydown App
-#'
-#' This function is a wrapper for `rsconnect::deployApp()` specifically designed
-#' for deploying Surveydown applications. It simplifies the deployment process
-#' by allowing you to specify just the app name.
-#'
-#' @param name A character string specifying the name of the app. Default is "survey".
-#'
-#' @return This function doesn't return a value; it deploys the app to Shiny Server.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Deploy with default name "survey"
-#' sd_deploy()
-#'
-#' # Deploy with a custom name
-#' sd_deploy("my_custom_survey")
-#' }
-#'
-#' @seealso \code{\link[rsconnect]{deployApp}}
-#'
-#' @importFrom rsconnect deployApp
-sd_deploy <- function(name = "survey") {
-    rsconnect::deployApp(appName = name)
-}
-
 #' Required Set Up Function
 #'
 #' This function is depreciated and no longer needed.
 #'
-#' @details The function configures the Shiny application to use Bootstrap 5 for styling and enables
-#'   Shinyjs for JavaScript functionalities within the application.
+#' @details The function configures the 'shiny' application to use Bootstrap 5
+#'   for styling and enables 'shinyjs' for JavaScript functionalities within
+#'   the application.
 #'
-#' @return This function does not return a value. It is called for its side effects of setting up the Shiny application.
-#'
-#' @examples
-#' \dontrun{
-#'   ui <- fluidPage(
-#'     sd_setup(),
-#'     # Your UI elements here
-#'   )
-#' }
+#' @return This function does not return a value. It is called for its side
+#' effects of setting up the 'shiny' application.
 #'
 #' @export
 sd_setup <- function() {
@@ -414,47 +386,51 @@ question_templates <- function(type = "mc") {
 
 #' Add a Question Template to the Current Document
 #'
-#' This function inserts a template for a surveydown question at the current cursor position
-#' in the active RStudio document. It supports various question types and automatically
-#' removes the function call before inserting the template if it exists in the document.
+#' This function inserts a template for a surveydown question at the current
+#' cursor position in the active RStudio document. It supports various question
+#' types and automatically removes the function call before inserting the
+#' template if it exists in the document.
 #'
-#' @param type A character string specifying the type of question template to insert.
-#'   Default is "mc" (multiple choice). Available options are:
+#' @param type A character string specifying the type of question template to
+#'   insert.
+#'   Default is `"mc"` (multiple choice). Available options are:
 #'   \itemize{
-#'     \item "mc": Multiple choice (single selection)
-#'     \item "select": Dropdown selection
-#'     \item "mc_multiple": Multiple choice (multiple selections)
-#'     \item "mc_buttons": Multiple choice with button layout (single selection)
-#'     \item "mc_multiple_buttons": Multiple choice with button layout (multiple selections)
-#'     \item "text": Short text input
-#'     \item "textarea": Long text input
-#'     \item "numeric": Numeric input
-#'     \item "slider": Slider input
-#'     \item "date": Date input
-#'     \item "daterange": Date range input
+#'     \item `"mc"`: Multiple choice (single selection)
+#'     \item `"select"`: Dropdown selection
+#'     \item `"mc_multiple"`: Multiple choice (multiple selections)
+#'     \item `"mc_buttons"`: Multiple choice with button layout (single selection)
+#'     \item `"mc_multiple_buttons"`: Multiple choice with button layout (multiple selections)
+#'     \item `"text"`: Short text input
+#'     \item `"textarea"`: Long text input
+#'     \item `"numeric"`: Numeric input
+#'     \item `"slider"`: Slider input
+#'     \item `"date"`: Date input
+#'     \item `"daterange"`: Date range input
 #'   }
-#' @param chunk Logical. If `TRUE`, the code will be generated with the R code chunk wrapper. Defaults to `FALSE`.
+#' @param chunk Logical. If `TRUE`, the code will be generated with the R code
+#'   chunk wrapper. Defaults to `FALSE`.
 #' @details
 #' The function performs the following steps:
 #' 1. Checks for and removes any existing `sd_add_question()` function call in the document.
 #' 2. Inserts the appropriate question template at the current cursor position.
 #'
-#' @return This function does not return a value. It modifies the active document
-#'   as a side effect by inserting text and potentially removing a function call.
+#' @return This function does not return a value. It modifies the active
+#' document as a side effect by inserting text and potentially removing a
+#' function call.
 #'
 #' @examples
-#' \dontrun{
-#' # Insert a default multiple choice question template
-#' sd_add_question()
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' # Insert a text input question template
-#' sd_add_question("text")
+#'   # Insert a default multiple choice question template
+#'   sd_add_question()
 #'
-#' # Insert a slider question template
-#' sd_add_question("slider")
+#'   # Insert a text input question template
+#'   sd_add_question("text")
+#'
+#'   # Insert a slider question template
+#'   sd_add_question("slider")
 #' }
-#'
-#' @import rstudioapi
 #'
 #' @export
 sd_add_question <- function(type = "mc", chunk = FALSE) {
@@ -488,35 +464,38 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
 
 #' Add a Page Template to the Current Document
 #'
-#' This function inserts a template for a surveydown page at the current cursor position
-#' in the active RStudio document. It provides a basic structure for a new page, including
-#' a title, content area, and a next button. If the function call exists in the document,
-#' it will be removed before inserting the template.
+#' This function inserts a template for a surveydown page at the current cursor
+#' position in the active RStudio document. It provides a basic structure for a
+#' new page, including a title, content area, and a next button. If the
+#' function call exists in the document, it will be removed before inserting
+#' the template.
 #'
 #' @details
-#' IMPORTANT: This function should be run outside any division or R code chunk in your Quarto document.
-#' Running it inside a division or code chunk may result in incorrect page structure.
+#' IMPORTANT: This function should be run outside any division or R code chunk
+#' in your 'Quarto' document. Running it inside a division or code chunk may
+#' result in an incorrect page structure.
 #'
 #' The function performs the following steps:
 #' 1. Checks for and removes any existing `sd_add_page()` function call in the document.
 #' 2. Inserts a template at the current cursor position.
 #'
 #' The template includes:
-#' - A div with class 'sd-page' and a placeholder ID
+#' - A div with class `'sd-page'` and a placeholder page ID
 #' - A placeholder for the page title
 #' - A placeholder for page contents
 #' - An R code chunk with a placeholder for questions and a next button
 #'
-#' @return This function does not return a value. It modifies the active document
-#'   as a side effect by inserting text and potentially removing a function call.
+#' @return This function does not return a value. It modifies the active
+#' document as a side effect by inserting text and potentially removing a
+#' function call.
 #'
 #' @examples
-#' \dontrun{
-#' # Insert a new page template
-#' sd_add_page()
-#' }
+#' if (interactive()) {
+#'   library(surveydown)
 #'
-#' @import rstudioapi
+#'   # Insert a new page template
+#'   sd_add_page()
+#' }
 #'
 #' @export
 sd_add_page <- function() {
@@ -562,24 +541,6 @@ sd_next()
   rstudioapi::insertText(location = cursor, text = template)
 }
 
-#' Update Surveydown Package
-#'
-#' This function directly updates the surveydown package to the latest version
-#' from GitHub, without checking the current version.
-#'
-#' @return No return value, called for side effects.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' sd_update()
-#' }
-sd_update <- function() {
-  message("Updating surveydown to the latest version...")
-  remotes::install_github("surveydown-dev/surveydown", force = TRUE)
-  message("Update complete.")
-}
-
 #' Check Surveydown Version
 #'
 #' This function checks if the local surveydown package is up-to-date with
@@ -592,7 +553,7 @@ sd_update <- function() {
 #' @export
 #'
 #' @examples
-#' sd_version()
+#' surveydown::sd_version()
 sd_version <- function() {
     # Get local version
     local_surveydown_version <- utils::packageVersion("surveydown")

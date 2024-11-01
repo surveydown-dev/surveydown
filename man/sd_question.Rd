@@ -63,7 +63,8 @@ sd_question(
 \item{row}{List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.}
 }
 \value{
-A Shiny UI element wrapped in a div with a data attribute for question ID.
+A 'shiny' UI element wrapped in a div with a data attribute for
+question ID.
 }
 \description{
 This function creates various types of survey questions for use in a Surveydown survey.
@@ -85,23 +86,34 @@ The function supports various question types:
 \item "matrix": Matrix-style question with rows and columns
 }
 
-For "matrix" type questions, use the \code{row} parameter to define the rows of the matrix.
-Each element in the \code{row} list should have a name (used as the row ID) and a value (used as the row label).
+For "matrix" type questions, use the \code{row} parameter to define the rows of
+the matrix. Each element in the \code{row} list should have a name (used as the
+row ID) and a value (used as the row label).
 }
 \examples{
-sd_question("text", "name", "What is your name?")
-sd_question("mc", "color", "What is your favorite color?", option = c("Red", "Blue", "Green"))
+if (interactive()) {
+  library(surveydown)
 
-# Example of a matrix question
-sd_question(
-  type = "matrix",
-  id   = "satisfaction",
-  label = "Rate your satisfaction with the following:",
-  row = c("Customer Service" = "service",
-          "Product Quality"  = "quality",
-          "Price"            = "price"),
-  option = c("Unsatisfied" = 1,
-             "Neutral"     = 2,
-             "Satisfied"   = 3))
+  # Get path to example survey file
+  survey_path <- system.file("examples", "basic_survey.qmd",
+                             package = "surveydown")
+
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+    sd_server()
+  }
+
+  # Run the app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
+}
 
 }

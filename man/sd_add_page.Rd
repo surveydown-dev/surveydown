@@ -7,18 +7,21 @@
 sd_add_page()
 }
 \value{
-This function does not return a value. It modifies the active document
-as a side effect by inserting text and potentially removing a function call.
+This function does not return a value. It modifies the active
+document as a side effect by inserting text and potentially removing a
+function call.
 }
 \description{
-This function inserts a template for a surveydown page at the current cursor position
-in the active RStudio document. It provides a basic structure for a new page, including
-a title, content area, and a next button. If the function call exists in the document,
-it will be removed before inserting the template.
+This function inserts a template for a surveydown page at the current cursor
+position in the active RStudio document. It provides a basic structure for a
+new page, including a title, content area, and a next button. If the
+function call exists in the document, it will be removed before inserting
+the template.
 }
 \details{
-IMPORTANT: This function should be run outside any division or R code chunk in your Quarto document.
-Running it inside a division or code chunk may result in incorrect page structure.
+IMPORTANT: This function should be run outside any division or R code chunk
+in your 'Quarto' document. Running it inside a division or code chunk may
+result in an incorrect page structure.
 
 The function performs the following steps:
 \enumerate{
@@ -28,16 +31,18 @@ The function performs the following steps:
 
 The template includes:
 \itemize{
-\item A div with class 'sd-page' and a placeholder ID
+\item A div with class \code{'sd-page'} and a placeholder page ID
 \item A placeholder for the page title
 \item A placeholder for page contents
 \item An R code chunk with a placeholder for questions and a next button
 }
 }
 \examples{
-\dontrun{
-# Insert a new page template
-sd_add_page()
+if (interactive()) {
+  library(surveydown)
+
+  # Insert a new page template
+  sd_add_page()
 }
 
 }

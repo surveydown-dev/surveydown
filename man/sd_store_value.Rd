@@ -2,27 +2,58 @@
 % Please edit documentation in R/server.R
 \name{sd_store_value}
 \alias{sd_store_value}
-\title{Store a value}
+\title{Store a value in the survey data}
 \usage{
 sd_store_value(value, id = NULL)
 }
 \arguments{
-\item{value}{The raid value to be stored.}
+\item{value}{The value to be stored. This can be any R object that can be
+coerced to a character string.}
 
-\item{id}{(Optional) The id (name) of the value in the data.
-If not provided, the id of the \code{value} variable will be used.}
+\item{id}{(Optional) Character string. The id (name) of the value in the
+data. If not provided, the name of the \code{value} variable will be used.}
 }
 \value{
-NULL (invisibly)
+\code{NULL} (invisibly)
 }
 \description{
-This function allows storing additional values to be included in the survey data,
-such as respondent IDs or other data.
+This function allows storing additional values to be included in the survey
+data, such as respondent IDs or other metadata.
 }
 \examples{
-\dontrun{
-  sd_store_value(respondentID)
-  sd_store_value(respondentID, "respID")
+if (interactive()) {
+  library(surveydown)
+
+  # Get path to example survey file
+  survey_path <- system.file("examples", "sd_ui.qmd",
+                             package = "surveydown")
+
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "basic_survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+
+    # Create a respondent ID to store
+    respondentID <- 42
+
+    # Store the respondentID
+    sd_store_value(respondentID)
+
+    # Store the respondentID as the variable "respID"
+    sd_store_value(respondentID, "respID")
+
+    sd_server()
+  }
+
+  # Run the app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
 }
 
 }

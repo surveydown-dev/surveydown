@@ -14,13 +14,9 @@ surveydown.Rproj
 ^doc$
 ^Meta$
 build.R
-data-raw
 ^cran-comments\.md$
 ^\.travis\.yml$
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
 ^.vscode$
 ^app.R$
-^survey.qmd$
-^_extensions$
-^data.csv$

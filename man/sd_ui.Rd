@@ -7,7 +7,7 @@
 sd_ui()
 }
 \value{
-A Shiny UI object
+A 'shiny' UI object
 }
 \description{
 This function creates the user interface for a surveydown survey,
@@ -19,15 +19,39 @@ The function reads the following settings from the survey.qmd YAML header:
 \itemize{
 \item \code{theme}: The theme to be applied to the survey.
 \item \code{barcolor}: The color of the progress bar (should be a valid hex color).
-\item \code{barposition}: The position of the progress bar ('top', 'bottom', or 'none').
+\item \code{barposition}: The position of the progress bar (\code{'top'}, \code{'bottom'}, or \code{'none'}).
 }
 
-If \code{barcolor} is not specified or is NULL, the default theme color will be used.
-If \code{barposition} is not specified, it defaults to 'top'.
+If \code{barcolor} is not specified or is \code{NULL}, the default theme color will be
+used. If \code{barposition} is not specified, it defaults to 'top'.
 }
 \examples{
-\dontrun{
-# In your app.R or ui.R file:
-ui <- sd_ui()
+if (interactive()) {
+  library(surveydown)
+
+  # Get path to example survey file
+  survey_path <- system.file("examples", "sd_ui.qmd",
+                             package = "surveydown")
+
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+    sd_server()
+  }
+
+  # Run the app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
 }
+
+}
+\seealso{
+\code{sd_server()} for creating the server-side logic of the survey
 }

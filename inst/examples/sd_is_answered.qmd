@@ -1,0 +1,32 @@
+---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+::: {#page_id .sd-page}
+
+This is a sample survey
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'apple_text',
+  label = 'Write a type of apple'
+)
+
+sd_question(
+  type  = 'mc',
+  id    = 'other_fruit',
+  label = 'Do you also like other fruits?',
+  option = c(
+    'Yes' = 'yes',
+    'No'  = 'no'
+  )
+)
+```
+
+:::
