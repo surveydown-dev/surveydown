@@ -68,6 +68,8 @@
 <img src="logo.png" class="logo" alt=""><h1 id="surveydown">surveydown<a class="anchor" aria-label="anchor" href="#surveydown"></a>
 </h1>
 </div>
+<!-- badges: start -->
+
 <blockquote>
 <p>Note: This site only documents the {surveydown} R package - visit our main site at <a href="https://surveydown.org" class="external-link">surveydown.org</a> for more information!</p>
 </blockquote>
@@ -101,12 +103,18 @@
 <div class="section level3">
 <h3 id="install-the-surveydown-r-package">Install the {surveydown} R package<a class="anchor" aria-label="anchor" href="#install-the-surveydown-r-package"></a>
 </h3>
-<p>The {surveydown} R package is not yet on CRAN, but you can install the development version from GitHub with the following command in your R console:</p>
+<p>You can install {surveydown} from CRAN in your R console:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"surveydown"</span><span class="op">)</span></span></code></pre></div>
+<p>or you can install the development version from <a href="https://github.com/surveydown-dev/surveydown" class="external-link">GitHub</a>:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu">pak</span><span class="op">(</span><span class="st">'surveydown-dev/surveydown'</span><span class="op">)</span></span></code></pre></div>
+<p>Load the package with:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pkg.surveydown.org">surveydown</a></span><span class="op">)</span></span></code></pre></div>
 <p>You can also check which version you have installed:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_version.html">sd_version</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -170,7 +178,7 @@
 <h2 id="citation-information">Citation Information<a class="anchor" aria-label="anchor" href="#citation-information"></a>
 </h2>
 <p>If you use this package for in a publication, please cite it! You can get the citation by typing <code>citation("surveydown")</code> into R:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"surveydown"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -216,7 +224,14 @@
 </ul>
 </div>
 
-
+<div class="dev-status">
+<h2 data-toc-skip>Dev status</h2>
+<ul class="list-unstyled">
+<li><a href="https://CRAN.R-project.org/package=surveydown" class="external-link"><img src="https://www.r-pkg.org/badges/version/surveydown" alt="CRAN status"></a></li>
+<li><a href="https://cran.r-project.org/package=surveydown" class="external-link"><img src="http://cranlogs.r-pkg.org/badges/grand-total/surveydown?color=blue"></a></li>
+<li><a href="https://cran.r-project.org/package=surveydown" class="external-link"><img src="http://cranlogs.r-pkg.org/badges/surveydown" alt="CRAN RStudio mirror downloads"></a></li>
+</ul>
+</div>
 
   </aside>
 </div>
