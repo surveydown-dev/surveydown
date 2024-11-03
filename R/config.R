@@ -24,12 +24,12 @@ run_config <- function(
         sapply(as.character) |>
         paste(collapse = "\n")
 
-    # Extract page and question structures
+    # Get the question structure (extract first time from HTML, otherwise YAML)
     question_structure <- get_question_structure(html_content)
 
     page_ids <- sapply(pages, function(p) p$id)
     question_ids <- names(question_structure)
-
+    
     # Check for duplicate, overlapping, or pre-defined IDs
     check_ids(page_ids, question_ids)
 
@@ -198,50 +198,224 @@ extract_html_pages <- function(
     return(pages)
 }
 
-# Get question structure from HTML
+# Get question structure ('smart': load YAML or extract from HTML and save to YAML)
 get_question_structure <- function(html_content) {
+    # Set file names
+    # TODO define file names globaly (in the config.R or external config file)
+    file_survey <- 'survey.qmd'
+    file_html <- 'survey.html'
+    file_question <- 'survey_question.yml'
+
+    # Check time modified (to see if the question structure is up to date)
+    time_qmd <- file.info(file_survey)$mtime
+    time_yml <- file.info(file_question)$mtime
+    
+    # Get the question structure (A: load YAML; or B: extract from HTML and save to YAML)
+    if (file.exists(file_question) && time_qmd < time_yml) {
+        message(glue::glue("Loading extracted question structure from {file_question}."))
+
+        question_structure <- load_question_structure_yaml(file_question)
+    } else {
+        message(glue::glue("Extracting question structure from {file_html} and save to {file_question} file."))
+
+        question_structure <- extract_question_structure_html(html_content)
+        write_question_structure_yaml(question_structure, file_question)
+    }
+
+    return(question_structure)
+}
+
+# Extract question structure from HTML
+extract_question_structure_html <- function(html_content) {
     question_nodes <- rvest::html_nodes(html_content, "[data-question-id]")
 
     question_structure <- list()
-    all_question_ids <- character()
 
+    # Loop through all question nodes and extract information
     for (question_node in question_nodes) {
         question_id <- rvest::html_attr(question_node, "data-question-id")
-        all_question_ids <- c(all_question_ids, question_id)
 
-        # Check if it's a matrix question
+        type <- question_node |>
+            rvest::html_nodes(glue::glue("#{question_id}")) |>
+            rvest::html_attr("class")
+        
         is_matrix <- length(rvest::html_nodes(question_node, ".matrix-question")) > 0
 
-        ## Extract the question text (label)
-        label_question <- question_node |>
+        if (is_matrix) type <- "matrix"
+
+        # Extract the question text (label)
+        label <- question_node |>
             rvest::html_nodes("p") |>
             rvest::html_text(trim = TRUE)
-    
-        # Extract the options for the question (for mc, *_multi, *_buttons, and select)
-        options <- question_node |>
-            rvest::html_nodes("input[type='radio'], input[type='checkbox'], option") |>
-            rvest::html_attr("value") |>
-            {
-            \(x) if (length(x) == 0) "" else x
-            }()
-    
-        # Extract the option labels of the question (for mc, *_multi, *_buttons, and select)
-        label_options <- question_node |>
-            rvest::html_nodes("label>span, button, option") |>
-            rvest::html_text(trim = TRUE) # |>
-        # {\(x) if(length(x) == 0) "" else x }()
-    
-        # Store the options and type for this question in a named list
+             
+        # Write main information to the question structure
         question_structure[[question_id]] <- list(
-            id = question_id,
-            label_question = label_question,
-            options = options,
-            label_options = label_options,
-            is_matrix = is_matrix
-        )
+            type = type,
+            is_matrix = is_matrix,
+            label = label
+          )
+
+        # Extract options for the question ( mc, *_multiple, *_buttons, and select)
+        if (grepl("radio|checkbox|select|matrix", type)) {
+
+            options <- question_node |>
+                rvest::html_nodes("input[type='radio'], input[type='checkbox'], option") |>
+                rvest::html_attr("value")
+
+            label_options <- question_node |>
+                rvest::html_nodes("label>span, button, option") |>
+                rvest::html_text(trim = TRUE)
+      
+            names(options) <- label_options
+            
+            # Write options to the question structure
+            question_structure[[question_id]]$options <- as.list(options)
+        
+        # Extract options for the question (slider)
+        } else if (grepl("slider", type)) {
+            options_raw <- question_node |>
+                rvest::html_nodes("input") |>
+                rvest::html_attr("data-swvalues")
+
+            options <- gsub("\\[|\\]|\\\"", "", options_raw) |>
+                strsplit(",") |>
+                unlist()
+
+            # names(options) <- options # TODO no labels in html for slider
+
+            question_structure[[question_id]]$options <- as.list(options)
+        }
+
+        # Extract the rows and options for the matrix main question
+        if (is_matrix) {
+      
+            rows <- question_node  |>
+                rvest::html_nodes("div > div[id]") |>
+                rvest::html_attr("id")
+          
+            # Remove the question ID prefix from the row names
+            rows <- gsub(glue::glue("{question_id}_"), "", rows)
+        
+            label_rows <- question_node |>
+                rvest::html_nodes("td:nth-child(1)") |> 
+                rvest::html_text(trim = TRUE)
+            
+            # remove first empty row label (option header)
+            label_rows <- label_rows[label_rows != ""]
+        
+            names(rows) <- label_rows
+
+            # Write rows to the question structure
+            question_structure[[question_id]]$row <- as.list(rows)
+            
+            # Correct to unique options (first extraction multiplies by subquestions)
+            options <- options[1:(length(options) / length(rows))]
+            question_structure[[question_id]]$options <- as.list(options)
+        }
     }
 
-    attr(question_structure, "all_ids") <- all_question_ids
+    return(question_structure)
+}
+
+# Write question structure to YAML
+write_question_structure_yaml <- function(question_structure, file_yaml) {
+
+    # Map question types to extracted html classes
+    type_replacement <- c(
+        'shiny-input-text form-control' = 'text',
+        'shiny-input-textarea form-control' = 'textarea',
+        'shiny-input-number form-control' = 'numeric',
+        'form-group shiny-input-radiogroup shiny-input-container' = 'mc',
+        'radio-group-buttons' = 'mc_buttons',
+        'form-group shiny-input-checkboxgroup shiny-input-container' = 'mc_multiple',
+        'checkbox-group-buttons' = 'mc_multiple_buttons',
+        'shiny-input-select' = 'select',
+        'js-range-slider sw-slider-text' = 'slider',
+        'shiny-date-input form-group shiny-input-container' = 'date',
+        'shiny-date-range-input form-group shiny-input-container' = 'daterange'
+    )
+    
+    # Loop through question structure and clean/prepare questions
+    question_structure <- lapply(question_structure, function(question) {
+    
+        # Rename type to function option names
+        question$type <- type_replacement[names(type_replacement) == question$type]
+        
+        if (question$is_matrix) question$type <- "matrix"
+
+        if (rlang::is_empty(question$type)) question$type <- "unknown"
+
+        # Remove indicator if is matrix (type is correctly set)
+        question$is_matrix <- NULL
+        
+        # Mark matrix subquestion to remove from list (and end further processing)
+        if (question$type == "mc" & length(question$label) == 0) {
+            return(NULL)
+        }
+        
+        # Remove first option from select type question
+        if (question$type == "select") {
+           question$options <- question$options[-1]
+        }
+
+        return(question)
+    })
+    
+    # Remove NULL elements (matrix subquestions)
+    question_structure <- Filter(Negate(is.null), question_structure)
+
+    # Write question to YAML (with comment in first lines)
+    yaml_content <- yaml::as.yaml(question_structure)
+
+    comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+    comment_line2 <- "# Question structure extracted from survey.html\n"
+
+    full_content <- paste0(comment_line1, comment_line2, yaml_content)
+
+    writeLines(full_content, con = file_yaml)
+}
+
+# Load question structure from YAML
+load_question_structure_yaml <- function(file_yaml) {
+
+    # Read question structure from YAML file
+    question_structure <- yaml::read_yaml(file_yaml)
+    
+    # Add matrix question indicator to all questions as FALSE (correct later)
+    question_structure <- lapply(question_structure, function(question) {
+        question$is_matrix <- FALSE
+        return(question)
+    })
+
+    # Get question types to create subquestions for matrix questions
+    question_types <- sapply(question_structure, function(q) q$type)
+    matrix_questions_ids <- names(question_types)[question_types == "matrix"]
+
+    # Loop trough matrix questions and add subquestions
+    for (matrix_question_id in matrix_questions_ids) {
+
+        # Get matrix question and subquestion (rows option) from question list
+        matrix_question <- question_structure[[matrix_question_id]]
+        rows <- matrix_question$row
+        
+        # Loop over subquestions and add to question structure (with label and options)
+        for (row_number in seq_along(rows)) {
+
+            subquestion_id <- paste0(matrix_question_id, "_", rows[[row_number]])
+            
+            subquestion_structure <- list(
+                type = "mc",
+                label = names(rows)[row_number],
+                options = matrix_question$options
+            )
+            
+            question_structure[[subquestion_id]] <- subquestion_structure
+        }
+        
+        # Add matrix question indicator
+        question_structure[[matrix_question_id]]$is_matrix <- TRUE
+    }
+
     return(question_structure)
 }
 
