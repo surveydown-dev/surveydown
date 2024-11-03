@@ -45,6 +45,7 @@ Imports:
     shinyWidgets,
     usethis,
     utils,
-    xml2
+    xml2,
+    yaml
 URL: https://pkg.surveydown.org
 BugReports: https://github.com/surveydown-dev/surveydown/issues
