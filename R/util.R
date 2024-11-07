@@ -30,13 +30,8 @@ list_name_md_to_html <- function(list) {
 .onAttach <- function(libname, pkgname) {
 
     # Add special folders to resource path
-    folders <- c('images', 'css', 'js', 'www')
+    folders <- c('_survey', 'images', 'css', 'js', 'www')
     for (folder in folders) { include_folder(folder) }
-
-    # Add survey_files folder to resource path
-    # (if survey.qmd exists and it's not self contained)
-    folder <- get_survey_file_folder()
-    if (!is.null(folder)) { include_folder(folder, create = TRUE) }
 
     # Print package data
     desc  <- utils::packageDescription(pkgname, libname)
@@ -49,24 +44,27 @@ list_name_md_to_html <- function(list) {
     )
 }
 
-get_survey_file_folder <- function() {
-    if (!survey_file_exists()) { return(NULL) }
-    if (!is_self_contained("survey.qmd")) {
-        return("survey_files")
-    }
-    return(NULL)
-}
-
 survey_file_exists <- function() {
     files <- basename(list.files(full.names = TRUE))
     if ("survey.qmd" %in% files) { return(TRUE) }
     return(FALSE)
 }
 
-is_self_contained <- function(x) {
-    result <- quarto::quarto_inspect(x)$formats$html$pandoc$`self-contained`
-    if (is.null(result)) { return(FALSE) }
-    return(result)
+is_self_contained <- function() {
+    metadata <- quarto::quarto_inspect("survey.qmd")
+    embedded <- metadata$formats$html$pandoc$`embed-resources`
+    if (!is.null(embedded)) {
+        if (embedded) {
+            return(TRUE)
+        }
+    }
+    self <- metadata$formats$html$pandoc$`self-contained`
+    if (!is.null(self)) {
+        if (self) {
+            return(TRUE)
+        }
+    }
+    return(FALSE)
 }
 
 include_folder <- function(folder, create = FALSE) {
