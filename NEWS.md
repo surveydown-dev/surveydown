@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+- Modified survey rendering to move all rendered files into "_survey" folder.
+- Export survey question metadata to "_survey/questions.yml" file (see #132).
+
 # surveydown 0.4.0
 
 - All examples updated to include run-able examples (where possible).
