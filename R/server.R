@@ -138,7 +138,8 @@ sd_server <- function(
         start_page,
         admin_page,
         skip_if,
-        show_if
+        show_if,
+        rate_survey
     )
 
     # Initialize local variables ----

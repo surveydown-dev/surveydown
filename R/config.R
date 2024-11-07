@@ -1,13 +1,14 @@
 run_config <- function(
-    required_questions = NULL,
-    all_questions_required = FALSE,
-    start_page = NULL,
-    admin_page = FALSE,
-    skip_if = NULL,
-    show_if = NULL
+    required_questions,
+    all_questions_required,
+    start_page,
+    admin_page,
+    skip_if,
+    show_if,
+    rate_survey
 ) {
-    # Always check for sd_close() in survey.qmd
-    # sd_close_present <- check_sd_close("survey.qmd")
+    # Check for sd_close() in survey.qmd if rate_survey used
+    if (rate_survey) { check_sd_close() }
 
     # Get the paths to all the survey files and folders
     paths <- get_paths()
@@ -81,15 +82,14 @@ run_config <- function(
 
 check_sd_close <- function(survey_file) {
     # Read the content of survey.qmd
-    qmd_content <- readLines(survey_file, warn = FALSE)
+    qmd_content <- readLines("survey.qmd", warn = FALSE)
 
     # Check for sd_close() call with any parameters
     sd_close_present <- any(grepl("sd_close\\s*\\(.*\\)", qmd_content))
 
     if (!sd_close_present) {
-        message("\u274C No sd_close() call found in ", survey_file, ". This may cause issues with data submission.")
+        warning("\u274C No sd_close() function found in 'survey.qmd' file. You must use sd_close() to trigger the rating question response at the end of the survey. You can also remove this rating question by setting 'rate_survey = FALSE' in sd_server().")
     }
-    return(sd_close_present)
 }
 
 get_paths <- function() {
