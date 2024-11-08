@@ -135,86 +135,6 @@ render_survey <- function(paths) {
     }
 }
 
-# Adds "embed-resources: true" to the 'survey.qmd' yaml
-# Handles all the following YAML cases:
-# - Simple format: html
-# - Existing format.html with embed-resources
-# - No format section at all
-# - Nested format.html with other settings
-get_qmd_content <- function(paths) {
-    # Read the original qmd
-    qmd_content <- readLines(paths$qmd)
-
-    # Find YAML boundaries
-    yaml_start <- which(qmd_content == "---")[1]
-    yaml_end <- which(qmd_content == "---")[2]
-
-    if (length(yaml_start) > 0 && length(yaml_end) > 0) {
-        # Extract existing YAML
-        yaml_lines <- qmd_content[(yaml_start+1):(yaml_end-1)]
-
-        # Find format line(s)
-        format_line <- grep("^format:", yaml_lines)
-
-        if (length(format_line) == 0) {
-            # No format section exists, add it
-            yaml_lines <- c(yaml_lines,
-                            "format:",
-                            "  html:",
-                            "    embed-resources: true")
-        } else {
-            # Check what's after format:
-            format_content <- yaml_lines[format_line]
-
-            if (trimws(format_content) == "format: html") {
-                # Replace the simple format: html with detailed version
-                yaml_lines[format_line] <- "format:"
-                yaml_lines <- append(yaml_lines,
-                                     c("  html:",
-                                       "    embed-resources: true"),
-                                     after = format_line)
-            } else if (trimws(format_content) == "format:") {
-                # Check for html section
-                html_line <- grep("^  html:", yaml_lines)
-
-                if (length(html_line) == 0) {
-                    # Add html section right after format:
-                    yaml_lines <- append(yaml_lines,
-                                         c("  html:",
-                                           "    embed-resources: true"),
-                                         after = format_line)
-                } else {
-                    # Check for existing embed-resources
-                    embed_line <- grep("^    embed-resources:", yaml_lines)
-
-                    if (length(embed_line) == 0) {
-                        # Find where html section ends
-                        next_indent_lines <- grep("^  \\w", yaml_lines[(html_line+1):length(yaml_lines)])
-
-                        if (length(next_indent_lines) == 0) {
-                            # No next section at same indent, append to end
-                            yaml_lines <- append(yaml_lines,
-                                                 "    embed-resources: true",
-                                                 after = length(yaml_lines))
-                        } else {
-                            # Insert before next section at same indent
-                            insert_at <- html_line + next_indent_lines[1] - 1
-                            yaml_lines <- append(yaml_lines,
-                                                 "    embed-resources: true",
-                                                 after = insert_at - 1)
-                        }
-                    }
-                }
-            }
-        }
-
-        # Reconstruct file content with modified yaml
-        qmd_content <- c("---", yaml_lines, "---", qmd_content[(yaml_end+1):length(qmd_content)])
-    }
-
-    return(qmd_content)
-}
-
 render_qmd <- function(paths) {
     tryCatch(
         {
@@ -223,17 +143,14 @@ render_qmd <- function(paths) {
                 fs::dir_create(paths$target_folder)
             }
 
-            # Get qmd file content with modified yaml for self-containment
-            qmd_content <- get_qmd_content(paths)
+            # Render the 'survey.qmd' filek
+            quarto::quarto_render(
+                paths$qmd,
+                pandoc_args = c("--embed-resources")
+            )
 
-            # Write to temp qmd file and render
-            temp_qmd <- tempfile(fileext = ".qmd")
-            writeLines(qmd_content, temp_qmd)
-            quarto::quarto_render(temp_qmd)
-
-            # Copy the temp file to target location
-            temp_html <- sub("\\.qmd$", ".html", temp_qmd)
-            suppressMessages(file.copy(temp_html, paths$target_html, overwrite = TRUE))
+            # Move rendered 'survey.html' into '_survey' folder
+            fs::file_move(paths$root_html, paths$target_html)
         },
         error = function(e) {
             stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
