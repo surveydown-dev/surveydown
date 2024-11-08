@@ -7,17 +7,17 @@ run_config <- function(
     show_if,
     rate_survey
 ) {
-    # Check for sd_close() in survey.qmd if rate_survey used
-    if (rate_survey) { check_sd_close() }
+    # Create target '_survey' folder and define files and paths for export
+    files <- set_folder_files()
 
-    # Get the paths to all the survey files and folders
-    paths <- get_paths()
+    # Check for sd_close() in survey.qmd if rate_survey used
+    if (rate_survey) { check_sd_close(files$qmd) }
 
     # Render the qmd file into the "_survey" folder
-    render_survey(paths)
+    render_survey(files)
 
     # Get the html content from the rendered survey.html file
-    html_content <- get_html_content()
+    html_content <- get_html_content(files$html)
 
     # Extract all divs with class "sd-page"
     pages <- extract_html_pages(
@@ -31,9 +31,8 @@ run_config <- function(
         sapply(as.character) |>
         paste(collapse = "\n")
 
-    # Get the question structure:
-    # If changed detected, extract from HTML, otherwise YAML
-    question_structure <- get_question_structure(paths, html_content)
+    # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
+    question_structure <- get_question_structure(files, html_content)
 
     page_ids <- sapply(pages, function(p) p$id)
     question_ids <- names(question_structure)
@@ -82,97 +81,79 @@ run_config <- function(
 
 check_sd_close <- function(survey_file) {
     # Read the content of survey.qmd
-    qmd_content <- readLines("survey.qmd", warn = FALSE)
+    qmd_content <- readLines(survey_file, warn = FALSE)
 
     # Check for sd_close() call with any parameters
     sd_close_present <- any(grepl("sd_close\\s*\\(.*\\)", qmd_content))
 
     if (!sd_close_present) {
-        warning("\u274C No sd_close() function found in 'survey.qmd' file. You must use sd_close() to trigger the rating question response at the end of the survey. You can also remove this rating question by setting 'rate_survey = FALSE' in sd_server().")
+        warning("\u274C No sd_close() function found in '", survey_file,"' file. You must use sd_close() to trigger the rating question response at the end of the survey. You can also remove this rating question by setting 'rate_survey = FALSE' in sd_server().")
     }
 }
 
-get_paths <- function() {
-    target_folder <- "_survey"
-    paths <- list(
-        target_folder = target_folder,
-        root_html    = "survey.html",
-        target_html  = file.path(target_folder, "survey.html"),
-        root_files   = "survey_files",
-        target_files = file.path(target_folder, "survey_files"),
-        question_yml = file.path(target_folder, "questions.yml")
+set_folder_files <- function(target = "survey_files") {
+    # Define and create '_survey' folder for export
+    folder_target <- target
+
+    if (!fs::dir_exists(folder_target)) { fs::dir_create(folder_target) }
+
+    # Create list of file names for main level and export folder
+    files <- list(
+        qmd = 'survey.qmd',
+        html = 'survey.html',
+        yml = file.path(folder_target, 'questions.yml'),
+        survey_files = 'survey_files'
     )
-    return(paths)
+
+    files$target <- lapply(files, function(file) file.path(folder_target, file))
+
+    return(files)
 }
 
-render_survey <- function(paths) {
+render_survey <- function(files) {
 
-    # Get survey metadata to check if it's self-contained
-    self_contained <- is_self_contained()
+    # Render qmd if it hasn't been rendered before (into the _survey folder)
+    if (!file.exists(files$html)) {
 
-    # Create _survey directory if it doesn't exist
-    if (!fs::dir_exists(paths$target_folder)) {
-        fs::dir_create(paths$target_folder)
+        message("'", files$html, "' file not detected - rendering the '", files$qmd, "' file")
+        render_qmd(files)
+
+    } else { # Render qmd if it's been updated since last rendering
+        
+        time_qmd <- file.info(files$qmd)$mtime
+        time_html <- file.info(files$html)$mtime
+        
+        if (time_qmd > time_html) {
+            message("Rendering '", files$qmd, "' since updates were detected that are not present in the '", files$html, "' file")
+            render_qmd(files)
+        }
     }
 
-    # Handle backwards compatibility - check for files in root
-    if (file.exists(paths$root_html)) {
-        move_survey_files(paths)
-    }
+    # # Move survey_files folder if it exists
+    # if (fs::dir_exists(files$survey_files)) {
+    #     fs::dir_copy(files$survey_files, files$target$survey_files)
+    #     fs::dir_delete(files$survey_files)
+    # }
 
-    # Render qmd if it hasn't been rendered before
-    if (!file.exists(paths$target_html)) {
-        render_qmd(
-            paths,
-            "'survey.html' file not detected - rendering the 'survey.qmd' file"
-        )
-    }
+    # # Move survey.html to _survey folder
+    # if (file.exists(files$html)) { fs::file_move(files$html, files$target$html) }
 
-    # Render qmd if not self-contained and missing the survey_files folder
-    if (!self_contained & !fs::dir_exists(paths$target_files)) {
-        render_qmd(
-            paths,
-            "'survey_files' folder not detected - rendering the 'survey.qmd' file"
-        )
-    }
-
-    # Render qmd if it's been updated since last rendering
-    qmd_time <- file.info('survey.qmd')$mtime
-    html_time <- file.info(paths$target_html)$mtime
-    if (qmd_time > html_time) {
-        render_qmd(
-            paths,
-            "Rendering 'survey.qmd' since updates were detected that are not present in the 'survey.html' file"
-        )
-    }
 }
 
-move_survey_files <- function(paths) {
-    # Move survey.html to _survey folder
-    fs::file_move(paths$root_html, paths$target_html)
 
-    # Move survey_files folder if it exists
-    if (fs::dir_exists(paths$root_files)) {
-        fs::dir_copy(paths$root_files, paths$target_files)
-        fs::dir_delete(paths$root_files)
-    }
-}
-
-render_qmd <- function(paths, x) {
-    message(x)
+render_qmd <- function(files) {
     tryCatch(
         {
-            quarto::quarto_render("survey.qmd")
-            move_survey_files(paths)
+            quarto::quarto_render(files$qmd)
         },
         error = function(e) {
-            stop("Error rendering 'survey.qmd' file. Please review and revise your 'survey.qmd' file. Error details: ", e$message)
+            stop("Error rendering '", files$qmd, "' file. Please review and revise your '", files$qmd, "' file. Error details: ", e$message)
         }
     )
 }
 
-get_html_content <- function() {
-    return(rvest::read_html(file.path("_survey", "survey.html")))
+get_html_content <- function(file_html) {
+    return(rvest::read_html(file_html))
 }
 
 extract_html_pages <- function(
@@ -246,20 +227,22 @@ extract_html_pages <- function(
 }
 
 # Get question structure ('smart': load YAML or extract from HTML and save to YAML)
-get_question_structure <- function(paths, html_content) {
+get_question_structure <- function(files, html_content) {
 
     # Check time modified (to see if the question structure is up to date)
-    time_qmd <- file.info('survey.qmd')$mtime
-    time_yml <- file.info(paths$question_yml)$mtime
+    time_html <- file.info(files$html)$mtime
+    time_yml <- file.info(files$yml)$mtime
 
     # Get the question structure (A: load YAML; or B: extract from HTML and save to YAML)
-    if (file.exists(paths$question_yml) & (time_qmd < time_yml)) {
-        message(glue::glue("Loading extracted question structure from {paths$question_yml}."))
-        question_structure <- load_question_structure_yaml(paths$question_yml)
+    if (file.exists(files$yml) && (time_yml - time_html < 20)) {
+        message("Loading extracted question structure from '", files$yml, "'.")
+
+        question_structure <- load_question_structure_yaml(files$yml)
     } else {
-        message(glue::glue("Extracting question structure from {paths$target_html} and saving to {paths$question_yml} file."))
+        message("Extracting question structure from '", files$html, "' and saving to '", files$yml, "' file.")
+
         question_structure <- extract_question_structure_html(html_content)
-        write_question_structure_yaml(question_structure, paths$question_yml)
+        write_question_structure_yaml(question_structure, files$yml)
     }
 
     return(question_structure)
