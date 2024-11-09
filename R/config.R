@@ -34,13 +34,12 @@ run_config <- function(
     # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
     question_structure <- get_question_structure(paths, html_content)
 
+    # Get page and question IDs
     page_ids <- sapply(pages, function(p) p$id)
     question_ids <- names(question_structure)
 
     # Check for duplicate, overlapping, or pre-defined IDs
     check_ids(page_ids, question_ids)
-
-    question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
 
     # Determine required questions, excluding matrix question IDs
     if (all_questions_required) {
@@ -61,6 +60,8 @@ run_config <- function(
     }
 
     # Check skip_if and show_if inputs
+    question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
+
     check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
 
     # Store all config settings
@@ -69,7 +70,6 @@ run_config <- function(
         head_content = head_content,
         page_ids = page_ids,
         question_ids = question_ids,
-        question_values = question_values,
         question_required = question_required,
         start_page = start_page,
         admin_page = admin_page,
@@ -143,7 +143,7 @@ render_qmd <- function(paths) {
                 fs::dir_create(paths$target_folder)
             }
 
-            # Render the 'survey.qmd' filek
+            # Render the 'survey.qmd' file
             quarto::quarto_render(
                 paths$qmd,
                 pandoc_args = c("--embed-resources")
