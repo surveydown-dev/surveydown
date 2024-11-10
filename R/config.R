@@ -14,9 +14,9 @@ run_config <- function(
     paths <- get_paths()
 
     # Check for changes in survey.qmd and app.R files
-    files_updated <- check_files_updated(paths)
+    files_need_updating <- check_files_need_updating(paths)
 
-    if (files_updated) {
+    if (files_need_updating) {
         message("Output files not up-to-date - rendering qmd file and extracting content.")
 
         # Render the qmd file into the "_survey" folder
@@ -36,28 +36,26 @@ run_config <- function(
         # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
         question_structure <- get_question_structure(paths, html_content)
 
-        message("Survey rendered and saved to '", paths$target_html)
         message(
-            "Extracted content saved to '", paths$target_pages, "', '", 
-            paths$target_head, "' and '", paths$question_yml, "'."
+          "Survey rendered and saved to '", paths$target_html,
+          ". Extracted content saved to '", paths$target_pages, "', '",
+          paths$target_head, "', and '", paths$target_questions, "' files."
         )
 
     } else {
-        message("No changes detected in 'survey.qmd' or 'app.R' files.")
+        message(
+          "No changes detected in 'survey.qmd' or 'app.R' files. ",
+          "Importing survey content from '_survey' folder."
+        )
 
         # Load head content from _survey folder
-        head_content <- qs::qread(paths$target_head)
+        head_content <- readRDS(paths$target_head)
 
         # Load pages object from _survey folder
-        pages <- qs::qread(paths$target_pages)
+        pages <- readRDS(paths$target_pages)
 
         # Load question structure from _survey folder
-        question_structure <- load_question_structure_yaml(paths$question_yml)
-
-        message(
-            "Extracted content imported from '", paths$target_pages, "', '", 
-            paths$target_head, "' and '", paths$question_yml, "'."
-        )
+        question_structure <- load_question_structure_yaml(paths$target_questions)
     }
 
     # Get page and question IDs
@@ -119,35 +117,33 @@ check_sd_close <- function() {
 
 get_paths <- function() {
     target_folder <- "_survey"
-
     if (!fs::dir_exists(target_folder)) { fs::dir_create(target_folder)}
-
     paths <- list(
         qmd           = "survey.qmd",
         app           = "app.R",
         target_folder = target_folder,
         root_html     = "survey.html",
         target_html   = file.path(target_folder, "survey.html"),
-        target_pages  = file.path(target_folder, "pages.qs"),
-        target_head   = file.path(target_folder, "head.qs"),
-        question_yml  = file.path(target_folder, "questions.yml")
+        target_pages  = file.path(target_folder, "pages.rds"),
+        target_head   = file.path(target_folder, "head.rds"),
+        target_questions  = file.path(target_folder, "questions.yml")
     )
-
     return(paths)
 }
 
-check_files_updated <- function(paths) {
+check_files_need_updating <- function(paths) {
+    # Re-render if any of the target files are missing
+    targets <- c(
+      paths$target_html, paths$target_pages,
+      paths$target_head, paths$target_questions
+    )
+    if (any(!fs::file_exists(targets))) { return(TRUE) }
+
+    # Re-render if the target pages file is out of date with 'survey.qmd' or 'app.R'
     time_qmd <- file.info(paths$qmd)$mtime
     time_app <- file.info(paths$app)$mtime
     time_pages <- file.info(paths$target_pages)$mtime
-
-    if (file.exists(paths$target_pages)) {
-        files_updated <- (time_qmd > time_pages) || (time_app > time_pages)
-    } else {
-        files_updated <- TRUE
-    }
-
-    return(files_updated)
+    return((time_qmd > time_pages) || (time_app > time_pages))
 }
 
 render_qmd <- function(paths) {
@@ -175,7 +171,7 @@ extract_head_content <- function(paths, html_content) {
         sapply(as.character) |>
         paste(collapse = "\n")
 
-    qs::qsave(head_content, paths$target_head)
+    saveRDS(head_content, paths$target_head)
 
     return(head_content)
 }
@@ -247,9 +243,9 @@ extract_html_pages <- function(
                 content = as.character(x)
             )
         })
-    
-    qs::qsave(pages, paths$target_pages)
-    
+
+    saveRDS(pages, paths$target_pages)
+
     return(pages)
 }
 
@@ -258,7 +254,7 @@ get_question_structure <- function(paths, html_content) {
 
     question_structure <- extract_question_structure_html(html_content)
 
-    write_question_structure_yaml(question_structure, paths$question_yml)
+    write_question_structure_yaml(question_structure, paths$target_questions)
 
     return(question_structure)
 }
