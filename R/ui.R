@@ -518,7 +518,7 @@ make_question_container <- function(id, object, width) {
 #' }
 #'
 #' @export
-sd_next <- function(next_page = NULL, label = "Next") {
+sd_next <- function(next_page = NULL, label = "Next") { # TODO change label if !en and label == "Next"
   button_id <- "page_id_next"  # Placeholder ID
   shiny::tagList(
     shiny::div(
@@ -608,14 +608,14 @@ sd_close <- function(label = "Exit Survey") {
         onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
       )
     ),
-    shiny::tags$script(htmltools::HTML("
+    shiny::tags$script(htmltools::HTML(glue::glue("
       Shiny.addCustomMessageHandler('closeWindow', function(message) {
         window.close();
         if (!window.closed) {
-          alert('Please close this tab manually to exit the survey.');
-        }
+          alert('{translations[[language]]$close_tab}');
+        } # TODO : how do I get the translations here in this function?
       });
-    "))
+    ")))
   )
 }
 
@@ -749,10 +749,14 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
                     element,
                     shiny::p(
                         style = "margin: 0.5rem 0 0 0;",
-                        "Redirecting in ",
+                        translations[[language]]$redirect, " ",
                         shiny::tags$strong(id = countdown_id, delay),
-                        " seconds.",
-                        if (newtab) " (Opens in a new tab)" else NULL
+                        " ", translations[[language]]$seconds, ".",
+                        if (newtab) {
+                          glue:glue(" ({translations[[language]]$new_tab})")
+                        } else {
+                          NULL
+                        }
                     )
                 )
             ),
