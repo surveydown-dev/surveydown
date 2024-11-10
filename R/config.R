@@ -10,29 +10,55 @@ run_config <- function(
     # Check for sd_close() in survey.qmd if rate_survey used
     if (rate_survey) { check_sd_close() }
 
-    # Get paths to files
+    # Get paths to files and create '_survey' folder if necessary
     paths <- get_paths()
 
-    # Render the qmd file into the "_survey" folder
-    render_survey(paths)
+    # Check for changes in survey.qmd and app.R files
+    files_updated <- check_files_updated(paths)
 
-    # Get the html content from the rendered survey.html file
-    html_content <- get_html_content(paths)
+    if (files_updated) {
+        message("Output files not up-to-date - rendering qmd file and extracting content.")
 
-    # Extract all divs with class "sd-page"
-    pages <- extract_html_pages(
-        html_content, required_questions, all_questions_required, show_if
-    )
+        # Render the qmd file into the "_survey" folder
+        render_qmd(paths)
 
-    # Extract head content (for CSS and JS)
-    head_content <- html_content |>
-        rvest::html_element("head") |>
-        rvest::html_children() |>
-        sapply(as.character) |>
-        paste(collapse = "\n")
+        # Get the html content from the rendered survey.html file
+        html_content <- rvest::read_html(paths$target_html)
 
-    # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
-    question_structure <- get_question_structure(paths, html_content)
+        # Extract head content (for CSS and JS) and save to "_survey" folder
+        head_content <- extract_head_content(paths, html_content)
+
+        # Extract all divs with class "sd-page" and save to "_survey" folder
+        pages <- extract_html_pages(
+            paths, html_content, required_questions, all_questions_required, show_if
+        )
+
+        # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
+        question_structure <- get_question_structure(paths, html_content)
+
+        message("Survey rendered and saved to '", paths$target_html)
+        message(
+            "Extracted content saved to '", paths$target_pages, "', '", 
+            paths$target_head, "' and '", paths$question_yml, "'."
+        )
+
+    } else {
+        message("No changes detected in 'survey.qmd' or 'app.R' files.")
+
+        # Load head content from _survey folder
+        head_content <- qs::qread(paths$target_head)
+
+        # Load pages object from _survey folder
+        pages <- qs::qread(paths$target_pages)
+
+        # Load question structure from _survey folder
+        question_structure <- load_question_structure_yaml(paths$question_yml)
+
+        message(
+            "Extracted content imported from '", paths$target_pages, "', '", 
+            paths$target_head, "' and '", paths$question_yml, "'."
+        )
+    }
 
     # Get page and question IDs
     page_ids <- sapply(pages, function(p) p$id)
@@ -93,56 +119,40 @@ check_sd_close <- function() {
 
 get_paths <- function() {
     target_folder <- "_survey"
+
+    if (!fs::dir_exists(target_folder)) { fs::dir_create(target_folder)}
+
     paths <- list(
         qmd           = "survey.qmd",
+        app           = "app.R",
         target_folder = target_folder,
         root_html     = "survey.html",
-        root_files    = "survey_files",
         target_html   = file.path(target_folder, "survey.html"),
+        target_pages  = file.path(target_folder, "pages.qs"),
+        target_head   = file.path(target_folder, "head.qs"),
         question_yml  = file.path(target_folder, "questions.yml")
     )
+
     return(paths)
 }
 
-render_survey <- function(paths) {
-
-    # Remove root survey files if user rendered the 'survey.qmd' file manually
-    if (file.exists(paths$root_html)) {
-        fs::file_delete(paths$root_html)
-    }
-    if (file.exists(paths$root_files)) {
-        fs::dir_delete(paths$root_files)
-    }
-
-    # Render qmd if it's not in the '_survey' folder
-    if (!file.exists(paths$target_html)) {
-        message(
-            "'", paths$target_html, "' file not detected - ",
-            "rendering the '", paths$qmd, "' file"
-        )
-        render_qmd(paths)
-    }
-
-    # Render qmd if it's been updated since last rendering
+check_files_updated <- function(paths) {
     time_qmd <- file.info(paths$qmd)$mtime
-    time_html <- file.info(paths$target_html)$mtime
-    if (time_qmd > time_html) {
-        message(
-            "Updates detected in '", paths$qmd, "' - ",
-            "rendering the '", paths$qmd, "' file"
-        )
-        render_qmd(paths)
+    time_app <- file.info(paths$app)$mtime
+    time_pages <- file.info(paths$target_pages)$mtime
+
+    if (file.exists(paths$target_pages)) {
+        files_updated <- (time_qmd > time_pages) || (time_app > time_pages)
+    } else {
+        files_updated <- TRUE
     }
+
+    return(files_updated)
 }
 
 render_qmd <- function(paths) {
     tryCatch(
         {
-            # Make '_survey' folder if missing
-            if (!fs::dir_exists(paths$target_folder)) {
-                fs::dir_create(paths$target_folder)
-            }
-
             # Render the 'survey.qmd' file
             quarto::quarto_render(
                 paths$qmd,
@@ -158,12 +168,20 @@ render_qmd <- function(paths) {
     )
 }
 
-get_html_content <- function(paths) {
-    return(rvest::read_html(paths$target_html))
+extract_head_content <- function(paths, html_content) {
+    head_content <- html_content |>
+        rvest::html_element("head") |>
+        rvest::html_children() |>
+        sapply(as.character) |>
+        paste(collapse = "\n")
+
+    qs::qsave(head_content, paths$target_head)
+
+    return(head_content)
 }
 
 extract_html_pages <- function(
-    html_content, required_questions, all_questions_required, show_if
+    paths, html_content, required_questions, all_questions_required, show_if
 ) {
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
@@ -229,30 +247,18 @@ extract_html_pages <- function(
                 content = as.character(x)
             )
         })
+    
+    qs::qsave(pages, paths$target_pages)
+    
     return(pages)
 }
 
 # Get question structure ('smart': load YAML or extract from HTML and save to YAML)
 get_question_structure <- function(paths, html_content) {
 
-    # Check time modified (to see if the question structure is up to date)
-    time_html <- file.info(paths$target_html)$mtime
-    time_yml <- file.info(paths$question_yml)$mtime
+    question_structure <- extract_question_structure_html(html_content)
 
-    # Get the question structure (A: load YAML; or B: extract from HTML and save to YAML)
-    if (file.exists(paths$question_yml) && ((time_yml - time_html) < 20)) {
-        message(
-            "Loading extracted question structure from '", paths$question_yml
-        )
-        question_structure <- load_question_structure_yaml(paths$question_yml)
-    } else {
-        message(
-            "Extracting question structure from '", paths$target_html,
-            "'\n and saving to '", paths$question_yml, "' file."
-        )
-        question_structure <- extract_question_structure_html(html_content)
-        write_question_structure_yaml(question_structure, paths$question_yml)
-    }
+    write_question_structure_yaml(question_structure, paths$question_yml)
 
     return(question_structure)
 }
