@@ -40,8 +40,13 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.1" id="surveydown-041">surveydown 0.4.1<a class="anchor" aria-label="anchor" href="#surveydown-041"></a></h2>
 <ul><li>Modified survey rendering to move all rendered files into “_survey” folder.</li>
 <li>Export survey question metadata to “_survey/questions.yml” file (see <a href="https://github.com/surveydown-dev/surveydown/issues/132" class="external-link">#132</a>).</li>
+<li>Survey content is now extracted and saved to ’_survey/pages.rds’, ’_survey/head.rds’, and ’_survey/questions.yml’ files for faster loading.</li>
+<li>Survey will load content from stored files if no changes detected in ‘survey.qmd’ or ‘app.R’ files.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="surveydown-040">surveydown 0.4.0<a class="anchor" aria-label="anchor" href="#surveydown-040"></a></h2><p class="text-muted">CRAN release: 2024-11-01</p>
