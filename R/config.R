@@ -374,10 +374,8 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
 
         # Rename type to function option names
         question$type <- type_replacement[names(type_replacement) == question$type]
-
-        if (question$is_matrix) question$type <- "matrix"
-
-        if (rlang::is_empty(question$type)) question$type <- "unknown"
+        if (question$is_matrix) { question$type <- "matrix" }
+        if (length(question$type) == 0) question$type <- "unknown"
 
         # Remove indicator if is matrix (type is correctly set)
         question$is_matrix <- NULL
