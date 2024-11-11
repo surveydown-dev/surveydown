@@ -1,7 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.4.1
+
 - Modified survey rendering to move all rendered files into "_survey" folder.
 - Export survey question metadata to "_survey/questions.yml" file (see #132).
+- Survey content is now extracted and saved to '_survey/pages.rds', '_survey/head.rds', and '_survey/questions.yml' files for faster loading.
+- Survey will load content from stored files if no changes detected in 'survey.qmd' or 'app.R' files.
 
 # surveydown 0.4.0
 
