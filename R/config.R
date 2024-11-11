@@ -1,39 +1,69 @@
 run_config <- function(
-    required_questions = NULL,
-    all_questions_required = FALSE,
-    start_page = NULL,
-    admin_page = FALSE,
-    skip_if = NULL,
-    show_if = NULL
+    required_questions,
+    all_questions_required,
+    start_page,
+    admin_page,
+    skip_if,
+    show_if,
+    rate_survey
 ) {
-    # Always check for sd_close() in survey.qmd
-    sd_close_present <- check_sd_close("survey.qmd")
+    # Check for sd_close() in survey.qmd if rate_survey used
+    if (rate_survey) { check_sd_close() }
 
-    # Get the html content from the survey.qmd file
-    html_content <- get_html_content()
+    # Get paths to files and create '_survey' folder if necessary
+    paths <- get_paths()
 
-    # Extract all divs with class "sd-page"
-    pages <- extract_html_pages(
-        html_content, required_questions, all_questions_required, show_if
-    )
+    # Check for changes in survey.qmd and app.R files
+    files_need_updating <- check_files_need_updating(paths)
 
-    # Extract head content (for CSS and JS)
-    head_content <- html_content |>
-        rvest::html_element("head") |>
-        rvest::html_children() |>
-        sapply(as.character) |>
-        paste(collapse = "\n")
+    if (files_need_updating) {
+        message("Output files not up-to-date - rendering qmd file and extracting content.")
 
-    # Extract page and question structures
-    question_structure <- get_question_structure(html_content)
+        # Render the qmd file into the "_survey" folder
+        render_qmd(paths)
 
+        # Get the html content from the rendered survey.html file
+        html_content <- rvest::read_html(paths$target_html)
+
+        # Extract head content (for CSS and JS) and save to "_survey" folder
+        head_content <- extract_head_content(paths, html_content)
+
+        # Extract all divs with class "sd-page" and save to "_survey" folder
+        pages <- extract_html_pages(
+            paths, html_content, required_questions, all_questions_required, show_if
+        )
+
+        # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
+        question_structure <- get_question_structure(paths, html_content)
+
+        message(
+          "Survey rendered and saved to '", paths$target_html,
+          ". Extracted content saved to '", paths$target_pages, "', '",
+          paths$target_head, "', and '", paths$target_questions, "' files."
+        )
+
+    } else {
+        message(
+          "No changes detected in 'survey.qmd' or 'app.R' files. ",
+          "Importing survey content from '_survey' folder."
+        )
+
+        # Load head content from _survey folder
+        head_content <- readRDS(paths$target_head)
+
+        # Load pages object from _survey folder
+        pages <- readRDS(paths$target_pages)
+
+        # Load question structure from _survey folder
+        question_structure <- load_question_structure_yaml(paths$target_questions)
+    }
+
+    # Get page and question IDs
     page_ids <- sapply(pages, function(p) p$id)
     question_ids <- names(question_structure)
 
     # Check for duplicate, overlapping, or pre-defined IDs
     check_ids(page_ids, question_ids)
-
-    question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
 
     # Determine required questions, excluding matrix question IDs
     if (all_questions_required) {
@@ -54,6 +84,8 @@ run_config <- function(
     }
 
     # Check skip_if and show_if inputs
+    question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
+
     check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
 
     # Store all config settings
@@ -62,7 +94,6 @@ run_config <- function(
         head_content = head_content,
         page_ids = page_ids,
         question_ids = question_ids,
-        question_values = question_values,
         question_required = question_required,
         start_page = start_page,
         admin_page = admin_page,
@@ -72,64 +103,81 @@ run_config <- function(
     return(config)
 }
 
-check_sd_close <- function(survey_file) {
-    if (!file.exists(survey_file)) {
-        stop(paste("The file", survey_file, "does not exist."))
-    }
-
+check_sd_close <- function() {
     # Read the content of survey.qmd
-    qmd_content <- readLines(survey_file, warn = FALSE)
+    qmd_content <- readLines('survey.qmd', warn = FALSE)
 
     # Check for sd_close() call with any parameters
     sd_close_present <- any(grepl("sd_close\\s*\\(.*\\)", qmd_content))
 
     if (!sd_close_present) {
-        message("\u274C No sd_close() call found in ", survey_file, ". This may cause issues with data submission.")
+        warning("\u274C No sd_close() function found in 'survey.qmd' file. You must use sd_close() to trigger the rating question response at the end of the survey. You can also remove this rating question by setting 'rate_survey = FALSE' in sd_server().")
     }
-    return(sd_close_present)
 }
 
-get_html_content <- function() {
-    survey_qmd <- 'survey.qmd'
-    survey_html <- 'survey.html'
+get_paths <- function() {
+    target_folder <- "_survey"
+    if (!fs::dir_exists(target_folder)) { fs::dir_create(target_folder)}
+    paths <- list(
+        qmd           = "survey.qmd",
+        app           = "app.R",
+        target_folder = target_folder,
+        root_html     = "survey.html",
+        target_html   = file.path(target_folder, "survey.html"),
+        target_pages  = file.path(target_folder, "pages.rds"),
+        target_head   = file.path(target_folder, "head.rds"),
+        target_questions  = file.path(target_folder, "questions.yml")
+    )
+    return(paths)
+}
 
-    # Render the qmd if it hasn't been rendered yet
-    if (!file.exists(survey_html)) {
-        render_qmd("'survey.html' file not detected - rendering the 'survey.qmd' file")
-    }
+check_files_need_updating <- function(paths) {
+    # Re-render if any of the target files are missing
+    targets <- c(
+      paths$target_html, paths$target_pages,
+      paths$target_head, paths$target_questions
+    )
+    if (any(!fs::file_exists(targets))) { return(TRUE) }
 
-    # Render the qmd if the html file is older, meaning it hasn't been updated
-    time_qmd <- file.info(survey_qmd)$mtime
-    time_html <- file.info(survey_html)$mtime
-    if (time_qmd > time_html) {
-        render_qmd("Rendering the 'survey.qmd' file since updates were detected that are not present in the 'survey.html' file")
-    }
+    # Re-render if the target pages file is out of date with 'survey.qmd' or 'app.R'
+    time_qmd <- file.info(paths$qmd)$mtime
+    time_app <- file.info(paths$app)$mtime
+    time_pages <- file.info(paths$target_pages)$mtime
+    return((time_qmd > time_pages) || (time_app > time_pages))
+}
 
-    # Once rendered, return the parsed html content
+render_qmd <- function(paths) {
     tryCatch(
         {
-            return(rvest::read_html('survey.html'))
+            # Render the 'survey.qmd' file
+            quarto::quarto_render(
+                paths$qmd,
+                pandoc_args = c("--embed-resources")
+            )
+
+            # Move rendered 'survey.html' into '_survey' folder
+            fs::file_move(paths$root_html, paths$target_html)
         },
         error = function(e) {
-            stop("Error reading survey.html file. Please ensure the file exists and has no errors. Error details: ", e$message)
+            stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
         }
     )
 }
 
-render_qmd <- function(x) {
-    message(x)
-    tryCatch(
-        {
-            quarto::quarto_render("survey.qmd")
-        },
-        error = function(e) {
-            stop("Error rendering survey.qmd file. Please review and revise your survey.qmd file. Also, try rendering it directly to check for errors in your survey.qmd file. Error details: ", e$message)
-        }
-    )
+extract_head_content <- function(paths, html_content) {
+    head_content <- html_content |>
+        rvest::html_element("head") |>
+        rvest::html_children() |>
+        sapply(as.character) |>
+        paste(collapse = "\n")
+
+    saveRDS(head_content, paths$target_head)
+
+    return(head_content)
 }
 
 extract_html_pages <- function(
-    html_content, required_questions, all_questions_required, show_if
+    paths, html_content, required_questions, all_questions_required, show_if
 ) {
     pages <- html_content |>
         rvest::html_elements(".sd-page") |>
@@ -195,53 +243,213 @@ extract_html_pages <- function(
                 content = as.character(x)
             )
         })
+
+    saveRDS(pages, paths$target_pages)
+
     return(pages)
 }
 
-# Get question structure from HTML
-get_question_structure <- function(html_content) {
+# Get question structure ('smart': load YAML or extract from HTML and save to YAML)
+get_question_structure <- function(paths, html_content) {
+
+    question_structure <- extract_question_structure_html(html_content)
+
+    write_question_structure_yaml(question_structure, paths$target_questions)
+
+    return(question_structure)
+}
+
+# Extract question structure from HTML
+extract_question_structure_html <- function(html_content) {
     question_nodes <- rvest::html_nodes(html_content, "[data-question-id]")
 
     question_structure <- list()
-    all_question_ids <- character()
 
+    # Loop through all question nodes and extract information
     for (question_node in question_nodes) {
         question_id <- rvest::html_attr(question_node, "data-question-id")
-        all_question_ids <- c(all_question_ids, question_id)
 
-        # Check if it's a matrix question
+        type <- question_node |>
+            rvest::html_nodes(glue::glue("#{question_id}")) |>
+            rvest::html_attr("class")
+
         is_matrix <- length(rvest::html_nodes(question_node, ".matrix-question")) > 0
 
-        ## Extract the question text (label)
-        label_question <- question_node |>
+        if (is_matrix) type <- "matrix"
+
+        # Extract the question text (label)
+        label <- question_node |>
             rvest::html_nodes("p") |>
             rvest::html_text(trim = TRUE)
-    
-        # Extract the options for the question (for mc, *_multi, *_buttons, and select)
-        options <- question_node |>
-            rvest::html_nodes("input[type='radio'], input[type='checkbox'], option") |>
-            rvest::html_attr("value") |>
-            {
-            \(x) if (length(x) == 0) "" else x
-            }()
-    
-        # Extract the option labels of the question (for mc, *_multi, *_buttons, and select)
-        label_options <- question_node |>
-            rvest::html_nodes("label>span, button, option") |>
-            rvest::html_text(trim = TRUE) # |>
-        # {\(x) if(length(x) == 0) "" else x }()
-    
-        # Store the options and type for this question in a named list
+
+        # Write main information to the question structure
         question_structure[[question_id]] <- list(
-            id = question_id,
-            label_question = label_question,
-            options = options,
-            label_options = label_options,
-            is_matrix = is_matrix
-        )
+            type = type,
+            is_matrix = is_matrix,
+            label = label
+          )
+
+        # Extract options for the question ( mc, *_multiple, *_buttons, and select)
+        if (grepl("radio|checkbox|select|matrix", type)) {
+
+            options <- question_node |>
+                rvest::html_nodes("input[type='radio'], input[type='checkbox'], option") |>
+                rvest::html_attr("value")
+
+            label_options <- question_node |>
+                rvest::html_nodes("label>span, button, option") |>
+                rvest::html_text(trim = TRUE)
+
+            names(options) <- label_options
+
+            # Write options to the question structure
+            question_structure[[question_id]]$options <- as.list(options)
+
+        # Extract options for the question (slider)
+        } else if (grepl("slider", type)) {
+            options_raw <- question_node |>
+                rvest::html_nodes("input") |>
+                rvest::html_attr("data-swvalues")
+
+            options <- gsub("\\[|\\]|\\\"", "", options_raw) |>
+                strsplit(",") |>
+                unlist()
+
+            # names(options) <- options # TODO no labels in html for slider
+
+            question_structure[[question_id]]$options <- as.list(options)
+        }
+
+        # Extract the rows and options for the matrix main question
+        if (is_matrix) {
+
+            rows <- question_node  |>
+                rvest::html_nodes("div > div[id]") |>
+                rvest::html_attr("id")
+
+            # Remove the question ID prefix from the row names
+            rows <- gsub(glue::glue("{question_id}_"), "", rows)
+
+            label_rows <- question_node |>
+                rvest::html_nodes("td:nth-child(1)") |>
+                rvest::html_text(trim = TRUE)
+
+            # remove first empty row label (option header)
+            label_rows <- label_rows[label_rows != ""]
+
+            names(rows) <- label_rows
+
+            # Write rows to the question structure
+            question_structure[[question_id]]$row <- as.list(rows)
+
+            # Correct to unique options (first extraction multiplies by subquestions)
+            options <- options[1:(length(options) / length(rows))]
+            question_structure[[question_id]]$options <- as.list(options)
+        }
     }
 
-    attr(question_structure, "all_ids") <- all_question_ids
+    return(question_structure)
+}
+
+# Write question structure to YAML
+write_question_structure_yaml <- function(question_structure, file_yaml) {
+
+    # Map question types to extracted html classes
+    type_replacement <- c(
+        'shiny-input-text form-control' = 'text',
+        'shiny-input-textarea form-control' = 'textarea',
+        'shiny-input-number form-control' = 'numeric',
+        'form-group shiny-input-radiogroup shiny-input-container' = 'mc',
+        'radio-group-buttons' = 'mc_buttons',
+        'form-group shiny-input-checkboxgroup shiny-input-container' = 'mc_multiple',
+        'checkbox-group-buttons' = 'mc_multiple_buttons',
+        'shiny-input-select' = 'select',
+        'js-range-slider sw-slider-text' = 'slider',
+        'shiny-date-input form-group shiny-input-container' = 'date',
+        'shiny-date-range-input form-group shiny-input-container' = 'daterange'
+    )
+
+    # Loop through question structure and clean/prepare questions
+    question_structure <- lapply(question_structure, function(question) {
+
+        # Rename type to function option names
+        question$type <- type_replacement[names(type_replacement) == question$type]
+
+        if (question$is_matrix) question$type <- "matrix"
+
+        if (rlang::is_empty(question$type)) question$type <- "unknown"
+
+        # Remove indicator if is matrix (type is correctly set)
+        question$is_matrix <- NULL
+
+        # Mark matrix subquestion to remove from list (and end further processing)
+        if (question$type == "mc" & length(question$label) == 0) {
+            return(NULL)
+        }
+
+        # Remove first option from select type question
+        if (question$type == "select") {
+           question$options <- question$options[-1]
+        }
+
+        return(question)
+    })
+
+    # Remove NULL elements (matrix subquestions)
+    question_structure <- Filter(Negate(is.null), question_structure)
+
+    # Write question to YAML (with comment in first lines)
+    yaml_content <- yaml::as.yaml(question_structure)
+
+    comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+    comment_line2 <- "# Question structure extracted from survey.html\n"
+
+    full_content <- paste0(comment_line1, comment_line2, yaml_content)
+
+    writeLines(full_content, con = file_yaml)
+}
+
+# Load question structure from YAML
+load_question_structure_yaml <- function(file_yaml) {
+
+    # Read question structure from YAML file
+    question_structure <- yaml::read_yaml(file_yaml)
+
+    # Add matrix question indicator to all questions as FALSE (correct later)
+    question_structure <- lapply(question_structure, function(question) {
+        question$is_matrix <- FALSE
+        return(question)
+    })
+
+    # Get question types to create subquestions for matrix questions
+    question_types <- sapply(question_structure, function(q) q$type)
+    matrix_questions_ids <- names(question_types)[question_types == "matrix"]
+
+    # Loop trough matrix questions and add subquestions
+    for (matrix_question_id in matrix_questions_ids) {
+
+        # Get matrix question and subquestion (rows option) from question list
+        matrix_question <- question_structure[[matrix_question_id]]
+        rows <- matrix_question$row
+
+        # Loop over subquestions and add to question structure (with label and options)
+        for (row_number in seq_along(rows)) {
+
+            subquestion_id <- paste0(matrix_question_id, "_", rows[[row_number]])
+
+            subquestion_structure <- list(
+                type = "mc",
+                label = names(rows)[row_number],
+                options = matrix_question$options
+            )
+
+            question_structure[[subquestion_id]] <- subquestion_structure
+        }
+
+        # Add matrix question indicator
+        question_structure[[matrix_question_id]]$is_matrix <- TRUE
+    }
+
     return(question_structure)
 }
 

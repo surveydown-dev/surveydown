@@ -138,7 +138,8 @@ sd_server <- function(
         start_page,
         admin_page,
         skip_if,
-        show_if
+        show_if,
+        rate_survey
     )
 
     # Initialize local variables ----
@@ -307,10 +308,10 @@ sd_server <- function(
                 changed_fields(c(changed_fields(), changed))
 
                 # Get question labels and values from question structure
-                question_info <- question_structure[[local_id]]
-                label_question <- question_info$label_question
-                label_options  <- question_info$label_options
+                question_info  <- question_structure[[local_id]]
+                label_question <- question_info$label
                 options        <- question_info$options
+                label_options  <- names(options)
 
                 # For the selected value(s), get the corresponding label(s)
                 if (length(options) == length(label_options)) {

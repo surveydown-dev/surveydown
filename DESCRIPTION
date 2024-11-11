@@ -1,6 +1,6 @@
 Package: surveydown
 Title: Markdown-Based Surveys Using 'Quarto' and 'shiny'
-Version: 0.4.0
+Version: 0.4.1
 Authors@R: c(
     person(given   = "John Paul",
            family  = "Helveston",
@@ -33,6 +33,7 @@ Suggests:
 Imports:
     DBI,
     DT,
+    fs,
     htmltools,
     markdown,
     pool,
@@ -45,6 +46,7 @@ Imports:
     shinyWidgets,
     usethis,
     utils,
-    xml2
+    xml2,
+    yaml
 URL: https://pkg.surveydown.org
 BugReports: https://github.com/surveydown-dev/surveydown/issues
