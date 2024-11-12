@@ -114,13 +114,8 @@ sd_server <- function(
     auto_scroll = FALSE,
     rate_survey = FALSE,
     language = "en"
-    # TODO check if choosen language is available. 
-    # TODO Check for additional language yaml file
-        # TODO -> if some are missing -> fall back to english language
 ) {
-    # Store the selected language in a global option
-    options(surveydown.language = language)
-
+    
     # Get input, output, and session from the parent environment
     parent_env <- parent.frame()
     input <- get("input", envir = parent_env)
@@ -146,7 +141,8 @@ sd_server <- function(
         admin_page,
         skip_if,
         show_if,
-        rate_survey
+        rate_survey,
+        language
     )
 
     # Initialize local variables ----
@@ -164,7 +160,6 @@ sd_server <- function(
     admin_page         <- config$admin_page
     question_required  <- config$question_required
     page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
-    languages          <- config$languages
 
     # Pre-compute timestamp IDs
     page_ts_ids      <- paste0("time_p_", page_ids)
@@ -416,8 +411,8 @@ sd_server <- function(
             } else if (!is.null(next_page_id)) {
               shinyWidgets::sendSweetAlert(
                 session = session,
-                title = translations[[language]]$warning,
-                text = translations[[language]]$required,
+                title = translations[[language]][["warning"]],
+                text = translations[[language]][["required"]],
                 type = "warning"
               )
             }
@@ -439,11 +434,11 @@ sd_server <- function(
     shiny::observeEvent(input$show_exit_modal, {
       if (rate_survey) {
         shiny::showModal(shiny::modalDialog(
-          title = translations[[language]]$rating_title,
+          title = translations[[language]][["rating_title"]],
           sd_question(
             type   = 'mc_buttons',
             id     = 'survey_rating',
-            label  = glue:glue("{translations[[language]]$rating_text}:<br><small>({translations[[language]]$rating_scale})</small>"),
+            label  = glue::glue("{translations[[language]][['rating_text']]}:<br><small>({translations[[language]][['rating_scale']]})</small>"),
             option = c(
               "1" = "1",
               "2" = "2",
@@ -453,17 +448,17 @@ sd_server <- function(
             )
           ),
           footer = shiny::tagList(
-            shiny::modalButton(translations[[language]]$cancel),
-            shiny::actionButton("submit_rating", translations[[language]]$submit_exit)
+            shiny::modalButton(translations[[language]][["cancel"]]),
+            shiny::actionButton("submit_rating", translations[[language]][["submit_exit"]])
           )
         ))
       } else {
         shiny::showModal(shiny::modalDialog(
-          title = translations[[language]]$confirm_exit,
-          translations[[language]]$sure_exit,
+          title = translations[[language]][["confirm_exit"]],
+          translations[[language]][["sure_exit"]],
           footer = shiny::tagList(
-            shiny::modalButton(translations[[language]]$cancel),
-            shiny::actionButton("confirm_exit", translations[[language]]$exit)
+            shiny::modalButton(translations[[language]][["cancel"]]),
+            shiny::actionButton("confirm_exit", translations[[language]][["exit"]])
           )
         ))
       }

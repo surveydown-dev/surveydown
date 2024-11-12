@@ -239,6 +239,9 @@ sd_question <- function(
 
     output <- NULL
 
+    # Load translations for selected label and date language option
+    translations <- yaml::read_yaml("_survey/translations.yml")
+
     # Check if question if answered
     js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
 
@@ -246,6 +249,11 @@ sd_question <- function(
     label <- markdown_to_html(label)
 
     if (type ==  "select") {
+
+        # Change translation of selected label
+        label_select <- translations[[1]][['choose_option']]
+
+        # Add blank option for visible selected option
         option <- c("", option)
         names(option)[1] <- label_select
 
@@ -370,7 +378,7 @@ sd_question <- function(
             format             = "mm/dd/yyyy",
             startview          = "month",
             weekstart          = 0,
-            language           = "en",
+            language           = names(translations),
             autoclose          = TRUE,
             datesdisabled      = NULL,
             daysofweekdisabled = NULL
@@ -390,7 +398,7 @@ sd_question <- function(
             format    = "mm/dd/yyyy",
             startview = "month",
             weekstart = 0,
-            language  = "en",
+            language  = names(translations),
             separator = "-",
             autoclose = TRUE
         )
@@ -518,7 +526,15 @@ make_question_container <- function(id, object, width) {
 #' }
 #'
 #' @export
-sd_next <- function(next_page = NULL, label = "Next") { # TODO change label if !en and label == "Next"
+sd_next <- function(next_page = NULL, label = "Next") {
+
+  # Get choosen language and insert translation of label if default not changed 
+  translations <- yaml::read_yaml('_survey/translations.yml')
+  
+  if (label == "Next" && names(translations) != 'en') {
+    label <- translations[[1]][['next']]
+  }
+
   button_id <- "page_id_next"  # Placeholder ID
   shiny::tagList(
     shiny::div(
@@ -596,6 +612,14 @@ make_next_button_id <- function(page_id) {
 #'
 #' @export
 sd_close <- function(label = "Exit Survey") {
+
+  # Get choosen language and insert translation of label if default not changed 
+  translations <- yaml::read_yaml('_survey/translations.yml')
+  
+  if (label == 'Exit Survey' && names(translations) != 'en') {
+    label <- translations[[1]][['exit']]
+  }
+
   button_id <- "close-survey-button"
   shiny::tagList(
     shiny::div(
@@ -608,14 +632,14 @@ sd_close <- function(label = "Exit Survey") {
         onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
       )
     ),
-    shiny::tags$script(htmltools::HTML(glue::glue("
+    shiny::tags$script(htmltools::HTML("
       Shiny.addCustomMessageHandler('closeWindow', function(message) {
         window.close();
         if (!window.closed) {
-          alert('{translations[[language]]$close_tab}');
-        } # TODO : how do I get the translations here in this function?
+          alert('Please close this tab manually to exit the survey.');
+        }
       });
-    ")))
+    "))
   )
 }
 
@@ -698,6 +722,13 @@ sd_redirect <- function(
     delay  = NULL,
     newtab = FALSE
 ) {
+    # Get choosen language and insert translation of label if default not changed 
+    translations <- yaml::read_yaml('_survey/translations.yml')
+    
+    if (label == "Click here" && names(translations) != 'en') {
+      label <- translations[[1]][['click']]
+    }
+
     if (!is.null(shiny::getDefaultReactiveDomain())) {
         # In a reactive context, directly add to output with renderUI
         shiny::isolate({
@@ -736,7 +767,14 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
     } else {
         element <- shiny::span(label)
     }
-
+  
+    translations <- yaml::read_yaml('_survey/translations.yml')
+  
+    text_redirect <- translations[[1]][["redirect"]]
+    text_seconds <- translations[[1]][["seconds"]]
+    text_newtab <- translations[[1]][["new_tab"]]
+    text_error <- translations[[1]][["redirect_error"]]
+  
     # Add automatic redirection if delay is specified
     if (!is.null(delay) && is.numeric(delay) && delay > 0) {
         countdown_id <- paste0("countdown_", id)
@@ -749,11 +787,11 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
                     element,
                     shiny::p(
                         style = "margin: 0.5rem 0 0 0;",
-                        translations[[language]]$redirect, " ",
+                        text_redirect, " ",
                         shiny::tags$strong(id = countdown_id, delay),
-                        " ", translations[[language]]$seconds, ".",
+                        " ", text_seconds, ".",
                         if (newtab) {
-                          glue:glue(" ({translations[[language]]$new_tab})")
+                          glue::glue(" ({text_newtab})")
                         } else {
                           NULL
                         }
@@ -775,7 +813,7 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
             shiny::div(
                 class = "sd-container",
                 element,
-                shiny::p(style = "margin: 0.5rem 0 0 0;", "Error: This text won't trigger any redirection...")
+                shiny::p(style = "margin: 0.5rem 0 0 0;", text_error)
             )
         )
     } else {

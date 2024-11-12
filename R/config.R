@@ -5,7 +5,8 @@ run_config <- function(
     admin_page,
     skip_if,
     show_if,
-    rate_survey
+    rate_survey,
+    language
 ) {
     # Check for sd_close() in survey.qmd if rate_survey used
     if (rate_survey) { check_sd_close() }
@@ -18,6 +19,9 @@ run_config <- function(
 
     if (files_need_updating) {
         message("Output files not up-to-date - rendering qmd file and extracting content.")
+
+        # Prepare translations (check for inputs)
+        get_translations(paths, language)
 
         # Render the qmd file into the "_survey" folder
         render_qmd(paths)
@@ -117,16 +121,19 @@ check_sd_close <- function() {
 
 get_paths <- function() {
     target_folder <- "_survey"
+
     if (!fs::dir_exists(target_folder)) { fs::dir_create(target_folder)}
+
     paths <- list(
-        qmd           = "survey.qmd",
-        app           = "app.R",
-        target_folder = target_folder,
-        root_html     = "survey.html",
-        target_html   = file.path(target_folder, "survey.html"),
-        target_pages  = file.path(target_folder, "pages.rds"),
-        target_head   = file.path(target_folder, "head.rds"),
-        target_questions  = file.path(target_folder, "questions.yml")
+        qmd              = "survey.qmd",
+        app              = "app.R",
+        root_html        = "survey.html",
+        transl           = "translations.yml",
+        target_transl    = file.path(target_folder, "translations.yml"),
+        target_html      = file.path(target_folder, "survey.html"),
+        target_pages     = file.path(target_folder, "pages.rds"),
+        target_head      = file.path(target_folder, "head.rds"),
+        target_questions = file.path(target_folder, "questions.yml")
     )
     return(paths)
 }
@@ -139,11 +146,93 @@ check_files_need_updating <- function(paths) {
     )
     if (any(!fs::file_exists(targets))) { return(TRUE) }
 
-    # Re-render if the target pages file is out of date with 'survey.qmd' or 'app.R'
+    # Re-render if the target pages file is out of date with 'survey.qmd', 'app.R'
     time_qmd <- file.info(paths$qmd)$mtime
     time_app <- file.info(paths$app)$mtime
     time_pages <- file.info(paths$target_pages)$mtime
-    return((time_qmd > time_pages) || (time_app > time_pages))
+
+    if ((time_qmd > time_pages) || (time_app > time_pages)) { return(TRUE) }
+
+    # Re-render if the user provided a 'translations.yml' file which is out of date
+    if (fs::file_exists(paths$transl)) {
+        
+        time_transl <- file.info(paths$transl)$mtime
+
+        if (time_transl > time_pages) { return(TRUE) }
+    }
+
+    return(FALSE)
+}
+
+get_translations <- function(paths, language) {
+
+    # Check for valid language input (see https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput)
+    valid_languages <- c(
+        "ar", "az", "bg", "bs", "ca", "cs", "cy", "da", "de", "el", "en", 
+        "en-AU", "en-GB", "eo", "es", "et", "eu", "fa", "fi", "fo", "fr-CH", 
+        "fr", "gl", "he", "hr", "hu", "hy", "id", "is", "it-CH", "it", "ja",
+        "ka", "kh", "kk", "ko", "kr", "lt", "lv", "me", "mk", "mn", "ms", "nb",
+        "nl-BE", "nl", "no", "pl", "pt-BR", "pt", "ro", "rs-latin", "rs", "ru",
+        "sk", "sl", "sq", "sr-latin", "sr", "sv", "sw", "th", "tr", "uk", "vi",
+        "zh-CN", "zh-TW"
+    )
+    
+    # Fallback to English if not set or not supported (from shiny::dateInput())
+    if (is.null(language) || !(language %in% valid_languages)) {
+        message("Invalid or unsupported language selected. Falling back to predefined English.")
+        message("Check https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput for supported languages.")
+        language <- "en"  
+    }
+
+    # Include user provided translations (if translations.yml file is in root folder)
+    if (fs::file_exists(paths$transl)) {
+        # Read translations file and select translations for selected language
+        tryCatch({
+            user_transl <- yaml::read_yaml(paths$transl)
+            user_transl <- user_transl[unique(names(user_transl))]
+            user_transl <- user_transl[names(user_transl) == language]
+
+            # Check if there is one valid set of translations for selected language
+            if (length(user_transl) == 1) {
+                message("User provided translations for language '", language, "' from '", paths$transl, "' file loaded.")
+
+                # Add possible missing text elements from predefined translations (if not available, use English)
+                if (language %in% names(translations)) {
+                    predef_transl <- translations[[language]]
+                } else {
+                    predef_transl <- translations[["en"]]
+                }
+                user_transl[[1]] <- c(
+                    user_transl[[1]],
+                    predef_transl[!(names(predef_transl) %in% names(user_transl[[1]]))]
+                )
+
+            } else {
+                user_transl <- NULL
+            }
+        }, error = function(e) {
+            message("Error reading '", paths$transl, "' file. Please review and revise the file. Error details: ", e$message)
+            user_transl <- NULL
+        })
+
+        # Combine user provided translations with predefined translations
+        translations <- c(user_transl, translations) # user provided take precedence
+    }
+
+    # Choose translations by choosen language
+    translations <- translations[names(translations) == language]
+    translations <- translations[1]
+
+    # Fallback to English if no translations found for selected language
+    if (length(translations[[1]]) == 0) {
+        message("No translations found for language '", language, "'. Fall back to predefined English.")
+        message("Surveydown currently provides translations for the following languages: 'en', 'de', 'fr', 'it', and 'es'.")
+        message("Add a translation file to the root folder to provide translations for other supported languages.")
+        translations <- translations[names(translations) == "en"]
+    }
+
+    # write translations file
+    yaml::write_yaml(translations, paths$target_transl)
 }
 
 render_qmd <- function(paths) {
