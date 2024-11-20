@@ -87,6 +87,7 @@ sd_ui <- function() {
       shinyjs::useShinyjs(),
       load_resource(
         "auto_scroll.js",
+        "cookies.js",
         "countdown.js",
         "enter_key.js",
         "keep_alive.js",
