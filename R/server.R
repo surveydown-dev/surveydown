@@ -1273,9 +1273,37 @@ handle_data_restoration <- function(restore_data, session, current_page_id, star
   })
 }
 
+check_session <- function(sid, db) {
+  if (is.null(sid)) {
+    message("Null session ID passed to check_session")
+    return(NULL)
+  }
+
+  tryCatch({
+    pool::poolWithTransaction(db$db, function(conn) {
+      message("Checking database for session ID: ", sid)
+      all_sessions <- DBI::dbGetQuery(conn, sprintf('SELECT session_id FROM "%s"', db$table))
+      message("All session IDs in database: ", paste(all_sessions$session_id, collapse=", "))
+
+      query <- sprintf('SELECT * FROM "%s" WHERE session_id = $1', db$table)
+      result <- DBI::dbGetQuery(conn, query, params = list(sid))
+
+      if (nrow(result) > 0) {
+        message("Found data for session: ", sid)
+        message("Data columns: ", paste(names(result), collapse=", "))
+        return(result)
+      }
+      message("No data found for session: ", sid)
+      return(NULL)
+    })
+  }, error = function(e) {
+    message("Error checking session: ", e$message)
+    return(NULL)
+  })
+}
+
 handle_sessions <- function(db, session, input, time_start, start_page, current_page_id) {
-  # Set a default session_id
-  session_id <- session$token
+  session_id <- NULL
 
   if (!is.null(db)) {
     session_data <- shiny::reactiveValues(initialized = FALSE)
@@ -1288,59 +1316,28 @@ handle_sessions <- function(db, session, input, time_start, start_page, current_
         current_token <- session$token
         message("Current token: ", current_token)
 
-        # Function to check session data in DB
-        check_session <- function(sid) {
-          if (is.null(sid)) {
-            message("Null session ID passed to check_session")
-            return(NULL)
-          }
-
-          tryCatch({
-            pool::poolWithTransaction(db$db, function(conn) {
-              message("Checking database for session ID: ", sid)
-              all_sessions <- DBI::dbGetQuery(conn, sprintf('SELECT session_id FROM "%s"', db$table))
-              message("All session IDs in database: ", paste(all_sessions$session_id, collapse=", "))
-
-              query <- sprintf('SELECT * FROM "%s" WHERE session_id = $1', db$table)
-              result <- DBI::dbGetQuery(conn, query, params = list(sid))
-
-              if (nrow(result) > 0) {
-                message("Found data for session: ", sid)
-                message("Data columns: ", paste(names(result), collapse=", "))
-                return(result)
-              }
-              message("No data found for session: ", sid)
-              return(NULL)
-            })
-          }, error = function(e) {
-            message("Error checking session: ", e$message)
-            return(NULL)
-          })
-        }
-
-        # Check for existing session data
         restore_data <- NULL
         parent_id <- get0("session_id", envir = parent.frame(), ifnotfound = NULL)
 
-        if (!is.null(parent_id) && nchar(parent_id) > 0) {
-          message("Found parent ID: ", parent_id)
-          restore_data <- check_session(parent_id)
+        if (is.null(restore_data) && !is.null(stored_session_id) && nchar(stored_session_id) > 0) {
+          message("Trying stored session ID from cookie: ", stored_session_id)
+          restore_data <- check_session(stored_session_id, db)
+          if (!is.null(restore_data)) {
+            message("Using stored cookie session: ", stored_session_id)
+            session_id <- stored_session_id
+          }
+        }
+
+        if (is.null(restore_data) && !is.null(parent_id) && nchar(parent_id) > 0) {
+          message("Trying parent ID: ", parent_id)
+          restore_data <- check_session(parent_id, db)
           if (!is.null(restore_data)) {
             message("Using parent session: ", parent_id)
             session_id <- parent_id
           }
         }
 
-        if (is.null(restore_data) && !is.null(stored_session_id) && nchar(stored_session_id) > 0) {
-          message("Trying stored session ID: ", stored_session_id)
-          restore_data <- check_session(stored_session_id)
-          if (!is.null(restore_data)) {
-            message("Using stored session: ", stored_session_id)
-            session_id <- stored_session_id
-          }
-        }
-
-        if (is.null(restore_data)) {
+        if (is.null(session_id)) {
           session_id <- current_token
           message("Starting new session with token: ", current_token)
         }
@@ -1361,6 +1358,8 @@ handle_sessions <- function(db, session, input, time_start, start_page, current_
         session_data$initialized <- TRUE
       }
     }, ignoreNULL = FALSE)
+  } else {
+    session_id <- session$token
   }
 
   return(session_id)
