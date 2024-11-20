@@ -1302,65 +1302,42 @@ check_session <- function(sid, db) {
   })
 }
 
+session_registry <- new.env()
+
 handle_sessions <- function(db, session, input, time_start, start_page, current_page_id) {
-  session_id <- NULL
-
-  if (!is.null(db)) {
-    session_data <- shiny::reactiveValues(initialized = FALSE)
-
-    shiny::observeEvent(input$stored_session_id, {
-      message("Stored session event triggered with: ", input$stored_session_id)
-
-      if (!session_data$initialized) {
-        stored_session_id <- input$stored_session_id
-        current_token <- session$token
-        message("Current token: ", current_token)
-
-        restore_data <- NULL
-        parent_id <- get0("session_id", envir = parent.frame(), ifnotfound = NULL)
-
-        if (is.null(restore_data) && !is.null(stored_session_id) && nchar(stored_session_id) > 0) {
-          message("Trying stored session ID from cookie: ", stored_session_id)
-          restore_data <- check_session(stored_session_id, db)
-          if (!is.null(restore_data)) {
-            message("Using stored cookie session: ", stored_session_id)
-            session_id <- stored_session_id
-          }
-        }
-
-        if (is.null(restore_data) && !is.null(parent_id) && nchar(parent_id) > 0) {
-          message("Trying parent ID: ", parent_id)
-          restore_data <- check_session(parent_id, db)
-          if (!is.null(restore_data)) {
-            message("Using parent session: ", parent_id)
-            session_id <- parent_id
-          }
-        }
-
-        if (is.null(session_id)) {
-          session_id <- current_token
-          message("Starting new session with token: ", current_token)
-        }
-
-        session$sendCustomMessage("setCookie", list(sessionId = session_id))
-        message("Sent cookie with session ID: ", session_id)
-
-        assign("session_id", session_id, envir = parent.frame())
-        message("Set final session ID in parent: ", session_id)
-
-        if (!is.null(restore_data)) {
-          handle_data_restoration(restore_data, session, current_page_id, start_page)
-        } else {
-          message("No data to restore, starting from: ", start_page)
-          current_page_id(start_page)
-        }
-
-        session_data$initialized <- TRUE
-      }
-    }, ignoreNULL = FALSE)
-  } else {
-    session_id <- session$token
+  if (is.null(session_registry$current_id)) {
+    session_registry$current_id <- session$token
   }
 
-  return(session_id)
+  if (is.null(db)) {
+    return(session_registry$current_id)
+  }
+
+  session_data <- shiny::reactiveValues(initialized = FALSE)
+
+  shiny::observeEvent(input$stored_session_id, {
+    if (!session_data$initialized) {
+      stored_id <- input$stored_session_id
+
+      if (!is.null(stored_id) && nchar(stored_id) > 0) {
+        restore_data <- check_session(stored_id, db)
+        if (!is.null(restore_data)) {
+          session_registry$current_id <- stored_id
+          session$sendCustomMessage("setCookie", list(sessionId = stored_id))
+          assign("session_id", stored_id, envir = parent.frame())
+          handle_data_restoration(restore_data, session, current_page_id, start_page)
+          session_data$initialized <- TRUE
+          return()
+        }
+      }
+
+      # If no valid stored session, set up new session
+      session$sendCustomMessage("setCookie", list(sessionId = session_registry$current_id))
+      assign("session_id", session_registry$current_id, envir = parent.frame())
+      current_page_id(start_page)
+      session_data$initialized <- TRUE
+    }
+  }, ignoreNULL = FALSE)
+
+  return(session_registry$current_id)
 }
