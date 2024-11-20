@@ -54,9 +54,25 @@ Shiny.addCustomMessageHandler('setCookie', function(message) {
 
 // Add handler for triggering input changes
 Shiny.addCustomMessageHandler('triggerInputChange', function(message) {
-    var inputEl = $('#' + message.inputId);
+    const inputEl = $('#' + message.inputId);
     if (inputEl.length) {
-        inputEl.trigger('change');
+        // For radio buttons and checkboxes
+        if (inputEl.is(':radio') || inputEl.is(':checkbox')) {
+            inputEl.prop('checked', true).trigger('change');
+        }
+        // For select elements
+        else if (inputEl.is('select')) {
+            inputEl.val(inputEl.val()).trigger('change');
+        }
+        // For text inputs and others
+        else {
+            inputEl.trigger('change');
+        }
+
+        // Also trigger input event for text-based inputs
+        if (inputEl.is('input[type="text"], textarea')) {
+            inputEl.trigger('input');
+        }
     }
 });
 
