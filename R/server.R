@@ -772,270 +772,6 @@ sd_show_if <- function(...) {
     })
 }
 
-set_show_if_conditions <- function(show_if) {
-    if (is.null(show_if) || length(show_if$conditions) == 0) {
-        return(shiny::reactive(list()))
-    }
-    shiny::reactive({
-        results <- lapply(show_if$conditions, function(rule) {
-            result <- tryCatch({
-                evaluate_condition(rule)
-            }, error = function(e) {
-                warning(sprintf(
-                    "Error in show_if condition for target '%s', condition '%s': %s",
-                    rule$target,
-                    deparse(rule$condition),
-                    conditionMessage(e)
-                ))
-                FALSE
-            })
-            stats::setNames(list(result), rule$target)
-        })
-        do.call(c, results)
-    })
-}
-
-get_unique_targets <- function(a) {
-    return(unique(sapply(a, function(x) x$target)))
-}
-
-parse_conditions <- function(...) {
-    conditions <- list(...)
-    lapply(conditions, function(cond) {
-        if (!inherits(cond, "formula")) {
-            stop("Each condition must be a formula (condition ~ target)")
-        }
-        list(
-            condition = cond[[2]],  # Left-hand side of the formula
-            target = eval(cond[[3]])  # Right-hand side of the formula
-        )
-    })
-}
-
-evaluate_condition <- function(rule) {
-    isTRUE(eval(
-        rule$condition,
-        envir = list(input = shiny::getDefaultReactiveDomain()$input)
-    ))
-}
-
-# Function to get all stored values
-get_stored_vals <- function(session) {
-    shiny::isolate({
-        if (is.null(session)) {
-            stop("get_stored_vals must be called from within a Shiny reactive context")
-        }
-        stored_vals <- session$userData$stored_values
-        if (is.null(stored_vals)) { return(NULL) }
-
-        # Format stored values as a list
-        formatted_vals <- lapply(stored_vals, function(val) {
-            if (is.null(val)) "" else val
-        })
-
-        return(formatted_vals)
-    })
-}
-
-# Get Current UTC Timestamp
-get_utc_timestamp <- function() {
-    return(format(Sys.time(), tz = "UTC", usetz = TRUE))
-}
-
-get_initial_data <- function(
-        session, session_id, time_start, all_ids, start_page_ts_id
-) {
-    # Initialize with static data
-    data <- c(
-        list(session_id = session_id, time_start = time_start),
-        get_stored_vals(session)
-    )
-
-    # Initialize question & timestamp values
-    for (id in all_ids) { data[[id]] <- "" }
-    data[['time_start']] <- time_start
-    data[[start_page_ts_id]] <- time_start
-    data[['time_end']] <- ""
-
-    return(data)
-}
-
-# Helper function to format a single question value
-format_question_value <- function(val) {
-    if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
-        return("")
-    } else if (length(val) > 1) {
-        return(paste(val, collapse = ", "))
-    } else {
-        return(as.character(val))
-    }
-}
-
-get_default_next_page <- function(page, page_ids, page_id_to_index) {
-    if (is.null(page$next_page_id)) return(NULL)
-    next_page_id <- page$next_page_id
-    if (next_page_id == "") {
-        index <- page_id_to_index[page$id] + 1
-        if (index <= length(page_ids)) {
-            return(page_ids[index])
-        } else {
-            return(NULL)
-        }
-    }
-    return(next_page_id)
-}
-
-handle_skip_logic <- function(input, skip_if, current_page_id, next_page_id) {
-    if (is.null(next_page_id) | is.null(skip_if)) { return(next_page_id) }
-
-    # Loop through each skip logic condition
-    conditions <- skip_if$conditions
-    for (i in seq_along(conditions)) {
-        rule <- conditions[[i]]
-
-        # Evaluate the condition
-        condition_result <- tryCatch({
-            evaluate_condition(rule)
-        }, error = function(e) {
-            warning(sprintf(
-                "Error in skip_if condition for target '%s': %s",
-                rule$target, conditionMessage(e))
-            )
-            FALSE
-        })
-
-        # Check if the condition is met
-        if (condition_result & (current_page_id != rule$target)) {
-            return(rule$target)
-        }
-    }
-    return(next_page_id)
-}
-
-# Check if a single question is answered
-check_answer <- function(q, input) {
-    answer <- input[[q]]
-    if (is.null(answer)) return(FALSE)
-    if (is.character(answer)) return(any(nzchar(answer)))
-    if (is.numeric(answer)) return(any(!is.na(answer)))
-    if (inherits(answer, "Date")) return(any(!is.na(answer)))
-    if (is.list(answer)) return(any(!sapply(answer, is.null)))
-    return(TRUE)  # Default to true for unknown types
-}
-
-admin_enable <- function(input, output, session, db) {
-    #not fun to figure out, do not render the admin page at the start if you are
-    #using an outright hide_pages js file
-    show_admin_section <- function() {
-        shinyjs::hide("quarto-content")
-        shiny::insertUI(
-            selector = "body",
-            where = "beforeEnd",
-            ui = htmltools::div(
-                id = "admin-section",
-                class = "admin-section",
-                htmltools::div(
-                    id = "login-page",
-                    htmltools::h2("Admin Login"),
-                    shiny::passwordInput("adminpw", "Password"),
-                    shiny::actionButton("submitPw", "Log in"),
-                    htmltools::br(),
-                    htmltools::br(),
-                    shiny::actionButton("back_to_survey_login", "Back to Survey")
-                ),
-                shinyjs::hidden(
-                    htmltools::div(
-                        id = "admin-content",
-                        htmltools::h2("Admin Page"),
-                        shiny::actionButton("pause_survey", "Pause Survey"),
-                        shiny::actionButton("pause_db", "Pause DB"),
-                        shiny::downloadButton("download_data", "Download Data"),
-                        shiny::actionButton("back_to_survey_admin", "Back to Survey"),
-                        htmltools::hr(),
-                        htmltools::h3("Survey Data"),
-                        DT::DTOutput("survey_data_table")
-                    )
-                )
-            )
-        )
-    }
-
-    # Observe for URL change
-    url_reactive <- shiny::reactive({
-        session$clientData$url_search
-    })
-
-    # Observe changes to the URL
-    shiny::observe({
-        url <- url_reactive()
-        query <- shiny::parseQueryString(url)
-        admin_param <- query[['admin']]
-        if(!is.null(admin_param)) {
-            show_admin_section()
-        }
-    })
-
-    # Password check and admin content reveal
-    shiny::observeEvent(input$submitPw, {
-        if (input$adminpw == Sys.getenv("SURVEYDOWN_PASSWORD")) {
-            session$userData$isAdmin <- TRUE
-            shinyjs::hide("login-page")
-            shinyjs::show("admin-content")
-
-            output$survey_data_table <- DT::renderDT({
-                data <- DBI::dbReadTable(db$db, db$table)
-                DT::datatable(data, options = list(scrollX = TRUE))
-            })
-        } else {
-            shiny::showNotification("Incorrect password", type = "error")
-        }
-    })
-
-    # Function to return to survey
-    return_to_survey <- function() {
-        session$userData$isAdmin <- NULL
-        shinyjs::hide("admin-section")
-        shinyjs::show("quarto-content")
-        shinyjs::runjs("showFirstPage();")
-        shiny::updateQueryString("?", mode = "replace")
-    }
-
-    # Back to survey button on login page
-    shiny::observeEvent(input$back_to_survey_login, {
-        return_to_survey()
-    })
-
-    # Back to survey button on admin content page
-    shiny::observeEvent(input$back_to_survey_admin, {
-        return_to_survey()
-    })
-
-    #Pause Survey - Pause DB Section
-
-    shiny::observeEvent(input$pause_survey, {
-        #Code here that write to the table to change row value from 0 -> 1 and back if it happens
-        data <- DBI::dbReadTable(db$db, paste0(db$table, "_admin_table"))
-        #Read table value in, change it from true to false
-
-
-        #Add in sd_server if(survey_paused == TRUE)
-        #Create and display a blank page that says the survey is pause
-
-
-    })
-
-    # Download Data button functionality
-    output$download_data <- shiny::downloadHandler(
-        filename = function() {
-            paste0(db$table, "_", Sys.Date(), ".csv")
-        },
-        content = function(file) {
-            data <- DBI::dbReadTable(db$db, db$table)
-            utils::write.csv(data, file, row.names = FALSE)
-        }
-    )
-}
-
 #' Set password for surveydown survey
 #'
 #' This function sets your surveydown password, which is used to access
@@ -1372,4 +1108,266 @@ sd_is_answered <- function(question_id) {
         # For single-answer questions
         return(!is.null(input[[question_id]]) && nzchar(input[[question_id]]))
     }
+}
+
+# Helper functions ----
+
+set_show_if_conditions <- function(show_if) {
+  if (is.null(show_if) || length(show_if$conditions) == 0) {
+    return(shiny::reactive(list()))
+  }
+  shiny::reactive({
+    results <- lapply(show_if$conditions, function(rule) {
+      result <- tryCatch({
+        evaluate_condition(rule)
+      }, error = function(e) {
+        warning(sprintf(
+          "Error in show_if condition for target '%s', condition '%s': %s",
+          rule$target,
+          deparse(rule$condition),
+          conditionMessage(e)
+        ))
+        FALSE
+      })
+      stats::setNames(list(result), rule$target)
+    })
+    do.call(c, results)
+  })
+}
+
+get_unique_targets <- function(a) {
+  return(unique(sapply(a, function(x) x$target)))
+}
+
+parse_conditions <- function(...) {
+  conditions <- list(...)
+  lapply(conditions, function(cond) {
+    if (!inherits(cond, "formula")) {
+      stop("Each condition must be a formula (condition ~ target)")
+    }
+    list(
+      condition = cond[[2]],  # Left-hand side of the formula
+      target = eval(cond[[3]])  # Right-hand side of the formula
+    )
+  })
+}
+
+evaluate_condition <- function(rule) {
+  isTRUE(eval(
+    rule$condition,
+    envir = list(input = shiny::getDefaultReactiveDomain()$input)
+  ))
+}
+
+get_stored_vals <- function(session) {
+  shiny::isolate({
+    if (is.null(session)) {
+      stop("get_stored_vals must be called from within a Shiny reactive context")
+    }
+    stored_vals <- session$userData$stored_values
+    if (is.null(stored_vals)) { return(NULL) }
+
+    # Format stored values as a list
+    formatted_vals <- lapply(stored_vals, function(val) {
+      if (is.null(val)) "" else val
+    })
+
+    return(formatted_vals)
+  })
+}
+
+get_utc_timestamp <- function() {
+  return(format(Sys.time(), tz = "UTC", usetz = TRUE))
+}
+
+get_initial_data <- function(
+    session, session_id, time_start, all_ids, start_page_ts_id
+) {
+  # Initialize with static data
+  data <- c(
+    list(session_id = session_id, time_start = time_start),
+    get_stored_vals(session)
+  )
+
+  # Initialize question & timestamp values
+  for (id in all_ids) { data[[id]] <- "" }
+  data[['time_start']] <- time_start
+  data[[start_page_ts_id]] <- time_start
+  data[['time_end']] <- ""
+
+  return(data)
+}
+
+format_question_value <- function(val) {
+  if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
+    return("")
+  } else if (length(val) > 1) {
+    return(paste(val, collapse = ", "))
+  } else {
+    return(as.character(val))
+  }
+}
+
+get_default_next_page <- function(page, page_ids, page_id_to_index) {
+  if (is.null(page$next_page_id)) return(NULL)
+  next_page_id <- page$next_page_id
+  if (next_page_id == "") {
+    index <- page_id_to_index[page$id] + 1
+    if (index <= length(page_ids)) {
+      return(page_ids[index])
+    } else {
+      return(NULL)
+    }
+  }
+  return(next_page_id)
+}
+
+handle_skip_logic <- function(input, skip_if, current_page_id, next_page_id) {
+  if (is.null(next_page_id) | is.null(skip_if)) { return(next_page_id) }
+
+  # Loop through each skip logic condition
+  conditions <- skip_if$conditions
+  for (i in seq_along(conditions)) {
+    rule <- conditions[[i]]
+
+    # Evaluate the condition
+    condition_result <- tryCatch({
+      evaluate_condition(rule)
+    }, error = function(e) {
+      warning(sprintf(
+        "Error in skip_if condition for target '%s': %s",
+        rule$target, conditionMessage(e))
+      )
+      FALSE
+    })
+
+    # Check if the condition is met
+    if (condition_result & (current_page_id != rule$target)) {
+      return(rule$target)
+    }
+  }
+  return(next_page_id)
+}
+
+check_answer <- function(q, input) {
+  answer <- input[[q]]
+  if (is.null(answer)) return(FALSE)
+  if (is.character(answer)) return(any(nzchar(answer)))
+  if (is.numeric(answer)) return(any(!is.na(answer)))
+  if (inherits(answer, "Date")) return(any(!is.na(answer)))
+  if (is.list(answer)) return(any(!sapply(answer, is.null)))
+  return(TRUE)  # Default to true for unknown types
+}
+
+admin_enable <- function(input, output, session, db) {
+  #not fun to figure out, do not render the admin page at the start if you are
+  #using an outright hide_pages js file
+  show_admin_section <- function() {
+    shinyjs::hide("quarto-content")
+    shiny::insertUI(
+      selector = "body",
+      where = "beforeEnd",
+      ui = htmltools::div(
+        id = "admin-section",
+        class = "admin-section",
+        htmltools::div(
+          id = "login-page",
+          htmltools::h2("Admin Login"),
+          shiny::passwordInput("adminpw", "Password"),
+          shiny::actionButton("submitPw", "Log in"),
+          htmltools::br(),
+          htmltools::br(),
+          shiny::actionButton("back_to_survey_login", "Back to Survey")
+        ),
+        shinyjs::hidden(
+          htmltools::div(
+            id = "admin-content",
+            htmltools::h2("Admin Page"),
+            shiny::actionButton("pause_survey", "Pause Survey"),
+            shiny::actionButton("pause_db", "Pause DB"),
+            shiny::downloadButton("download_data", "Download Data"),
+            shiny::actionButton("back_to_survey_admin", "Back to Survey"),
+            htmltools::hr(),
+            htmltools::h3("Survey Data"),
+            DT::DTOutput("survey_data_table")
+          )
+        )
+      )
+    )
+  }
+
+  # Observe for URL change
+  url_reactive <- shiny::reactive({
+    session$clientData$url_search
+  })
+
+  # Observe changes to the URL
+  shiny::observe({
+    url <- url_reactive()
+    query <- shiny::parseQueryString(url)
+    admin_param <- query[['admin']]
+    if(!is.null(admin_param)) {
+      show_admin_section()
+    }
+  })
+
+  # Password check and admin content reveal
+  shiny::observeEvent(input$submitPw, {
+    if (input$adminpw == Sys.getenv("SURVEYDOWN_PASSWORD")) {
+      session$userData$isAdmin <- TRUE
+      shinyjs::hide("login-page")
+      shinyjs::show("admin-content")
+
+      output$survey_data_table <- DT::renderDT({
+        data <- DBI::dbReadTable(db$db, db$table)
+        DT::datatable(data, options = list(scrollX = TRUE))
+      })
+    } else {
+      shiny::showNotification("Incorrect password", type = "error")
+    }
+  })
+
+  # Function to return to survey
+  return_to_survey <- function() {
+    session$userData$isAdmin <- NULL
+    shinyjs::hide("admin-section")
+    shinyjs::show("quarto-content")
+    shinyjs::runjs("showFirstPage();")
+    shiny::updateQueryString("?", mode = "replace")
+  }
+
+  # Back to survey button on login page
+  shiny::observeEvent(input$back_to_survey_login, {
+    return_to_survey()
+  })
+
+  # Back to survey button on admin content page
+  shiny::observeEvent(input$back_to_survey_admin, {
+    return_to_survey()
+  })
+
+  #Pause Survey - Pause DB Section
+
+  shiny::observeEvent(input$pause_survey, {
+    #Code here that write to the table to change row value from 0 -> 1 and back if it happens
+    data <- DBI::dbReadTable(db$db, paste0(db$table, "_admin_table"))
+    #Read table value in, change it from true to false
+
+
+    #Add in sd_server if(survey_paused == TRUE)
+    #Create and display a blank page that says the survey is pause
+
+
+  })
+
+  # Download Data button functionality
+  output$download_data <- shiny::downloadHandler(
+    filename = function() {
+      paste0(db$table, "_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      data <- DBI::dbReadTable(db$db, db$table)
+      utils::write.csv(data, file, row.names = FALSE)
+    }
+  )
 }
