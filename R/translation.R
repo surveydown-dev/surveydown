@@ -35,8 +35,8 @@ get_translations_default <- function() {
     "de" = list(
       #server.R
       "cancel" = 'Abbrechen',
-      "confirm_exit" = 'Beenden bestätigen',
-      "sure_exit" = 'Sind Sie sicher, dass Sie die Umfrage beenden möchten?',
+      "confirm_exit" = 'Beenden best\u00E4tigen',
+      "sure_exit" = 'Sind Sie sicher, dass Sie die Umfrage beenden m\u00F6chten?',
       "submit_exit" = 'Absenden und beenden',
       "warning" = 'Warnung',
       "required" = 'Bitte beantworten Sie alle erforderlichen Fragen, bevor Sie fortfahren.',
@@ -46,19 +46,19 @@ get_translations_default <- function() {
       # ui.R
       "next" = 'Weiter',
       "exit" = 'Umfrage beenden',
-      "close_tab" = 'Bitte schließen Sie diesen Tab manuell, um die Umfrage zu beenden.',
-      "choose_option" = "Option auswählen...",
+      "close_tab" = 'Bitte schlie\u00DFen Sie diesen Tab manuell, um die Umfrage zu beenden.',
+      "choose_option" = "Option ausw\u00E4hlen...",
       "click" = 'Hier klicken',
       "redirect" = 'Weiterleitung in',
       "seconds" = 'Sekunden',
-      "new_tab" = 'Öffnet sich in einem neuen Tab',
-      "redirect_error" = "Fehler: Dieser Text wird keine Weiterleitung auslösen..."
+      "new_tab" = '\u00D6ffnet sich in einem neuen Tab',
+      "redirect_error" = "Fehler: Dieser Text wird keine Weiterleitung ausl\u00F6sen..."
     ),
     "es" = list(
       #server.R
       "cancel" = 'Cancelar',
       "confirm_exit" = 'Confirmar Salida',
-      "sure_exit" = '¿Está seguro de que desea salir de la encuesta?',
+      "sure_exit" = '\u00BFEst\u00E1 seguro de que desea salir de la encuesta?',
       "submit_exit" = 'Enviar y Salir',
       "warning" = 'Advertencia',
       "required" = 'Por favor, responda todas las preguntas obligatorias antes de continuar.',
@@ -68,25 +68,25 @@ get_translations_default <- function() {
       # ui.R
       "next" = 'Siguiente',
       "exit" = 'Salir de la Encuesta',
-      "close_tab" = 'Por favor, cierre esta pestaña manualmente para salir de la encuesta.',
-      "choose_option" = "Elija una opción...",
-      "click" = 'Haga clic aquí',
+      "close_tab" = 'Por favor, cierre esta pesta\u00F1a manualmente para salir de la encuesta.',
+      "choose_option" = "Elija una opci\u00F3n...",
+      "click" = 'Haga clic aqu\u00ED',
       "redirect" = 'Redireccionando en',
       "seconds" = 'segundos',
-      "new_tab" = 'Se abre en una nueva pestaña',
-      "redirect_error" = "Error: Este texto no activará ninguna redirección..."
+      "new_tab" = 'Se abre en una nueva pesta\u00F1a',
+      "redirect_error" = "Error: Este texto no activar\u00E1 ninguna redirecci\u00F3n..."
     ),
     "fr" = list(
       #server.R
       "cancel" = 'Annuler',
       "confirm_exit" = 'Confirmer la sortie',
-      "sure_exit" = 'Êtes-vous sûr de vouloir quitter le sondage?',
+      "sure_exit" = '\u00CAtes-vous s\u00FBr de vouloir quitter le sondage?',
       "submit_exit" = 'Soumettre et quitter',
       "warning" = 'Avertissement',
-      "required" = 'Veuillez répondre à toutes les questions obligatoires avant de continuer.',
+      "required" = 'Veuillez r\u00E9pondre \u00E0 toutes les questions obligatoires avant de continuer.',
       "rating_title" = 'Avant de partir...',
-      "rating_text"  = 'Évaluez votre expérience du sondage :',
-      "rating_scale" = 'de 1-mauvais à 5-excellent',
+      "rating_text"  = '\u00C9valuez votre exp\u00E9rience du sondage :',
+      "rating_scale" = 'de 1-mauvais \u00E0 5-excellent',
       # ui.R
       "next" = 'Suivant',
       "exit" = 'Quitter le sondage',
@@ -118,7 +118,7 @@ get_translations_default <- function() {
       "redirect" = 'Reindirizzamento in',
       "seconds" = 'secondi',
       "new_tab" = 'Si apre in una nuova scheda',
-      "redirect_error" = "Errore: Questo testo non attiverà alcun reindirizzamento..."
+      "redirect_error" = "Errore: Questo testo non attiver\u00E0 alcun reindirizzamento..."
     )
   ))
 }

@@ -11,7 +11,8 @@ sd_server(
   start_page = NULL,
   admin_page = FALSE,
   auto_scroll = FALSE,
-  rate_survey = FALSE
+  rate_survey = FALSE,
+  language = "en"
 )
 }
 \arguments{
@@ -36,6 +37,11 @@ question after answering. Defaults to \code{FALSE}.}
 \item{rate_survey}{Logical. If \code{TRUE}, shows a rating question when exiting
 the survey. If \code{FALSE}, shows a simple confirmation dialog.
 Defaults to \code{FALSE}.}
+
+\item{language}{Set the language for the survey system messages. Include
+your own in a \code{translations.yml} file, or choose a built in one from
+the following list: English (\code{"en"}), German (\code{"de"}), Spanish (\code{"es"}),
+French (\code{"fr"}), Italian (\code{"it"}). Defaults to \code{"en"}.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
@@ -81,14 +87,14 @@ CSV file.
 
 \section{Auto-Scrolling}{
 
-When \code{auto_scroll} is \code{TRUE}, the survey will automatically scroll to the next
-question after the current question is answered. This behavior can be disabled
-by setting \code{auto_scroll} to \code{FALSE}.
+When \code{auto_scroll} is \code{TRUE}, the survey will automatically scroll to the
+next question after the current question is answered. This behavior can be
+disabled by setting \code{auto_scroll = FALSE}.
 }
 
 \section{Exit Survey}{
 
-When \code{rate_survey} is \code{TRUE}, the function will show a rating question when
+When \code{rate_survey = TRUE}, the function will show a rating question when
 the user attempts to exit the survey. When \code{FALSE}, it will show a simple
 confirmation dialog. The rating, if provided, is saved with the survey data.
 }
@@ -118,7 +124,8 @@ if (interactive()) {
       start_page = NULL,
       admin_page = FALSE,
       auto_scroll = FALSE,
-      rate_survey = FALSE
+      rate_survey = FALSE,
+      language = "en"
     )
   }
 
