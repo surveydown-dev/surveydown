@@ -21,7 +21,7 @@ run_config <- function(
         message("Output files not up-to-date - rendering qmd file and extracting content.")
 
         # Prepare translations (check for inputs)
-        get_translations(paths, language)
+        set_translations(paths, language)
 
         # Render the qmd file into the "_survey" folder
         render_qmd(paths)
@@ -164,7 +164,10 @@ check_files_need_updating <- function(paths) {
     return(FALSE)
 }
 
-get_translations <- function(paths, language) {
+set_translations <- function(paths, language) {
+
+    # Load default translations
+    translations <- get_translations_default()
 
     # Check for valid language input (see https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput)
     valid_languages <- c(
@@ -184,7 +187,7 @@ get_translations <- function(paths, language) {
         language <- "en"  
     }
 
-    # Include user provided translations (if translations.yml file is in root folder)
+    # Include user provided translations if translations.yml file is in root
     if (fs::file_exists(paths$transl)) {
         # Read translations file and select translations for selected language
         tryCatch({
@@ -192,11 +195,16 @@ get_translations <- function(paths, language) {
             user_transl <- user_transl[unique(names(user_transl))]
             user_transl <- user_transl[names(user_transl) == language]
 
-            # Check if there is one valid set of translations for selected language
+            # Check if there is a valid set of translations for
+            # selected language
             if (length(user_transl) == 1) {
-                message("User provided translations for language '", language, "' from '", paths$transl, "' file loaded.")
+                message(
+                  "User provided translations for language '", language,
+                  "' from '", paths$transl, "' file loaded."
+                )
 
-                # Add possible missing text elements from predefined translations (if not available, use English)
+                # Add possible missing text elements from default
+                # translations (if not available, use English)
                 if (language %in% names(translations)) {
                     predef_transl <- translations[[language]]
                 } else {
@@ -211,7 +219,11 @@ get_translations <- function(paths, language) {
                 user_transl <- NULL
             }
         }, error = function(e) {
-            message("Error reading '", paths$transl, "' file. Please review and revise the file. Error details: ", e$message)
+            message(
+              "Error reading '", paths$transl,
+              "' file. Please review and revise the file. Error details: ",
+              e$message
+            )
             user_transl <- NULL
         })
 
@@ -225,9 +237,16 @@ get_translations <- function(paths, language) {
 
     # Fallback to English if no translations found for selected language
     if (length(translations[[1]]) == 0) {
-        message("No translations found for language '", language, "'. Fall back to predefined English.")
-        message("Surveydown currently provides translations for the following languages: 'en', 'de', 'fr', 'it', and 'es'.")
-        message("Add a translation file to the root folder to provide translations for other supported languages.")
+        message(
+          "No translations found for language '", language,
+          "'. Fall back to predefined English."
+        )
+        message(
+          "surveydown currently provides translations for the following languages: 'en', 'de', 'fr', 'it', and 'es'."
+        )
+        message(
+          "Add a translation file to the root folder to provide translations for other supported languages."
+        )
         translations <- translations[names(translations) == "en"]
     }
 

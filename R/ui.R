@@ -240,7 +240,7 @@ sd_question <- function(
     output <- NULL
 
     # Load translations for selected label and date language option
-    translations <- yaml::read_yaml("_survey/translations.yml")
+    translations <- get_translations()
 
     # Check if question if answered
     js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
@@ -529,7 +529,7 @@ make_question_container <- function(id, object, width) {
 sd_next <- function(next_page = NULL, label = "Next") {
 
   # Get choosen language and insert translation of label if default not changed 
-  translations <- yaml::read_yaml('_survey/translations.yml')
+  translations <- get_translations()
   
   if (label == "Next" && names(translations) != 'en') {
     label <- translations[[1]][['next']]
@@ -614,7 +614,7 @@ make_next_button_id <- function(page_id) {
 sd_close <- function(label = "Exit Survey") {
 
   # Get choosen language and insert translation of label if default not changed 
-  translations <- yaml::read_yaml('_survey/translations.yml')
+  translations <- get_translations()
   
   if (label == 'Exit Survey' && names(translations) != 'en') {
     label <- translations[[1]][['exit']]
@@ -723,7 +723,7 @@ sd_redirect <- function(
     newtab = FALSE
 ) {
     # Get choosen language and insert translation of label if default not changed 
-    translations <- yaml::read_yaml('_survey/translations.yml')
+    translations <- get_translations()
     
     if (label == "Click here" && names(translations) != 'en') {
       label <- translations[[1]][['click']]
@@ -768,7 +768,7 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
         element <- shiny::span(label)
     }
   
-    translations <- yaml::read_yaml('_survey/translations.yml')
+    translations <- get_translations()
   
     text_redirect <- translations[[1]][["redirect"]]
     text_seconds <- translations[[1]][["seconds"]]
