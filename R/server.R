@@ -208,6 +208,8 @@ sd_server <- function(
         }
     }
 
+    # Update data ----
+
     update_data <- function(time_last = FALSE) {
         data_list <- latest_data()
         fields <- changed_fields()
