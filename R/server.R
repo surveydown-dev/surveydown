@@ -191,7 +191,12 @@ sd_server <- function(
         question_visibility(current_visibility)
     })
 
-    # Initialize local functions ----
+    # Progress bar ----
+
+    # Initialize values for progress bar
+    load_js_file("update_progress.js")
+    max_progress <- shiny::reactiveVal(0)
+    last_answered_question <- shiny::reactiveVal(0)
 
     # Function to update progress bar
     update_progress_bar <- function(index) {
@@ -259,11 +264,6 @@ sd_server <- function(
 
     # Create admin page if admin_page is TRUE
     if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
-
-    # Initialize values for progressbar
-    load_js_file("update_progress.js")
-    max_progress <- shiny::reactiveVal(0)
-    last_answered_question <- shiny::reactiveVal(0)
 
     # Data tracking ----
 
@@ -356,11 +356,6 @@ sd_server <- function(
                 })
                 output[[paste0(local_id, "_label_question")]] <- shiny::renderText({
                     label_question
-                })
-
-                # Update database
-                shiny::isolate({
-                    update_data()
                 })
             },
             ignoreNULL = FALSE,
