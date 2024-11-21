@@ -204,8 +204,16 @@ sd_server <- function(
     }
 
     update_data <- function(time_last = FALSE) {
+        message("Starting update_data")
         data_list <- latest_data()
+        message("Data to update: ", paste(names(data_list), collapse=", "))
+        message("Values before processing: ")
+        for (name in names(data_list)) {
+            message(name, ": ", data_list[[name]])
+        }
+
         fields <- changed_fields()
+        message("Changed fields initially: ", paste(fields, collapse=", "))
 
         # Only update fields that have actually changed and have values
         if (length(fields) > 0) {
@@ -214,12 +222,16 @@ sd_server <- function(
             for (field in fields) {
                 if (!is.null(data_list[[field]]) && data_list[[field]] != "") {
                     valid_fields <- c(valid_fields, field)
+                } else {
+                    message("Skipping empty field: ", field)
                 }
             }
             fields <- valid_fields
+            message("Valid fields to update: ", paste(fields, collapse=", "))
         } else {
             # On initial load or restoration, use all non-empty fields
             fields <- names(data_list)[sapply(data_list, function(x) !is.null(x) && x != "")]
+            message("No changed fields, using all non-empty fields: ", paste(fields, collapse=", "))
         }
 
         if (time_last) {
@@ -243,11 +255,19 @@ sd_server <- function(
                 message("Running in a non-writable environment.")
             }
         } else {
+            message("Uploading to database")
+            message("Final fields to update: ", paste(fields, collapse=", "))
+            message("Final values to update: ")
+            for (field in fields) {
+                message(field, ": ", data_list[[field]])
+            }
             database_uploading(data_list, db$db, db$table, fields)
         }
 
         # Only reset changed fields that were actually processed
         changed_fields(setdiff(changed_fields(), fields))
+        message("Update complete, remaining changed_fields: ",
+                paste(changed_fields(), collapse=", "))
     }
 
     # Initial settings ----
@@ -305,18 +325,27 @@ sd_server <- function(
     })
 
     # Main question observers ----
-
+    # (one created for each question)
     lapply(seq_along(question_ids), function(index) {
         local({
-            local_id    <- question_ids[index]
+            local_id <- question_ids[index]
             local_ts_id <- question_ts_ids[index]
 
             shiny::observeEvent(input[[local_id]], {
-                # Tag event time and update value
-                timestamp            <- get_utc_timestamp()
-                value                <- input[[local_id]]
-                formatted_value      <- format_question_value(value)
+                # Debug log
+                message("Processing input for ", local_id)
+                message("Input value: ", paste(input[[local_id]], collapse=", "))
+
+                # Tag event time
+                timestamp <- get_utc_timestamp()
+
+                # Update question value
+                value <- input[[local_id]]
+                formatted_value <- format_question_value(value)
                 all_data[[local_id]] <- formatted_value
+
+                # Debug log
+                message("Formatted value stored in all_data: ", formatted_value)
 
                 # Update timestamp and progress if interacted
                 changed <- local_id
@@ -324,10 +353,12 @@ sd_server <- function(
                     all_data[[local_ts_id]] <- timestamp
                     changed <- c(changed, local_ts_id)
                     update_progress_bar(index)
+                    message("Interaction detected, timestamp updated: ", timestamp)
                 }
 
                 # Update tracker of which fields changed
                 changed_fields(c(changed_fields(), changed))
+                message("Changed fields updated: ", paste(changed_fields(), collapse=", "))
 
                 # Get question labels and values from question structure
                 question_info  <- question_structure[[local_id]]
@@ -339,10 +370,10 @@ sd_server <- function(
                 if (length(options) == length(label_options)) {
                     names(options) <- label_options
                 }
-                label_option <- if (is.null(value) || length(value) == 0) {
-                    ""
+                if (is.null(value) || length(value) == 0) {
+                    label_option <- ""
                 } else {
-                    options[options %in% value] |>
+                    label_option <- options[options %in% value] |>
                         names() |>
                         paste(collapse = ", ")
                 }
@@ -358,9 +389,10 @@ sd_server <- function(
                     label_question
                 })
 
-                # Update database
+                # Force immediate database update
                 shiny::isolate({
                     update_data()
+                    message("Database update triggered for ", local_id)
                 })
             },
             ignoreNULL = FALSE,
@@ -1253,14 +1285,24 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
+session_registry <- new.env()
+
 handle_data_restoration <- function(session_id, db, session, current_page_id, start_page) {
-    if (is.null(session_id)) return(NULL)
+    message("Starting data restoration for session: ", session_id)
+
+    if (is.null(session_id)) {
+        message("Null session ID passed to restoration")
+        return(NULL)
+    }
 
     # Get data using sd_get_data
     all_data <- sd_get_data(db)
     restore_data <- all_data[all_data$session_id == session_id, ]
 
-    if (nrow(restore_data) == 0) return(NULL)
+    if (nrow(restore_data) == 0) {
+        message("No data found for session: ", session_id)
+        return(NULL)
+    }
 
     # Use isolate to prevent triggering reactive updates
     shiny::isolate({
@@ -1281,17 +1323,18 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
                 val <- restore_data[[col]]
                 if (!is.null(val) && !is.na(val) && val != "") {
+                    # Directly update all_data instead of triggering input
                     all_data[[col]] <- val
+
+                    # Update UI without triggering observer
                     session$sendInputMessage(col, list(value = val, priority = "event"))
                 }
             }
         }
     })
+
     return(restore_data)
 }
-
-# Global environment for consistent session_id
-session_registry <- new.env()
 
 handle_sessions <- function(db, session, input, time_start, start_page, current_page_id) {
     if (is.null(session_registry$current_id)) {
