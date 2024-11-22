@@ -3,6 +3,7 @@
 # surveydown 0.4.2
 
 - New "translations" feature now supported (see PR #138). This allows system messages and date formats to be specified by a language using the `language` argument in `sd_server()`. Custom language messages can be further modified by providing a `translations.yml` file in the root project folder.
+- Added new `sd_create_translations()` function to generate a template `translations.yml` file to use to edit the system messages.
 - Added Stefan Munnes as contributor in DESCRIPTION file (`ctb`)
 - Bug fix: The `is_matrix` metadata was not recorded for matrix sub-questions when exported into the `_survey/questions.yml` file, which caused an error if any matrix question was required. This is now corrected when obtaining the question structure from the stored `_survey/questions.yml` file.
 
