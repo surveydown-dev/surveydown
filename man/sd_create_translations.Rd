@@ -5,8 +5,6 @@
 \title{Create a translations template file}
 \usage{
 sd_create_translations(language = "en", path = getwd())
-
-sd_create_translations(language = "en", path = getwd())
 }
 \arguments{
 \item{language}{Character string specifying the language to use. See
@@ -20,35 +18,23 @@ file should be created. Defaults to the current working directory. The
 file should be placed in the root project folder of your surveydown survey.}
 }
 \value{
-Invisible \code{NULL}. Called for its side effects.
-
-Invisible NULL. Called for its side effects.
+Invisible \code{NULL}.
 }
 \description{
 This function creates a template translations.yml file in the project root directory
 that users can customize to modify system messages.
-
-This function creates a template translations.yml file in the project root directory
-that users can customize to modify system messages.
 }
 \examples{
-\dontrun{
-# Create English template
-sd_create_translations()
+if (interactive()) {
+  # Create English template
+  sd_create_translations()
 
-# Create German template
-sd_create_translations(language = "de")
-}
-\dontrun{
-# Create English template
-sd_create_translations()
+  # Create German template
+  sd_create_translations(language = "de")
 
-# Create German template
-sd_create_translations(language = "de")
-
-# Create Japanese template
-# Will use English messages but Japanese date picker - user can modify
-# the messages as desired
-sd_create_translations(language = "ja")
+  # Create Japanese template
+  # Will use English messages but Japanese date picker - user can modify
+  # the messages as desired
+  sd_create_translations(language = "ja")
 }
 }

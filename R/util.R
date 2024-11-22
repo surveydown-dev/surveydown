@@ -601,83 +601,6 @@ get_latest_version <- function(url, pattern) {
 #' This function creates a template translations.yml file in the project root directory
 #' that users can customize to modify system messages.
 #'
-#' @param path Character string specifying the directory where the translations.yml
-#'   file should be created. Defaults to the current working directory. The
-#'   file should be placed in the root project folder of your surveydown survey.
-#' @param language Character string specifying the language to use as template.
-#'   Must be one of `"en"`, `"de"`, `"es"`, `"fr"`, or `"it"`. Defaults to `"en"`.
-#' @return Invisible `NULL`. Called for its side effects.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' # Create English template
-#' sd_create_translations()
-#'
-#' # Create German template
-#' sd_create_translations(language = "de")
-#' }
-sd_create_translations <- function(path = getwd(), language = "en") {
-  # Validate language parameter
-  supported_langs <- c("en", "de", "es", "fr", "it")
-  if (!language %in% supported_langs) {
-    warning(
-      "The language '", language, "' is not a supported default. ",
-      "Falling back to English template."
-    )
-    language <- "en"
-  }
-
-  # Get default translations
-  translations <- get_translations_default()
-
-  # Select specified language
-  template <- list()
-  template[[language]] <- translations[[language]]
-
-  # Create the file path
-  file_path <- file.path(path, "translations.yml")
-
-  # Check if file already exists
-  if (file.exists(file_path)) {
-    stop("translations.yml already exists in the specified path")
-  }
-
-  # Write the template file with a header comment
-  header <- paste(
-    "# Surveydown translations template",
-    "# Edit the values below to customize system messages",
-    "# Keep the structure and keys unchanged",
-    "",
-    sep = "\n"
-  )
-
-  # Write header and content
-  writeLines(header, file_path)
-  yaml::write_yaml(template, file_path, append = TRUE)
-
-  message("Created translations template at: ", file_path)
-  invisible(NULL)
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#' Create a translations template file
-#'
-#' This function creates a template translations.yml file in the project root directory
-#' that users can customize to modify system messages.
-#'
 #' @param language Character string specifying the language to use. See
 #'   https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput for supported
 #'   languages. Also, if `"en"`, `"de"`, `"es"`, `"fr"`, or `"it"` is chosen,
@@ -686,21 +609,21 @@ sd_create_translations <- function(path = getwd(), language = "en") {
 #' @param path Character string specifying the directory where the translations.yml
 #'   file should be created. Defaults to the current working directory. The
 #'   file should be placed in the root project folder of your surveydown survey.
-#' @return Invisible NULL. Called for its side effects.
+#' @return Invisible `NULL`.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' # Create English template
-#' sd_create_translations()
+#' if (interactive()) {
+#'   # Create English template
+#'   sd_create_translations()
 #'
-#' # Create German template
-#' sd_create_translations(language = "de")
+#'   # Create German template
+#'   sd_create_translations(language = "de")
 #'
-#' # Create Japanese template
-#' # Will use English messages but Japanese date picker - user can modify
-#' # the messages as desired
-#' sd_create_translations(language = "ja")
+#'   # Create Japanese template
+#'   # Will use English messages but Japanese date picker - user can modify
+#'   # the messages as desired
+#'   sd_create_translations(language = "ja")
 #' }
 sd_create_translations <- function(language = "en", path = getwd()) {
   # Define valid languages
