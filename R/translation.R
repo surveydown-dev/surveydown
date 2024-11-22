@@ -122,3 +122,15 @@ get_translations_default <- function() {
     )
   ))
 }
+
+get_valid_languages <- function() {
+  return(c(
+    "ar", "az", "bg", "bs", "ca", "cs", "cy", "da", "de", "el", "en",
+    "en-AU", "en-GB", "eo", "es", "et", "eu", "fa", "fi", "fo", "fr-CH",
+    "fr", "gl", "he", "hr", "hu", "hy", "id", "is", "it-CH", "it", "ja",
+    "ka", "kh", "kk", "ko", "kr", "lt", "lv", "me", "mk", "mn", "ms", "nb",
+    "nl-BE", "nl", "no", "pl", "pt-BR", "pt", "ro", "rs-latin", "rs", "ru",
+    "sk", "sl", "sq", "sr-latin", "sr", "sv", "sw", "th", "tr", "uk", "vi",
+    "zh-CN", "zh-TW"
+  ))
+}
