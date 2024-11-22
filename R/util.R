@@ -595,3 +595,82 @@ get_latest_version <- function(url, pattern) {
         return(NULL)
     })
 }
+
+#' Create a translations template file
+#'
+#' This function creates a template translations.yml file in the project root directory
+#' that users can customize to modify system messages.
+#'
+#' @param language Character string specifying the language to use. See
+#'   https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput for supported
+#'   languages. Also, if `"en"`, `"de"`, `"es"`, `"fr"`, or `"it"` is chosen,
+#'   default messages in those langauges will be used, otherwise the default
+#'   English messages will be used. Defaults to `"en"`.
+#' @param path Character string specifying the directory where the translations.yml
+#'   file should be created. Defaults to the current working directory. The
+#'   file should be placed in the root project folder of your surveydown survey.
+#' @return Invisible `NULL`.
+#' @export
+#'
+#' @examples
+#' if (interactive()) {
+#'   # Create English template
+#'   sd_create_translations()
+#'
+#'   # Create German template
+#'   sd_create_translations(language = "de")
+#'
+#'   # Create Japanese template
+#'   # Will use English messages but Japanese date picker - user can modify
+#'   # the messages as desired
+#'   sd_create_translations(language = "ja")
+#' }
+sd_create_translations <- function(language = "en", path = getwd()) {
+  # Define valid languages
+  valid_languages <- get_valid_languages()
+
+  # Check if language is valid
+  if (is.null(language) || !(language %in% valid_languages)) {
+    stop(
+      "Invalid language selected. Check https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput for supported languages."
+    )
+  }
+
+  # Get default translations
+  translations <- get_translations_default()
+
+  # If language has default messages, use them; otherwise use English
+  template <- list()
+  if (language %in% names(translations)) {
+    template[[language]] <- translations[[language]]
+  } else {
+    template[[language]] <- translations[["en"]]
+    message(
+      "No default messages available for '", language,
+      "'. Using English messages with ", language, " date picker."
+    )
+  }
+
+  # Create the file path
+  file_path <- file.path(path, "translations.yml")
+
+  # Check if file already exists
+  if (file.exists(file_path)) {
+    stop("translations.yml already exists in the specified path")
+  }
+
+  # Define template header
+  header <- paste(
+    "# Surveydown translations template",
+    "# Edit the values below to customize system messages",
+    "# Keep the structure and keys unchanged",
+    "",
+    sep = "\n"
+  )
+
+  # Write question to YAML (with comment in first lines)
+  yaml_content <- paste0(header, yaml::as.yaml(template))
+  writeLines(yaml_content, con = file_path)
+  message("Created translations template at: ", file_path)
+  invisible(NULL)
+}

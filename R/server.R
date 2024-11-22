@@ -21,6 +21,10 @@
 #' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
 #'   the survey. If `FALSE`, shows a simple confirmation dialog.
 #'   Defaults to `FALSE`.
+#' @param language Set the language for the survey system messages. Include
+#'   your own in a `translations.yml` file, or choose a built in one from
+#'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
+#'   French (`"fr"`), Italian (`"it"`). Defaults to `"en"`.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -51,12 +55,12 @@
 #' CSV file.
 #'
 #' @section Auto-Scrolling:
-#' When `auto_scroll` is `TRUE`, the survey will automatically scroll to the next
-#' question after the current question is answered. This behavior can be disabled
-#' by setting `auto_scroll` to `FALSE`.
+#' When `auto_scroll` is `TRUE`, the survey will automatically scroll to the
+#' next question after the current question is answered. This behavior can be
+#' disabled by setting `auto_scroll = FALSE`.
 #'
 #' @section Exit Survey:
-#' When `rate_survey` is `TRUE`, the function will show a rating question when
+#' When `rate_survey = TRUE`, the function will show a rating question when
 #' the user attempts to exit the survey. When `FALSE`, it will show a simple
 #' confirmation dialog. The rating, if provided, is saved with the survey data.
 #'
@@ -89,7 +93,8 @@
 #'       start_page = NULL,
 #'       admin_page = FALSE,
 #'       auto_scroll = FALSE,
-#'       rate_survey = FALSE
+#'       rate_survey = FALSE,
+#'       language = "en"
 #'     )
 #'   }
 #'
@@ -111,7 +116,8 @@ sd_server <- function(
     start_page = NULL,
     admin_page = FALSE,
     auto_scroll = FALSE,
-    rate_survey = FALSE
+    rate_survey = FALSE,
+    language = "en"
 ) {
 
     # Get input, output, and session from the parent environment
@@ -139,7 +145,8 @@ sd_server <- function(
         admin_page,
         skip_if,
         show_if,
-        rate_survey
+        rate_survey,
+        language
     )
 
     # Initialize local variables ----
@@ -157,6 +164,10 @@ sd_server <- function(
     admin_page         <- config$admin_page
     question_required  <- config$question_required
     page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
+
+    # Initialize translations list (from '_survey/translations.yml' file)
+    translations <- get_translations()[[language]]
+    print(translations)
 
     # Pre-compute timestamp IDs
     page_ts_ids      <- paste0("time_p_", page_ids)
@@ -408,8 +419,8 @@ sd_server <- function(
             } else if (!is.null(next_page_id)) {
               shinyWidgets::sendSweetAlert(
                 session = session,
-                title = "Warning",
-                text = "Please answer all required questions before proceeding.",
+                title = translations[["warning"]],
+                text = translations[["required"]],
                 type = "warning"
               )
             }
@@ -431,11 +442,11 @@ sd_server <- function(
     shiny::observeEvent(input$show_exit_modal, {
       if (rate_survey) {
         shiny::showModal(shiny::modalDialog(
-          title = "Before you go...",
+          title = translations[["rating_title"]],
           sd_question(
             type   = 'mc_buttons',
             id     = 'survey_rating',
-            label  = "Rate your survey experience:<br><small>(from 1-poor to 5-excellent)</small>",
+            label  = glue::glue("{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"),
             option = c(
               "1" = "1",
               "2" = "2",
@@ -445,17 +456,17 @@ sd_server <- function(
             )
           ),
           footer = shiny::tagList(
-            shiny::modalButton("Cancel"),
-            shiny::actionButton("submit_rating", "Submit and Exit")
+            shiny::modalButton(translations[["cancel"]]),
+            shiny::actionButton("submit_rating", translations[["submit_exit"]])
           )
         ))
       } else {
         shiny::showModal(shiny::modalDialog(
-          title = "Confirm Exit",
-          "Are you sure you want to exit the survey?",
+          title = translations[["confirm_exit"]],
+          translations[["sure_exit"]],
           footer = shiny::tagList(
-            shiny::modalButton("Cancel"),
-            shiny::actionButton("confirm_exit", "Exit")
+            shiny::modalButton(translations[["cancel"]]),
+            shiny::actionButton("confirm_exit", translations[["exit"]])
           )
         ))
       }
