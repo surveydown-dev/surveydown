@@ -127,7 +127,7 @@ sd_server <- function(
 
     # Initialize session handling and session_id
     session_id <- handle_sessions(db, session, input, time_start, start_page, current_page_id,
-                            question_ids, update_progress_bar)
+                            question_ids, question_ts_ids, update_progress_bar)
 
     # Get any skip or show conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
@@ -1252,7 +1252,7 @@ admin_enable <- function(input, output, session, db) {
 }
 
 handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
-                                  question_ids, progress_updater) {
+                                  question_ids, question_ts_ids, progress_updater) {
     if (is.null(session_id)) return(NULL)
 
     # Get data using sd_get_data
@@ -1279,9 +1279,12 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
         last_index <- 0
         for (i in seq_along(question_ids)) {
             q_id <- question_ids[i]
-            if (q_id %in% names(restore_data)) {
-                val <- restore_data[[q_id]]
-                if (!is.null(val) && !is.na(val) && val != "") {
+            ts_id <- question_ts_ids[i]
+
+            # Check if question has a timestamp (indicating user interaction)
+            if (ts_id %in% names(restore_data)) {
+                ts_val <- restore_data[[ts_id]]
+                if (!is.null(ts_val) && !is.na(ts_val) && ts_val != "") {
                     last_index <- i
                 }
             }
@@ -1310,7 +1313,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 session_registry <- new.env()
 
 handle_sessions <- function(db, session, input, time_start, start_page, current_page_id,
-                          question_ids, progress_updater) {
+                          question_ids, question_ts_ids, progress_updater) {
     if (is.null(session_registry$current_id)) {
         session_registry$current_id <- session$token
     }
@@ -1327,7 +1330,8 @@ handle_sessions <- function(db, session, input, time_start, start_page, current_
 
             if (!is.null(stored_id) && nchar(stored_id) > 0) {
                 restore_data <- handle_data_restoration(stored_id, db, session, current_page_id,
-                                                      start_page, question_ids, progress_updater)
+                                          start_page, question_ids, question_ts_ids,
+                                          progress_updater)
                 if (!is.null(restore_data)) {
                     session_registry$current_id <- stored_id
                     session$sendCustomMessage("setCookie", list(sessionId = stored_id))
