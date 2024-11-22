@@ -34,7 +34,8 @@ run_config <- function(
 
         # Extract all divs with class "sd-page" and save to "_survey" folder
         pages <- extract_html_pages(
-            paths, html_content, required_questions, all_questions_required, show_if
+            paths, html_content, required_questions,
+            all_questions_required, show_if
         )
 
         # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
@@ -155,7 +156,7 @@ check_files_need_updating <- function(paths) {
 
     # Re-render if the user provided a 'translations.yml' file which is out of date
     if (fs::file_exists(paths$transl)) {
-        
+
         time_transl <- file.info(paths$transl)$mtime
 
         if (time_transl > time_pages) { return(TRUE) }
@@ -171,20 +172,20 @@ set_translations <- function(paths, language) {
 
     # Check for valid language input (see https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput)
     valid_languages <- c(
-        "ar", "az", "bg", "bs", "ca", "cs", "cy", "da", "de", "el", "en", 
-        "en-AU", "en-GB", "eo", "es", "et", "eu", "fa", "fi", "fo", "fr-CH", 
+        "ar", "az", "bg", "bs", "ca", "cs", "cy", "da", "de", "el", "en",
+        "en-AU", "en-GB", "eo", "es", "et", "eu", "fa", "fi", "fo", "fr-CH",
         "fr", "gl", "he", "hr", "hu", "hy", "id", "is", "it-CH", "it", "ja",
         "ka", "kh", "kk", "ko", "kr", "lt", "lv", "me", "mk", "mn", "ms", "nb",
         "nl-BE", "nl", "no", "pl", "pt-BR", "pt", "ro", "rs-latin", "rs", "ru",
         "sk", "sl", "sq", "sr-latin", "sr", "sv", "sw", "th", "tr", "uk", "vi",
         "zh-CN", "zh-TW"
     )
-    
+
     # Fallback to English if not set or not supported (from shiny::dateInput())
     if (is.null(language) || !(language %in% valid_languages)) {
         message("Invalid or unsupported language selected. Falling back to predefined English.")
         message("Check https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput for supported languages.")
-        language <- "en"  
+        language <- "en"
     }
 
     # Include user provided translations if translations.yml file is in root
@@ -554,6 +555,13 @@ load_question_structure_yaml <- function(file_yaml) {
 
         # Add matrix question indicator
         question_structure[[matrix_question_id]]$is_matrix <- TRUE
+    }
+
+    # Negate NULL elements in is_matrix (matrix subquestions)
+    for (question in names(question_structure)) {
+        if (is.null(question_structure[[question]]$is_matrix)) {
+            question_structure[[question]]$is_matrix <- FALSE
+        }
     }
 
     return(question_structure)
