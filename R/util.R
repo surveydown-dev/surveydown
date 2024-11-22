@@ -678,14 +678,14 @@ sd_create_translations <- function(path = getwd(), language = "en") {
 #' This function creates a template translations.yml file in the project root directory
 #' that users can customize to modify system messages.
 #'
-#' @param path Character string specifying the directory where the translations.yml
-#'   file should be created. Defaults to the current working directory. The
-#'   file should be placed in the root project folder of your surveydown survey.
 #' @param language Character string specifying the language to use. See
 #'   https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput for supported
 #'   languages. Also, if `"en"`, `"de"`, `"es"`, `"fr"`, or `"it"` is chosen,
 #'   default messages in those langauges will be used, otherwise the default
 #'   English messages will be used. Defaults to `"en"`.
+#' @param path Character string specifying the directory where the translations.yml
+#'   file should be created. Defaults to the current working directory. The
+#'   file should be placed in the root project folder of your surveydown survey.
 #' @return Invisible NULL. Called for its side effects.
 #' @export
 #'
@@ -702,7 +702,7 @@ sd_create_translations <- function(path = getwd(), language = "en") {
 #' # the messages as desired
 #' sd_create_translations(language = "ja")
 #' }
-sd_create_translations <- function(path = getwd(), language = "en") {
+sd_create_translations <- function(language = "en", path = getwd()) {
   # Define valid languages
   valid_languages <- get_valid_languages()
 
@@ -724,7 +724,8 @@ sd_create_translations <- function(path = getwd(), language = "en") {
     template[[language]] <- translations[["en"]]
     message(
       "No default messages available for '", language,
-      "'. Using English messages with ", language, " date picker.")
+      "'. Using English messages with ", language, " date picker."
+    )
   }
 
   # Create the file path
@@ -735,7 +736,7 @@ sd_create_translations <- function(path = getwd(), language = "en") {
     stop("translations.yml already exists in the specified path")
   }
 
-  # Write template with header
+  # Define template header
   header <- paste(
     "# Surveydown translations template",
     "# Edit the values below to customize system messages",
@@ -744,9 +745,9 @@ sd_create_translations <- function(path = getwd(), language = "en") {
     sep = "\n"
   )
 
-  writeLines(header, file_path)
-  yaml::write_yaml(template, file_path, append = TRUE)
-
+  # Write question to YAML (with comment in first lines)
+  yaml_content <- paste0(header, yaml::as.yaml(template))
+  writeLines(yaml_content, con = file_path)
   message("Created translations template at: ", file_path)
   invisible(NULL)
 }

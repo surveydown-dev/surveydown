@@ -4,20 +4,20 @@
 \alias{sd_create_translations}
 \title{Create a translations template file}
 \usage{
-sd_create_translations(path = getwd(), language = "en")
+sd_create_translations(language = "en", path = getwd())
 
-sd_create_translations(path = getwd(), language = "en")
+sd_create_translations(language = "en", path = getwd())
 }
 \arguments{
-\item{path}{Character string specifying the directory where the translations.yml
-file should be created. Defaults to the current working directory. The
-file should be placed in the root project folder of your surveydown survey.}
-
 \item{language}{Character string specifying the language to use. See
 https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput for supported
 languages. Also, if \code{"en"}, \code{"de"}, \code{"es"}, \code{"fr"}, or \code{"it"} is chosen,
 default messages in those langauges will be used, otherwise the default
 English messages will be used. Defaults to \code{"en"}.}
+
+\item{path}{Character string specifying the directory where the translations.yml
+file should be created. Defaults to the current working directory. The
+file should be placed in the root project folder of your surveydown survey.}
 }
 \value{
 Invisible \code{NULL}. Called for its side effects.
