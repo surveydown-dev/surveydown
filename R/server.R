@@ -25,6 +25,8 @@
 #'   your own in a `translations.yml` file, or choose a built in one from
 #'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
 #'   French (`"fr"`), Italian (`"it"`). Defaults to `"en"`.
+#' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
+#'   for storing and restoring survey progress. Defaults to `TRUE`.
 #'
 #' @details
 #' The function performs the following tasks:

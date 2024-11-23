@@ -9,7 +9,7 @@ get_translations <- function() {
 }
 
 get_translations_default <- function() {
-    translations <- list(
+    return(list(
         "en" = list(
             #server.R
             "cancel" = "Cancel",
@@ -122,29 +122,27 @@ get_translations_default <- function() {
         ),
         "zh-CN" = list(
             #server.R
-            "cancel" = "取消",
-            "confirm_exit" = "确认退出",
-            "sure_exit" = "您确认要退出吗？",
-            "submit_exit" = "提交并退出",
-            "warning" = "警告",
-            "required" = "请回答所有必填问题。",
-            "rating_title" = "稍等一下…",
-            "rating_text" = "请您为此次问卷打分：",
-            "rating_scale" = "1为非常不满意，5为非常满意",
+            "cancel" = "\u53d6\u6d88",  # 取消
+            "confirm_exit" = "\u786e\u8ba4\u9000\u51fa",  # 确认退出
+            "sure_exit" = "\u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f",  # 您确认要退出吗？
+            "submit_exit" = "\u63d0\u4ea4\u5e76\u9000\u51fa",  # 提交并退出
+            "warning" = "\u8b66\u544a",  # 警告
+            "required" = "\u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002",  # 请回答所有必填问题。
+            "rating_title" = "\u7a0d\u7b49\u4e00\u4e0b\u2026",  # 稍等一下…
+            "rating_text" = "\u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a",  # 请您为此次问卷打分：
+            "rating_scale" = "1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f",  # 1为非常不满意，5为非常满意
             # ui.R
-            "next" = "下一页",
-            "exit" = "退出问卷",
-            "close_tab" = "请手动关闭本页面。",
-            "choose_option" = "请选择一项…",
-            "click" = "单击此处",
-            "redirect" = "跳转倒计时",
-            "seconds" = "秒",
-            "new_tab" = "在新页面开启",
-            "redirect_error" = "错误：此文本无法触发任何跳转…"
+            "next" = "\u4e0b\u4e00\u9875",  # 下一页
+            "exit" = "\u9000\u51fa\u95ee\u5377",  # 退出问卷
+            "close_tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002",  # 请手动关闭本页面。
+            "choose_option" = "\u8bf7\u9009\u62e9\u4e00\u9879\u2026",  # 请选择一项…
+            "click" = "\u5355\u51fb\u6b64\u5904",  # 单击此处
+            "redirect" = "\u8df3\u8f6c\u5012\u8ba1\u65f6",  # 跳转倒计时
+            "seconds" = "\u79d2",  # 秒
+            "new_tab" = "\u5728\u65b0\u9875\u9762\u5f00\u542f",  # 在新页面开启
+            "redirect_error" = "\u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026"  # 错误：此文本无法触发任何跳转…
         )
-    )
-    # Convert all text to Unicode
-    convert_to_unicode(translations)
+    ))
 }
 
 get_valid_languages <- function() {
@@ -157,22 +155,4 @@ get_valid_languages <- function() {
         "sk", "sl", "sq", "sr-latin", "sr", "sv", "sw", "th", "tr", "uk", "vi",
         "zh-CN", "zh-TW"
     ))
-}
-
-convert_to_unicode <- function(translations_list) {
-    # Only convert during R CMD check
-    if (!identical(Sys.getenv("R_CMD_check"), "TRUE")) {
-        return(translations_list)
-    }
-
-    # Recursively process nested lists during package check
-    lapply(translations_list, function(x) {
-        if (is.list(x)) {
-            convert_to_unicode(x)
-        } else if (is.character(x)) {
-            stringi::stri_escape_unicode(x)
-        } else {
-            x
-        }
-    })
 }
