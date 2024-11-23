@@ -225,51 +225,88 @@ sd_server <- function(
     # Update data ----
 
     update_data <- function(time_last = FALSE) {
-        data_list <- latest_data()
-        fields <- changed_fields()
+    data_list <- latest_data()
+    fields <- changed_fields()
 
-        # Only update fields that have actually changed and have values
-        if (length(fields) > 0) {
-            # Filter out fields with empty values unless explicitly changed
-            valid_fields <- character(0)
-            for (field in fields) {
-                if (!is.null(data_list[[field]]) && data_list[[field]] != "") {
-                    valid_fields <- c(valid_fields, field)
-                }
+    # Only update fields that have actually changed and have values
+    if (length(fields) > 0) {
+        # Filter out fields with empty values unless explicitly changed
+        valid_fields <- character(0)
+        for (field in fields) {
+            if (!is.null(data_list[[field]]) && data_list[[field]] != "") {
+                valid_fields <- c(valid_fields, field)
             }
-            fields <- valid_fields
-        } else {
-            # On initial load or restoration, use all non-empty fields
-            fields <- names(data_list)[sapply(data_list, function(x) !is.null(x) && x != "")]
         }
-
-        if (time_last) {
-            data_list[['time_end']] <- get_utc_timestamp()
-            fields <- unique(c(fields, 'time_end'))
-        }
-
-        if (ignore_mode) {
-            if (file.access('.', 2) == 0) {
-                tryCatch({
-                    utils::write.csv(
-                        as.data.frame(data_list, stringsAsFactors = FALSE),
-                        "data.csv",
-                        row.names = FALSE
-                    )
-                }, error = function(e) {
-                    warning("Unable to write to data.csv")
-                    message("Error details: ", e$message)
-                })
-            } else {
-                message("Running in a non-writable environment.")
-            }
-        } else {
-            database_uploading(data_list, db$db, db$table, fields)
-        }
-
-        # Only reset changed fields that were actually processed
-        changed_fields(setdiff(changed_fields(), fields))
+        fields <- valid_fields
+    } else {
+        # On initial load or restoration, use all non-empty fields
+        fields <- names(data_list)[sapply(data_list, function(x) !is.null(x) && x != "")]
     }
+
+    if (time_last) {
+        data_list[['time_end']] <- get_utc_timestamp()
+        fields <- unique(c(fields, 'time_end'))
+    }
+
+    if (ignore_mode) {
+        if (file.access('.', 2) == 0) {
+            tryCatch({
+                # Read existing data if file exists
+                existing_data <- if (file.exists("preview_data.csv")) {
+                    utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
+                } else {
+                    data.frame()
+                }
+
+                # Convert current data_list to data frame
+                new_data <- as.data.frame(data_list, stringsAsFactors = FALSE)
+
+                # If existing data exists, update or append based on session_id
+                if (nrow(existing_data) > 0) {
+                    # Find if this session_id already exists
+                    session_idx <- which(existing_data$session_id == data_list$session_id)
+
+                    if (length(session_idx) > 0) {
+                        # Update existing session data
+                        for (field in fields) {
+                            if (field %in% names(existing_data)) {
+                                existing_data[session_idx, field] <- data_list[[field]]
+                            } else {
+                                existing_data[[field]] <- NA
+                                existing_data[session_idx, field] <- data_list[[field]]
+                            }
+                        }
+                        updated_data <- existing_data
+                    } else {
+                        # Append new session data
+                        updated_data <- rbind(existing_data, new_data)
+                    }
+                } else {
+                    # No existing data, use new data
+                    updated_data <- new_data
+                }
+
+                # Write updated data back to file
+                utils::write.csv(
+                    updated_data,
+                    "preview_data.csv",
+                    row.names = FALSE,
+                    na = ""
+                )
+            }, error = function(e) {
+                warning("Unable to write to preview_data.csv")
+                message("Error details: ", e$message)
+            })
+        } else {
+            message("Running in a non-writable environment.")
+        }
+    } else {
+        database_uploading(data_list, db$db, db$table, fields)
+    }
+
+    # Only reset changed fields that were actually processed
+    changed_fields(setdiff(changed_fields(), fields))
+}
 
     # Initial settings ----
 
@@ -1264,17 +1301,37 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
+get_local_data <- function() {
+    if (file.exists("preview_data.csv")) {
+        tryCatch({
+            return(utils::read.csv("preview_data.csv", stringsAsFactors = FALSE))
+        }, error = function(e) {
+            warning("Error reading preview_data.csv: ", e$message)
+            return(NULL)
+        })
+    }
+    return(NULL)
+}
+
 handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
                                   question_ids, question_ts_ids, progress_updater) {
     if (is.null(session_id)) return(NULL)
 
-    # Get data using sd_get_data
-    all_data <- sd_get_data(db)
+    # Get data using sd_get_data or local CSV
+    if (!is.null(db)) {
+        all_data <- sd_get_data(db)
+    } else {
+        all_data <- get_local_data()
+    }
+
+    # If no data available, return NULL
+    if (is.null(all_data)) return(NULL)
+
     restore_data <- all_data[all_data$session_id == session_id, ]
 
     if (nrow(restore_data) == 0) return(NULL)
 
-    # Use isolate to prevent triggering reactive updates
+    # Rest of the function remains the same...
     shiny::isolate({
         # Restore page state
         if ("current_page" %in% names(restore_data)) {
@@ -1294,7 +1351,6 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             q_id <- question_ids[i]
             ts_id <- question_ts_ids[i]
 
-            # Check if question has a timestamp (indicating user interaction)
             if (ts_id %in% names(restore_data)) {
                 ts_val <- restore_data[[ts_id]]
                 if (!is.null(ts_val) && !is.na(ts_val) && ts_val != "") {
@@ -1303,12 +1359,10 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             }
         }
 
-        # Update progress bar if there were answered questions
         if (last_index > 0) {
             progress_updater(last_index)
         }
 
-        # Restore input values while preventing updates
         for (col in names(restore_data)) {
             if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
                 val <- restore_data[[col]]
@@ -1331,8 +1385,8 @@ handle_sessions <- function(db, session, input, time_start, start_page, current_
         session_registry$current_id <- session$token
     }
 
-    # If cookies are disabled or no db, return simple session id
-    if (!use_cookies || is.null(db)) {
+    # Check use_cookies flag
+    if (!use_cookies) {
         return(session_registry$current_id)
     }
 
