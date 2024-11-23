@@ -247,6 +247,7 @@ sd_server <- function(
         fields <- unique(c(fields, 'time_end'))
     }
 
+    # Update the update_data function to handle column mismatches
     if (ignore_mode) {
         if (file.access('.', 2) == 0) {
             tryCatch({
@@ -271,14 +272,25 @@ sd_server <- function(
                             if (field %in% names(existing_data)) {
                                 existing_data[session_idx, field] <- data_list[[field]]
                             } else {
+                                # Add new column with NAs, then update the specific row
                                 existing_data[[field]] <- NA
                                 existing_data[session_idx, field] <- data_list[[field]]
                             }
                         }
                         updated_data <- existing_data
                     } else {
-                        # Append new session data
-                        updated_data <- rbind(existing_data, new_data)
+                        # Ensure all columns from existing_data are in new_data
+                        missing_cols <- setdiff(names(existing_data), names(new_data))
+                        for (col in missing_cols) {
+                            new_data[[col]] <- NA
+                        }
+                        # Ensure all columns from new_data are in existing_data
+                        missing_cols <- setdiff(names(new_data), names(existing_data))
+                        for (col in missing_cols) {
+                            existing_data[[col]] <- NA
+                        }
+                        # Now both data frames should have the same columns
+                        updated_data <- rbind(existing_data, new_data[names(existing_data)])
                     }
                 } else {
                     # No existing data, use new data
@@ -293,7 +305,7 @@ sd_server <- function(
                     na = ""
                 )
             }, error = function(e) {
-                warning("Unable to write to preview_data.csv")
+                warning("Unable to write to preview_data.csv: ", e$message)
                 message("Error details: ", e$message)
             })
         } else {
@@ -1386,7 +1398,7 @@ handle_sessions <- function(db, session, input, time_start, start_page, current_
 
     # Check use_cookies flag
     if (!use_cookies) {
-        return(session_registry$current_id)
+        return(session$token)
     }
 
     session_data <- shiny::reactiveValues(initialized = FALSE)
