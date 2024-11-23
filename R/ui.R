@@ -631,12 +631,22 @@ make_next_button_id <- function(page_id) {
 #'
 #' @export
 sd_close <- function(label = "Exit Survey") {
-
-  # Get choosen language and insert translation of label if default not changed
+  # Get translations
   translations <- get_translations()
 
-  if (label == 'Exit Survey' && names(translations) != 'en') {
-    label <- translations[[1]][['exit']]
+  # If using default label "Exit Survey"
+  if (label == "Exit Survey") {
+    # translations will be either:
+    # - a full language list (if translations.yml exists)
+    # - just the English translations (if no translations.yml)
+    if ('exit' %in% names(translations)) {
+      # No translations.yml case - we got direct English translations
+      label <- translations[['exit']]
+    } else if (length(translations) > 0) {
+      # translations.yml exists case - get the first language's translations
+      # (which will be the language set in sd_server)
+      label <- translations[[1]][['exit']]
+    }
   }
 
   button_id <- "close-survey-button"
