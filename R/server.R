@@ -174,7 +174,6 @@ sd_server <- function(
 
     # Initialize translations list (from '_survey/translations.yml' file)
     translations <- get_translations()[[language]]
-    print(translations)
 
     # Pre-compute timestamp IDs
     page_ts_ids      <- paste0("time_p_", page_ids)
