@@ -87,6 +87,7 @@ sd_ui <- function() {
       shinyjs::useShinyjs(),
       load_resource(
         "auto_scroll.js",
+        "cookies.js",
         "countdown.js",
         "enter_key.js",
         "keep_alive.js",
@@ -248,10 +249,19 @@ sd_question <- function(
     # Create label with hidden asterisk
     label <- markdown_to_html(label)
 
-    if (type ==  "select") {
+    if (type == "select") {
+        # Get default label
+        label_select <- "Choose an option..."
 
         # Change translation of selected label
-        label_select <- translations[[1]][['choose_option']]
+        if ('choose_option' %in% names(translations)) {
+            # No translations.yml case - we got direct English translations
+            label_select <- translations[['choose_option']]
+        } else if (length(translations) > 0) {
+            # translations.yml exists case - get the first language's translations
+            # (which will be the language set in sd_server)
+            label_select <- translations[[1]][['choose_option']]
+        }
 
         # Add blank option for visible selected option
         option <- c("", option)
@@ -264,7 +274,6 @@ sd_question <- function(
             multiple = FALSE,
             selected = FALSE
         )
-
     } else if (type == "mc") {
 
         output <- shiny::radioButtons(
@@ -527,28 +536,38 @@ make_question_container <- function(id, object, width) {
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
+    # Get translations
+    translations <- get_translations()
 
-  # Get choosen language and insert translation of label if default not changed 
-  translations <- get_translations()
-  
-  if (label == "Next" && names(translations) != 'en') {
-    label <- translations[[1]][['next']]
-  }
+    # If using default label "Next"
+    if (label == "Next") {
+        # translations will be either:
+        # - a full language list (if translations.yml exists)
+        # - just the English translations (if no translations.yml)
+        if ('next' %in% names(translations)) {
+            # No translations.yml case - we got direct English translations
+            label <- translations[['next']]
+        } else if (length(translations) > 0) {
+            # translations.yml exists case - get the first language's translations
+            # (which will be the language set in sd_server)
+            label <- translations[[1]][['next']]
+        }
+    }
 
-  button_id <- "page_id_next"  # Placeholder ID
-  shiny::tagList(
-    shiny::div(
-      `data-next-page` = if (!is.null(next_page)) next_page else "",
-      style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
-      shiny::actionButton(
-        inputId = button_id,
-        label = label,
-        class = "sd-enter-button",
-        style = "display: block; margin: auto;",
-        onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
-      )
+    button_id <- "page_id_next"  # Placeholder ID
+    shiny::tagList(
+        shiny::div(
+            `data-next-page` = if (!is.null(next_page)) next_page else "",
+            style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
+            shiny::actionButton(
+                inputId = button_id,
+                label = label,
+                class = "sd-enter-button",
+                style = "display: block; margin: auto;",
+                onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
+            )
+        )
     )
-  )
 }
 
 # Generate Next Button ID
@@ -613,9 +632,9 @@ make_next_button_id <- function(page_id) {
 #' @export
 sd_close <- function(label = "Exit Survey") {
 
-  # Get choosen language and insert translation of label if default not changed 
+  # Get choosen language and insert translation of label if default not changed
   translations <- get_translations()
-  
+
   if (label == 'Exit Survey' && names(translations) != 'en') {
     label <- translations[[1]][['exit']]
   }
@@ -722,9 +741,9 @@ sd_redirect <- function(
     delay  = NULL,
     newtab = FALSE
 ) {
-    # Get choosen language and insert translation of label if default not changed 
+    # Get choosen language and insert translation of label if default not changed
     translations <- get_translations()
-    
+
     if (label == "Click here" && names(translations) != 'en') {
       label <- translations[[1]][['click']]
     }
@@ -767,14 +786,14 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
     } else {
         element <- shiny::span(label)
     }
-  
+
     translations <- get_translations()
-  
+
     text_redirect <- translations[[1]][["redirect"]]
     text_seconds <- translations[[1]][["seconds"]]
     text_newtab <- translations[[1]][["new_tab"]]
     text_error <- translations[[1]][["redirect_error"]]
-  
+
     # Add automatic redirection if delay is specified
     if (!is.null(delay) && is.numeric(delay) && delay > 0) {
         countdown_id <- paste0("countdown_", id)

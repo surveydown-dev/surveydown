@@ -1,5 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.5.0
+
+- New cookies feature! Now `sd_server()` accepts a new argument `use_cookies`, defaults to `TRUE`. It enables cookies so that reopening the survey will resume the participant to where the survey was left. The database will trace to the original `session_id` and continuous the data update based on user input. If changed to `FALSE`, the survey will start as brand new session upon reopening.
+- Off-line data storage upgrade. Now if ignore mode is on, the data will be stored on the project directory with file name called `preview_data.csv`. This file works exactly the same as online database, and is compatible with cookies functionality.
+- Simplified Chinese supported in `sd_server()`. You can trigger it by: `sd_server(language = "zh-CN")`.
+
 # surveydown 0.4.2
 
 - New "translations" feature now supported (see PR #138). This allows system messages and date formats to be specified by a language using the `language` argument in `sd_server()`. Custom language messages can be further modified by providing a `translations.yml` file in the root project folder.
