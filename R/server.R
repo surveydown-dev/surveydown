@@ -94,7 +94,8 @@
 #'       admin_page = FALSE,
 #'       auto_scroll = FALSE,
 #'       rate_survey = FALSE,
-#'       language = "en"
+#'       language = "en",
+#'       use_cookies = TRUE
 #'     )
 #'   }
 #'
@@ -117,7 +118,8 @@ sd_server <- function(
     admin_page = FALSE,
     auto_scroll = FALSE,
     rate_survey = FALSE,
-    language = "en"
+    language = "en",
+    use_cookies = TRUE
 ) {
 
     # Preparation ----
@@ -133,7 +135,7 @@ sd_server <- function(
 
     # Initialize session handling and session_id
     session_id <- handle_sessions(db, session, input, time_start, start_page, current_page_id,
-                            question_ids, question_ts_ids, update_progress_bar)
+                            question_ids, question_ts_ids, update_progress_bar, use_cookies)
 
     # Get any skip or show conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
@@ -1324,12 +1326,13 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 session_registry <- new.env()
 
 handle_sessions <- function(db, session, input, time_start, start_page, current_page_id,
-                          question_ids, question_ts_ids, progress_updater) {
+                          question_ids, question_ts_ids, progress_updater, use_cookies = TRUE) {
     if (is.null(session_registry$current_id)) {
         session_registry$current_id <- session$token
     }
 
-    if (is.null(db)) {
+    # If cookies are disabled or no db, return simple session id
+    if (!use_cookies || is.null(db)) {
         return(session_registry$current_id)
     }
 
