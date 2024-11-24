@@ -1,14 +1,12 @@
 # surveydown (development version)
 
-# surveydown 0.5.1
-
-- Improvement: default language behavior in UI functions cleaner when separately rendering survey.qmd file.
-
 # surveydown 0.5.0
 
 - New cookies feature! Now `sd_server()` accepts a new argument `use_cookies`, defaults to `TRUE`. It enables cookies so that reopening the survey will resume the participant to where the survey was left. The database will trace to the original `session_id` and continuous the data update based on user input. If changed to `FALSE`, the survey will start as brand new session upon reopening.
 - Off-line data storage upgrade. Now if ignore mode is on, the data will be stored on the project directory with file name called `preview_data.csv`. This file works exactly the same as online database, and is compatible with cookies functionality.
 - Simplified Chinese supported in `sd_server()`. You can trigger it by: `sd_server(language = "zh-CN")`.
+- Improvement: default language behavior in UI functions cleaner when separately rendering survey.qmd file.
+- Byg fix: There used to be a bug if multiple themes are defined in YAML. Now it's solved.
 
 # surveydown 0.4.2
 

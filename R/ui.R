@@ -93,7 +93,7 @@ sd_ui <- function() {
         "keep_alive.js",
         "surveydown.css"
       ),
-      if (theme == "default") {
+      if (any(theme == "default")) {
         load_resource("default_theme.css")
       },
       shiny::tags$script("var surveydownConfig = {};"),
