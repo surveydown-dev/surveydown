@@ -489,7 +489,8 @@ make_question_container <- function(id, object, width) {
 #' The button can be activated by clicking or by pressing the Enter key when visible.
 #'
 #' @param next_page Character string. The ID of the next page to navigate to. This parameter is required.
-#' @param label Character string. The label of the 'Next' button. Defaults to "Next".
+#' @param label Character string. The label of the 'Next' button. Defaults to
+#'   `NULL`, in which case the word `"Next"` will be used.
 #'
 #' @details The function generates a 'shiny' action button that, when clicked
 #' or when the Enter key is pressed, sets the input value to the specified next
@@ -526,15 +527,12 @@ make_question_container <- function(id, object, width) {
 #' }
 #'
 #' @export
-sd_next <- function(next_page = NULL, label = "Next") {
+sd_next <- function(next_page = NULL, label = NULL) {
     # Get translations
     translations <- get_translations()$translations
 
-    # If using default label "Next"
-    if (label == "Next") {
-        # translations will be either:
-        # - a full language list (if translations.yml exists)
-        # - just the English translations (if no translations.yml)
+    # If no label provided, use default
+    if (is.null(label)) {
         label <- translations[['next']]
     }
 
@@ -565,7 +563,8 @@ make_next_button_id <- function(page_id) {
 #' for the survey. Depending on the server-side configuration, this may show a rating question
 #' or a simple confirmation dialog before attempting to close the current browser tab or window.
 #'
-#' @param label Character string. The label of the 'Close' button. Defaults to "Exit Survey".
+#' @param label Character string. The label of the 'Close' button. Defaults to
+#'    `NULL`, in which case the word `"Exit Survey"` will be used.
 #'
 #' @return A 'shiny' tagList containing the 'Close' button UI element and
 #' associated JavaScript for the exit process.
@@ -614,16 +613,13 @@ make_next_button_id <- function(page_id) {
 #' @seealso \code{\link{sd_server}}
 #'
 #' @export
-sd_close <- function(label = "Exit Survey") {
+sd_close <- function(label = NULL) {
   # Get translations
   translations <- get_translations()$translations
 
-  # If using default label "Exit Survey"
-  if (label == "Exit Survey") {
-    # translations will be either:
-    # - a full language list (if translations.yml exists)
-    # - just the English translations (if no translations.yml)
-    label <- translations[['exit']]
+  # If no label provided, use default
+  if (is.null(label)) {
+      label <- translations[['exit']]
   }
 
   button_id <- "close-survey-button"
@@ -660,8 +656,8 @@ sd_close <- function(label = "Exit Survey") {
 #' @param url A character string specifying the URL to redirect to.
 #' @param button A logical value indicating whether to create a button (`TRUE`)
 #'   or a text element (`FALSE`) for the redirect. Default is `TRUE`.
-#' @param label A character string for the button or text label. Default is
-#'   "Click here".
+#' @param label A character string for the button or text label. Defaults to
+#'   `NULL`, in which case the words `"Click here"` will be used.
 #' @param delay An optional numeric value specifying the delay in seconds before
 #'   automatic redirection. If `NULL` (default), no automatic redirection
 #'   occurs.
@@ -731,11 +727,8 @@ sd_redirect <- function(
     # Get translations
     translations <- get_translations()$translations
 
-    # If using default label "Exit Survey"
-    if (label == "Click here") {
-        # translations will be either:
-        # - a full language list (if translations.yml exists)
-        # - just the English translations (if no translations.yml)
+    # If no label provided, use default
+    if (is.null(label)) {
         label <- translations[['click']]
     }
 
@@ -779,10 +772,7 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
     }
 
     # Get translations
-    translations <- get_translations()
-    language <- translations$language
-    translations <- translations$translations
-
+    translations <- get_translations()$translations
     text_redirect <- translations[["redirect"]]
     text_seconds <- translations[["seconds"]]
     text_newtab <- translations[["new_tab"]]
