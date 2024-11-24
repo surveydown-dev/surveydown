@@ -242,6 +242,8 @@ sd_question <- function(
 
     # Load translations for selected label and date language option
     translations <- get_translations()
+    language <- translations$language
+    translations <- translations$translations
 
     # Check if question if answered
     js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
@@ -250,18 +252,7 @@ sd_question <- function(
     label <- markdown_to_html(label)
 
     if (type == "select") {
-        # Get default label
-        label_select <- "Choose an option..."
-
-        # Change translation of selected label
-        if ('choose_option' %in% names(translations)) {
-            # No translations.yml case - we got direct English translations
-            label_select <- translations[['choose_option']]
-        } else if (length(translations) > 0) {
-            # translations.yml exists case - get the first language's translations
-            # (which will be the language set in sd_server)
-            label_select <- translations[[1]][['choose_option']]
-        }
+        label_select <- translations[['choose_option']]
 
         # Add blank option for visible selected option
         option <- c("", option)
@@ -387,7 +378,7 @@ sd_question <- function(
             format             = "mm/dd/yyyy",
             startview          = "month",
             weekstart          = 0,
-            language           = names(translations),
+            language           = language,
             autoclose          = TRUE,
             datesdisabled      = NULL,
             daysofweekdisabled = NULL
@@ -407,7 +398,7 @@ sd_question <- function(
             format    = "mm/dd/yyyy",
             startview = "month",
             weekstart = 0,
-            language  = names(translations),
+            language  = language,
             separator = "-",
             autoclose = TRUE
         )
@@ -537,21 +528,14 @@ make_question_container <- function(id, object, width) {
 #' @export
 sd_next <- function(next_page = NULL, label = "Next") {
     # Get translations
-    translations <- get_translations()
+    translations <- get_translations()$translations
 
     # If using default label "Next"
     if (label == "Next") {
         # translations will be either:
         # - a full language list (if translations.yml exists)
         # - just the English translations (if no translations.yml)
-        if ('next' %in% names(translations)) {
-            # No translations.yml case - we got direct English translations
-            label <- translations[['next']]
-        } else if (length(translations) > 0) {
-            # translations.yml exists case - get the first language's translations
-            # (which will be the language set in sd_server)
-            label <- translations[[1]][['next']]
-        }
+        label <- translations[['next']]
     }
 
     button_id <- "page_id_next"  # Placeholder ID
@@ -632,21 +616,14 @@ make_next_button_id <- function(page_id) {
 #' @export
 sd_close <- function(label = "Exit Survey") {
   # Get translations
-  translations <- get_translations()
+  translations <- get_translations()$translations
 
   # If using default label "Exit Survey"
   if (label == "Exit Survey") {
     # translations will be either:
     # - a full language list (if translations.yml exists)
     # - just the English translations (if no translations.yml)
-    if ('exit' %in% names(translations)) {
-      # No translations.yml case - we got direct English translations
-      label <- translations[['exit']]
-    } else if (length(translations) > 0) {
-      # translations.yml exists case - get the first language's translations
-      # (which will be the language set in sd_server)
-      label <- translations[[1]][['exit']]
-    }
+    label <- translations[['exit']]
   }
 
   button_id <- "close-survey-button"
@@ -751,11 +728,15 @@ sd_redirect <- function(
     delay  = NULL,
     newtab = FALSE
 ) {
-    # Get choosen language and insert translation of label if default not changed
-    translations <- get_translations()
+    # Get translations
+    translations <- get_translations()$translations
 
-    if (label == "Click here" && names(translations) != 'en') {
-      label <- translations[[1]][['click']]
+    # If using default label "Exit Survey"
+    if (label == "Click here") {
+        # translations will be either:
+        # - a full language list (if translations.yml exists)
+        # - just the English translations (if no translations.yml)
+        label <- translations[['click']]
     }
 
     if (!is.null(shiny::getDefaultReactiveDomain())) {
@@ -797,12 +778,15 @@ create_redirect_element <- function(id, url, button, label, delay, newtab = FALS
         element <- shiny::span(label)
     }
 
+    # Get translations
     translations <- get_translations()
+    language <- translations$language
+    translations <- translations$translations
 
-    text_redirect <- translations[[1]][["redirect"]]
-    text_seconds <- translations[[1]][["seconds"]]
-    text_newtab <- translations[[1]][["new_tab"]]
-    text_error <- translations[[1]][["redirect_error"]]
+    text_redirect <- translations[["redirect"]]
+    text_seconds <- translations[["seconds"]]
+    text_newtab <- translations[["new_tab"]]
+    text_error <- translations[["redirect_error"]]
 
     # Add automatic redirection if delay is specified
     if (!is.null(delay) && is.numeric(delay) && delay > 0) {
