@@ -1,11 +1,25 @@
 get_translations <- function() {
+    # Initialize translations list from '_survey/translations.yml' file
+    translations <- get_translations_yml()
+    if (is.null(translations)) {
+        # '_survey/translations.yml' file missing, so just load English
+        translations <- get_translations_default()
+        language <- 'en'
+    } else {
+        language <- names(translations)
+    }
+    return(list(
+        translations = translations[[language]],
+        language = language
+    ))
+}
+
+get_translations_yml <- function() {
     path <- file.path("_survey", "translations.yml")
     if (fs::file_exists(path)) {
         return(yaml::read_yaml("_survey/translations.yml"))
     }
-    # If "app.R" has not yet been run, then no `_survey/translations.yml` file
-    # will exist. In this case, just return the English as default.
-    return(get_translations_default()[["en"]])
+    return(NULL)
 }
 
 get_translations_default <- function() {

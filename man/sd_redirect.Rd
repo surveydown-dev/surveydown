@@ -22,8 +22,8 @@ redirect button in the survey body.}
 \item{button}{A logical value indicating whether to create a button (\code{TRUE})
 or a text element (\code{FALSE}) for the redirect. Default is \code{TRUE}.}
 
-\item{label}{A character string for the button or text label. Default is
-"Click here".}
+\item{label}{A character string for the button or text label. Defaults to
+\code{NULL}, in which case the words \code{"Click here"} will be used.}
 
 \item{delay}{An optional numeric value specifying the delay in seconds before
 automatic redirection. If \code{NULL} (default), no automatic redirection

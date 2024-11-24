@@ -174,8 +174,8 @@ sd_server <- function(
     question_required  <- config$question_required
     page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
 
-    # Initialize translations list (from '_survey/translations.yml' file)
-    translations <- get_translations()[[language]]
+    # Get translations
+    translations <- get_translations()$translations
 
     # Pre-compute timestamp IDs
     page_ts_ids      <- paste0("time_p_", page_ids)

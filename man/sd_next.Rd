@@ -4,12 +4,13 @@
 \alias{sd_next}
 \title{Create a 'Next' Button for Page Navigation}
 \usage{
-sd_next(next_page = NULL, label = "Next")
+sd_next(next_page = NULL, label = NULL)
 }
 \arguments{
 \item{next_page}{Character string. The ID of the next page to navigate to. This parameter is required.}
 
-\item{label}{Character string. The label of the 'Next' button. Defaults to "Next".}
+\item{label}{Character string. The label of the 'Next' button. Defaults to
+\code{NULL}, in which case the word \code{"Next"} will be used.}
 }
 \value{
 A 'shiny' tagList containing the 'Next' button UI element.

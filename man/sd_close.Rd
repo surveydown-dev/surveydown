@@ -4,10 +4,11 @@
 \alias{sd_close}
 \title{Create a 'Close' Button to Exit the Survey}
 \usage{
-sd_close(label = "Exit Survey")
+sd_close(label = NULL)
 }
 \arguments{
-\item{label}{Character string. The label of the 'Close' button. Defaults to "Exit Survey".}
+\item{label}{Character string. The label of the 'Close' button. Defaults to
+\code{NULL}, in which case the word \code{"Exit Survey"} will be used.}
 }
 \value{
 A 'shiny' tagList containing the 'Close' button UI element and
