@@ -6,14 +6,14 @@ on:
 
 jobs:
   pkgdown:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Changed to ubuntu
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_VERSION: '4.3.2'
 
     steps:
-      - uses: actions/checkout@v3  # Updated to v3
+      - uses: actions/checkout@v4  # Updated to v4
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
