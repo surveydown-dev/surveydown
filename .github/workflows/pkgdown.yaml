@@ -4,20 +4,40 @@ on:
 
 name: pkgdown
 
+name: pkgdown
+
+on:
+  push:
+    branches: main
+
 jobs:
   pkgdown:
-    runs-on: macos-14
+    runs-on: ubuntu-latest
+
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_VERSION: '4.3.2'
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: r-lib/actions/setup-r@v2
-      - uses: r-lib/actions/setup-pandoc@v2
+      - uses: actions/checkout@v3  # Updated to v3
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ env.R_VERSION }}
+          use-public-rspm: true  # Use RStudio Package Manager for better reliability
+
+      - name: Setup pandoc
+        uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev
 
       - name: Query dependencies
         run: |
-          install.packages('remotes')
-          install.packages('here')
+          install.packages(c('remotes', 'here'))
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
         shell: Rscript {0}
@@ -26,13 +46,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.R_LIBS_USER }}
-          key: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
-          restore-keys: ${{ runner.os }}-${{ hashFiles('.github/R-version') }}-1-
+          key: ${{ runner.os }}-${{ env.R_VERSION }}-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-${{ env.R_VERSION }}-1-
 
       - name: Install dependencies
         run: |
           remotes::install_deps(dependencies = TRUE)
-          install.packages("pkgdown", type = "binary")
+          install.packages("pkgdown")  # Removed "type = binary" as we're on Ubuntu
         shell: Rscript {0}
 
       - name: Install package
