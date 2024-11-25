@@ -142,13 +142,13 @@ to the project:
   <https://shinysurveys.jdtrat.com/articles/get-survey-data.html>
 - [x] Ability to pass url parameters, e.g. for tracking users.
 - [x] Ability to redirect users to another url.
+- [x] Leverage cookies so users who close the browser can start back
+  where they left off.
 - [ ] Admin page w/password to preview / download data (see
   <https://github.com/daattali/shinyforms>)
 - [ ] Form validation: Make sure the user inputs the correct type
   depending on the question type. (see
   <https://shiny.posit.co/r/reference/shiny/0.14/validate.html>)
-- [ ] Leverage cookies so users who close the browser can start back
-  where they left off.
 - Question types:
   - [x] Multiple choice (single choice)
   - [x] Multiple choice (multiple choices)
