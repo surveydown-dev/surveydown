@@ -1398,14 +1398,8 @@ handle_sessions <- function(db, session, input, time_start, start_page, current_
         session_registry$current_id <- session$token
     }
 
-    # Check if we should proceed with cookie logic
-    should_use_cookies <- use_cookies && (
-        !is.null(db) || # Has database connection
-        file.exists("preview_data.csv") # Has preview data file
-    )
-
-    # Return early if we shouldn't use cookies
-    if (!should_use_cookies) {
+    # Check use_cookies flag
+    if (!use_cookies) {
         return(session$token)
     }
 
