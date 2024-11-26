@@ -229,9 +229,8 @@ sd_server <- function(
     data_list <- latest_data()
     fields <- changed_fields()
 
-    # Only update fields that have actually changed and have values
+    # Update the fields handling logic...
     if (length(fields) > 0) {
-        # Filter out fields with empty values unless explicitly changed
         valid_fields <- character(0)
         for (field in fields) {
             if (!is.null(data_list[[field]]) && data_list[[field]] != "") {
@@ -240,7 +239,6 @@ sd_server <- function(
         }
         fields <- valid_fields
     } else {
-        # On initial load or restoration, use all non-empty fields
         fields <- names(data_list)[sapply(data_list, function(x) !is.null(x) && x != "")]
     }
 
@@ -249,9 +247,13 @@ sd_server <- function(
         fields <- unique(c(fields, 'time_end'))
     }
 
-    # Update the update_data function to handle column mismatches
+    # Check if we're in ignore_mode (no database connection)
     if (ignore_mode) {
-        if (file.access('.', 2) == 0) {
+        # Check if we're running on shinyapps.io
+        is_shinyapps <- Sys.getenv("SHINYAPPS_NAME") != ""
+
+        # Only proceed with preview_data.csv if we're not on shinyapps.io
+        if (!is_shinyapps && file.access('.', 2) == 0) {
             tryCatch({
                 # Read existing data if file exists
                 existing_data <- if (file.exists("preview_data.csv")) {
@@ -1398,14 +1400,8 @@ handle_sessions <- function(db, session, input, time_start, start_page, current_
         session_registry$current_id <- session$token
     }
 
-    # Check if we should proceed with cookie logic
-    should_use_cookies <- use_cookies && (
-        !is.null(db) || # Has database connection
-        file.exists("preview_data.csv") # Has preview data file
-    )
-
-    # Return early if we shouldn't use cookies
-    if (!should_use_cookies) {
+    # Check use_cookies flag
+    if (!use_cookies) {
         return(session$token)
     }
 
