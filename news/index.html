@@ -40,9 +40,10 @@
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-</div>
+<ul><li>Fixed typo in error message (<code>data.csv</code> -&gt; <code>preview_data.csv</code>).</li>
+</ul></div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.5.0" id="surveydown-050">surveydown 0.5.0<a class="anchor" aria-label="anchor" href="#surveydown-050"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.5.0" id="surveydown-050">surveydown 0.5.0<a class="anchor" aria-label="anchor" href="#surveydown-050"></a></h2><p class="text-muted">CRAN release: 2024-11-25</p>
 <ul><li>New cookies feature! Now <code><a href="../reference/sd_server.html">sd_server()</a></code> accepts a new argument <code>use_cookies</code>, defaults to <code>TRUE</code>. It enables cookies so that reopening the survey will resume the participant to where the survey was left. The database will trace to the original <code>session_id</code> and continuous the data update based on user input. If changed to <code>FALSE</code>, the survey will start as brand new session upon reopening.</li>
 <li>Off-line data storage upgrade. Now if ignore mode is on, the data will be stored on the project directory with file name called <code>preview_data.csv</code>. This file works exactly the same as online database, and is compatible with cookies functionality.</li>
 <li>Simplified Chinese supported in <code><a href="../reference/sd_server.html">sd_server()</a></code>. You can trigger it by: <code>sd_server(language = "zh-CN")</code>.</li>
