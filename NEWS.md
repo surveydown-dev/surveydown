@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+- Fixed typo in error message (`data.csv` -> `preview_data.csv`).
+
 # surveydown 0.5.0
 
 - New cookies feature! Now `sd_server()` accepts a new argument `use_cookies`, defaults to `TRUE`. It enables cookies so that reopening the survey will resume the participant to where the survey was left. The database will trace to the original `session_id` and continuous the data update based on user input. If changed to `FALSE`, the survey will start as brand new session upon reopening.
