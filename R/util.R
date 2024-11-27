@@ -647,7 +647,8 @@ sd_create_translations <- function(language = "en", path = getwd()) {
     template[[language]] <- translations[["en"]]
     message(
       "No default messages available for '", language,
-      "'. Using English messages with ", language, " date picker."
+      "'. surveydown currently only provides default translations for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
+      "Using English messages with ", language, " date picker.\n"
     )
   }
 
@@ -671,6 +672,9 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   # Write question to YAML (with comment in first lines)
   yaml_content <- paste0(header, yaml::as.yaml(template))
   writeLines(yaml_content, con = file_path)
-  message("Created translations template at: ", file_path)
+  message(
+    "Created translations template at: ", file_path,
+    "\n\nModify it to provide custom messages in '", language, "'."
+  )
   invisible(NULL)
 }
