@@ -111,14 +111,14 @@
 #'
 #' @export
 sd_server <- function(
-    db = NULL,
-    required_questions = NULL,
-    all_questions_required = FALSE,
-    start_page = NULL,
-    admin_page = FALSE,
-    auto_scroll = FALSE,
-    rate_survey = FALSE,
-    language = "en"
+        db = NULL,
+        required_questions = NULL,
+        all_questions_required = FALSE,
+        start_page = NULL,
+        admin_page = FALSE,
+        auto_scroll = FALSE,
+        rate_survey = FALSE,
+        language = "en"
 ) {
 
     # Preparation ----
@@ -183,23 +183,23 @@ sd_server <- function(
 
     # Reactive to store visibility status of all questions
     question_visibility <- shiny::reactiveVal(
-      stats::setNames(rep(TRUE, length(question_ids)), question_ids)
+        stats::setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
     # Observer to apply show_if conditions and update question_visibility
     shiny::observe({
-      shiny::reactiveValuesToList(input)
-      show_if_results <- set_show_if_conditions(show_if)()
-      current_visibility <- question_visibility()
-      for (target in names(show_if_results)) {
-          current_visibility[target] <- show_if_results[[target]]
-          if (show_if_results[[target]]) {
-              shinyjs::show(paste0('container-', target))
-          } else {
-              shinyjs::hide(paste0('container-', target))
-          }
-      }
-      question_visibility(current_visibility)
+        shiny::reactiveValuesToList(input)
+        show_if_results <- set_show_if_conditions(show_if)()
+        current_visibility <- question_visibility()
+        for (target in names(show_if_results)) {
+            current_visibility[target] <- show_if_results[[target]]
+            if (show_if_results[[target]]) {
+                shinyjs::show(paste0('container-', target))
+            } else {
+                shinyjs::hide(paste0('container-', target))
+            }
+        }
+        question_visibility(current_visibility)
     })
 
     # Progress bar ----
@@ -256,7 +256,7 @@ sd_server <- function(
 
     # Keep-alive observer - this will be triggered every 60 seconds
     shiny::observeEvent(input$keepAlive, {
-      cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
+        cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
     })
 
     # Create admin page if admin_page is TRUE
@@ -334,14 +334,14 @@ sd_server <- function(
 
                 # For the selected value(s), get the corresponding label(s)
                 if (length(options) == length(label_options)) {
-                  names(options) <- label_options
+                    names(options) <- label_options
                 }
                 if (is.null(value) || length(value) == 0) {
-                  label_option <- ""
+                    label_option <- ""
                 } else {
-                  label_option <- options[options %in% value] |>
-                    names() |>
-                    paste(collapse = ", ")
+                    label_option <- options[options %in% value] |>
+                        names() |>
+                        paste(collapse = ", ")
                 }
 
                 # Store the values and labels in output
@@ -392,49 +392,49 @@ sd_server <- function(
     # Page navigation ----
 
     check_required <- function(page) {
-      required_questions <- page$required_questions
-      is_visible <- question_visibility()[required_questions]
-      all(vapply(required_questions, function(q) {
-        !is_visible[q] || check_answer(q, input)
-      }, logical(1)))
+        required_questions <- page$required_questions
+        is_visible <- question_visibility()[required_questions]
+        all(vapply(required_questions, function(q) {
+            !is_visible[q] || check_answer(q, input)
+        }, logical(1)))
     }
 
     # Determine which page is next, then update current_page_id() to it
     shiny::observe({
-      lapply(pages, function(page) {
-        shiny::observeEvent(input[[page$next_button_id]], {
-          shiny::isolate({
-            # Grab the time stamp of the page turn
-            timestamp <- get_utc_timestamp()
+        lapply(pages, function(page) {
+            shiny::observeEvent(input[[page$next_button_id]], {
+                shiny::isolate({
+                    # Grab the time stamp of the page turn
+                    timestamp <- get_utc_timestamp()
 
-            # Figure out page ids
-            current_page_id <- page$id
-            next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
-            next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
-            if (!is.null(next_page_id) && check_required(page)) {
-              # Set the current page as the next page
-              current_page_id(next_page_id)
+                    # Figure out page ids
+                    current_page_id <- page$id
+                    next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
+                    next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
+                    if (!is.null(next_page_id) && check_required(page)) {
+                        # Set the current page as the next page
+                        current_page_id(next_page_id)
 
-              # Update the page time stamp
-              next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
-              all_data[[next_ts_id]] <- timestamp
+                        # Update the page time stamp
+                        next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
+                        all_data[[next_ts_id]] <- timestamp
 
-              # Update tracker of which fields changed
-              changed_fields(c(changed_fields(), next_ts_id))
+                        # Update tracker of which fields changed
+                        changed_fields(c(changed_fields(), next_ts_id))
 
-              # Update data
-              update_data()
-            } else if (!is.null(next_page_id)) {
-              shinyWidgets::sendSweetAlert(
-                session = session,
-                title = translations[["warning"]],
-                text = translations[["required"]],
-                type = "warning"
-              )
-            }
-          })
+                        # Update data
+                        update_data()
+                    } else if (!is.null(next_page_id)) {
+                        shinyWidgets::sendSweetAlert(
+                            session = session,
+                            title = translations[["warning"]],
+                            text = translations[["required"]],
+                            type = "warning"
+                        )
+                    }
+                })
+            })
         })
-      })
     })
 
     # Observer to max out the progress bar when we reach the last page
@@ -448,57 +448,57 @@ sd_server <- function(
     # Survey rating ----
     # Observer for the exit survey modal
     shiny::observeEvent(input$show_exit_modal, {
-      if (rate_survey) {
-        shiny::showModal(shiny::modalDialog(
-          title = translations[["rating_title"]],
-          sd_question(
-            type   = 'mc_buttons',
-            id     = 'survey_rating',
-            label  = glue::glue("{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"),
-            option = c(
-              "1" = "1",
-              "2" = "2",
-              "3" = "3",
-              "4" = "4",
-              "5" = "5"
-            )
-          ),
-          footer = shiny::tagList(
-            shiny::modalButton(translations[["cancel"]]),
-            shiny::actionButton("submit_rating", translations[["submit_exit"]])
-          )
-        ))
-      } else {
-        shiny::showModal(shiny::modalDialog(
-          title = translations[["confirm_exit"]],
-          translations[["sure_exit"]],
-          footer = shiny::tagList(
-            shiny::modalButton(translations[["cancel"]]),
-            shiny::actionButton("confirm_exit", translations[["exit"]])
-          )
-        ))
-      }
+        if (rate_survey) {
+            shiny::showModal(shiny::modalDialog(
+                title = translations[["rating_title"]],
+                sd_question(
+                    type   = 'mc_buttons',
+                    id     = 'survey_rating',
+                    label  = glue::glue("{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"),
+                    option = c(
+                        "1" = "1",
+                        "2" = "2",
+                        "3" = "3",
+                        "4" = "4",
+                        "5" = "5"
+                    )
+                ),
+                footer = shiny::tagList(
+                    shiny::modalButton(translations[["cancel"]]),
+                    shiny::actionButton("submit_rating", translations[["submit_exit"]])
+                )
+            ))
+        } else {
+            shiny::showModal(shiny::modalDialog(
+                title = translations[["confirm_exit"]],
+                translations[["sure_exit"]],
+                footer = shiny::tagList(
+                    shiny::modalButton(translations[["cancel"]]),
+                    shiny::actionButton("confirm_exit", translations[["exit"]])
+                )
+            ))
+        }
     })
 
     # Observer to handle the rating submission or exit confirmation
     shiny::observeEvent(input$submit_rating, {
-      # Save the rating
-      rating <- input$survey_rating
-      all_data[['exit_survey_rating']] <- rating
-      changed_fields(c(changed_fields(), 'exit_survey_rating'))
-      # Update data immediately
-      shiny::isolate({
-        update_data(time_last = TRUE)
-      })
-      # Close the modal and the window
-      shiny::removeModal()
-      session$sendCustomMessage("closeWindow", list())
+        # Save the rating
+        rating <- input$survey_rating
+        all_data[['exit_survey_rating']] <- rating
+        changed_fields(c(changed_fields(), 'exit_survey_rating'))
+        # Update data immediately
+        shiny::isolate({
+            update_data(time_last = TRUE)
+        })
+        # Close the modal and the window
+        shiny::removeModal()
+        session$sendCustomMessage("closeWindow", list())
     })
 
     shiny::observeEvent(input$confirm_exit, {
-      # Close the modal and the window
-      shiny::removeModal()
-      session$sendCustomMessage("closeWindow", list())
+        # Close the modal and the window
+        shiny::removeModal()
+        session$sendCustomMessage("closeWindow", list())
     })
 
     # Ensure final update on session end
@@ -628,18 +628,18 @@ sd_skip_if <- function(...) {
 #' @export
 sd_show_if <- function(...) {
     conditions <- parse_conditions(...)
-  # Create a list in userData to store the show_if targets
-  shiny::isolate({
-    session <- shiny::getDefaultReactiveDomain()
-    if (is.null(session)) {
-      stop("sd_show_if must be called within a Shiny reactive context")
-    }
-    if (is.null(session$userData$show_if)) {
-      session$userData$show_if <- list()
-    }
-    session$userData$show_if$conditions <- conditions
-    session$userData$show_if$targets <- get_unique_targets(conditions)
-  })
+    # Create a list in userData to store the show_if targets
+    shiny::isolate({
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            stop("sd_show_if must be called within a Shiny reactive context")
+        }
+        if (is.null(session$userData$show_if)) {
+            session$userData$show_if <- list()
+        }
+        session$userData$show_if$conditions <- conditions
+        session$userData$show_if$targets <- get_unique_targets(conditions)
+    })
 }
 
 #' Set password for surveydown survey
@@ -737,37 +737,37 @@ sd_set_password <- function(password) {
 #'
 #' @export
 sd_show_password <- function() {
-  # Define the path to .Renviron file
-  renviron_path <- file.path(getwd(), ".Renviron")
+    # Define the path to .Renviron file
+    renviron_path <- file.path(getwd(), ".Renviron")
 
-  # Check if .Renviron file exists
-  if (!file.exists(renviron_path)) {
-    usethis::ui_oops("No .Renviron file found. No password is saved.")
-    usethis::ui_todo("Use sd_set_password() to define a password.")
-    return(invisible(NULL))
-  }
+    # Check if .Renviron file exists
+    if (!file.exists(renviron_path)) {
+        usethis::ui_oops("No .Renviron file found. No password is saved.")
+        usethis::ui_todo("Use sd_set_password() to define a password.")
+        return(invisible(NULL))
+    }
 
-  # Read the content of .Renviron
-  env_content <- readLines(renviron_path)
+    # Read the content of .Renviron
+    env_content <- readLines(renviron_path)
 
-  # Find the line with SURVEYDOWN_PASSWORD
-  password_line <- grep("^SURVEYDOWN_PASSWORD=", env_content, value = TRUE)
+    # Find the line with SURVEYDOWN_PASSWORD
+    password_line <- grep("^SURVEYDOWN_PASSWORD=", env_content, value = TRUE)
 
-  if (length(password_line) == 0) {
-    usethis::ui_oops("No password found in .Renviron file.")
-    usethis::ui_todo("Use sd_set_password() to define a password.")
-    return(invisible(NULL))
-  }
+    if (length(password_line) == 0) {
+        usethis::ui_oops("No password found in .Renviron file.")
+        usethis::ui_todo("Use sd_set_password() to define a password.")
+        return(invisible(NULL))
+    }
 
-  # Extract the password
-  password <- sub("^SURVEYDOWN_PASSWORD=", "", password_line)
+    # Extract the password
+    password <- sub("^SURVEYDOWN_PASSWORD=", "", password_line)
 
-  # Confirm with the user
-  if (usethis::ui_yeah("Are you sure you want to display your password in the console?")) {
-    usethis::ui_info("Your saved password is: {password}")
-  } else {
-    usethis::ui_info("Password display cancelled.")
-  }
+    # Confirm with the user
+    if (usethis::ui_yeah("Are you sure you want to display your password in the console?")) {
+        usethis::ui_info("Your saved password is: {password}")
+    } else {
+        usethis::ui_info("Password display cancelled.")
+    }
 }
 
 #' Store a value in the survey data
@@ -947,37 +947,37 @@ sd_copy_value <- function(id, id_copy) {
 #'
 #' @export
 sd_is_answered <- function(question_id) {
-  # Get the Shiny session
-  session <- shiny::getDefaultReactiveDomain()
+    # Get the Shiny session
+    session <- shiny::getDefaultReactiveDomain()
 
-  if (is.null(session)) {
-    stop("sd_is_answered() must be called from within a Shiny reactive context")
-  }
-
-  # Access the input object from the session
-  input <- session$input
-
-  # Check if it's a matrix question (ends with a number)
-  if (!grepl("_\\d+$", question_id)) {
-    # It's potentially a matrix question, check all sub-questions
-    sub_questions <- grep(paste0("^", question_id, "_"), names(input), value = TRUE)
-
-    if (length(sub_questions) > 0) {
-      # It's confirmed to be a matrix question
-      return(all(sapply(sub_questions, function(sq) !is.null(input[[sq]]) && nzchar(input[[sq]]))))
+    if (is.null(session)) {
+        stop("sd_is_answered() must be called from within a Shiny reactive context")
     }
-  }
 
-  # For non-matrix questions or individual sub-questions
-  if (is.null(input[[question_id]])) return(FALSE)
+    # Access the input object from the session
+    input <- session$input
 
-  if (is.list(input[[question_id]])) {
-    # For questions that can have multiple answers (e.g., checkboxes)
-    return(length(input[[question_id]]) > 0 && any(nzchar(unlist(input[[question_id]]))))
-  } else {
-    # For single-answer questions
-    return(!is.null(input[[question_id]]) && nzchar(input[[question_id]]))
-  }
+    # Check if it's a matrix question (ends with a number)
+    if (!grepl("_\\d+$", question_id)) {
+        # It's potentially a matrix question, check all sub-questions
+        sub_questions <- grep(paste0("^", question_id, "_"), names(input), value = TRUE)
+
+        if (length(sub_questions) > 0) {
+            # It's confirmed to be a matrix question
+            return(all(sapply(sub_questions, function(sq) !is.null(input[[sq]]) && nzchar(input[[sq]]))))
+        }
+    }
+
+    # For non-matrix questions or individual sub-questions
+    if (is.null(input[[question_id]])) return(FALSE)
+
+    if (is.list(input[[question_id]])) {
+        # For questions that can have multiple answers (e.g., checkboxes)
+        return(length(input[[question_id]]) > 0 && any(nzchar(unlist(input[[question_id]]))))
+    } else {
+        # For single-answer questions
+        return(!is.null(input[[question_id]]) && nzchar(input[[question_id]]))
+    }
 }
 
 # Helper functions ----
@@ -1051,7 +1051,7 @@ get_utc_timestamp <- function() {
 }
 
 get_initial_data <- function(
-    session, session_id, time_start, all_ids, start_page_ts_id
+        session, session_id, time_start, all_ids, start_page_ts_id
 ) {
     # Initialize with static data
     data <- c(
