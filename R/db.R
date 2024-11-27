@@ -166,11 +166,23 @@ sd_get_data <- function(db, refresh_interval = NULL) {
         warning("Database is not connected, db is NULL")
         return(NULL)
     }
+
     fetch_data <- function() {
+        # Check if table exists first
+        table_exists <- pool::poolWithTransaction(db$db, function(conn) {
+            DBI::dbExistsTable(conn, db$table)
+        })
+
+        if (!table_exists) {
+            return(NULL)
+        }
+
+        # Only try to read if table exists
         pool::poolWithTransaction(db$db, function(conn) {
             DBI::dbReadTable(conn, db$table)
         })
     }
+
     if (!is.null(refresh_interval)) {
         if (is.null(shiny::getDefaultReactiveDomain())) {
             stop('If refresh_interval is set to a positive number, sd_get_data() must be called within a reactive context for the data to continously update in the server.')
@@ -228,7 +240,7 @@ create_table <- function(data_list, db, table) {
         DBI::dbExecute(conn, paste0('ALTER TABLE "', table, '" ENABLE ROW LEVEL SECURITY;'))
     })
 
-    message(paste("Table", table, "created in the database."))
+    message(paste0('Table "', table, '" created in the database.'))
 }
 
 # Solution found in this issue:

@@ -26,6 +26,8 @@
 #'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
 #'   French (`"fr"`), Italian (`"it"`). Simplified Chinese (`"zh-CN"`).
 #'   Defaults to `"en"`.
+#' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
+#'   for storing and restoring survey progress. Defaults to `TRUE`.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -95,7 +97,8 @@
 #'       admin_page = FALSE,
 #'       auto_scroll = FALSE,
 #'       rate_survey = FALSE,
-#'       language = "en"
+#'       language = "en",
+#'       use_cookies = TRUE
 #'     )
 #'   }
 #'
@@ -111,36 +114,31 @@
 #'
 #' @export
 sd_server <- function(
-        db = NULL,
-        required_questions = NULL,
+        db                     = NULL,
+        required_questions     = NULL,
         all_questions_required = FALSE,
-        start_page = NULL,
-        admin_page = FALSE,
-        auto_scroll = FALSE,
-        rate_survey = FALSE,
-        language = "en"
+        start_page             = NULL,
+        admin_page             = FALSE,
+        auto_scroll            = FALSE,
+        rate_survey            = FALSE,
+        language               = "en",
+        use_cookies            = TRUE
 ) {
 
-    # Preparation ----
+    # Initialize local variables ----
 
     # Get input, output, and session from the parent environment
     parent_env <- parent.frame()
-    input <- get("input", envir = parent_env)
-    output <- get("output", envir = parent_env)
-    session <- get("session", envir = parent_env)
+    input      <- get("input", envir = parent_env)
+    output     <- get("output", envir = parent_env)
+    session    <- get("session", envir = parent_env)
 
     # Tag start time
     time_start <- get_utc_timestamp()
 
-    # Initialize session_id
-    session_id <- session$token
-
     # Get any skip or show conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
     skip_if <- shiny::getDefaultReactiveDomain()$userData$skip_if
-
-    # Auto scroll
-    session$sendCustomMessage("updateSurveydownConfig", list(autoScrollEnabled = auto_scroll))
 
     # Run the configuration settings
     config <- run_config(
@@ -154,11 +152,6 @@ sd_server <- function(
         language
     )
 
-    # Initialize local variables ----
-
-    # Check if db is NULL (either blank or specified with ignore = TRUE)
-    ignore_mode <- is.null(db)
-
     # Create local objects from config file
     pages              <- config$pages
     head_content       <- config$head_content
@@ -170,14 +163,41 @@ sd_server <- function(
     question_required  <- config$question_required
     page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
 
-    # Initialize translations list (from '_survey/translations.yml' file)
-    translations <- get_translations()$translations
-
     # Pre-compute timestamp IDs
     page_ts_ids      <- paste0("time_p_", page_ids)
     question_ts_ids  <- paste0("time_q_", question_ids)
     start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
-    all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
+    all_ids          <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
+
+    # Create current_page_id reactive value
+    current_page_id <- shiny::reactiveVal(start_page)
+
+    # Progress bar
+    load_js_file("update_progress.js")
+    max_progress <- shiny::reactiveVal(0)
+    last_answered_question <- shiny::reactiveVal(0)
+    update_progress_bar <- function(index) {
+        if (index > last_answered_question()) {
+            last_answered_question(index)
+            current_progress <- index / length(question_ids)
+            max_progress(max(max_progress(), current_progress))
+            session$sendCustomMessage("updateProgressBar", max_progress() * 100)
+        }
+    }
+
+    # Initialize session handling and session_id
+    session_id <- session$token
+    session_id <- handle_sessions(session_id, db, session, input, time_start, start_page,
+                                  current_page_id, question_ids, question_ts_ids,
+                                  update_progress_bar, use_cookies)
+    # Auto scroll
+    session$sendCustomMessage("updateSurveydownConfig", list(autoScrollEnabled = auto_scroll))
+
+    # Check if db is NULL (either blank or specified with ignore = TRUE)
+    ignore_mode <- is.null(db)
+
+    # Initialize translations list (from '_survey/translations.yml' file)
+    translations <- get_translations()$translations
 
     # show_if conditions ----
 
@@ -202,44 +222,91 @@ sd_server <- function(
         question_visibility(current_visibility)
     })
 
-    # Progress bar ----
-
-    # Initialize values for progressbar
-    load_js_file("update_progress.js")
-    max_progress <- shiny::reactiveVal(0)
-    last_answered_question <- shiny::reactiveVal(0)
-
-    # Function to update progress bar
-    update_progress_bar <- function(index) {
-        if (index > last_answered_question()) {
-            last_answered_question(index)
-            current_progress <- index / length(question_ids)
-            max_progress(max(max_progress(), current_progress))
-            session$sendCustomMessage("updateProgressBar", max_progress() * 100)
-        }
-    }
-
     # Update data ----
 
     update_data <- function(time_last = FALSE) {
         data_list <- latest_data()
         fields <- changed_fields()
-        if (length(fields) == 0) {
-            fields = names(data_list)
+
+        # Only update fields that have actually changed and have values
+        if (length(fields) > 0) {
+            # Filter out fields with empty values unless explicitly changed
+            valid_fields <- character(0)
+            for (field in fields) {
+                if (!is.null(data_list[[field]]) && data_list[[field]] != "") {
+                    valid_fields <- c(valid_fields, field)
+                }
+            }
+            fields <- valid_fields
+        } else {
+            # On initial load or restoration, use all non-empty fields
+            fields <- names(data_list)[sapply(data_list, function(x) !is.null(x) && x != "")]
         }
+
         if (time_last) {
             data_list[['time_end']] <- get_utc_timestamp()
+            fields <- unique(c(fields, 'time_end'))
         }
+
+        # Local data handling
         if (ignore_mode) {
-            if (file.access('.', 2) == 0) {  # Check if current directory is writable
+            if (file.access('.', 2) == 0) {
                 tryCatch({
+                    # Read existing data
+                    existing_data <- if (file.exists("preview_data.csv")) {
+                        utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
+                    } else {
+                        data.frame()
+                    }
+
+                    # Convert current data_list to data frame
+                    new_data <- as.data.frame(data_list, stringsAsFactors = FALSE)
+
+                    # If there is existing data, update or append based on session_id
+                    if (nrow(existing_data) > 0) {
+                        # Find if this session_id already exists
+                        session_idx <- which(existing_data$session_id == data_list$session_id)
+
+                        if (length(session_idx) > 0) {
+                            # Update existing session data
+                            for (field in fields) {
+                                if (field %in% names(existing_data)) {
+                                    existing_data[session_idx, field] <- data_list[[field]]
+                                } else {
+                                    # Add new column with NAs, then update the specific row
+                                    existing_data[[field]] <- NA
+                                    existing_data[session_idx, field] <- data_list[[field]]
+                                }
+                            }
+                            updated_data <- existing_data
+                        } else {
+                            # Ensure all columns from existing_data are in new_data
+                            missing_cols <- setdiff(names(existing_data), names(new_data))
+                            for (col in missing_cols) {
+                                new_data[[col]] <- NA
+                            }
+                            # Ensure all columns from new_data are in existing_data
+                            missing_cols <- setdiff(names(new_data), names(existing_data))
+                            for (col in missing_cols) {
+                                existing_data[[col]] <- NA
+                            }
+                            # Now both data frames should have the same columns
+                            updated_data <- rbind(existing_data, new_data[names(existing_data)])
+                        }
+                    } else {
+                        # If no existing data, use new data
+                        updated_data <- new_data
+                    }
+
+                    # Write updated data back to file
                     utils::write.csv(
-                        as.data.frame(data_list, stringsAsFactors = FALSE),
+                        updated_data,
                         "preview_data.csv",
-                        row.names = FALSE
+                        row.names = FALSE,
+                        na = ""
                     )
                 }, error = function(e) {
-                    warning("Unable to write to preview_data.csv")
+                    warning("Unable to write to preview_data.csv: ", e$message)
                     message("Error details: ", e$message)
                 })
             } else {
@@ -248,8 +315,9 @@ sd_server <- function(
         } else {
             database_uploading(data_list, db$db, db$table, fields)
         }
-        # Reset changed_fields after updating the data
-        changed_fields(character(0))
+
+        # Only reset changed fields that were actually processed
+        changed_fields(setdiff(changed_fields(), fields))
     }
 
     # Initial settings ----
@@ -264,21 +332,28 @@ sd_server <- function(
 
     # Data tracking ----
 
-    # Initialize the all_data reactive values
-    initial_data <- get_initial_data(
-        session, session_id, time_start, all_ids, start_page_ts_id
-    )
-    all_data <- do.call(shiny::reactiveValues, initial_data)
-
-    # Initialize database table
+    # First check and initialize table if needed
     if (!ignore_mode) {
+        # Create a minimal initial data just for table creation
+        min_initial_data <- list(
+            session_id = character(0),
+            time_start = character(0),
+            time_end = character(0)
+        )
+
         table_exists <- pool::poolWithTransaction(db$db, function(conn) {
             DBI::dbExistsTable(conn, db$table)
         })
         if (!table_exists) {
-            create_table(initial_data, db$db, db$table)
+            create_table(min_initial_data, db$db, db$table)
         }
     }
+
+    # Now handle session and get proper initial data
+    initial_data <- get_initial_data(
+        session, session_id, time_start, all_ids, start_page_ts_id
+    )
+    all_data <- do.call(shiny::reactiveValues, initial_data)
 
     # Reactive expression that returns a list of the latest data
     latest_data <- shiny::reactive({
@@ -309,7 +384,7 @@ sd_server <- function(
             local_ts_id <- question_ts_ids[index]
 
             shiny::observeEvent(input[[local_id]], {
-                # Tag event time and update question value
+                # Tag event time and update value
                 timestamp            <- get_utc_timestamp()
                 value                <- input[[local_id]]
                 formatted_value      <- format_question_value(value)
@@ -336,10 +411,10 @@ sd_server <- function(
                 if (length(options) == length(label_options)) {
                     names(options) <- label_options
                 }
-                if (is.null(value) || length(value) == 0) {
-                    label_option <- ""
+                label_option <- if (is.null(value) || length(value) == 0) {
+                    ""
                 } else {
-                    label_option <- options[options %in% value] |>
+                    options[options %in% value] |>
                         names() |>
                         paste(collapse = ", ")
                 }
@@ -363,9 +438,6 @@ sd_server <- function(
     # Page rendering ----
 
     # Create reactive values for the start page ID
-    # (defaults to first page if NULL...see run_config() function)
-    current_page_id <- shiny::reactiveVal(start_page)
-
     get_current_page <- shiny::reactive({
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
@@ -419,8 +491,11 @@ sd_server <- function(
                         next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
                         all_data[[next_ts_id]] <- timestamp
 
+                        # Save the current page to all_data
+                        all_data[["current_page"]] <- next_page_id
+
                         # Update tracker of which fields changed
-                        changed_fields(c(changed_fields(), next_ts_id))
+                        changed_fields(c(changed_fields(), next_ts_id, "current_page"))
 
                         # Update data
                         update_data()
@@ -1242,4 +1317,122 @@ admin_enable <- function(input, output, session, db) {
             utils::write.csv(data, file, row.names = FALSE)
         }
     )
+}
+
+get_local_data <- function() {
+    if (file.exists("preview_data.csv")) {
+        tryCatch({
+            return(utils::read.csv("preview_data.csv", stringsAsFactors = FALSE))
+        }, error = function(e) {
+            warning("Error reading preview_data.csv: ", e$message)
+            return(NULL)
+        })
+    }
+    return(NULL)
+}
+
+handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
+                                    question_ids, question_ts_ids, progress_updater) {
+    if (is.null(session_id)) return(NULL)
+
+    # Get data using sd_get_data or local CSV
+    if (!is.null(db)) {
+        all_data <- sd_get_data(db)
+    } else {
+        all_data <- get_local_data()
+    }
+
+    # If no data available, return NULL
+    if (is.null(all_data)) return(NULL)
+
+    restore_data <- all_data[all_data$session_id == session_id, ]
+
+    if (nrow(restore_data) == 0) return(NULL)
+
+    # Rest of the function remains the same...
+    shiny::isolate({
+        # Restore page state
+        if ("current_page" %in% names(restore_data)) {
+            restored_page <- restore_data[["current_page"]]
+            if (!is.null(restored_page) && !is.na(restored_page) && nchar(restored_page) > 0) {
+                current_page_id(restored_page)
+            } else {
+                current_page_id(start_page)
+            }
+        } else {
+            current_page_id(start_page)
+        }
+
+        # Find the last answered question for progress bar
+        last_index <- 0
+        for (i in seq_along(question_ids)) {
+            q_id <- question_ids[i]
+            ts_id <- question_ts_ids[i]
+
+            if (ts_id %in% names(restore_data)) {
+                ts_val <- restore_data[[ts_id]]
+                if (!is.null(ts_val) && !is.na(ts_val) && ts_val != "") {
+                    last_index <- i
+                }
+            }
+        }
+
+        if (last_index > 0) {
+            progress_updater(last_index)
+        }
+
+        for (col in names(restore_data)) {
+            if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
+                val <- restore_data[[col]]
+                if (!is.null(val) && !is.na(val) && val != "") {
+                    all_data[[col]] <- val
+                    session$sendInputMessage(col, list(value = val, priority = "event"))
+                }
+            }
+        }
+    })
+    return(restore_data)
+}
+
+handle_sessions <- function(session_id, db = NULL, session, input, time_start,
+                            start_page, current_page_id, question_ids,
+                            question_ts_ids, progress_updater, use_cookies = TRUE) {
+    # Check 1: Cookies enabled?
+    if (!use_cookies) {
+        return(session_id)
+    }
+
+    # Create a variable to store the final ID
+    final_session_id <- session_id
+
+    # Do the cookie check synchronously in a reactive context
+    shiny::isolate({
+        # Check 2: Cookie exists and is valid?
+        stored_id <- shiny::reactiveValuesToList(input)$stored_session_id
+        if (!is.null(stored_id) && nchar(stored_id) > 0 &&
+            # Check 3: DB connection exists?
+            !is.null(db)) {
+
+            # Check 4: Session exists in DB?
+            restore_data <- handle_data_restoration(
+                stored_id, db, session, current_page_id,
+                start_page, question_ids, question_ts_ids,
+                progress_updater
+            )
+
+            if (!is.null(restore_data)) {
+                # All checks passed - use stored session
+                final_session_id <- stored_id
+                session$sendCustomMessage("setCookie", list(sessionId = stored_id))
+            } else {
+                # Session not in DB - use new session
+                session$sendCustomMessage("setCookie", list(sessionId = session_id))
+            }
+        } else {
+            # No cookie or no DB connection - use new session
+            session$sendCustomMessage("setCookie", list(sessionId = session_id))
+        }
+    })
+
+    return(final_session_id)
 }
