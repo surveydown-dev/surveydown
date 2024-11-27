@@ -49,7 +49,8 @@ run_config <- function(
 
     } else {
         message(
-          'Survey unchanged, loading from "_survey" folder.'
+          "No changes detected in 'survey.qmd' or 'app.R' files. ",
+          "Importing survey content from '_survey' folder."
         )
 
         # Load head content from _survey folder
@@ -223,23 +224,15 @@ set_translations <- function(paths, language) {
         translations <- c(user_transl, translations) # user provided take precedence
     }
 
-    # Choose translations by choosen language
-    translations <- translations[names(translations) == language]
-    translations <- translations[1]
-
-    # Fallback to English if no translations found for selected language
-    if (length(translations[[1]]) == 0) {
-        message(
-          "No translations found for language '", language,
-          "'. Fall back to predefined English."
-        )
-        message(
-          "surveydown currently provides translations for the following languages: 'en', 'de', 'fr', 'it', and 'es'."
-        )
-        message(
-          "Add a translation file to the root folder to provide translations for other supported languages."
-        )
-        translations <- translations[names(translations) == "en"]
+    # Choose translations by chosen language
+    if (! language %in% names(translations)) {
+        # Fallback to English if no translations found for selected language
+        sd_create_translations(language)
+        translations <- translations["en"]
+        names(translations) <- language
+    } else {
+        translations <- translations[names(translations) == language]
+        translations <- translations[1]
     }
 
     # write translations file

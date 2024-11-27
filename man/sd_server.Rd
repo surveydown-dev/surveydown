@@ -12,8 +12,7 @@ sd_server(
   admin_page = FALSE,
   auto_scroll = FALSE,
   rate_survey = FALSE,
-  language = "en",
-  use_cookies = TRUE
+  language = "en"
 )
 }
 \arguments{
@@ -42,10 +41,8 @@ Defaults to \code{FALSE}.}
 \item{language}{Set the language for the survey system messages. Include
 your own in a \code{translations.yml} file, or choose a built in one from
 the following list: English (\code{"en"}), German (\code{"de"}), Spanish (\code{"es"}),
-French (\code{"fr"}), Italian (\code{"it"}). Defaults to \code{"en"}.}
-
-\item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management
-for storing and restoring survey progress. Defaults to \code{TRUE}.}
+French (\code{"fr"}), Italian (\code{"it"}). Simplified Chinese (\code{"zh-CN"}).
+Defaults to \code{"en"}.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
@@ -129,8 +126,7 @@ if (interactive()) {
       admin_page = FALSE,
       auto_scroll = FALSE,
       rate_survey = FALSE,
-      language = "en",
-      use_cookies = TRUE
+      language = "en"
     )
   }
 

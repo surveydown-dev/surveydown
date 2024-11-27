@@ -75,7 +75,7 @@ sd_database <- function(
 
     # Authentication/Checks for NULL Values
     if (is.null(host) | is.null(dbname) | is.null(port) | is.null(user) | is.null(table)) {
-        message("One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local preview_data.csv file *for previewing purposes only*.")
+        message("One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local data.csv file *for previewing purposes only*.")
         return(NULL)
     }
 
@@ -250,8 +250,9 @@ sqlInterpolateList <- function(conn, sql, vars=list(), list_vars=list()) {
 }
 
 database_uploading <- function(data_list, db, table, changed_fields) {
-    if(is.null(db)) return(warning("Databasing is not in use"))
-
+    if(is.null(db)) {
+        return(warning("Databasing is not in use"))
+    }
     tryCatch({
         pool::poolWithTransaction(db, function(conn) {
             # Get the actual columns in the table
@@ -260,9 +261,11 @@ database_uploading <- function(data_list, db, table, changed_fields) {
             # Check for new fields
             new_fields <- setdiff(names(data_list), existing_cols)
             if (length(new_fields) > 0) {
+                # Add new fields to the table
                 for (field in new_fields) {
                     DBI::dbExecute(conn, sprintf('ALTER TABLE "%s" ADD COLUMN "%s" TEXT', table, field))
                 }
+                # Update existing_cols
                 existing_cols <- c(existing_cols, new_fields)
             }
 
@@ -270,20 +273,24 @@ database_uploading <- function(data_list, db, table, changed_fields) {
             data_list <- data_list[names(data_list) %in% c("session_id", intersect(changed_fields, existing_cols))]
 
             # If there's nothing to update (only session_id), return early
-            if (length(data_list) <= 1) return()
+            if (length(data_list) <= 1) {
+                return()
+            }
 
             # Ensure session_id is the first column
             cols <- c("session_id", setdiff(names(data_list), "session_id"))
             data_list <- data_list[cols]
 
-            # Prepare SQL components
+            # Prepare the placeholders
             placeholders <- paste0("?", names(data_list))
+
+            # Prepare the update set
             update_cols <- setdiff(cols, "session_id")
             update_set <- paste(sapply(update_cols, function(col) {
                 sprintf('"%s" = EXCLUDED."%s"', col, col)
             }), collapse = ", ")
 
-            # Build and execute query
+            # Prepare the SQL query template
             query_template <- sprintf(
                 'INSERT INTO "%s" ("%s") VALUES (%s) ON CONFLICT (session_id) DO UPDATE SET %s',
                 table,
@@ -292,10 +299,18 @@ database_uploading <- function(data_list, db, table, changed_fields) {
                 update_set
             )
 
-            query <- sqlInterpolateList(conn, query_template, list_vars = data_list)
+            # Use sqlInterpolateList to safely insert values
+            query <- sqlInterpolateList(
+                conn,
+                query_template,
+                list_vars = data_list
+            )
+
+            # Execute the query
             DBI::dbExecute(conn, query)
         })
     }, error = function(e) {
         warning("Error in database operation: ", e$message)
+        print(e)  # Print the full error for debugging
     })
 }

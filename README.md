@@ -11,15 +11,6 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
 <!-- badges: end -->
 
-# WARNING: v0.5.0 on CRAN is broken
-
-**Please install the previous (stable) version:**
-
-``` r
-# install.packages("remotes")
-remotes::install_version("surveydown", version = "0.4.2")
-```
-
 > Note: This site only documents the {surveydown} R package - visit our
 > main site at [surveydown.org](https://surveydown.org) for more
 > information!
@@ -151,7 +142,7 @@ to the project:
   <https://shinysurveys.jdtrat.com/articles/get-survey-data.html>
 - [x] Ability to pass url parameters, e.g. for tracking users.
 - [x] Ability to redirect users to another url.
-- [x] Leverage cookies so users who close the browser can start back
+- [ ] Leverage cookies so users who close the browser can start back
   where they left off.
 - [ ] Admin page w/password to preview / download data (see
   <https://github.com/daattali/shinyforms>)
