@@ -41,7 +41,8 @@ Defaults to \code{FALSE}.}
 \item{language}{Set the language for the survey system messages. Include
 your own in a \code{translations.yml} file, or choose a built in one from
 the following list: English (\code{"en"}), German (\code{"de"}), Spanish (\code{"es"}),
-French (\code{"fr"}), Italian (\code{"it"}). Defaults to \code{"en"}.}
+French (\code{"fr"}), Italian (\code{"it"}). Simplified Chinese (\code{"zh-CN"}).
+Defaults to \code{"en"}.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for

@@ -24,7 +24,8 @@
 #' @param language Set the language for the survey system messages. Include
 #'   your own in a `translations.yml` file, or choose a built in one from
 #'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
-#'   French (`"fr"`), Italian (`"it"`). Defaults to `"en"`.
+#'   French (`"fr"`), Italian (`"it"`). Simplified Chinese (`"zh-CN"`).
+#'   Defaults to `"en"`.
 #'
 #' @details
 #' The function performs the following tasks:
