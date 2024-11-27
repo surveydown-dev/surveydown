@@ -13,11 +13,11 @@ downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cr
 
 # WARNING: v0.5.0 on CRAN is broken
 
-**Please install the previous (stable) version:**
+**Please install the latest (stable) version from GitHub:**
 
 ``` r
-# install.packages("remotes")
-remotes::install_version("surveydown", version = "0.4.2")
+# install.packages("pak")
+pak::pak('surveydown-dev/surveydown')
 ```
 
 > Note: This site only documents the {surveydown} R package - visit our
