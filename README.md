@@ -11,15 +11,6 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
 <!-- badges: end -->
 
-# WARNING: v0.5.0 on CRAN is broken
-
-**Please install the latest (stable) version from GitHub:**
-
-``` r
-# install.packages("pak")
-pak::pak('surveydown-dev/surveydown')
-```
-
 > Note: This site only documents the {surveydown} R package - visit our
 > main site at [surveydown.org](https://surveydown.org) for more
 > information!
