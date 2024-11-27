@@ -52,7 +52,7 @@
 <li>Off-line data storage upgrade. Now if ignore mode is on, the data will be stored on the project directory with file name called <code>preview_data.csv</code>. This file works exactly the same as online database, and is compatible with cookies functionality.</li>
 <li>Simplified Chinese supported in <code><a href="../reference/sd_server.html">sd_server()</a></code>. You can trigger it by: <code>sd_server(language = "zh-CN")</code>.</li>
 <li>Improvement: default language behavior in UI functions cleaner when separately rendering survey.qmd file.</li>
-<li>Byg fix: There used to be a bug if multiple themes are defined in YAML. Now it’s solved.</li>
+<li>Bug fix: There used to be a bug if multiple themes are defined in YAML. Now it’s solved.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.2" id="surveydown-042">surveydown 0.4.2<a class="anchor" aria-label="anchor" href="#surveydown-042"></a></h2>
@@ -280,7 +280,7 @@
 <li>(extension) Default page background is set as “#f2f6f9” (a light blue color). Can be overwritten in the YAML header with the <code>backgroundcolor</code>.</li>
 <li>(extension) Questions are now encapsulated in a container that distinguishes from the descriptive texts.</li>
 <li>(extension) Options of <code>mc_button</code> and <code>mu_multiple_buttons</code> types of questions are now centered.</li>
-<li>Now the <code>surveydown::create_survey()</code> function will download the whole <a href="https://github.com/surveydown-dev/surveydown-ext/tree/main" class="external-link">extension repo</a>, containing the extension, an example survey, and an RStudio project.</li>
+<li>Now the <code>surveydown::create_survey()</code> function will download the whole extension repo, containing the extension, an example survey, and an RStudio project.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.0.3" id="surveydown-003">surveydown 0.0.3<a class="anchor" aria-label="anchor" href="#surveydown-003"></a></h2>
