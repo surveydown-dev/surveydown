@@ -23,6 +23,17 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project
 [![metacran downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
 <!-- badges: end -->
 
+# WARNING: v0.5.0 on CRAN is broken
+
+**Please install the previous (stable) version:**
+
+```{r}
+#| eval: false
+
+# install.packages("remotes")
+remotes::install_version("surveydown", version = "0.4.2")
+```
+
 > Note: This site only documents the {surveydown} R package - visit our main site at [surveydown.org](https://surveydown.org) for more information!
 
 **surveydown** is a flexible, open-source platform for making surveys with [R](https://www.r-project.org/), [Quarto](https://quarto.org/), [Shiny](https://shiny.posit.co/), and [Supabase](https://supabase.com/).
