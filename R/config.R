@@ -49,7 +49,8 @@ run_config <- function(
 
     } else {
         message(
-          'Survey unchanged, loading from "_survey" folder.'
+          "No changes detected in 'survey.qmd' or 'app.R' files. ",
+          "Importing survey content from '_survey' folder."
         )
 
         # Load head content from _survey folder
