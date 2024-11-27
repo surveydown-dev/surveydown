@@ -224,11 +224,11 @@ sd_server <- function(
                 tryCatch({
                     utils::write.csv(
                         as.data.frame(data_list, stringsAsFactors = FALSE),
-                        "data.csv",
+                        "preview_data.csv",
                         row.names = FALSE
                     )
                 }, error = function(e) {
-                    warning("Unable to write to data.csv")
+                    warning("Unable to write to preview_data.csv")
                     message("Error details: ", e$message)
                 })
             } else {

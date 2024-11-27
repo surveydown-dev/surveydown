@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+# surveydown 0.5.1
+
+- Revert mostly to v0.4.2 to completely remove the cookies feature added in v0.5.0. Will re-implement a new approach in a later version.
 - Fixed typo in error message (`data.csv` -> `preview_data.csv`).
 
 # surveydown 0.5.0

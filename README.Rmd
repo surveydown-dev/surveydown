@@ -125,7 +125,7 @@ This is a running list of things we're working on / have already added to the pr
 - [x] Add a `sd_get_data()` function so the survey designer can obtain the current survey results from inside the app: https://shinysurveys.jdtrat.com/articles/get-survey-data.html
 - [x] Ability to pass url parameters, e.g. for tracking users.
 - [x] Ability to redirect users to another url.
-- [x] Leverage cookies so users who close the browser can start back where they left off.
+- [ ] Leverage cookies so users who close the browser can start back where they left off.
 - [ ] Admin page w/password to preview / download data (see https://github.com/daattali/shinyforms)
 - [ ] Form validation: Make sure the user inputs the correct type depending on the question type. (see https://shiny.posit.co/r/reference/shiny/0.14/validate.html)
 - Question types:

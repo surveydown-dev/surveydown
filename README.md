@@ -151,7 +151,7 @@ to the project:
   <https://shinysurveys.jdtrat.com/articles/get-survey-data.html>
 - [x] Ability to pass url parameters, e.g. for tracking users.
 - [x] Ability to redirect users to another url.
-- [x] Leverage cookies so users who close the browser can start back
+- [ ] Leverage cookies so users who close the browser can start back
   where they left off.
 - [ ] Admin page w/password to preview / download data (see
   <https://github.com/daattali/shinyforms>)
