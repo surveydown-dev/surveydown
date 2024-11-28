@@ -576,7 +576,14 @@ sd_server <- function(
         session$sendCustomMessage("closeWindow", list())
     })
 
-    # Update checkpoint 4 - when session is ended
+    # Update checkpoint 4 - when window is closed
+    shiny::observeEvent(input$window_closing, {
+        shiny::isolate({
+            update_data(time_last = TRUE)
+        })
+    }, ignoreInit = TRUE)
+
+    # Update checkpoint 5 - when session is ended (backup)
     shiny::onSessionEnded(function() {
         shiny::isolate({
             update_data(time_last = TRUE)
