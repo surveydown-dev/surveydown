@@ -371,7 +371,7 @@ sd_server <- function(
     # Reactive value to track which fields have changed
     changed_fields <- shiny::reactiveVal(names(initial_data))
 
-    # Initial data update when session starts
+    # Update checkpoint 1 - when session starts
     shiny::isolate({
         update_data()
     })
@@ -497,7 +497,7 @@ sd_server <- function(
                         # Update tracker of which fields changed
                         changed_fields(c(changed_fields(), next_ts_id, "current_page"))
 
-                        # Update data
+                        # Update checkpoint 2 - upon going to the next page
                         update_data()
                     } else if (!is.null(next_page_id)) {
                         shinyWidgets::sendSweetAlert(
@@ -561,7 +561,7 @@ sd_server <- function(
         rating <- input$survey_rating
         all_data[['exit_survey_rating']] <- rating
         changed_fields(c(changed_fields(), 'exit_survey_rating'))
-        # Update data immediately
+        # Update checkpoint 3 - when submitting rating
         shiny::isolate({
             update_data(time_last = TRUE)
         })
@@ -576,7 +576,7 @@ sd_server <- function(
         session$sendCustomMessage("closeWindow", list())
     })
 
-    # Ensure final update on session end
+    # Update checkpoint 4 - when session is ended
     shiny::onSessionEnded(function() {
         shiny::isolate({
             update_data(time_last = TRUE)
