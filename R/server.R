@@ -579,36 +579,16 @@ sd_server <- function(
     # Update checkpoint 4 - when window is closed
     shiny::observeEvent(input$window_closing, {
         shiny::isolate({
-            # Force a synchronous database write
-            tryCatch({
-                if (!is.null(db)) {
-                    # Get the current data
-                    data_list <- latest_data()
-                    data_list[['time_end']] <- get_utc_timestamp()
-
-                    # Direct database write using poolWithTransaction
-                    pool::poolWithTransaction(db$db, function(conn) {
-                        # Update the data
-                        database_uploading(data_list, conn, db$table, names(data_list))
-                        # Explicitly commit
-                        DBI::dbCommit(conn)
-                    })
-
-                    # Force pool closing
-                    pool::poolClose(db$db)
-                }
-            }, error = function(e) {
-                warning("Error during forced data save: ", e$message)
-            })
+            update_data(time_last = TRUE)
         })
     }, ignoreInit = TRUE)
 
     # Update checkpoint 5 - when session is ended (backup)
-    shiny::onSessionEnded(function() {
-        shiny::isolate({
-            update_data(time_last = TRUE)
-        })
-    })
+    # shiny::onSessionEnded(function() {
+    #     shiny::isolate({
+    #         update_data(time_last = TRUE)
+    #     })
+    # })
 }
 
 #' Define skip conditions for survey pages
