@@ -42,15 +42,14 @@ run_config <- function(
         question_structure <- get_question_structure(paths, html_content)
 
         message(
-          "Survey rendered and saved to '", paths$target_html,
-          ". Extracted content saved to '", paths$target_pages, "', '",
-          paths$target_head, "', and '", paths$target_questions, "' files."
+          'Survey rendered and saved to "', paths$target_html,
+          '. Extracted content saved to "', paths$target_pages, '", "',
+          paths$target_head, '", and "', paths$target_questions, '" files.'
         )
 
     } else {
         message(
-          "No changes detected in 'survey.qmd' or 'app.R' files. ",
-          "Importing survey content from '_survey' folder."
+          'No changes detected. Importing contents from "_survey" folder.'
         )
 
         # Load head content from _survey folder

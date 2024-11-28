@@ -26,6 +26,8 @@
 #'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
 #'   French (`"fr"`), Italian (`"it"`). Simplified Chinese (`"zh-CN"`).
 #'   Defaults to `"en"`.
+#' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
+#'   for storing and restoring survey progress. Defaults to `TRUE`.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -95,7 +97,8 @@
 #'       admin_page = FALSE,
 #'       auto_scroll = FALSE,
 #'       rate_survey = FALSE,
-#'       language = "en"
+#'       language = "en",
+#'       use_cookies = TRUE
 #'     )
 #'   }
 #'
@@ -111,32 +114,31 @@
 #'
 #' @export
 sd_server <- function(
-    db = NULL,
-    required_questions = NULL,
-    all_questions_required = FALSE,
-    start_page = NULL,
-    admin_page = FALSE,
-    auto_scroll = FALSE,
-    rate_survey = FALSE,
-    language = "en"
+        db                     = NULL,
+        required_questions     = NULL,
+        all_questions_required = FALSE,
+        start_page             = NULL,
+        admin_page             = FALSE,
+        auto_scroll            = FALSE,
+        rate_survey            = FALSE,
+        language               = "en",
+        use_cookies            = TRUE
 ) {
+
+    # Initialize local variables ----
 
     # Get input, output, and session from the parent environment
     parent_env <- parent.frame()
-    input <- get("input", envir = parent_env)
-    output <- get("output", envir = parent_env)
-    session <- get("session", envir = parent_env)
+    input      <- get("input", envir = parent_env)
+    output     <- get("output", envir = parent_env)
+    session    <- get("session", envir = parent_env)
 
-    # Tag start time and unique session_id
+    # Tag start time
     time_start <- get_utc_timestamp()
-    session_id <- session$token
 
     # Get any skip or show conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
     skip_if <- shiny::getDefaultReactiveDomain()$userData$skip_if
-
-    # Auto scroll
-    session$sendCustomMessage("updateSurveydownConfig", list(autoScrollEnabled = auto_scroll))
 
     # Run the configuration settings
     config <- run_config(
@@ -150,11 +152,6 @@ sd_server <- function(
         language
     )
 
-    # Initialize local variables ----
-
-    # Check if db is NULL (either blank or specified with ignore = TRUE)
-    ignore_mode <- is.null(db)
-
     # Create local objects from config file
     pages              <- config$pages
     head_content       <- config$head_content
@@ -166,41 +163,19 @@ sd_server <- function(
     question_required  <- config$question_required
     page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
 
-    # Initialize translations list (from '_survey/translations.yml' file)
-    translations <- get_translations()$translations
-
     # Pre-compute timestamp IDs
     page_ts_ids      <- paste0("time_p_", page_ids)
     question_ts_ids  <- paste0("time_q_", question_ids)
     start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
-    all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
+    all_ids          <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
 
-    # show_if conditions ----
+    # Create current_page_id reactive value
+    current_page_id <- shiny::reactiveVal(start_page)
 
-    # Reactive to store visibility status of all questions
-    question_visibility <- shiny::reactiveVal(
-      stats::setNames(rep(TRUE, length(question_ids)), question_ids)
-    )
-
-    # Observer to apply show_if conditions and update question_visibility
-    shiny::observe({
-      shiny::reactiveValuesToList(input)
-      show_if_results <- set_show_if_conditions(show_if)()
-      current_visibility <- question_visibility()
-      for (target in names(show_if_results)) {
-          current_visibility[target] <- show_if_results[[target]]
-          if (show_if_results[[target]]) {
-              shinyjs::show(paste0('container-', target))
-          } else {
-              shinyjs::hide(paste0('container-', target))
-          }
-      }
-      question_visibility(current_visibility)
-    })
-
-    # Initialize local functions ----
-
-    # Function to update progress bar
+    # Progress bar
+    load_js_file("update_progress.js")
+    max_progress <- shiny::reactiveVal(0)
+    last_answered_question <- shiny::reactiveVal(0)
     update_progress_bar <- function(index) {
         if (index > last_answered_question()) {
             last_answered_question(index)
@@ -210,25 +185,128 @@ sd_server <- function(
         }
     }
 
+    # Initialize session handling and session_id
+    session_id <- session$token
+    session_id <- handle_sessions(session_id, db, session, input, time_start, start_page,
+                                  current_page_id, question_ids, question_ts_ids,
+                                  update_progress_bar, use_cookies)
+    # Auto scroll
+    session$sendCustomMessage("updateSurveydownConfig", list(autoScrollEnabled = auto_scroll))
+
+    # Check if db is NULL (either blank or specified with ignore = TRUE)
+    ignore_mode <- is.null(db)
+
+    # Initialize translations list (from '_survey/translations.yml' file)
+    translations <- get_translations()$translations
+
+    # show_if conditions ----
+
+    # Reactive to store visibility status of all questions
+    question_visibility <- shiny::reactiveVal(
+        stats::setNames(rep(TRUE, length(question_ids)), question_ids)
+    )
+
+    # Observer to apply show_if conditions and update question_visibility
+    shiny::observe({
+        shiny::reactiveValuesToList(input)
+        show_if_results <- set_show_if_conditions(show_if)()
+        current_visibility <- question_visibility()
+        for (target in names(show_if_results)) {
+            current_visibility[target] <- show_if_results[[target]]
+            if (show_if_results[[target]]) {
+                shinyjs::show(paste0('container-', target))
+            } else {
+                shinyjs::hide(paste0('container-', target))
+            }
+        }
+        question_visibility(current_visibility)
+    })
+
+    # Update data ----
+
     update_data <- function(time_last = FALSE) {
         data_list <- latest_data()
         fields <- changed_fields()
-        if (length(fields) == 0) {
-            fields = names(data_list)
+
+        # Only update fields that have actually changed and have values
+        if (length(fields) > 0) {
+            # Filter out fields with empty values unless explicitly changed
+            valid_fields <- character(0)
+            for (field in fields) {
+                if (!is.null(data_list[[field]]) && data_list[[field]] != "") {
+                    valid_fields <- c(valid_fields, field)
+                }
+            }
+            fields <- valid_fields
+        } else {
+            # On initial load or restoration, use all non-empty fields
+            fields <- names(data_list)[sapply(data_list, function(x) !is.null(x) && x != "")]
         }
+
         if (time_last) {
             data_list[['time_end']] <- get_utc_timestamp()
+            fields <- unique(c(fields, 'time_end'))
         }
+
+        # Local data handling
         if (ignore_mode) {
-            if (file.access('.', 2) == 0) {  # Check if current directory is writable
+            if (file.access('.', 2) == 0) {
                 tryCatch({
+                    # Read existing data
+                    existing_data <- if (file.exists("preview_data.csv")) {
+                        utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
+                    } else {
+                        data.frame()
+                    }
+
+                    # Convert current data_list to data frame
+                    new_data <- as.data.frame(data_list, stringsAsFactors = FALSE)
+
+                    # If there is existing data, update or append based on session_id
+                    if (nrow(existing_data) > 0) {
+                        # Find if this session_id already exists
+                        session_idx <- which(existing_data$session_id == data_list$session_id)
+
+                        if (length(session_idx) > 0) {
+                            # Update existing session data
+                            for (field in fields) {
+                                if (field %in% names(existing_data)) {
+                                    existing_data[session_idx, field] <- data_list[[field]]
+                                } else {
+                                    # Add new column with NAs, then update the specific row
+                                    existing_data[[field]] <- NA
+                                    existing_data[session_idx, field] <- data_list[[field]]
+                                }
+                            }
+                            updated_data <- existing_data
+                        } else {
+                            # Ensure all columns from existing_data are in new_data
+                            missing_cols <- setdiff(names(existing_data), names(new_data))
+                            for (col in missing_cols) {
+                                new_data[[col]] <- NA
+                            }
+                            # Ensure all columns from new_data are in existing_data
+                            missing_cols <- setdiff(names(new_data), names(existing_data))
+                            for (col in missing_cols) {
+                                existing_data[[col]] <- NA
+                            }
+                            # Now both data frames should have the same columns
+                            updated_data <- rbind(existing_data, new_data[names(existing_data)])
+                        }
+                    } else {
+                        # If no existing data, use new data
+                        updated_data <- new_data
+                    }
+
+                    # Write updated data back to file
                     utils::write.csv(
-                        as.data.frame(data_list, stringsAsFactors = FALSE),
+                        updated_data,
                         "preview_data.csv",
-                        row.names = FALSE
+                        row.names = FALSE,
+                        na = ""
                     )
                 }, error = function(e) {
-                    warning("Unable to write to preview_data.csv")
+                    warning("Unable to write to preview_data.csv: ", e$message)
                     message("Error details: ", e$message)
                 })
             } else {
@@ -237,42 +315,45 @@ sd_server <- function(
         } else {
             database_uploading(data_list, db$db, db$table, fields)
         }
-        # Reset changed_fields after updating the data
-        changed_fields(character(0))
+
+        # Only reset changed fields that were actually processed
+        changed_fields(setdiff(changed_fields(), fields))
     }
 
     # Initial settings ----
 
     # Keep-alive observer - this will be triggered every 60 seconds
     shiny::observeEvent(input$keepAlive, {
-      cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
+        cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
     })
 
     # Create admin page if admin_page is TRUE
     if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
 
-    # Initialize values for progressbar
-    load_js_file("update_progress.js")
-    max_progress <- shiny::reactiveVal(0)
-    last_answered_question <- shiny::reactiveVal(0)
-
     # Data tracking ----
 
-    # Initialize the all_data reactive values
-    initial_data <- get_initial_data(
-        session, session_id, time_start, all_ids, start_page_ts_id
-    )
-    all_data <- do.call(shiny::reactiveValues, initial_data)
-
-    # Initialize database table
+    # First check and initialize table if needed
     if (!ignore_mode) {
+        # Create a minimal initial data just for table creation
+        min_initial_data <- list(
+            session_id = character(0),
+            time_start = character(0),
+            time_end = character(0)
+        )
+
         table_exists <- pool::poolWithTransaction(db$db, function(conn) {
             DBI::dbExistsTable(conn, db$table)
         })
         if (!table_exists) {
-            create_table(initial_data, db$db, db$table)
+            create_table(min_initial_data, db$db, db$table)
         }
     }
+
+    # Now handle session and get proper initial data
+    initial_data <- get_initial_data(
+        session, session_id, time_start, all_ids, start_page_ts_id
+    )
+    all_data <- do.call(shiny::reactiveValues, initial_data)
 
     # Reactive expression that returns a list of the latest data
     latest_data <- shiny::reactive({
@@ -290,21 +371,23 @@ sd_server <- function(
     # Reactive value to track which fields have changed
     changed_fields <- shiny::reactiveVal(names(initial_data))
 
+    # Initial data update when session starts
+    shiny::isolate({
+        update_data()
+    })
+
     # Main question observers ----
-    # (one created for each question)
 
     lapply(seq_along(question_ids), function(index) {
         local({
-            local_id <- question_ids[index]
+            local_id    <- question_ids[index]
             local_ts_id <- question_ts_ids[index]
 
             shiny::observeEvent(input[[local_id]], {
-                # Tag event time
-                timestamp <- get_utc_timestamp()
-
-                # Update question value
-                value <- input[[local_id]]
-                formatted_value <- format_question_value(value)
+                # Tag event time and update value
+                timestamp            <- get_utc_timestamp()
+                value                <- input[[local_id]]
+                formatted_value      <- format_question_value(value)
                 all_data[[local_id]] <- formatted_value
 
                 # Update timestamp and progress if interacted
@@ -326,14 +409,14 @@ sd_server <- function(
 
                 # For the selected value(s), get the corresponding label(s)
                 if (length(options) == length(label_options)) {
-                  names(options) <- label_options
+                    names(options) <- label_options
                 }
-                if (is.null(value) || length(value) == 0) {
-                  label_option <- ""
+                label_option <- if (is.null(value) || length(value) == 0) {
+                    ""
                 } else {
-                  label_option <- options[options %in% value] |>
-                    names() |>
-                    paste(collapse = ", ")
+                    options[options %in% value] |>
+                        names() |>
+                        paste(collapse = ", ")
                 }
 
                 # Store the values and labels in output
@@ -355,9 +438,6 @@ sd_server <- function(
     # Page rendering ----
 
     # Create reactive values for the start page ID
-    # (defaults to first page if NULL...see run_config() function)
-    current_page_id <- shiny::reactiveVal(start_page)
-
     get_current_page <- shiny::reactive({
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
@@ -384,49 +464,52 @@ sd_server <- function(
     # Page navigation ----
 
     check_required <- function(page) {
-      required_questions <- page$required_questions
-      is_visible <- question_visibility()[required_questions]
-      all(vapply(required_questions, function(q) {
-        !is_visible[q] || check_answer(q, input)
-      }, logical(1)))
+        required_questions <- page$required_questions
+        is_visible <- question_visibility()[required_questions]
+        all(vapply(required_questions, function(q) {
+            !is_visible[q] || check_answer(q, input)
+        }, logical(1)))
     }
 
     # Determine which page is next, then update current_page_id() to it
     shiny::observe({
-      lapply(pages, function(page) {
-        shiny::observeEvent(input[[page$next_button_id]], {
-          shiny::isolate({
-            # Grab the time stamp of the page turn
-            timestamp <- get_utc_timestamp()
+        lapply(pages, function(page) {
+            shiny::observeEvent(input[[page$next_button_id]], {
+                shiny::isolate({
+                    # Grab the time stamp of the page turn
+                    timestamp <- get_utc_timestamp()
 
-            # Figure out page ids
-            current_page_id <- page$id
-            next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
-            next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
-            if (!is.null(next_page_id) && check_required(page)) {
-              # Set the current page as the next page
-              current_page_id(next_page_id)
+                    # Figure out page ids
+                    current_page_id <- page$id
+                    next_page_id <- get_default_next_page(page, page_ids, page_id_to_index)
+                    next_page_id <- handle_skip_logic(input, skip_if, current_page_id, next_page_id)
+                    if (!is.null(next_page_id) && check_required(page)) {
+                        # Set the current page as the next page
+                        current_page_id(next_page_id)
 
-              # Update the page time stamp
-              next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
-              all_data[[next_ts_id]] <- timestamp
+                        # Update the page time stamp
+                        next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
+                        all_data[[next_ts_id]] <- timestamp
 
-              # Update tracker of which fields changed
-              changed_fields(c(changed_fields(), next_ts_id))
+                        # Save the current page to all_data
+                        all_data[["current_page"]] <- next_page_id
 
-              # Update data
-              update_data()
-            } else if (!is.null(next_page_id)) {
-              shinyWidgets::sendSweetAlert(
-                session = session,
-                title = translations[["warning"]],
-                text = translations[["required"]],
-                type = "warning"
-              )
-            }
-          })
+                        # Update tracker of which fields changed
+                        changed_fields(c(changed_fields(), next_ts_id, "current_page"))
+
+                        # Update data
+                        update_data()
+                    } else if (!is.null(next_page_id)) {
+                        shinyWidgets::sendSweetAlert(
+                            session = session,
+                            title = translations[["warning"]],
+                            text = translations[["required"]],
+                            type = "warning"
+                        )
+                    }
+                })
+            })
         })
-      })
     })
 
     # Observer to max out the progress bar when we reach the last page
@@ -440,57 +523,57 @@ sd_server <- function(
     # Survey rating ----
     # Observer for the exit survey modal
     shiny::observeEvent(input$show_exit_modal, {
-      if (rate_survey) {
-        shiny::showModal(shiny::modalDialog(
-          title = translations[["rating_title"]],
-          sd_question(
-            type   = 'mc_buttons',
-            id     = 'survey_rating',
-            label  = glue::glue("{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"),
-            option = c(
-              "1" = "1",
-              "2" = "2",
-              "3" = "3",
-              "4" = "4",
-              "5" = "5"
-            )
-          ),
-          footer = shiny::tagList(
-            shiny::modalButton(translations[["cancel"]]),
-            shiny::actionButton("submit_rating", translations[["submit_exit"]])
-          )
-        ))
-      } else {
-        shiny::showModal(shiny::modalDialog(
-          title = translations[["confirm_exit"]],
-          translations[["sure_exit"]],
-          footer = shiny::tagList(
-            shiny::modalButton(translations[["cancel"]]),
-            shiny::actionButton("confirm_exit", translations[["exit"]])
-          )
-        ))
-      }
+        if (rate_survey) {
+            shiny::showModal(shiny::modalDialog(
+                title = translations[["rating_title"]],
+                sd_question(
+                    type   = 'mc_buttons',
+                    id     = 'survey_rating',
+                    label  = glue::glue("{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"),
+                    option = c(
+                        "1" = "1",
+                        "2" = "2",
+                        "3" = "3",
+                        "4" = "4",
+                        "5" = "5"
+                    )
+                ),
+                footer = shiny::tagList(
+                    shiny::modalButton(translations[["cancel"]]),
+                    shiny::actionButton("submit_rating", translations[["submit_exit"]])
+                )
+            ))
+        } else {
+            shiny::showModal(shiny::modalDialog(
+                title = translations[["confirm_exit"]],
+                translations[["sure_exit"]],
+                footer = shiny::tagList(
+                    shiny::modalButton(translations[["cancel"]]),
+                    shiny::actionButton("confirm_exit", translations[["exit"]])
+                )
+            ))
+        }
     })
 
     # Observer to handle the rating submission or exit confirmation
     shiny::observeEvent(input$submit_rating, {
-      # Save the rating
-      rating <- input$survey_rating
-      all_data[['exit_survey_rating']] <- rating
-      changed_fields(c(changed_fields(), 'exit_survey_rating'))
-      # Update data immediately
-      shiny::isolate({
-        update_data(time_last = TRUE)
-      })
-      # Close the modal and the window
-      shiny::removeModal()
-      session$sendCustomMessage("closeWindow", list())
+        # Save the rating
+        rating <- input$survey_rating
+        all_data[['exit_survey_rating']] <- rating
+        changed_fields(c(changed_fields(), 'exit_survey_rating'))
+        # Update data immediately
+        shiny::isolate({
+            update_data(time_last = TRUE)
+        })
+        # Close the modal and the window
+        shiny::removeModal()
+        session$sendCustomMessage("closeWindow", list())
     })
 
     shiny::observeEvent(input$confirm_exit, {
-      # Close the modal and the window
-      shiny::removeModal()
-      session$sendCustomMessage("closeWindow", list())
+        # Close the modal and the window
+        shiny::removeModal()
+        session$sendCustomMessage("closeWindow", list())
     })
 
     # Ensure final update on session end
@@ -619,20 +702,360 @@ sd_skip_if <- function(...) {
 #'
 #' @export
 sd_show_if <- function(...) {
-  conditions <- parse_conditions(...)
-  # Create a list in userData to store the show_if targets
-  shiny::isolate({
-    session <- shiny::getDefaultReactiveDomain()
-    if (is.null(session)) {
-      stop("sd_show_if must be called within a Shiny reactive context")
-    }
-    if (is.null(session$userData$show_if)) {
-      session$userData$show_if <- list()
-    }
-    session$userData$show_if$conditions <- conditions
-    session$userData$show_if$targets <- get_unique_targets(conditions)
-  })
+    conditions <- parse_conditions(...)
+    # Create a list in userData to store the show_if targets
+    shiny::isolate({
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            stop("sd_show_if must be called within a Shiny reactive context")
+        }
+        if (is.null(session$userData$show_if)) {
+            session$userData$show_if <- list()
+        }
+        session$userData$show_if$conditions <- conditions
+        session$userData$show_if$targets <- get_unique_targets(conditions)
+    })
 }
+
+#' Set password for surveydown survey
+#'
+#' This function sets your surveydown password, which is used to access
+#' the 'PostgreSQL' data (e.g. Supabase). The password is saved in a `.Renviron`
+#' file and adds `.Renviron` to `.gitignore`.
+#'
+#' @param password Character string. The password to be set for the database
+#'   connection.
+#'
+#' @details The function performs the following actions:
+#'   1. Creates a `.Renviron` file in the root directory if it doesn't exist.
+#'   2. Adds or updates the `SURVEYDOWN_PASSWORD` entry in the `.Renviron` file.
+#'   3. Adds `.Renviron` to `.gitignore` if it's not already there.
+#'
+#' @return None. The function is called for its side effects.
+#'
+#' @examples
+#' \dontrun{
+#'   # Set a temporary password for demonstration
+#'   temp_password <- paste0(sample(letters, 10, replace = TRUE), collapse = "")
+#'
+#'   # Set the password
+#'   sd_set_password(temp_password)
+#'
+#'   # After restarting R, verify the password was set
+#'   cat("Password is :", Sys.getenv('SURVEYDOWN_PASSWORD'))
+#' }
+#'
+#' @export
+sd_set_password <- function(password) {
+    # Define the path to .Renviron file
+    renviron_path <- file.path(getwd(), ".Renviron")
+
+    # Check if .Renviron file exists, if not create it
+    if (!file.exists(renviron_path)) {
+        file.create(renviron_path)
+    }
+
+    # Read existing content
+    existing_content <- readLines(renviron_path)
+
+    # Check if SURVEYDOWN_PASSWORD is already defined
+    password_line_index <- grep("^SURVEYDOWN_PASSWORD=", existing_content)
+
+    # Prepare the new password line
+    new_password_line <- paste0("SURVEYDOWN_PASSWORD=", password)
+
+    # If SURVEYDOWN_PASSWORD is already defined, replace it; otherwise, append it
+    if (length(password_line_index) > 0) {
+        existing_content[password_line_index] <- new_password_line
+    } else {
+        existing_content <- c(existing_content, new_password_line)
+    }
+
+    # Write the updated content back to .Renviron
+    writeLines(existing_content, renviron_path)
+
+    # Add .Renviron to .gitignore if not already there
+    gitignore_path <- file.path(getwd(), ".gitignore")
+    if (file.exists(gitignore_path)) {
+        gitignore_content <- readLines(gitignore_path)
+        if (!".Renviron" %in% gitignore_content) {
+            # Remove any trailing empty lines
+            while (length(gitignore_content) > 0 && gitignore_content[length(gitignore_content)] == "") {
+                gitignore_content <- gitignore_content[-length(gitignore_content)]
+            }
+            # Add .Renviron to the end without an extra newline
+            gitignore_content <- c(gitignore_content, ".Renviron")
+            writeLines(gitignore_content, gitignore_path)
+        }
+    } else {
+        writeLines(".Renviron", gitignore_path)
+    }
+
+    message("Password set successfully and .Renviron added to .gitignore.")
+}
+
+#' Show the Saved Survey Password
+#'
+#' This function displays the password saved in the `.Renviron` file under the
+#' `SURVEYDOWN_PASSWORD` variable. It includes a confirmation step to ensure
+#' the user wants to display the password in the console. If no password is
+#' found, it suggests using the `sd_set_password()` function to define a
+#' password.
+#'
+#' @return A character string containing the password if found and confirmed,
+#'   or a message if no password is saved along with a suggestion to set one.
+#'
+#' @examples
+#' \dontrun{
+#'   surveydown::sd_show_password()
+#' }
+#'
+#' @export
+sd_show_password <- function() {
+    # Define the path to .Renviron file
+    renviron_path <- file.path(getwd(), ".Renviron")
+
+    # Check if .Renviron file exists
+    if (!file.exists(renviron_path)) {
+        usethis::ui_oops("No .Renviron file found. No password is saved.")
+        usethis::ui_todo("Use sd_set_password() to define a password.")
+        return(invisible(NULL))
+    }
+
+    # Read the content of .Renviron
+    env_content <- readLines(renviron_path)
+
+    # Find the line with SURVEYDOWN_PASSWORD
+    password_line <- grep("^SURVEYDOWN_PASSWORD=", env_content, value = TRUE)
+
+    if (length(password_line) == 0) {
+        usethis::ui_oops("No password found in .Renviron file.")
+        usethis::ui_todo("Use sd_set_password() to define a password.")
+        return(invisible(NULL))
+    }
+
+    # Extract the password
+    password <- sub("^SURVEYDOWN_PASSWORD=", "", password_line)
+
+    # Confirm with the user
+    if (usethis::ui_yeah("Are you sure you want to display your password in the console?")) {
+        usethis::ui_info("Your saved password is: {password}")
+    } else {
+        usethis::ui_info("Password display cancelled.")
+    }
+}
+
+#' Store a value in the survey data
+#'
+#' This function allows storing additional values to be included in the survey
+#' data, such as respondent IDs or other metadata.
+#'
+#' @param value The value to be stored. This can be any R object that can be
+#'   coerced to a character string.
+#' @param id (Optional) Character string. The id (name) of the value in the
+#'   data. If not provided, the name of the `value` variable will be used.
+#'
+#' @return `NULL` (invisibly)
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_ui.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "basic_survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Create a respondent ID to store
+#'     respondentID <- 42
+#'
+#'     # Store the respondentID
+#'     sd_store_value(respondentID)
+#'
+#'     # Store the respondentID as the variable "respID"
+#'     sd_store_value(respondentID, "respID")
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
+#' }
+#'
+#' @export
+sd_store_value <- function(value, id = NULL) {
+    if (is.null(id)) {
+        id <- deparse(substitute(value))
+    }
+
+    shiny::isolate({
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            stop("sd_store_value must be called from within a Shiny reactive context")
+        }
+        if (is.null(session$userData$stored_values)) {
+            session$userData$stored_values <- list()
+        }
+        formatted_value <- format_question_value(value)
+        session$userData$stored_values[[id]] <- formatted_value
+
+        # Make value accessible in the UI
+        output <- shiny::getDefaultReactiveDomain()$output
+        output[[paste0(id, "_value")]] <- shiny::renderText({ formatted_value })
+    })
+
+    invisible(NULL)
+}
+
+#' Create a copy of a value
+#'
+#' This function creates a copy of an input value and makes it available as a
+#' new output. The new output can then be displayed using `sd_output()`.
+#'
+#' @param id Character string. The ID of the input value to copy.
+#' @param id_copy Character string. The ID for the new copy (must be different
+#'   from `id`).
+#'
+#' @return `NULL` invisibly. This function is called for its side effects.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_ui.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "sd_copy_value.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Make a copy of the "name" variable to call its value a second time
+#'     sd_copy_value(id = "name", id_copy = "name_copy")
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
+#' }
+#'
+#' @seealso `sd_output()` for displaying the copied value
+#'
+#' @export
+sd_copy_value <- function(id, id_copy) {
+    if (id == id_copy) {
+        stop("The 'id_copy' must be different from the 'id'")
+    }
+    shiny::isolate({
+        output <- shiny::getDefaultReactiveDomain()$output
+        input <- shiny::getDefaultReactiveDomain()$input
+        output_id <- paste0(id_copy, "_value")
+        if (!is.null(output)) {
+            output[[output_id]] <- shiny::renderText({ input[[id]] })
+        } else {
+            warning("sd_copy_value was not called within a Shiny reactive context")
+        }
+    })
+    invisible(NULL)
+}
+
+#' Check if a question is answered
+#'
+#' This function checks if a given question has been answered by the user.
+#' For matrix questions, it checks if all sub-questions (rows) are answered.
+#'
+#' @param question_id The ID of the question to check.
+#' @return A logical value: `TRUE` if the question is answered, `FALSE`
+#' otherwise.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_is_answered.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     sd_show_if(
+#'       # If "apple_text" is answered, show the conditional question
+#'       sd_is_answered("apple_text") ~ "other_fruit"
+#'     )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
+#' }
+#'
+#' @export
+sd_is_answered <- function(question_id) {
+    # Get the Shiny session
+    session <- shiny::getDefaultReactiveDomain()
+
+    if (is.null(session)) {
+        stop("sd_is_answered() must be called from within a Shiny reactive context")
+    }
+
+    # Access the input object from the session
+    input <- session$input
+
+    # Check if it's a matrix question (ends with a number)
+    if (!grepl("_\\d+$", question_id)) {
+        # It's potentially a matrix question, check all sub-questions
+        sub_questions <- grep(paste0("^", question_id, "_"), names(input), value = TRUE)
+
+        if (length(sub_questions) > 0) {
+            # It's confirmed to be a matrix question
+            return(all(sapply(sub_questions, function(sq) !is.null(input[[sq]]) && nzchar(input[[sq]]))))
+        }
+    }
+
+    # For non-matrix questions or individual sub-questions
+    if (is.null(input[[question_id]])) return(FALSE)
+
+    if (is.list(input[[question_id]])) {
+        # For questions that can have multiple answers (e.g., checkboxes)
+        return(length(input[[question_id]]) > 0 && any(nzchar(unlist(input[[question_id]]))))
+    } else {
+        # For single-answer questions
+        return(!is.null(input[[question_id]]) && nzchar(input[[question_id]]))
+    }
+}
+
+# Helper functions ----
 
 set_show_if_conditions <- function(show_if) {
     if (is.null(show_if) || length(show_if$conditions) == 0) {
@@ -681,7 +1104,6 @@ evaluate_condition <- function(rule) {
     ))
 }
 
-# Function to get all stored values
 get_stored_vals <- function(session) {
     shiny::isolate({
         if (is.null(session)) {
@@ -699,13 +1121,12 @@ get_stored_vals <- function(session) {
     })
 }
 
-# Get Current UTC Timestamp
 get_utc_timestamp <- function() {
     return(format(Sys.time(), tz = "UTC", usetz = TRUE))
 }
 
 get_initial_data <- function(
-    session, session_id, time_start, all_ids, start_page_ts_id
+        session, session_id, time_start, all_ids, start_page_ts_id
 ) {
     # Initialize with static data
     data <- c(
@@ -898,340 +1319,120 @@ admin_enable <- function(input, output, session, db) {
     )
 }
 
-#' Set password for surveydown survey
-#'
-#' This function sets your surveydown password, which is used to access
-#' the 'PostgreSQL' data (e.g. Supabase). The password is saved in a `.Renviron`
-#' file and adds `.Renviron` to `.gitignore`.
-#'
-#' @param password Character string. The password to be set for the database
-#'   connection.
-#'
-#' @details The function performs the following actions:
-#'   1. Creates a `.Renviron` file in the root directory if it doesn't exist.
-#'   2. Adds or updates the `SURVEYDOWN_PASSWORD` entry in the `.Renviron` file.
-#'   3. Adds `.Renviron` to `.gitignore` if it's not already there.
-#'
-#' @return None. The function is called for its side effects.
-#'
-#' @examples
-#' \dontrun{
-#'   # Set a temporary password for demonstration
-#'   temp_password <- paste0(sample(letters, 10, replace = TRUE), collapse = "")
-#'
-#'   # Set the password
-#'   sd_set_password(temp_password)
-#'
-#'   # After restarting R, verify the password was set
-#'   cat("Password is :", Sys.getenv('SURVEYDOWN_PASSWORD'))
-#' }
-#'
-#' @export
-sd_set_password <- function(password) {
-    # Define the path to .Renviron file
-    renviron_path <- file.path(getwd(), ".Renviron")
-
-    # Check if .Renviron file exists, if not create it
-    if (!file.exists(renviron_path)) {
-        file.create(renviron_path)
+get_local_data <- function() {
+    if (file.exists("preview_data.csv")) {
+        tryCatch({
+            return(utils::read.csv("preview_data.csv", stringsAsFactors = FALSE))
+        }, error = function(e) {
+            warning("Error reading preview_data.csv: ", e$message)
+            return(NULL)
+        })
     }
+    return(NULL)
+}
 
-    # Read existing content
-    existing_content <- readLines(renviron_path)
+handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
+                                    question_ids, question_ts_ids, progress_updater) {
+    if (is.null(session_id)) return(NULL)
 
-    # Check if SURVEYDOWN_PASSWORD is already defined
-    password_line_index <- grep("^SURVEYDOWN_PASSWORD=", existing_content)
-
-    # Prepare the new password line
-    new_password_line <- paste0("SURVEYDOWN_PASSWORD=", password)
-
-    # If SURVEYDOWN_PASSWORD is already defined, replace it; otherwise, append it
-    if (length(password_line_index) > 0) {
-        existing_content[password_line_index] <- new_password_line
+    # Get data using sd_get_data or local CSV
+    if (!is.null(db)) {
+        all_data <- sd_get_data(db)
     } else {
-        existing_content <- c(existing_content, new_password_line)
+        all_data <- get_local_data()
     }
 
-    # Write the updated content back to .Renviron
-    writeLines(existing_content, renviron_path)
+    # If no data available, return NULL
+    if (is.null(all_data)) return(NULL)
 
-    # Add .Renviron to .gitignore if not already there
-    gitignore_path <- file.path(getwd(), ".gitignore")
-    if (file.exists(gitignore_path)) {
-        gitignore_content <- readLines(gitignore_path)
-        if (!".Renviron" %in% gitignore_content) {
-            # Remove any trailing empty lines
-            while (length(gitignore_content) > 0 && gitignore_content[length(gitignore_content)] == "") {
-                gitignore_content <- gitignore_content[-length(gitignore_content)]
+    restore_data <- all_data[all_data$session_id == session_id, ]
+
+    if (nrow(restore_data) == 0) return(NULL)
+
+    # Rest of the function remains the same...
+    shiny::isolate({
+        # Restore page state
+        if ("current_page" %in% names(restore_data)) {
+            restored_page <- restore_data[["current_page"]]
+            if (!is.null(restored_page) && !is.na(restored_page) && nchar(restored_page) > 0) {
+                current_page_id(restored_page)
+            } else {
+                current_page_id(start_page)
             }
-            # Add .Renviron to the end without an extra newline
-            gitignore_content <- c(gitignore_content, ".Renviron")
-            writeLines(gitignore_content, gitignore_path)
-        }
-    } else {
-        writeLines(".Renviron", gitignore_path)
-    }
-
-    message("Password set successfully and .Renviron added to .gitignore.")
-}
-
-#' Show the Saved Survey Password
-#'
-#' This function displays the password saved in the `.Renviron` file under the
-#' `SURVEYDOWN_PASSWORD` variable. It includes a confirmation step to ensure
-#' the user wants to display the password in the console. If no password is
-#' found, it suggests using the `sd_set_password()` function to define a
-#' password.
-#'
-#' @return A character string containing the password if found and confirmed,
-#'   or a message if no password is saved along with a suggestion to set one.
-#'
-#' @examples
-#' \dontrun{
-#'   surveydown::sd_show_password()
-#' }
-#'
-#' @export
-sd_show_password <- function() {
-  # Define the path to .Renviron file
-  renviron_path <- file.path(getwd(), ".Renviron")
-
-  # Check if .Renviron file exists
-  if (!file.exists(renviron_path)) {
-    usethis::ui_oops("No .Renviron file found. No password is saved.")
-    usethis::ui_todo("Use sd_set_password() to define a password.")
-    return(invisible(NULL))
-  }
-
-  # Read the content of .Renviron
-  env_content <- readLines(renviron_path)
-
-  # Find the line with SURVEYDOWN_PASSWORD
-  password_line <- grep("^SURVEYDOWN_PASSWORD=", env_content, value = TRUE)
-
-  if (length(password_line) == 0) {
-    usethis::ui_oops("No password found in .Renviron file.")
-    usethis::ui_todo("Use sd_set_password() to define a password.")
-    return(invisible(NULL))
-  }
-
-  # Extract the password
-  password <- sub("^SURVEYDOWN_PASSWORD=", "", password_line)
-
-  # Confirm with the user
-  if (usethis::ui_yeah("Are you sure you want to display your password in the console?")) {
-    usethis::ui_info("Your saved password is: {password}")
-  } else {
-    usethis::ui_info("Password display cancelled.")
-  }
-}
-
-#' Store a value in the survey data
-#'
-#' This function allows storing additional values to be included in the survey
-#' data, such as respondent IDs or other metadata.
-#'
-#' @param value The value to be stored. This can be any R object that can be
-#'   coerced to a character string.
-#' @param id (Optional) Character string. The id (name) of the value in the
-#'   data. If not provided, the name of the `value` variable will be used.
-#'
-#' @return `NULL` (invisibly)
-#'
-#' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_ui.qmd",
-#'                              package = "surveydown")
-#'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "basic_survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Create a respondent ID to store
-#'     respondentID <- 42
-#'
-#'     # Store the respondentID
-#'     sd_store_value(respondentID)
-#'
-#'     # Store the respondentID as the variable "respID"
-#'     sd_store_value(respondentID, "respID")
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
-#' }
-#'
-#' @export
-sd_store_value <- function(value, id = NULL) {
-    if (is.null(id)) {
-        id <- deparse(substitute(value))
-    }
-
-    shiny::isolate({
-        session <- shiny::getDefaultReactiveDomain()
-        if (is.null(session)) {
-            stop("sd_store_value must be called from within a Shiny reactive context")
-        }
-        if (is.null(session$userData$stored_values)) {
-            session$userData$stored_values <- list()
-        }
-        formatted_value <- format_question_value(value)
-        session$userData$stored_values[[id]] <- formatted_value
-
-        # Make value accessible in the UI
-        output <- shiny::getDefaultReactiveDomain()$output
-        output[[paste0(id, "_value")]] <- shiny::renderText({ formatted_value })
-    })
-
-    invisible(NULL)
-}
-
-#' Create a copy of a value
-#'
-#' This function creates a copy of an input value and makes it available as a
-#' new output. The new output can then be displayed using `sd_output()`.
-#'
-#' @param id Character string. The ID of the input value to copy.
-#' @param id_copy Character string. The ID for the new copy (must be different
-#'   from `id`).
-#'
-#' @return `NULL` invisibly. This function is called for its side effects.
-#'
-#' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_ui.qmd",
-#'                              package = "surveydown")
-#'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "sd_copy_value.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Make a copy of the "name" variable to call its value a second time
-#'     sd_copy_value(id = "name", id_copy = "name_copy")
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
-#' }
-#'
-#' @seealso `sd_output()` for displaying the copied value
-#'
-#' @export
-sd_copy_value <- function(id, id_copy) {
-    if (id == id_copy) {
-        stop("The 'id_copy' must be different from the 'id'")
-    }
-    shiny::isolate({
-        output <- shiny::getDefaultReactiveDomain()$output
-        input <- shiny::getDefaultReactiveDomain()$input
-        output_id <- paste0(id_copy, "_value")
-        if (!is.null(output)) {
-            output[[output_id]] <- shiny::renderText({ input[[id]] })
         } else {
-            warning("sd_copy_value was not called within a Shiny reactive context")
+            current_page_id(start_page)
+        }
+
+        # Find the last answered question for progress bar
+        last_index <- 0
+        for (i in seq_along(question_ids)) {
+            q_id <- question_ids[i]
+            ts_id <- question_ts_ids[i]
+
+            if (ts_id %in% names(restore_data)) {
+                ts_val <- restore_data[[ts_id]]
+                if (!is.null(ts_val) && !is.na(ts_val) && ts_val != "") {
+                    last_index <- i
+                }
+            }
+        }
+
+        if (last_index > 0) {
+            progress_updater(last_index)
+        }
+
+        for (col in names(restore_data)) {
+            if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
+                val <- restore_data[[col]]
+                if (!is.null(val) && !is.na(val) && val != "") {
+                    all_data[[col]] <- val
+                    session$sendInputMessage(col, list(value = val, priority = "event"))
+                }
+            }
         }
     })
-    invisible(NULL)
+    return(restore_data)
 }
 
-#' Check if a question is answered
-#'
-#' This function checks if a given question has been answered by the user.
-#' For matrix questions, it checks if all sub-questions (rows) are answered.
-#'
-#' @param question_id The ID of the question to check.
-#' @return A logical value: `TRUE` if the question is answered, `FALSE`
-#' otherwise.
-#'
-#' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_is_answered.qmd",
-#'                              package = "surveydown")
-#'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     sd_show_if(
-#'       # If "apple_text" is answered, show the conditional question
-#'       sd_is_answered("apple_text") ~ "other_fruit"
-#'     )
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
-#' }
-#'
-#' @export
-sd_is_answered <- function(question_id) {
-  # Get the Shiny session
-  session <- shiny::getDefaultReactiveDomain()
-
-  if (is.null(session)) {
-    stop("sd_is_answered() must be called from within a Shiny reactive context")
-  }
-
-  # Access the input object from the session
-  input <- session$input
-
-  # Check if it's a matrix question (ends with a number)
-  if (!grepl("_\\d+$", question_id)) {
-    # It's potentially a matrix question, check all sub-questions
-    sub_questions <- grep(paste0("^", question_id, "_"), names(input), value = TRUE)
-
-    if (length(sub_questions) > 0) {
-      # It's confirmed to be a matrix question
-      return(all(sapply(sub_questions, function(sq) !is.null(input[[sq]]) && nzchar(input[[sq]]))))
+handle_sessions <- function(session_id, db = NULL, session, input, time_start,
+                            start_page, current_page_id, question_ids,
+                            question_ts_ids, progress_updater, use_cookies = TRUE) {
+    # Check 1: Cookies enabled?
+    if (!use_cookies) {
+        return(session_id)
     }
-  }
 
-  # For non-matrix questions or individual sub-questions
-  if (is.null(input[[question_id]])) return(FALSE)
+    # Create a variable to store the final ID
+    final_session_id <- session_id
 
-  if (is.list(input[[question_id]])) {
-    # For questions that can have multiple answers (e.g., checkboxes)
-    return(length(input[[question_id]]) > 0 && any(nzchar(unlist(input[[question_id]]))))
-  } else {
-    # For single-answer questions
-    return(!is.null(input[[question_id]]) && nzchar(input[[question_id]]))
-  }
+    # Do the cookie check synchronously in a reactive context
+    shiny::isolate({
+        # Check 2: Cookie exists and is valid?
+        stored_id <- shiny::reactiveValuesToList(input)$stored_session_id
+        if (!is.null(stored_id) && nchar(stored_id) > 0 &&
+            # Check 3: DB connection exists?
+            !is.null(db)) {
+
+            # Check 4: Session exists in DB?
+            restore_data <- handle_data_restoration(
+                stored_id, db, session, current_page_id,
+                start_page, question_ids, question_ts_ids,
+                progress_updater
+            )
+
+            if (!is.null(restore_data)) {
+                # All checks passed - use stored session
+                final_session_id <- stored_id
+                session$sendCustomMessage("setCookie", list(sessionId = stored_id))
+            } else {
+                # Session not in DB - use new session
+                session$sendCustomMessage("setCookie", list(sessionId = session_id))
+            }
+        } else {
+            # No cookie or no DB connection - use new session
+            session$sendCustomMessage("setCookie", list(sessionId = session_id))
+        }
+    })
+
+    return(final_session_id)
 }
