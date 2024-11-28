@@ -571,24 +571,14 @@ sd_server <- function(
     })
 
     shiny::observeEvent(input$confirm_exit, {
+        # Update checkpoint 4 - when exiting survey
+        shiny::isolate({
+            update_data(time_last = TRUE)
+        })
         # Close the modal and the window
         shiny::removeModal()
         session$sendCustomMessage("closeWindow", list())
     })
-
-    # Update checkpoint 4 - when window is closed
-    shiny::observeEvent(input$window_closing, {
-        shiny::isolate({
-            update_data(time_last = TRUE)
-        })
-    }, ignoreInit = TRUE)
-
-    # Update checkpoint 5 - when session is ended (backup)
-    # shiny::onSessionEnded(function() {
-    #     shiny::isolate({
-    #         update_data(time_last = TRUE)
-    #     })
-    # })
 }
 
 #' Define skip conditions for survey pages
