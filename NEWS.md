@@ -2,7 +2,8 @@
 
 # surveydown 0.5.2
 
-- Cookies feature fixed.
+- Cookies feature fixed and back online.
+- Now upon window closure, the data will be immediately uploaded to db. A backup uploading will trigger upon session ends, which is usually after 5-10 secs upon closing the window.
 
 # surveydown 0.5.1
 
