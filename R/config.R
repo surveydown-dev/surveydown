@@ -18,7 +18,7 @@ run_config <- function(
   files_need_updating <- check_files_need_updating(paths)
 
   if (files_need_updating) {
-    message("Output files not up-to-date - rendering qmd file and extracting content.")
+    message("Changes detected. Rendering contents.")
 
     # Prepare translations (check for inputs)
     set_translations(paths, language)
@@ -42,9 +42,12 @@ run_config <- function(
     question_structure <- get_question_structure(paths, html_content)
 
     message(
-      'Survey rendered and saved to "', paths$target_html,
-      '. Extracted content saved to "', paths$target_pages, '", "',
-      paths$target_head, '", and "', paths$target_questions, '" files.'
+      "Survey saved to:\n",
+      "  ", paths$target_html, "\n",
+      "Contents saved to:\n",
+      "  ", paths$target_pages, "\n",
+      "  ", paths$target_head, "\n",
+      "  ", paths$target_questions
     )
 
   } else {
@@ -441,11 +444,6 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
 
     # Remove indicator if is matrix (type is correctly set)
     question$is_matrix <- NULL
-
-    # Mark matrix subquestion to remove from list (and end further processing)
-    if (question$type == "mc" & length(question$label) == 0) {
-      return(NULL)
-    }
 
     # Remove first option from select type question
     if (question$type == "select") {
