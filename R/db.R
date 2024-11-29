@@ -56,16 +56,16 @@
 #' }
 #' @export
 sd_database <- function(
-    host       = NULL,
-    dbname     = NULL,
-    port       = NULL,
-    user       = NULL,
-    table      = NULL,
-    password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
-    gssencmode = "prefer",
-    ignore     = FALSE,
-    min_size   = 1,
-    max_size   = Inf
+        host       = NULL,
+        dbname     = NULL,
+        port       = NULL,
+        user       = NULL,
+        table      = NULL,
+        password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
+        gssencmode = "prefer",
+        ignore     = FALSE,
+        min_size   = 1,
+        max_size   = Inf
 ) {
 
     if (ignore) {

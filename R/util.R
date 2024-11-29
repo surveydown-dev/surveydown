@@ -1,19 +1,19 @@
 # Convert Markdown to HTML
 markdown_to_html <- function(text) {
-    if (is.null(text)) { return(text) }
-    return(shiny::HTML(markdown::renderMarkdown(text = text)))
+  if (is.null(text)) { return(text) }
+  return(shiny::HTML(markdown::renderMarkdown(text = text)))
 }
 
 # Convert List Names from Markdown to HTML
 list_name_md_to_html <- function(list) {
-    list_names_md <- names(list)
-    list_names_html <- lapply(list_names_md, function(name) {
-        html_name <- markdown_to_html(name)
-        plain_name <- gsub("<[/]?p>|\\n", "", html_name)
-        return(plain_name)
-    })
-    names(list) <- unlist(list_names_html)
-    return(list)
+  list_names_md <- names(list)
+  list_names_html <- lapply(list_names_md, function(name) {
+    html_name <- markdown_to_html(name)
+    plain_name <- gsub("<[/]?p>|\\n", "", html_name)
+    return(plain_name)
+  })
+  names(list) <- unlist(list_names_html)
+  return(list)
 }
 
 #' Display Package Information on Attach
@@ -29,52 +29,52 @@ list_name_md_to_html <- function(list) {
 #' @noRd
 .onAttach <- function(libname, pkgname) {
 
-    # Add special folders to resource path
-    folders <- c('_survey', 'images', 'css', 'js', 'www')
-    for (folder in folders) { include_folder(folder) }
+  # Add special folders to resource path
+  folders <- c('_survey', 'images', 'css', 'js', 'www')
+  for (folder in folders) { include_folder(folder) }
 
-    # Print package data
-    desc  <- utils::packageDescription(pkgname, libname)
-    packageStartupMessage(
-        "Version:  ", desc$Version, "\n",
-        "Author:   ", "John Paul Helveston, Pingfan Hu, Bogdan Bunea (George Washington University)", "\n\n",
-        "Consider submitting praise at\n",
-        "https://github.com/jhelvy/surveydown/issues/41.\n\n",
-        "Please cite our package in your publications, see:\ncitation(\"surveydown\")"
-    )
+  # Print package data
+  desc  <- utils::packageDescription(pkgname, libname)
+  packageStartupMessage(
+    "Version:  ", desc$Version, "\n",
+    "Author:   ", "John Paul Helveston, Pingfan Hu, Bogdan Bunea (George Washington University)", "\n\n",
+    "Consider submitting praise at\n",
+    "https://github.com/jhelvy/surveydown/issues/41.\n\n",
+    "Please cite our package in your publications, see:\ncitation(\"surveydown\")"
+  )
 }
 
 survey_file_exists <- function() {
-    files <- basename(list.files(full.names = TRUE))
-    if ("survey.qmd" %in% files) { return(TRUE) }
-    return(FALSE)
+  files <- basename(list.files(full.names = TRUE))
+  if ("survey.qmd" %in% files) { return(TRUE) }
+  return(FALSE)
 }
 
 is_self_contained <- function() {
-    metadata <- quarto::quarto_inspect("survey.qmd")
-    embedded <- metadata$formats$html$pandoc$`embed-resources`
-    if (!is.null(embedded)) {
-        if (embedded) {
-            return(TRUE)
-        }
+  metadata <- quarto::quarto_inspect("survey.qmd")
+  embedded <- metadata$formats$html$pandoc$`embed-resources`
+  if (!is.null(embedded)) {
+    if (embedded) {
+      return(TRUE)
     }
-    self <- metadata$formats$html$pandoc$`self-contained`
-    if (!is.null(self)) {
-        if (self) {
-            return(TRUE)
-        }
+  }
+  self <- metadata$formats$html$pandoc$`self-contained`
+  if (!is.null(self)) {
+    if (self) {
+      return(TRUE)
     }
-    return(FALSE)
+  }
+  return(FALSE)
 }
 
 include_folder <- function(folder, create = FALSE) {
-    folder_exists <- dir.exists(folder)
-    if (folder_exists) {
-        shiny::addResourcePath(folder, folder)
-    } else if (create) {
-        dir.create(folder)
-        shiny::addResourcePath(folder, folder)
-    }
+  folder_exists <- dir.exists(folder)
+  if (folder_exists) {
+    shiny::addResourcePath(folder, folder)
+  } else if (create) {
+    dir.create(folder)
+    shiny::addResourcePath(folder, folder)
+  }
 }
 
 #' Include a folder to the 'shiny' resource path
@@ -104,46 +104,68 @@ include_folder <- function(folder, create = FALSE) {
 #'
 #' @export
 sd_include_folder <- function(folder) {
-    # List of folders pre-included by the package
-    pre_included_folders <- names(shiny::resourcePaths())
+  # List of folders pre-included by the package
+  pre_included_folders <- names(shiny::resourcePaths())
 
-    if (folder %in% pre_included_folders) {
-        message(paste("The folder", folder, "is already included by the package. No action needed."))
-        return(invisible(NULL))
-    }
+  if (folder %in% pre_included_folders) {
+    message(paste("The folder", folder, "is already included by the package. No action needed."))
+    return(invisible(NULL))
+  }
 
-    if (!dir.exists(folder)) {
-        stop(paste("The folder", folder, "does not exist in the current directory."))
-    }
+  if (!dir.exists(folder)) {
+    stop(paste("The folder", folder, "does not exist in the current directory."))
+  }
 
-    shiny::addResourcePath(folder, folder)
-    message(paste("Successfully added", folder, "to Shiny's resource path."))
+  shiny::addResourcePath(folder, folder)
+  message(paste("Successfully added", folder, "to Shiny's resource path."))
 
-    invisible(NULL)
+  invisible(NULL)
 }
 
 # Convert Vector to JSON Array
 vector_to_json_array <- function(vec) {
-    if (length(vec) == 0) return("[]")
+  if (length(vec) == 0) return("[]")
 
-    # Ensure all elements are properly quoted
-    quoted_elements <- sapply(vec, function(x) {
-        if (is.character(x)) {
-            sprintf('"%s"', gsub('"', '\\"', x))  # Escape any quotes within strings
-        } else {
-            as.character(x)
-        }
-    })
+  # Ensure all elements are properly quoted
+  quoted_elements <- sapply(vec, function(x) {
+    if (is.character(x)) {
+      sprintf('"%s"', gsub('"', '\\"', x))  # Escape any quotes within strings
+    } else {
+      as.character(x)
+    }
+  })
 
-    # Join elements and wrap in brackets
-    sprintf("[%s]", paste(quoted_elements, collapse = ","))
+  # Join elements and wrap in brackets
+  sprintf("[%s]", paste(quoted_elements, collapse = ","))
 }
 
-# Load and Run JavaScript File
+# Dynamically load JS files
 load_js_file <- function(name) {
-    js_file_path <- system.file("js", name, package = "surveydown")
-    js_code <- paste(readLines(js_file_path), collapse = "\n")
-    shinyjs::runjs(js_code)
+  js_file_path <- system.file("js", name, package = "surveydown")
+  js_code <- paste(readLines(js_file_path), collapse = "\n")
+  shinyjs::runjs(js_code)
+}
+
+# Load CSS and JS files
+load_resource <- function(..., package = "surveydown") {
+  files <- c(...)
+  lapply(files, function(file) {
+    file_type <- tolower(tools::file_ext(file))
+    if (!(file_type %in% c("css", "js"))) {
+      stop(paste("Unsupported file type:", file_type, "for file:", file))
+    }
+    path <- system.file(paste0(file_type, "/", file), package = package)
+    if (file.exists(path)) {
+      if (file_type == "css") {
+        shiny::includeCSS(path)
+      } else {
+        shiny::includeScript(path)
+      }
+    } else {
+      warning(paste("File not found:", file, "in package:", package))
+      NULL
+    }
+  })
 }
 
 tibble_to_list_of_lists <- function(tbl) {
@@ -201,53 +223,53 @@ tibble_to_list_of_lists <- function(tbl) {
 #'   sd_create_survey(structure = "multi")
 #' }
 sd_create_survey <- function(path = getwd(), structure = "single") {
-    # Check if using current directory and confirm with user
-    if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
-        stop("Operation aborted by the user.")
-    }
+  # Check if using current directory and confirm with user
+  if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
+    stop("Operation aborted by the user.")
+  }
 
-    # Validate the structure parameter
-    if (!structure %in% c("single", "multi")) {
-        stop("Invalid structure. Choose either 'single' or 'multi'.")
-    }
+  # Validate the structure parameter
+  if (!structure %in% c("single", "multi")) {
+    stop("Invalid structure. Choose either 'single' or 'multi'.")
+  }
 
-    # Create the directory if it doesn't exist
-    dir.create(path, recursive = TRUE, showWarnings = FALSE)
+  # Create the directory if it doesn't exist
+  dir.create(path, recursive = TRUE, showWarnings = FALSE)
 
-    # Get the path to the template folder and list files
-    template_path <- system.file(file.path("templates", structure), package = "surveydown")
-    if (!dir.exists(template_path)) {
-        stop(paste("Template directory for", structure, "structure does not exist."))
-    }
-    template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
+  # Get the path to the template folder and list files
+  template_path <- system.file(file.path("templates", structure), package = "surveydown")
+  if (!dir.exists(template_path)) {
+    stop(paste("Template directory for", structure, "structure does not exist."))
+  }
+  template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
 
-    # Copy files, checking for conflicts
-    files_copied <- sapply(template_files, function(file) {
-        relative_path <- sub(template_path, "", file)
-        target_file <- file.path(path, relative_path)
+  # Copy files, checking for conflicts
+  files_copied <- sapply(template_files, function(file) {
+    relative_path <- sub(template_path, "", file)
+    target_file <- file.path(path, relative_path)
 
-        # Ensure target directory exists
-        dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
+    # Ensure target directory exists
+    dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
 
-        file_name <- basename(file)
-        if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
-            warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
-            return(FALSE)
-        } else if (file.exists(target_file)) {
-            warning(paste("Skipping", file_name, "since it already exists."), call. = FALSE, immediate. = TRUE)
-            return(FALSE)
-        } else {
-            file.copy(from = file, to = target_file, overwrite = FALSE)
-            return(TRUE)
-        }
-    })
-
-    # Provide feedback to the user
-    if (any(files_copied)) {
-        usethis::ui_done(paste(structure, "version of template created at", path))
+    file_name <- basename(file)
+    if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
+      warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
+      return(FALSE)
+    } else if (file.exists(target_file)) {
+      warning(paste("Skipping", file_name, "since it already exists."), call. = FALSE, immediate. = TRUE)
+      return(FALSE)
     } else {
-        usethis::ui_done("Since all files exist, no file was added.")
+      file.copy(from = file, to = target_file, overwrite = FALSE)
+      return(TRUE)
     }
+  })
+
+  # Provide feedback to the user
+  if (any(files_copied)) {
+    usethis::ui_done(paste(structure, "version of template created at", path))
+  } else {
+    usethis::ui_done("Since all files exist, no file was added.")
+  }
 }
 
 #' Required Set Up Function
@@ -263,8 +285,8 @@ sd_create_survey <- function(path = getwd(), structure = "single") {
 #'
 #' @export
 sd_setup <- function() {
-    # v0.3.0
-    .Deprecated("")
+  # v0.3.0
+  .Deprecated("")
 }
 
 question_templates <- function(type = "mc") {
@@ -280,28 +302,28 @@ question_templates <- function(type = "mc") {
 )
 
 ',
-    text = 'sd_question(
+  text = 'sd_question(
   type  = "text",
   id    = "apple_text",
   label = "Write a type of apple:"
 )
 
 ',
-    textarea = 'sd_question(
+textarea = 'sd_question(
   type  = "textarea",
   id    = "apple_textarea",
   label = "What do you like about apple?"
 )
 
 ',
-    numeric = 'sd_question(
+numeric = 'sd_question(
   type  = "numeric",
   id    = "apple_numeric",
   label = "How many apple(s) do you eat per day?"
 )
 
 ',
-    mc_buttons = 'sd_question(
+mc_buttons = 'sd_question(
   type   = "mc_buttons",
   id     = "apple_mc_buttons",
   label  = "Which apple do you prefer most?",
@@ -313,7 +335,7 @@ question_templates <- function(type = "mc") {
 )
 
 ',
-    mc_multiple = 'sd_question(
+mc_multiple = 'sd_question(
   type  = "mc_multiple",
   id    = "apple_mc_multiple",
   label = "What are your favorite apple types (select all that apply)?",
@@ -325,7 +347,7 @@ question_templates <- function(type = "mc") {
 )
 
 ',
-    mc_multiple_buttons = 'sd_question(
+mc_multiple_buttons = 'sd_question(
   type  = "mc_multiple_buttons",
   id    = "apple_mc_multiple_buttons",
   label = "What are your favorite apple types (select all that apply)?",
@@ -337,7 +359,7 @@ question_templates <- function(type = "mc") {
 )
 
 ',
-    select = 'sd_question(
+select = 'sd_question(
   type  = "select",
   id    = "apple_select",
   label = "Which apple do you prefer most?",
@@ -349,7 +371,7 @@ question_templates <- function(type = "mc") {
 )
 
 ',
-    slider = 'sd_question(
+slider = 'sd_question(
   type  = "slider",
   id    = "apple_slider",
   label = "To what extent do you like apple?",
@@ -363,14 +385,14 @@ question_templates <- function(type = "mc") {
 )
 
 ',
-    date = 'sd_question(
+date = 'sd_question(
   type  = "date",
   id    = "apple_date",
   label = "What is the last day you had apple?"
 )
 
 ',
-    daterange = 'sd_question(
+daterange = 'sd_question(
   type  = "daterange",
   id    = "vacation_daterange",
   label = "Please select the date range of your upcoming vacation."
@@ -379,7 +401,7 @@ question_templates <- function(type = "mc") {
 '
   )
 
-  return(templates[[type]])
+return(templates[[type]])
 }
 
 #' Add a Question Template to the Current Document
@@ -434,7 +456,7 @@ question_templates <- function(type = "mc") {
 sd_add_question <- function(type = "mc", chunk = FALSE) {
   template <- question_templates(type)
   if (chunk) {
-      template <- paste0("```{r}\n", template, "```\n")
+    template <- paste0("```{r}\n", template, "```\n")
   }
 
   # Get the current document context
@@ -553,47 +575,47 @@ sd_next()
 #' @examples
 #' surveydown::sd_version()
 sd_version <- function() {
-    # Get local version
-    local_surveydown_version <- utils::packageVersion("surveydown")
+  # Get local version
+  local_surveydown_version <- utils::packageVersion("surveydown")
 
-    # Get latest online version
-    latest_surveydown_version <- get_latest_version("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
+  # Get latest online version
+  latest_surveydown_version <- get_latest_version("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
 
-    # Display version information
-    message("surveydown (local): ", local_surveydown_version)
-    message("surveydown (latest): ",
-            if(is.null(latest_surveydown_version)) "Unable to fetch" else latest_surveydown_version)
+  # Display version information
+  message("surveydown (local): ", local_surveydown_version)
+  message("surveydown (latest): ",
+          if(is.null(latest_surveydown_version)) "Unable to fetch" else latest_surveydown_version)
 
-    # Check if update is needed
-    if (is.null(latest_surveydown_version)) {
-        message("\nUnable to determine if an update is available.")
-        message("Please ensure you have an active internet connection and try again later.")
+  # Check if update is needed
+  if (is.null(latest_surveydown_version)) {
+    message("\nUnable to determine if an update is available.")
+    message("Please ensure you have an active internet connection and try again later.")
+  } else {
+    pkg_needs_update <- local_surveydown_version < latest_surveydown_version
+
+    if (pkg_needs_update) {
+      message("\nAn update is available. To update surveydown to the latest version, run: surveydown::sd_update()")
     } else {
-        pkg_needs_update <- local_surveydown_version < latest_surveydown_version
-
-        if (pkg_needs_update) {
-            message("\nAn update is available. To update surveydown to the latest version, run: surveydown::sd_update()")
-        } else {
-            message("\nsurveydown is up to date.")
-        }
+      message("\nsurveydown is up to date.")
     }
+  }
 }
 
 get_latest_version <- function(url, pattern) {
-    tryCatch({
-        content <- readLines(url)
-        version_line <- grep(pattern, content, value = TRUE)
-        if (length(version_line) > 0) {
-            version <- sub(pattern, "", version_line[1])
-            return(package_version(trimws(version)))
-        } else {
-            message("Version information not found in the file at ", url)
-            return(NULL)
-        }
-    }, error = function(e) {
-        message("Error occurred while fetching version from ", url, ": ", e$message)
-        return(NULL)
-    })
+  tryCatch({
+    content <- readLines(url)
+    version_line <- grep(pattern, content, value = TRUE)
+    if (length(version_line) > 0) {
+      version <- sub(pattern, "", version_line[1])
+      return(package_version(trimws(version)))
+    } else {
+      message("Version information not found in the file at ", url)
+      return(NULL)
+    }
+  }, error = function(e) {
+    message("Error occurred while fetching version from ", url, ": ", e$message)
+    return(NULL)
+  })
 }
 
 #' Create a translations template file
