@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.6.0
+
+- Cookies functionality fully working, applied to both local testing and online db.
+- Bug fix: The matrix subquestions used to be counted as the last questions in order regardless of their location in the survey. It's now solved.
+
 # surveydown 0.5.2
 
 - Cookies feature fixed and back online.
