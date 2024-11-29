@@ -1407,10 +1407,10 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
         # Check 2: Cookie exists and is valid?
         stored_id <- shiny::reactiveValuesToList(input)$stored_session_id
         if (!is.null(stored_id) && nchar(stored_id) > 0 &&
-            # Check 3: DB connection exists?
-            !is.null(db)) {
+            # Check 3: Either DB connection exists or preview_data.csv is writable
+            (!is.null(db) || (file.exists("preview_data.csv") && file.access("preview_data.csv", 2) == 0))) {
 
-            # Check 4: Session exists in DB?
+            # Check 4: Session exists in DB or preview data?
             restore_data <- handle_data_restoration(
                 stored_id, db, session, current_page_id,
                 start_page, question_ids, question_ts_ids,
