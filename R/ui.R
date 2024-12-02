@@ -69,6 +69,7 @@ sd_ui <- function() {
       "countdown.js",
       "enter_key.js",
       "keep_alive.js",
+      "update_progress.js",
       "surveydown.css"
     ),
     if (any(theme == "default")) {

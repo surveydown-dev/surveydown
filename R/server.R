@@ -125,7 +125,7 @@ sd_server <- function(
         use_cookies            = TRUE
 ) {
 
-    # Initialize local variables ----
+    # 1. Initialize local variables ----
 
     # Get input, output, and session from the parent environment
     parent_env <- parent.frame()
@@ -173,7 +173,6 @@ sd_server <- function(
     current_page_id <- shiny::reactiveVal(start_page)
 
     # Progress bar
-    load_js_file("update_progress.js")
     max_progress <- shiny::reactiveVal(0)
     last_answered_question <- shiny::reactiveVal(0)
     update_progress_bar <- function(index) {
@@ -199,7 +198,15 @@ sd_server <- function(
     # Initialize translations list (from '_survey/translations.yml' file)
     translations <- get_translations()$translations
 
-    # show_if conditions ----
+    # Keep-alive observer - this will be triggered every 60 seconds
+    shiny::observeEvent(input$keepAlive, {
+        cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
+    })
+
+    # Create admin page if admin_page is TRUE
+    if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
+
+    # 2. show_if conditions ----
 
     # Reactive to store visibility status of all questions
     question_visibility <- shiny::reactiveVal(
@@ -222,7 +229,7 @@ sd_server <- function(
         question_visibility(current_visibility)
     })
 
-    # Update data ----
+    # 3. Update data ----
 
     update_data <- function(time_last = FALSE) {
         data_list <- latest_data()
@@ -320,17 +327,7 @@ sd_server <- function(
         changed_fields(setdiff(changed_fields(), fields))
     }
 
-    # Initial settings ----
-
-    # Keep-alive observer - this will be triggered every 60 seconds
-    shiny::observeEvent(input$keepAlive, {
-        cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
-    })
-
-    # Create admin page if admin_page is TRUE
-    if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
-
-    # Data tracking ----
+    # 4. Data tracking ----
 
     # First check and initialize table if needed
     if (!ignore_mode) {
@@ -376,7 +373,7 @@ sd_server <- function(
         update_data()
     })
 
-    # Main question observers ----
+    # 5. Main question observers ----
 
     lapply(seq_along(question_ids), function(index) {
         local({
@@ -435,7 +432,7 @@ sd_server <- function(
         })
     })
 
-    # Page rendering ----
+    # 6. Page rendering ----
 
     # Create reactive values for the start page ID
     get_current_page <- shiny::reactive({
@@ -461,7 +458,7 @@ sd_server <- function(
         )
     })
 
-    # Page navigation ----
+    # 7. Page navigation ----
 
     check_required <- function(page) {
         required_questions <- page$required_questions
@@ -520,7 +517,8 @@ sd_server <- function(
         }
     })
 
-    # Survey rating ----
+    # 8. Survey rating and exit ----
+
     # Observer for the exit survey modal
     shiny::observeEvent(input$show_exit_modal, {
         if (rate_survey) {
@@ -578,6 +576,13 @@ sd_server <- function(
         # Close the modal and the window
         shiny::removeModal()
         session$sendCustomMessage("closeWindow", list())
+    })
+
+    # Update checkpoint 5 - when session ends
+    shiny::onSessionEnded(function() {
+        shiny::isolate({
+            update_data(time_last = TRUE)
+        })
     })
 }
 
