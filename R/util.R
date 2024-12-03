@@ -50,6 +50,25 @@ survey_file_exists <- function() {
   return(FALSE)
 }
 
+app_file_exists <- function() {
+    files <- basename(list.files(full.names = TRUE))
+    if ("app.R" %in% files) { return(TRUE) }
+    return(FALSE)
+}
+
+check_files_missing <- function() {
+  if (!survey_file_exists()) {
+    stop(
+      'Missing "survey.qmd" file - your survey file must be named "survey.qmd"'
+    )
+  }
+  if (!app_file_exists()) {
+    stop(
+      'Missing "app.R" file - your app file must be named "app.R"'
+    )
+  }
+}
+
 is_self_contained <- function() {
   metadata <- quarto::quarto_inspect("survey.qmd")
   embedded <- metadata$formats$html$pandoc$`embed-resources`

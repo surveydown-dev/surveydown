@@ -128,6 +128,9 @@ get_paths <- function() {
     app              = "app.R",
     root_html        = "survey.html",
     transl           = "translations.yml",
+    survey_files     = "survey_files",
+    target_files     = file.path(target_folder, 'survey_files'),
+    target_folder    = target_folder,
     target_transl    = file.path(target_folder, "translations.yml"),
     target_html      = file.path(target_folder, "survey.html"),
     target_pages     = file.path(target_folder, "pages.rds"),
@@ -235,13 +238,14 @@ render_qmd <- function(paths) {
   tryCatch(
     {
       # Render the 'survey.qmd' file
-      quarto::quarto_render(
-        paths$qmd,
-        pandoc_args = c("--embed-resources")
-      )
+      quarto::quarto_render(paths$qmd, quiet = TRUE)
 
-      # Move rendered 'survey.html' into '_survey' folder
+      # Move 'survey.html' file and 'survey_files' folder to '_survey' folder
       fs::file_move(paths$root_html, paths$target_html)
+      if (file.exists(paths$survey_files)) {
+          fs::dir_copy(paths$survey_files, paths$target_files)
+          fs::dir_delete(paths$survey_files)
+      }
     },
     error = function(e) {
       stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
