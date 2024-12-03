@@ -368,7 +368,18 @@ sd_server <- function(
     # Reactive value to track which fields have changed
     changed_fields <- shiny::reactiveVal(names(initial_data))
 
-    # Update checkpoint 1 - when session starts
+    # Update checkpoint 1 - when any question input changes
+    shiny::observe({
+        input_values <- shiny::reactiveValuesToList(input)
+        question_inputs <- input_values[question_ids]
+        
+        if (length(changed_fields()) > 0) {
+            update_data()
+            changed_fields(character(0))
+        }
+    })
+
+    # Update checkpoint 2 - when session starts
     shiny::isolate({
         update_data()
     })
@@ -494,7 +505,7 @@ sd_server <- function(
                         # Update tracker of which fields changed
                         changed_fields(c(changed_fields(), next_ts_id, "current_page"))
 
-                        # Update checkpoint 2 - upon going to the next page
+                        # Update checkpoint 3 - upon going to the next page
                         update_data()
                     } else if (!is.null(next_page_id)) {
                         shinyWidgets::sendSweetAlert(
@@ -559,7 +570,7 @@ sd_server <- function(
         rating <- input$survey_rating
         all_data[['exit_survey_rating']] <- rating
         changed_fields(c(changed_fields(), 'exit_survey_rating'))
-        # Update checkpoint 3 - when submitting rating
+        # Update checkpoint 4 - when submitting rating
         shiny::isolate({
             update_data(time_last = TRUE)
         })
@@ -569,7 +580,7 @@ sd_server <- function(
     })
 
     shiny::observeEvent(input$confirm_exit, {
-        # Update checkpoint 4 - when exiting survey
+        # Update checkpoint 5 - when exiting survey
         shiny::isolate({
             update_data(time_last = TRUE)
         })
@@ -578,7 +589,7 @@ sd_server <- function(
         session$sendCustomMessage("closeWindow", list())
     })
 
-    # Update checkpoint 5 - when session ends
+    # Update checkpoint 6 - when session ends
     shiny::onSessionEnded(function() {
         shiny::isolate({
             update_data(time_last = TRUE)
