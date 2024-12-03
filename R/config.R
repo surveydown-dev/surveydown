@@ -240,11 +240,42 @@ render_qmd <- function(paths) {
       # Render the 'survey.qmd' file
       quarto::quarto_render(paths$qmd, quiet = TRUE)
 
-      # Move 'survey.html' file and 'survey_files' folder to '_survey' folder
+      # Move 'survey.html' file to '_survey' folder
       fs::file_move(paths$root_html, paths$target_html)
+
+      # Handle survey_files folder if it exists
       if (file.exists(paths$survey_files)) {
-          fs::dir_copy(paths$survey_files, paths$target_files)
-          fs::dir_delete(paths$survey_files)
+        # Create target_files directory if it doesn't exist
+        if (!dir.exists(paths$target_files)) {
+          fs::dir_create(paths$target_files)
+        }
+
+        # Copy contents instead of moving the directory
+        fs::dir_copy(
+          paths$survey_files,
+          paths$target_files,
+          overwrite = TRUE
+        )
+
+        # Clean up original survey_files
+        fs::dir_delete(paths$survey_files)
+      }
+
+      # Copy package resources to target_files
+      resource_types <- c("css", "js")
+      for (type in resource_types) {
+        pkg_resources <- system.file(type, package = "surveydown")
+        if (pkg_resources != "") {
+          target_resource_dir <- file.path(paths$target_files, type)
+          if (!dir.exists(target_resource_dir)) {
+            fs::dir_create(target_resource_dir)
+          }
+          fs::dir_copy(
+            pkg_resources,
+            target_resource_dir,
+            overwrite = TRUE
+          )
+        }
       }
     },
     error = function(e) {
