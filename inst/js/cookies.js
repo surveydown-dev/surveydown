@@ -83,7 +83,7 @@ $(document).ready(function() {
         console.log("Initializing with session ID:", sessionId, "Retry count:", retryCount);
 
         if (sessionId) {
-            Shiny.onInputChange('stored_session_id', sessionId);
+            Shiny.setInputValue('stored_session_id', sessionId, {priority: 'event'});
         } else if (retryCount < 3) {
             // Retry after a short delay
             setTimeout(() => initializeSession(retryCount + 1), 100);
@@ -98,6 +98,6 @@ $(document).on('shiny:connected', function(event) {
     const sessionId = surveydownCookies.get();
     console.log("Shiny reconnected, session ID:", sessionId);
     if (sessionId) {
-        Shiny.onInputChange('stored_session_id', sessionId);
+        Shiny.setInputValue('stored_session_id', sessionId, {priority: 'event'});
     }
 });
