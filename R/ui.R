@@ -70,6 +70,7 @@ sd_ui <- function() {
       "enter_key.js",
       "keep_alive.js",
       "update_progress.js",
+      "session_storage.js",
       "surveydown.css"
     ),
     if (any(theme == "default")) {
