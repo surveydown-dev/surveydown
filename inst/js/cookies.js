@@ -34,13 +34,10 @@ const surveydownCookies = {
         }
     },
 
-    setAnswerData: function(pageId, answers, timestamps) {
+    setAnswerData: function(pageId, pageData) {
         try {
             let currentData = this.getAnswerData() || {};
-            currentData[pageId] = {
-                answers: answers,
-                timestamps: timestamps
-            };
+            currentData[pageId] = pageData;  // pageData contains both answers and timestamps
             
             const date = new Date();
             date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
@@ -87,8 +84,8 @@ Shiny.addCustomMessageHandler('setCookie', function(message) {
 });
 
 Shiny.addCustomMessageHandler('setAnswerData', function(message) {
-    if (message.pageId && message.answers) {
-        surveydownCookies.setAnswerData(message.pageId, message.answers);
+    if (message.pageId && message.pageData) {
+        surveydownCookies.setAnswerData(message.pageId, message.pageData);
     }
 });
 

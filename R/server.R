@@ -433,7 +433,7 @@ sd_server <- function(
     })
 
     # Observer to update cookies with answers
-    observe({
+    shiny::observe({
         # Get current page ID
         page_id <- current_page_id()
         
@@ -443,22 +443,30 @@ sd_server <- function(
         # Create answers and timestamps lists
         answers <- list()
         timestamps <- list()
+        
         for (q_id in page_questions) {
+            # Get question value
             val <- input[[q_id]]
             if (!is.null(val)) {
                 answers[[q_id]] <- val
-                # Get corresponding timestamp ID
+                
+                # Get corresponding timestamp 
                 ts_id <- paste0("time_q_", q_id)
-                timestamps[[ts_id]] <- get_utc_timestamp()
+                if (!is.null(input[[paste0(q_id, "_interacted")]])) {
+                    timestamps[[ts_id]] <- get_utc_timestamp()
+                }
             }
         }
         
         # Send to client to update cookie
         if (length(answers) > 0 && !is.null(db)) {  # Only update cookies in db mode
+            page_data <- list(
+                answers = answers,
+                timestamps = timestamps
+            )
             session$sendCustomMessage("setAnswerData", 
                                     list(pageId = page_id, 
-                                        answers = answers,
-                                        timestamps = timestamps))
+                                        pageData = page_data))
         }
     })
 
