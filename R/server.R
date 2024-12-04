@@ -1302,10 +1302,8 @@ admin_enable <- function(input, output, session, db) {
         data <- DBI::dbReadTable(db$db, paste0(db$table, "_admin_table"))
         #Read table value in, change it from true to false
 
-
         #Add in sd_server if(survey_paused == TRUE)
         #Create and display a blank page that says the survey is pause
-
 
     })
 
@@ -1351,7 +1349,6 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 
     if (nrow(restore_data) == 0) return(NULL)
 
-    # Rest of the function remains the same...
     shiny::isolate({
         # Restore page state
         if ("current_page" %in% names(restore_data)) {
@@ -1399,6 +1396,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 handle_sessions <- function(session_id, db = NULL, session, input, time_start,
                             start_page, current_page_id, question_ids,
                             question_ts_ids, progress_updater, use_cookies = TRUE) {
+                                
     # Check 1: Cookies enabled?
     if (!use_cookies) {
         return(session_id)
@@ -1409,6 +1407,7 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
 
     # Do the cookie check synchronously in a reactive context
     shiny::isolate({
+
         # Check 2: Cookie exists and is valid?
         stored_id <- shiny::reactiveValuesToList(input)$stored_session_id
         if (!is.null(stored_id) && nchar(stored_id) > 0 &&
@@ -1423,14 +1422,17 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
             )
 
             if (!is.null(restore_data)) {
+
                 # All checks passed - use stored session
                 final_session_id <- stored_id
                 session$sendCustomMessage("setCookie", list(sessionId = stored_id))
             } else {
+
                 # Session not in DB - use new session
                 session$sendCustomMessage("setCookie", list(sessionId = session_id))
             }
         } else {
+
             # No cookie or no DB connection - use new session
             session$sendCustomMessage("setCookie", list(sessionId = session_id))
         }
