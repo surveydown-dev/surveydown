@@ -1344,6 +1344,23 @@ get_local_data <- function() {
     return(NULL)
 }
 
+get_session_storage <- function(input, current_page_id) {
+  # Get answers from session storage
+  answers <- input$session_storage_answers
+  
+  if (is.null(answers) || length(answers) == 0) {
+    return(NULL)
+  }
+  
+  # Convert the answers list to a data frame with one row
+  answer_df <- as.data.frame(t(unlist(answers)), stringsAsFactors = FALSE)
+  
+  # Add the current page information
+  answer_df$current_page <- current_page_id
+  
+  return(answer_df)
+}
+
 handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
                                     question_ids, question_ts_ids, progress_updater) {
     if (is.null(session_id)) return(NULL)
@@ -1351,6 +1368,8 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
     # Get data using sd_get_data or local CSV
     if (!is.null(db)) {
         all_data <- sd_get_data(db)
+        # Get session storage data for the current page
+        answer_data <- get_session_storage(session$input, current_page_id())
     } else {
         all_data <- get_local_data()
     }
@@ -1362,7 +1381,6 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 
     if (nrow(restore_data) == 0) return(NULL)
 
-    # Rest of the function remains the same...
     shiny::isolate({
         # Restore page state
         if ("current_page" %in% names(restore_data)) {
@@ -1394,12 +1412,22 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             progress_updater(last_index)
         }
 
-        for (col in names(restore_data)) {
-            if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
-                val <- restore_data[[col]]
-                if (!is.null(val) && !is.na(val) && val != "") {
-                    all_data[[col]] <- val
-                    session$sendInputMessage(col, list(value = val, priority = "event"))
+        # Determine which data source to use for restoration
+        restoration_source <- if (!is.null(db) && !is.null(answer_data)) {
+            answer_data  # Use session storage data for db case
+        } else {
+            restore_data  # Use restore_data for local CSV case
+        }
+
+        # Restore question values
+        if (!is.null(restoration_source)) {
+            for (col in names(restoration_source)) {
+                if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
+                    val <- restoration_source[[col]]
+                    if (!is.null(val) && !is.na(val) && val != "") {
+                        all_data[[col]] <- val
+                        session$sendInputMessage(col, list(value = val, priority = "event"))
+                    }
                 }
             }
         }
