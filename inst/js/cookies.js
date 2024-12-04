@@ -1,6 +1,4 @@
-// cookies.js
 const surveydownCookies = {
-    // Existing session cookie functions
     set: function(sessionId) {
         try {
             const date = new Date();
@@ -36,11 +34,13 @@ const surveydownCookies = {
         }
     },
 
-    // New functions for answer data
-    setAnswerData: function(pageId, answers) {
+    setAnswerData: function(pageId, answers, timestamps) {
         try {
             let currentData = this.getAnswerData() || {};
-            currentData[pageId] = answers;
+            currentData[pageId] = {
+                answers: answers,
+                timestamps: timestamps
+            };
             
             const date = new Date();
             date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
@@ -80,14 +80,12 @@ const surveydownCookies = {
     }
 };
 
-// Existing handlers
 Shiny.addCustomMessageHandler('setCookie', function(message) {
     if (message.sessionId) {
         surveydownCookies.set(message.sessionId);
     }
 });
 
-// New handler for setting answer data
 Shiny.addCustomMessageHandler('setAnswerData', function(message) {
     if (message.pageId && message.answers) {
         surveydownCookies.setAnswerData(message.pageId, message.answers);
