@@ -1350,7 +1350,8 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
     if (nrow(restore_data) == 0) return(NULL)
 
     shiny::isolate({
-        # Restore page state
+
+        # 1. Restore page state
         if ("current_page" %in% names(restore_data)) {
             restored_page <- restore_data[["current_page"]]
             if (!is.null(restored_page) && !is.na(restored_page) && nchar(restored_page) > 0) {
@@ -1362,7 +1363,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             current_page_id(start_page)
         }
 
-        # Find the last answered question for progress bar
+        # 2. Find the last answered question for progress bar
         last_index <- 0
         for (i in seq_along(question_ids)) {
             q_id <- question_ids[i]
@@ -1380,6 +1381,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             progress_updater(last_index)
         }
 
+        # 3. Restore question values
         for (col in names(restore_data)) {
             if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
                 val <- restore_data[[col]]
