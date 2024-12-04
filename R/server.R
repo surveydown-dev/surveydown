@@ -432,6 +432,31 @@ sd_server <- function(
         })
     })
 
+    # Observer to update cookies with answers
+    observe({
+        # Get current page ID
+        page_id <- current_page_id()
+        
+        # Get all questions for current page
+        page_questions <- names(input)[names(input) %in% question_ids]
+        
+        # Create answers list
+        answers <- list()
+        for (q_id in page_questions) {
+            val <- input[[q_id]]
+            if (!is.null(val)) {
+                answers[[q_id]] <- val
+            }
+        }
+        
+        # Send to client to update cookie
+        if (length(answers) > 0 && !is.null(db)) {  # Only update cookies in db mode
+            session$sendCustomMessage("setAnswerData", 
+                                    list(pageId = page_id, 
+                                        answers = answers))
+        }
+    })
+
     # 6. Page rendering ----
 
     # Create reactive values for the start page ID
@@ -1331,11 +1356,43 @@ get_local_data <- function() {
     return(NULL)
 }
 
+get_cookie_data <- function(session, current_page_id) {
+    # Get stored answer data from input
+    answer_data <- session$input$stored_answer_data
+    
+    if (is.null(answer_data) || !length(answer_data)) {
+        return(NULL)
+    }
+    
+    # Extract data for current page
+    page_data <- answer_data[[current_page_id]]
+    if (is.null(page_data)) {
+        return(NULL)
+    }
+    
+    # Convert to data frame format
+    df <- as.data.frame(t(unlist(page_data)), stringsAsFactors = FALSE)
+    return(df)
+}
+
+restore_current_page_values <- function(restore_data, session, page_filter = NULL) {
+    for (col in names(restore_data)) {
+        # Skip special columns
+        if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
+            val <- restore_data[[col]]
+            if (!is.null(val) && !is.na(val) && val != "") {
+                session$sendInputMessage(col, list(value = val, priority = "event"))
+            }
+        }
+    }
+}
+
+
 handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
-                                    question_ids, question_ts_ids, progress_updater) {
+                                  question_ids, question_ts_ids, progress_updater) {
     if (is.null(session_id)) return(NULL)
 
-    # Get data using sd_get_data or local CSV
+    # Get data based on source
     if (!is.null(db)) {
         all_data <- sd_get_data(db)
     } else {
@@ -1350,8 +1407,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
     if (nrow(restore_data) == 0) return(NULL)
 
     shiny::isolate({
-
-        # 1. Restore page state
+        # 1. Restore page state (using restore_data)
         if ("current_page" %in% names(restore_data)) {
             restored_page <- restore_data[["current_page"]]
             if (!is.null(restored_page) && !is.na(restored_page) && nchar(restored_page) > 0) {
@@ -1363,7 +1419,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             current_page_id(start_page)
         }
 
-        # 2. Find the last answered question for progress bar
+        # 2. Find the last answered question for progress bar (using restore_data)
         last_index <- 0
         for (i in seq_along(question_ids)) {
             q_id <- question_ids[i]
@@ -1382,18 +1438,30 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
         }
 
         # 3. Restore question values
-        for (col in names(restore_data)) {
-            if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
-                val <- restore_data[[col]]
-                if (!is.null(val) && !is.na(val) && val != "") {
-                    all_data[[col]] <- val
-                    session$sendInputMessage(col, list(value = val, priority = "event"))
+        if (!is.null(db)) {
+            # For DB case, try to get cookie data first
+            answer_data <- get_cookie_data(session, current_page_id())
+            
+            if (!is.null(answer_data)) {
+                # Use answer data from cookies for current page
+                for (col in names(answer_data)) {
+                    val <- answer_data[[col]]
+                    if (!is.null(val) && !is.na(val) && val != "") {
+                        session$sendInputMessage(col, list(value = val, priority = "event"))
+                    }
                 }
+            } else {
+                # Fall back to restore_data for the current page
+                restore_current_page_values(restore_data, session, current_page_id())
             }
+        } else {
+            # For local CSV case, use restore_data as before
+            restore_current_page_values(restore_data, session)
         }
     })
     return(restore_data)
 }
+
 
 handle_sessions <- function(session_id, db = NULL, session, input, time_start,
                             start_page, current_page_id, question_ids,

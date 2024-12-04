@@ -1,5 +1,6 @@
 // cookies.js
 const surveydownCookies = {
+    // Existing session cookie functions
     set: function(sessionId) {
         try {
             const date = new Date();
@@ -8,16 +9,14 @@ const surveydownCookies = {
                               ";expires=" + date.toUTCString() +
                               ";path=/;SameSite=Strict";
             document.cookie = cookieValue;
-            console.log("Cookie set successfully:", cookieValue);
-            console.log("Current cookies:", document.cookie);
+            console.log("Session cookie set successfully:", cookieValue);
         } catch (e) {
-            console.error("Error setting cookie:", e);
+            console.error("Error setting session cookie:", e);
         }
     },
 
     get: function() {
         try {
-            console.log("All cookies:", document.cookie);
             const name = "surveydown_session=";
             const decodedCookie = decodeURIComponent(document.cookie);
             const ca = decodedCookie.split(';');
@@ -27,65 +26,88 @@ const surveydownCookies = {
                     c = c.substring(1);
                 }
                 if (c.indexOf(name) == 0) {
-                    const sessionId = c.substring(name.length);
-                    console.log("Found session cookie:", sessionId);
-                    return sessionId;
+                    return c.substring(name.length);
                 }
             }
-            console.log("No session cookie found");
             return null;
         } catch (e) {
-            console.error("Error getting cookie:", e);
+            console.error("Error getting session cookie:", e);
+            return null;
+        }
+    },
+
+    // New functions for answer data
+    setAnswerData: function(pageId, answers) {
+        try {
+            let currentData = this.getAnswerData() || {};
+            currentData[pageId] = answers;
+            
+            const date = new Date();
+            date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+            const cookieValue = "surveydown_answers=" + JSON.stringify(currentData) +
+                              ";expires=" + date.toUTCString() +
+                              ";path=/;SameSite=Strict";
+            document.cookie = cookieValue;
+            console.log("Answer data set for page:", pageId);
+            
+            // Update Shiny input
+            Shiny.setInputValue('stored_answer_data', currentData, {priority: 'event'});
+        } catch (e) {
+            console.error("Error setting answer data:", e);
+        }
+    },
+
+    getAnswerData: function() {
+        try {
+            const name = "surveydown_answers=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    const data = JSON.parse(c.substring(name.length));
+                    return data;
+                }
+            }
+            return null;
+        } catch (e) {
+            console.error("Error getting answer data:", e);
             return null;
         }
     }
 };
 
-// Set cookie handler
+// Existing handlers
 Shiny.addCustomMessageHandler('setCookie', function(message) {
-    console.log("Received setCookie message:", message);
     if (message.sessionId) {
         surveydownCookies.set(message.sessionId);
-        // Verify the cookie was set
-        const verifyId = surveydownCookies.get();
-        console.log("Verified cookie after setting:", verifyId);
     }
 });
 
-// Add handler for triggering input changes
-Shiny.addCustomMessageHandler('triggerInputChange', function(message) {
-    const inputEl = $('#' + message.inputId);
-    if (inputEl.length) {
-        // For radio buttons and checkboxes
-        if (inputEl.is(':radio') || inputEl.is(':checkbox')) {
-            inputEl.prop('checked', true).trigger('change');
-        }
-        // For select elements
-        else if (inputEl.is('select')) {
-            inputEl.val(inputEl.val()).trigger('change');
-        }
-        // For text inputs and others
-        else {
-            inputEl.trigger('change');
-        }
-
-        // Also trigger input event for text-based inputs
-        if (inputEl.is('input[type="text"], textarea')) {
-            inputEl.trigger('input');
-        }
+// New handler for setting answer data
+Shiny.addCustomMessageHandler('setAnswerData', function(message) {
+    if (message.pageId && message.answers) {
+        surveydownCookies.setAnswerData(message.pageId, message.answers);
     }
 });
 
-// Initialize on document ready - with retry mechanism
+// Initialize on document ready
 $(document).ready(function() {
     function initializeSession(retryCount = 0) {
         const sessionId = surveydownCookies.get();
-        console.log("Initializing with session ID:", sessionId, "Retry count:", retryCount);
-
+        const answerData = surveydownCookies.getAnswerData();
+        
         if (sessionId) {
             Shiny.setInputValue('stored_session_id', sessionId, {priority: 'event'});
-        } else if (retryCount < 3) {
-            // Retry after a short delay
+        }
+        if (answerData) {
+            Shiny.setInputValue('stored_answer_data', answerData, {priority: 'event'});
+        }
+        
+        if (!sessionId && retryCount < 3) {
             setTimeout(() => initializeSession(retryCount + 1), 100);
         }
     }
@@ -93,11 +115,15 @@ $(document).ready(function() {
     initializeSession();
 });
 
-// Also handle Shiny reconnections
+// Handle Shiny reconnections
 $(document).on('shiny:connected', function(event) {
     const sessionId = surveydownCookies.get();
-    console.log("Shiny reconnected, session ID:", sessionId);
+    const answerData = surveydownCookies.getAnswerData();
+    
     if (sessionId) {
         Shiny.setInputValue('stored_session_id', sessionId, {priority: 'event'});
+    }
+    if (answerData) {
+        Shiny.setInputValue('stored_answer_data', answerData, {priority: 'event'});
     }
 });
