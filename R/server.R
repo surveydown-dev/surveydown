@@ -440,9 +440,9 @@ sd_server <- function(
         # Get all questions for current page
         page_questions <- names(input)[names(input) %in% question_ids]
         
-        # Create answers and timestamps lists
+        # Create answers list and single timestamp
         answers <- list()
-        timestamps <- list()
+        last_timestamp <- NULL
         
         for (q_id in page_questions) {
             # Get question value
@@ -450,10 +450,12 @@ sd_server <- function(
             if (!is.null(val)) {
                 answers[[q_id]] <- val
                 
-                # Get corresponding timestamp 
-                ts_id <- paste0("time_q_", q_id)
+                # Update timestamp if question was interacted with
                 if (!is.null(input[[paste0(q_id, "_interacted")]])) {
-                    timestamps[[ts_id]] <- get_utc_timestamp()
+                    last_timestamp <- list(
+                        id = paste0("time_q_", q_id),
+                        time = get_utc_timestamp()
+                    )
                 }
             }
         }
@@ -462,7 +464,7 @@ sd_server <- function(
         if (length(answers) > 0 && !is.null(db)) {  # Only update cookies in db mode
             page_data <- list(
                 answers = answers,
-                timestamps = timestamps
+                last_timestamp = last_timestamp
             )
             session$sendCustomMessage("setAnswerData", 
                                     list(pageId = page_id, 
@@ -1437,19 +1439,14 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             answer_data <- get_cookie_data(session, current_page_id())
         }
 
-        # 2. Find the last answered question for progress bar (using cookie data if available)
+        # 2. Find the last answered question for progress bar
         last_index <- 0
-        if (!is.null(db) && !is.null(answer_data) && !is.null(answer_data$timestamps)) {
-            # Use cookie data for progress in DB mode
-            for (i in seq_along(question_ids)) {
-                ts_id <- question_ts_ids[i]
-                if (ts_id %in% names(answer_data$timestamps)) {
-                    ts_val <- answer_data$timestamps[[ts_id]]
-                    if (length(ts_val) == 1 && !is.null(ts_val) && !is.na(ts_val) && ts_val != "") {
-                        last_index <- i
-                    }
-                }
-            }
+        if (!is.null(db) && !is.null(answer_data) && !is.null(answer_data$last_timestamp)) {
+            # Use last timestamp from cookie data in DB mode
+            last_ts_id <- answer_data$last_timestamp$id
+            # Find the index of this timestamp ID in our question_ts_ids
+            last_index <- match(last_ts_id, question_ts_ids)
+            if (is.na(last_index)) last_index <- 0
         } else {
             # Use restore_data for local CSV mode
             for (i in seq_along(question_ids)) {
