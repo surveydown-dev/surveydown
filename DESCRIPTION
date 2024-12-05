@@ -1,6 +1,6 @@
 Package: surveydown
 Title: Markdown-Based Surveys Using 'Quarto' and 'shiny'
-Version: 0.6.0
+Version: 0.6.1
 Authors@R: c(
     person(given   = "John Paul",
            family  = "Helveston",
