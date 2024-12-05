@@ -36,8 +36,7 @@ const surveydownCookies = {
 
     setAnswerData: function(pageId, pageData) {
         try {
-            // Only store current page data instead of accumulating
-            let currentData = {};
+            let currentData = this.getAnswerData() || {};
             currentData[pageId] = pageData;  // pageData contains both answers and timestamps
             
             const date = new Date();
