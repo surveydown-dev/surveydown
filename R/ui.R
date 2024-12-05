@@ -60,40 +60,24 @@ sd_ui <- function() {
   paths <- get_paths()
 
   # Get the head_content from the 'survey.qmd' file
-  files_need_updating <- check_files_need_updating(paths)
-  if (files_need_updating) {
-    # Create a temp filename in the current directory
-    temp_html <- "temp_survey.html"
+  if (check_files_need_updating(paths)) {
 
     # Render to temp file and extract head content
     tryCatch({
       message("Rendering temporary file for head content extraction...")
       quarto::quarto_render(
         paths$qmd,
-        output_file = temp_html,
         pandoc_args = c("--embed-resources"),
         quiet = TRUE
       )
       # Extract head content
-      html_content <- rvest::read_html(temp_html)
+      html_content <- rvest::read_html(paths$root_html)
       head_content <- extract_head_content(html_content)
       # Clean up temp file
-      unlink(temp_html)
-
-      # Also clean up any supporting files that Quarto might have created
-      if (dir.exists("temp_survey_files")) {
-        unlink("temp_survey_files", recursive = TRUE)
-      }
+      fs::file_delete(paths$root_html)
 
     }, error = function(e) {
       warning("Error rendering temporary survey file: ", e$message)
-      # Clean up in case of error
-      unlink(temp_html)
-      if (dir.exists("temp_survey_files")) {
-        unlink("temp_survey_files", recursive = TRUE)
-      }
-      # Return empty string if rendering fails
-      head_content <- ""
     })
   } else {
     # Load head content from _survey folder

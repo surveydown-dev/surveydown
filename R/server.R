@@ -114,15 +114,15 @@
 #'
 #' @export
 sd_server <- function(
-        db                     = NULL,
-        required_questions     = NULL,
-        all_questions_required = FALSE,
-        start_page             = NULL,
-        admin_page             = FALSE,
-        auto_scroll            = FALSE,
-        rate_survey            = FALSE,
-        language               = "en",
-        use_cookies            = TRUE
+    db                     = NULL,
+    required_questions     = NULL,
+    all_questions_required = FALSE,
+    start_page             = NULL,
+    admin_page             = FALSE,
+    auto_scroll            = FALSE,
+    rate_survey            = FALSE,
+    language               = "en",
+    use_cookies            = TRUE
 ) {
 
     # 1. Initialize local variables ----
