@@ -1489,8 +1489,12 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 handle_sessions <- function(session_id, db = NULL, session, input, time_start,
                             start_page, current_page_id, question_ids,
                             question_ts_ids, progress_updater, use_cookies = TRUE) {
-                                
-    # Check 1: Cookies enabled?
+    # Check 1: if db is null, don't use cookies
+    if (is.null(db)) {
+        use_cookies <- FALSE
+    }
+
+    # Check 2: Cookies enabled?
     if (!use_cookies) {
         return(session_id)
     }
@@ -1501,13 +1505,13 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
     # Do the cookie check synchronously in a reactive context
     shiny::isolate({
 
-        # Check 2: Cookie exists and is valid?
+        # Check 3: Cookie exists and is valid?
         stored_id <- shiny::reactiveValuesToList(input)$stored_session_id
         if (!is.null(stored_id) && nchar(stored_id) > 0 &&
-            # Check 3: Either DB connection exists or preview_data.csv is writable
+            # Check 4: Either DB connection exists or preview_data.csv is writable
             (!is.null(db) || (file.exists("preview_data.csv") && file.access("preview_data.csv", 2) == 0))) {
 
-            # Check 4: Session exists in DB or preview data?
+            # Check 5: Session exists in DB or preview data?
             restore_data <- handle_data_restoration(
                 stored_id, db, session, current_page_id,
                 start_page, question_ids, question_ts_ids,
