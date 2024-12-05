@@ -440,9 +440,10 @@ sd_server <- function(
         # Get all questions for current page
         page_questions <- names(input)[names(input) %in% question_ids]
         
-        # Create answers list and single timestamp
+        # Create answers list
         answers <- list()
         last_timestamp <- NULL
+        max_index <- 0
         
         for (q_id in page_questions) {
             # Get question value
@@ -450,12 +451,17 @@ sd_server <- function(
             if (!is.null(val)) {
                 answers[[q_id]] <- val
                 
-                # Update timestamp if question was interacted with
+                # If question was interacted with, check its position
                 if (!is.null(input[[paste0(q_id, "_interacted")]])) {
-                    last_timestamp <- list(
-                        id = paste0("time_q_", q_id),
-                        time = get_utc_timestamp()
-                    )
+                    # Find this question's index in the overall sequence
+                    current_index <- match(q_id, question_ids)
+                    if (!is.na(current_index) && current_index > max_index) {
+                        max_index <- current_index
+                        last_timestamp <- list(
+                            id = paste0("time_q_", q_id),
+                            time = get_utc_timestamp()
+                        )
+                    }
                 }
             }
         }
@@ -471,7 +477,6 @@ sd_server <- function(
                                         pageData = page_data))
         }
     })
-
 
     # 6. Page rendering ----
 
