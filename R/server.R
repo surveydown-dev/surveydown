@@ -1400,8 +1400,6 @@ restore_current_page_values <- function(restore_data, session, page_filter = NUL
     }
 }
 
-
-# Modified handle_data_restoration function
 handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
                                   question_ids, question_ts_ids, progress_updater) {
     if (is.null(session_id)) return(NULL)
@@ -1485,7 +1483,6 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
     })
     return(restore_data)
 }
-
 
 handle_sessions <- function(session_id, db = NULL, session, input, time_start,
                             start_page, current_page_id, question_ids,
