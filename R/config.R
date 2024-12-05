@@ -30,7 +30,8 @@ run_config <- function(
     html_content <- rvest::read_html(paths$target_html)
 
     # Extract head content (for CSS and JS) and save to "_survey" folder
-    head_content <- extract_head_content(paths, html_content)
+    head_content <- extract_head_content(html_content)
+    saveRDS(head_content, paths$target_head)
 
     # Extract all divs with class "sd-page" and save to "_survey" folder
     pages <- extract_html_pages(
@@ -54,9 +55,6 @@ run_config <- function(
     message(
       'No changes detected. Importing contents from "_survey" folder.'
     )
-
-    # Load head content from _survey folder
-    head_content <- readRDS(paths$target_head)
 
     # Load pages object from _survey folder
     pages <- readRDS(paths$target_pages)
@@ -97,7 +95,6 @@ run_config <- function(
   # Store all config settings
   config <- list(
     pages = pages,
-    head_content = head_content,
     page_ids = page_ids,
     question_ids = question_ids,
     question_required = question_required,
@@ -128,9 +125,6 @@ get_paths <- function() {
     app              = "app.R",
     root_html        = "survey.html",
     transl           = "translations.yml",
-    survey_files     = "survey_files",
-    target_files     = file.path(target_folder, 'survey_files'),
-    target_folder    = target_folder,
     target_transl    = file.path(target_folder, "translations.yml"),
     target_html      = file.path(target_folder, "survey.html"),
     target_pages     = file.path(target_folder, "pages.rds"),
@@ -238,45 +232,15 @@ render_qmd <- function(paths) {
   tryCatch(
     {
       # Render the 'survey.qmd' file
-      quarto::quarto_render(paths$qmd, quiet = TRUE)
+      message("Rendering 'survey.qmd' file")
+      quarto::quarto_render(
+        paths$qmd,
+        pandoc_args = c("--embed-resources"),
+        quiet = TRUE
+      )
 
-      # Move 'survey.html' file to '_survey' folder
+      # Move rendered 'survey.html' into '_survey' folder
       fs::file_move(paths$root_html, paths$target_html)
-
-      # Handle survey_files folder if it exists
-      if (file.exists(paths$survey_files)) {
-        # Create target_files directory if it doesn't exist
-        if (!dir.exists(paths$target_files)) {
-          fs::dir_create(paths$target_files)
-        }
-
-        # Copy contents instead of moving the directory
-        fs::dir_copy(
-          paths$survey_files,
-          paths$target_files,
-          overwrite = TRUE
-        )
-
-        # Clean up original survey_files
-        fs::dir_delete(paths$survey_files)
-      }
-
-      # Copy package resources to target_files
-      resource_types <- c("css", "js")
-      for (type in resource_types) {
-        pkg_resources <- system.file(type, package = "surveydown")
-        if (pkg_resources != "") {
-          target_resource_dir <- file.path(paths$target_files, type)
-          if (!dir.exists(target_resource_dir)) {
-            fs::dir_create(target_resource_dir)
-          }
-          fs::dir_copy(
-            pkg_resources,
-            target_resource_dir,
-            overwrite = TRUE
-          )
-        }
-      }
     },
     error = function(e) {
       stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
@@ -284,13 +248,13 @@ render_qmd <- function(paths) {
   )
 }
 
-extract_head_content <- function(paths, html_content) {
+extract_head_content <- function(html_content) {
+  # Head content from the rendered 'survey.html' file
   head_content <- html_content |>
     rvest::html_element("head") |>
     rvest::html_children() |>
     sapply(as.character) |>
     paste(collapse = "\n")
-  saveRDS(head_content, paths$target_head)
   return(head_content)
 }
 
@@ -594,7 +558,7 @@ check_ids <- function(page_ids, question_ids) {
   }
 
   # Check for restricted IDs
-  restricted_ids <- c("session_id", "time_start", "time_end", "exit_survey_rating")
+  restricted_ids <- c("session_id", "time_start", "time_end", "exit_survey_rating", "current_page")
   used_restricted_ids <- intersect(restricted_ids, question_ids)
   if (length(used_restricted_ids) > 0) {
     stop("Restricted question IDs found: ", paste(used_restricted_ids, collapse = ", "),

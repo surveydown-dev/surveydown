@@ -47,59 +47,110 @@
 #'
 #' @export
 sd_ui <- function() {
-
-  # Throw error if "survey.qmd" or "app.R" files are missing
+  # Throw error if 'survey.qmd' or 'app.R' files are missing
   check_files_missing()
 
-  # Get the theme from the survey.qmd file
+  # Get settings from the survey.qmd file
   metadata <- quarto::quarto_inspect("survey.qmd")
   theme <- get_theme(metadata)
-
-  # Get progress bar settings from the survey.qmd file
   barcolor <- get_barcolor(metadata)
   barposition <- get_barposition(metadata)
 
-  # Get all required dependencies
+  # Get paths to files and create '_survey' folder if necessary
+  paths <- get_paths()
+
+  # Get the head_content from the 'survey.qmd' file
+  files_need_updating <- check_files_need_updating(paths)
+  if (files_need_updating) {
+    # Create a temp filename in the current directory
+    temp_html <- "temp_survey.html"
+
+    # Render to temp file and extract head content
+    tryCatch({
+      message("Rendering temporary file for head content extraction...")
+      quarto::quarto_render(
+        paths$qmd,
+        output_file = temp_html,
+        pandoc_args = c("--embed-resources"),
+        quiet = TRUE
+      )
+      # Extract head content
+      html_content <- rvest::read_html(temp_html)
+      head_content <- extract_head_content(html_content)
+      # Clean up temp file
+      unlink(temp_html)
+
+      # Also clean up any supporting files that Quarto might have created
+      if (dir.exists("temp_survey_files")) {
+        unlink("temp_survey_files", recursive = TRUE)
+      }
+
+    }, error = function(e) {
+      warning("Error rendering temporary survey file: ", e$message)
+      # Clean up in case of error
+      unlink(temp_html)
+      if (dir.exists("temp_survey_files")) {
+        unlink("temp_survey_files", recursive = TRUE)
+      }
+      # Return empty string if rendering fails
+      head_content <- ""
+    })
+  } else {
+    # Load head content from _survey folder
+    head_content <- readRDS(paths$target_head)
+  }
+
+  # Get widget dependencies
   deps <- find_widget_dependencies()
 
-  # Create and return UI with dependencies
-  htmltools::attachDependencies(
-    shiny::fluidPage(
-      shinyjs::useShinyjs(),
-      load_resource(
-        "auto_scroll.js",
-        "cookies.js",
-        "countdown.js",
-        "enter_key.js",
-        "keep_alive.js",
-        "update_progress.js",
-        "surveydown.css"
-      ),
-      if (any(theme == "default")) {
-        load_resource("default_theme.css")
-      },
-      shiny::tags$script("var surveydownConfig = {};"),
-      if (!is.null(barcolor)) {
-        shiny::tags$style(htmltools::HTML(sprintf("
-                  :root {
-                      --progress-color: %s;
-                  }
-              ", barcolor)))
-      },
-      if (barposition != "none") {
-        shiny::tags$div(
-          id = "progressbar",
-          class = barposition,
-          shiny::tags$div(id = "progress")
-        )
-      },
-      shiny::tags$div(
-        class = "content",
-        shiny::uiOutput("main")
-      )
+  # Create the UI
+  shiny::tagList(
+    # Head content
+    shiny::tags$head(
+      # Essential Shiny/jQuery dependencies
+      shiny::bootstrapLib(),  # This brings in jQuery and Bootstrap
+      # Survey head content (filtered)
+      shiny::HTML(head_content)
     ),
-    deps,
-    append = TRUE
+    # Body content
+    htmltools::attachDependencies(
+      shiny::fluidPage(
+        shinyjs::useShinyjs(),
+        load_resource(
+          "auto_scroll.js",
+          "cookies.js",
+          "countdown.js",
+          "enter_key.js",
+          "keep_alive.js",
+          "update_progress.js",
+          "surveydown.css"
+        ),
+        if (any(theme == "default")) {
+          load_resource("default_theme.css")
+        },
+        shiny::tags$script("var surveydownConfig = {};"),
+        if (!is.null(barcolor)) {
+          shiny::tags$style(htmltools::HTML(sprintf("
+            :root {
+                --progress-color: %s;
+            }
+          ", barcolor)))
+        },
+        if (barposition != "none") {
+          shiny::tags$div(
+            id = "progressbar",
+            class = barposition,
+            shiny::tags$div(id = "progress")
+          )
+        },
+        shiny::tags$div(
+          class = "content",
+          shiny::uiOutput("main")
+        )
+      ), # fluidPage
+      deps,
+      append = TRUE
+    ) # htmltools::attachDependencies
   )
 }
 
@@ -131,58 +182,56 @@ get_barposition <- function(metadata) {
 }
 
 find_widget_dependencies <- function(
-  qmd_file = "survey.qmd",
-  app_file = "app.R"
+    qmd_file = "survey.qmd",
+    app_file = "app.R"
 ) {
-    # Read both files
-    qmd_content <- readLines(qmd_file)
-    app_content <- readLines(app_file)
-    all_content <- paste(c(qmd_content, app_content), collapse = "\n")
+  # Read both files
+  qmd_content <- readLines(qmd_file)
+  app_content <- readLines(app_file)
+  all_content <- paste(c(qmd_content, app_content), collapse = "\n")
 
-    # Find packages from library() calls
-    library_packages <- stringr::str_match_all(
-        all_content,
-        "library\\s*\\(\\s*([^\\)]+)\\s*\\)"
-    )[[1]][,2]
+  # Find packages from library() calls
+  library_packages <- stringr::str_match_all(
+    all_content,
+    "library\\s*\\(\\s*([^\\)]+)\\s*\\)"
+  )[[1]][,2]
 
-    # Find packages from namespace calls (pkg::fn)
-    namespace_packages <- stringr::str_match_all(
-        all_content,
-        "([[:alnum:]\\._]+)::"
-    )[[1]][,2]
+  # Find packages from namespace calls (pkg::fn)
+  namespace_packages <- stringr::str_match_all(
+    all_content,
+    "([[:alnum:]\\._]+)::"
+  )[[1]][,2]
 
-    # Combine and unique
-    widget_packages <- unique(c(library_packages, namespace_packages))
-    # Remove 'shiny' as those are already loaded
-    widget_packages <- widget_packages[-which(widget_packages == 'shiny')]
+  # Combine and unique
+  widget_packages <- unique(c(library_packages, namespace_packages))
 
-    # Find dependencies for each package
-    dependencies <- list()
-    for (pkg in widget_packages) {
-        if (pkg %in% loadedNamespaces()) {
-            # Look for any *Output functions in the package
-            exports <- getNamespaceExports(pkg)
-            output_fns <- grep("Output$", exports, value = TRUE)
+  # Find dependencies for each package
+  dependencies <- list()
+  for (pkg in widget_packages) {
+    if (pkg %in% loadedNamespaces()) {
+      # Look for any *Output functions in the package
+      exports <- getNamespaceExports(pkg)
+      output_fns <- grep("Output$", exports, value = TRUE)
 
-            for (output_fn_name in output_fns) {
-                widget_fn <- getExportedValue(pkg, output_fn_name)
-                # Check if it's actually a widget output function
-                # by seeing if it has an htmlwidget class
-                tryCatch({
-                    widget <- widget_fn("dummy")
-                    deps <- htmltools::findDependencies(widget)
-                    if (length(deps) > 0) {
-                        dependencies <- c(dependencies, deps)
-                    }
-                }, error = function(e) {
-                    # Skip if there's an error creating the widget
-                })
-            }
-        }
+      for (output_fn_name in output_fns) {
+        widget_fn <- getExportedValue(pkg, output_fn_name)
+        # Check if it's actually a widget output function
+        # by seeing if it has an htmlwidget class
+        tryCatch({
+          widget <- widget_fn("dummy")
+          deps <- htmltools::findDependencies(widget)
+          if (length(deps) > 0) {
+            dependencies <- c(dependencies, deps)
+          }
+        }, error = function(e) {
+          # Skip if there's an error creating the widget
+        })
+      }
     }
+  }
 
-    # Return unique dependencies
-    unique(dependencies)
+  # Return unique dependencies
+  unique(dependencies)
 }
 
 #' Create a survey question

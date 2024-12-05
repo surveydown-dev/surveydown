@@ -154,7 +154,6 @@ sd_server <- function(
 
     # Create local objects from config file
     pages              <- config$pages
-    head_content       <- config$head_content
     page_ids           <- config$page_ids
     question_ids       <- config$question_ids
     question_structure <- config$question_structure
@@ -443,7 +442,6 @@ sd_server <- function(
     output$main <- shiny::renderUI({
         current_page <- get_current_page()
         shiny::tagList(
-            shiny::tags$head(shiny::HTML(head_content)),
             shiny::tags$div(
                 class = "content",
                 shiny::tags$div(
