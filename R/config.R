@@ -559,7 +559,7 @@ check_ids <- function(page_ids, question_ids) {
   }
 
   # Check for restricted IDs
-  restricted_ids <- c("session_id", "time_start", "time_end", "exit_survey_rating")
+  restricted_ids <- c("session_id", "time_start", "time_end", "exit_survey_rating", "current_page")
   used_restricted_ids <- intersect(restricted_ids, question_ids)
   if (length(used_restricted_ids) > 0) {
     stop("Restricted question IDs found: ", paste(used_restricted_ids, collapse = ", "),
