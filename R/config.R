@@ -16,7 +16,7 @@ run_config <- function(
 
   # If changes detected, re-parse the '_survey/survey.html' file
   if (survey_files_need_updating(paths)) {
-    message("Changes detected. Rendering contents.")
+    message("Changes detected...re-parsing survey contents...")
 
     # Prepare translations (check for inputs)
     set_translations(paths, language)
