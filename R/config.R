@@ -15,7 +15,7 @@ run_config <- function(
   paths <- get_paths()
 
   # If changes detected, re-parse the '_survey/survey.html' file
-  if (check_files_need_updating(paths)) {
+  if (survey_files_need_updating(paths)) {
     message("Changes detected. Rendering contents.")
 
     # Prepare translations (check for inputs)
@@ -124,22 +124,19 @@ get_paths <- function() {
   return(paths)
 }
 
-check_files_need_updating <- function(paths) {
-  # Re-render if any of the target files are missing
-  targets <- c(
-    paths$target_html, paths$target_pages,
-    paths$target_head, paths$target_questions
-  )
+survey_files_need_updating <- function(paths) {
+  # Re-parse if any of the target files are missing
+  targets <- c(paths$target_pages, paths$target_questions)
   if (any(!fs::file_exists(targets))) { return(TRUE) }
 
-  # Re-render if the target pages file is out of date with 'survey.qmd', 'app.R'
+  # Re-parse if the target pages file is out of date with 'survey.qmd', 'app.R'
   time_qmd <- file.info(paths$qmd)$mtime
   time_app <- file.info(paths$app)$mtime
   time_pages <- file.info(paths$target_pages)$mtime
 
   if ((time_qmd > time_pages) || (time_app > time_pages)) { return(TRUE) }
 
-  # Re-render if the user provided a 'translations.yml' file which is out of date
+  # Re-parse if the user provided a 'translations.yml' file which is out of date
   if (fs::file_exists(paths$transl)) {
     time_transl <- file.info(paths$transl)$mtime
     if (time_transl > time_pages) { return(TRUE) }

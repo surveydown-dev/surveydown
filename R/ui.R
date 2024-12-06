@@ -64,7 +64,7 @@ sd_ui <- function() {
   paths <- get_paths()
 
   # Render the 'survey.qmd' file if changes detected
-  if (check_files_need_updating(paths)) {
+  if (survey_needs_updating(paths)) {
     tryCatch({
       # Render the 'survey.qmd' file
       message("Changes detected...rendering 'survey.qmd' file...")
@@ -153,6 +153,20 @@ get_barposition <- function(metadata) {
         return("top")
     }
     return(barposition)
+}
+
+survey_needs_updating <- function(paths) {
+    # Re-render if any of the target files are missing
+    targets <- c(paths$target_html, paths$target_head)
+    if (any(!fs::file_exists(targets))) { return(TRUE) }
+
+    # Re-render if '_survey/survey.html' file is out of date with 'survey.qmd' file
+    time_qmd <- file.info(paths$qmd)$mtime
+    time_html <- file.info(paths$target_html)$mtime
+
+    if (time_qmd > time_html) { return(TRUE) }
+
+    return(FALSE)
 }
 
 render_survey_qmd <- function(paths, default_theme = TRUE) {
