@@ -47,81 +47,153 @@
 #'
 #' @export
 sd_ui <- function() {
+  # Throw error if 'survey.qmd' or 'app.R' files are missing
+  check_files_missing()
 
-  # Throw error if "survey.qmd" file missing
-  if (!survey_file_exists()) {
-    stop('Missing "survey.qmd" file. Your survey file must be named "survey.qmd"')
-  }
-
-  # Get the theme from the survey.qmd file
+  # Get metadata from the 'survey.qmd' file
   metadata <- quarto::quarto_inspect("survey.qmd")
   theme <- get_theme(metadata)
-
-  # Get progress bar settings from the survey.qmd file
+  default_theme <- FALSE
+  if (any(theme == "default")) {
+      default_theme <- TRUE
+  }
   barcolor <- get_barcolor(metadata)
   barposition <- get_barposition(metadata)
 
-  shiny::fluidPage(
-    shinyjs::useShinyjs(),
-    load_resource(
-      "auto_scroll.js",
-      "cookies.js",
-      "countdown.js",
-      "enter_key.js",
-      "keep_alive.js",
-      "update_progress.js",
-      "surveydown.css"
-    ),
-    if (any(theme == "default")) {
-      load_resource("default_theme.css")
-    },
-    shiny::tags$script("var surveydownConfig = {};"),
-    if (!is.null(barcolor)) {
-      shiny::tags$style(htmltools::HTML(sprintf("
-                :root {
-                    --progress-color: %s;
-                }
-            ", barcolor)))
-    },
-    if (barposition != "none") {
-      shiny::tags$div(
-        id = "progressbar",
-        class = barposition,
-        shiny::tags$div(id = "progress")
-      )
-    },
-    shiny::tags$div(
-      class = "content",
-      shiny::uiOutput("main")
-    )
-  )
+  # Get paths to files and create '_survey' folder if necessary
+  paths <- get_paths()
+
+  # Render the 'survey.qmd' file if changes detected
+  if (survey_needs_updating(paths)) {
+    tryCatch({
+      # Render the 'survey.qmd' file
+      message("Changes detected...rendering 'survey.qmd' file...")
+      render_survey_qmd(paths, default_theme)
+
+      # Extract head content (for CSS and JS) and save to "_survey" folder
+      html_content <- rvest::read_html(paths$root_html)
+      head_content <- extract_head_content(html_content)
+      saveRDS(head_content, paths$target_head)
+
+      # Move rendered 'survey.html' into '_survey' folder
+      fs::file_move(paths$root_html, paths$target_html)
+      message("Survey saved to ", paths$target_html, "\n")
+    }, error = function(e) {
+        stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
+    })
+  } else {
+    # If no changes, just load head content from '_survey/head.rds'
+    head_content <- readRDS(paths$target_head)
+  }
+
+  # Create the UI
+    shiny::tagList(
+      # Head content
+      shiny::tags$head(
+        # Survey head content (filtered)
+        shiny::HTML(head_content)
+      ),
+      # Body content
+      shiny::fluidPage(
+        shinyjs::useShinyjs(),
+        shiny::tags$script("var surveydownConfig = {};"),
+        if (!is.null(barcolor)) {
+          shiny::tags$style(htmltools::HTML(sprintf("
+            :root {
+                --progress-color: %s;
+            }
+          ", barcolor)))
+        },
+        if (barposition != "none") {
+          shiny::tags$div(
+            id = "progressbar",
+            class = barposition,
+            shiny::tags$div(id = "progress")
+          )
+        },
+        shiny::tags$div(
+          class = "content",
+          shiny::uiOutput("main")
+        )
+      ) # fluidPage
+    ) # shiny::tagList()
 }
 
 get_theme <- function(metadata) {
-  x <- "survey.qmd"
-  theme <- metadata$formats$html$metadata$theme
-  if (is.null(theme)) {
-    return("default")
-  }
-  return(theme)
+    x <- "survey.qmd"
+    theme <- metadata$formats$html$metadata$theme
+    if (is.null(theme)) {
+        return("default")
+    }
+    return(theme)
 }
 
 get_barcolor <- function(metadata) {
-  barcolor <- metadata$formats$html$metadata$barcolor
-  if (!is.null(barcolor)) {
-    if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
-      stop("Invalid barcolor in YAML. Use a valid hex color.")
+    barcolor <- metadata$formats$html$metadata$barcolor
+    if (!is.null(barcolor)) {
+        if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
+            stop("Invalid barcolor in YAML. Use a valid hex color.")
+        }
     }
-  }
-  return(barcolor)
+    return(barcolor)
 }
 
 get_barposition <- function(metadata) {
-  barposition <- metadata$formats$html$metadata$barposition
-  if (is.null(barposition)) {
-    return("top")
-  }
-  return(barposition)
+    barposition <- metadata$formats$html$metadata$barposition
+    if (is.null(barposition)) {
+        return("top")
+    }
+    return(barposition)
+}
+
+survey_needs_updating <- function(paths) {
+    # Re-render if any of the target files are missing
+    targets <- c(paths$target_html, paths$target_head)
+    if (any(!fs::file_exists(targets))) { return(TRUE) }
+
+    # Re-render if '_survey/survey.html' file is out of date with 'survey.qmd' file
+    time_qmd <- file.info(paths$qmd)$mtime
+    time_html <- file.info(paths$target_html)$mtime
+
+    if (time_qmd > time_html) { return(TRUE) }
+
+    return(FALSE)
+}
+
+render_survey_qmd <- function(paths, default_theme = TRUE) {
+    # Copy lua filter to local folder
+    lua_file <- 'surveydown.lua'
+    fs::file_copy(
+        system.file("lua/include-resources.lua", package = "surveydown"),
+        lua_file,
+        overwrite = TRUE
+    )
+
+    # Render with Lua filter and metadata
+    quarto::quarto_render(
+        paths$qmd,
+        metadata = list(
+            default_theme = default_theme
+        ),
+        pandoc_args = c(
+            "--embed-resources",
+            "--lua-filter=surveydown.lua"
+        ),
+        quiet = TRUE
+    )
+
+    # Delete local lua filter
+    fs::file_delete(lua_file)
+}
+
+extract_head_content <- function(html_content) {
+    # Head content from the rendered 'survey.html' file
+    head_content <- html_content |>
+        rvest::html_element("head") |>
+        rvest::html_children() |>
+        sapply(as.character) |>
+        paste(collapse = "\n")
+    return(head_content)
 }
 
 #' Create a survey question

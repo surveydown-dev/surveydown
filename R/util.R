@@ -40,7 +40,7 @@ list_name_md_to_html <- function(list) {
     "Author:   ", "John Paul Helveston, Pingfan Hu, Bogdan Bunea (George Washington University)", "\n\n",
     "Consider submitting praise at\n",
     "https://github.com/jhelvy/surveydown/issues/41.\n\n",
-    "Please cite our package in your publications, see:\ncitation(\"surveydown\")"
+    "Please cite our package in your publications, see:\ncitation(\"surveydown\")\n"
   )
 }
 
@@ -48,6 +48,25 @@ survey_file_exists <- function() {
   files <- basename(list.files(full.names = TRUE))
   if ("survey.qmd" %in% files) { return(TRUE) }
   return(FALSE)
+}
+
+app_file_exists <- function() {
+    files <- basename(list.files(full.names = TRUE))
+    if ("app.R" %in% files) { return(TRUE) }
+    return(FALSE)
+}
+
+check_files_missing <- function() {
+  if (!survey_file_exists()) {
+    stop(
+      'Missing "survey.qmd" file - your survey file must be named "survey.qmd"'
+    )
+  }
+  if (!app_file_exists()) {
+    stop(
+      'Missing "app.R" file - your app file must be named "app.R"'
+    )
+  }
 }
 
 is_self_contained <- function() {
@@ -144,28 +163,6 @@ load_js_file <- function(name) {
   js_file_path <- system.file("js", name, package = "surveydown")
   js_code <- paste(readLines(js_file_path), collapse = "\n")
   shinyjs::runjs(js_code)
-}
-
-# Load CSS and JS files
-load_resource <- function(..., package = "surveydown") {
-  files <- c(...)
-  lapply(files, function(file) {
-    file_type <- tolower(tools::file_ext(file))
-    if (!(file_type %in% c("css", "js"))) {
-      stop(paste("Unsupported file type:", file_type, "for file:", file))
-    }
-    path <- system.file(paste0(file_type, "/", file), package = package)
-    if (file.exists(path)) {
-      if (file_type == "css") {
-        shiny::includeCSS(path)
-      } else {
-        shiny::includeScript(path)
-      }
-    } else {
-      warning(paste("File not found:", file, "in package:", package))
-      NULL
-    }
-  })
 }
 
 tibble_to_list_of_lists <- function(tbl) {

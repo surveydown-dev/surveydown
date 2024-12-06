@@ -14,23 +14,15 @@ run_config <- function(
   # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
-  # Check for changes in survey.qmd and app.R files
-  files_need_updating <- check_files_need_updating(paths)
-
-  if (files_need_updating) {
-    message("Changes detected. Rendering contents.")
+  # If changes detected, re-parse the '_survey/survey.html' file
+  if (survey_files_need_updating(paths)) {
+    message("Changes detected...re-parsing survey contents...")
 
     # Prepare translations (check for inputs)
     set_translations(paths, language)
 
-    # Render the qmd file into the "_survey" folder
-    render_qmd(paths)
-
     # Get the html content from the rendered survey.html file
     html_content <- rvest::read_html(paths$target_html)
-
-    # Extract head content (for CSS and JS) and save to "_survey" folder
-    head_content <- extract_head_content(paths, html_content)
 
     # Extract all divs with class "sd-page" and save to "_survey" folder
     pages <- extract_html_pages(
@@ -38,25 +30,21 @@ run_config <- function(
       all_questions_required, show_if
     )
 
-    # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
+    # Get question structure
     question_structure <- get_question_structure(paths, html_content)
 
     message(
-      "Survey saved to:\n",
-      "  ", paths$target_html, "\n",
-      "Contents saved to:\n",
+      "Survey contents saved to:\n",
       "  ", paths$target_pages, "\n",
       "  ", paths$target_head, "\n",
       "  ", paths$target_questions
     )
 
   } else {
+    # If no changes, import from '_survey' folder
     message(
       'No changes detected. Importing contents from "_survey" folder.'
     )
-
-    # Load head content from _survey folder
-    head_content <- readRDS(paths$target_head)
 
     # Load pages object from _survey folder
     pages <- readRDS(paths$target_pages)
@@ -97,7 +85,6 @@ run_config <- function(
   # Store all config settings
   config <- list(
     pages = pages,
-    head_content = head_content,
     page_ids = page_ids,
     question_ids = question_ids,
     question_required = question_required,
@@ -137,22 +124,19 @@ get_paths <- function() {
   return(paths)
 }
 
-check_files_need_updating <- function(paths) {
-  # Re-render if any of the target files are missing
-  targets <- c(
-    paths$target_html, paths$target_pages,
-    paths$target_head, paths$target_questions
-  )
+survey_files_need_updating <- function(paths) {
+  # Re-parse if any of the target files are missing
+  targets <- c(paths$target_pages, paths$target_questions)
   if (any(!fs::file_exists(targets))) { return(TRUE) }
 
-  # Re-render if the target pages file is out of date with 'survey.qmd', 'app.R'
+  # Re-parse if the target pages file is out of date with 'survey.qmd', 'app.R'
   time_qmd <- file.info(paths$qmd)$mtime
   time_app <- file.info(paths$app)$mtime
   time_pages <- file.info(paths$target_pages)$mtime
 
   if ((time_qmd > time_pages) || (time_app > time_pages)) { return(TRUE) }
 
-  # Re-render if the user provided a 'translations.yml' file which is out of date
+  # Re-parse if the user provided a 'translations.yml' file which is out of date
   if (fs::file_exists(paths$transl)) {
     time_transl <- file.info(paths$transl)$mtime
     if (time_transl > time_pages) { return(TRUE) }
@@ -229,34 +213,6 @@ set_translations <- function(paths, language) {
 
   # write translations file
   yaml::write_yaml(translations, paths$target_transl)
-}
-
-render_qmd <- function(paths) {
-  tryCatch(
-    {
-      # Render the 'survey.qmd' file
-      quarto::quarto_render(
-        paths$qmd,
-        pandoc_args = c("--embed-resources")
-      )
-
-      # Move rendered 'survey.html' into '_survey' folder
-      fs::file_move(paths$root_html, paths$target_html)
-    },
-    error = function(e) {
-      stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
-    }
-  )
-}
-
-extract_head_content <- function(paths, html_content) {
-  head_content <- html_content |>
-    rvest::html_element("head") |>
-    rvest::html_children() |>
-    sapply(as.character) |>
-    paste(collapse = "\n")
-  saveRDS(head_content, paths$target_head)
-  return(head_content)
 }
 
 extract_html_pages <- function(
