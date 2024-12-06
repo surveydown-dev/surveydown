@@ -1,6 +1,10 @@
 # surveydown (development version)
 
-# surveydowb 0.6.2
+# surveydown 0.7.0
+
+- Heavy revision to how css and us dependencies are loaded. Now the `sd_ui()` function handles the rendering of the `survey.qmd` file and extracting the header contents. All surveydown css and js dependencies are loaded via a simple lua filter when rendering. This simplifies how these dependencies get loaded into the resulting shiny app.
+
+# surveydown 0.6.2
 
 - Update: Now `ignore = TRUE` in `sd_server()` will turn off cookies, regardless of the value of `use_cookies`.
 
