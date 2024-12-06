@@ -431,6 +431,52 @@ sd_server <- function(
         })
     })
 
+    # Observer to update cookies with answers
+    shiny::observe({
+        # Get current page ID
+        page_id <- current_page_id()
+        
+        # Get all questions for current page
+        page_questions <- names(input)[names(input) %in% question_ids]
+        
+        # Create answers list
+        answers <- list()
+        last_timestamp <- NULL
+        max_index <- 0
+        
+        for (q_id in page_questions) {
+            # Get question value
+            val <- input[[q_id]]
+            if (!is.null(val)) {
+                answers[[q_id]] <- val
+                
+                # If question was interacted with, check its position
+                if (!is.null(input[[paste0(q_id, "_interacted")]])) {
+                    # Find this question's index in the overall sequence
+                    current_index <- match(q_id, question_ids)
+                    if (!is.na(current_index) && current_index > max_index) {
+                        max_index <- current_index
+                        last_timestamp <- list(
+                            id = paste0("time_q_", q_id),
+                            time = get_utc_timestamp()
+                        )
+                    }
+                }
+            }
+        }
+        
+        # Send to client to update cookie
+        if (length(answers) > 0 && !is.null(db)) {  # Only update cookies in db mode
+            page_data <- list(
+                answers = answers,
+                last_timestamp = last_timestamp
+            )
+            session$sendCustomMessage("setAnswerData", 
+                                    list(pageId = page_id, 
+                                        pageData = page_data))
+        }
+    })
+
     # 6. Page rendering ----
 
     # Create reactive values for the start page ID
@@ -1300,10 +1346,8 @@ admin_enable <- function(input, output, session, db) {
         data <- DBI::dbReadTable(db$db, paste0(db$table, "_admin_table"))
         #Read table value in, change it from true to false
 
-
         #Add in sd_server if(survey_paused == TRUE)
         #Create and display a blank page that says the survey is pause
-
 
     })
 
@@ -1331,11 +1375,41 @@ get_local_data <- function() {
     return(NULL)
 }
 
+get_cookie_data <- function(session, current_page_id) {
+    # Get stored answer data from input
+    answer_data <- session$input$stored_answer_data
+    
+    if (is.null(answer_data) || !length(answer_data)) {
+        return(NULL)
+    }
+    
+    # Extract data for current page
+    page_data <- answer_data[[current_page_id]]
+    if (is.null(page_data)) {
+        return(NULL)
+    }
+    
+    # Return the full page data structure including answers and timestamps
+    return(page_data)
+}
+
+restore_current_page_values <- function(restore_data, session, page_filter = NULL) {
+    for (col in names(restore_data)) {
+        # Skip special columns
+        if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
+            val <- restore_data[[col]]
+            if (!is.null(val) && !is.na(val) && val != "") {
+                session$sendInputMessage(col, list(value = val, priority = "event"))
+            }
+        }
+    }
+}
+
 handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
-                                    question_ids, question_ts_ids, progress_updater) {
+                                  question_ids, question_ts_ids, progress_updater) {
     if (is.null(session_id)) return(NULL)
 
-    # Get data using sd_get_data or local CSV
+    # Get data based on source
     if (!is.null(db)) {
         all_data <- sd_get_data(db)
     } else {
@@ -1349,9 +1423,8 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 
     if (nrow(restore_data) == 0) return(NULL)
 
-    # Rest of the function remains the same...
     shiny::isolate({
-        # Restore page state
+        # 1. Restore page state (using restore_data)
         if ("current_page" %in% names(restore_data)) {
             restored_page <- restore_data[["current_page"]]
             if (!is.null(restored_page) && !is.na(restored_page) && nchar(restored_page) > 0) {
@@ -1362,17 +1435,30 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
         } else {
             current_page_id(start_page)
         }
+        
+        # Get cookie data after page state is set
+        answer_data <- NULL
+        if (!is.null(db)) {
+            answer_data <- get_cookie_data(session, current_page_id())
+        }
 
-        # Find the last answered question for progress bar
+        # 2. Find the last answered question for progress bar
         last_index <- 0
-        for (i in seq_along(question_ids)) {
-            q_id <- question_ids[i]
-            ts_id <- question_ts_ids[i]
-
-            if (ts_id %in% names(restore_data)) {
-                ts_val <- restore_data[[ts_id]]
-                if (!is.null(ts_val) && !is.na(ts_val) && ts_val != "") {
-                    last_index <- i
+        if (!is.null(db) && !is.null(answer_data) && !is.null(answer_data$last_timestamp)) {
+            # Use last timestamp from cookie data in DB mode
+            last_ts_id <- answer_data$last_timestamp$id
+            # Find the index of this timestamp ID in our question_ts_ids
+            last_index <- match(last_ts_id, question_ts_ids)
+            if (is.na(last_index)) last_index <- 0
+        } else {
+            # Use restore_data for local CSV mode
+            for (i in seq_along(question_ids)) {
+                ts_id <- question_ts_ids[i]
+                if (ts_id %in% names(restore_data)) {
+                    ts_val <- restore_data[[ts_id]]
+                    if (length(ts_val) == 1 && !is.null(ts_val) && !is.na(ts_val) && ts_val != "") {
+                        last_index <- i
+                    }
                 }
             }
         }
@@ -1381,14 +1467,18 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             progress_updater(last_index)
         }
 
-        for (col in names(restore_data)) {
-            if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
-                val <- restore_data[[col]]
-                if (!is.null(val) && !is.na(val) && val != "") {
-                    all_data[[col]] <- val
+        # 3. Restore question values
+        if (!is.null(db) && !is.null(answer_data) && !is.null(answer_data$answers)) {
+            # Use answer data from cookies for current page
+            for (col in names(answer_data$answers)) {
+                val <- answer_data$answers[[col]]
+                if (length(val) == 1 && !is.null(val) && !is.na(val) && val != "") {
                     session$sendInputMessage(col, list(value = val, priority = "event"))
                 }
             }
+        } else {
+            # Fall back to restore_data
+            restore_current_page_values(restore_data, session)
         }
     })
     return(restore_data)
@@ -1397,7 +1487,12 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 handle_sessions <- function(session_id, db = NULL, session, input, time_start,
                             start_page, current_page_id, question_ids,
                             question_ts_ids, progress_updater, use_cookies = TRUE) {
-    # Check 1: Cookies enabled?
+    # Check 1: if db is null, don't use cookies
+    if (is.null(db)) {
+        use_cookies <- FALSE
+    }
+
+    # Check 2: Cookies enabled?
     if (!use_cookies) {
         return(session_id)
     }
@@ -1407,13 +1502,14 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
 
     # Do the cookie check synchronously in a reactive context
     shiny::isolate({
-        # Check 2: Cookie exists and is valid?
+
+        # Check 3: Cookie exists and is valid?
         stored_id <- shiny::reactiveValuesToList(input)$stored_session_id
         if (!is.null(stored_id) && nchar(stored_id) > 0 &&
-            # Check 3: Either DB connection exists or preview_data.csv is writable
+            # Check 4: Either DB connection exists or preview_data.csv is writable
             (!is.null(db) || (file.exists("preview_data.csv") && file.access("preview_data.csv", 2) == 0))) {
 
-            # Check 4: Session exists in DB or preview data?
+            # Check 5: Session exists in DB or preview data?
             restore_data <- handle_data_restoration(
                 stored_id, db, session, current_page_id,
                 start_page, question_ids, question_ts_ids,
@@ -1421,14 +1517,17 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
             )
 
             if (!is.null(restore_data)) {
+
                 # All checks passed - use stored session
                 final_session_id <- stored_id
                 session$sendCustomMessage("setCookie", list(sessionId = stored_id))
             } else {
+
                 # Session not in DB - use new session
                 session$sendCustomMessage("setCookie", list(sessionId = session_id))
             }
         } else {
+
             # No cookie or no DB connection - use new session
             session$sendCustomMessage("setCookie", list(sessionId = session_id))
         }

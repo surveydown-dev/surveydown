@@ -1,5 +1,14 @@
 # surveydown (development version)
 
+# surveydowb 0.6.2
+
+- Update: Now `ignore = TRUE` in `sd_server()` will turn off cookies, regardless of the value of `use_cookies`.
+
+# surveydown 0.6.1
+
+- Cookies now contain not only the `session_id` but a complete JSON object of the current page questions, answers, and latest time stamp.
+- Increased checkpoints of data updates. Now they are: upon starting, upon proceeding to the next page, upon submitting rating or clicking the exit button, and finally, upon abruptly quitting the survey.
+
 # surveydown 0.6.0
 
 - Cookies functionality fully working, applied to both local testing and online db.
