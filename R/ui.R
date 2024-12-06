@@ -86,16 +86,10 @@ sd_ui <- function() {
     head_content <- readRDS(paths$target_head)
   }
 
-  # Get widget dependencies
-  deps <- suppressMessages(find_widget_dependencies())
-
   # Create the UI
-  htmltools::attachDependencies(
     shiny::tagList(
       # Head content
       shiny::tags$head(
-        # Essential Shiny/jQuery dependencies
-        shiny::bootstrapLib(),  # This brings in jQuery and Bootstrap
         # Survey head content (filtered)
         shiny::HTML(head_content)
       ),
@@ -122,10 +116,7 @@ sd_ui <- function() {
           shiny::uiOutput("main")
         )
       ) # fluidPage
-    ), # htmltools::attachDependencies
-    deps,
-    append = TRUE
-  )
+    ) # shiny::tagList()
 }
 
 get_theme <- function(metadata) {
@@ -203,59 +194,6 @@ extract_head_content <- function(html_content) {
         sapply(as.character) |>
         paste(collapse = "\n")
     return(head_content)
-}
-
-find_widget_dependencies <- function(
-    qmd_file = "survey.qmd",
-    app_file = "app.R"
-) {
-  # Read both files
-  qmd_content <- readLines(qmd_file)
-  app_content <- readLines(app_file)
-  all_content <- paste(c(qmd_content, app_content), collapse = "\n")
-
-  # Find packages from library() calls
-  library_packages <- stringr::str_match_all(
-    all_content,
-    "library\\s*\\(\\s*([^\\)]+)\\s*\\)"
-  )[[1]][,2]
-
-  # Find packages from namespace calls (pkg::fn)
-  namespace_packages <- stringr::str_match_all(
-    all_content,
-    "([[:alnum:]\\._]+)::"
-  )[[1]][,2]
-
-  # Combine and unique
-  widget_packages <- unique(c(library_packages, namespace_packages))
-
-  # Find dependencies for each package
-  dependencies <- list()
-  for (pkg in widget_packages) {
-    if (pkg %in% loadedNamespaces()) {
-      # Look for any *Output functions in the package
-      exports <- getNamespaceExports(pkg)
-      output_fns <- grep("Output$", exports, value = TRUE)
-
-      for (output_fn_name in output_fns) {
-        widget_fn <- getExportedValue(pkg, output_fn_name)
-        # Check if it's actually a widget output function
-        # by seeing if it has an htmlwidget class
-        tryCatch({
-          widget <- widget_fn("dummy")
-          deps <- htmltools::findDependencies(widget)
-          if (length(deps) > 0) {
-            dependencies <- c(dependencies, deps)
-          }
-        }, error = function(e) {
-          # Skip if there's an error creating the widget
-        })
-      }
-    }
-  }
-
-  # Return unique dependencies
-  unique(dependencies)
 }
 
 #' Create a survey question

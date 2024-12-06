@@ -165,28 +165,6 @@ load_js_file <- function(name) {
   shinyjs::runjs(js_code)
 }
 
-# Load CSS and JS files
-load_resource <- function(..., package = "surveydown") {
-  files <- c(...)
-  lapply(files, function(file) {
-    file_type <- tolower(tools::file_ext(file))
-    if (!(file_type %in% c("css", "js"))) {
-      stop(paste("Unsupported file type:", file_type, "for file:", file))
-    }
-    path <- system.file(paste0(file_type, "/", file), package = package)
-    if (file.exists(path)) {
-      if (file_type == "css") {
-        shiny::includeCSS(path)
-      } else {
-        shiny::includeScript(path)
-      }
-    } else {
-      warning(paste("File not found:", file, "in package:", package))
-      NULL
-    }
-  })
-}
-
 tibble_to_list_of_lists <- function(tbl) {
   if (!is.data.frame(tbl)) {
     stop("Input must be a data frame or tibble")
