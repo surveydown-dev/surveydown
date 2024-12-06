@@ -69,7 +69,7 @@ sd_database <- function(
 ) {
 
     if (ignore) {
-        message("Database connection ignored. Saving data to local CSV file.")
+        message("Database connection ignored. Saving data to local CSV file.\n")
         return(NULL)
     }
 

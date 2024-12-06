@@ -40,7 +40,7 @@ list_name_md_to_html <- function(list) {
     "Author:   ", "John Paul Helveston, Pingfan Hu, Bogdan Bunea (George Washington University)", "\n\n",
     "Consider submitting praise at\n",
     "https://github.com/jhelvy/surveydown/issues/41.\n\n",
-    "Please cite our package in your publications, see:\ncitation(\"surveydown\")"
+    "Please cite our package in your publications, see:\ncitation(\"surveydown\")\n"
   )
 }
 

@@ -14,24 +14,15 @@ run_config <- function(
   # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
-  # Check for changes in survey.qmd and app.R files
-  files_need_updating <- check_files_need_updating(paths)
-
-  if (files_need_updating) {
+  # If changes detected, re-parse the '_survey/survey.html' file
+  if (check_files_need_updating(paths)) {
     message("Changes detected. Rendering contents.")
 
     # Prepare translations (check for inputs)
     set_translations(paths, language)
 
-    # Render the qmd file into the "_survey" folder
-    render_qmd(paths)
-
     # Get the html content from the rendered survey.html file
     html_content <- rvest::read_html(paths$target_html)
-
-    # Extract head content (for CSS and JS) and save to "_survey" folder
-    head_content <- extract_head_content(html_content)
-    saveRDS(head_content, paths$target_head)
 
     # Extract all divs with class "sd-page" and save to "_survey" folder
     pages <- extract_html_pages(
@@ -39,19 +30,18 @@ run_config <- function(
       all_questions_required, show_if
     )
 
-    # Get the question structure (If changes detected, extract from HTML, otherwise YAML)
+    # Get question structure
     question_structure <- get_question_structure(paths, html_content)
 
     message(
-      "Survey saved to:\n",
-      "  ", paths$target_html, "\n",
-      "Contents saved to:\n",
+      "Survey contents saved to:\n",
       "  ", paths$target_pages, "\n",
       "  ", paths$target_head, "\n",
       "  ", paths$target_questions
     )
 
   } else {
+    # If no changes, import from '_survey' folder
     message(
       'No changes detected. Importing contents from "_survey" folder.'
     )
@@ -226,36 +216,6 @@ set_translations <- function(paths, language) {
 
   # write translations file
   yaml::write_yaml(translations, paths$target_transl)
-}
-
-render_qmd <- function(paths) {
-  tryCatch(
-    {
-      # Render the 'survey.qmd' file
-      message("Rendering 'survey.qmd' file")
-      quarto::quarto_render(
-        paths$qmd,
-        pandoc_args = c("--embed-resources"),
-        quiet = TRUE
-      )
-
-      # Move rendered 'survey.html' into '_survey' folder
-      fs::file_move(paths$root_html, paths$target_html)
-    },
-    error = function(e) {
-      stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
-    }
-  )
-}
-
-extract_head_content <- function(html_content) {
-  # Head content from the rendered 'survey.html' file
-  head_content <- html_content |>
-    rvest::html_element("head") |>
-    rvest::html_children() |>
-    sapply(as.character) |>
-    paste(collapse = "\n")
-  return(head_content)
 }
 
 extract_html_pages <- function(
