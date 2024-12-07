@@ -487,6 +487,16 @@ sd_question <- function(
         shiny::tags$tbody(rows)
       )
     )
+  } else if (type == "custom") {
+      # For custom map type, we need to ensure proper nesting of containers
+      output <- shiny::div(
+        class = "custom-question-container",
+        shiny::tags$label(class = "control-label", label),
+        shiny::div(
+          class = "map-container",
+          leafletOutput(paste0(id, "_map"), height = "400px")
+        )
+      )
   }
 
   # Create wrapper div
