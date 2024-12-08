@@ -1472,7 +1472,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             # Use answer data from cookies for current page
             for (col in names(answer_data$answers)) {
                 val <- answer_data$answers[[col]]
-                if (length(val) == 1 && !is.null(val) && !is.na(val) && val != "") {
+                if (!is.null(val) && !identical(val, "")) {
                     session$sendInputMessage(col, list(value = val, priority = "event"))
                 }
             }
