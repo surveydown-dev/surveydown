@@ -55,7 +55,7 @@ sd_ui <- function() {
   theme <- get_theme(metadata)
   default_theme <- FALSE
   if (any(theme == "default")) {
-      default_theme <- TRUE
+    default_theme <- TRUE
   }
   barcolor <- get_barcolor(metadata)
   barposition <- get_barposition(metadata)
@@ -79,7 +79,7 @@ sd_ui <- function() {
       fs::file_move(paths$root_html, paths$target_html)
       message("Survey saved to ", paths$target_html, "\n")
     }, error = function(e) {
-        stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
+      stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
     })
   } else {
     # If no changes, just load head content from '_survey/head.rds'
@@ -87,113 +87,113 @@ sd_ui <- function() {
   }
 
   # Create the UI
-    shiny::tagList(
-      # Head content
-      shiny::tags$head(
-        # Survey head content (filtered)
-        shiny::HTML(head_content)
-      ),
-      # Body content
-      shiny::fluidPage(
-        shinyjs::useShinyjs(),
-        shiny::tags$script("var surveydownConfig = {};"),
-        if (!is.null(barcolor)) {
-          shiny::tags$style(htmltools::HTML(sprintf("
+  shiny::tagList(
+    # Head content
+    shiny::tags$head(
+      # Survey head content (filtered)
+      shiny::HTML(head_content)
+    ),
+    # Body content
+    shiny::fluidPage(
+      shinyjs::useShinyjs(),
+      shiny::tags$script("var surveydownConfig = {};"),
+      if (!is.null(barcolor)) {
+        shiny::tags$style(htmltools::HTML(sprintf("
             :root {
                 --progress-color: %s;
             }
           ", barcolor)))
-        },
-        if (barposition != "none") {
-          shiny::tags$div(
-            id = "progressbar",
-            class = barposition,
-            shiny::tags$div(id = "progress")
-          )
-        },
+      },
+      if (barposition != "none") {
         shiny::tags$div(
-          class = "content",
-          shiny::uiOutput("main")
+          id = "progressbar",
+          class = barposition,
+          shiny::tags$div(id = "progress")
         )
-      ) # fluidPage
-    ) # shiny::tagList()
+      },
+      shiny::tags$div(
+        class = "content",
+        shiny::uiOutput("main")
+      )
+    ) # fluidPage
+  ) # shiny::tagList()
 }
 
 get_theme <- function(metadata) {
-    x <- "survey.qmd"
-    theme <- metadata$formats$html$metadata$theme
-    if (is.null(theme)) {
-        return("default")
-    }
-    return(theme)
+  x <- "survey.qmd"
+  theme <- metadata$formats$html$metadata$theme
+  if (is.null(theme)) {
+    return("default")
+  }
+  return(theme)
 }
 
 get_barcolor <- function(metadata) {
-    barcolor <- metadata$formats$html$metadata$barcolor
-    if (!is.null(barcolor)) {
-        if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
-            stop("Invalid barcolor in YAML. Use a valid hex color.")
-        }
+  barcolor <- metadata$formats$html$metadata$barcolor
+  if (!is.null(barcolor)) {
+    if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
+      stop("Invalid barcolor in YAML. Use a valid hex color.")
     }
-    return(barcolor)
+  }
+  return(barcolor)
 }
 
 get_barposition <- function(metadata) {
-    barposition <- metadata$formats$html$metadata$barposition
-    if (is.null(barposition)) {
-        return("top")
-    }
-    return(barposition)
+  barposition <- metadata$formats$html$metadata$barposition
+  if (is.null(barposition)) {
+    return("top")
+  }
+  return(barposition)
 }
 
 survey_needs_updating <- function(paths) {
-    # Re-render if any of the target files are missing
-    targets <- c(paths$target_html, paths$target_head)
-    if (any(!fs::file_exists(targets))) { return(TRUE) }
+  # Re-render if any of the target files are missing
+  targets <- c(paths$target_html, paths$target_head)
+  if (any(!fs::file_exists(targets))) { return(TRUE) }
 
-    # Re-render if '_survey/survey.html' file is out of date with 'survey.qmd' file
-    time_qmd <- file.info(paths$qmd)$mtime
-    time_html <- file.info(paths$target_html)$mtime
+  # Re-render if '_survey/survey.html' file is out of date with 'survey.qmd' file
+  time_qmd <- file.info(paths$qmd)$mtime
+  time_html <- file.info(paths$target_html)$mtime
 
-    if (time_qmd > time_html) { return(TRUE) }
+  if (time_qmd > time_html) { return(TRUE) }
 
-    return(FALSE)
+  return(FALSE)
 }
 
 render_survey_qmd <- function(paths, default_theme = TRUE) {
-    # Copy lua filter to local folder
-    lua_file <- 'surveydown.lua'
-    fs::file_copy(
-        system.file("lua/include-resources.lua", package = "surveydown"),
-        lua_file,
-        overwrite = TRUE
-    )
+  # Copy lua filter to local folder
+  lua_file <- 'surveydown.lua'
+  fs::file_copy(
+    system.file("lua/include-resources.lua", package = "surveydown"),
+    lua_file,
+    overwrite = TRUE
+  )
 
-    # Render with Lua filter and metadata
-    quarto::quarto_render(
-        paths$qmd,
-        metadata = list(
-            default_theme = default_theme
-        ),
-        pandoc_args = c(
-            "--embed-resources",
-            "--lua-filter=surveydown.lua"
-        ),
-        quiet = TRUE
-    )
+  # Render with Lua filter and metadata
+  quarto::quarto_render(
+    paths$qmd,
+    metadata = list(
+      default_theme = default_theme
+    ),
+    pandoc_args = c(
+      "--embed-resources",
+      "--lua-filter=surveydown.lua"
+    ),
+    quiet = TRUE
+  )
 
-    # Delete local lua filter
-    fs::file_delete(lua_file)
+  # Delete local lua filter
+  fs::file_delete(lua_file)
 }
 
 extract_head_content <- function(html_content) {
-    # Head content from the rendered 'survey.html' file
-    head_content <- html_content |>
-        rvest::html_element("head") |>
-        rvest::html_children() |>
-        sapply(as.character) |>
-        paste(collapse = "\n")
-    return(head_content)
+  # Head content from the rendered 'survey.html' file
+  head_content <- html_content |>
+    rvest::html_element("head") |>
+    rvest::html_children() |>
+    sapply(as.character) |>
+    paste(collapse = "\n")
+  return(head_content)
 }
 
 #' Create a survey question
@@ -491,33 +491,33 @@ sd_question <- function(
       )
     )
   } else if (type == "custom") {
-      # Handle the main question container structure
-      output <- shiny::div(
-        class = "question-container",
-        `data-question-id` = id,
-        shiny::tags$label(class = "control-label", label),
-        # Hidden input to store the value
-        shiny::div(
-          style = "display: none;",
-          shiny::textInput(
-            inputId = id,
-            label = NULL,
-            value = "",
-            width = "0px"
-          )
+    # Handle the main question container structure
+    output <- shiny::div(
+      class = "question-container",
+      `data-question-id` = id,
+      shiny::tags$label(class = "control-label", label),
+      # Hidden input to store the value
+      shiny::div(
+        style = "display: none;",
+        shiny::textInput(
+          inputId = id,
+          label = NULL,
+          value = "",
+          width = "0px"
+        )
+      ),
+      # Custom content container
+      shiny::div(
+        class = "custom-content",
+        onclick = sprintf(
+          "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
+          id
         ),
-        # Custom content container
-        shiny::div(
-          class = "custom-content",
-          onclick = sprintf(
-            "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
-            id
-          ),
-          # Allow for custom content through option parameter
-          option
-        ),
-        shiny::tags$span(class = "hidden-asterisk", "*")
-      )
+        # Allow for custom content through option parameter
+        option
+      ),
+      shiny::tags$span(class = "hidden-asterisk", "*")
+    )
   }
 
   # Create wrapper div
