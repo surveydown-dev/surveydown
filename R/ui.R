@@ -489,7 +489,8 @@ sd_question <- function(
     )
   } else if (type == "custom") {
       output <- shiny::div(
-        class = "custom-question-container",
+        class = "question-container",
+        `data-question-id` = id,
         shiny::tags$label(class = "control-label", label),
         # Hidden input to store the value
         shiny::div(
@@ -503,8 +504,14 @@ sd_question <- function(
         ),
         shiny::div(
           class = "map-container",
+          # Add oninput handler to trigger interaction
+          onclick = sprintf(
+            "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
+            id
+          ),
           leafletOutput(paste0(id, "_map"), height = "400px")
-        )
+        ),
+        shiny::tags$span(class = "hidden-asterisk", "*")
       )
   }
 
