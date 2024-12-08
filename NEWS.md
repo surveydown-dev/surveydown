@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.7.1
+
+- `custom` type added for `sd_question()`. Now users can create customized question types according to their own needs. A demo of leaflet map is created as well to showcase this ability.
+
 # surveydown 0.7.0
 
 - Heavy revision to how css and us dependencies are loaded. Now the `sd_ui()` function handles the rendering of the `survey.qmd` file and extracting the header contents. All surveydown css and js dependencies are loaded via a simple lua filter when rendering. This simplifies how these dependencies get loaded into the resulting shiny app.

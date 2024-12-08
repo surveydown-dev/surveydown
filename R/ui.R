@@ -200,7 +200,9 @@ extract_head_content <- function(html_content) {
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
 #'
-#' @param type Specifies the type of question. Possible values are "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea", "numeric", "slider", "date", "daterange", and "matrix".
+#' @param type Specifies the type of question. Possible values are "select", "mc",
+#'   "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
+#'   "numeric", "slider", "date", "daterange", "matrix", and "custom".
 #' @param id A unique identifier for the question, which will be used as the variable name in the resulting survey data.
 #' @param label Character string. The label for the UI element, which can be formatted with markdown.
 #' @param cols Integer. Number of columns for the textarea input. Defaults to 80.
@@ -233,6 +235,7 @@ extract_head_content <- function(html_content) {
 #' - "date": Date input
 #' - "daterange": Date range input
 #' - "matrix": Matrix-style question with rows and columns
+#' - "custom": Custom question with arbitrary content
 #'
 #' For "matrix" type questions, use the `row` parameter to define the rows of
 #' the matrix. Each element in the `row` list should have a name (used as the
@@ -487,6 +490,34 @@ sd_question <- function(
         shiny::tags$tbody(rows)
       )
     )
+  } else if (type == "custom") {
+      # Handle the main question container structure
+      output <- shiny::div(
+        class = "question-container",
+        `data-question-id` = id,
+        shiny::tags$label(class = "control-label", label),
+        # Hidden input to store the value
+        shiny::div(
+          style = "display: none;",
+          shiny::textInput(
+            inputId = id,
+            label = NULL,
+            value = "",
+            width = "0px"
+          )
+        ),
+        # Custom content container
+        shiny::div(
+          class = "custom-content",
+          onclick = sprintf(
+            "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
+            id
+          ),
+          # Allow for custom content through option parameter
+          option
+        ),
+        shiny::tags$span(class = "hidden-asterisk", "*")
+      )
   }
 
   # Create wrapper div
