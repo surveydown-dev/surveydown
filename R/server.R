@@ -114,15 +114,15 @@
 #'
 #' @export
 sd_server <- function(
-    db                     = NULL,
-    required_questions     = NULL,
-    all_questions_required = FALSE,
-    start_page             = NULL,
-    admin_page             = FALSE,
-    auto_scroll            = FALSE,
-    rate_survey            = FALSE,
-    language               = "en",
-    use_cookies            = TRUE
+        db                     = NULL,
+        required_questions     = NULL,
+        all_questions_required = FALSE,
+        start_page             = NULL,
+        admin_page             = FALSE,
+        auto_scroll            = FALSE,
+        rate_survey            = FALSE,
+        language               = "en",
+        use_cookies            = TRUE
 ) {
 
     # 1. Initialize local variables ----
@@ -435,21 +435,21 @@ sd_server <- function(
     shiny::observe({
         # Get current page ID
         page_id <- current_page_id()
-        
+
         # Get all questions for current page
         page_questions <- names(input)[names(input) %in% question_ids]
-        
+
         # Create answers list
         answers <- list()
         last_timestamp <- NULL
         max_index <- 0
-        
+
         for (q_id in page_questions) {
             # Get question value
             val <- input[[q_id]]
             if (!is.null(val)) {
                 answers[[q_id]] <- val
-                
+
                 # If question was interacted with, check its position
                 if (!is.null(input[[paste0(q_id, "_interacted")]])) {
                     # Find this question's index in the overall sequence
@@ -464,16 +464,16 @@ sd_server <- function(
                 }
             }
         }
-        
+
         # Send to client to update cookie
         if (length(answers) > 0 && !is.null(db)) {  # Only update cookies in db mode
             page_data <- list(
                 answers = answers,
                 last_timestamp = last_timestamp
             )
-            session$sendCustomMessage("setAnswerData", 
-                                    list(pageId = page_id, 
-                                        pageData = page_data))
+            session$sendCustomMessage("setAnswerData",
+                                      list(pageId = page_id,
+                                           pageData = page_data))
         }
     })
 
@@ -1378,17 +1378,17 @@ get_local_data <- function() {
 get_cookie_data <- function(session, current_page_id) {
     # Get stored answer data from input
     answer_data <- session$input$stored_answer_data
-    
+
     if (is.null(answer_data) || !length(answer_data)) {
         return(NULL)
     }
-    
+
     # Extract data for current page
     page_data <- answer_data[[current_page_id]]
     if (is.null(page_data)) {
         return(NULL)
     }
-    
+
     # Return the full page data structure including answers and timestamps
     return(page_data)
 }
@@ -1406,7 +1406,7 @@ restore_current_page_values <- function(restore_data, session, page_filter = NUL
 }
 
 handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
-                                  question_ids, question_ts_ids, progress_updater) {
+                                    question_ids, question_ts_ids, progress_updater) {
     if (is.null(session_id)) return(NULL)
 
     # Get data based on source
@@ -1435,7 +1435,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
         } else {
             current_page_id(start_page)
         }
-        
+
         # Get cookie data after page state is set
         answer_data <- NULL
         if (!is.null(db)) {
@@ -1472,7 +1472,7 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
             # Use answer data from cookies for current page
             for (col in names(answer_data$answers)) {
                 val <- answer_data$answers[[col]]
-                if (length(val) == 1 && !is.null(val) && !is.na(val) && val != "") {
+                if (!is.null(val) && !identical(val, "")) {
                     session$sendInputMessage(col, list(value = val, priority = "event"))
                 }
             }
