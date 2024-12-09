@@ -510,6 +510,7 @@ sd_question <- function(
         # Leaflet map container
         shiny::div(
           class = "leaflet-content",
+          # Add onclick handler to mark as interacted
           onclick = sprintf(
             "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
             id
@@ -521,6 +522,42 @@ sd_question <- function(
         ),
         shiny::tags$span(class = "hidden-asterisk", "*")
       )
+
+      # Add the observer for map clicks
+      session <- shiny::getDefaultReactiveDomain()
+      shiny::observeEvent(session$input[[paste0(map, "_shape_click")]], {
+        state_name <- session$input[[paste0(map, "_shape_click")]]$id
+        if (!is.null(state_name)) {
+          state_name <- stringr::str_to_title(state_name)
+          state_name <- stringr::str_replace(state_name, ':main', '')
+          # Update the hidden input value
+          shiny::updateTextInput(session, id, value = state_name)
+          # Set interacted to true when a state is clicked
+          shiny::updateTextInput(session, paste0(id, "_interacted"), value = TRUE)
+          # Update map colors
+          states <- maps::map("state", plot = FALSE, fill = TRUE)
+          leaflet::leafletProxy(map) %>%
+            leaflet::addPolygons(
+              data = states,
+              fillColor = ifelse(
+                states$names == session$input[[paste0(map, "_shape_click")]]$id,
+                "orange",
+                "lightblue"
+              ),
+              weight = 2,
+              opacity = 1,
+              color = "white",
+              fillOpacity = 0.7,
+              highlightOptions = leaflet::highlightOptions(
+                weight = 3,
+                color = "#666",
+                fillOpacity = 0.7,
+                bringToFront = TRUE
+              ),
+              layerId = states$names
+            )
+        }
+      })
   }
 
   # Create wrapper div
