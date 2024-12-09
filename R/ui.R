@@ -290,7 +290,7 @@ sd_question <- function(
     placeholder  = NULL,
     resize       = NULL,
     row          = NULL,
-    map          = NULL,
+    map_name     = NULL,
     map_data     = NULL
 ) {
 
@@ -513,7 +513,7 @@ sd_question <- function(
             id
           ),
           leaflet::leafletOutput(
-            outputId = map,
+            outputId = map_name,
             height = if (!is.null(height)) height else "400px"
           )
         ),
@@ -526,21 +526,18 @@ sd_question <- function(
       base_color <- shiny::reactiveVal(NULL)
       
       # Observer to capture initial color
-      shiny::observeEvent(session$input[[map]], {
+      shiny::observeEvent(session$input[[map_name]], {
         if (is.null(base_color())) {
-          map_data <- session$input[[map]]
-          print("Initial map data:")
-          print(map_data)
+          map_data <- session$input[[map_name]]
           if (!is.null(map_data$calls[[1]]$args[[1]]$fillColor)) {
             initial_color <- map_data$calls[[1]]$args[[1]]$fillColor
-            print(paste("Setting initial color to:", initial_color))
             base_color(initial_color)
           }
         }
       }, ignoreNULL = TRUE)
 
-      shiny::observeEvent(session$input[[paste0(map, "_shape_click")]], {
-        click_data <- session$input[[paste0(map, "_shape_click")]]
+      shiny::observeEvent(session$input[[paste0(map_name, "_shape_click")]], {
+        click_data <- session$input[[paste0(map_name, "_shape_click")]]
         if (!is.null(click_data)) {
           # Get clicked feature id and set values
           feature_id <- click_data$id
@@ -564,7 +561,7 @@ sd_question <- function(
                 return hex.length === 1 ? '0' + hex : hex;
               }).join('');
               Shiny.setInputValue('%s_color', hex);",
-              map, id
+              map_name, id
             ))
           )
           
@@ -572,9 +569,9 @@ sd_question <- function(
           shiny::observe({
             shiny::req(session$input[[paste0(id, "_color")]], map_data())
             base_color <- session$input[[paste0(id, "_color")]]
-            darker_color <- colorspace::darken(base_color, 0.2)
+            darker_color <- colorspace::darken(base_color, 0.4)
 
-            leaflet::leafletProxy(map) %>%
+            leaflet::leafletProxy(map_name) %>%
               leaflet::addPolygons(
                 data = map_data(),
                 fillColor = ifelse(
