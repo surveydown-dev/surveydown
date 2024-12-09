@@ -279,7 +279,7 @@ sd_question <- function(
     direction    = "horizontal",
     status       = "default",
     width        = "100%",
-    height       = "100px",
+    height       = NULL,
     selected     = NULL,
     label_select = "Choose an option...",
     grid         = TRUE,
@@ -289,7 +289,8 @@ sd_question <- function(
     option       = NULL,
     placeholder  = NULL,
     resize       = NULL,
-    row          = NULL
+    row          = NULL,
+    map          = NULL
 ) {
 
   output <- NULL
@@ -383,7 +384,7 @@ sd_question <- function(
     output <- shiny::textAreaInput(
       inputId     = id,
       label       = label,
-      height      = height,
+      height      = "100px",
       cols        = cols,
       value       = NULL,
       rows        = "6",
@@ -490,34 +491,36 @@ sd_question <- function(
         shiny::tags$tbody(rows)
       )
     )
-  } else if (type == "custom") {
-    # Handle the main question container structure
-    output <- shiny::div(
-      class = "question-container",
-      `data-question-id` = id,
-      shiny::tags$label(class = "control-label", label),
-      # Hidden input to store the value
-      shiny::div(
-        style = "display: none;",
-        shiny::textInput(
-          inputId = id,
-          label = NULL,
-          value = "",
-          width = "0px"
-        )
-      ),
-      # Custom content container
-      shiny::div(
-        class = "custom-content",
-        onclick = sprintf(
-          "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
-          id
+  } else if (type == "leaflet") {
+      # Handle the leaflet map question structure
+      output <- shiny::div(
+        class = "question-container",
+        `data-question-id` = id,
+        shiny::tags$label(class = "control-label", label),
+        # Hidden input to store the value
+        shiny::div(
+          style = "display: none;",
+          shiny::textInput(
+            inputId = id,
+            label = NULL,
+            value = "",
+            width = "0px"
+          )
         ),
-        # Allow for custom content through option parameter
-        option
-      ),
-      shiny::tags$span(class = "hidden-asterisk", "*")
-    )
+        # Leaflet map container
+        shiny::div(
+          class = "leaflet-content",
+          onclick = sprintf(
+            "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
+            id
+          ),
+          leaflet::leafletOutput(
+            outputId = map,
+            height = if (!is.null(height)) height else "400px"
+          )
+        ),
+        shiny::tags$span(class = "hidden-asterisk", "*")
+      )
   }
 
   # Create wrapper div
