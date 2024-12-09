@@ -1,5 +1,7 @@
 # surveydown (development version)
 
+- Bug fix: The `mc_multiple` question type could not resume its UI if multiple options are selected. Now it's solved.
+
 # surveydown 0.7.1
 
 - `custom` type added for `sd_question()`. Now users can create customized question types according to their own needs. A demo of leaflet map is created as well to showcase this ability.
