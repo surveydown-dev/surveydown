@@ -12,7 +12,7 @@ sd_question(
   direction = "horizontal",
   status = "default",
   width = "100\%",
-  height = "100px",
+  height = NULL,
   selected = NULL,
   label_select = "Choose an option...",
   grid = TRUE,
@@ -22,7 +22,9 @@ sd_question(
   option = NULL,
   placeholder = NULL,
   resize = NULL,
-  row = NULL
+  row = NULL,
+  map_name = NULL,
+  map_data = NULL
 )
 }
 \arguments{

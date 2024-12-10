@@ -39,6 +39,7 @@ Imports:
     DT,
     fs,
     htmltools,
+    leaflet,
     markdown,
     pool,
     quarto,
