@@ -291,7 +291,11 @@ sd_question <- function(
     resize       = NULL,
     row          = NULL,
     map_name     = NULL,
-    map_data     = NULL
+    map_data     = NULL,
+    lng          = NULL,
+    lat          = NULL,
+    zoom         = NULL,
+    color        = NULL
 ) {
 
   output <- NULL
@@ -493,112 +497,105 @@ sd_question <- function(
       )
     )
   } else if (type == "leaflet") {
-
-    # Map polygon settings
-    map_layout <- function(map, area, color) {
-      map |> leaflet::addPolygons(
-        data = area,
-        fillColor = color,
-        weight = 2,
-        opacity = 1,
-        color = "white",
-        fillOpacity = 0.7,
-        highlightOptions = leaflet::highlightOptions(
-          weight = 3,
-          color = "#666",
+      # Map polygon settings
+      map_layout <- function(map, area, color) {
+        map |> leaflet::addPolygons(
+          data = area,
+          fillColor = color,
+          weight = 2,
+          opacity = 1,
+          color = "white",
           fillOpacity = 0.7,
-          bringToFront = TRUE
-        ),
-        layerId = area$names
-      )
-    }
-
-    # Create the UI element
-    output <- shiny::div(
-      class = "question-container",
-      `data-question-id` = id,
-      shiny::tags$label(class = "control-label", label),
-      shiny::div(
-        style = "display: none;",
-        shiny::textInput(
-          inputId = id,
-          label = NULL,
-          value = "",
-          width = "0px"
+          highlightOptions = leaflet::highlightOptions(
+            weight = 3,
+            color = "#666",
+            fillOpacity = 0.7,
+            bringToFront = TRUE
+          ),
+          layerId = area$names
         )
-      ),
-      shiny::div(
-        class = "leaflet-content",
-        onclick = sprintf(
-          "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
-          id
-        ),
-        leaflet::leafletOutput(
-          outputId = map_name,
-          height = if (!is.null(height)) height else "400px"
-        )
-      ),
-      shiny::tags$span(class = "hidden-asterisk", "*")
-    )
-
-    # Observer for initial color
-    base_color <- shiny::reactiveVal(NULL)
-    shiny::observeEvent(session$input[[map_name]], {
-      if (is.null(base_color())) {
-        map_data <- session$input[[map_name]]
-        if (!is.null(map_data$calls[[1]]$args[[1]]$fillColor)) {
-          initial_color <- map_data$calls[[1]]$args[[1]]$fillColor
-          base_color(initial_color)
-        }
       }
-    }, ignoreNULL = TRUE)
 
-    # Observer for map clicks
-    session <- shiny::getDefaultReactiveDomain()
-    shiny::observeEvent(session$input[[paste0(map_name, "_shape_click")]], {
-      click_data <- session$input[[paste0(map_name, "_shape_click")]]
-      if (!is.null(click_data)) {
-        feature_id <- click_data$id
-        feature_id <- stringr::str_replace(feature_id, ':main', '')
-        shiny::updateTextInput(session, id, value = feature_id)
-        shiny::updateTextInput(session, paste0(id, "_interacted"), value = TRUE)
-
-        # Base color of map
-        shiny::insertUI(
-          selector = "body",
-          where = "beforeEnd",
-          ui = shiny::tags$script(sprintf(
-            "var initialPolygon = document.querySelector('#%s path');
-              var style = window.getComputedStyle(initialPolygon);
-              var rgb = style.fill;
-              var rgbVals = rgb.match(/\\d+/g);
-              var hex = '#' + rgbVals.map(function(x) {
-                var hex = parseInt(x).toString(16);
-                return hex.length === 1 ? '0' + hex : hex;
-              }).join('');
-              Shiny.setInputValue('%s_color', hex);",
-            map_name, id
-          ))
-        )
-
-        # Update map color
-        shiny::observe({
-          shiny::req(session$input[[paste0(id, "_color")]], map_data())
-          base_color <- session$input[[paste0(id, "_color")]]
-          darker_color <- colorspace::darken(base_color, 0.4)
-          colors <- rep(base_color, length(map_data()$names))
-          colors[map_data()$names == feature_id] <- darker_color
-          map_layout(
-            map = leaflet::leafletProxy(map_name),
-            area = map_data(),
-            color = colors
+      # Create the UI element
+      output <- shiny::div(
+        class = "question-container",
+        `data-question-id` = id,
+        shiny::tags$label(class = "control-label", label),
+        shiny::div(
+          style = "display: none;",
+          shiny::textInput(
+            inputId = id,
+            label = NULL,
+            value = "",
+            width = "0px"
           )
-        })
-      }
-    })
+        ),
+        shiny::div(
+          class = "leaflet-content",
+          onclick = sprintf(
+            "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
+            id
+          ),
+          leaflet::leafletOutput(
+            outputId = map_name,
+            height = if (!is.null(height)) height else "400px"
+          )
+        ),
+        shiny::tags$span(class = "hidden-asterisk", "*")
+      )
 
-    # Make map_layout() available to server
-    session$userData[[paste0(map_name, "_layout")]] <- map_layout
+      # Create the map output
+      session <- shiny::getDefaultReactiveDomain()
+      shiny::isolate({
+        session$output[[map_name]] <- leaflet::renderLeaflet({
+          # Create base map
+          map <- leaflet::leaflet() %>%
+            leaflet::addTiles()
+          
+          # Add view settings if provided
+          if (!is.null(lng) && !is.null(lat) && !is.null(zoom)) {
+            map <- map %>% leaflet::setView(lng = lng, lat = lat, zoom = zoom)
+          }
+          
+          # Get area data
+          area <- map_data()
+          
+          # Set default color if not provided
+          color_val <- if (!is.null(color)) color else "orange"
+          colors <- rep(color_val, length(area$names))
+          
+          # Apply map layout
+          map_layout(map = map, area = area, color = colors)
+        })
+      })
+
+      # Observer for map clicks
+      shiny::observeEvent(session$input[[paste0(map_name, "_shape_click")]], {
+        click_data <- session$input[[paste0(map_name, "_shape_click")]]
+        if (!is.null(click_data)) {
+          feature_id <- click_data$id
+          feature_id <- stringr::str_replace(feature_id, ':main', '')
+          shiny::updateTextInput(session, id, value = feature_id)
+          shiny::updateTextInput(session, paste0(id, "_interacted"), value = TRUE)
+
+          # Update map color
+          shiny::observe({
+            shiny::req(map_data())
+            base_color <- if (!is.null(color)) color else "orange"
+            darker_color <- colorspace::darken(base_color, 0.4)
+            colors <- rep(base_color, length(map_data()$names))
+            colors[map_data()$names == feature_id] <- darker_color
+            map_layout(
+              map = leaflet::leafletProxy(map_name),
+              area = map_data(),
+              color = colors
+            )
+          })
+        }
+      })
+
+      # Make map_layout() available to server
+      session$userData[[paste0(map_name, "_layout")]] <- map_layout
   }
 
   # Create wrapper div
