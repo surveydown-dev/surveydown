@@ -595,7 +595,12 @@ sd_question <- function(
         if (!is.null(click_data)) {
           feature_id <- click_data$id
           feature_id <- stringr::str_replace(feature_id, ':main', '')
-          shiny::updateTextInput(session, id, value = feature_id)
+          
+          # Format the display value
+          display_value <- gsub("([^:]):", "\\1: ", feature_id)
+          display_value <- gsub("(^|:[ ]*|\\s)([a-z])", "\\1\\U\\2", tolower(display_value), perl = TRUE)
+          
+          shiny::updateTextInput(session, id, value = display_value)
           shiny::updateTextInput(session, paste0(id, "_interacted"), value = TRUE)
 
           # Update map color
