@@ -35,6 +35,7 @@ Suggests:
     testthat, 
     glue
 Imports:
+    colorspace,
     DBI,
     DT,
     fs,
@@ -49,6 +50,7 @@ Imports:
     shiny,
     shinyjs,
     shinyWidgets,
+    stringr,
     usethis,
     utils,
     xml2,

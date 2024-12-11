@@ -23,14 +23,17 @@ sd_question(
   placeholder = NULL,
   resize = NULL,
   row = NULL,
-  map_name = NULL,
-  map_data = NULL
+  map = NULL,
+  lng = NULL,
+  lat = NULL,
+  zoom = NULL,
+  color = NULL
 )
 }
 \arguments{
 \item{type}{Specifies the type of question. Possible values are "select", "mc",
 "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-"numeric", "slider", "date", "daterange", "matrix", and "custom".}
+"numeric", "slider", "date", "daterange", "matrix", and "leaflet".}
 
 \item{id}{A unique identifier for the question, which will be used as the variable name in the resulting survey data.}
 
@@ -65,6 +68,16 @@ sd_question(
 \item{resize}{Character string. Resize option for textarea input. Defaults to NULL.}
 
 \item{row}{List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.}
+
+\item{map}{List. Used for "leaflet" type questions. Contains the map data and settings.}
+
+\item{lng}{Numeric. The longitude of the map center.}
+
+\item{lat}{Numeric. The latitude of the map center.}
+
+\item{zoom}{Numeric. The zoom level of the map.}
+
+\item{color}{Character string. The color of the map polygons.}
 }
 \value{
 A 'shiny' UI element wrapped in a div with a data attribute for
@@ -88,7 +101,7 @@ The function supports various question types:
 \item "date": Date input
 \item "daterange": Date range input
 \item "matrix": Matrix-style question with rows and columns
-\item "custom": Custom question with arbitrary content
+\item "leaflet": Leaflet map question
 }
 
 For "matrix" type questions, use the \code{row} parameter to define the rows of

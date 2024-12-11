@@ -202,7 +202,7 @@ extract_head_content <- function(html_content) {
 #'
 #' @param type Specifies the type of question. Possible values are "select", "mc",
 #'   "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-#'   "numeric", "slider", "date", "daterange", "matrix", and "custom".
+#'   "numeric", "slider", "date", "daterange", "matrix", and "leaflet".
 #' @param id A unique identifier for the question, which will be used as the variable name in the resulting survey data.
 #' @param label Character string. The label for the UI element, which can be formatted with markdown.
 #' @param cols Integer. Number of columns for the textarea input. Defaults to 80.
@@ -220,6 +220,11 @@ extract_head_content <- function(html_content) {
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
 #' @param row List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.
+#' @param map List. Used for "leaflet" type questions. Contains the map data and settings.
+#' @param lng Numeric. The longitude of the map center.
+#' @param lat Numeric. The latitude of the map center.
+#' @param zoom Numeric. The zoom level of the map.
+#' @param color Character string. The color of the map polygons.
 #'
 #' @details
 #' The function supports various question types:
@@ -235,7 +240,7 @@ extract_head_content <- function(html_content) {
 #' - "date": Date input
 #' - "daterange": Date range input
 #' - "matrix": Matrix-style question with rows and columns
-#' - "custom": Custom question with arbitrary content
+#' - "leaflet": Leaflet map question
 #'
 #' For "matrix" type questions, use the `row` parameter to define the rows of
 #' the matrix. Each element in the `row` list should have a name (used as the
@@ -503,13 +508,13 @@ sd_question <- function(
       } else {
         shiny::reactiveVal(map)
       }
-      
+
       # Map polygon settings
       map_layout <- function(map, area, color) {
         # Dynamic ID field detection
         possible_id_fields <- c("names", "name", "NAME", "id", "ID")
         id_field <- NULL
-        
+
         # Check which field exists in the data
         for (field in possible_id_fields) {
           if (!is.null(area[[field]])) {
@@ -517,7 +522,7 @@ sd_question <- function(
             break
           }
         }
-        
+
         # If no known field is found, create sequential IDs
         if (is.null(id_field)) {
           id_field <- seq_len(length(area))
@@ -576,12 +581,12 @@ sd_question <- function(
           # Create base map
           map <- leaflet::leaflet() |>
             leaflet::addTiles()
-          
+
           # Add view settings if provided
           if (!is.null(lng) && !is.null(lat) && !is.null(zoom)) {
             map <- map |> leaflet::setView(lng = lng, lat = lat, zoom = zoom)
           }
-          
+
           area <- map()
           color_val <- if (!is.null(color)) color else "lightblue"
           colors <- rep(color_val, length(area$names))
@@ -595,11 +600,11 @@ sd_question <- function(
         if (!is.null(click_data)) {
           feature_id <- click_data$id
           feature_id <- stringr::str_replace(feature_id, ':main', '')
-          
+
           # Format the display value
           display_value <- gsub("([^:]):", "\\1: ", feature_id)
           display_value <- gsub("(^|:[ ]*|\\s)([a-z])", "\\1\\U\\2", tolower(display_value), perl = TRUE)
-          
+
           shiny::updateTextInput(session, id, value = display_value)
           shiny::updateTextInput(session, paste0(id, "_interacted"), value = TRUE)
 
@@ -612,11 +617,11 @@ sd_question <- function(
             clean_feature_id <- tolower(gsub(":", "", feature_id))
             clean_map_names <- tolower(map()$names)
             match_idx <- which(startsWith(clean_map_names, clean_feature_id))
-            
+
             if (length(match_idx) > 0) {
               colors[match_idx] <- darker_color
             }
-            
+
             map_layout(
               map = leaflet::leafletProxy("map"),
               area = map(),
@@ -749,7 +754,7 @@ sd_question_custom <- function(
         output,
 
         # Interaction tracking
-        tags$script(sprintf(
+        shiny::tags$script(sprintf(
             "$(document).on('shiny:inputchanged', function(event) {
                 if (event.name === '%s') {
                     Shiny.setInputValue('%s_interacted', true, {priority: 'event'});

@@ -1,6 +1,7 @@
 # surveydown (development version)
 
 - Bug fix: The `mc_multiple` question type could not resume its UI if multiple options are selected. Now it's solved.
+- New feature: a new `sd_question_custom()` function is created for custom question definition. See demo surveys for more details.
 
 # surveydown 0.7.1
 
