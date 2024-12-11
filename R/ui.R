@@ -572,14 +572,14 @@ sd_question <- function(
       session <- shiny::getDefaultReactiveDomain()
       shiny::isolate({
         session$output[["map"]] <- leaflet::renderLeaflet({
-          
+
           # Create base map
-          map <- leaflet::leaflet() %>%
+          map <- leaflet::leaflet() |>
             leaflet::addTiles()
           
           # Add view settings if provided
           if (!is.null(lng) && !is.null(lat) && !is.null(zoom)) {
-            map <- map %>% leaflet::setView(lng = lng, lat = lat, zoom = zoom)
+            map <- map |> leaflet::setView(lng = lng, lat = lat, zoom = zoom)
           }
           
           area <- map()
