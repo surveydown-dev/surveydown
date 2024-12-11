@@ -736,33 +736,15 @@ sd_question_custom <- function(
     }
 
     # Create the container div
-    output_div <- shiny::div(
-        id = paste0("container-", id),
-        `data-question-id` = id,
-        class = "question-container",
-
-        # Question label
+    output_contents <- shiny::tagList(
         shiny::tags$label(class = "control-label", shiny::HTML(label)),
-
-        # Hidden text input to store the value
         shiny::div(
             style = "display: none;",
             shiny::textInput(id, label = NULL, value = "", width = "0px")
         ),
-
-        # Widget output UI
-        output,
-
-        # Interaction tracking
-        shiny::tags$script(sprintf(
-            "$(document).on('shiny:inputchanged', function(event) {
-                if (event.name === '%s') {
-                    Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
-                }
-            });",
-            id, id
-        ))
+        output
     )
+    output_div <- make_question_container(id, output_contents, "100%")
 
     # In a reactive context, directly add to output with renderUI
     shiny::isolate({
@@ -804,6 +786,7 @@ make_question_container <- function(id, object, width) {
     class = "question-container",
     style = sprintf("width: %s;", width),
     oninput = js_interaction,
+    onclick = js_interaction,
     object,
     shiny::tags$span(class = "hidden-asterisk", "*")
   ))
