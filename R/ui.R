@@ -506,6 +506,23 @@ sd_question <- function(
       
       # Map polygon settings
       map_layout <- function(map, area, color) {
+        # Dynamic ID field detection
+        possible_id_fields <- c("names", "name", "NAME", "id", "ID")
+        id_field <- NULL
+        
+        # Check which field exists in the data
+        for (field in possible_id_fields) {
+          if (!is.null(area[[field]])) {
+            id_field <- area[[field]]
+            break
+          }
+        }
+        
+        # If no known field is found, create sequential IDs
+        if (is.null(id_field)) {
+          id_field <- seq_len(length(area))
+        }
+
         map |> leaflet::addPolygons(
           data = area,
           fillColor = color,
@@ -519,7 +536,7 @@ sd_question <- function(
             fillOpacity = 0.7,
             bringToFront = TRUE
           ),
-          layerId = area$names
+          layerId = id_field
         )
       }
 
@@ -555,6 +572,7 @@ sd_question <- function(
       session <- shiny::getDefaultReactiveDomain()
       shiny::isolate({
         session$output[["map"]] <- leaflet::renderLeaflet({
+          
           # Create base map
           map <- leaflet::leaflet() %>%
             leaflet::addTiles()
@@ -564,14 +582,9 @@ sd_question <- function(
             map <- map %>% leaflet::setView(lng = lng, lat = lat, zoom = zoom)
           }
           
-          # Get area data
           area <- map()
-          
-          # Set default color if not provided
           color_val <- if (!is.null(color)) color else "lightblue"
           colors <- rep(color_val, length(area$names))
-          
-          # Apply map layout
           map_layout(map = map, area = area, color = colors)
         })
       })
@@ -591,7 +604,14 @@ sd_question <- function(
             base_color <- if (!is.null(color)) color else "lightblue"
             darker_color <- colorspace::darken(base_color, 0.4)
             colors <- rep(base_color, length(map()$names))
-            colors[map()$names == feature_id] <- darker_color
+            clean_feature_id <- tolower(gsub(":", "", feature_id))
+            clean_map_names <- tolower(map()$names)
+            match_idx <- which(startsWith(clean_map_names, clean_feature_id))
+            
+            if (length(match_idx) > 0) {
+              colors[match_idx] <- darker_color
+            }
+            
             map_layout(
               map = leaflet::leafletProxy("map"),
               area = map(),
