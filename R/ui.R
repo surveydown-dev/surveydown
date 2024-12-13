@@ -202,7 +202,7 @@ extract_head_content <- function(html_content) {
 #'
 #' @param type Specifies the type of question. Possible values are "select", "mc",
 #'   "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-#'   "numeric", "slider", "date", "daterange", "matrix", and "custom".
+#'   "numeric", "slider", "date", "daterange", and "matrix".
 #' @param id A unique identifier for the question, which will be used as the variable name in the resulting survey data.
 #' @param label Character string. The label for the UI element, which can be formatted with markdown.
 #' @param cols Integer. Number of columns for the textarea input. Defaults to 80.
@@ -235,7 +235,6 @@ extract_head_content <- function(html_content) {
 #' - "date": Date input
 #' - "daterange": Date range input
 #' - "matrix": Matrix-style question with rows and columns
-#' - "custom": Custom question with arbitrary content
 #'
 #' For "matrix" type questions, use the `row` parameter to define the rows of
 #' the matrix. Each element in the `row` list should have a name (used as the
@@ -279,7 +278,7 @@ sd_question <- function(
     direction    = "horizontal",
     status       = "default",
     width        = "100%",
-    height       = "100px",
+    height       = NULL,
     selected     = NULL,
     label_select = "Choose an option...",
     grid         = TRUE,
@@ -383,7 +382,7 @@ sd_question <- function(
     output <- shiny::textAreaInput(
       inputId     = id,
       label       = label,
-      height      = height,
+      height      = "100px",
       cols        = cols,
       value       = NULL,
       rows        = "6",
@@ -490,34 +489,6 @@ sd_question <- function(
         shiny::tags$tbody(rows)
       )
     )
-  } else if (type == "custom") {
-    # Handle the main question container structure
-    output <- shiny::div(
-      class = "question-container",
-      `data-question-id` = id,
-      shiny::tags$label(class = "control-label", label),
-      # Hidden input to store the value
-      shiny::div(
-        style = "display: none;",
-        shiny::textInput(
-          inputId = id,
-          label = NULL,
-          value = "",
-          width = "0px"
-        )
-      ),
-      # Custom content container
-      shiny::div(
-        class = "custom-content",
-        onclick = sprintf(
-          "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
-          id
-        ),
-        # Allow for custom content through option parameter
-        option
-      ),
-      shiny::tags$span(class = "hidden-asterisk", "*")
-    )
   }
 
   # Create wrapper div
@@ -534,6 +505,120 @@ sd_question <- function(
     # If not in a reactive context, just return the element
     return(output_div)
   }
+}
+
+#' Create a Custom Question with a Shiny Widget
+#'
+#' @description
+#' This function creates a custom survey question that incorporates any Shiny widget
+#' and captures its interaction value. It allows for the integration of interactive
+#' visualizations (e.g., maps, plots) or other custom Shiny outputs into a survey,
+#' storing the result of user interaction as survey data.
+#'
+#' @param id Character string. A unique identifier for the question.
+#' @param label Character string. The label text for the question, which can
+#'   include HTML formatting.
+#' @param output Shiny UI element. The output of a Shiny widget (e.g.,
+#'   `leafletOutput()`, `plotlyOutput()`).
+#' @param value Reactive expression that returns the value to be stored in the
+#'   survey data when the user interacts with the widget.
+#' @param height Character string. The height of the widget output. Defaults to
+#'   "400px".
+#'
+#' @return None (called for side effects)
+#'
+#' @details
+#' The function creates a custom question container that includes:
+#' - A visible widget output that users can interact with
+#' - A hidden text input that stores the value from the interaction
+#' - Automatic tracking of user interaction for progress monitoring
+#'
+#' The value to be stored is controlled by the reactive expression provided to
+#' the `value` parameter, which should update whenever the user interacts with
+#' the widget in the desired way.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'   library(leaflet)
+#'
+#'   server <- function(input, output, session) {
+#'     # Create map output
+#'     output$usa_map <- renderLeaflet({
+#'       leaflet() |>
+#'         addTiles() |>
+#'         setView(lng = -98.5795, lat = 39.8283, zoom = 4)
+#'     })
+#'
+#'     # Reactive value for selected location
+#'     selected_location <- reactiveVal(NULL)
+#'
+#'     # Click observer
+#'     observeEvent(input$usa_map_click, {
+#'       click <- input$usa_map_click
+#'       if (!is.null(click)) {
+#'         selected_location(
+#'           sprintf("Lat: %0.2f, Lng: %0.2f", click$lat, click$lng)
+#'         )
+#'       }
+#'     })
+#'
+#'     # Create the custom question
+#'     sd_question_custom(
+#'       id = "location",
+#'       label = "Click on your location:",
+#'       output = leafletOutput("usa_map", height = "400px"),
+#'       value = selected_location
+#'     )
+#'
+#'     sd_server()
+#'   }
+#'
+#'   shinyApp(ui = sd_ui(), server = server)
+#' }
+#'
+#' @seealso
+#' [sd_question()] for standard question types
+#'
+#' @export
+sd_question_custom <- function(
+    id,
+    label,
+    output,  # The UI component (e.g., leafletOutput, plotlyOutput)
+    value,   # Reactive expression that returns the value to store in the data
+    height = "400px"
+) {
+    # Get the current shiny session
+    session <- shiny::getDefaultReactiveDomain()
+    if (is.null(session)) {
+        stop("sd_question_widget must be called from within a Shiny reactive context")
+    }
+
+    # Create the container div
+    output_contents <- shiny::tagList(
+        shiny::tags$label(class = "control-label", shiny::HTML(label)),
+        shiny::div(
+            style = "display: none;",
+            shiny::textInput(id, label = NULL, value = "", width = "0px")
+        ),
+        output
+    )
+    output_div <- make_question_container(id, output_contents, "100%")
+
+    # In a reactive context, directly add to output with renderUI
+    shiny::isolate({
+        output_div <- shiny::tags$div(output_div)
+        output <- shiny::getDefaultReactiveDomain()$output
+        output[[id]] <- shiny::renderUI({ output_div })
+    })
+
+    # Observer to update the stored value when value changes
+    shiny::observe({
+        temp_value <- value()
+        if (!is.null(temp_value)) {
+            shiny::updateTextInput(session, id, value = as.character(temp_value))
+        }
+    })
 }
 
 date_interaction <- function(output, id) {
@@ -560,6 +645,7 @@ make_question_container <- function(id, object, width) {
     class = "question-container",
     style = sprintf("width: %s;", width),
     oninput = js_interaction,
+    onclick = js_interaction,
     object,
     shiny::tags$span(class = "hidden-asterisk", "*")
   ))

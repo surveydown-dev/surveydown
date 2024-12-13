@@ -12,7 +12,7 @@ sd_question(
   direction = "horizontal",
   status = "default",
   width = "100\%",
-  height = "100px",
+  height = NULL,
   selected = NULL,
   label_select = "Choose an option...",
   grid = TRUE,
@@ -28,7 +28,7 @@ sd_question(
 \arguments{
 \item{type}{Specifies the type of question. Possible values are "select", "mc",
 "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-"numeric", "slider", "date", "daterange", "matrix", and "custom".}
+"numeric", "slider", "date", "daterange", and "matrix".}
 
 \item{id}{A unique identifier for the question, which will be used as the variable name in the resulting survey data.}
 
@@ -86,7 +86,6 @@ The function supports various question types:
 \item "date": Date input
 \item "daterange": Date range input
 \item "matrix": Matrix-style question with rows and columns
-\item "custom": Custom question with arbitrary content
 }
 
 For "matrix" type questions, use the \code{row} parameter to define the rows of

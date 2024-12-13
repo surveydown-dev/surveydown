@@ -41,6 +41,7 @@ reference:
 - title: Survey UI
   contents:
   - sd_question
+  - sd_question_custom
   - sd_next
   - sd_output
   - sd_close

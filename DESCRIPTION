@@ -1,6 +1,6 @@
 Package: surveydown
 Title: Markdown-Based Surveys Using 'Quarto' and 'shiny'
-Version: 0.7.1
+Version: 0.7.2
 Authors@R: c(
     person(given   = "John Paul",
            family  = "Helveston",
@@ -32,6 +32,7 @@ Depends:
     R (>= 4.0.0)
 Suggests:
     knitr,
+    leaflet,
     testthat, 
     glue
 Imports:
