@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,7 +53,7 @@
 <span>  direction <span class="op">=</span> <span class="st">"horizontal"</span>,</span>
 <span>  status <span class="op">=</span> <span class="st">"default"</span>,</span>
 <span>  width <span class="op">=</span> <span class="st">"100%"</span>,</span>
-<span>  height <span class="op">=</span> <span class="st">"100px"</span>,</span>
+<span>  height <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  selected <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  label_select <span class="op">=</span> <span class="st">"Choose an option..."</span>,</span>
 <span>  grid <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -74,7 +74,7 @@
 <dl><dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>Specifies the type of question. Possible values are "select", "mc",
 "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-"numeric", "slider", "date", "daterange", "matrix", and "custom".</p></dd>
+"numeric", "slider", "date", "daterange", and "matrix".</p></dd>
 
 
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
@@ -164,7 +164,6 @@ question ID.</p>
 <li><p>"date": Date input</p></li>
 <li><p>"daterange": Date range input</p></li>
 <li><p>"matrix": Matrix-style question with rows and columns</p></li>
-<li><p>"custom": Custom question with arbitrary content</p></li>
 </ul><p>For "matrix" type questions, use the <code>row</code> parameter to define the rows of
 the matrix. Each element in the <code>row</code> list should have a name (used as the
 row ID) and a value (used as the row label).</p>
