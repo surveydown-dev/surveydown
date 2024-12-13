@@ -63,11 +63,9 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header">
-<img src="logo.png" class="logo" alt=""><h1 id="surveydown">surveydown<a class="anchor" aria-label="anchor" href="#surveydown"></a>
-</h1>
-</div>
+  <main id="main" class="col-md-9"><div class="section level2">
+<h2 id="surveydown">surveydown<a class="anchor" aria-label="anchor" href="#surveydown"></a>
+</h2>
 <!-- badges: start -->
 
 <blockquote>
@@ -88,9 +86,9 @@
 <p>The {surveydown} R package provides functions to bring this all together.</p>
 <p><strong>See the <a href="https://surveydown.org" class="external-link">documentation</a> to get started making your own surveydown survey!</strong></p>
 </div>
-<div class="section level1">
-<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
-</h1>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
 <div class="section level3">
 <h3 id="install-r--quarto">Install R &amp; Quarto<a class="anchor" aria-label="anchor" href="#install-r--quarto"></a>
 </h3>
@@ -118,57 +116,18 @@
 <code class="sourceCode R"><span><span class="fu">surveydown</span><span class="fu">::</span><span class="fu"><a href="reference/sd_version.html">sd_version</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
-<div class="section level1">
-<h1 id="background--motivation">Background &amp; Motivation<a class="anchor" aria-label="anchor" href="#background--motivation"></a>
-</h1>
-<p>Most survey platforms (e.g., Google forms, Qualtrics, etc.) use drag-and-drop interfaces to design surveys, making version control and collaboration with others difficult. They’re also not reproducible (others cannot easily reproduce a survey made on these platforms), and many require a paid subscription or license to use.</p>
-<p>The surveydown package was designed to address these problems. As an open-source, markdown-based platform, all survey content is defined with plain text (markdown and R code) in a <code>survey.qmd</code> file and an <code>app.R</code> file that renders your survey into a Shiny app that can be hosted online. This makes your survey easy to reproduce, share, and version control with common tools like Git. The survey data collected is also owned by the survey designer in a separate Postgres database (we recommend Supabase as a free and open-source database provider).</p>
+<div class="section level2">
+<h2 id="background--motivation">Background &amp; Motivation<a class="anchor" aria-label="anchor" href="#background--motivation"></a>
+</h2>
+<p>Most survey platforms (e.g., Google forms, Qualtrics, etc.) use graphic interfaces to design surveys, making version control and collaboration with others difficult. They’re also not easily reproducible, and many require a paid subscription or license to use.</p>
+<p>The surveydown package was designed to address these problems. As an open-source, markdown-based platform, all survey content is defined with plain text (markdown and R code) in a <code>survey.qmd</code> file and an <code>app.R</code> file that renders your survey into a Shiny app that can be hosted online. This makes your survey easy to reproduce, share, and version control with common tools like Git. The researcher also has total control over the data collected as it is stored in a PostgreSQL database of their choosing (we recommend Supabase as a free and secure option).</p>
 <p>If you’re curious where this whole idea came from, check out this <a href="https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/" class="external-link">blog post</a>, which outlines more on the general idea and the motivation for it. The post is now outdated in terms of the overall package design, but it provides something of an origin story and some of the motivation for developing this project.</p>
 </div>
-<div class="section level1">
-<h1 id="todo-list">TODO List<a class="anchor" aria-label="anchor" href="#todo-list"></a>
-</h1>
-<p>This is a running list of things we’re working on / have already added to the project:</p>
-<ul>
-<li><label><input type="checkbox" checked>show_if (conditionally display question)</label></li>
-<li><label><input type="checkbox" checked>skip_if (conditionally skip to page)</label></li>
-<li><label><input type="checkbox" checked>Set defaults for questions to not have any choices selected on launch.</label></li>
-<li><label><input type="checkbox" checked>Ability to embed markdown inside choice options (like mc buttons in formr)</label></li>
-<li><label><input type="checkbox" checked>Option for <code>ignore = TRUE</code> setting (database connection is ignored)</label></li>
-<li><label><input type="checkbox" checked>Automatically include timestamps on each page and question interaction in the data</label></li>
-<li><label><input type="checkbox" checked>Option to start at a designated page, e.g. <code>start_page = 'page_name'</code></label></li>
-<li><label><input type="checkbox">A <code>show_all_pages = TRUE</code> argument to show all the pages and hidden questions when launched (e.g. to be able to print out the entire survey text). Could also be a <code>sd_print_survey()</code> function to print it to pdf.</label></li>
-<li><label><input type="checkbox" checked>Set up SCSS to be compatible with Quarto-supported bootstrap themes.</label></li>
-<li><label><input type="checkbox" checked>Include an optional progress bar.</label></li>
-<li><label><input type="checkbox" checked>Include input checks for <code>skip_if</code> and <code>show_if</code> (<code>question_id</code> exists, and data frame names are correct)</label></li>
-<li><label><input type="checkbox" checked>Required questions: post a popup if a question is required before allowing next button.</label></li>
-<li><label><input type="checkbox" checked>Add a <code><a href="reference/sd_get_data.html">sd_get_data()</a></code> function so the survey designer can obtain the current survey results from inside the app: <a href="https://shinysurveys.jdtrat.com/articles/get-survey-data.html" class="external-link uri">https://shinysurveys.jdtrat.com/articles/get-survey-data.html</a></label></li>
-<li><label><input type="checkbox" checked>Ability to pass url parameters, e.g. for tracking users.</label></li>
-<li><label><input type="checkbox" checked>Ability to redirect users to another url.</label></li>
-<li><label><input type="checkbox">Leverage cookies so users who close the browser can start back where they left off.</label></li>
-<li><label><input type="checkbox">Admin page w/password to preview / download data (see <a href="https://github.com/daattali/shinyforms" class="external-link uri">https://github.com/daattali/shinyforms</a>)</label></li>
-<li><label><input type="checkbox">Form validation: Make sure the user inputs the correct type depending on the question type. (see <a href="https://shiny.posit.co/r/reference/shiny/0.14/validate.html" class="external-link uri">https://shiny.posit.co/r/reference/shiny/0.14/validate.html</a>)</label></li>
-<li>Question types:
-<ul class="task-list">
-<li><label><input type="checkbox" checked>Multiple choice (single choice)</label></li>
-<li><label><input type="checkbox" checked>Multiple choice (multiple choices)</label></li>
-<li><label><input type="checkbox" checked>Select</label></li>
-<li><label><input type="checkbox" checked>Text</label></li>
-<li><label><input type="checkbox" checked>Numeric</label></li>
-<li><label><input type="checkbox" checked>Multiple choice (button…like formr mc_button)</label></li>
-<li><label><input type="checkbox" checked>Text area</label></li>
-<li><label><input type="checkbox" checked>Date</label></li>
-<li><label><input type="checkbox" checked>Slider</label></li>
-<li><label><input type="checkbox" checked>Matrix</label></li>
-<li><label><input type="checkbox">Best worst</label></li>
-</ul>
-</li>
-</ul>
-<p>Resources / other related examples:</p>
-<ul>
-<li><a href="https://github.com/jdtrat/shinysurveys" class="external-link">shinysurveys</a></li>
-<li><a href="https://github.com/daattali/shinyforms" class="external-link">shinyforms</a></li>
-</ul>
+<div class="section level2">
+<h2 id="roadmap">Roadmap<a class="anchor" aria-label="anchor" href="#roadmap"></a>
+</h2>
+<p>See our <a href="https://github.com/surveydown-dev/todo" class="external-link">todo</a> repo for a running list of things we’re working on / have already added to the project.</p>
+</div>
 <div class="section level2">
 <h2 id="license-information">
 <a href="https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md" class="external-link">License Information</a><a class="anchor" aria-label="anchor" href="#license-information"></a>
@@ -180,7 +139,6 @@
 <p>If you use this package for in a publication, please cite it! You can get the citation by typing <code>citation("surveydown")</code> into R:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation</a></span><span class="op">(</span><span class="st">"surveydown"</span><span class="op">)</span></span></code></pre></div>
-</div>
 </div>
 
   </main><aside class="col-md-3"><div class="links">
