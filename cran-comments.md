@@ -8,5 +8,3 @@
 
 ## Notes
 * This is a new release.
-* Apologies for the back-to-back submissions - we noticed a major bug in v0.5.0, so we're pushing this quickly to patch it.
-* Fixed broken url.
