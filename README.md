@@ -114,12 +114,12 @@ See our [todo](https://github.com/surveydown-dev/todo) repo for a
 running list of things we’re working on / have already added to the
 project.
 
-## [License Information](https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md)
+## [License](https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md)
 
-## Citation Information
+## Citation
 
 If you use this package for in a publication, please cite it! You can
-get the citation by typing `citation("surveydown")` into R:
+get the citation by running `citation("surveydown")` in your R console:
 
 ``` r
 citation("surveydown")
