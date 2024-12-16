@@ -25,37 +25,32 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project
 
 > Note: This site only documents the {surveydown} R package - visit our main site at [surveydown.org](https://surveydown.org) for more information!
 
-**surveydown** is a flexible, open-source platform for making surveys with [R](https://www.r-project.org/), [Quarto](https://quarto.org/), [Shiny](https://shiny.posit.co/), and [Supabase](https://supabase.com/).
+## What is surveydown?
 
-<br>
-<div align="center">
-  <img src='man/figures/technologies.png' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
-</div>
-<br>
-
-The basic concept is:
-
-1. Design your survey as a [Quarto](https://quarto.org/) document using markdown and R code.
-2. Convert your survey into a [Shiny](https://shiny.posit.co/) app that can be hosted online and sent to respondents.
-3. Store your survey responses in a [Supabase](https://supabase.com/) database (or any Postgres database).
-
-The {surveydown} R package provides functions to bring this all together.
-
-**See the [documentation](https://surveydown.org) to get started making your own surveydown survey!**
-
-## Installation
-
-```{r child="man/rmdchunks/installation.Rmd"}
+```{r child="man/rmdchunks/concept.Rmd"}
 ```
 
-## Background & Motivation
+## Why surveydown?
 
 ```{r child="man/rmdchunks/motivation.Rmd"}
 ```
 
+## Installation
+
+### Install R & Quarto
+
+```{r child="man/rmdchunks/install_R_Quarto.Rmd"}
+```
+
+### Install the {surveydown} R package
+
+```{r child="man/rmdchunks/install_surveydown.Rmd"}
+```
+
 ## Roadmap
 
-See our [todo](https://github.com/surveydown-dev/todo) repo for a running list of things we're working on / have already added to the project.
+```{r child="man/rmdchunks/todo.Rmd"}
+```
 
 ## License
 

@@ -1,12 +1,3 @@
-### Install R & Quarto
-
-- [R](https://CRAN.R-project.org/)
-- [Quarto](https://quarto.org/)
-
-We also recommend working with an IDE that has good support for R, Quarto, and Shiny. [RStudio](https://posit.co/products/open-source/rstudio/) is great, and we also like [VSCode](https://github.com/microsoft/vscode) and [Positron](https://github.com/posit-dev/positron).
-
-### Install the {surveydown} R package
-
 You can install {surveydown} from CRAN in your R console:
 
 ```{r}
