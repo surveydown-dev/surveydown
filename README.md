@@ -114,7 +114,10 @@ See our [todo](https://github.com/surveydown-dev/todo) repo for a
 running list of things we’re working on / have already added to the
 project.
 
-## [License](https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md)
+## License
+
+See the
+[License](https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md).
 
 ## Citation
 
