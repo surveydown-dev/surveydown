@@ -23,9 +23,7 @@ with [R](https://www.r-project.org/), [Quarto](https://quarto.org/),
 
 <div align="center">
 
-<center>
 <img src='https://github.com/surveydown-dev/surveydown/blob/main/man/figures/technologies.png?raw=true' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
-</center>
 
 </div>
 

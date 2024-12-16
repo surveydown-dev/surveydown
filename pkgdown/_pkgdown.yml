@@ -1,8 +1,15 @@
 url: https://pkg.surveydown.org/
+navbar:
+  structure:
+    left: [docs, reference, articles, tutorials, news]
+    right: [github]
+  components:
+    docs:
+      text: Documentation
+      href: https://www.surveydown.org/
 
 home:
-  title: Build markdown-based surveys with quarto shiny documents
-
+  title: Markdown-Based Surveys Using R, Quarto, and Shiny
 template:
   bootstrap: 5
   light-switch: true
@@ -15,18 +22,15 @@ template:
     image:
       src: https://pkg.surveydown.org/reference/figures/logo.png
       alt: "Logo for the surveydown package"
-
 reference:
 - title: Survey Data
   contents:
   - sd_database
   - sd_get_data
-
 - title: Control Logic
   contents:
   - sd_show_if
   - sd_skip_if
-
 - title: Server
   contents:
   - sd_server
@@ -37,7 +41,6 @@ reference:
   - sd_copy_value
   - sd_get_url_pars
   - sd_is_answered
-
 - title: Survey UI
   contents:
   - sd_question
@@ -50,7 +53,6 @@ reference:
   - sd_display_question
   - sd_display_value
   - sd_ui
-
 - title: Utilities
   contents:
   - sd_create_survey
@@ -59,7 +61,6 @@ reference:
   - sd_setup
   - sd_add_page
   - sd_add_question
-
 - title: Version Control
   contents:
   - sd_version

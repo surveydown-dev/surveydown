@@ -1,8 +1,0 @@
-Most survey platforms (e.g., Google forms, Qualtrics, etc.) use graphic interfaces or spreadsheets to define survey content, making version control, collaboration, and reproducibility difficult or impossible. The surveydown package was designed to address these problems. As an open-source, markdown-based platform, all survey content is defined using **plain text** (markdown and R code) in two files:
-
-- `survey.qmd`: A Quarto document that contains the survey content (pages, questions, etc).
-- `app.R`: An R script defining a shiny app that contains global settings (libraries, database configuration, etc.) and server configuration options (e.g., conditional skipping / display, etc.).
-
-This approach makes your survey easy to reproduce, share, and version control with common tools like Git. And since all survey data is stored in a PostgreSQL database, you have total control over where your survey data lives. We provide direct support for [Supabase](https://supabase.com/) as a free, secure, and easy to use option.
-
-In case you're interested in the background behind the project, this [blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/) provides something of an origin story. Note that the design discussed in the post is now quite outdated with what ultimately became surveydown.
