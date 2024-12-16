@@ -27,7 +27,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev
+          sudo apt-get install -y libcurl4-openssl-dev libharfbuzz-dev libfribidi-dev libudunits2-dev libgdal-dev libgeos-dev libproj-dev libtiff5-dev libicu-dev libjpeg-dev
 
       - name: Query dependencies
         run: |
