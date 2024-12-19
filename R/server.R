@@ -14,8 +14,6 @@
 #'   survey will be required. Defaults to `FALSE`.
 #' @param start_page Character string. The ID of the page to start on.
 #'   Defaults to `NULL`.
-#' @param admin_page Logical. Whether to include an admin page for viewing and
-#'   downloading survey data. Defaults to `FALSE`.
 #' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
 #'   question after answering. Defaults to `FALSE`.
 #' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
@@ -38,7 +36,6 @@
 #'   \item Handles page navigation and skip logic.
 #'   \item Manages required questions.
 #'   \item Performs database operation.
-#'   \item Sets up admin functionality if enabled with the `admin_page` argument.
 #'   \item Controls auto-scrolling behavior based on the `auto_scroll` argument.
 #'   \item Uses sweetalert for warning messages when required questions are not
 #'         answered.
@@ -94,7 +91,6 @@
 #'       required_questions = NULL,
 #'       all_questions_required = FALSE,
 #'       start_page = NULL,
-#'       admin_page = FALSE,
 #'       auto_scroll = FALSE,
 #'       rate_survey = FALSE,
 #'       language = "en",
@@ -118,7 +114,6 @@ sd_server <- function(
         required_questions     = NULL,
         all_questions_required = FALSE,
         start_page             = NULL,
-        admin_page             = FALSE,
         auto_scroll            = FALSE,
         rate_survey            = FALSE,
         language               = "en",
@@ -133,6 +128,8 @@ sd_server <- function(
     output     <- get("output", envir = parent_env)
     session    <- get("session", envir = parent_env)
 
+    session$userData$db <- db
+
     # Tag start time
     time_start <- get_utc_timestamp()
 
@@ -145,7 +142,6 @@ sd_server <- function(
         required_questions,
         all_questions_required,
         start_page,
-        admin_page,
         skip_if,
         show_if,
         rate_survey,
@@ -158,7 +154,6 @@ sd_server <- function(
     question_ids       <- config$question_ids
     question_structure <- config$question_structure
     start_page         <- config$start_page
-    admin_page         <- config$admin_page
     question_required  <- config$question_required
     page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
 
@@ -201,9 +196,6 @@ sd_server <- function(
     shiny::observeEvent(input$keepAlive, {
         cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
     })
-
-    # Create admin page if admin_page is TRUE
-    if (isTRUE(config$admin_page)) admin_enable(input, output, session, db)
 
     # 2. show_if conditions ----
 
@@ -1250,117 +1242,6 @@ check_answer <- function(q, input) {
     if (inherits(answer, "Date")) return(any(!is.na(answer)))
     if (is.list(answer)) return(any(!sapply(answer, is.null)))
     return(TRUE)  # Default to true for unknown types
-}
-
-admin_enable <- function(input, output, session, db) {
-    #not fun to figure out, do not render the admin page at the start if you are
-    #using an outright hide_pages js file
-    show_admin_section <- function() {
-        shinyjs::hide("quarto-content")
-        shiny::insertUI(
-            selector = "body",
-            where = "beforeEnd",
-            ui = htmltools::div(
-                id = "admin-section",
-                class = "admin-section",
-                htmltools::div(
-                    id = "login-page",
-                    htmltools::h2("Admin Login"),
-                    shiny::passwordInput("adminpw", "Password"),
-                    shiny::actionButton("submitPw", "Log in"),
-                    htmltools::br(),
-                    htmltools::br(),
-                    shiny::actionButton("back_to_survey_login", "Back to Survey")
-                ),
-                shinyjs::hidden(
-                    htmltools::div(
-                        id = "admin-content",
-                        htmltools::h2("Admin Page"),
-                        shiny::actionButton("pause_survey", "Pause Survey"),
-                        shiny::actionButton("pause_db", "Pause DB"),
-                        shiny::downloadButton("download_data", "Download Data"),
-                        shiny::actionButton("back_to_survey_admin", "Back to Survey"),
-                        htmltools::hr(),
-                        htmltools::h3("Survey Data"),
-                        DT::DTOutput("survey_data_table")
-                    )
-                )
-            )
-        )
-    }
-
-    # Observe for URL change
-    url_reactive <- shiny::reactive({
-        session$clientData$url_search
-    })
-
-    # Observe changes to the URL
-    shiny::observe({
-        url <- url_reactive()
-        query <- shiny::parseQueryString(url)
-        admin_param <- query[['admin']]
-        if(!is.null(admin_param)) {
-            show_admin_section()
-        }
-    })
-
-    # Password check and admin content reveal
-    shiny::observeEvent(input$submitPw, {
-        if (input$adminpw == Sys.getenv("SURVEYDOWN_PASSWORD")) {
-            session$userData$isAdmin <- TRUE
-            shinyjs::hide("login-page")
-            shinyjs::show("admin-content")
-
-            output$survey_data_table <- DT::renderDT({
-                data <- DBI::dbReadTable(db$db, db$table)
-                DT::datatable(data, options = list(scrollX = TRUE))
-            })
-        } else {
-            shiny::showNotification("Incorrect password", type = "error")
-        }
-    })
-
-    # Function to return to survey
-    return_to_survey <- function() {
-        session$userData$isAdmin <- NULL
-        shinyjs::hide("admin-section")
-        shinyjs::show("quarto-content")
-        shinyjs::runjs("showFirstPage();")
-        shiny::updateQueryString("?", mode = "replace")
-    }
-
-    # Back to survey button on login page
-    shiny::observeEvent(input$back_to_survey_login, {
-        return_to_survey()
-    })
-
-    # Back to survey button on admin content page
-    shiny::observeEvent(input$back_to_survey_admin, {
-        return_to_survey()
-    })
-
-    #Pause Survey - Pause DB Section
-
-    shiny::observeEvent(input$pause_survey, {
-        #Code here that write to the table to change row value from 0 -> 1 and back if it happens
-        data <- DBI::dbReadTable(db$db, paste0(db$table, "_admin_table"))
-        #Read table value in, change it from true to false
-
-        #Add in sd_server if(survey_paused == TRUE)
-        #Create and display a blank page that says the survey is pause
-
-    })
-
-    # Download Data button functionality
-    output$download_data <- shiny::downloadHandler(
-        filename = function() {
-            paste0(db$table, "_", Sys.Date(), ".csv")
-        },
-        content = function(file) {
-            data <- DBI::dbReadTable(db$db, db$table)
-            utils::write.csv(data, file, row.names = FALSE)
-        }
-    )
 }
 
 get_local_data <- function() {
