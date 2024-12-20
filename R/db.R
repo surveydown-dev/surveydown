@@ -68,6 +68,65 @@ sd_database <- function(
         max_size   = Inf
 ) {
 
+    # v0.8.0
+    .Deprecated("sd_connect")
+
+    if (ignore) {
+        message("Database connection ignored. Saving data to local CSV file.\n")
+        return(NULL)
+    }
+
+    # Authentication/Checks for NULL Values
+    if (is.null(host) | is.null(dbname) | is.null(port) | is.null(user) | is.null(table)) {
+        message("One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local data.csv file *for previewing purposes only*.")
+        return(NULL)
+    }
+
+    if (!nchar(password)) {
+        stop("Please define your password using surveydown::sd_set_password().\n If you just did this, RESTART the R session to make sure the password environment variable is loaded.")
+    }
+
+    tryCatch({
+        pool <- pool::dbPool(
+            RPostgres::Postgres(),
+            host = host,
+            dbname = dbname,
+            port = port,
+            user = user,
+            password = password,
+            gssencmode = gssencmode,
+            minSize = min_size,
+            maxSize = max_size
+        )
+
+        # Set up automatic cleanup when the Shiny session ends
+        shiny::onStop(function() {
+            pool::poolClose(pool)
+        })
+
+        message("Successfully connected to the database.")
+        return(list(db = pool, table = table))
+    }, error = function(e) {
+        stop(paste("Error: Failed to connect to the database.",
+                   "Details:", conditionMessage(e),
+                   "\nPlease check your connection details:",
+                   "\n- host:    ", host,
+                   "\n- dbname:  ", dbname,
+                   "\n- port:    ", port,
+                   "\n- user:    ", user,
+                   "\nTo update password, please use surveydown::sd_set_password().",
+                   "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disable' in the sd_database() function."))
+    })
+}
+
+sd_connect <- function(
+        table      = NULL,
+        password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
+        gssencmode = "prefer",
+        ignore     = FALSE,
+        min_size   = 1,
+        max_size   = Inf
+) {
     if (ignore) {
         message("Database connection ignored. Saving data to local CSV file.\n")
         return(NULL)
