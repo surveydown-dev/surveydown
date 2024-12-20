@@ -2,18 +2,43 @@
 % Please edit documentation in R/db.R
 \name{sd_connect}
 \alias{sd_connect}
-\title{Database connection function}
+\title{database connection function}
 \usage{
-sd_connect(table = NULL, ignore = FALSE)
+sd_connect(
+  table = NULL,
+  ignore = FALSE,
+  gssencmode = "prefer",
+  min_size = 1,
+  max_size = Inf
+)
 }
 \arguments{
-\item{table}{table name}
+\item{table}{character string. name of the table to interact with}
 
-\item{ignore}{if TRUE, use local csv instead}
+\item{ignore}{logical. if TRUE, saves data to local CSV file instead of database. defaults to FALSE}
+
+\item{gssencmode}{character string. GSS encryption mode for database connection. defaults to "prefer"}
+
+\item{min_size}{integer. minimum number of connections in pool. defaults to 1}
+
+\item{max_size}{integer. maximum number of connections in pool. defaults to Inf}
 }
 \value{
-connection list or NULL
+list containing database connection pool (db) and table name, or NULL if in ignore mode
 }
 \description{
 reads configuration file and establishes database connection
+}
+\examples{
+\dontrun{
+  # create connection with default parameters
+  db <- sd_connect(table = "responses")
+
+  # create connection with custom pool size
+  db <- sd_connect(
+    table = "responses",
+    min_size = 2,
+    max_size = 10
+  )
+}
 }

@@ -76,17 +76,40 @@ sd_create_db_config <- function(host, dbname, port, user, path = getwd()) {
     invisible(NULL)
 }
 
-#' Database connection function
+#' database connection function
 #'
 #' @description
 #' reads configuration file and establishes database connection
 #'
-#' @param table table name
-#' @param ignore if TRUE, use local csv instead
+#' @param table character string. name of the table to interact with
+#' @param ignore logical. if TRUE, saves data to local CSV file instead of database. defaults to FALSE
+#' @param gssencmode character string. GSS encryption mode for database connection. defaults to "prefer"
+#' @param min_size integer. minimum number of connections in pool. defaults to 1
+#' @param max_size integer. maximum number of connections in pool. defaults to Inf
 #'
-#' @return connection list or NULL
+#' @return list containing database connection pool (db) and table name, or NULL if in ignore mode
+#'
+#' @examples
+#' \dontrun{
+#'   # create connection with default parameters
+#'   db <- sd_connect(table = "responses")
+#'
+#'   # create connection with custom pool size
+#'   db <- sd_connect(
+#'     table = "responses",
+#'     min_size = 2,
+#'     max_size = 10
+#'   )
+#' }
 #' @export
-sd_connect <- function(table = NULL, ignore = FALSE) {
+sd_connect <- function(
+        table = NULL,
+        ignore = FALSE,
+        gssencmode = "prefer",
+        min_size   = 1,
+        max_size   = Inf
+        )
+    {
     if (ignore) {
         message("Database connection ignored. Saving data to local CSV file.\n")
         return(NULL)
@@ -125,8 +148,9 @@ sd_connect <- function(table = NULL, ignore = FALSE) {
             port = config$port,
             user = config$user,
             password = password,
-            minSize = 1,
-            maxSize = Inf
+            gssencmode = gssencmode,
+            minSize = min_size,
+            maxSize = max_size
         )
 
         message("Successfully connected to the database.")
