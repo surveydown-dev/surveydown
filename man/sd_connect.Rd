@@ -4,14 +4,7 @@
 \alias{sd_connect}
 \title{Database connection function}
 \usage{
-sd_connect(
-  table = NULL,
-  password = Sys.getenv("SURVEYDOWN_PASSWORD"),
-  gssencmode = "prefer",
-  ignore = FALSE,
-  min_size = 1,
-  max_size = Inf
-)
+sd_connect(table = NULL, ignore = FALSE)
 }
 \arguments{
 \item{table}{table name}

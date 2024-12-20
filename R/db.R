@@ -96,54 +96,28 @@ sd_connect <- function(table = NULL, ignore = FALSE) {
         stop("Table name must be provided")
     }
 
-    message("Current working directory: ", getwd())
-
     # Check for config file
     config_path <- "connectionParam.yml"
-    message("Looking for config file at: ", normalizePath(config_path, mustWork = FALSE))
-
     if (!file.exists(config_path)) {
         stop("No connectionParam.yml found. Create one using sd_create_db_config()")
     }
 
-    # Read configuration with detailed debug
+    # Read configuration
     tryCatch({
         raw_yaml <- yaml::read_yaml(config_path)
-        message("\nRaw YAML content:")
-        print(raw_yaml)
-
         config <- raw_yaml$connection
-        message("\nConnection section:")
-        print(config)
 
         if (is.null(config)) {
             stop("Invalid configuration file format. Missing 'connection' section.")
         }
-    }, error = function(e) {
-        stop("Error reading connectionParam.yml: ", e$message)
-    })
 
-    # Print detailed config info
-    message("\nConfig keys available:")
-    print(names(config))
-    message("\nConfig values:")
-    print(unlist(config))
+        # Get password from environment
+        password <- Sys.getenv("SURVEYDOWN_PASSWORD")
+        if (!nchar(password)) {
+            stop("Please define your password using surveydown::sd_set_password()")
+        }
 
-    # Get password from environment
-    password <- Sys.getenv("SURVEYDOWN_PASSWORD")
-    if (!nchar(password)) {
-        stop("Please define your password using surveydown::sd_set_password()")
-    }
-
-    # Pre-connection debug
-    message("\nAttempting connection with parameters:")
-    message("host: ", config$host, " (", typeof(config$host), ")")
-    message("dbname: ", config$dbname, " (", typeof(config$dbname), ")")
-    message("port: ", config$port, " (", typeof(config$port), ")")
-    message("user: ", config$user, " (", typeof(config$user), ")")
-
-    # Create connection
-    tryCatch({
+        # Create connection
         pool <- pool::dbPool(
             RPostgres::Postgres(),
             host = config$host,
@@ -154,17 +128,13 @@ sd_connect <- function(table = NULL, ignore = FALSE) {
             minSize = 1,
             maxSize = Inf
         )
+
         message("Successfully connected to the database.")
         return(list(db = pool, table = table))
     }, error = function(e) {
-        stop("Failed to connect to database: ", e$message, "\n",
-             "Config state at failure:\n",
-             paste(capture.output(str(config)), collapse = "\n"))
+        stop("Failed to connect to database: ", e$message)
     })
 }
-
-
-
 
 #' Connect to a 'PostgreSQL' Database with Automatic Cleanup
 #'
@@ -287,61 +257,6 @@ sd_database <- function(
     })
 }
 
-sd_connect <- function(
-        table      = NULL,
-        password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
-        gssencmode = "prefer",
-        ignore     = FALSE,
-        min_size   = 1,
-        max_size   = Inf
-) {
-    if (ignore) {
-        message("Database connection ignored. Saving data to local CSV file.\n")
-        return(NULL)
-    }
-
-    # Authentication/Checks for NULL Values
-    if (is.null(host) | is.null(dbname) | is.null(port) | is.null(user) | is.null(table)) {
-        message("One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local data.csv file *for previewing purposes only*.")
-        return(NULL)
-    }
-
-    if (!nchar(password)) {
-        stop("Please define your password using surveydown::sd_set_password().\n If you just did this, RESTART the R session to make sure the password environment variable is loaded.")
-    }
-
-    tryCatch({
-        pool <- pool::dbPool(
-            RPostgres::Postgres(),
-            host = host,
-            dbname = dbname,
-            port = port,
-            user = user,
-            password = password,
-            gssencmode = gssencmode,
-            minSize = min_size,
-            maxSize = max_size
-        )
-
-        # Set up automatic cleanup when the Shiny session ends
-        shiny::onStop(function() {
-            pool::poolClose(pool)
-        })
-
-        message("Successfully connected to the database.")
-        return(list(db = pool, table = table))
-    }, error = function(e) {
-        stop(paste("Error: Failed to connect to the database.",
-                   "Details:", conditionMessage(e),
-                   "\nPlease check your connection details:",
-                   "\n- host:    ", host,
-                   "\n- dbname:  ", dbname,
-                   "\n- port:    ", port,
-                   "\n- user:    ", user,
-                   "\nTo update password, please use surveydown::sd_set_password().",
-                   "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disable' in the sd_database() function."))
-    })
-}
 
 #' Fetch data from a database table with automatic reactivity detection
 #'
