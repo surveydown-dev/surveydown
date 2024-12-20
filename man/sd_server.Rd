@@ -9,7 +9,6 @@ sd_server(
   required_questions = NULL,
   all_questions_required = FALSE,
   start_page = NULL,
-  admin_page = FALSE,
   auto_scroll = FALSE,
   rate_survey = FALSE,
   language = "en",
@@ -28,9 +27,6 @@ survey will be required. Defaults to \code{FALSE}.}
 
 \item{start_page}{Character string. The ID of the page to start on.
 Defaults to \code{NULL}.}
-
-\item{admin_page}{Logical. Whether to include an admin page for viewing and
-downloading survey data. Defaults to \code{FALSE}.}
 
 \item{auto_scroll}{Logical. Whether to enable auto-scrolling to the next
 question after answering. Defaults to \code{FALSE}.}
@@ -67,7 +63,6 @@ The function performs the following tasks:
 \item Handles page navigation and skip logic.
 \item Manages required questions.
 \item Performs database operation.
-\item Sets up admin functionality if enabled with the \code{admin_page} argument.
 \item Controls auto-scrolling behavior based on the \code{auto_scroll} argument.
 \item Uses sweetalert for warning messages when required questions are not
 answered.
@@ -127,7 +122,6 @@ if (interactive()) {
       required_questions = NULL,
       all_questions_required = FALSE,
       start_page = NULL,
-      admin_page = FALSE,
       auto_scroll = FALSE,
       rate_survey = FALSE,
       language = "en",

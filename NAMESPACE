@@ -2,9 +2,12 @@
 
 export(sd_add_page)
 export(sd_add_question)
+export(sd_admin)
 export(sd_close)
 export(sd_completion_code)
+export(sd_connect)
 export(sd_copy_value)
+export(sd_create_db_config)
 export(sd_create_survey)
 export(sd_create_translations)
 export(sd_database)
