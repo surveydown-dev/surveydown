@@ -65,22 +65,14 @@ sd_ui <- function() {
 
   # Render the 'survey.qmd' file if changes detected
   if (survey_needs_updating(paths)) {
-    tryCatch({
-      # Render the 'survey.qmd' file
-      message("Changes detected...rendering 'survey.qmd' file...")
-      render_survey_qmd(paths, default_theme)
+    message("Changes detected...rendering 'survey.qmd' file...")
+    render_survey_qmd(paths, default_theme)
 
-      # Extract head content (for CSS and JS) and save to "_survey" folder
-      html_content <- rvest::read_html(paths$root_html)
-      head_content <- extract_head_content(html_content)
-      saveRDS(head_content, paths$target_head)
+    # Extract head content and save
+    html_content <- rvest::read_html(paths$root_html)
+    head_content <- extract_head_content(html_content)
+    saveRDS(head_content, paths$target_head)
 
-      # Move rendered 'survey.html' into '_survey' folder
-      fs::file_move(paths$root_html, paths$target_html)
-      message("Survey saved to ", paths$target_html, "\n")
-    }, error = function(e) {
-      stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
-    })
   } else {
     # If no changes, just load head content from '_survey/head.rds'
     head_content <- readRDS(paths$target_head)
@@ -161,29 +153,36 @@ survey_needs_updating <- function(paths) {
 }
 
 render_survey_qmd <- function(paths, default_theme = TRUE) {
-  # Copy lua filter to local folder
-  lua_file <- 'surveydown.lua'
-  fs::file_copy(
-    system.file("lua/include-resources.lua", package = "surveydown"),
-    lua_file,
-    overwrite = TRUE
-  )
+    # Copy lua filter to local folder
+    lua_file <- 'surveydown.lua'
+    fs::file_copy(
+        system.file("lua/include-resources.lua", package = "surveydown"),
+        lua_file,
+        overwrite = TRUE
+    )
 
-  # Render with Lua filter and metadata
-  quarto::quarto_render(
-    paths$qmd,
-    metadata = list(
-      default_theme = default_theme
-    ),
-    pandoc_args = c(
-      "--embed-resources",
-      "--lua-filter=surveydown.lua"
-    ),
-    quiet = TRUE
-  )
+    # Render the survey.qmd file
+    quarto::quarto_render(
+        input = paths$qmd,
+        metadata = list(
+            default_theme = default_theme
+        ),
+        pandoc_args = c(
+            "--embed-resources",
+            "--lua-filter=surveydown.lua"
+        ),
+        # Turn off quiet mode to capture output
+        quiet = FALSE
+    )
 
-  # Delete local lua filter
-  fs::file_delete(lua_file)
+    # Move rendered file
+    fs::file_move(paths$root_html, paths$target_html)
+    message("Survey saved to ", paths$target_html, "\n")
+
+    # Delete lua file from root folder
+    if (file.exists(lua_file)) {
+        fs::file_delete(lua_file)
+    }
 }
 
 extract_head_content <- function(html_content) {
@@ -290,6 +289,22 @@ sd_question <- function(
     resize       = NULL,
     row          = NULL
 ) {
+
+  # Define valid question types
+  valid_types <- c(
+    "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons",
+    "text", "textarea", "numeric", "slider", "date", "daterange", "matrix"
+  )
+
+  # Check if provided type is valid
+  if (!type %in% valid_types) {
+    stop(
+      sprintf(
+        "Invalid question type: '%s'. Valid types are: %s",
+        type, paste(sort(valid_types), collapse = "', '")
+      )
+    )
+  }
 
   output <- NULL
 
