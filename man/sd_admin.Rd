@@ -2,12 +2,15 @@
 % Please edit documentation in R/admin.R
 \name{sd_admin}
 \alias{sd_admin}
-\title{Launch Admin Interface}
+\title{Launch Admin App}
 \usage{
-sd_admin(table)
+sd_admin(table = NULL)
 }
 \arguments{
-\item{table}{Character string. The name of the table to interact with.}
+\item{table}{Character string. The name of the table to interact with.
+Only used to override the \code{table} set in the current \code{.env} configuration
+that was created using the \code{sd_db_config()} function. Defaults to \code{NULL}, in
+which case the table specified in the \code{.env} file will be used.}
 }
 \value{
 No return value, called for side effects (opens Shiny gadget)

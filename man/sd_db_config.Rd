@@ -12,8 +12,7 @@ sd_db_config(
   table = NULL,
   password = NULL,
   gssencmode = NULL,
-  interactive = NULL,
-  path = getwd()
+  interactive = NULL
 )
 }
 \arguments{
@@ -32,8 +31,6 @@ sd_db_config(
 \item{gssencmode}{Character string. GSS encryption mode}
 
 \item{interactive}{Logical. Whether to use interactive setup. Defaults to TRUE if no parameters provided}
-
-\item{path}{Character string. Directory where .env should be created/modified. Defaults to getwd()}
 }
 \value{
 Invisibly returns a list of the current configuration settings

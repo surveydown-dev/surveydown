@@ -8,7 +8,7 @@ sd_get_data(db, refresh_interval = NULL)
 }
 \arguments{
 \item{db}{A list containing database connection details created using
-\code{sd_database()}. Must have elements:
+\code{sd_db_config()}. Must have elements:
 \itemize{
 \item \code{db}: A \code{DBI} database connection object
 \item \code{table}: A string specifying the name of the table to query

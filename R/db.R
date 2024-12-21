@@ -11,7 +11,6 @@
 #' @param password Character string. Database password
 #' @param gssencmode Character string. GSS encryption mode
 #' @param interactive Logical. Whether to use interactive setup. Defaults to TRUE if no parameters provided
-#' @param path Character string. Directory where .env should be created/modified. Defaults to getwd()
 #'
 #' @return Invisibly returns a list of the current configuration settings
 #'
@@ -45,9 +44,9 @@ sd_db_config <- function(
     table = NULL,
     password = NULL,
     gssencmode = NULL,
-    interactive = NULL,
-    path = getwd()
+    interactive = NULL
 ) {
+    path <- getwd()
     env_file <- file.path(path, ".env")
 
     # Get current values if file exists
@@ -352,15 +351,19 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
         cli::cli_alert_warning("Failed to connect to the database:")
         cli::cli_text(conditionMessage(e))
         cli::cli_text("")
-        cli::cli_alert_info("To view the current configuration, run:")
-        cli::cli_code("sd_db_show()")
-        cli::cli_text("")
-        cli::cli_alert_info("To modify these settings, run:")
-        cli::cli_code("sd_db_config(overwrite = TRUE)")
-        cli::cli_text("")
-        cli::cli_alert_info("If you have verified all connection parameters\nare correct but still cannot connect to the database,\nconsider setting the 'gssencmode' parameter to 'disable'.")
+        db_fail_messages()
         return(NULL)
     })
+}
+
+db_fail_messages <- function() {
+    cli::cli_alert_info("To view the current configuration, run:")
+    cli::cli_code("sd_db_show()")
+    cli::cli_text("")
+    cli::cli_alert_info("To modify these settings, run:")
+    cli::cli_code("sd_db_config(overwrite = TRUE)")
+    cli::cli_text("")
+    cli::cli_alert_info("If you have verified all connection parameters\nare correct but still cannot connect to the database,\nconsider setting the 'gssencmode' parameter to 'disable'.")
 }
 
 #' Connect to a 'PostgreSQL' Database with Automatic Cleanup
@@ -494,7 +497,7 @@ sd_database <- function(
 #' the data at specified intervals.
 #'
 #' @param db A list containing database connection details created using
-#'  `sd_database()`. Must have elements:
+#'  `sd_db_config()`. Must have elements:
 #'   \itemize{
 #'     \item `db`: A `DBI` database connection object
 #'     \item `table`: A string specifying the name of the table to query

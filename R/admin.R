@@ -1,19 +1,27 @@
-#' Launch Admin Interface
+#' Launch Admin App
 #'
 #' Opens a Shiny gadget that provides administrative functionality for surveydown surveys,
 #' including viewing survey responses and managing survey data.
-#'
 #' @param table Character string. The name of the table to interact with.
+#' Only used to override the `table` set in the current `.env` configuration
+#' that was created using the `sd_db_config()` function. Defaults to `NULL`, in
+#' which case the table specified in the `.env` file will be used.
 #'
 #' @return No return value, called for side effects (opens Shiny gadget)
 #'
 #' @export
-sd_admin <- function(table) {
-    # Create database connection
-    local_db <- sd_connect(table = table)
+sd_admin <- function(table = NULL) {
+    if (is.null(table)) {
+        local_db <- sd_db_connect()
+    } else {
+        local_db <- sd_db_connect(table = table)
+    }
 
     if (is.null(local_db)) {
-        stop("Failed to connect to database. Please check your connection parameters.")
+        cli::cli_alert_warning("Failed to connect to the database - review your connection settings.")
+        cli::cli_text("")
+        db_fail_messages()
+        stop()
     }
 
     # Define UI
