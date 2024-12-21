@@ -86,47 +86,55 @@ sd_db_config <- function(
         cli::cli_h1("Database Configuration Setup")
         cli::cli_text("Press Enter to keep current value shown in brackets\n")
 
-        host <- readline(sprintf("Host [%s]: ", current$host))
-        if (host == "") host <- current$host
+        # Get host
+        input <- readline(sprintf("Host [%s]: ", current$host))
+        host <- if (input == "") current$host else input
 
-        dbname <- readline(sprintf("Database name [%s]: ", current$dbname))
-        if (dbname == "") dbname <- current$dbname
+        # Get dbname
+        input <- readline(sprintf("Database name [%s]: ", current$dbname))
+        dbname <- if (input == "") current$dbname else input
 
-        port <- readline(sprintf("Port [%s]: ", current$port))
-        if (port == "") port <- current$port
+        # Get port
+        input <- readline(sprintf("Port [%s]: ", current$port))
+        port <- if (input == "") current$port else input
 
-        user <- readline(sprintf("User [%s]: ", current$user))
-        if (user == "") user <- current$user
+        # Get user
+        input <- readline(sprintf("User [%s]: ", current$user))
+        user <- if (input == "") current$user else input
 
-        password <- readline(sprintf("Password [%s]: ", if(current$password == "") "" else "****"))
-        if (password == "") password <- current$password
+        # Get password
+        input <- readline(sprintf("Password [%s]: ", if(current$password == "") "" else "****"))
+        password <- if (input == "") current$password else input
 
-        table <- readline(sprintf("Table name [%s]: ", current$table))
-        if (table == "") table <- current$table
+        # Get table
+        input <- readline(sprintf("Table name [%s]: ", current$table))
+        table <- if (input == "") current$table else input
 
-        gssencmode <- readline(sprintf("GSS encryption mode [%s]: ", current$gssencmode))
-        if (gssencmode == "") gssencmode <- current$gssencmode
+        # Get gssencmode
+        input <- readline(sprintf("GSS encryption mode [%s]: ", current$gssencmode))
+        gssencmode <- if (input == "") current$gssencmode else input
+
     } else {
-        # Update only provided values
-        if (!is.null(host)) current$host <- host
-        if (!is.null(dbname)) current$dbname <- dbname
-        if (!is.null(port)) current$port <- port
-        if (!is.null(user)) current$user <- user
-        if (!is.null(password)) current$password <- password
-        if (!is.null(table)) current$table <- table
-        if (!is.null(gssencmode)) current$gssencmode <- gssencmode
+        # For non-interactive mode, use current values if not provided
+        host <- if (!is.null(host)) host else current$host
+        dbname <- if (!is.null(dbname)) dbname else current$dbname
+        port <- if (!is.null(port)) port else current$port
+        user <- if (!is.null(user)) user else current$user
+        password <- if (!is.null(password)) password else current$password
+        table <- if (!is.null(table)) table else current$table
+        gssencmode <- if (!is.null(gssencmode)) gssencmode else current$gssencmode
     }
 
-    # Create template content
+    # Create template content using direct variables
     template <- paste(
         "# Database connection settings for surveydown",
-        sprintf("SD_HOST=%s", current$host),
-        sprintf("SD_DBNAME=%s", current$dbname),
-        sprintf("SD_PORT=%s", current$port),
-        sprintf("SD_USER=%s", current$user),
-        sprintf("SD_TABLE=%s", current$table),
-        sprintf("SD_PASSWORD=%s", current$password),
-        sprintf("SD_GSSENCMODE=%s", current$gssencmode),
+        sprintf("SD_HOST=%s", host),
+        sprintf("SD_DBNAME=%s", dbname),
+        sprintf("SD_PORT=%s", port),
+        sprintf("SD_USER=%s", user),
+        sprintf("SD_TABLE=%s", table),
+        sprintf("SD_PASSWORD=%s", password),
+        sprintf("SD_GSSENCMODE=%s", gssencmode),
         sep = "\n"
     )
 
@@ -146,16 +154,26 @@ sd_db_config <- function(
 
     cli::cli_alert_success("Database configuration updated")
 
-    # Show current config
+    # Show current config with the new values
     cli::cli_h2("Current database configuration:")
-    cli::cli_text("SD_HOST={current$host}")
-    cli::cli_text("SD_DBNAME={current$dbname}")
-    cli::cli_text("SD_PORT={current$port}")
-    cli::cli_text("SD_USER={current$user}")
-    cli::cli_text("SD_TABLE={current$table}")
-    cli::cli_text("SD_PASSWORD={if(current$password == '') '' else '****'}")
-    cli::cli_text("SD_GSSENCMODE={current$gssencmode}")
+    cli::cli_text("SD_HOST={host}")
+    cli::cli_text("SD_DBNAME={dbname}")
+    cli::cli_text("SD_PORT={port}")
+    cli::cli_text("SD_USER={user}")
+    cli::cli_text("SD_TABLE={table}")
+    cli::cli_text("SD_PASSWORD={if(password == '') '' else '****'}")
+    cli::cli_text("SD_GSSENCMODE={gssencmode}")
 
+    # Return new configuration
+    current <- list(
+        host = host,
+        dbname = dbname,
+        port = port,
+        user = user,
+        password = password,
+        table = table,
+        gssencmode = gssencmode
+    )
     invisible(current)
 }
 
@@ -192,7 +210,7 @@ sd_db_show <- function(path = getwd(), show_password = FALSE) {
     if (!file.exists(env_file)) {
         cli::cli_alert_error("No .env file found in the current directory.")
         cli::cli_alert_info("Run:")
-        cli::cli_code("sd_create_db_config()")
+        cli::cli_code("sd_db_config()")
         cli::cli_text("to create one.")
         return(invisible(NULL))
     }
@@ -231,11 +249,11 @@ sd_db_show <- function(path = getwd(), show_password = FALSE) {
     cli::cli_text("")  # Single blank line
     if (!show_password) {
         cli::cli_alert_info("To show password, run:")
-        cli::cli_code("sd_show_db_config(show_password = TRUE)")
+        cli::cli_code("sd_db_show(show_password = TRUE)")
         cli::cli_text("")  # Add blank line before modification instructions
     }
     cli::cli_alert_info("To modify these settings, run:")
-    cli::cli_code("sd_create_db_config(overwrite = TRUE)")
+    cli::cli_code("sd_db_config(overwrite = TRUE)")
 
     invisible(NULL)  # Ensure clean return
 }
