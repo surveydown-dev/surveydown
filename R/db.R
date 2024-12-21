@@ -4,7 +4,7 @@
 #' are used to establish database connections for storing survey responses.
 #'
 #' @param host Character string. Database host
-#' @param dbname Character string. Database name
+#' @param database Character string. Database name
 #' @param port Character string. Database port
 #' @param user Character string. Database user
 #' @param table Character string. Table name
@@ -39,7 +39,7 @@
 #' @export
 sd_db_config <- function(
     host = NULL,
-    dbname = NULL,
+    database = NULL,
     port = NULL,
     user = NULL,
     table = NULL,
@@ -54,7 +54,7 @@ sd_db_config <- function(
     current <- list(
         host = "localhost",
         port = "5432",
-        dbname = "postgres",
+        database = "postgres",
         user = "username",
         password = "password",
         table = "responses",
@@ -66,7 +66,7 @@ sd_db_config <- function(
         dotenv::load_dot_env(env_file)
         current$host <- Sys.getenv("SD_HOST", current$host)
         current$port <- Sys.getenv("SD_PORT", current$port)
-        current$dbname <- Sys.getenv("SD_DBNAME", current$dbname)
+        current$database <- Sys.getenv("SD_DATABASE", current$database)
         current$user <- Sys.getenv("SD_USER", current$user)
         current$password <- Sys.getenv("SD_PASSWORD", current$password)
         current$table <- Sys.getenv("SD_TABLE", current$table)
@@ -75,7 +75,7 @@ sd_db_config <- function(
 
     # If no parameters provided and interactive not set, default to interactive
     if (is.null(interactive) &&
-        all(sapply(list(host, dbname, port, user, table, password, gssencmode), is.null))) {
+        all(sapply(list(host, database, port, user, table, password, gssencmode), is.null))) {
         interactive <- TRUE
     } else if (is.null(interactive)) {
         interactive <- FALSE
@@ -94,9 +94,9 @@ sd_db_config <- function(
         input <- readline(sprintf("Port [%s]: ", current$port))
         port <- if (input == "") current$port else input
 
-        # Get dbname
-        input <- readline(sprintf("Database name [%s]: ", current$dbname))
-        dbname <- if (input == "") current$dbname else input
+        # Get database
+        input <- readline(sprintf("Database name [%s]: ", current$database))
+        database <- if (input == "") current$database else input
 
         # Get user
         input <- readline(sprintf("User [%s]: ", current$user))
@@ -118,7 +118,7 @@ sd_db_config <- function(
         # For non-interactive mode, use current values if not provided
         host <- if (!is.null(host)) host else current$host
         port <- if (!is.null(port)) port else current$port
-        dbname <- if (!is.null(dbname)) dbname else current$dbname
+        database <- if (!is.null(database)) database else current$database
         user <- if (!is.null(user)) user else current$user
         password <- if (!is.null(password)) password else current$password
         table <- if (!is.null(table)) table else current$table
@@ -130,7 +130,7 @@ sd_db_config <- function(
         "# Database connection settings for surveydown",
         sprintf("SD_HOST=%s", host),
         sprintf("SD_PORT=%s", port),
-        sprintf("SD_DBNAME=%s", dbname),
+        sprintf("SD_DATABASE=%s", database),
         sprintf("SD_USER=%s", user),
         sprintf("SD_TABLE=%s", table),
         sprintf("SD_PASSWORD=%s", password),
@@ -158,7 +158,7 @@ sd_db_config <- function(
     cli::cli_h2("Current database configuration:")
     cli::cli_text("SD_HOST={host}")
     cli::cli_text("SD_PORT={port}")
-    cli::cli_text("SD_DBNAME={dbname}")
+    cli::cli_text("SD_DATABASE={database}")
     cli::cli_text("SD_USER={user}")
     cli::cli_text("SD_TABLE={table}")
     cli::cli_text("SD_PASSWORD={if(password == '') '' else '****'}")
@@ -167,7 +167,7 @@ sd_db_config <- function(
     # Return new configuration
     current <- list(
         host = host,
-        dbname = dbname,
+        database = database,
         port = port,
         user = user,
         password = password,
@@ -315,7 +315,7 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
     params <- list(
         host = Sys.getenv("SD_HOST"),
         port = Sys.getenv("SD_PORT"),
-        dbname = Sys.getenv("SD_DBNAME"),
+        database = Sys.getenv("SD_DATABASE"),
         user = Sys.getenv("SD_USER"),
         password = Sys.getenv("SD_PASSWORD"),
         gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer"),
@@ -340,7 +340,7 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
         pool <- pool::dbPool(
             RPostgres::Postgres(),
             host = params$host,
-            dbname = params$dbname,
+            database = params$database,
             port = params$port,
             user = params$user,
             password = params$password,
@@ -421,16 +421,16 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
 #' }
 #' @export
 sd_database <- function(
-        host       = NULL,
-        dbname     = NULL,
-        port       = NULL,
-        user       = NULL,
-        table      = NULL,
-        password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
-        gssencmode = "prefer",
-        ignore     = FALSE,
-        min_size   = 1,
-        max_size   = Inf
+    host       = NULL,
+    dbname     = NULL,
+    port       = NULL,
+    user       = NULL,
+    table      = NULL,
+    password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
+    gssencmode = "prefer",
+    ignore     = FALSE,
+    min_size   = 1,
+    max_size   = Inf
 ) {
 
     # v0.8.0
