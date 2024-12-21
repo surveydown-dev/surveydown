@@ -4,18 +4,11 @@
 \alias{sd_admin}
 \title{Launch Admin App}
 \usage{
-sd_admin(table = NULL)
-}
-\arguments{
-\item{table}{Character string. The name of the table to interact with.
-Only used to override the \code{table} set in the current \code{.env} configuration
-that was created using the \code{sd_db_config()} function. Defaults to \code{NULL}, in
-which case the table specified in the \code{.env} file will be used.}
+sd_admin()
 }
 \value{
-No return value, called for side effects (opens Shiny gadget)
+No return value, called for side effects (opens admin interface)
 }
 \description{
-Opens a Shiny gadget that provides administrative functionality for surveydown surveys,
-including viewing survey responses and managing survey data.
+Opens an admin interface to view survey responses and summary statistics
 }

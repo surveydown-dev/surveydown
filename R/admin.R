@@ -1,21 +1,13 @@
 #' Launch Admin App
 #'
-#' Opens a Shiny gadget that provides administrative functionality for surveydown surveys,
-#' including viewing survey responses and managing survey data.
-#' @param table Character string. The name of the table to interact with.
-#' Only used to override the `table` set in the current `.env` configuration
-#' that was created using the `sd_db_config()` function. Defaults to `NULL`, in
-#' which case the table specified in the `.env` file will be used.
+#' @description
+#' Opens an admin interface to view survey responses and summary statistics
 #'
-#' @return No return value, called for side effects (opens Shiny gadget)
-#'
+#' @return No return value, called for side effects (opens admin interface)
 #' @export
-sd_admin <- function(table = NULL) {
-    if (is.null(table)) {
-        local_db <- sd_db_connect()
-    } else {
-        local_db <- sd_db_connect(table = table)
-    }
+sd_admin <- function() {
+    # Connect to database for initial table list
+    local_db <- sd_db_connect()
 
     if (is.null(local_db)) {
         cli::cli_alert_warning("Failed to connect to the database - review your connection settings.")
@@ -24,11 +16,42 @@ sd_admin <- function(table = NULL) {
         stop()
     }
 
+    # Get list of tables
+    tables <- pool::poolWithTransaction(local_db$db, function(conn) {
+        # Get all tables except system tables and admin tables
+        tables <- DBI::dbListTables(conn)
+        # Filter out pg_ tables (system) and _admin tables
+        tables <- tables[!grepl("^pg_", tables)]
+        return(tables)
+    })
+
     # Define UI
     ui <- miniUI::miniPage(
         miniUI::gadgetTitleBar("Surveydown Admin Interface"),
         miniUI::miniContentPanel(
+            shiny::fluidRow(
+                shiny::column(
+                    width = 12,
+                    shiny::selectInput(
+                        "table_select",
+                        "Select Survey Table:",
+                        choices = tables,
+                        selected = local_db$table,
+                        width = "100%"
+                    )
+                )
+            ),
             shiny::tabsetPanel(
+                id = "tabs",
+                # Summary Tab
+                shiny::tabPanel(
+                    "Survey Summary",
+                    shiny::div(
+                        style = "margin: 20px;",
+                        shiny::uiOutput("survey_stats")
+                    )
+                ),
+                # Data Table Tab
                 shiny::tabPanel(
                     "Survey Data",
                     DT::DTOutput("survey_data_table")
@@ -39,63 +62,107 @@ sd_admin <- function(table = NULL) {
 
     # Define server
     server <- function(input, output, session) {
-        # Create reactive to fetch data
+        # Reactive table data
         survey_data <- shiny::reactive({
-            tryCatch({
-                pool::poolWithTransaction(local_db$db, function(conn) {
-                    # First check if table exists
-                    table_exists <- DBI::dbExistsTable(conn, local_db$table)
-                    if (!table_exists) {
-                        stop(sprintf("Table '%s' does not exist in the database", local_db$table))
-                    }
-
-                    # Read the table data
-                    query <- sprintf('SELECT * FROM "%s"', local_db$table)
-                    DBI::dbGetQuery(conn, query)
-                })
-            }, error = function(e) {
-                shiny::showNotification(
-                    sprintf("Error reading data: %s", e$message),
-                    type = "error",
-                    duration = NULL
-                )
-                return(NULL)
+            pool::poolWithTransaction(local_db$db, function(conn) {
+                DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s"', input$table_select))
             })
         })
 
-        # Render data table
-        output$survey_data_table <- DT::renderDT({
+        # Generate survey statistics
+        output$survey_stats <- shiny::renderUI({
             data <- survey_data()
 
-            if (is.null(data) || nrow(data) == 0) {
-                return(DT::datatable(
-                    data.frame(Message = "No data available"),
-                    options = list(dom = 't'),
-                    selection = 'none',
-                    rownames = FALSE
-                ))
+            # Calculate statistics
+            total_respondents <- nrow(data)
+
+            # Convert time_start to datetime and calculate time differences
+            start_times <- as.POSIXct(data$time_start, format="%Y-%m-%d %H:%M:%S")
+            if(length(start_times) > 0) {
+                first_response <- min(start_times, na.rm = TRUE)
+                last_response <- max(start_times, na.rm = TRUE)
+
+                # Calculate duration in days (add 1 if same day)
+                survey_duration <- difftime(last_response, first_response, units = "days")
+                duration_days <- max(as.numeric(survey_duration), 1)  # At least 1 day
+
+                # Calculate daily average
+                daily_avg <- round(total_respondents / duration_days, 1)
+
+                # Format dates
+                first_date <- format(first_response, "%Y-%m-%d")
+                last_date <- format(last_response, "%Y-%m-%d")
+            } else {
+                first_date <- "No responses"
+                last_date <- "No responses"
+                daily_avg <- 0
+                duration_days <- 0
             }
 
+            # Create info boxes
+            shiny::div(
+                class = "survey-summary",
+                style = "padding: 20px; background-color: #f8f9fa; border-radius: 5px;",
+
+                shiny::div(
+                    style = "margin-bottom: 30px;",
+                    shiny::h3(input$table_select, style = "margin-bottom: 20px;")
+                ),
+
+                shiny::div(
+                    style = "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;",
+
+                    # Total Respondents
+                    shiny::div(
+                        style = "background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);",
+                        shiny::h4("Total Respondents"),
+                        shiny::p(style = "font-size: 24px; font-weight: bold;", total_respondents)
+                    ),
+
+                    # Average Daily Responses
+                    shiny::div(
+                        style = "background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);",
+                        shiny::h4("Average Daily Responses"),
+                        shiny::p(style = "font-size: 24px; font-weight: bold;", daily_avg)
+                    ),
+
+                    # Survey Duration
+                    shiny::div(
+                        style = "background: white; padding: 20px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);",
+                        shiny::h4("Survey Duration"),
+                        shiny::p(style = "font-size: 24px; font-weight: bold;",
+                                 if(duration_days == 1) "1 day" else sprintf("%.1f days", duration_days))
+                    )
+                ),
+
+                # Additional Info
+                shiny::div(
+                    style = "margin-top: 20px; color: #666;",
+                    shiny::p(
+                        sprintf("First Response: %s", first_date),
+                        style = "margin: 5px 0;"
+                    ),
+                    shiny::p(
+                        sprintf("Last Response: %s", last_date),
+                        style = "margin: 5px 0;"
+                    )
+                )
+            )
+        })
+
+        # Data table
+        output$survey_data_table <- DT::renderDT({
             DT::datatable(
-                data,
+                survey_data(),
                 options = list(
                     scrollX = TRUE,
                     pageLength = 25,
                     dom = 'Bfrtip',
                     buttons = list(
                         list(
-                            extend = 'copy',
-                            text = 'Copy'
-                        ),
-                        list(
                             extend = 'csv',
-                            text = 'CSV',
-                            filename = local_db$table
-                        ),
-                        list(
-                            extend = 'excel',
-                            text = 'Excel',
-                            filename = local_db$table
+                            text = 'Download CSV',
+                            filename = input$table_select
                         )
                     )
                 ),
@@ -103,13 +170,12 @@ sd_admin <- function(table = NULL) {
             )
         })
 
-        # Handle the Done button
-        shiny::observeEvent(input$done, {
+        # Close connection on exit
+        shiny::onStop(function() {
             pool::poolClose(local_db$db)
-            shiny::stopApp()
         })
     }
 
-    # Run the gadget
+    # Run gadget
     shiny::runGadget(ui, server, viewer = shiny::paneViewer())
 }
