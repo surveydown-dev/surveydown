@@ -53,10 +53,10 @@ sd_db_config <- function(
     # Get current values if file exists
     current <- list(
         host = "localhost",
-        dbname = "postgres",
         port = "5432",
-        user = "",
-        password = "",
+        dbname = "postgres",
+        user = "username",
+        password = "password",
         table = "responses",
         gssencmode = "prefer"
     )
@@ -65,8 +65,8 @@ sd_db_config <- function(
     if (file.exists(env_file)) {
         dotenv::load_dot_env(env_file)
         current$host <- Sys.getenv("SD_HOST", current$host)
-        current$dbname <- Sys.getenv("SD_DBNAME", current$dbname)
         current$port <- Sys.getenv("SD_PORT", current$port)
+        current$dbname <- Sys.getenv("SD_DBNAME", current$dbname)
         current$user <- Sys.getenv("SD_USER", current$user)
         current$password <- Sys.getenv("SD_PASSWORD", current$password)
         current$table <- Sys.getenv("SD_TABLE", current$table)
@@ -90,13 +90,13 @@ sd_db_config <- function(
         input <- readline(sprintf("Host [%s]: ", current$host))
         host <- if (input == "") current$host else input
 
-        # Get dbname
-        input <- readline(sprintf("Database name [%s]: ", current$dbname))
-        dbname <- if (input == "") current$dbname else input
-
         # Get port
         input <- readline(sprintf("Port [%s]: ", current$port))
         port <- if (input == "") current$port else input
+
+        # Get dbname
+        input <- readline(sprintf("Database name [%s]: ", current$dbname))
+        dbname <- if (input == "") current$dbname else input
 
         # Get user
         input <- readline(sprintf("User [%s]: ", current$user))
@@ -117,8 +117,8 @@ sd_db_config <- function(
     } else {
         # For non-interactive mode, use current values if not provided
         host <- if (!is.null(host)) host else current$host
-        dbname <- if (!is.null(dbname)) dbname else current$dbname
         port <- if (!is.null(port)) port else current$port
+        dbname <- if (!is.null(dbname)) dbname else current$dbname
         user <- if (!is.null(user)) user else current$user
         password <- if (!is.null(password)) password else current$password
         table <- if (!is.null(table)) table else current$table
@@ -129,8 +129,8 @@ sd_db_config <- function(
     template <- paste(
         "# Database connection settings for surveydown",
         sprintf("SD_HOST=%s", host),
-        sprintf("SD_DBNAME=%s", dbname),
         sprintf("SD_PORT=%s", port),
+        sprintf("SD_DBNAME=%s", dbname),
         sprintf("SD_USER=%s", user),
         sprintf("SD_TABLE=%s", table),
         sprintf("SD_PASSWORD=%s", password),
@@ -157,8 +157,8 @@ sd_db_config <- function(
     # Show current config with the new values
     cli::cli_h2("Current database configuration:")
     cli::cli_text("SD_HOST={host}")
-    cli::cli_text("SD_DBNAME={dbname}")
     cli::cli_text("SD_PORT={port}")
+    cli::cli_text("SD_DBNAME={dbname}")
     cli::cli_text("SD_USER={user}")
     cli::cli_text("SD_TABLE={table}")
     cli::cli_text("SD_PASSWORD={if(password == '') '' else '****'}")
@@ -208,7 +208,7 @@ sd_db_show <- function(path = getwd(), show_password = FALSE) {
 
     # Check if .env file exists
     if (!file.exists(env_file)) {
-        cli::cli_alert_error("No .env file found in the current directory.")
+        cli::cli_alert_warning("No .env file found in the current directory.")
         cli::cli_alert_info("Run:")
         cli::cli_code("sd_db_config()")
         cli::cli_text("to create one.")
@@ -303,7 +303,7 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
 
     # Load environment variables
     if (!file.exists(env_file)) {
-        cli::cli_alert_error("No .env file found.")
+        cli::cli_alert_warning("No .env file found.")
         cli::cli_alert_info("Run the following to create database configuration:")
         cli::cli_code("sd_db_config()")
         return(NULL)
@@ -314,8 +314,8 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
     # Get all required parameters
     params <- list(
         host = Sys.getenv("SD_HOST"),
-        dbname = Sys.getenv("SD_DBNAME"),
         port = Sys.getenv("SD_PORT"),
+        dbname = Sys.getenv("SD_DBNAME"),
         user = Sys.getenv("SD_USER"),
         password = Sys.getenv("SD_PASSWORD"),
         gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer"),
@@ -325,12 +325,13 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
     # Check for missing required parameters
     missing <- names(params)[!nchar(unlist(params))]
     if (length(missing) > 0) {
-        cli::cli_alert_error("Missing required database configuration:")
+        cli::cli_alert_warning("Missing required database configuration:")
         cli::cli_bullets(paste0("* ", missing))
-        cli::cli_alert_info("View current configuration:")
+        cli::cli_alert_info("To view the current configuration, run:")
         cli::cli_code("sd_db_show()")
-        cli::cli_alert_info("Update configuration:")
-        cli::cli_code("sd_db_config()")
+        cli::cli_text("")
+        cli::cli_alert_info("To modify these settings, run:")
+        cli::cli_code("sd_db_config(overwrite = TRUE)")
         return(NULL)
     }
 
@@ -348,12 +349,16 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
         cli::cli_alert_success("Successfully connected to the database.")
         return(list(db = pool, table = params$table))
     }, error = function(e) {
-        cli::cli_alert_error("Failed to connect to the database:")
+        cli::cli_alert_warning("Failed to connect to the database:")
         cli::cli_text(conditionMessage(e))
-        cli::cli_alert_info("View current configuration:")
+        cli::cli_text("")
+        cli::cli_alert_info("To view the current configuration, run:")
         cli::cli_code("sd_db_show()")
-        cli::cli_alert_info("Update configuration:")
-        cli::cli_code("sd_db_config()")
+        cli::cli_text("")
+        cli::cli_alert_info("To modify these settings, run:")
+        cli::cli_code("sd_db_config(overwrite = TRUE)")
+        cli::cli_text("")
+        cli::cli_alert_info("If you have verified all connection parameters\nare correct but still cannot connect to the database,\nconsider setting the 'gssencmode' parameter to 'disable'.")
         return(NULL)
     })
 }
