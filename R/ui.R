@@ -68,8 +68,12 @@ sd_ui <- function() {
     message("Changes detected...rendering 'survey.qmd' file...")
     render_survey_qmd(paths, default_theme)
 
+    # Move rendered file
+    fs::file_move(paths$root_html, paths$target_html)
+    message("Survey saved to ", paths$target_html, "\n")
+
     # Extract head content and save
-    html_content <- rvest::read_html(paths$root_html)
+    html_content <- rvest::read_html(paths$target_html)
     head_content <- extract_head_content(html_content)
     saveRDS(head_content, paths$target_head)
 
@@ -174,10 +178,6 @@ render_survey_qmd <- function(paths, default_theme = TRUE) {
         # Turn off quiet mode to capture output
         quiet = FALSE
     )
-
-    # Move rendered file
-    fs::file_move(paths$root_html, paths$target_html)
-    message("Survey saved to ", paths$target_html, "\n")
 
     # Delete lua file from root folder
     if (file.exists(lua_file)) {
