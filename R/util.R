@@ -28,6 +28,8 @@ list_name_md_to_html <- function(list) {
 #'
 #' @noRd
 .onAttach <- function(libname, pkgname) {
+  # Set cli option to suppress theme warning
+  options(cli.ignore_unknown_rstudio_theme = TRUE)
 
   # Add special folders to resource path
   folders <- c('_survey', 'images', 'css', 'js', 'www')

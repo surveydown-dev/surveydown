@@ -6,31 +6,57 @@
 #' @export
 sd_create_db_config <- function(path = getwd(), overwrite = FALSE) {
     env_file <- file.path(path, ".env")
-    if (file.exists(env_file) && !overwrite) {
-        stop(".env already exists. Use overwrite = TRUE to replace it.")
+
+    # Get current values if file exists
+    current <- list(
+        host = "localhost",
+        dbname = "postgres",
+        port = "5432",
+        user = "",
+        password = "",
+        table = "responses",
+        gssencmode = "prefer"
+    )
+
+    if (file.exists(env_file)) {
+        if (!overwrite) {
+            stop(".env already exists. Use overwrite = TRUE to modify it.")
+        }
+        # Read current values
+        dotenv::load_dot_env(env_file)
+        current$host <- Sys.getenv("SD_HOST", current$host)
+        current$dbname <- Sys.getenv("SD_DBNAME", current$dbname)
+        current$port <- Sys.getenv("SD_PORT", current$port)
+        current$user <- Sys.getenv("SD_USER", current$user)
+        current$password <- Sys.getenv("SD_PASSWORD", current$password)
+        current$table <- Sys.getenv("SD_TABLE", current$table)
+        current$gssencmode <- Sys.getenv("SD_GSSENCMODE", current$gssencmode)
     }
 
     # Interactive setup
-    cat("\nDatabase Configuration Setup\n")
-    cat("Press Enter to keep default value shown in brackets\n\n")
+    cli::cli_h1("Database Configuration Setup")
+    cli::cli_text("Press Enter to keep current value shown in brackets\n")
 
-    host <- readline("Host [localhost]: ")
-    if (host == "") host <- "localhost"
+    host <- readline(sprintf("Host [%s]: ", current$host))
+    if (host == "") host <- current$host
 
-    dbname <- readline("Database name [postgres]: ")
-    if (dbname == "") dbname <- "postgres"
+    dbname <- readline(sprintf("Database name [%s]: ", current$dbname))
+    if (dbname == "") dbname <- current$dbname
 
-    port <- readline("Port [5432]: ")
-    if (port == "") port <- "5432"
+    port <- readline(sprintf("Port [%s]: ", current$port))
+    if (port == "") port <- current$port
 
-    user <- readline("User: ")
-    password <- readline("Password: ")
+    user <- readline(sprintf("User [%s]: ", current$user))
+    if (user == "") user <- current$user
 
-    table <- readline("Table name [responses]: ")
-    if (table == "") table <- "responses"
+    password <- readline(sprintf("Password [%s]: ", if(current$password == "") "" else "****"))
+    if (password == "") password <- current$password
 
-    gssencmode <- readline("GSS encryption mode [prefer]: ")
-    if (gssencmode == "") gssencmode <- "prefer"
+    table <- readline(sprintf("Table name [%s]: ", current$table))
+    if (table == "") table <- current$table
+
+    gssencmode <- readline(sprintf("GSS encryption mode [%s]: ", current$gssencmode))
+    if (gssencmode == "") gssencmode <- current$gssencmode
 
     # Create template content with user input
     template <- paste(
@@ -59,13 +85,21 @@ sd_create_db_config <- function(path = getwd(), overwrite = FALSE) {
         write(".env", gitignore_path)
     }
 
-    usethis::ui_done("Created .env file with your settings")
-    usethis::ui_done("Added .env to .gitignore")
+    cli::cli_alert_success("Created .env file with your settings")
+    cli::cli_alert_success("Added .env to .gitignore")
 
-    # Show the contents
-    cat("\nYour database configuration:\n")
-    cat(readLines(env_file), sep = "\n")
-    cat("\nTo modify these settings later, run sd_create_db_config() with overwrite = TRUE\n")
+    # Show the contents (with password masked)
+    cli::cli_h2("Your database configuration:")
+    cli::cli_text("SD_HOST={host}")
+    cli::cli_text("SD_DBNAME={dbname}")
+    cli::cli_text("SD_PORT={port}")
+    cli::cli_text("SD_USER={user}")
+    cli::cli_text("SD_TABLE={table}")
+    cli::cli_text("SD_PASSWORD={if(password == '') '' else '****'}")
+    cli::cli_text("SD_GSSENCMODE={gssencmode}")
+    cli::cli_text("")  # Add blank line
+    cli::cli_alert_info("To modify these settings, run:")
+    cli::cli_code("sd_create_db_config(overwrite = TRUE)")
 }
 
 #' Show the database configuration settings
@@ -74,39 +108,65 @@ sd_create_db_config <- function(path = getwd(), overwrite = FALSE) {
 #' It includes a confirmation step before showing sensitive information like passwords.
 #'
 #' @param path Character string. Directory containing the .env file. Defaults to current directory.
+#' @param show_password Logical. Whether to show the actual password (TRUE) or mask it (FALSE).
+#'   Defaults to FALSE.
 #'
 #' @return Invisibly returns NULL. Called for its side effects (printing to console).
 #'
 #' @export
-sd_show_db_config <- function(path = getwd()) {
+sd_show_db_config <- function(path = getwd(), show_password = FALSE) {
     env_file <- file.path(path, ".env")
 
     # Check if .env file exists
     if (!file.exists(env_file)) {
-        usethis::ui_oops("No .env file found in the current directory.")
-        usethis::ui_todo("Use sd_create_db_config() to create one.")
+        cli::cli_alert_error("No .env file found in the current directory.")
+        cli::cli_alert_info("Run:")
+        cli::cli_code("sd_create_db_config()")
+        cli::cli_text("to create one.")
         return(invisible(NULL))
     }
 
-    # Confirm before showing settings
-    if (usethis::ui_yeah("Are you sure you want to display your database configuration in the console?")) {
-        # Read and parse env file
-        env_contents <- readLines(env_file)
+    # Read and parse env file
+    env_contents <- readLines(env_file)
 
-        # Filter out comments and empty lines
-        settings <- env_contents[grepl("^SD_", env_contents)]
+    # Filter out comments and empty lines
+    settings <- env_contents[grepl("^SD_", env_contents)]
 
-        usethis::ui_info("Current database configuration:")
-        usethis::ui_line()
-        cat(settings, sep = "\n")
-        usethis::ui_line()
-
-        usethis::ui_info("To modify these settings, run sd_create_db_config() with overwrite = TRUE")
-    } else {
-        usethis::ui_info("Database configuration display cancelled.")
+    # If we're showing the password, confirm first
+    if (show_password) {
+        if (!usethis::ui_yeah("Are you sure you want to display your database password in the console?")) {
+            show_password <- FALSE
+        }
     }
 
-    invisible(NULL)
+    # Process settings to mask password if needed
+    processed_settings <- settings
+    if (!show_password) {
+        password_line <- grep("^SD_PASSWORD=", processed_settings)
+        if (length(password_line) > 0) {
+            current_password <- sub("^SD_PASSWORD=", "", processed_settings[password_line])
+            if (current_password != "") {
+                processed_settings[password_line] <- "SD_PASSWORD=****"
+            }
+        }
+    }
+
+    cli::cli_h2("Current database configuration:")
+    # Print each setting on its own line
+    for (setting in processed_settings) {
+        cli::cli_text(setting)
+    }
+
+    cli::cli_text("")  # Single blank line
+    if (!show_password) {
+        cli::cli_alert_info("To show password, run:")
+        cli::cli_code("sd_show_db_config(show_password = TRUE)")
+        cli::cli_text("")  # Add blank line before modification instructions
+    }
+    cli::cli_alert_info("To modify these settings, run:")
+    cli::cli_code("sd_create_db_config(overwrite = TRUE)")
+
+    invisible(NULL)  # Ensure clean return
 }
 
 #' Connect to database using configuration from .env
