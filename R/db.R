@@ -1,10 +1,53 @@
-#' Create a database configuration file
+#' Configure database settings
 #'
-#' @param path Character string. Directory where .env should be created
-#' @param overwrite Logical. Whether to overwrite existing .env
+#' Set up or modify database configuration settings in a .env file. These settings
+#' are used to establish database connections for storing survey responses.
+#'
+#' @param host Character string. Database host
+#' @param dbname Character string. Database name
+#' @param port Character string. Database port
+#' @param user Character string. Database user
+#' @param table Character string. Table name
+#' @param password Character string. Database password
+#' @param gssencmode Character string. GSS encryption mode
+#' @param interactive Logical. Whether to use interactive setup. Defaults to TRUE if no parameters provided
+#' @param path Character string. Directory where .env should be created/modified. Defaults to getwd()
+#'
+#' @return Invisibly returns a list of the current configuration settings
+#'
+#' @examples
+#' if (interactive()) {
+#'   # Interactive setup
+#'   sd_db_config()
+#'
+#'   # Update specific settings
+#'   sd_db_config(table = "new_table")
+#'
+#'   # Update multiple settings
+#'   sd_db_config(
+#'     host = "new_host",
+#'     port = "5433",
+#'     table = "new_table"
+#'   )
+#' }
+#'
+#' @family database functions
+#' @seealso
+#' * [sd_db_show()] to view current database settings
+#' * [sd_db_connect()] to connect to the database
 #'
 #' @export
-sd_create_db_config <- function(path = getwd(), overwrite = FALSE) {
+sd_db_config <- function(
+    host = NULL,
+    dbname = NULL,
+    port = NULL,
+    user = NULL,
+    table = NULL,
+    password = NULL,
+    gssencmode = NULL,
+    interactive = NULL,
+    path = getwd()
+) {
     env_file <- file.path(path, ".env")
 
     # Get current values if file exists
@@ -18,11 +61,8 @@ sd_create_db_config <- function(path = getwd(), overwrite = FALSE) {
         gssencmode = "prefer"
     )
 
+    # If .env exists, read current values
     if (file.exists(env_file)) {
-        if (!overwrite) {
-            stop(".env already exists. Use overwrite = TRUE to modify it.")
-        }
-        # Read current values
         dotenv::load_dot_env(env_file)
         current$host <- Sys.getenv("SD_HOST", current$host)
         current$dbname <- Sys.getenv("SD_DBNAME", current$dbname)
@@ -33,41 +73,60 @@ sd_create_db_config <- function(path = getwd(), overwrite = FALSE) {
         current$gssencmode <- Sys.getenv("SD_GSSENCMODE", current$gssencmode)
     }
 
-    # Interactive setup
-    cli::cli_h1("Database Configuration Setup")
-    cli::cli_text("Press Enter to keep current value shown in brackets\n")
+    # If no parameters provided and interactive not set, default to interactive
+    if (is.null(interactive) &&
+        all(sapply(list(host, dbname, port, user, table, password, gssencmode), is.null))) {
+        interactive <- TRUE
+    } else if (is.null(interactive)) {
+        interactive <- FALSE
+    }
 
-    host <- readline(sprintf("Host [%s]: ", current$host))
-    if (host == "") host <- current$host
+    if (interactive) {
+        # Interactive setup
+        cli::cli_h1("Database Configuration Setup")
+        cli::cli_text("Press Enter to keep current value shown in brackets\n")
 
-    dbname <- readline(sprintf("Database name [%s]: ", current$dbname))
-    if (dbname == "") dbname <- current$dbname
+        host <- readline(sprintf("Host [%s]: ", current$host))
+        if (host == "") host <- current$host
 
-    port <- readline(sprintf("Port [%s]: ", current$port))
-    if (port == "") port <- current$port
+        dbname <- readline(sprintf("Database name [%s]: ", current$dbname))
+        if (dbname == "") dbname <- current$dbname
 
-    user <- readline(sprintf("User [%s]: ", current$user))
-    if (user == "") user <- current$user
+        port <- readline(sprintf("Port [%s]: ", current$port))
+        if (port == "") port <- current$port
 
-    password <- readline(sprintf("Password [%s]: ", if(current$password == "") "" else "****"))
-    if (password == "") password <- current$password
+        user <- readline(sprintf("User [%s]: ", current$user))
+        if (user == "") user <- current$user
 
-    table <- readline(sprintf("Table name [%s]: ", current$table))
-    if (table == "") table <- current$table
+        password <- readline(sprintf("Password [%s]: ", if(current$password == "") "" else "****"))
+        if (password == "") password <- current$password
 
-    gssencmode <- readline(sprintf("GSS encryption mode [%s]: ", current$gssencmode))
-    if (gssencmode == "") gssencmode <- current$gssencmode
+        table <- readline(sprintf("Table name [%s]: ", current$table))
+        if (table == "") table <- current$table
 
-    # Create template content with user input
+        gssencmode <- readline(sprintf("GSS encryption mode [%s]: ", current$gssencmode))
+        if (gssencmode == "") gssencmode <- current$gssencmode
+    } else {
+        # Update only provided values
+        if (!is.null(host)) current$host <- host
+        if (!is.null(dbname)) current$dbname <- dbname
+        if (!is.null(port)) current$port <- port
+        if (!is.null(user)) current$user <- user
+        if (!is.null(password)) current$password <- password
+        if (!is.null(table)) current$table <- table
+        if (!is.null(gssencmode)) current$gssencmode <- gssencmode
+    }
+
+    # Create template content
     template <- paste(
         "# Database connection settings for surveydown",
-        sprintf("SD_HOST=%s", host),
-        sprintf("SD_DBNAME=%s", dbname),
-        sprintf("SD_PORT=%s", port),
-        sprintf("SD_USER=%s", user),
-        sprintf("SD_TABLE=%s", table),
-        sprintf("SD_PASSWORD=%s", password),
-        sprintf("SD_GSSENCMODE=%s", gssencmode),
+        sprintf("SD_HOST=%s", current$host),
+        sprintf("SD_DBNAME=%s", current$dbname),
+        sprintf("SD_PORT=%s", current$port),
+        sprintf("SD_USER=%s", current$user),
+        sprintf("SD_TABLE=%s", current$table),
+        sprintf("SD_PASSWORD=%s", current$password),
+        sprintf("SD_GSSENCMODE=%s", current$gssencmode),
         sep = "\n"
     )
 
@@ -85,27 +144,25 @@ sd_create_db_config <- function(path = getwd(), overwrite = FALSE) {
         write(".env", gitignore_path)
     }
 
-    cli::cli_alert_success("Created .env file with your settings")
-    cli::cli_alert_success("Added .env to .gitignore")
+    cli::cli_alert_success("Database configuration updated")
 
-    # Show the contents (with password masked)
-    cli::cli_h2("Your database configuration:")
-    cli::cli_text("SD_HOST={host}")
-    cli::cli_text("SD_DBNAME={dbname}")
-    cli::cli_text("SD_PORT={port}")
-    cli::cli_text("SD_USER={user}")
-    cli::cli_text("SD_TABLE={table}")
-    cli::cli_text("SD_PASSWORD={if(password == '') '' else '****'}")
-    cli::cli_text("SD_GSSENCMODE={gssencmode}")
-    cli::cli_text("")  # Add blank line
-    cli::cli_alert_info("To modify these settings, run:")
-    cli::cli_code("sd_create_db_config(overwrite = TRUE)")
+    # Show current config
+    cli::cli_h2("Current database configuration:")
+    cli::cli_text("SD_HOST={current$host}")
+    cli::cli_text("SD_DBNAME={current$dbname}")
+    cli::cli_text("SD_PORT={current$port}")
+    cli::cli_text("SD_USER={current$user}")
+    cli::cli_text("SD_TABLE={current$table}")
+    cli::cli_text("SD_PASSWORD={if(current$password == '') '' else '****'}")
+    cli::cli_text("SD_GSSENCMODE={current$gssencmode}")
+
+    invisible(current)
 }
 
-#' Show the database configuration settings
+#' Show database settings
 #'
-#' This function displays the current database configuration settings from the .env file.
-#' It includes a confirmation step before showing sensitive information like passwords.
+#' Display the current database configuration settings from the .env file.
+#' Sensitive information like passwords can be optionally displayed with confirmation.
 #'
 #' @param path Character string. Directory containing the .env file. Defaults to current directory.
 #' @param show_password Logical. Whether to show the actual password (TRUE) or mask it (FALSE).
@@ -113,8 +170,22 @@ sd_create_db_config <- function(path = getwd(), overwrite = FALSE) {
 #'
 #' @return Invisibly returns NULL. Called for its side effects (printing to console).
 #'
+#' @examples
+#' if (interactive()) {
+#'   # Show configuration (password masked)
+#'   sd_db_show()
+#'
+#'   # Show configuration including password
+#'   sd_db_show(show_password = TRUE)
+#' }
+#'
+#' @family database functions
+#' @seealso
+#' * [sd_db_config()] to set up or modify database settings
+#' * [sd_db_connect()] to connect to the database
+#'
 #' @export
-sd_show_db_config <- function(path = getwd(), show_password = FALSE) {
+sd_db_show <- function(path = getwd(), show_password = FALSE) {
     env_file <- file.path(path, ".env")
 
     # Check if .env file exists
@@ -169,7 +240,11 @@ sd_show_db_config <- function(path = getwd(), show_password = FALSE) {
     invisible(NULL)  # Ensure clean return
 }
 
-#' Connect to database using configuration from .env
+#' Connect to database
+#'
+#' Establish a connection to the database using settings from .env file. This function
+#' creates a connection pool for efficient database access and provides options for
+#' local data storage when needed.
 #'
 #' @param table Character string. Optional. Override the table name from .env
 #' @param env_file Character string. Path to the env file. Defaults to ".env"
@@ -177,39 +252,68 @@ sd_show_db_config <- function(path = getwd(), show_password = FALSE) {
 #'   of the database. Defaults to FALSE.
 #'
 #' @return A list containing the database connection pool (`db`) and table name (`table`),
-#'   or NULL if ignore is TRUE
+#'   or NULL if ignore is TRUE or if connection fails
+#'
+#' @examples
+#' if (interactive()) {
+#'   # Connect using settings from .env
+#'   db <- sd_db_connect()
+#'
+#'   # Connect using a different table
+#'   db <- sd_db_connect(table = "responses_test")
+#'
+#'   # Use local storage instead of database
+#'   db <- sd_db_connect(ignore = TRUE)
+#'
+#'   # Close connection when done
+#'   if (!is.null(db)) {
+#'     pool::poolClose(db$db)
+#'   }
+#' }
+#'
+#' @family database functions
+#' @seealso
+#' * [sd_db_config()] to set up or modify database settings
+#' * [sd_db_show()] to view current database settings
+#'
 #' @export
-sd_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
+sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
     if (ignore) {
-        message("Database connection ignored. Saving data to local CSV file.\n")
+        cli::cli_alert_info("Database connection ignored. Saving data to local CSV file.")
         return(NULL)
     }
 
     # Load environment variables
     if (!file.exists(env_file)) {
-        stop("No .env file found. Run sd_create_db_config() to create a template.")
+        cli::cli_alert_error("No .env file found.")
+        cli::cli_alert_info("Run the following to create database configuration:")
+        cli::cli_code("sd_db_config()")
+        return(NULL)
     }
+
     dotenv::load_dot_env(env_file)
 
     # Get all required parameters
     params <- list(
-        host = Sys.getenv("SURVEYDOWN_HOST"),
-        dbname = Sys.getenv("SURVEYDOWN_DBNAME"),
-        port = Sys.getenv("SURVEYDOWN_PORT"),
-        user = Sys.getenv("SURVEYDOWN_USER"),
-        password = Sys.getenv("SURVEYDOWN_PASSWORD"),
-        gssencmode = Sys.getenv("SURVEYDOWN_GSSENCMODE", "prefer"),
-        table = if (!is.null(table)) table else Sys.getenv("SURVEYDOWN_TABLE")
+        host = Sys.getenv("SD_HOST"),
+        dbname = Sys.getenv("SD_DBNAME"),
+        port = Sys.getenv("SD_PORT"),
+        user = Sys.getenv("SD_USER"),
+        password = Sys.getenv("SD_PASSWORD"),
+        gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer"),
+        table = if (!is.null(table)) table else Sys.getenv("SD_TABLE")
     )
 
     # Check for missing required parameters
     missing <- names(params)[!nchar(unlist(params))]
     if (length(missing) > 0) {
-        stop(
-            "Missing required environment variables: ",
-            paste(missing, collapse = ", "), "\n",
-            "Please check your .env file"
-        )
+        cli::cli_alert_error("Missing required database configuration:")
+        cli::cli_bullets(paste0("* ", missing))
+        cli::cli_alert_info("View current configuration:")
+        cli::cli_code("sd_db_show()")
+        cli::cli_alert_info("Update configuration:")
+        cli::cli_code("sd_db_config()")
+        return(NULL)
     }
 
     # Create connection
@@ -223,178 +327,18 @@ sd_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
             password = params$password,
             gssencmode = params$gssencmode
         )
-
-        message("Successfully connected to the database.")
+        cli::cli_alert_success("Successfully connected to the database.")
         return(list(db = pool, table = params$table))
-
     }, error = function(e) {
-        stop(paste("Error: Failed to connect to the database.",
-                   "Details:", conditionMessage(e),
-                   "\nPlease check your connection details in .env"))
+        cli::cli_alert_error("Failed to connect to the database:")
+        cli::cli_text(conditionMessage(e))
+        cli::cli_alert_info("View current configuration:")
+        cli::cli_code("sd_db_show()")
+        cli::cli_alert_info("Update configuration:")
+        cli::cli_code("sd_db_config()")
+        return(NULL)
     })
 }
-
-#' #' Create a database configuration file
-#' #'
-#' #' @description
-#' #' Creates a YAML file that stores database connection parameters.
-#' #' The file will be used for establishing database connections.
-#' #'
-#' #' @param host Character string. The host address of the database.
-#' #' @param dbname Character string. The name of the database.
-#' #' @param port Character string or integer. The port number for the connection.
-#' #' @param user Character string. The username for the database connection.
-#' #' @param path Character string. Path where to create the configuration file.
-#' #'   Defaults to the current working directory.
-#' #'
-#' #' @return Invisible NULL. Called for its side effects.
-#' #'
-#' #' @examples
-#' #' \dontrun{
-#' #'   sd_create_db_config(
-#' #'     host = "your-host.example.com",
-#' #'     dbname = "your-database",
-#' #'     port = "5432",
-#' #'     user = "your-username"
-#' #'   )
-#' #' }
-#' #' @export
-#' sd_create_db_config <- function(host, dbname, port, user, path = getwd()) {
-#'     if (missing(host) || missing(dbname) || missing(port) || missing(user)) {
-#'         stop("All parameters (host, dbname, port, user) are required")
-#'     }
-#'
-#'     # Create the configuration structure
-#'     config <- list(
-#'         connection = list(
-#'             host = host,
-#'             dbname = dbname,
-#'             port = as.character(port),
-#'             user = user
-#'         )
-#'     )
-#'
-#'     # Define the file path
-#'     file_path <- file.path(path, "connectionParam.yml")
-#'
-#'     # Check if file already exists
-#'     if (file.exists(file_path)) {
-#'         stop("connectionParam.yml already exists. Remove it first if you want to create a new configuration.")
-#'     }
-#'
-#'     # Write to YAML with a header comment
-#'     header <- paste(
-#'         "# Surveydown database connection parameters",
-#'         "# Generated by sd_create_db_config()",
-#'         "# Do not edit manually unless you know what you're doing",
-#'         "",
-#'         sep = "\n"
-#'     )
-#'
-#'     yaml_content <- paste0(header, yaml::as.yaml(config))
-#'     writeLines(yaml_content, con = file_path)
-#'
-#'     # Add to .gitignore
-#'     gitignore_path <- file.path(path, ".gitignore")
-#'     if (file.exists(gitignore_path)) {
-#'         gitignore_content <- readLines(gitignore_path)
-#'         if (!"connectionParam.yml" %in% gitignore_content) {
-#'             write(c(gitignore_content, "connectionParam.yml"), gitignore_path)
-#'         }
-#'     } else {
-#'         write("connectionParam.yml", gitignore_path)
-#'     }
-#'
-#'     message(
-#'         "Created database configuration file at: ", file_path,
-#'         "\nFile has been added to .gitignore for security."
-#'     )
-#'     invisible(NULL)
-#' }
-#'
-#' #' database connection function
-#' #'
-#' #' @description
-#' #' reads configuration file and establishes database connection
-#' #'
-#' #' @param table character string. name of the table to interact with
-#' #' @param ignore logical. if TRUE, saves data to local CSV file instead of database. defaults to FALSE
-#' #' @param gssencmode character string. GSS encryption mode for database connection. defaults to "prefer"
-#' #' @param min_size integer. minimum number of connections in pool. defaults to 1
-#' #' @param max_size integer. maximum number of connections in pool. defaults to Inf
-#' #'
-#' #' @return list containing database connection pool (db) and table name, or NULL if in ignore mode
-#' #'
-#' #' @examples
-#' #' \dontrun{
-#' #'   # create connection with default parameters
-#' #'   db <- sd_connect(table = "responses")
-#' #'
-#' #'   # create connection with custom pool size
-#' #'   db <- sd_connect(
-#' #'     table = "responses",
-#' #'     min_size = 2,
-#' #'     max_size = 10
-#' #'   )
-#' #' }
-#' #' @export
-#' sd_connect <- function(
-#'         table = NULL,
-#'         ignore = FALSE,
-#'         gssencmode = "prefer",
-#'         min_size   = 1,
-#'         max_size   = Inf
-#'         )
-#'     {
-#'     if (ignore) {
-#'         message("Database connection ignored. Saving data to local CSV file.\n")
-#'         return(NULL)
-#'     }
-#'
-#'     if (is.null(table)) {
-#'         stop("Table name must be provided")
-#'     }
-#'
-#'     # Check for config file
-#'     config_path <- "connectionParam.yml"
-#'     if (!file.exists(config_path)) {
-#'         stop("No connectionParam.yml found. Create one using sd_create_db_config()")
-#'     }
-#'
-#'     # Read configuration
-#'     tryCatch({
-#'         raw_yaml <- yaml::read_yaml(config_path)
-#'         config <- raw_yaml$connection
-#'
-#'         if (is.null(config)) {
-#'             stop("Invalid configuration file format. Missing 'connection' section.")
-#'         }
-#'
-#'         # Get password from environment
-#'         password <- Sys.getenv("SURVEYDOWN_PASSWORD")
-#'         if (!nchar(password)) {
-#'             stop("Please define your password using surveydown::sd_set_password()")
-#'         }
-#'
-#'         # Create connection
-#'         pool <- pool::dbPool(
-#'             RPostgres::Postgres(),
-#'             host = config$host,
-#'             dbname = config$dbname,
-#'             port = config$port,
-#'             user = config$user,
-#'             password = password,
-#'             gssencmode = gssencmode,
-#'             minSize = min_size,
-#'             maxSize = max_size
-#'         )
-#'
-#'         message("Successfully connected to the database.")
-#'         return(list(db = pool, table = table))
-#'     }, error = function(e) {
-#'         stop("Failed to connect to database: ", e$message)
-#'     })
-#' }
 
 #' Connect to a 'PostgreSQL' Database with Automatic Cleanup
 #'
@@ -467,7 +411,7 @@ sd_database <- function(
 ) {
 
     # v0.8.0
-    .Deprecated("sd_connect")
+    .Deprecated("sd_db_connect")
 
     if (ignore) {
         message("Database connection ignored. Saving data to local CSV file.\n")
