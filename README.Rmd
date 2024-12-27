@@ -34,7 +34,7 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project
 **surveydown** is a flexible, open-source platform for making surveys with [R](https://www.r-project.org/), [Quarto](https://quarto.org/), [Shiny](https://shiny.posit.co/), and [Supabase](https://supabase.com/).
 
 <div align="center">
-<img src='https://github.com/surveydown-dev/surveydown/blob/main/man/figures/technologies.png?raw=true' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
+<img src='man/figures/technologies.svg' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
 </div>
 
 <br>

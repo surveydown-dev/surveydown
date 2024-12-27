@@ -4,17 +4,21 @@
 ## surveydown
 
 <!-- badges: start -->
+
 [![CRAN
 status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project.org/package=surveydown)
 [![metacran
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
 <!-- badges: end -->
 
-> [!IMPORTANT]
-> surveydown is an early stage project under active development and may [not yet be a good fit for you](https://surveydown.org/faq.html#is-surveydown-right-for-me). If you are interested in experimenting with it, we welcome your [feedback](https://github.com/orgs/surveydown-dev/discussions)!
+> \[!IMPORTANT\] surveydown is an early stage project under active
+> development and may [not yet be a good fit for
+> you](https://surveydown.org/faq.html#is-surveydown-right-for-me). If
+> you are interested in experimenting with it, we welcome your
+> [feedback](https://github.com/orgs/surveydown-dev/discussions)!
 
-> [!NOTE] 
-> Visit the main documentation site at [surveydown.org](https://surveydown.org) for more information!
+> \[!NOTE\] Visit the main documentation site at
+> [surveydown.org](https://surveydown.org) for more information!
 
 ## What is surveydown?
 
@@ -24,7 +28,7 @@ with [R](https://www.r-project.org/), [Quarto](https://quarto.org/),
 
 <div align="center">
 
-<img src='https://github.com/surveydown-dev/surveydown/blob/main/man/figures/technologies.png?raw=true' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
+<img src='man/figures/technologies.svg' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
 
 </div>
 
