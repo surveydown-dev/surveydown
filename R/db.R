@@ -1,260 +1,303 @@
-#' Configure database settings
+#' Configure Database Settings
 #'
-#' Set up or modify database configuration settings in a .env file. These settings
-#' are used to establish database connections for storing survey responses.
+#' @description
+#' Opens a user interface to configure database connection settings for surveydown.
+#' These settings are saved in a .env file and are used for storing survey responses.
+#' The interface allows for testing the connection before saving settings.
 #'
-#' @param host Character string. Database host
-#' @param dbname Character string. Database name
-#' @param port Character string. Database port
-#' @param user Character string. Database user
-#' @param table Character string. Table name
-#' @param password Character string. Database password
-#' @param gssencmode Character string. GSS encryption mode
-#' @param interactive Logical. Whether to use interactive setup. Defaults to TRUE if no parameters provided
-#'
-#' @return Invisibly returns a list of the current configuration settings
+#' @return Invisibly returns a list of the configured settings if successful, or NULL if cancelled.
 #'
 #' @examples
 #' if (interactive()) {
-#'   # Interactive setup
+#'   # Open the configuration interface
 #'   sd_db_config()
-#'
-#'   # Update specific settings
-#'   sd_db_config(table = "new_table")
-#'
-#'   # Update multiple settings
-#'   sd_db_config(
-#'     host = "new_host",
-#'     port = "5433",
-#'     table = "new_table"
-#'   )
 #' }
 #'
-#' @family database functions
-#' @seealso
-#' * [sd_db_show()] to view current database settings
-#' * [sd_db_connect()] to connect to the database
-#'
 #' @export
-sd_db_config <- function(
-    host = NULL,
-    dbname = NULL,
-    port = NULL,
-    user = NULL,
-    table = NULL,
-    password = NULL,
-    gssencmode = NULL,
-    interactive = NULL
-) {
-    path <- getwd()
-    env_file <- file.path(path, ".env")
+sd_db_config <- function() {
+    # First load the environment variables
+    if (file.exists(".env")) {
+        dotenv::load_dot_env(".env")
+    }
 
-    # Get current values if file exists
-    current <- list(
-        host = "localhost",
-        port = "5432",
-        dbname = "postgres",
-        user = "username",
-        password = "password",
-        table = "responses",
-        gssencmode = "prefer"
+    # Define UI
+    ui <- miniUI::miniPage(
+        miniUI::gadgetTitleBar("Database Configuration Setup"),
+        miniUI::miniContentPanel(
+            shiny::div(
+                style = "max-width: 600px; margin: 0 auto;",
+                # Current settings display
+                shiny::div(
+                    style = "margin-bottom: 30px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;",
+                    shiny::h4("Current Settings:", style = "margin-top: 0; margin-bottom: 15px;"),
+                    shiny::div(
+                        style = "display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center;",
+                        shiny::tags$strong("Host:", style = "color: #666;"),
+                        shiny::span(Sys.getenv("SD_HOST", "Not set"), style = "color: #2c3e50;"),
+                        shiny::tags$strong("Port:", style = "color: #666;"),
+                        shiny::span(Sys.getenv("SD_PORT", "Not set"), style = "color: #2c3e50;"),
+                        shiny::tags$strong("Database:", style = "color: #666;"),
+                        shiny::span(Sys.getenv("SD_DBNAME", "Not set"), style = "color: #2c3e50;"),
+                        shiny::tags$strong("User:", style = "color: #666;"),
+                        shiny::span(Sys.getenv("SD_USER", "Not set"), style = "color: #2c3e50;"),
+                        shiny::tags$strong("Password:", style = "color: #666;"),
+                        shiny::span("*****", style = "color: #2c3e50;"),
+                        shiny::tags$strong("GSS Mode:", style = "color: #666;"),
+                        shiny::span(Sys.getenv("SD_GSSENCMODE", "Not set"), style = "color: #2c3e50;")
+                    )
+                ),
+
+                shiny::hr(style = "margin: 20px 0;"),
+
+                shiny::h4("Update Settings:", style = "margin-bottom: 20px;"),
+
+                # Host
+                shiny::textInput(
+                    "host",
+                    "Host:",
+                    value = Sys.getenv("SD_HOST", "localhost"),
+                    placeholder = "e.g., localhost"
+                ),
+
+                # Port
+                shiny::textInput(
+                    "port",
+                    "Port:",
+                    value = Sys.getenv("SD_PORT", "5432"),
+                    placeholder = "e.g., 5432"
+                ),
+
+                # Database name
+                shiny::textInput(
+                    "dbname",
+                    "Database name:",
+                    value = Sys.getenv("SD_DBNAME", "postgres"),
+                    placeholder = "e.g., postgres"
+                ),
+
+                # User
+                shiny::textInput(
+                    "user",
+                    "User:",
+                    value = Sys.getenv("SD_USER", "username"),
+                    placeholder = "Database username"
+                ),
+
+                # Password input with show/hide toggle
+                shiny::div(
+                    style = "position: relative;",
+                    # Password input
+                    shiny::passwordInput(
+                        "password",
+                        "Password:",
+                        value = Sys.getenv("SD_PASSWORD", ""),
+                        placeholder = "Database password"
+                    ),
+                    # Show/hide toggle using a switch
+                    shiny::div(
+                        style = "position: absolute; right: 10px; top: 30px;",
+                        shinyWidgets::materialSwitch(
+                            inputId = "show_password",
+                            label = "Show",
+                            value = FALSE,
+                            status = "primary",
+                            right = TRUE
+                        )
+                    )
+                ),
+
+                # GSS encryption mode
+                shiny::selectInput(
+                    "gssencmode",
+                    "GSS encryption mode:",
+                    choices = c("prefer", "disable", "require"),
+                    selected = Sys.getenv("SD_GSSENCMODE", "prefer")
+                ),
+
+                # Test connection button
+                shiny::div(
+                    style = "margin-top: 20px;",
+                    shiny::actionButton(
+                        "test_connection",
+                        "Test Connection",
+                        class = "btn-primary",
+                        style = "width: 100%;"
+                    )
+                ),
+
+                # Connection status
+                shiny::div(
+                    style = "margin-top: 10px; text-align: center;",
+                    shiny::textOutput("connection_status")
+                )
+            )
+        )
     )
 
-    # If .env exists, read current values
-    if (file.exists(env_file)) {
-        dotenv::load_dot_env(env_file)
-        current$host <- Sys.getenv("SD_HOST", current$host)
-        current$port <- Sys.getenv("SD_PORT", current$port)
-        current$dbname <- Sys.getenv("SD_DBNAME", current$dbname)
-        current$user <- Sys.getenv("SD_USER", current$user)
-        current$password <- Sys.getenv("SD_PASSWORD", current$password)
-        current$table <- Sys.getenv("SD_TABLE", current$table)
-        current$gssencmode <- Sys.getenv("SD_GSSENCMODE", current$gssencmode)
-    }
+    # Server logic
+    server <- function(input, output, session) {
+        # Toggle password visibility
+        shiny::observeEvent(input$show_password, {
+            if (input$show_password) {
+                # Create a visible text input
+                shiny::removeUI("#password-container")
+                shiny::insertUI(
+                    selector = "#password-label",
+                    where = "afterEnd",
+                    ui = shiny::textInput(
+                        "password",
+                        label = NULL,
+                        value = input$password,
+                        placeholder = "Database password"
+                    )
+                )
+            } else {
+                # Create a password input
+                shiny::removeUI("#password")
+                shiny::insertUI(
+                    selector = "#password-label",
+                    where = "afterEnd",
+                    ui = shiny::passwordInput(
+                        "password",
+                        label = NULL,
+                        value = input$password,
+                        placeholder = "Database password"
+                    )
+                )
+            }
+        })
 
-    # If no parameters provided and interactive not set, default to interactive
-    if (is.null(interactive) &&
-        all(sapply(list(host, dbname, port, user, table, password, gssencmode), is.null))) {
-        interactive <- TRUE
-    } else if (is.null(interactive)) {
-        interactive <- FALSE
-    }
+        # Password visibility toggle
+        password_visible <- shiny::reactiveVal(FALSE)
 
-    if (interactive) {
-        # Interactive setup
-        cli::cli_h1("Database Configuration Setup")
-        cli::cli_text("Press Enter to keep current value shown in brackets\n")
+        shiny::observeEvent(input$toggle_password, {
+            # Toggle visibility state
+            password_visible(!password_visible())
 
-        # Get host
-        input <- readline(sprintf("Host [%s]: ", current$host))
-        host <- if (input == "") current$host else input
+            # Update button text
+            shiny::updateActionButton(session, "toggle_password",
+                                      label = if (password_visible()) "Hide" else "Show"
+            )
 
-        # Get port
-        input <- readline(sprintf("Port [%s]: ", current$port))
-        port <- if (input == "") current$port else input
+            if (password_visible()) {
+                # Show as text input
+                shiny::updateTextInput(session, "password",
+                                       value = input$password,
+                                       type = "text"
+                )
+            } else {
+                # Show as password input
+                shiny::updateTextInput(session, "password",
+                                       value = input$password,
+                                       type = "password"
+                )
+            }
+        })
 
-        # Get dbname
-        input <- readline(sprintf("Database name [%s]: ", current$dbname))
-        dbname <- if (input == "") current$dbname else input
-
-        # Get user
-        input <- readline(sprintf("User [%s]: ", current$user))
-        user <- if (input == "") current$user else input
-
-        # Get password
-        input <- readline(sprintf("Password [%s]: ", if(current$password == "") "" else "****"))
-        password <- if (input == "") current$password else input
-
-        # Get table
-        input <- readline(sprintf("Table name [%s]: ", current$table))
-        table <- if (input == "") current$table else input
-
-        # Get gssencmode
-        input <- readline(sprintf("GSS encryption mode [%s]: ", current$gssencmode))
-        gssencmode <- if (input == "") current$gssencmode else input
-
-    } else {
-        # For non-interactive mode, use current values if not provided
-        host <- if (!is.null(host)) host else current$host
-        port <- if (!is.null(port)) port else current$port
-        dbname <- if (!is.null(dbname)) dbname else current$dbname
-        user <- if (!is.null(user)) user else current$user
-        password <- if (!is.null(password)) password else current$password
-        table <- if (!is.null(table)) table else current$table
-        gssencmode <- if (!is.null(gssencmode)) gssencmode else current$gssencmode
-    }
-
-    # Create template content using direct variables
-    template <- paste(
-        "# Database connection settings for surveydown",
-        sprintf("SD_HOST=%s", host),
-        sprintf("SD_PORT=%s", port),
-        sprintf("SD_DBNAME=%s", dbname),
-        sprintf("SD_USER=%s", user),
-        sprintf("SD_TABLE=%s", table),
-        sprintf("SD_PASSWORD=%s", password),
-        sprintf("SD_GSSENCMODE=%s", gssencmode),
-        sep = "\n"
-    )
-
-    # Write template to file
-    writeLines(template, env_file)
-
-    # Add to .gitignore
-    gitignore_path <- file.path(path, ".gitignore")
-    if (file.exists(gitignore_path)) {
-        gitignore_content <- readLines(gitignore_path)
-        if (!".env" %in% gitignore_content) {
-            write("\n.env", gitignore_path, append = TRUE)
+        # Test connection function
+        test_connection <- function(config) {
+            tryCatch({
+                pool <- pool::dbPool(
+                    RPostgres::Postgres(),
+                    host = config$host,
+                    dbname = config$dbname,
+                    port = config$port,
+                    user = config$user,
+                    password = config$password,
+                    gssencmode = config$gssencmode
+                )
+                pool::poolClose(pool)
+                return(list(success = TRUE, message = "Connection successful!"))
+            }, error = function(e) {
+                return(list(success = FALSE, message = paste("Connection failed:", e$message)))
+            })
         }
-    } else {
-        write(".env", gitignore_path)
+
+        # Reactive values for connection status
+        connection_status <- shiny::reactiveVal("")
+        connection_successful <- shiny::reactiveVal(FALSE)
+
+        # Test connection button observer
+        shiny::observeEvent(input$test_connection, {
+            config <- list(
+                host = input$host,
+                port = input$port,
+                dbname = input$dbname,
+                user = input$user,
+                password = input$password,
+                gssencmode = input$gssencmode
+            )
+
+            result <- test_connection(config)
+            connection_status(result$message)
+            connection_successful(result$success)
+        })
+
+        # Display connection status
+        output$connection_status <- shiny::renderText({
+            connection_status()
+        })
+
+        # Handle the Done button
+        shiny::observeEvent(input$done, {
+            if (!connection_successful()) {
+                shiny::showNotification(
+                    "Please test and verify the connection before saving.",
+                    type = "warning"
+                )
+                return()
+            }
+
+            # Create template content
+            template <- paste(
+                "# Database connection settings for surveydown",
+                sprintf("SD_HOST=%s", input$host),
+                sprintf("SD_PORT=%s", input$port),
+                sprintf("SD_DBNAME=%s", input$dbname),
+                sprintf("SD_USER=%s", input$user),
+                sprintf("SD_PASSWORD=%s", input$password),
+                sprintf("SD_GSSENCMODE=%s", input$gssencmode),
+                sep = "\n"
+            )
+
+            # Write to .env file
+            writeLines(template, ".env")
+
+            # Add to .gitignore if needed
+            if (file.exists(".gitignore")) {
+                gitignore_content <- readLines(".gitignore")
+                if (!".env" %in% gitignore_content) {
+                    write("\n.env", ".gitignore", append = TRUE)
+                }
+            } else {
+                write(".env", ".gitignore")
+            }
+
+            # Return the configuration
+            shiny::stopApp(list(
+                host = input$host,
+                dbname = input$dbname,
+                port = input$port,
+                user = input$user,
+                password = input$password,
+                gssencmode = input$gssencmode
+            ))
+        })
+
+        # Handle the Cancel button
+        shiny::observeEvent(input$cancel, {
+            shiny::stopApp(NULL)
+        })
     }
 
-    cli::cli_alert_success("Database configuration updated")
-
-    # Show current config with the new values
-    cli::cli_h2("Current database configuration:")
-    cli::cli_text("SD_HOST={host}")
-    cli::cli_text("SD_PORT={port}")
-    cli::cli_text("SD_DBNAME={dbname}")
-    cli::cli_text("SD_USER={user}")
-    cli::cli_text("SD_TABLE={table}")
-    cli::cli_text("SD_PASSWORD={if(password == '') '' else '****'}")
-    cli::cli_text("SD_GSSENCMODE={gssencmode}")
-
-    # Return new configuration
-    current <- list(
-        host = host,
-        dbname = dbname,
-        port = port,
-        user = user,
-        password = password,
-        table = table,
-        gssencmode = gssencmode
-    )
-    invisible(current)
+    # Run the gadget
+    shiny::runGadget(ui, server, viewer = shiny::dialogViewer("Database Configuration"))
 }
 
-#' Show database settings
-#'
-#' Display the current database configuration settings from the .env file.
-#' Sensitive information like passwords can be optionally displayed with confirmation.
-#'
-#' @param path Character string. Directory containing the .env file. Defaults to current directory.
-#' @param show_password Logical. Whether to show the actual password (TRUE) or mask it (FALSE).
-#'   Defaults to FALSE.
-#'
-#' @return Invisibly returns NULL. Called for its side effects (printing to console).
-#'
-#' @examples
-#' if (interactive()) {
-#'   # Show configuration (password masked)
-#'   sd_db_show()
-#'
-#'   # Show configuration including password
-#'   sd_db_show(show_password = TRUE)
-#' }
-#'
-#' @family database functions
-#' @seealso
-#' * [sd_db_config()] to set up or modify database settings
-#' * [sd_db_connect()] to connect to the database
-#'
-#' @export
-sd_db_show <- function(path = getwd(), show_password = FALSE) {
-    env_file <- file.path(path, ".env")
-
-    # Check if .env file exists
-    if (!file.exists(env_file)) {
-        cli::cli_alert_warning("No .env file found in the current directory.")
-        cli::cli_alert_info("Run:")
-        cli::cli_code("sd_db_config()")
-        cli::cli_text("to create one.")
-        return(invisible(NULL))
-    }
-
-    # Read and parse env file
-    env_contents <- readLines(env_file)
-
-    # Filter out comments and empty lines
-    settings <- env_contents[grepl("^SD_", env_contents)]
-
-    # If we're showing the password, confirm first
-    if (show_password) {
-        if (!usethis::ui_yeah("Are you sure you want to display your database password in the console?")) {
-            show_password <- FALSE
-        }
-    }
-
-    # Process settings to mask password if needed
-    processed_settings <- settings
-    if (!show_password) {
-        password_line <- grep("^SD_PASSWORD=", processed_settings)
-        if (length(password_line) > 0) {
-            current_password <- sub("^SD_PASSWORD=", "", processed_settings[password_line])
-            if (current_password != "") {
-                processed_settings[password_line] <- "SD_PASSWORD=****"
-            }
-        }
-    }
-
-    cli::cli_h2("Current database configuration:")
-    # Print each setting on its own line
-    for (setting in processed_settings) {
-        cli::cli_text(setting)
-    }
-
-    cli::cli_text("")  # Single blank line
-    if (!show_password) {
-        cli::cli_alert_info("To show password, run:")
-        cli::cli_code("sd_db_show(show_password = TRUE)")
-        cli::cli_text("")  # Add blank line before modification instructions
-    }
-    cli::cli_alert_info("To modify these settings, run:")
-    cli::cli_code("sd_db_config(overwrite = TRUE)")
-
-    invisible(NULL)  # Ensure clean return
+# Update the error messages function
+db_fail_messages <- function() {
+    cli::cli_alert_info("To configure your database settings, run:")
+    cli::cli_code("sd_db_config()")
 }
 
 #' Connect to database
@@ -263,7 +306,6 @@ sd_db_show <- function(path = getwd(), show_password = FALSE) {
 #' creates a connection pool for efficient database access and provides options for
 #' local data storage when needed.
 #'
-#' @param table Character string. Optional. Override the table name from .env
 #' @param env_file Character string. Path to the env file. Defaults to ".env"
 #' @param ignore Logical. If TRUE, data will be saved to a local CSV file instead
 #'   of the database. Defaults to FALSE.
@@ -276,9 +318,6 @@ sd_db_show <- function(path = getwd(), show_password = FALSE) {
 #'   # Connect using settings from .env
 #'   db <- sd_db_connect()
 #'
-#'   # Connect using a different table
-#'   db <- sd_db_connect(table = "responses_test")
-#'
 #'   # Use local storage instead of database
 #'   db <- sd_db_connect(ignore = TRUE)
 #'
@@ -288,13 +327,8 @@ sd_db_show <- function(path = getwd(), show_password = FALSE) {
 #'   }
 #' }
 #'
-#' @family database functions
-#' @seealso
-#' * [sd_db_config()] to set up or modify database settings
-#' * [sd_db_show()] to view current database settings
-#'
 #' @export
-sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
+sd_db_connect <- function(env_file = ".env", ignore = FALSE) {
     if (ignore) {
         cli::cli_alert_info("Database connection ignored. Saving data to local CSV file.")
         return(NULL)
@@ -303,7 +337,7 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
     # Load environment variables
     if (!file.exists(env_file)) {
         cli::cli_alert_warning("No .env file found.")
-        cli::cli_alert_info("Run the following to create database configuration:")
+        cli::cli_alert_info("Run the following to configure your database:")
         cli::cli_code("sd_db_config()")
         return(NULL)
     }
@@ -317,8 +351,7 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
         dbname = Sys.getenv("SD_DBNAME"),
         user = Sys.getenv("SD_USER"),
         password = Sys.getenv("SD_PASSWORD"),
-        gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer"),
-        table = if (!is.null(table)) table else Sys.getenv("SD_TABLE")
+        gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer")
     )
 
     # Check for missing required parameters
@@ -326,11 +359,7 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
     if (length(missing) > 0) {
         cli::cli_alert_warning("Missing required database configuration:")
         cli::cli_bullets(paste0("* ", missing))
-        cli::cli_alert_info("To view the current configuration, run:")
-        cli::cli_code("sd_db_show()")
-        cli::cli_text("")
-        cli::cli_alert_info("To modify these settings, run:")
-        cli::cli_code("sd_db_config(overwrite = TRUE)")
+        db_fail_messages()
         return(NULL)
     }
 
@@ -346,7 +375,7 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
             gssencmode = params$gssencmode
         )
         cli::cli_alert_success("Successfully connected to the database.")
-        return(list(db = pool, table = params$table))
+        return(list(db = pool))
     }, error = function(e) {
         cli::cli_alert_warning("Failed to connect to the database:")
         cli::cli_text(conditionMessage(e))
@@ -354,16 +383,6 @@ sd_db_connect <- function(table = NULL, env_file = ".env", ignore = FALSE) {
         db_fail_messages()
         return(NULL)
     })
-}
-
-db_fail_messages <- function() {
-    cli::cli_alert_info("To view the current configuration, run:")
-    cli::cli_code("sd_db_show()")
-    cli::cli_text("")
-    cli::cli_alert_info("To modify these settings, run:")
-    cli::cli_code("sd_db_config(overwrite = TRUE)")
-    cli::cli_text("")
-    cli::cli_alert_info("If you have verified all connection parameters\nare correct but still cannot connect to the database,\nconsider setting the 'gssencmode' parameter to 'disable'.")
 }
 
 #' Connect to a 'PostgreSQL' Database with Automatic Cleanup

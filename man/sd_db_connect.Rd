@@ -4,11 +4,9 @@
 \alias{sd_db_connect}
 \title{Connect to database}
 \usage{
-sd_db_connect(table = NULL, env_file = ".env", ignore = FALSE)
+sd_db_connect(env_file = ".env", ignore = FALSE)
 }
 \arguments{
-\item{table}{Character string. Optional. Override the table name from .env}
-
 \item{env_file}{Character string. Path to the env file. Defaults to ".env"}
 
 \item{ignore}{Logical. If TRUE, data will be saved to a local CSV file instead
@@ -28,9 +26,6 @@ if (interactive()) {
   # Connect using settings from .env
   db <- sd_db_connect()
 
-  # Connect using a different table
-  db <- sd_db_connect(table = "responses_test")
-
   # Use local storage instead of database
   db <- sd_db_connect(ignore = TRUE)
 
@@ -41,14 +36,3 @@ if (interactive()) {
 }
 
 }
-\seealso{
-\itemize{
-\item \code{\link[=sd_db_config]{sd_db_config()}} to set up or modify database settings
-\item \code{\link[=sd_db_show]{sd_db_show()}} to view current database settings
-}
-
-Other database functions: 
-\code{\link{sd_db_config}()},
-\code{\link{sd_db_show}()}
-}
-\concept{database functions}

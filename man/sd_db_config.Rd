@@ -2,68 +2,22 @@
 % Please edit documentation in R/db.R
 \name{sd_db_config}
 \alias{sd_db_config}
-\title{Configure database settings}
+\title{Configure Database Settings}
 \usage{
-sd_db_config(
-  host = NULL,
-  dbname = NULL,
-  port = NULL,
-  user = NULL,
-  table = NULL,
-  password = NULL,
-  gssencmode = NULL,
-  interactive = NULL
-)
-}
-\arguments{
-\item{host}{Character string. Database host}
-
-\item{dbname}{Character string. Database name}
-
-\item{port}{Character string. Database port}
-
-\item{user}{Character string. Database user}
-
-\item{table}{Character string. Table name}
-
-\item{password}{Character string. Database password}
-
-\item{gssencmode}{Character string. GSS encryption mode}
-
-\item{interactive}{Logical. Whether to use interactive setup. Defaults to TRUE if no parameters provided}
+sd_db_config()
 }
 \value{
-Invisibly returns a list of the current configuration settings
+Invisibly returns a list of the configured settings if successful, or NULL if cancelled.
 }
 \description{
-Set up or modify database configuration settings in a .env file. These settings
-are used to establish database connections for storing survey responses.
+Opens a user interface to configure database connection settings for surveydown.
+These settings are saved in a .env file and are used for storing survey responses.
+The interface allows for testing the connection before saving settings.
 }
 \examples{
 if (interactive()) {
-  # Interactive setup
+  # Open the configuration interface
   sd_db_config()
-
-  # Update specific settings
-  sd_db_config(table = "new_table")
-
-  # Update multiple settings
-  sd_db_config(
-    host = "new_host",
-    port = "5433",
-    table = "new_table"
-  )
 }
 
 }
-\seealso{
-\itemize{
-\item \code{\link[=sd_db_show]{sd_db_show()}} to view current database settings
-\item \code{\link[=sd_db_connect]{sd_db_connect()}} to connect to the database
-}
-
-Other database functions: 
-\code{\link{sd_db_connect}()},
-\code{\link{sd_db_show}()}
-}
-\concept{database functions}
