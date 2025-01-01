@@ -59,6 +59,7 @@ sd_ui <- function() {
   }
   barcolor <- get_barcolor(metadata)
   barposition <- get_barposition(metadata)
+  footer <- get_footer(metadata)
 
   # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
@@ -110,7 +111,13 @@ sd_ui <- function() {
       shiny::tags$div(
         class = "content",
         shiny::uiOutput("main")
-      )
+      ),
+      if (footer != "") {
+        shiny::tags$div(
+          class = "footer",
+          shiny::markdown(footer)
+        )
+      }
     ) # fluidPage
   ) # shiny::tagList()
 }
@@ -140,6 +147,28 @@ get_barposition <- function(metadata) {
     return("top")
   }
   return(barposition)
+}
+
+get_footer <- function(metadata) {
+  footer <- metadata$formats$html$metadata$footer
+
+  # Check if footer is NULL or empty string first
+  if (is.null(footer) || identical(footer, "")) {
+    return(shiny::HTML('Made with <a href="https://surveydown.org" target="_blank">surveydown</a>.'))
+  }
+
+  # Return empty string if footer is "none"
+  if (identical(tolower(footer), "none")) {
+    return("")
+  }
+
+  # Convert markdown links to HTML links with target="_blank"
+  footer <- gsub("\\[([^]]+)\\]\\(([^)]+)\\)",
+                 '<a href="\\2" target="_blank">\\1</a>',
+                 footer)
+
+  # Wrap with HTML() to prevent escaping
+  return(shiny::HTML(footer))
 }
 
 survey_needs_updating <- function(paths) {

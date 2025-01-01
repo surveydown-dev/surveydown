@@ -8,6 +8,7 @@
   --progressbar-position: top;
   --progress-bar-height: 10px;
   --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
+  --footer-height: calc(1rem * 2 + 1.5em);
 }
 
 /* Styles for container and wrapper */
@@ -35,6 +36,10 @@ body {
   max-width: 800px;
   margin: 0 auto !important;
   padding: 0 0 5px !important;
+}
+
+.container-fluid {
+  padding-bottom: 7rem;
 }
 
 /* Typography */
@@ -176,7 +181,12 @@ p, .form-group, .control-label {
 }
 
 #progressbar.bottom {
-  bottom: 0;
+  bottom: 0; /* Default position at the bottom */
+}
+
+/* When footer exists, move the bottom progress bar up */
+.footer ~ #progressbar.bottom {
+  bottom: var(--footer-height);
 }
 
 #progressbar > div {
@@ -224,6 +234,31 @@ p:last-child,
   .checkbox-group-buttons .btn-group-container-sw {
     flex-direction: column;
   }
+}
+
+/* Footer styling */
+.footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+    padding: 1rem;
+    height: var(--footer-height);
+    background-color: color-mix(in srgb, var(--body-background-color) 90%, black);
+    border-top: 1px solid #eee;
+    color: #666;
+    z-index: 999;
+}
+
+.footer a {
+    color: var(--theme-color);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+    color: color-mix(in srgb, var(--theme-color) 80%, black);
 }
 
 /* Matrix question styling */

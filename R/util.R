@@ -160,13 +160,6 @@ vector_to_json_array <- function(vec) {
   sprintf("[%s]", paste(quoted_elements, collapse = ","))
 }
 
-# Dynamically load JS files
-load_js_file <- function(name) {
-  js_file_path <- system.file("js", name, package = "surveydown")
-  js_code <- paste(readLines(js_file_path), collapse = "\n")
-  shinyjs::runjs(js_code)
-}
-
 tibble_to_list_of_lists <- function(tbl) {
   if (!is.data.frame(tbl)) {
     stop("Input must be a data frame or tibble")
