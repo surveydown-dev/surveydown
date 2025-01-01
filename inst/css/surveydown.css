@@ -181,11 +181,11 @@ p, .form-group, .control-label {
 }
 
 #progressbar.bottom {
-  bottom: 0; /* Default position at the bottom */
+  bottom: 0; /* Default position at very bottom when no footer */
 }
 
-/* When footer exists, move the bottom progress bar up */
-.footer ~ #progressbar.bottom {
+/* When the footer exists, adjust bottom progress bar position */
+:has(.footer) #progressbar.bottom {
   bottom: var(--footer-height);
 }
 
