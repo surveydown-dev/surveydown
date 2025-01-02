@@ -242,13 +242,40 @@ p:last-child,
     left: 0;
     right: 0;
     bottom: 0;
-    text-align: center;
     padding: 1rem;
     height: var(--footer-height);
     background-color: color-mix(in srgb, var(--body-background-color) 90%, black);
     border-top: 1px solid #eee;
     color: #666;
     z-index: 999;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+    height: 100%;
+}
+
+.footer-content.center {
+    justify-content: center;
+}
+
+.footer-left {
+    text-align: left;
+    margin-right: auto;
+}
+
+.footer-center {
+    text-align: center;
+    flex: 1;
+}
+
+.footer-right {
+    text-align: right;
+    margin-left: auto;
 }
 
 .footer a {
