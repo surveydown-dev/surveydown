@@ -174,100 +174,50 @@ process_links <- function(text) {
 }
 
 get_footer <- function(metadata) {
-  footer <- metadata$formats$html$metadata$footer
+  # Get all footer-related fields
+  footer_center <- if (!is.null(metadata$formats$html$metadata$footer)) {
+    metadata$formats$html$metadata$footer
+  } else {
+    metadata$formats$html$metadata$`footer-center`
+  }
+  footer_left <- metadata$formats$html$metadata$`footer-left`
+  footer_right <- metadata$formats$html$metadata$`footer-right`
 
-  if (is.null(footer)) {
+  # If all are NULL, return empty string
+  if (is.null(footer_center) && is.null(footer_left) && is.null(footer_right)) {
     return("")
   }
 
-  if (grepl("^\\s*\\{.*\\}\\s*$", footer)) {
-    try_parse <- tryCatch({
-      # Clean up the input text
-      footer_text <- gsub("\\s+", " ", footer)
-      footer_text <- trimws(footer_text)
+  # Process each section if it exists
+  footer_html <- c()
 
-      # Store all links (both markdown and HTML) with placeholders
-      placeholders <- list()
-      placeholder_id <- 0
-
-      create_placeholder <- function() {
-        id <- placeholder_id
-        placeholder_id <<- placeholder_id + 1
-        sprintf("PLACEHOLDER_%d_", id)
-      }
-
-      # First handle markdown links
-      while(grepl("\\[([^]]+)\\]\\(([^)]+)\\)", footer_text)) {
-        match <- regexpr("\\[([^]]+)\\]\\(([^)]+)\\)", footer_text, perl=TRUE)
-        link <- regmatches(footer_text, match)[[1]]
-        ph <- create_placeholder()
-        placeholders[[ph]] <- link
-        footer_text <- sub("\\[([^]]+)\\]\\(([^)]+)\\)", ph, footer_text, perl=TRUE)
-      }
-
-      # Then handle HTML links
-      while(grepl("<a\\s+[^>]*href=['\"][^'\"]*['\"][^>]*>.*?</a>", footer_text)) {
-        match <- regexpr("<a\\s+[^>]*href=['\"][^'\"]*['\"][^>]*>.*?</a>", footer_text, perl=TRUE)
-        link <- regmatches(footer_text, match)[[1]]
-        ph <- create_placeholder()
-        placeholders[[ph]] <- link
-        footer_text <- sub("<a\\s+[^>]*href=['\"][^'\"]*['\"][^>]*>.*?</a>", ph, footer_text, perl=TRUE)
-      }
-
-      # Convert to proper JSON format
-      footer_text <- gsub("'([^']*)'", "\"\\1\"", footer_text)
-      footer_text <- gsub("([a-zA-Z]+):", "\"\\1\":", footer_text)
-
-      # Parse JSON
-      parts <- jsonlite::fromJSON(footer_text)
-
-      footer_html <- c()
-
-      # Helper function to restore placeholders and ensure target="_blank"
-      restore_links <- function(text) {
-        result <- text
-        for (ph in names(placeholders)) {
-          link <- placeholders[[ph]]
-          # If it's an HTML link that doesn't have target="_blank", add it
-          if (grepl("^<a", link) && !grepl("target=", link)) {
-            link <- gsub("<a ", "<a target=\"_blank\" ", link)
-          }
-          result <- gsub(ph, link, result, fixed=TRUE)
-        }
-        return(result)
-      }
-
-      if (!is.null(parts$left)) {
-        restored_text <- restore_links(parts$left)
-        footer_html <- c(footer_html,
-                         sprintf('<div class="footer-left">%s</div>',
-                                 process_links(restored_text)))
-      }
-      if (!is.null(parts$center)) {
-        restored_text <- restore_links(parts$center)
-        footer_html <- c(footer_html,
-                         sprintf('<div class="footer-center">%s</div>',
-                                 process_links(restored_text)))
-      }
-      if (!is.null(parts$right)) {
-        restored_text <- restore_links(parts$right)
-        footer_html <- c(footer_html,
-                         sprintf('<div class="footer-right">%s</div>',
-                                 process_links(restored_text)))
-      }
-
-      return(paste0('<div class="footer-content">',
-                    paste(footer_html, collapse = ""),
-                    '</div>'))
-    }, error = function(e) NULL)
-
-    if (!is.null(try_parse)) return(try_parse)
+  if (!is.null(footer_left)) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-left">%s</div>',
+                             process_links(footer_left)))
   }
 
-  # If not JSON or parsing failed, treat as center-aligned text
-  processed_text <- process_links(footer)
-  return(sprintf('<div class="footer-content center"><div class="footer-center">%s</div></div>',
-                 processed_text))
+  if (!is.null(footer_center)) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-center">%s</div>',
+                             process_links(footer_center)))
+  }
+
+  if (!is.null(footer_right)) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-right">%s</div>',
+                             process_links(footer_right)))
+  }
+
+  # If no content was added, return empty string
+  if (length(footer_html) == 0) {
+    return("")
+  }
+
+  # Return the final HTML
+  return(paste0('<div class="footer-content">',
+                paste(footer_html, collapse = ""),
+                '</div>'))
 }
 
 survey_needs_updating <- function(paths) {
