@@ -7,9 +7,36 @@
 sd_dashboard()
 }
 \value{
-No return value, called for side effects (opens dashboard interface)
+Launches a Shiny application with the survey dashboard.
+The function does not return a value; it is called for its side effects
+of opening the dashboard interface.
 }
 \description{
-Opens a dashboard interface to view survey responses and summary statistics.
-Includes database configuration, summary statistics, and response data.
+This function creates a comprehensive dashboard for survey data analysis
+with two main tabs:
+\itemize{
+\item Dashboard: Displays survey statistics, response trends, and a full
+response data table
+\item Settings: Provides interface for updating database connection settings
+}
+}
+\details{
+Opens an interactive dashboard to view and analyze survey responses
+using a Shiny dashboard interface.
+
+The dashboard offers the following features:
+\itemize{
+\item Summary value boxes showing total responses, daily average,
+completion rate, and average rating
+\item Response trend plot with daily and cumulative responses
+\item Downloadable survey responses data table
+\item Database connection configuration and testing
+}
+}
+\examples{
+\dontrun{
+# Launch the survey dashboard
+sd_dashboard()
+}
+
 }
