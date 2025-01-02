@@ -115,13 +115,12 @@ sd_dashboard <- function() {
                                                 shiny::uiOutput("survey_timeline")
                                             )
                                         ),
-
-                                        # Data Table
                                         shiny::fluidRow(
                                             shinydashboard::box(
                                                 title = "Survey Responses",
                                                 width = 12,
-                                                DT::DTOutput("survey_data_table")
+                                                DT::dataTableOutput("survey_data_table"),
+                                                shiny::downloadButton("download_survey_data", "Download CSV")
                                             )
                                         )
                 ),
@@ -214,6 +213,8 @@ sd_dashboard <- function() {
         )
     )
 
+    #Server Block
+
     server <- function(input, output, session) {
         # Reactive values for connection status
         connection_status <- shiny::reactiveVal(FALSE)
@@ -284,17 +285,28 @@ sd_dashboard <- function() {
         })
 
         # Reactive survey data
-        # Reactive survey data
         survey_data <- shiny::reactive({
             shiny::req(input$table_select)
             shiny::req(connection_status())
             shiny::req(!is.null(local_db))
 
-
             data <- pool::poolWithTransaction(local_db$db, function(conn) {
                 DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s"', input$table_select))
             })
         })
+
+        # Downloadable CSV of survey data
+        output$download_survey_data <- downloadHandler(
+            filename = function() {
+                paste0(input$table_select, "_", Sys.Date(), ".csv")
+            },
+            content = function(file) {
+                data <- survey_data()
+                write.csv(data, file, row.names = FALSE)
+            }
+        )
+
+
         # Value Boxes
         output$total_responses <- shinydashboard::renderValueBox({
             shiny::req(survey_data())
@@ -365,7 +377,6 @@ sd_dashboard <- function() {
         })
 
         # Response Trend Plot
-        # Response Trend Plot
         output$response_trend <- shiny::renderPlot({
             data <- survey_data()
             if (is.null(data) || nrow(data) == 0 || !("time_start" %in% names(data))) {
@@ -385,16 +396,10 @@ sd_dashboard <- function() {
             all_counts <- integer(length(date_range))
             names(all_counts) <- date_range
 
-            # Fill in actual counts
-            message("Filling in actual counts...")
             all_counts[names(daily_counts)] <- daily_counts
-
-            # Calculate cumulative responses
-            message("Calculating cumulative responses...")
             cumulative_responses <- cumsum(all_counts)
 
             # Create the plot
-            message("Creating the plot...")
             par(mar = c(4, 4, 2, 4))
 
             # Plot daily responses
@@ -440,30 +445,22 @@ sd_dashboard <- function() {
             duration_days <- max(as.numeric(difftime(last_response, first_response, units = "days")), 1)
 
             shiny::div(
-                    shiny::tags$p(sprintf("Survey Duration: %.1f days", duration_days)),
-                    shiny::tags$p(sprintf("First Response: %s", format(first_response, "%Y-%m-%d"))),
-                    shiny::tags$p(sprintf("Last Response: %s", format(last_response, "%Y-%m-%d")))
-                )
-            })
+                shiny::tags$p(sprintf("Survey Duration: %.1f days", duration_days)),
+                shiny::tags$p(sprintf("First Response: %s", format(first_response, "%Y-%m-%d"))),
+                shiny::tags$p(sprintf("Last Response: %s", format(last_response, "%Y-%m-%d")))
+            )
+        })
 
 
         # Survey Data Table
-        output$survey_data_table <- DT::renderDT({
+        output$survey_data_table <- DT::renderDataTable({
             shiny::req(survey_data())
             data <- survey_data()
-
             DT::datatable(
                 data,
-                extensions = c('Buttons', 'Scroller'),
+                extensions = 'Scroller',
                 options = list(
                     dom = 'Bfrtip',
-                    buttons = list(
-                        list(
-                            extend = 'csv',
-                            text = 'Download CSV',
-                            filename = function() input$table_select
-                        )
-                    ),
                     scrollX = TRUE,
                     scrollY = '400px',
                     scroller = TRUE,
