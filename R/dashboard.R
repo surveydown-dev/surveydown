@@ -184,7 +184,8 @@ sd_dashboard <- function() {
                                                                 "toggle_password",
                                                                 "Show",
                                                                 class = "btn-sm btn-secondary",
-                                                                style = "padding: 2px 8px; font-size: 12px;"
+                                                                style = "padding: 2px 8px; font-size: 12px;",
+                                                                onclick = "myFunction()"
                                                             )
                                                         )
                                                     )
@@ -198,7 +199,18 @@ sd_dashboard <- function() {
                                             )
                                         )
                 )
-            )
+            ),
+            #Script for password, something I found online R solutions weren't working
+            shiny::tags$script(HTML("
+                function myFunction() {
+                  var x = document.getElementById('password');
+                  if (x.type === 'password') {
+                    x.type = 'text';
+                  } else {
+                    x.type = 'password';
+                  }
+                }
+                "))
         )
     )
 
