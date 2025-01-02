@@ -50,7 +50,7 @@ sd_dashboard <- function() {
         shinydashboard::dashboardSidebar(
             shinydashboard::sidebarMenu(
                 shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = shiny::icon("dashboard")),
-                shinydashboard::menuItem("Database Settings", tabName = "settings", icon = shiny::icon("cog"))
+                shinydashboard::menuItem("Connection Settings", tabName = "settings", icon = shiny::icon("cog"))
             )
         ),
         shinydashboard::dashboardBody(
@@ -152,9 +152,9 @@ sd_dashboard <- function() {
 
                                         shiny::fluidRow(
                                             shinydashboard::box(
-                                                title = "Update Database Connection",
+                                                title = "Update Your Database Connection",
                                                 width = 12,
-                                                status = "warning",
+                                                status = "info",
                                                 solidHeader = TRUE,
                                                 shiny::textInput("host", "Host:",
                                                                  value = Sys.getenv("SD_HOST", "localhost")),
@@ -230,10 +230,11 @@ sd_dashboard <- function() {
                     password = config$password,
                     gssencmode = config$gssencmode
                 )
-                pool::poolClose(pool)
                 TRUE
             }, error = function(e) {
                 FALSE
+            }, finally = {
+                pool::poolClose(pool)
             })
         }
 
@@ -283,15 +284,17 @@ sd_dashboard <- function() {
         })
 
         # Reactive survey data
+        # Reactive survey data
         survey_data <- shiny::reactive({
             shiny::req(input$table_select)
             shiny::req(connection_status())
+            shiny::req(!is.null(local_db))
 
-            pool::poolWithTransaction(local_db$db, function(conn) {
+
+            data <- pool::poolWithTransaction(local_db$db, function(conn) {
                 DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s"', input$table_select))
             })
         })
-
         # Value Boxes
         output$total_responses <- shinydashboard::renderValueBox({
             shiny::req(survey_data())
@@ -362,60 +365,66 @@ sd_dashboard <- function() {
         })
 
         # Response Trend Plot
+        # Response Trend Plot
         output$response_trend <- shiny::renderPlot({
-            shiny::req(survey_data())
             data <- survey_data()
-
-            if (nrow(data) > 0 && "time_start" %in% names(data)) {
-                # Convert time_start to Date
-                dates <- as.Date(data$time_start)
-
-                # Create daily counts
-                daily_counts <- table(dates)
-
-                # Create a complete sequence of dates
-                date_range <- seq(min(dates), max(dates), by = "day")
-                all_counts <- integer(length(date_range))
-                names(all_counts) <- date_range
-
-                # Fill in actual counts
-                all_counts[names(daily_counts)] <- daily_counts
-
-                # Calculate cumulative responses
-                cumulative_responses <- cumsum(all_counts)
-
-                # Create the plot
-                par(mar = c(4, 4, 2, 4))
-
-                # Plot daily responses
-                plot(date_range, all_counts,
-                     type = "h",
-                     col = "#3498db",
-                     xlab = "Date",
-                     ylab = "Daily Responses",
-                     main = "Response Trend")
-
-                # Add cumulative line on secondary y-axis
-                par(new = TRUE)
-                plot(date_range, cumulative_responses,
-                     type = "l",
-                     col = "#e74c3c",
-                     xaxt = "n",
-                     yaxt = "n",
-                     xlab = "",
-                     ylab = "")
-
-                # Add secondary axis
-                axis(4, col = "#e74c3c", col.axis = "#e74c3c")
-                mtext("Cumulative Responses", side = 4, line = 2, col = "#e74c3c")
-
-                # Add legend
-                legend("topleft",
-                       legend = c("Daily", "Cumulative"),
-                       col = c("#3498db", "#e74c3c"),
-                       lty = c(1, 1),
-                       bg = "white")
+            if (is.null(data) || nrow(data) == 0 || !("time_start" %in% names(data))) {
+                message("No data available to display response trend.")
+                plot.new()
+                return()
             }
+
+            # Convert time_start to Date
+            dates <- as.Date(data$time_start)
+
+            # Create daily counts
+            daily_counts <- table(dates)
+
+            # Create a complete sequence of dates
+            date_range <- seq(min(dates), max(dates), by = "day")
+            all_counts <- integer(length(date_range))
+            names(all_counts) <- date_range
+
+            # Fill in actual counts
+            message("Filling in actual counts...")
+            all_counts[names(daily_counts)] <- daily_counts
+
+            # Calculate cumulative responses
+            message("Calculating cumulative responses...")
+            cumulative_responses <- cumsum(all_counts)
+
+            # Create the plot
+            message("Creating the plot...")
+            par(mar = c(4, 4, 2, 4))
+
+            # Plot daily responses
+            plot(date_range, all_counts,
+                 type = "h",
+                 col = "#3498db",
+                 xlab = "Date",
+                 ylab = "Daily Responses",
+                 main = "Response Trend")
+
+            # Add cumulative line on secondary y-axis
+            par(new = TRUE)
+            plot(date_range, cumulative_responses,
+                 type = "l",
+                 col = "#e74c3c",
+                 xaxt = "n",
+                 yaxt = "n",
+                 xlab = "",
+                 ylab = "")
+
+            # Add secondary axis
+            axis(4, col = "#e74c3c", col.axis = "#e74c3c")
+            mtext("Cumulative Responses", side = 4, line = 2, col = "#e74c3c")
+
+            # Add legend
+            legend("topleft",
+                   legend = c("Daily", "Cumulative"),
+                   col = c("#3498db", "#e74c3c"),
+                   lty = c(1, 1),
+                   bg = "white")
         })
 
         # Survey Timeline
