@@ -229,7 +229,7 @@ extract_head_content <- function(html_content) {
 #' - "mc_buttons": Multiple choice with button-style options (single selection)
 #' - "mc_multiple_buttons": Multiple choice with button-style options (multiple selections allowed)
 #' - "mc_drag_drop": Multiple choice in which the respondent can reorder the
-#' choices using drag and drop (based on the [sortsurvey rank_list_survey question](sortable::rank_list_survey))
+#' choices using drag and drop based on the sortsurvey rank_list_survey question (see [sortsurvey::rank_list_survey()])
 #' - "text": Single-line text input
 #' - "textarea": Multi-line text input
 #' - "numeric": Numeric input
@@ -270,7 +270,7 @@ extract_head_content <- function(html_content) {
 #'   # Clean up
 #'   setwd(orig_dir)
 #' }
-#'
+#' @importFrom sortsurvey rank_list_survey
 #' @export
 sd_question <- function(
     type,
@@ -373,7 +373,7 @@ sd_question <- function(
 
   } else if(type == "mc_drag_drop") {
 
-      output <- sortsurvey::rank_list_survey(
+      output <- rank_list_survey(
           input_id    = id,
           text      = label,
           labels    = list_name_md_to_html(option),
