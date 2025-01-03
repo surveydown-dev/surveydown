@@ -30,6 +30,12 @@ function Meta(meta)
     -- Initialize header-includes if it doesn't exist
     meta['header-includes'] = meta['header-includes'] or pandoc.MetaList{}
 
+    -- Add Font Awesome from cdnjs
+    meta['header-includes'][#meta['header-includes'] + 1] =
+        pandoc.RawBlock('html', '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">')
+    meta['header-includes'][#meta['header-includes'] + 1] =
+        pandoc.RawBlock('html', '<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>')
+
     -- Add JavaScript files
     for _, file in ipairs(js_files) do
         local path = get_package_file(file, "js")

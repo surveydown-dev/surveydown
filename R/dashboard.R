@@ -35,6 +35,8 @@
 #' @import pool
 #' @importFrom DT renderDT datatable
 #' @importFrom RPostgres Postgres
+#' @importFrom graphics axis legend mtext par plot.new
+#' @importFrom utils write.csv
 #' @export
 sd_dashboard <- function() {
     # First load the environment variables

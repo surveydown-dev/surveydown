@@ -41,6 +41,9 @@ reference:
   - sd_copy_value
   - sd_get_url_pars
   - sd_is_answered
+  - sd_dashboard
+  - sd_db_config
+  - sd_db_connect
 - title: Survey UI
   contents:
   - sd_question
