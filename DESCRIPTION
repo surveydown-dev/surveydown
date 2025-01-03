@@ -53,6 +53,6 @@ Imports:
     utils,
     xml2,
     yaml,
-    sortsurvey
+    sortable
 URL: https://pkg.surveydown.org
 BugReports: https://github.com/surveydown-dev/surveydown/issues
