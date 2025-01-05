@@ -373,7 +373,7 @@ p:last-child,
 }
 
 /* SweetAlert custom styling */
-.swal2-popup {
+div:where(.swal2-container) .swal2-popup {
   font-size: 1rem !important;
 }
 
