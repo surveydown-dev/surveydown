@@ -1,6 +1,8 @@
 ---
+format: html
 echo: false
 warning: false
+footer: "Made with [surveydown](https://surveydown.org)"
 ---
 
 ```{r}
