@@ -228,8 +228,10 @@ extract_head_content <- function(html_content) {
 #' - "mc_multiple": Multiple choice (multiple selections allowed)
 #' - "mc_buttons": Multiple choice with button-style options (single selection)
 #' - "mc_multiple_buttons": Multiple choice with button-style options (multiple selections allowed)
-#' - "mc_drag_drop": Multiple choice in which the respondent can reorder the
+#' - "rank_list": Multiple choice in which the respondent can reorder the
 #' choices using drag and drop based on the sortsurvey rank_list_survey question (see [sortsurvey::rank_list_survey()])
+#' - "bucket_list": Multiple choice options which the respondent can put into two
+#' different buckets based on the sortsurvey bucket_list_survey question (see [sortsurvey::bucket_list_survey()])
 #' - "text": Single-line text input
 #' - "textarea": Multi-line text input
 #' - "numeric": Numeric input
@@ -270,7 +272,7 @@ extract_head_content <- function(html_content) {
 #'   # Clean up
 #'   setwd(orig_dir)
 #' }
-#' @importFrom sortsurvey rank_list_survey
+#' @importFrom sortsurvey rank_list_survey bucket_list_survey
 #' @export
 sd_question <- function(
     type,
@@ -371,7 +373,7 @@ sd_question <- function(
             });
         ", id, js_interaction))))
 
-  } else if(type == "mc_drag_drop") {
+  } else if(type == "rank_list") {
 
       output <- rank_list_survey(
           input_id    = id,
@@ -379,6 +381,24 @@ sd_question <- function(
           labels    = list_name_md_to_html(option),
           options= sortsurvey::sortable_options(direction  = direction)
       )
+
+  } else if (type=="bucket_list") {
+
+      bucket_list_survey(
+          header = label,
+          group_name = id,
+          add_rank_list(
+              text = "Drag from here",
+              labels = list_name_md_to_html(option)
+          ),
+          add_rank_list(
+              text = "to here",
+              labels = NULL
+          ),output_width="100%",
+          output_height="100%",
+          options= sortsurvey::sortable_options(direction  = direction),
+          # NOTE: direction doesn't seem to work in bucket list questions
+          orientation=direction)
 
   } else if (type == "text") {
 

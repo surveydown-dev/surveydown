@@ -5,6 +5,7 @@ warning: false
 
 ```{r}
 library(surveydown)
+library(sortsurvey)
 ```
 
 ::: {#welcome .sd-page}
@@ -28,9 +29,9 @@ sd_question(
 )
 
 sd_question(
-  type  = 'mc_drag_drop',
+  type  = 'rank_list',
   id    = 'penguins_drag',
-  label = "Which type of penguin do you like the best?",
+  label = "Which type of penguin do you like the best? Rank them from best to worst.",
   option = c(
     'Adélie'    = 'adelie',
     'Chinstrap' = 'chinstrap',
@@ -38,7 +39,39 @@ sd_question(
   )
 )
 
+
+
 ```
+
+# Bucket list style:
+
+```{r}
+
+# add in drag and drop question
+# horizontal method doesn't seem to work regardless of what width/height is
+# set to
+
+# DOES NOT WORK: input id is only set for bucket top class, 
+# need to set two other input IDs for rank_list objects
+
+# see function bucket_list_survey in sortsurvey https://github.com/saudiwin/sortable_survey/blob/main/R/bucket_list.R
+# and add_rank_list in sortable: https://rstudio.github.io/sortable/reference/add_rank_list.html
+
+sd_question(
+  type  = 'bucket_list',
+  id    = 'penguins_bucket',
+  label = "Which type of penguin do you like the best? Drag those penguins to the second bucket.",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo'
+  )
+    
+)
+
+
+```
+
 
 You need to insert next buttons with `sd_next()` and set the `next_page` argument to the name of the page you want to go to next.
 

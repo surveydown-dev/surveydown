@@ -79,8 +79,10 @@ The function supports various question types:
 \item "mc_multiple": Multiple choice (multiple selections allowed)
 \item "mc_buttons": Multiple choice with button-style options (single selection)
 \item "mc_multiple_buttons": Multiple choice with button-style options (multiple selections allowed)
-\item "mc_drag_drop": Multiple choice in which the respondent can reorder the
+\item "rank_list": Multiple choice in which the respondent can reorder the
 choices using drag and drop based on the sortsurvey rank_list_survey question (see \code{\link[sortsurvey:rank_list_survey]{sortsurvey::rank_list_survey()}})
+\item "bucket_list": Multiple choice options which the respondent can put into two
+different buckets based on the sortsurvey bucket_list_survey question (see \code{\link[sortsurvey:bucket_list_survey]{sortsurvey::bucket_list_survey()}})
 \item "text": Single-line text input
 \item "textarea": Multi-line text input
 \item "numeric": Numeric input

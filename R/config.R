@@ -319,7 +319,7 @@ extract_question_structure_html <- function(html_content) {
     )
 
     # Extract options for the question ( mc, *_multiple, *_buttons, and select)
-    if (grepl("radio|checkbox|select|matrix", type)) {
+    if (grepl("radio|checkbox|select|matrix|list", type)) {
       options <- question_node |>
         rvest::html_nodes("input[type='radio'], input[type='checkbox'], option") |>
         rvest::html_attr("value")
