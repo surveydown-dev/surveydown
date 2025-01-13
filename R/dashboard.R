@@ -103,17 +103,21 @@ sd_dashboard <- function() {
                                         ),
 
                                         # Response Trend and Timeline
-                                        shiny::fluidRow(
-                                            shinydashboard::box(
-                                                title = "Response Trend",
-                                                width = 8,
-                                                shiny::plotOutput("response_trend", height = "300px")
+                                        shinydashboard::box(
+                                            title = "Response Trend",
+                                            width = 8,
+                                            shiny::fluidRow(
+                                                shiny::column(
+                                                    width = 12,
+                                                    shiny::selectInput(
+                                                        "plot_type",
+                                                        "Plot Type:",
+                                                        choices = c("Line Graph" = "line", "Bar Graph" = "bar"),
+                                                        selected = "line"
+                                                    )
+                                                )
                                             ),
-                                            shinydashboard::box(
-                                                title = "Survey Timeline",
-                                                width = 4,
-                                                shiny::uiOutput("survey_timeline")
-                                            )
+                                            shiny::plotOutput("response_trend", height = "300px")
                                         ),
                                         shiny::fluidRow(
                                             shinydashboard::box(
@@ -219,6 +223,39 @@ sd_dashboard <- function() {
         # Reactive values for connection status
         connection_status <- shiny::reactiveVal(FALSE)
 
+        # Initialize connection status based on local_db
+        shiny::observe({
+            if (!is.null(local_db)) {
+                # Test the initial connection
+                config <- list(
+                    host = Sys.getenv("SD_HOST", "localhost"),
+                    port = Sys.getenv("SD_PORT", "5432"),
+                    dbname = Sys.getenv("SD_DBNAME", "postgres"),
+                    user = Sys.getenv("SD_USER", "username"),
+                    password = Sys.getenv("SD_PASSWORD", ""),
+                    gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer")
+                )
+
+                success <- tryCatch({
+                    pool <- pool::dbPool(
+                        RPostgres::Postgres(),
+                        host = config$host,
+                        dbname = config$dbname,
+                        port = config$port,
+                        user = config$user,
+                        password = config$password,
+                        gssencmode = config$gssencmode
+                    )
+                    pool::poolClose(pool)
+                    TRUE
+                }, error = function(e) {
+                    FALSE
+                })
+
+                connection_status(success)
+            }
+        })
+
         # Test connection function
         test_connection <- function(config) {
             tryCatch({
@@ -231,11 +268,10 @@ sd_dashboard <- function() {
                     password = config$password,
                     gssencmode = config$gssencmode
                 )
+                pool::poolClose(pool)
                 TRUE
             }, error = function(e) {
                 FALSE
-            }, finally = {
-                pool::poolClose(pool)
             })
         }
 
@@ -284,14 +320,20 @@ sd_dashboard <- function() {
             }
         })
 
-        # Reactive survey data
+        # Reactive survey data with error handling
         survey_data <- shiny::reactive({
             shiny::req(input$table_select)
             shiny::req(connection_status())
             shiny::req(!is.null(local_db))
 
-            data <- pool::poolWithTransaction(local_db$db, function(conn) {
-                DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s"', input$table_select))
+            tryCatch({
+                data <- pool::poolWithTransaction(local_db$db, function(conn) {
+                    DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s"', input$table_select))
+                })
+                return(data)
+            }, error = function(e) {
+                warning("Error fetching survey data: ", e$message)
+                return(NULL)
             })
         })
 
@@ -378,77 +420,124 @@ sd_dashboard <- function() {
 
         # Response Trend Plot
         output$response_trend <- shiny::renderPlot({
+            # Check for data early
             data <- survey_data()
             if (is.null(data) || nrow(data) == 0 || !("time_start" %in% names(data))) {
-                message("No data available to display response trend.")
+                # Create an empty plot with a message
                 plot.new()
+                plot.window(xlim = c(0, 1), ylim = c(0, 1))
+                text(0.5, 0.5, "No data available to display", cex = 1.2)
                 return()
             }
 
-            # Convert time_start to Date
-            dates <- as.Date(data$time_start)
+            # Suppress warnings for the entire plotting process
+            withCallingHandlers({
+                # Convert time_start to Date - wrap in try to handle conversion errors
+                dates <- try(as.Date(data$time_start), silent = TRUE)
+                if (inherits(dates, "try-error") || length(dates) == 0 || all(is.na(dates))) {
+                    plot.new()
+                    plot.window(xlim = c(0, 1), ylim = c(0, 1))
+                    text(0.5, 0.5, "Unable to process date data", cex = 1.2)
+                    return()
+                }
 
-            # Create daily counts
-            daily_counts <- table(dates)
+                # Remove NA dates
+                dates <- dates[!is.na(dates)]
+                if (length(dates) == 0) {
+                    plot.new()
+                    plot.window(xlim = c(0, 1), ylim = c(0, 1))
+                    text(0.5, 0.5, "No valid dates found in data", cex = 1.2)
+                    return()
+                }
 
-            # Create a complete sequence of dates
-            date_range <- seq(min(dates), max(dates), by = "day")
-            all_counts <- integer(length(date_range))
-            names(all_counts) <- date_range
+                # Create daily counts
+                daily_counts <- table(dates)
 
-            all_counts[names(daily_counts)] <- daily_counts
-            cumulative_responses <- cumsum(all_counts)
+                # Create a complete sequence of dates
+                date_range <- seq(min(dates), max(dates), by = "day")
+                all_counts <- integer(length(date_range))
+                names(all_counts) <- date_range
 
-            # Create the plot
-            par(mar = c(4, 4, 2, 4))
+                all_counts[names(daily_counts)] <- daily_counts
+                cumulative_responses <- cumsum(all_counts)
 
-            # Plot daily responses
-            plot(date_range, all_counts,
-                 type = "h",
-                 col = "#3498db",
-                 xlab = "Date",
-                 ylab = "Daily Responses",
-                 main = "Response Trend")
+                # Set up the plot area
+                par(mar = c(4, 4, 2, 4))
 
-            # Add cumulative line on secondary y-axis
-            par(new = TRUE)
-            plot(date_range, cumulative_responses,
-                 type = "l",
-                 col = "#e74c3c",
-                 xaxt = "n",
-                 yaxt = "n",
-                 xlab = "",
-                 ylab = "")
+                if (input$plot_type == "line") {
+                    # Plot daily responses as a line
+                    plot(date_range, all_counts,
+                         type = "l",
+                         col = "#3498db",
+                         xlab = "Date",
+                         ylab = "Daily Responses",
+                         main = "Response Trend")
 
-            # Add secondary axis
-            axis(4, col = "#e74c3c", col.axis = "#e74c3c")
-            mtext("Cumulative Responses", side = 4, line = 2, col = "#e74c3c")
+                    # Add points to the line
+                    points(date_range, all_counts,
+                           col = "#3498db",
+                           pch = 16)
 
-            # Add legend
-            legend("topleft",
-                   legend = c("Daily", "Cumulative"),
-                   col = c("#3498db", "#e74c3c"),
-                   lty = c(1, 1),
-                   bg = "white")
-        })
+                } else {  # Bar graph
+                    # Plot daily responses as bars
+                    barplot_data <- barplot(all_counts,
+                                            names.arg = date_range,
+                                            col = "#3498db",
+                                            xlab = "Date",
+                                            ylab = "Daily Responses",
+                                            main = "Response Trend",
+                                            las = 2)  # Rotate x-axis labels
 
-        # Survey Timeline
-        output$survey_timeline <- shiny::renderUI({
-            shiny::req(survey_data())
-            data <- survey_data()
+                    # Store the bar positions for the cumulative line
+                    date_positions <- barplot_data
+                }
 
-            start_times <- as.POSIXct(data$time_start, format="%Y-%m-%d %H:%M:%S")
+                # Add cumulative line on secondary y-axis
+                par(new = TRUE)
+                if (input$plot_type == "line") {
+                    plot(date_range, cumulative_responses,
+                         type = "l",
+                         col = "#e74c3c",
+                         lwd = 2,
+                         xaxt = "n",
+                         yaxt = "n",
+                         xlab = "",
+                         ylab = "")
+                } else {
+                    plot(date_positions, cumulative_responses,
+                         type = "l",
+                         col = "#e74c3c",
+                         lwd = 2,
+                         xaxt = "n",
+                         yaxt = "n",
+                         xlab = "",
+                         ylab = "")
+                }
 
-            first_response <- min(start_times, na.rm = TRUE)
-            last_response <- max(start_times, na.rm = TRUE)
+                # Add secondary axis
+                axis(4, col = "#e74c3c", col.axis = "#e74c3c")
+                mtext("Cumulative Responses", side = 4, line = 2, col = "#e74c3c")
 
-            duration_days <- max(as.numeric(difftime(last_response, first_response, units = "days")), 1)
+                # Add legend
+                if (input$plot_type == "line") {
+                    legend_type <- c("Daily", "Cumulative")
+                    legend_line <- c(1, 1)
+                } else {
+                    legend_type <- c("Daily (Bars)", "Cumulative")
+                    legend_line <- c(0, 1)
+                }
 
-            shiny::div(
-                shiny::tags$p(sprintf("Survey Duration: %.1f days", duration_days)),
-                shiny::tags$p(sprintf("First Response: %s", format(first_response, "%Y-%m-%d"))),
-                shiny::tags$p(sprintf("Last Response: %s", format(last_response, "%Y-%m-%d")))
-            )
+                legend("topleft",
+                       legend = legend_type,
+                       col = c("#3498db", "#e74c3c"),
+                       lty = legend_line,
+                       pch = if(input$plot_type == "line") c(16, NA) else c(NA, NA),
+                       fill = if(input$plot_type == "bar") c("#3498db", NA) else c(NA, NA),
+                       bg = "white")
+            }, warning = function(w) {
+                # Suppress all warnings
+                invokeRestart("muffleWarning")
+            })
         })
 
 
