@@ -174,14 +174,22 @@ process_links <- function(text) {
 }
 
 get_footer <- function(metadata) {
-  # Get all footer-related fields
-  footer_center <- if (!is.null(metadata$formats$html$metadata$footer)) {
-    metadata$formats$html$metadata$footer
-  } else {
-    metadata$formats$html$metadata$`footer-center`
+  # Get the metadata safely
+  meta <- metadata$formats$html$metadata
+  if (is.null(meta)) {
+    return("")
   }
-  footer_left <- metadata$formats$html$metadata$`footer-left`
-  footer_right <- metadata$formats$html$metadata$`footer-right`
+
+  # Get footer-related fields
+  footer_left <- meta$`footer-left`
+  footer_right <- meta$`footer-right`
+  footer_center <- meta$`footer-center`
+  plain_footer <- meta$footer
+
+  # If footer-center doesn't exist but plain footer does, use plain footer
+  if (is.null(footer_center) && !is.null(plain_footer)) {
+    footer_center <- plain_footer
+  }
 
   # If all are NULL, return empty string
   if (is.null(footer_center) && is.null(footer_left) && is.null(footer_right)) {
@@ -191,27 +199,22 @@ get_footer <- function(metadata) {
   # Process each section if it exists
   footer_html <- c()
 
-  if (!is.null(footer_left)) {
+  if (!is.null(footer_left) && nchar(footer_left) > 0) {
     footer_html <- c(footer_html,
                      sprintf('<div class="footer-left">%s</div>',
                              process_links(footer_left)))
   }
 
-  if (!is.null(footer_center)) {
+  if (!is.null(footer_center) && nchar(footer_center) > 0) {
     footer_html <- c(footer_html,
                      sprintf('<div class="footer-center">%s</div>',
                              process_links(footer_center)))
   }
 
-  if (!is.null(footer_right)) {
+  if (!is.null(footer_right) && nchar(footer_right) > 0) {
     footer_html <- c(footer_html,
                      sprintf('<div class="footer-right">%s</div>',
                              process_links(footer_right)))
-  }
-
-  # If no content was added, return empty string
-  if (length(footer_html) == 0) {
-    return("")
   }
 
   # Return the final HTML
