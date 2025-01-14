@@ -496,14 +496,31 @@ sd_question <- function(
 
   } else if (type == "slider") {
 
+    slider_values <- make_slider_values(option)
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+      session <- shiny::getDefaultReactiveDomain()
+      session$userData[[paste0(id, "_values")]] <- slider_values
+    }
+
     output <- shinyWidgets::sliderTextInput(
       inputId     = id,
       label       = label,
-      choices     = list_name_md_to_html(option),
+      choices     = names(slider_values),
       selected    = selected,
       force_edges = force_edges,
       grid        = grid
     )
+
+    js_convert <- sprintf("
+      $(document).on('change', '#%s', function() {
+        var valueMap = %s;
+        var currentValue = $(this).val();
+        Shiny.setInputValue('%s', valueMap[currentValue]);
+      });
+    ", id, jsonlite::toJSON(as.list(slider_values)), id)
+
+    output <- shiny::tagAppendChild(output,
+                                    shiny::tags$script(htmltools::HTML(js_convert)))
 
   } else if (type == "date") {
 
@@ -590,6 +607,12 @@ sd_question <- function(
     # If not in a reactive context, just return the element
     return(output_div)
   }
+}
+
+make_slider_values <- function(labels) {
+  values <- janitor::make_clean_names(labels, case = "snake")
+  names(values) <- labels
+  return(values)
 }
 
 #' Create a Custom Question with a Shiny Widget
