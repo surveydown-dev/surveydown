@@ -85,9 +85,11 @@ sd_dashboard <- function() {
                                                     "table_select",
                                                     "Select Survey Table:",
                                                     choices = if (!is.null(local_db)) {
-                                                        pool::poolWithTransaction(local_db$db, function(conn) {
-                                                            DBI::dbListTables(conn)
+                                                        tables <- pool::poolWithTransaction(local_db$db, function(conn) {
+                                                            all_tables <- DBI::dbListTables(conn)
+                                                            all_tables[!grepl("^pg_", all_tables)]
                                                         })
+                                                        if (length(tables) == 0) NULL else tables
                                                     } else {
                                                         NULL
                                                     },
