@@ -497,23 +497,12 @@ sd_question <- function(
   } else if (type == "slider") {
 
     output <- shinyWidgets::sliderTextInput(
-      inputId      = id,
-      label        = label,
-      choices      = option,
-      selected     = selected,
-      force_edges  = force_edges,
-      grid         = grid,
-      animate      = FALSE,
-      hide_min_max = FALSE,
-      from_fixed   = FALSE,
-      to_fixed     = FALSE,
-      from_min     = NULL,
-      from_max     = NULL,
-      to_min       = NULL,
-      to_max       = NULL,
-      pre          = NULL,
-      post         = NULL,
-      dragRange    = TRUE
+      inputId     = id,
+      label       = label,
+      choices     = list_name_md_to_html(option),
+      selected    = selected,
+      force_edges = force_edges,
+      grid        = grid
     )
 
   } else if (type == "date") {
