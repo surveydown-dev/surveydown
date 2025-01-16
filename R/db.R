@@ -33,7 +33,6 @@
 #'
 #' @family database functions
 #' @seealso
-#' * [sd_db_show()] to view current database settings
 #' * [sd_db_connect()] to connect to the database
 #'
 #' @export
@@ -228,6 +227,7 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE) {
         dbname = Sys.getenv("SD_DBNAME"),
         user = Sys.getenv("SD_USER"),
         password = Sys.getenv("SD_PASSWORD"),
+        table = Sys.getenv("SD_TABLE"),
         gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer")
     )
 
@@ -252,7 +252,7 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE) {
             gssencmode = params$gssencmode
         )
         cli::cli_alert_success("Successfully connected to the database.")
-        return(list(db = pool))
+        return(list(db = pool, table = params$table))
     }, error = function(e) {
         cli::cli_alert_warning("Failed to connect to the database:")
         cli::cli_text(conditionMessage(e))
