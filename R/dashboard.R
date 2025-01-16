@@ -78,69 +78,59 @@ sd_dashboard <- function() {
             shinydashboard::tabItems(
                 # Dashboard Tab
                 shinydashboard::tabItem(tabName = "dashboard",
+                                        # First fluid row with stats and graphs
                                         shiny::fluidRow(
-                                            shinydashboard::box(
-                                                width = 12,
-                                                shiny::selectInput(
-                                                    "table_select",
-                                                    "Select Survey Table:",
-                                                    choices = if (!is.null(local_db)) {
-                                                        tables <- pool::poolWithTransaction(local_db$db, function(conn) {
-                                                            all_tables <- DBI::dbListTables(conn)
-                                                            all_tables[!grepl("^pg_", all_tables)]
-                                                        })
-                                                        if (length(tables) == 0) NULL else tables
-                                                    } else {
-                                                        NULL
-                                                    },
-                                                    width = "100%"
-                                                )
-                                            )
-                                        ),
-
-                                        # Summary Boxes
-                                        shiny::fluidRow(
-                                            shinydashboard::valueBoxOutput("total_responses", width = 3),
-                                            shinydashboard::valueBoxOutput("daily_average", width = 3),
-                                            shinydashboard::valueBoxOutput("completion_rate", width = 3),
-                                            shinydashboard::valueBoxOutput("avg_rating", width = 3)
-                                        ),
-
-                                        # Response Trend and Timeline
-                                        shiny::fluidRow(
-                                            shinydashboard::box(
-                                                title = "Response Trends",
-                                                width = 12,
-                                                status = "primary",
-                                                solidHeader = TRUE,
-                                                shiny::fluidRow(
-                                                    shiny::column(
-                                                        width = 6,
-                                                        shinydashboard::box(
-                                                            title = "Cumulative Responses",
-                                                            status = "info",
-                                                            width = NULL,
-                                                            shiny::plotOutput("cumulative_trend", height = "300px")
-                                                        )
-                                                    ),
-                                                    shiny::column(
-                                                        width = 6,
-                                                        shinydashboard::box(
-                                                            title = "Daily Responses",
-                                                            status = "info",
-                                                            width = NULL,
-                                                            shiny::plotOutput("daily_trend", height = "300px")
-                                                        )
+                                            # Left column for dropdown and summary stats
+                                            shiny::column(
+                                                width = 3,
+                                                shinydashboard::box(
+                                                    width = NULL,
+                                                    shiny::selectInput(
+                                                        "table_select",
+                                                        "Select Survey Table:",
+                                                        choices = if (!is.null(local_db)) {
+                                                            tables <- pool::poolWithTransaction(local_db$db, function(conn) {
+                                                                all_tables <- DBI::dbListTables(conn)
+                                                                all_tables[!grepl("^pg_", all_tables)]
+                                                            })
+                                                            if (length(tables) == 0) NULL else tables
+                                                        } else {
+                                                            NULL
+                                                        },
+                                                        width = "100%"
                                                     )
+                                                ),
+                                                # Value boxes inside the left column
+                                                shinydashboard::valueBoxOutput("total_responses", width = NULL),
+                                                shinydashboard::valueBoxOutput("daily_average", width = NULL),
+                                                shinydashboard::valueBoxOutput("completion_rate", width = NULL)
+                                            ),
+
+                                            # Right column for graphs
+                                            shiny::column(
+                                                width = 8,
+                                                shinydashboard::box(
+                                                    width = NULL,
+                                                    title = "Response Trends",
+                                                    status = "primary",
+                                                    solidHeader = TRUE,
+                                                    # Cumulative trend plot
+                                                    shiny::plotOutput("cumulative_trend", height = "250px"),
+                                                    # Small divider
+                                                    shiny::tags$div(style = "margin-top: 20px;"),
+                                                    # Daily trend plot
+                                                    shiny::plotOutput("daily_trend", height = "250px")
                                                 )
                                             )
                                         ),
+
+                                        # Second fluid row with data table
                                         shiny::fluidRow(
                                             shinydashboard::box(
                                                 title = "Survey Responses",
                                                 width = 12,
                                                 shiny::div(
-                                                    style = "margin-bottom: 5px;",
+                                                    style = "margin-bottom: 15px;",
                                                     shiny::downloadButton("download_survey_data", "Download CSV")
                                                 ),
                                                 DT::dataTableOutput("survey_data_table")
@@ -415,25 +405,6 @@ sd_dashboard <- function() {
                 "Completion Rate",
                 icon = shiny::icon("check-circle"),
                 color = "yellow"
-            )
-        })
-
-        output$avg_rating <- shinydashboard::renderValueBox({
-            shiny::req(survey_data())
-            data <- survey_data()
-
-            if ("exit_survey_rating" %in% names(data)) {
-                mean_rating <- mean(as.numeric(data$exit_survey_rating), na.rm = TRUE)
-                avg_rating <- if (!is.nan(mean_rating)) sprintf("%.1f", mean_rating) else "N/A"
-            } else {
-                avg_rating <- "N/A"
-            }
-
-            shinydashboard::valueBox(
-                avg_rating,
-                "Avg. Rating",
-                icon = shiny::icon("star"),
-                color = "purple"
             )
         })
 
