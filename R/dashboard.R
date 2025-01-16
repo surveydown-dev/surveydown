@@ -393,11 +393,13 @@ sd_dashboard <- function() {
             shiny::req(survey_data())
             data <- survey_data()
 
-            if ("exit_survey_rating" %in% names(data)) {
-                rated_responses <- sum(!is.na(data$exit_survey_rating))
-                completion_rate <- sprintf("%.1f%%", (rated_responses / nrow(data)) * 100)
+            total_responses <- nrow(data)
+            completed_responses <- sum(!is.na(data$time_end) & data$time_end != "", na.rm = TRUE)
+
+            completion_rate <- if(total_responses > 0) {
+                sprintf("%.1f%%", (completed_responses / total_responses) * 100)
             } else {
-                completion_rate <- "N/A"
+                "0.0%"
             }
 
             shinydashboard::valueBox(
