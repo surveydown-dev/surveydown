@@ -49,36 +49,52 @@ sd_dashboard <- function() {
 
     ui <- shinydashboard::dashboardPage(
         shinydashboard::dashboardHeader(
-            title = "Survey Dashboard"
+            title = "Survey Dashboard",
+            tags$li(
+                class = "dropdown",
+                tags$a(
+                    href = NULL,
+                    tags$img(
+                        src = "man/figures/logo.png",
+                        height = "40px",
+                        alt = "surveydown logo",
+                        style = "margin-right: 15px; margin-top: -2px;"
+                    )
+                ),
+                class = "pull-right"
+            )
         ),
         shinydashboard::dashboardSidebar(
             shinydashboard::sidebarMenu(
 
                 # Add divider and centered "Tables" label
-                shiny::tags$hr(),
                 shiny::tags$div(
-                    style = "text-align: center; padding: 10px; color: #b8c7ce;",
-                    "Tables"
-                ),
-                # Table selection dropdown
-                shiny::tags$div(
-                    style = "padding: 10px;",
-                    shiny::selectInput(
-                        "table_select",
-                        NULL,  # Remove label since we have the header text
-                        choices = if (!is.null(local_db)) {
-                            tables <- pool::poolWithTransaction(local_db$db, function(conn) {
-                                all_tables <- DBI::dbListTables(conn)
-                                all_tables[!grepl("^pg_", all_tables)]
-                            })
-                            if (length(tables) == 0) NULL else tables
-                        } else {
-                            NULL
-                        },
-                        width = "100%"
+                    class = "sidebar-menu",
+                    style = "padding: 10px 0;",  # Add vertical padding
+                    shiny::tags$li(
+                        class = "header",
+                        style = "background-color: #1a2226; color: #4b646f; text-align: center; padding: 10px 0; font-size: 12px; text-transform: uppercase;",
+                        "Tables"
+                    ),
+                    shiny::tags$li(
+                        style = "padding: 10px 15px;",  # Add padding around dropdown
+                        shiny::selectInput(
+                            "table_select",
+                            NULL,
+                            choices = if (!is.null(local_db)) {
+                                tables <- pool::poolWithTransaction(local_db$db, function(conn) {
+                                    all_tables <- DBI::dbListTables(conn)
+                                    all_tables[!grepl("^pg_", all_tables)]
+                                })
+                                if (length(tables) == 0) NULL else tables
+                            } else {
+                                NULL
+                            },
+                            width = "100%",
+                            selectize = TRUE
+                        )
                     )
                 ),
-                shiny::tags$hr(),
 
                 # Other menu items
                 shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = shiny::icon("dashboard")),
@@ -565,6 +581,9 @@ sd_dashboard <- function() {
                 class = 'cell-border stripe'
             )
         })
+
+        # Importing the surveydown logo
+        #shiny::addResourcePath("figures", "man/figures")
 
     }
 
