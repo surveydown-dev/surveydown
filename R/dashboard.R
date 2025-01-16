@@ -49,20 +49,7 @@ sd_dashboard <- function() {
 
     ui <- shinydashboard::dashboardPage(
         shinydashboard::dashboardHeader(
-            title = "Survey Dashboard",
-            tags$li(
-                class = "dropdown",
-                tags$a(
-                    href = NULL,
-                    tags$img(
-                        src = "man/figures/logo.png",
-                        height = "40px",
-                        alt = "surveydown logo",
-                        style = "margin-right: 15px; margin-top: -2px;"
-                    )
-                ),
-                class = "pull-right"
-            )
+            title = "Survey Dashboard"
         ),
         shinydashboard::dashboardSidebar(
             shinydashboard::sidebarMenu(
@@ -516,7 +503,6 @@ sd_dashboard <- function() {
 
         # Daily trend plot
         output$daily_trend <- shiny::renderPlot({
-            # Check for data early
             data <- survey_data()
             if (is.null(data) || nrow(data) == 0 || !("time_start" %in% names(data))) {
                 plot.new()
@@ -548,16 +534,24 @@ sd_dashboard <- function() {
                 names(all_counts) <- date_range
                 all_counts[names(daily_counts)] <- daily_counts
 
-                # Plot daily responses as bars
-                par(mar = c(4, 4, 2, 2))
-                barplot(all_counts,
-                        col = "#3498db",
-                        xlab = "Date",
-                        ylab = "Daily Responses",
-                        las = 2,
-                        space = 0)  # Remove space between bars
+                # Match the theme with cumulative plot but add spacing and border
+                par(mar = c(4, 4.5, 2, 2))  # Increased left margin for y-axis
+                bp <- barplot(all_counts,
+                              col = "#3498db",
+                              xlab = "Date",
+                              ylab = "Daily Responses",
+                              xaxt = "n",
+                              space = 0.1,
+                              border = "darkblue"
+                )
 
-                grid()
+                # Add x-axis with same format as cumulative plot
+                axis(1,
+                     at = bp,
+                     labels = format(date_range, "%b %d"),
+                     las = 1,
+                     cex.axis = 0.9
+                )
             }, warning = function(w) {
                 invokeRestart("muffleWarning")
             })
@@ -581,9 +575,6 @@ sd_dashboard <- function() {
                 class = 'cell-border stripe'
             )
         })
-
-        # Importing the surveydown logo
-        #shiny::addResourcePath("figures", "man/figures")
 
     }
 
