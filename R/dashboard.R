@@ -48,9 +48,39 @@ sd_dashboard <- function() {
     local_db <- sd_db_connect()
 
     ui <- shinydashboard::dashboardPage(
-        shinydashboard::dashboardHeader(title = "Survey Dashboard"),
+        shinydashboard::dashboardHeader(
+            title = "Survey Dashboard"
+        ),
         shinydashboard::dashboardSidebar(
             shinydashboard::sidebarMenu(
+
+                # Add divider and centered "Tables" label
+                shiny::tags$hr(),
+                shiny::tags$div(
+                    style = "text-align: center; padding: 10px; color: #b8c7ce;",
+                    "Tables"
+                ),
+                # Table selection dropdown
+                shiny::tags$div(
+                    style = "padding: 10px;",
+                    shiny::selectInput(
+                        "table_select",
+                        NULL,  # Remove label since we have the header text
+                        choices = if (!is.null(local_db)) {
+                            tables <- pool::poolWithTransaction(local_db$db, function(conn) {
+                                all_tables <- DBI::dbListTables(conn)
+                                all_tables[!grepl("^pg_", all_tables)]
+                            })
+                            if (length(tables) == 0) NULL else tables
+                        } else {
+                            NULL
+                        },
+                        width = "100%"
+                    )
+                ),
+                shiny::tags$hr(),
+
+                # Other menu items
                 shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = shiny::icon("dashboard")),
                 shinydashboard::menuItem("Connection Settings", tabName = "settings", icon = shiny::icon("cog"))
             )
@@ -80,50 +110,53 @@ sd_dashboard <- function() {
                 shinydashboard::tabItem(tabName = "dashboard",
                                         # First fluid row with stats and graphs
                                         shiny::fluidRow(
-                                            # Left column for dropdown and summary stats
                                             shiny::column(
-                                                width = 3,
-                                                shinydashboard::box(
-                                                    width = NULL,
-                                                    shiny::selectInput(
-                                                        "table_select",
-                                                        "Select Survey Table:",
-                                                        choices = if (!is.null(local_db)) {
-                                                            tables <- pool::poolWithTransaction(local_db$db, function(conn) {
-                                                                all_tables <- DBI::dbListTables(conn)
-                                                                all_tables[!grepl("^pg_", all_tables)]
-                                                            })
-                                                            if (length(tables) == 0) NULL else tables
-                                                        } else {
-                                                            NULL
-                                                        },
-                                                        width = "100%"
-                                                    )
-                                                ),
-                                                # Value boxes inside the left column
+                                                width = 2,
+                                                # Table selection box - Commented out just in case we revert to this style
+                                            #    shinydashboard::box(
+                                            #        width = NULL,  # NULL makes it fill the column
+                                            #        shiny::selectInput(
+                                            #            "table_select",
+                                            #            "Select Survey Table:",
+                                            #            choices = if (!is.null(local_db)) {
+                                            #                tables <- pool::poolWithTransaction(local_db$db, function(conn) {
+                                            #                    all_tables <- DBI::dbListTables(conn)
+                                            #                    all_tables[!grepl("^pg_", all_tables)]
+                                            #                })
+                                            #                if (length(tables) == 0) NULL else tables
+                                            #            } else {
+                                            #                NULL
+                                            #            },
+                                            #            width = "100%"
+                                            #        )
+                                            #    ),
+                                                # Value boxes
                                                 shinydashboard::valueBoxOutput("total_responses", width = NULL),
                                                 shinydashboard::valueBoxOutput("daily_average", width = NULL),
                                                 shinydashboard::valueBoxOutput("completion_rate", width = NULL)
                                             ),
-
-                                            # Right column for graphs
+                                            # Right columns for graphs
                                             shiny::column(
-                                                width = 8,
+                                                width = 5,
                                                 shinydashboard::box(
                                                     width = NULL,
-                                                    title = "Response Trends",
+                                                    title = "Cumulative Responses",
                                                     status = "primary",
                                                     solidHeader = TRUE,
-                                                    # Cumulative trend plot
-                                                    shiny::plotOutput("cumulative_trend", height = "250px"),
-                                                    # Small divider
-                                                    shiny::tags$div(style = "margin-top: 20px;"),
-                                                    # Daily trend plot
-                                                    shiny::plotOutput("daily_trend", height = "250px")
+                                                    shiny::plotOutput("cumulative_trend", height = "300px")
+                                                )
+                                            ),
+                                            shiny::column(
+                                                width = 5,
+                                                shinydashboard::box(
+                                                    title = "Daily Responses",
+                                                    width = NULL,
+                                                    status = "primary",
+                                                    solidHeader = TRUE,
+                                                    shiny::plotOutput("daily_trend", height = "300px")
                                                 )
                                             )
                                         ),
-
                                         # Second fluid row with data table
                                         shiny::fluidRow(
                                             shinydashboard::box(
@@ -532,6 +565,7 @@ sd_dashboard <- function() {
                 class = 'cell-border stripe'
             )
         })
+
     }
 
     # Run the Shiny app
