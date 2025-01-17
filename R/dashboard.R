@@ -285,6 +285,7 @@ sd_dashboard <- function() {
             })
         }
 
+
         # Initial connection attempt
         shiny::observe({
             attempt_connection()
@@ -321,6 +322,17 @@ sd_dashboard <- function() {
 
         # Initialize connection status based on local_db
         shiny::observeEvent(input$test_connection, {
+            # First close any existing connection
+            if (!is.null(rv$current_db) && !is.null(rv$current_db$db)) {
+                tryCatch({
+                    pool::poolClose(rv$current_db$db)
+                    rv$current_db <- NULL
+                    rv$connection_status <- FALSE
+                }, error = function(e) {
+                    warning("Error closing existing connection: ", e$message)
+                })
+            }
+
             config <- list(
                 host = input$host,
                 port = input$port,
@@ -330,7 +342,9 @@ sd_dashboard <- function() {
                 gssencmode = input$gssencmode
             )
 
-            success <- attempt_connection(config)
+            suppressMessages({
+                success <- attempt_connection(config)
+            })
 
             if (success) {
                 # Save configuration to .env file
@@ -345,7 +359,6 @@ sd_dashboard <- function() {
                     sprintf("SD_TABLE=%s", input$default_table),
                     sep = "\n"
                 )
-
                 writeLines(template, ".env")
 
                 # Update .gitignore
@@ -381,7 +394,7 @@ sd_dashboard <- function() {
                     "Connection failed. Please check your settings."
                 )
             }
-        })
+        }, ignoreInit = TRUE)
 
         # Reactive survey data with error handling
         survey_data <- shiny::reactive({
