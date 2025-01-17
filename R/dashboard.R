@@ -44,9 +44,6 @@ sd_dashboard <- function() {
         dotenv::load_dot_env(".env")
     }
 
-    # Try to connect to database
-    local_db <- sd_db_connect()
-
     ui <- shinydashboard::dashboardPage(
         shinydashboard::dashboardHeader(
             title = "Survey Dashboard"
@@ -60,23 +57,15 @@ sd_dashboard <- function() {
                     style = "padding: 10px 0;",  # Add vertical padding
                     shiny::tags$li(
                         class = "header",
-                        style = "background-color: #1a2226; color: #4b646f; text-align: center; padding: 10px 0; font-size: 12px; text-transform: uppercase;",
-                        "Tables"
+                        style = "background-color: #1a2226; color: #ffffff; text-align: center; padding: 10px 0; font-size: 12px;",
+                        "Choose a table to view:"
                     ),
                     shiny::tags$li(
-                        style = "padding: 10px 15px;",  # Add padding around dropdown
+                        style = "padding: 10px 15px;",
                         shiny::selectInput(
                             "table_select",
                             NULL,
-                            choices = if (!is.null(local_db)) {
-                                tables <- pool::poolWithTransaction(local_db$db, function(conn) {
-                                    all_tables <- DBI::dbListTables(conn)
-                                    all_tables[!grepl("^pg_", all_tables)]
-                                })
-                                if (length(tables) == 0) NULL else tables
-                            } else {
-                                NULL
-                            },
+                            choices = c("No connection" = ""),  # Start with no connection message
                             width = "100%",
                             selectize = TRUE
                         )
@@ -115,24 +104,6 @@ sd_dashboard <- function() {
                                         shiny::fluidRow(
                                             shiny::column(
                                                 width = 2,
-                                                # Table selection box - Commented out just in case we revert to this style
-                                            #    shinydashboard::box(
-                                            #        width = NULL,  # NULL makes it fill the column
-                                            #        shiny::selectInput(
-                                            #            "table_select",
-                                            #            "Select Survey Table:",
-                                            #            choices = if (!is.null(local_db)) {
-                                            #                tables <- pool::poolWithTransaction(local_db$db, function(conn) {
-                                            #                    all_tables <- DBI::dbListTables(conn)
-                                            #                    all_tables[!grepl("^pg_", all_tables)]
-                                            #                })
-                                            #                if (length(tables) == 0) NULL else tables
-                                            #            } else {
-                                            #                NULL
-                                            #            },
-                                            #            width = "100%"
-                                            #        )
-                                            #    ),
                                                 # Value boxes
                                                 shinydashboard::valueBoxOutput("total_responses", width = NULL),
                                                 shinydashboard::valueBoxOutput("daily_average", width = NULL),
@@ -166,8 +137,11 @@ sd_dashboard <- function() {
                                                 title = "Survey Responses",
                                                 width = 12,
                                                 shiny::div(
-                                                    style = "margin-bottom: 15px;",
-                                                    shiny::downloadButton("download_survey_data", "Download CSV")
+                                                    style = "margin-bottom: 15px; display: flex; align-items: center;",
+                                                    shiny::div(
+                                                        style = "margin-right: auto;",  # This pushes it to the left
+                                                        shiny::downloadButton("download_survey_data", "Download CSV")
+                                                    )
                                                 ),
                                                 DT::dataTableOutput("survey_data_table")
                                             )
@@ -193,7 +167,9 @@ sd_dashboard <- function() {
                                                     shiny::tags$strong("User:"),
                                                     shiny::span(Sys.getenv("SD_USER", "Not set")),
                                                     shiny::tags$strong("GSS Mode:"),
-                                                    shiny::span(Sys.getenv("SD_GSSENCMODE", "Not set"))
+                                                    shiny::span(Sys.getenv("SD_GSSENCMODE", "Not set")),
+                                                    shiny::tags$strong("Default Table:"),
+                                                    shiny::span(Sys.getenv("SD_TABLE", "Not set"))
                                                 )
                                             )
                                         ),
@@ -241,6 +217,11 @@ sd_dashboard <- function() {
                                                 shiny::selectInput("gssencmode", "GSS Encryption Mode",
                                                                    choices = c("prefer", "disable", "require"),
                                                                    selected = Sys.getenv("SD_GSSENCMODE", "prefer")),
+
+                                                # New input for default table
+                                                shiny::textInput("default_table", "Development Table:",
+                                                                 value = Sys.getenv("SD_TABLE", "responses")),
+
                                                 shiny::actionButton("test_connection", "Test Connection",
                                                                     class = "btn-primary"),
                                                 shiny::textOutput("connection_status")
@@ -266,22 +247,19 @@ sd_dashboard <- function() {
 
     server <- function(input, output, session) {
         # Reactive values for connection status
-        connection_status <- shiny::reactiveVal(FALSE)
+        rv <- shiny::reactiveValues(
+            connection_status = FALSE,
+            current_db = NULL
+        )
 
-        # Initialize connection status based on local_db
-        shiny::observe({
-            if (!is.null(local_db)) {
-                # Test the initial connection
-                config <- list(
-                    host = Sys.getenv("SD_HOST", "localhost"),
-                    port = Sys.getenv("SD_PORT", "5432"),
-                    dbname = Sys.getenv("SD_DBNAME", "postgres"),
-                    user = Sys.getenv("SD_USER", "username"),
-                    password = Sys.getenv("SD_PASSWORD", ""),
-                    gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer")
-                )
-
-                success <- tryCatch({
+        # Initial connection check
+        attempt_connection <- function(config = NULL) {
+            tryCatch({
+                if (is.null(config)) {
+                    # Use default connection from .env
+                    db <- sd_db_connect()
+                } else {
+                    # Use provided config
                     pool <- pool::dbPool(
                         RPostgres::Postgres(),
                         host = config$host,
@@ -291,36 +269,57 @@ sd_dashboard <- function() {
                         password = config$password,
                         gssencmode = config$gssencmode
                     )
-                    pool::poolClose(pool)
-                    TRUE
-                }, error = function(e) {
-                    FALSE
-                })
+                    db <- list(db = pool)
+                }
 
-                connection_status(success)
-            }
-        })
-
-        # Test connection function
-        test_connection <- function(config) {
-            tryCatch({
-                pool <- pool::dbPool(
-                    RPostgres::Postgres(),
-                    host = config$host,
-                    dbname = config$dbname,
-                    port = config$port,
-                    user = config$user,
-                    password = config$password,
-                    gssencmode = config$gssencmode
-                )
-                pool::poolClose(pool)
-                TRUE
+                if (!is.null(db)) {
+                    rv$connection_status <- TRUE
+                    rv$current_db <- db
+                    return(TRUE)
+                }
+                return(FALSE)
             }, error = function(e) {
-                FALSE
+                rv$connection_status <- FALSE
+                rv$current_db <- NULL
+                return(FALSE)
             })
         }
 
-        # Test connection observer
+        # Initial connection attempt
+        shiny::observe({
+            attempt_connection()
+        })
+
+        shiny::observe({
+            if (rv$connection_status && !is.null(rv$current_db)) {
+                tryCatch({
+                    tables <- pool::poolWithTransaction(rv$current_db$db, function(conn) {
+                        all_tables <- DBI::dbListTables(conn)
+                        all_tables[!grepl("^pg_", all_tables)]
+                    })
+
+                    # Set default table as first choice if available
+                    default_table <- Sys.getenv("SD_TABLE", "")
+                    if (default_table %in% tables) {
+                        tables <- c(default_table, setdiff(tables, default_table))
+                    }
+
+                    shiny::updateSelectInput(session, "table_select",
+                                             choices = if (length(tables) > 0) tables else c("No tables found" = "")
+                    )
+                }, error = function(e) {
+                    shiny::updateSelectInput(session, "table_select",
+                                             choices = c("Connection error" = "")
+                    )
+                })
+            } else {
+                shiny::updateSelectInput(session, "table_select",
+                                         choices = c("No connection" = "")
+                )
+            }
+        })
+
+        # Initialize connection status based on local_db
         shiny::observeEvent(input$test_connection, {
             config <- list(
                 host = input$host,
@@ -331,7 +330,8 @@ sd_dashboard <- function() {
                 gssencmode = input$gssencmode
             )
 
-            success <- test_connection(config)
+            success <- attempt_connection(config)
+
             if (success) {
                 # Save configuration to .env file
                 template <- paste(
@@ -342,6 +342,7 @@ sd_dashboard <- function() {
                     sprintf("SD_USER=%s", input$user),
                     sprintf("SD_PASSWORD=%s", input$password),
                     sprintf("SD_GSSENCMODE=%s", input$gssencmode),
+                    sprintf("SD_TABLE=%s", input$default_table),
                     sep = "\n"
                 )
 
@@ -357,22 +358,39 @@ sd_dashboard <- function() {
                     write(".env", ".gitignore")
                 }
 
-                output$connection_status <- shiny::renderText("Connection successful!")
-                connection_status(TRUE)
+                output$connection_status <- shiny::renderText(
+                    "Connection successful & Parameters saved to .env file."
+                )
+
+                # Update table selection choices
+                tables <- pool::poolWithTransaction(rv$current_db$db, function(conn) {
+                    all_tables <- DBI::dbListTables(conn)
+                    all_tables[!grepl("^pg_", all_tables)]
+                })
+
+                # Set default table as first choice if available
+                if (input$default_table %in% tables) {
+                    tables <- c(input$default_table, setdiff(tables, input$default_table))
+                }
+
+                shiny::updateSelectInput(session, "table_select",
+                                         choices = if (length(tables) > 0) tables else c("No tables found" = "")
+                )
             } else {
-                output$connection_status <- shiny::renderText("Connection failed. Please check your settings.")
-                connection_status(FALSE)
+                output$connection_status <- shiny::renderText(
+                    "Connection failed. Please check your settings."
+                )
             }
         })
 
         # Reactive survey data with error handling
         survey_data <- shiny::reactive({
+            shiny::req(rv$connection_status)
             shiny::req(input$table_select)
-            shiny::req(connection_status())
-            shiny::req(!is.null(local_db))
+            shiny::req(rv$current_db)
 
             tryCatch({
-                data <- pool::poolWithTransaction(local_db$db, function(conn) {
+                data <- pool::poolWithTransaction(rv$current_db$db, function(conn) {
                     DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s"', input$table_select))
                 })
                 return(data)
