@@ -37,14 +37,14 @@
 #'
 #' @export
 sd_db_config <- function(
-        host = NULL,
-        dbname = NULL,
-        port = NULL,
-        user = NULL,
-        table = NULL,
-        password = NULL,
-        gssencmode = NULL,
-        interactive = NULL
+    host = NULL,
+    dbname = NULL,
+    port = NULL,
+    user = NULL,
+    table = NULL,
+    password = NULL,
+    gssencmode = NULL,
+    interactive = NULL
 ) {
     path <- getwd()
     env_file <- file.path(path, ".env")
