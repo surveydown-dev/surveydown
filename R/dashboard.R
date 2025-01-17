@@ -203,7 +203,7 @@ sd_dashboard <- function() {
                                                             )
                                                         ),
                                                         shiny::div(
-                                                            style = "margin-left: 10px; margin-top: 25px;",
+                                                            style = "margin-left: 10px; margin-top: 10px;",
                                                             shiny::actionButton(
                                                                 "toggle_password",
                                                                 "Show",
@@ -606,6 +606,23 @@ sd_dashboard <- function() {
                 class = 'cell-border stripe'
             )
         })
+
+        # Mr.Gorbachev CLOSE DOWN THIS POOL
+
+        #Its not working...Getting a reactive value access error
+
+        #cleanup <- function() {
+        #    if (!is.null(rv$current_db) && !is.null(rv$current_db$db)) {
+        #        tryCatch({
+        #            pool::poolClose(rv$current_db$db)
+        #        }, error = function(e) {
+        #            warning("Error closing database connection: ", e$message)
+        #        })
+        #    }
+        #}
+        #
+        #shiny::onStop(cleanup)
+
 
     }
 
