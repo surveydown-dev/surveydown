@@ -39,227 +39,176 @@
 #' @importFrom utils write.csv
 #' @export
 sd_dashboard <- function() {
-    # First load the environment variables
     if (file.exists(".env")) {
         dotenv::load_dot_env(".env")
     }
 
-    ui <- shinydashboard::dashboardPage(
-        shinydashboard::dashboardHeader(
-            title = "Survey Dashboard"
-        ),
-        shinydashboard::dashboardSidebar(
-            shinydashboard::sidebarMenu(
-
-                # Add divider and centered "Tables" label
-                shiny::tags$div(
-                    class = "sidebar-menu",
-                    style = "padding: 10px 0;",  # Add vertical padding
-                    shiny::tags$li(
-                        class = "header",
-                        style = "background-color: #1a2226; color: #ffffff; text-align: center; padding: 10px 0; font-size: 12px;",
-                        "Choose a table to view:"
-                    ),
-                    shiny::tags$li(
-                        style = "padding: 10px 15px;",
-                        shiny::selectInput(
-                            "table_select",
-                            NULL,
-                            choices = c("No connection" = ""),  # Start with no connection message
-                            width = "100%",
-                            selectize = TRUE
-                        )
-                    )
-                ),
-
-                # Other menu items
-                shinydashboard::menuItem("Dashboard", tabName = "dashboard", icon = shiny::icon("dashboard")),
-                shinydashboard::menuItem("Connection Settings", tabName = "settings", icon = shiny::icon("cog"))
+    ui <- bslib::page_fillable(
+        bslib::page_navbar(
+            title = "Survey Dashboard",
+            bslib::nav_item(
+                bslib::input_dark_mode(id = "dark_mode")
             )
         ),
-        shinydashboard::dashboardBody(
-            shiny::tags$head(
-                shiny::tags$style(shiny::HTML("
-                    .info-box {
-                        min-height: 90px;
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        text-align: center;
-                    }
-                    .info-box-number {
-                        font-size: 24px;
-                        font-weight: bold;
-                    }
-                    .info-box-text {
-                        text-transform: uppercase;
-                        font-size: 12px;
-                    }
-                "))
-            ),
-            shinydashboard::tabItems(
-                # Dashboard Tab
-                shinydashboard::tabItem(tabName = "dashboard",
-                                        # First fluid row with stats and graphs
-                                        shiny::fluidRow(
-                                            shiny::column(
-                                                width = 2,
-                                                # Value boxes
-                                                shinydashboard::valueBoxOutput("total_responses", width = NULL),
-                                                shinydashboard::valueBoxOutput("daily_average", width = NULL),
-                                                shinydashboard::valueBoxOutput("completion_rate", width = NULL)
-                                            ),
-                                            # Right columns for graphs
-                                            shiny::column(
-                                                width = 5,
-                                                shinydashboard::box(
-                                                    width = NULL,
-                                                    title = "Cumulative Responses",
-                                                    status = "primary",
-                                                    solidHeader = TRUE,
-                                                    shiny::plotOutput("cumulative_trend", height = "300px")
-                                                )
-                                            ),
-                                            shiny::column(
-                                                width = 5,
-                                                shinydashboard::box(
-                                                    title = "Daily Responses",
-                                                    width = NULL,
-                                                    status = "primary",
-                                                    solidHeader = TRUE,
-                                                    shiny::plotOutput("daily_trend", height = "300px")
-                                                )
-                                            )
-                                        ),
-                                        # Second fluid row with data table
-                                        shiny::fluidRow(
-                                            shinydashboard::box(
-                                                title = "Survey Responses",
-                                                width = 12,
-                                                shiny::div(
-                                                    style = "margin-bottom: 15px; display: flex; align-items: center;",
-                                                    shiny::div(
-                                                        style = "margin-right: auto;",  # This pushes it to the left
-                                                        shiny::downloadButton("download_survey_data", "Download CSV")
-                                                    )
-                                                ),
-                                                DT::dataTableOutput("survey_data_table")
-                                            )
-                                        )
-                ),
 
-                # Settings Tab
-                shinydashboard::tabItem(tabName = "settings",
-                                        shiny::fluidRow(
-                                            shinydashboard::box(
-                                                title = "Current Database Settings",
-                                                width = 12,
-                                                status = "primary",
-                                                solidHeader = TRUE,
-                                                shiny::div(
-                                                    style = "display: grid; grid-template-columns: auto 1fr; gap: 10px;",
-                                                    shiny::tags$strong("Host:"),
-                                                    shiny::span(Sys.getenv("SD_HOST", "Not set")),
-                                                    shiny::tags$strong("Port:"),
-                                                    shiny::span(Sys.getenv("SD_PORT", "Not set")),
-                                                    shiny::tags$strong("Database:"),
-                                                    shiny::span(Sys.getenv("SD_DBNAME", "Not set")),
-                                                    shiny::tags$strong("User:"),
-                                                    shiny::span(Sys.getenv("SD_USER", "Not set")),
-                                                    shiny::tags$strong("GSS Mode:"),
-                                                    shiny::span(Sys.getenv("SD_GSSENCMODE", "Not set")),
-                                                    shiny::tags$strong("Default Table:"),
-                                                    shiny::span(Sys.getenv("SD_TABLE", "Not set"))
-                                                )
-                                            )
-                                        ),
-
-                                        shiny::fluidRow(
-                                            shinydashboard::box(
-                                                title = "Update Your Database Connection",
-                                                width = 12,
-                                                status = "info",
-                                                solidHeader = TRUE,
-                                                shiny::textInput("host", "Host:",
-                                                                 value = Sys.getenv("SD_HOST", "localhost")),
-                                                shiny::textInput("port", "Port:",
-                                                                 value = Sys.getenv("SD_PORT", "5432")),
-                                                shiny::textInput("dbname", "Database Name:",
-                                                                 value = Sys.getenv("SD_DBNAME", "postgres")),
-                                                shiny::textInput("user", "User:",
-                                                                 value = Sys.getenv("SD_USER", "username")),
-                                                shiny::div(
-                                                    id = "password-container",
-                                                    style = "position: relative;",
-                                                    shiny::div(
-                                                        style = "display: flex; align-items: center;",
-                                                        shiny::div(
-                                                            style = "flex-grow: 1;",
-                                                            shiny::passwordInput(
-                                                                "password",
-                                                                "Password:",
-                                                                value = Sys.getenv("SD_PASSWORD", ""),
-                                                                width = "100%"
-                                                            )
-                                                        ),
-                                                        shiny::div(
-                                                            style = "margin-left: 10px; margin-top: 10px;",
-                                                            shiny::actionButton(
-                                                                "toggle_password",
-                                                                "Show",
-                                                                class = "btn-sm btn-secondary",
-                                                                style = "padding: 2px 8px; font-size: 12px;",
-                                                                onclick = "myFunction()"
-                                                            )
-                                                        )
-                                                    )
-                                                ),
-                                                shiny::selectInput("gssencmode", "GSS Encryption Mode",
-                                                                   choices = c("prefer", "disable", "require"),
-                                                                   selected = Sys.getenv("SD_GSSENCMODE", "prefer")),
-
-                                                # New input for default table
-                                                shiny::textInput("default_table", "Development Table:",
-                                                                 value = Sys.getenv("SD_TABLE", "responses")),
-
-                                                shiny::actionButton("test_connection", "Test Connection",
-                                                                    class = "btn-primary"),
-                                                shiny::textOutput("connection_status")
-                                            )
-                                        )
-                )
-            ),
-            #Script for password, something I found online R solutions weren't working
-            shiny::tags$script(HTML("
-                function myFunction() {
-                  var x = document.getElementById('password');
-                  if (x.type === 'password') {
+        shiny::tags$head(
+            shiny::tags$script("
+            function myFunction() {
+                var x = document.getElementById('password');
+                if (x.type === 'password') {
                     x.type = 'text';
-                  } else {
+                    document.getElementById('toggle_password').innerText = 'Hide';
+                } else {
                     x.type = 'password';
-                  }
+                    document.getElementById('toggle_password').innerText = 'Show';
                 }
-                "))
+            }
+        ")
+        ),
+
+        bslib::navset_pill_list(
+            widths = c(2, 10),
+
+            #Dashboard Page
+            bslib::nav_panel(title = "Dashboard",
+
+                        #DropDown Table Selection
+                        shiny::selectInput(
+                            "table_select",
+                            "Choose a table to view:",
+                            choices = c("Loading..." = ""),
+                            selected = Sys.getenv("SD_TABLE", ""),
+                            width = "20%",
+                            selectize = FALSE
+                        ),
+
+                        #Basic Information
+                        bslib::layout_column_wrap(
+                            width = 1/3,
+                            heights_equal = "row",
+                            bslib::value_box(
+                                title = "Total Responses",
+                                value = shiny::textOutput("total_responses"),
+                                showcase = shiny::icon("table")
+                            ),
+                            bslib::value_box(
+                                title = "Daily Average",
+                                value = shiny::textOutput("daily_average"),
+                                showcase = shiny::icon("chart-line")
+                            ),
+                            bslib::value_box(
+                                title = "Completion Rate",
+                                value = shiny::textOutput("completion_rate"),
+                                showcase = shiny::icon("check-circle")
+                            )
+                        ),
+                        bslib::layout_column_wrap(
+                            width = 1/2,
+                            bslib::card(
+                                full_screen = TRUE,
+                                bslib::card_header("Cumulative Responses"),
+                                shiny::plotOutput("cumulative_trend", height = "300px")
+                            ),
+                            bslib::card(
+                                full_screen = TRUE,
+                                bslib::card_header("Daily Responses"),
+                                shiny::plotOutput("daily_trend", height = "300px")
+                            )
+                        ),
+                        bslib::card(
+                            full_screen = TRUE,
+                            bslib::card_header(
+                                class = "d-flex justify-content-between align-items-center",
+                                "Survey Responses",
+                                shiny::downloadButton("download_survey_data", "Download CSV",
+                                                      class = "btn-sm btn-secondary")
+                            ),
+                            DT::dataTableOutput("survey_data_table")
+                        )
+            ),
+
+            #Settings Page
+            bslib::nav_panel(title = "Settings",
+                         bslib::card(
+                             bslib::card_header("Current Database Settings"),
+                             bslib::card_body(
+                                 shiny::tags$div(
+                                     style = "display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center;",
+                                     shiny::tags$strong("Host:"), shiny::span(Sys.getenv("SD_HOST", "Not set")),
+                                     shiny::tags$strong("Port:"), shiny::span(Sys.getenv("SD_PORT", "Not set")),
+                                     shiny::tags$strong("Database:"), shiny::span(Sys.getenv("SD_DBNAME", "Not set")),
+                                     shiny::tags$strong("User:"), shiny::span(Sys.getenv("SD_USER", "Not set")),
+                                     shiny::tags$strong("GSS Mode:"), shiny::span(Sys.getenv("SD_GSSENCMODE", "Not set")),
+                                     shiny::tags$strong("Default Table:"), shiny::span(Sys.getenv("SD_TABLE", "Not set"))
+                                 )
+                             )
+                         ),
+                         bslib::card(
+                             bslib::card_header("Update Database Connection"),
+                             bslib::card_body(
+                                 shiny::textInput("host", "Host:", value = Sys.getenv("SD_HOST", "localhost")),
+                                 shiny::textInput("port", "Port:", value = Sys.getenv("SD_PORT", "5432")),
+                                 shiny::textInput("dbname", "Database Name:", value = Sys.getenv("SD_DBNAME", "postgres")),
+                                 shiny::textInput("user", "User:", value = Sys.getenv("SD_USER", "username")),
+                                 shiny::div(
+                                     id = "password-container",
+                                     style = "position: relative;",
+                                     shiny::div(
+                                         style = "display: flex; align-items: center;",
+                                         shiny::div(
+                                             style = "flex-grow: 1;",
+                                             shiny::passwordInput(
+                                                 "password",
+                                                 "Password:",
+                                                 value = Sys.getenv("SD_PASSWORD", ""),
+                                                 width = "100%"
+                                             )
+                                         ),
+                                         shiny::div(
+                                             style = "margin-left: 10px; margin-top: 10px;",
+                                             shiny::actionButton(
+                                                 "toggle_password",
+                                                 "Show",
+                                                 class = "btn-sm btn-secondary",
+                                                 style = "padding: 2px 8px; font-size: 12px;",
+                                                 onclick = "myFunction()"
+                                             )
+                                         )
+                                     )
+                                 ),
+                                 shiny::selectInput("gssencmode", "GSS Encryption Mode",
+                                                    choices = c("prefer", "disable", "require"),
+                                                    selected = Sys.getenv("SD_GSSENCMODE", "prefer")),
+                                 shiny::textInput("default_table", "Development Table:",
+                                                  value = Sys.getenv("SD_TABLE", "responses")),
+                                 shiny::div(
+                                     style = "margin-top: 20px;",
+                                     shiny::actionButton("test_connection", "Test Connection",
+                                                         class = "btn-primary w-100")
+                                 ),
+                                 shiny::textOutput("connection_status")
+                             )
+                         )
+
+            )
         )
     )
 
     #Server Block
 
     server <- function(input, output, session) {
-        # Reactive values for connection status
+        # Reactive values for connection status and database
         rv <- shiny::reactiveValues(
             connection_status = FALSE,
             current_db = NULL
         )
 
-        # Initial connection check
+        # Connection attempt function
         attempt_connection <- function(config = NULL) {
             tryCatch({
                 if (is.null(config)) {
-                    # Use default connection from .env
                     db <- sd_db_connect()
                 } else {
-                    # Use provided config
                     pool <- pool::dbPool(
                         RPostgres::Postgres(),
                         host = config$host,
@@ -285,29 +234,37 @@ sd_dashboard <- function() {
             })
         }
 
-
-        # Initial connection attempt
+        # Initial connection and table loading
         shiny::observe({
-            attempt_connection()
-        })
+            # Try initial connection if not connected
+            if (!rv$connection_status) {
+                attempt_connection()
+            }
 
-        shiny::observe({
+            # Handle table selection based on connection status
             if (rv$connection_status && !is.null(rv$current_db)) {
                 tryCatch({
+                    # Get tables
                     tables <- pool::poolWithTransaction(rv$current_db$db, function(conn) {
-                        all_tables <- DBI::dbListTables(conn)
-                        all_tables[!grepl("^pg_", all_tables)]
+                        DBI::dbListTables(conn)
                     })
+                    filtered_tables <- tables[!grepl("^pg_", tables)]
 
-                    # Set default table as first choice if available
+                    # Get default table
                     default_table <- Sys.getenv("SD_TABLE", "")
-                    if (default_table %in% tables) {
-                        tables <- c(default_table, setdiff(tables, default_table))
-                    }
 
-                    shiny::updateSelectInput(session, "table_select",
-                                             choices = if (length(tables) > 0) tables else c("No tables found" = "")
-                    )
+                    if (default_table %in% filtered_tables) {
+                        # Set default table first
+                        filtered_tables <- c(default_table, setdiff(filtered_tables, default_table))
+                        shiny::updateSelectInput(session, "table_select",
+                                                 choices = filtered_tables,
+                                                 selected = default_table
+                        )
+                    } else {
+                        shiny::updateSelectInput(session, "table_select",
+                                                 choices = if (length(filtered_tables) > 0) filtered_tables else c("No tables found" = "")
+                        )
+                    }
                 }, error = function(e) {
                     shiny::updateSelectInput(session, "table_select",
                                              choices = c("Connection error" = "")
@@ -320,19 +277,20 @@ sd_dashboard <- function() {
             }
         })
 
-        # Initialize connection status based on local_db
+        # Handle test connection button
         shiny::observeEvent(input$test_connection, {
-            # First close any existing connection
+            # Close existing connection
             if (!is.null(rv$current_db) && !is.null(rv$current_db$db)) {
                 tryCatch({
                     pool::poolClose(rv$current_db$db)
                     rv$current_db <- NULL
                     rv$connection_status <- FALSE
                 }, error = function(e) {
-                    warning("Error closing existing connection: ", e$message)
+                    warning("Error closing connection: ", e$message)
                 })
             }
 
+            # Test new connection
             config <- list(
                 host = input$host,
                 port = input$port,
@@ -342,13 +300,11 @@ sd_dashboard <- function() {
                 gssencmode = input$gssencmode
             )
 
-            suppressMessages({
-                success <- attempt_connection(config)
-            })
+            success <- attempt_connection(config)
 
             if (success) {
-                # Save configuration to .env file
-                template <- paste(
+                # Save to .env file
+                env_content <- paste(
                     "# Database connection settings for surveydown",
                     sprintf("SD_HOST=%s", input$host),
                     sprintf("SD_PORT=%s", input$port),
@@ -359,7 +315,7 @@ sd_dashboard <- function() {
                     sprintf("SD_TABLE=%s", input$default_table),
                     sep = "\n"
                 )
-                writeLines(template, ".env")
+                writeLines(env_content, ".env")
 
                 # Update .gitignore
                 if (file.exists(".gitignore")) {
@@ -373,21 +329,6 @@ sd_dashboard <- function() {
 
                 output$connection_status <- shiny::renderText(
                     "Connection successful & Parameters saved to .env file."
-                )
-
-                # Update table selection choices
-                tables <- pool::poolWithTransaction(rv$current_db$db, function(conn) {
-                    all_tables <- DBI::dbListTables(conn)
-                    all_tables[!grepl("^pg_", all_tables)]
-                })
-
-                # Set default table as first choice if available
-                if (input$default_table %in% tables) {
-                    tables <- c(input$default_table, setdiff(tables, input$default_table))
-                }
-
-                shiny::updateSelectInput(session, "table_select",
-                                         choices = if (length(tables) > 0) tables else c("No tables found" = "")
                 )
             } else {
                 output$connection_status <- shiny::renderText(
@@ -426,168 +367,137 @@ sd_dashboard <- function() {
 
 
         # Value Boxes
-        output$total_responses <- shinydashboard::renderValueBox({
+        output$total_responses <- shiny::renderText({
             shiny::req(survey_data())
-            data <- survey_data()
-            shinydashboard::valueBox(
-                nrow(data),
-                "Total Responses",
-                icon = shiny::icon("users"),
-                color = "aqua"
-            )
+            nrow(survey_data())
         })
 
-        output$daily_average <- shinydashboard::renderValueBox({
+
+        output$daily_average <- shiny::renderText({
             shiny::req(survey_data())
             data <- survey_data()
-
             start_times <- as.POSIXct(data$time_start, format="%Y-%m-%d %H:%M:%S")
             first_response <- min(start_times, na.rm = TRUE)
             last_response <- max(start_times, na.rm = TRUE)
-
             duration_days <- max(as.numeric(difftime(last_response, first_response, units = "days")), 1)
-            daily_avg <- round(nrow(data) / duration_days, 1)
-
-            shinydashboard::valueBox(
-                daily_avg,
-                "Daily Average",
-                icon = shiny::icon("chart-line"),
-                color = "green"
-            )
+            round(nrow(data) / duration_days, 1)
         })
 
-        output$completion_rate <- shinydashboard::renderValueBox({
+        output$completion_rate <- shiny::renderText({
             shiny::req(survey_data())
             data <- survey_data()
-
             total_responses <- nrow(data)
             completed_responses <- sum(!is.na(data$time_end) & data$time_end != "", na.rm = TRUE)
-
-            completion_rate <- if(total_responses > 0) {
+            if(total_responses > 0) {
                 sprintf("%.1f%%", (completed_responses / total_responses) * 100)
             } else {
                 "0.0%"
             }
-
-            shinydashboard::valueBox(
-                completion_rate,
-                "Completion Rate",
-                icon = shiny::icon("check-circle"),
-                color = "yellow"
-            )
         })
 
         # Response Trend Plot
         output$cumulative_trend <- shiny::renderPlot({
-            # Check for data early
             data <- survey_data()
+            # Get theme colors based on dark mode
+            bg_color <- if (input$dark_mode == "dark") "#2c3e50" else "#ffffff"
+            text_color <- if (input$dark_mode == "dark") "#ffffff" else "#1a2226"
+            grid_color <- if (input$dark_mode == "dark") "gray30" else "gray80"
+            line_color <- if (input$dark_mode == "dark") "#3498db" else "#0062cc"
+
             if (is.null(data) || nrow(data) == 0 || !("time_start" %in% names(data))) {
+                par(bg = bg_color, fg = text_color)
                 plot.new()
-                plot.window(xlim = c(0, 1), ylim = c(0, 1))
-                text(0.5, 0.5, "No data available to display", cex = 1.2)
+                text(0.5, 0.5, "No data available to display", col = text_color, cex = 1.2)
                 return()
             }
 
-            withCallingHandlers({
-                dates <- try(as.Date(data$time_start), silent = TRUE)
-                if (inherits(dates, "try-error") || length(dates) == 0 || all(is.na(dates))) {
-                    plot.new()
-                    plot.window(xlim = c(0, 1), ylim = c(0, 1))
-                    text(0.5, 0.5, "Unable to process date data", cex = 1.2)
-                    return()
-                }
+            dates <- try(as.Date(data$time_start))
+            if (inherits(dates, "try-error") || length(dates) == 0 || all(is.na(dates))) {
+                par(bg = bg_color, fg = text_color)
+                plot.new()
+                text(0.5, 0.5, "Unable to process date data", col = text_color, cex = 1.2)
+                return()
+            }
 
-                dates <- dates[!is.na(dates)]
-                if (length(dates) == 0) {
-                    plot.new()
-                    plot.window(xlim = c(0, 1), ylim = c(0, 1))
-                    text(0.5, 0.5, "No valid dates found in data", cex = 1.2)
-                    return()
-                }
+            dates <- dates[!is.na(dates)]
+            daily_counts <- table(dates)
+            date_range <- seq(min(dates), max(dates), by = "day")
+            all_counts <- integer(length(date_range))
+            names(all_counts) <- date_range
+            all_counts[names(daily_counts)] <- daily_counts
+            cumulative_responses <- cumsum(all_counts)
 
-                daily_counts <- table(dates)
-                date_range <- seq(min(dates), max(dates), by = "day")
-                all_counts <- integer(length(date_range))
-                names(all_counts) <- date_range
-                all_counts[names(daily_counts)] <- daily_counts
-                cumulative_responses <- cumsum(all_counts)
+            # Plot setup with theme
+            par(bg = bg_color, fg = text_color, col.axis = text_color, col.lab = text_color,
+                mar = c(4, 4, 2, 2))
 
-                # Plot cumulative responses
-                par(mar = c(4, 4, 2, 2))
-                plot(date_range, cumulative_responses,
-                     type = "l",
-                     col = "#e74c3c",
-                     lwd = 2,
-                     xlab = "Date",
-                     ylab = "Cumulative Responses"
-                     )
+            # Add grid first
+            plot(date_range, cumulative_responses, type = "n",
+                 xlab = "Date", ylab = "Cumulative Responses")
+            grid(col = grid_color, lty = "dotted")
 
-                points(date_range, cumulative_responses,
-                       col = "#e74c3c",
-                       pch = 16)
+            # Add line and points
+            lines(date_range, cumulative_responses, col = line_color, lwd = 2)
+            points(date_range, cumulative_responses, col = line_color, pch = 16)
+        }, bg = "transparent")
 
-                grid()
-            }, warning = function(w) {
-                invokeRestart("muffleWarning")
-            })
-        })
-
-        # Daily trend plot
         output$daily_trend <- shiny::renderPlot({
             data <- survey_data()
+            # Get theme colors based on dark mode
+            bg_color <- if (input$dark_mode == "dark") "#2c3e50" else "#ffffff"
+            text_color <- if (input$dark_mode == "dark") "#ffffff" else "#1a2226"
+            grid_color <- if (input$dark_mode == "dark") "gray30" else "gray80"
+            bar_color <- if (input$dark_mode == "dark") "#3498db" else "#0062cc"
+            bar_border <- if (input$dark_mode == "dark") "#00008B" else "#00008B"
+
             if (is.null(data) || nrow(data) == 0 || !("time_start" %in% names(data))) {
+                par(bg = bg_color, fg = text_color)
                 plot.new()
-                plot.window(xlim = c(0, 1), ylim = c(0, 1))
-                text(0.5, 0.5, "No data available to display", cex = 1.2)
+                text(0.5, 0.5, "No data available to display", col = text_color, cex = 1.2)
                 return()
             }
 
-            withCallingHandlers({
-                dates <- try(as.Date(data$time_start), silent = TRUE)
-                if (inherits(dates, "try-error") || length(dates) == 0 || all(is.na(dates))) {
-                    plot.new()
-                    plot.window(xlim = c(0, 1), ylim = c(0, 1))
-                    text(0.5, 0.5, "Unable to process date data", cex = 1.2)
-                    return()
-                }
+            dates <- try(as.Date(data$time_start))
+            if (inherits(dates, "try-error") || length(dates) == 0 || all(is.na(dates))) {
+                par(bg = bg_color, fg = text_color)
+                plot.new()
+                text(0.5, 0.5, "Unable to process date data", col = text_color, cex = 1.2)
+                return()
+            }
 
-                dates <- dates[!is.na(dates)]
-                if (length(dates) == 0) {
-                    plot.new()
-                    plot.window(xlim = c(0, 1), ylim = c(0, 1))
-                    text(0.5, 0.5, "No valid dates found in data", cex = 1.2)
-                    return()
-                }
+            dates <- dates[!is.na(dates)]
+            daily_counts <- table(dates)
+            date_range <- seq(min(dates), max(dates), by = "day")
+            all_counts <- integer(length(date_range))
+            names(all_counts) <- date_range
+            all_counts[names(daily_counts)] <- daily_counts
 
-                daily_counts <- table(dates)
-                date_range <- seq(min(dates), max(dates), by = "day")
-                all_counts <- integer(length(date_range))
-                names(all_counts) <- date_range
-                all_counts[names(daily_counts)] <- daily_counts
+            # Plot setup with theme
+            par(bg = bg_color, fg = text_color, col.axis = text_color, col.lab = text_color,
+                mar = c(5, 4, 2, 2))  # Increased bottom margin for date labels
 
-                # Match the theme with cumulative plot but add spacing and border
-                par(mar = c(4, 4.5, 2, 2))  # Increased left margin for y-axis
-                bp <- barplot(all_counts,
-                              col = "#3498db",
-                              xlab = "Date",
-                              ylab = "Daily Responses",
-                              xaxt = "n",
-                              space = 0.1,
-                              border = "darkblue"
-                )
+            # Create barplot
+            bp <- barplot(all_counts,
+                          col = bar_color,
+                          border = bar_border,
+                          xlab = "Date",
+                          ylab = "Daily Responses",
+                          xaxt = "n",
+                          space = 0.2
+            )
 
-                # Add x-axis with same format as cumulative plot
-                axis(1,
-                     at = bp,
-                     labels = format(date_range, "%b %d"),
-                     las = 1,
-                     cex.axis = 0.9
-                )
-            }, warning = function(w) {
-                invokeRestart("muffleWarning")
-            })
-        })
+            # Add gridlines
+            grid(col = grid_color, lty = "dotted")
 
+            # Add x-axis with rotated labels
+            axis(1,
+                 at = bp,
+                 labels = format(date_range, "%b %d"),
+                 las = 2,
+                 col.axis = text_color,
+                 cex.axis = 0.9
+            )
+        }, bg = "transparent")
 
         # Survey Data Table
         output$survey_data_table <- DT::renderDataTable({
@@ -622,7 +532,6 @@ sd_dashboard <- function() {
         #}
         #
         #shiny::onStop(cleanup)
-
 
     }
 
