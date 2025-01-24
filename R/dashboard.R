@@ -77,7 +77,6 @@ sd_dashboard <- function() {
                             "table_select",
                             "Choose a table to view:",
                             choices = c("Loading..." = ""),
-                            selected = Sys.getenv("SD_TABLE", ""),
                             width = "20%",
                             selectize = FALSE
                         ),
@@ -252,7 +251,6 @@ sd_dashboard <- function() {
 
                     # Get default table
                     default_table <- Sys.getenv("SD_TABLE", "")
-
                     if (default_table %in% filtered_tables) {
                         # Set default table first
                         filtered_tables <- c(default_table, setdiff(filtered_tables, default_table))
