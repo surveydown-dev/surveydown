@@ -9,12 +9,12 @@ sd_db_connect(env_file = ".env", ignore = FALSE)
 \arguments{
 \item{env_file}{Character string. Path to the env file. Defaults to ".env"}
 
-\item{ignore}{Logical. If TRUE, data will be saved to a local CSV file instead
-of the database. Defaults to FALSE.}
+\item{ignore}{Logical. If \code{TRUE}, data will be saved to a local CSV file
+instead of the database. Defaults to \code{FALSE}.}
 }
 \value{
 A list containing the database connection pool (\code{db}) and table name (\code{table}),
-or NULL if ignore is TRUE or if connection fails
+or \code{NULL} if ignore is \code{TRUE} or if connection fails
 }
 \description{
 Establish a connection to the database using settings from .env file. This function

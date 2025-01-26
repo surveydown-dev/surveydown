@@ -4,7 +4,7 @@
 \alias{sd_get_data}
 \title{Fetch data from a database table with automatic reactivity detection}
 \usage{
-sd_get_data(db, refresh_interval = NULL)
+sd_get_data(db, table = NULL, refresh_interval = NULL)
 }
 \arguments{
 \item{db}{A list containing database connection details created using
@@ -13,6 +13,9 @@ sd_get_data(db, refresh_interval = NULL)
 \item \code{db}: A \code{DBI} database connection object
 \item \code{table}: A string specifying the name of the table to query
 }}
+
+\item{table}{Character string. Database table name to obtain data from,
+overrides the table provided in the \code{db} argument. Defaults to \code{NULL}.}
 
 \item{refresh_interval}{Numeric. The time interval (in seconds) between data
 refreshes when in a reactive context. Default is \code{NULL}, meaning the data

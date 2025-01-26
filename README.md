@@ -11,13 +11,13 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
 <!-- badges: end -->
 
-> \[!IMPORTANT\] surveydown is an early stage project under active
+> [!IMPORTANT] surveydown is an early stage project under active
 > development and may [not yet be a good fit for
 > you](https://surveydown.org/faq.html#is-surveydown-right-for-me). If
 > you are interested in experimenting with it, we welcome your
 > [feedback](https://github.com/orgs/surveydown-dev/discussions)!
 
-> \[!NOTE\] Visit the main documentation site at
+> [!NOTE] Visit the main documentation site at
 > [surveydown.org](https://surveydown.org) for more information!
 
 ## What is surveydown?

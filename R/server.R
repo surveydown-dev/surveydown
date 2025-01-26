@@ -785,6 +785,10 @@ sd_show_if <- function(...) {
 #'
 #' @export
 sd_set_password <- function(password) {
+
+    # v0.8.0
+    .Deprecated("sd_db_config")
+
     # Define the path to .Renviron file
     renviron_path <- file.path(getwd(), ".Renviron")
 
@@ -850,6 +854,10 @@ sd_set_password <- function(password) {
 #'
 #' @export
 sd_show_password <- function() {
+
+    # v0.8.0
+    .Deprecated("sd_db_config")
+
     # Define the path to .Renviron file
     renviron_path <- file.path(getwd(), ".Renviron")
 

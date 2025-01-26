@@ -183,11 +183,11 @@ sd_db_config <- function(
 #' local data storage when needed.
 #'
 #' @param env_file Character string. Path to the env file. Defaults to ".env"
-#' @param ignore Logical. If TRUE, data will be saved to a local CSV file instead
-#'   of the database. Defaults to FALSE.
+#' @param ignore Logical. If `TRUE`, data will be saved to a local CSV file
+#' instead of the database. Defaults to `FALSE`.
 #'
 #' @return A list containing the database connection pool (`db`) and table name (`table`),
-#'   or NULL if ignore is TRUE or if connection fails
+#'   or `NULL` if ignore is `TRUE` or if connection fails
 #'
 #' @examples
 #' if (interactive()) {
@@ -262,128 +262,6 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE) {
     })
 }
 
-#' Connect to a 'PostgreSQL' Database with Automatic Cleanup
-#'
-#' This function establishes a connection pool to a 'PostgreSQL' database
-#' (e.g. Supabase) and sets up automatic cleanup when the 'shiny' session ends.
-#'
-#' @param host Character string. The host address of the Supabase database.
-#' @param dbname Character string. The name of the Supabase database.
-#' @param port Integer. The port number for the Supabase database connection.
-#' @param user Character string. The username for the Supabase database
-#'   connection.
-#' @param table Character string. The name of the table to interact with in
-#'   the Supabase database.
-#' @param password Character string. The password for the Supabase database
-#'   connection. NOTE: While you can provide a hard-coded password here, we do
-#'   NOT recommend doing so for security purposes. Instead, you should establish
-#'   a password with `surveydown::sd_set_password()`, which will create a local
-#'   `.Renviron` file that stores your password as a `SURVEYDOWN_PASSWORD`
-#'    environment
-#'   variable. The `password` argument uses this as the default value, so if you
-#'   set a password properly with `surveydown::sd_set_password()`, then you can
-#'   safely ignore using the `password` argument here.
-#' @param gssencmode Character string. The GSS encryption mode for the database
-#'   connection. Defaults to `"prefer"`. NOTE: If you have verified all
-#'   connection details are correct but still cannot access the database,
-#'   consider setting this to `"disable"`. This can be necessary if you're on a
-#'   secure connection, such as a VPN.
-#' @param ignore Logical. If `TRUE`, data will be saved to a local CSV file
-#'  instead of the database. Defaults to `FALSE`.
-#' @param min_size Integer. The minimum number of connections in the pool.
-#'  Defaults to 1.
-#' @param max_size Integer. The maximum number of connections in the pool.
-#'  Defaults to `Inf`.
-#'
-#' @return A list containing the database connection pool (`db`) and the table
-#'  name (`table`), or `NULL` if in ignore mode or if there's an error.
-#'
-#' @examples
-#' if (interactive()) {
-#'   # Assuming SURVEYDOWN_PASSWORD is set in .Renviron
-#'   db <- sd_database(
-#'     host   = "aws-0-us-west-1.pooler.supabase.com",
-#'     dbname = "postgres",
-#'     port   = "6---",
-#'     user   = "postgres.k----------i",
-#'     table  = "your-table-name",
-#'     ignore = FALSE
-#'   )
-#'
-#'   # Print the structure of the connection
-#'   str(db)
-#'
-#'   # Close the connection pool when done
-#'   if (!is.null(db)) {
-#'     pool::poolClose(db$db)
-#'   }
-#' }
-#' @export
-sd_database <- function(
-        host       = NULL,
-        dbname     = NULL,
-        port       = NULL,
-        user       = NULL,
-        table      = NULL,
-        password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
-        gssencmode = "prefer",
-        ignore     = FALSE,
-        min_size   = 1,
-        max_size   = Inf
-) {
-
-    # v0.8.0
-    .Deprecated("sd_db_connect")
-
-    if (ignore) {
-        message("Database connection ignored. Saving data to local CSV file.\n")
-        return(NULL)
-    }
-
-    # Authentication/Checks for NULL Values
-    if (is.null(host) | is.null(dbname) | is.null(port) | is.null(user) | is.null(table)) {
-        message("One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local data.csv file *for previewing purposes only*.")
-        return(NULL)
-    }
-
-    if (!nchar(password)) {
-        stop("Please define your password using surveydown::sd_set_password().\n If you just did this, RESTART the R session to make sure the password environment variable is loaded.")
-    }
-
-    tryCatch({
-        pool <- pool::dbPool(
-            RPostgres::Postgres(),
-            host = host,
-            dbname = dbname,
-            port = port,
-            user = user,
-            password = password,
-            gssencmode = gssencmode,
-            minSize = min_size,
-            maxSize = max_size
-        )
-
-        # Set up automatic cleanup when the Shiny session ends
-        shiny::onStop(function() {
-            pool::poolClose(pool)
-        })
-
-        message("Successfully connected to the database.")
-        return(list(db = pool, table = table))
-    }, error = function(e) {
-        stop(paste("Error: Failed to connect to the database.",
-                   "Details:", conditionMessage(e),
-                   "\nPlease check your connection details:",
-                   "\n- host:    ", host,
-                   "\n- dbname:  ", dbname,
-                   "\n- port:    ", port,
-                   "\n- user:    ", user,
-                   "\nTo update password, please use surveydown::sd_set_password().",
-                   "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disable' in the sd_database() function."))
-    })
-}
-
-
 #' Fetch data from a database table with automatic reactivity detection
 #'
 #' This function retrieves all data from a specified table in a database.
@@ -398,6 +276,8 @@ sd_database <- function(
 #'     \item `db`: A `DBI` database connection object
 #'     \item `table`: A string specifying the name of the table to query
 #'   }
+#' @param table Character string. Database table name to obtain data from,
+#' overrides the table provided in the `db` argument. Defaults to `NULL`.
 #' @param refresh_interval Numeric. The time interval (in seconds) between data
 #'  refreshes when in a reactive context. Default is `NULL`, meaning the data
 #'  will not refresh.
@@ -429,16 +309,20 @@ sd_database <- function(
 #'   }
 #' }
 #' @export
-sd_get_data <- function(db, refresh_interval = NULL) {
+sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
     if (is.null(db)) {
         warning("Database is not connected, db is NULL")
         return(NULL)
     }
 
+    if (is.null(table)) {
+        table <- db$table
+    }
+
     fetch_data <- function() {
         # Check if table exists first
         table_exists <- pool::poolWithTransaction(db$db, function(conn) {
-            DBI::dbExistsTable(conn, db$table)
+            DBI::dbExistsTable(conn, table)
         })
 
         if (!table_exists) {
@@ -447,7 +331,7 @@ sd_get_data <- function(db, refresh_interval = NULL) {
 
         # Only try to read if table exists
         pool::poolWithTransaction(db$db, function(conn) {
-            DBI::dbReadTable(conn, db$table)
+            DBI::dbReadTable(conn, table)
         })
     }
 
@@ -592,5 +476,129 @@ database_uploading <- function(data_list, db, table, changed_fields) {
     }, error = function(e) {
         warning("Error in database operation: ", e$message)
         print(e)  # Print the full error for debugging
+    })
+}
+
+
+
+
+#' Connect to a 'PostgreSQL' Database with Automatic Cleanup
+#'
+#' This function establishes a connection pool to a 'PostgreSQL' database
+#' (e.g. Supabase) and sets up automatic cleanup when the 'shiny' session ends.
+#'
+#' @param host Character string. The host address of the PostgreSQL database.
+#' @param dbname Character string. The name of the PostgreSQL database.
+#' @param port Integer. The port number for the PostgreSQL database connection.
+#' @param user Character string. The username for the PostgreSQL database
+#'   connection.
+#' @param table Character string. The name of the table to interact with in
+#'   the Supabase database.
+#' @param password Character string. The password for the PostgreSQL database
+#'   connection. NOTE: While you can provide a hard-coded password here, we do
+#'   NOT recommend doing so for security purposes. Instead, you should establish
+#'   a password with `surveydown::sd_set_password()`, which will create a local
+#'   `.Renviron` file that stores your password as a `SURVEYDOWN_PASSWORD`
+#'    environment
+#'   variable. The `password` argument uses this as the default value, so if you
+#'   set a password properly with `surveydown::sd_set_password()`, then you can
+#'   safely ignore using the `password` argument here.
+#' @param gssencmode Character string. The GSS encryption mode for the database
+#'   connection. Defaults to `"prefer"`. NOTE: If you have verified all
+#'   connection details are correct but still cannot access the database,
+#'   consider setting this to `"disable"`. This can be necessary if you're on a
+#'   secure connection, such as a VPN.
+#' @param ignore Logical. If `TRUE`, data will be saved to a local CSV file
+#'  instead of the database. Defaults to `FALSE`.
+#' @param min_size Integer. The minimum number of connections in the pool.
+#'  Defaults to 1.
+#' @param max_size Integer. The maximum number of connections in the pool.
+#'  Defaults to `Inf`.
+#'
+#' @return A list containing the database connection pool (`db`) and the table
+#'  name (`table`), or `NULL` if in ignore mode or if there's an error.
+#'
+#' @examples
+#' if (interactive()) {
+#'   # Assuming SURVEYDOWN_PASSWORD is set in .Renviron
+#'   db <- sd_database(
+#'     host   = "aws-0-us-west-1.pooler.supabase.com",
+#'     dbname = "postgres",
+#'     port   = "6---",
+#'     user   = "postgres.k----------i",
+#'     table  = "your-table-name",
+#'     ignore = FALSE
+#'   )
+#'
+#'   # Print the structure of the connection
+#'   str(db)
+#'
+#'   # Close the connection pool when done
+#'   if (!is.null(db)) {
+#'     pool::poolClose(db$db)
+#'   }
+#' }
+#' @export
+sd_database <- function(
+    host       = NULL,
+    dbname     = NULL,
+    port       = NULL,
+    user       = NULL,
+    table      = NULL,
+    password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
+    gssencmode = "prefer",
+    ignore     = FALSE,
+    min_size   = 1,
+    max_size   = Inf
+) {
+
+    # v0.8.0
+    .Deprecated("sd_db_connect")
+
+    if (ignore) {
+        message("Database connection ignored. Saving data to local CSV file.\n")
+        return(NULL)
+    }
+
+    # Authentication/Checks for NULL Values
+    if (is.null(host) | is.null(dbname) | is.null(port) | is.null(user) | is.null(table)) {
+        message("One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local data.csv file *for previewing purposes only*.")
+        return(NULL)
+    }
+
+    if (!nchar(password)) {
+        stop("Please define your password using surveydown::sd_set_password().\n If you just did this, RESTART the R session to make sure the password environment variable is loaded.")
+    }
+
+    tryCatch({
+        pool <- pool::dbPool(
+            RPostgres::Postgres(),
+            host = host,
+            dbname = dbname,
+            port = port,
+            user = user,
+            password = password,
+            gssencmode = gssencmode,
+            minSize = min_size,
+            maxSize = max_size
+        )
+
+        # Set up automatic cleanup when the Shiny session ends
+        shiny::onStop(function() {
+            pool::poolClose(pool)
+        })
+
+        message("Successfully connected to the database.")
+        return(list(db = pool, table = table))
+    }, error = function(e) {
+        stop(paste("Error: Failed to connect to the database.",
+                   "Details:", conditionMessage(e),
+                   "\nPlease check your connection details:",
+                   "\n- host:    ", host,
+                   "\n- dbname:  ", dbname,
+                   "\n- port:    ", port,
+                   "\n- user:    ", user,
+                   "\nTo update password, please use surveydown::sd_set_password().",
+                   "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disable' in the sd_database() function."))
     })
 }
