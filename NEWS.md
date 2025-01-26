@@ -1,5 +1,12 @@
 # surveydown (development version)
 
+# surveydown 0.8.0
+
+- New function for setting up the database configuration: `sd_db_config()`. Stores database parameters in a local .env file.
+- New function for connecting to database: `sd_db_connect`. Replaces older `sd_database()` function, which is now depreciated.
+- New function for monitoring survey data in database: `sd_dashboard()`. Interactive shiny app that runs locally for monitoring data.
+- Bug fix: Fixed the slider question type options. They we previously in the opposite order from all other question types (label = value), see #166.
+
 # surveydown 0.7.2
 
 - Bug fix: The `mc_multiple` question type could not resume its UI if multiple options are selected. Now it's solved.
