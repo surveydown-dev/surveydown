@@ -2,37 +2,34 @@ Package: surveydown
 Title: Markdown-Based Surveys Using 'Quarto' and 'shiny'
 Version: 0.8.0
 Authors@R: c(
-    person(given   = "John Paul",
-           family  = "Helveston",
-           role    = c("aut", "cre", "cph"),
-           email   = "john.helveston@gmail.com",
+    person("John Paul", "Helveston", , "john.helveston@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-2657-9191")),
-    person(given   = "Pingfan",
-           family  = "Hu",
-           role    = c("aut", "cph"),
-           email   = "pingfan0727@gmail.com",
+    person("Pingfan", "Hu", , "pingfan0727@gmail.com", role = c("aut", "cph"),
            comment = c(ORCID = "0009-0001-4877-4844")),
-    person(given   = "Bogdan",
-           family  = "Bunea",
-           role    = c("aut", "cph"),
-           email   = "buneabt@yahoo.com",
+    person("Bogdan", "Bunea", , "buneabt@yahoo.com", role = c("aut", "cph"),
            comment = c(ORCID = "0009-0006-2942-0588")),
-    person(given   = "Stefan",
-           family  = "Munnes",
-           role    = c("ctb"),
-           email   = "stefan.munnes@wzb.eu"))
-Description: Generate surveys using markdown and R code chunks. Surveys are composed of two files: a survey.qmd 'Quarto' file defining the survey content (pages, questions, etc), and an app.R file defining a 'shiny' app with global settings (libraries, database configuration, etc.) and server configuration options (e.g., conditional skipping / display, etc.). Survey data collected from respondents is stored in a 'PostgreSQL' database. Features include controls for conditional skip logic (skip to a page based on an answer to a question), conditional display logic (display a question based on an answer to a question), a customizable progress bar, and a wide variety of question types, including multiple choice (single choice and multiple choices), select, text, numeric, multiple choice buttons, text area, and dates. Because the surveys render into a 'shiny' app, designers can also leverage the reactive capabilities of 'shiny' to create dynamic and interactive surveys.
+    person("Stefan", "Munnes", , "stefan.munnes@wzb.eu", role = "ctb")
+  )
+Description: Generate surveys using markdown and R code chunks. Surveys
+    are composed of two files: a survey.qmd 'Quarto' file defining the
+    survey content (pages, questions, etc), and an app.R file defining a
+    'shiny' app with global settings (libraries, database configuration,
+    etc.) and server configuration options (e.g., conditional skipping /
+    display, etc.). Survey data collected from respondents is stored in a
+    'PostgreSQL' database. Features include controls for conditional skip
+    logic (skip to a page based on an answer to a question), conditional
+    display logic (display a question based on an answer to a question), a
+    customizable progress bar, and a wide variety of question types,
+    including multiple choice (single choice and multiple choices),
+    select, text, numeric, multiple choice buttons, text area, and dates.
+    Because the surveys render into a 'shiny' app, designers can also
+    leverage the reactive capabilities of 'shiny' to create dynamic and
+    interactive surveys.
 License: MIT + file LICENSE
-Encoding: UTF-8
-LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
-Depends: R (>= 4.1.0)
-Suggests:
-    knitr,
-    leaflet,
-    testthat, 
-    glue
+URL: https://pkg.surveydown.org
+BugReports: https://github.com/surveydown-dev/surveydown/issues
+Depends:
+    R (>= 4.1.0)
 Imports:
     bslib,
     cli,
@@ -55,5 +52,12 @@ Imports:
     utils,
     xml2,
     yaml
-URL: https://pkg.surveydown.org
-BugReports: https://github.com/surveydown-dev/surveydown/issues
+Suggests:
+    glue,
+    knitr,
+    leaflet,
+    testthat
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
