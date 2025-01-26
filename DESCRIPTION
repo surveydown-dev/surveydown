@@ -1,6 +1,6 @@
 Package: surveydown
 Title: Markdown-Based Surveys Using 'Quarto' and 'shiny'
-Version: 0.7.2
+Version: 0.8.0
 Authors@R: c(
     person(given   = "John Paul",
            family  = "Helveston",
@@ -27,19 +27,21 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-VignetteBuilder: knitr
-Depends:
-    R (>= 4.0.0)
+Depends: R (>= 4.1.0)
 Suggests:
     knitr,
     leaflet,
     testthat, 
     glue
 Imports:
+    bslib,
+    cli,
     DBI,
+    dotenv,
     DT,
     fs,
     htmltools,
+    jsonlite,
     markdown,
     pool,
     quarto,

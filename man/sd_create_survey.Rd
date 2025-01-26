@@ -4,43 +4,15 @@
 \alias{sd_create_survey}
 \title{Create a new survey template}
 \usage{
-sd_create_survey(path = getwd(), structure = "single")
+sd_create_survey(path = getwd())
 }
 \arguments{
 \item{path}{A character string specifying the directory where the survey
 template should be created. Defaults to the current working directory.}
-
-\item{structure}{A character string specifying the template structure to use.
-Must be either \code{"single"} or \code{"multi"}. Defaults to \code{"single"}.}
 }
 \value{
-Invisible \code{NULL}. The function is called for its side effects of
-creating files and providing user feedback.
+Invisible \code{NULL}. The function is called for its side effects.
 }
 \description{
-This function creates a new survey template by copying files from the
-package's template directory to a specified path. It handles file conflicts
-and provides appropriate warnings and feedback.
-}
-\details{
-The function performs the following steps:
-\itemize{
-\item If the specified path is the current working directory, it asks for user confirmation.
-\item Validates the specified structure (\code{"single"} or \code{"multi"}).
-\item Creates the target directory if it doesn't exist.
-\item Copies all files from the package's template directory (based on the specified structure) to the target path.
-\item Preserves the directory structure of the template.
-\item Skips existing files and provides warnings for each skipped file.
-\item Handles .Rproj files specially, skipping if any .Rproj file already exists in the target directory.
-\item Provides feedback on whether files were copied or if all files already existed.
-}
-}
-\examples{
-if (interactive()) {
-  # Create a single-page survey template
-  sd_create_survey(structure = "single")
-
-  # Create a multi-page survey template
-  sd_create_survey(structure = "multi")
-}
+Create a new survey template
 }

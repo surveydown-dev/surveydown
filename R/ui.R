@@ -59,28 +59,25 @@ sd_ui <- function() {
   }
   barcolor <- get_barcolor(metadata)
   barposition <- get_barposition(metadata)
+  footer <- get_footer(metadata)
 
   # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
   # Render the 'survey.qmd' file if changes detected
   if (survey_needs_updating(paths)) {
-    tryCatch({
-      # Render the 'survey.qmd' file
-      message("Changes detected...rendering 'survey.qmd' file...")
-      render_survey_qmd(paths, default_theme)
+    message("Changes detected...rendering 'survey.qmd' file...")
+    render_survey_qmd(paths, default_theme)
 
-      # Extract head content (for CSS and JS) and save to "_survey" folder
-      html_content <- rvest::read_html(paths$root_html)
-      head_content <- extract_head_content(html_content)
-      saveRDS(head_content, paths$target_head)
+    # Move rendered file
+    fs::file_move(paths$root_html, paths$target_html)
+    message("Survey saved to ", paths$target_html, "\n")
 
-      # Move rendered 'survey.html' into '_survey' folder
-      fs::file_move(paths$root_html, paths$target_html)
-      message("Survey saved to ", paths$target_html, "\n")
-    }, error = function(e) {
-      stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
-    })
+    # Extract head content and save
+    html_content <- rvest::read_html(paths$target_html)
+    head_content <- extract_head_content(html_content)
+    saveRDS(head_content, paths$target_head)
+
   } else {
     # If no changes, just load head content from '_survey/head.rds'
     head_content <- readRDS(paths$target_head)
@@ -114,7 +111,13 @@ sd_ui <- function() {
       shiny::tags$div(
         class = "content",
         shiny::uiOutput("main")
-      )
+      ),
+      if (nchar(footer) > 0) {
+        shiny::tags$div(
+          class = "footer",
+          shiny::HTML(footer)
+        )
+      }
     ) # fluidPage
   ) # shiny::tagList()
 }
@@ -146,6 +149,80 @@ get_barposition <- function(metadata) {
   return(barposition)
 }
 
+process_links <- function(text) {
+  if (is.null(text)) return("")
+
+  # Convert markdown links to HTML first
+  text <- gsub("\\[([^]]+)\\]\\(([^)]+)\\)",
+               '<a href="\\2">\\1</a>',
+               text)
+
+  # Then add target="_blank" to any HTML links that don't have it
+  pattern <- '<a [^>]*?href="[^"]*?"[^>]*?>'
+  matches <- gregexpr(pattern, text, perl = TRUE)
+  if (length(matches[[1]]) > 0 && matches[[1]][1] != -1) {
+    links <- regmatches(text, matches)[[1]]
+    for (link in links) {
+      if (!grepl('target=', link)) {
+        new_link <- sub('>', ' target="_blank">', link)
+        text <- sub(link, new_link, text, fixed = TRUE)
+      }
+    }
+  }
+
+  return(text)
+}
+
+get_footer <- function(metadata) {
+  # Get the metadata safely
+  meta <- metadata$formats$html$metadata
+  if (is.null(meta)) {
+    return("")
+  }
+
+  # Get footer-related fields
+  footer_left <- meta$`footer-left`
+  footer_right <- meta$`footer-right`
+  footer_center <- meta$`footer-center`
+  plain_footer <- meta$footer
+
+  # If footer-center doesn't exist but plain footer does, use plain footer
+  if (is.null(footer_center) && !is.null(plain_footer)) {
+    footer_center <- plain_footer
+  }
+
+  # If all are NULL, return empty string
+  if (is.null(footer_center) && is.null(footer_left) && is.null(footer_right)) {
+    return("")
+  }
+
+  # Process each section if it exists
+  footer_html <- c()
+
+  if (!is.null(footer_left) && nchar(footer_left) > 0) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-left">%s</div>',
+                             process_links(footer_left)))
+  }
+
+  if (!is.null(footer_center) && nchar(footer_center) > 0) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-center">%s</div>',
+                             process_links(footer_center)))
+  }
+
+  if (!is.null(footer_right) && nchar(footer_right) > 0) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-right">%s</div>',
+                             process_links(footer_right)))
+  }
+
+  # Return the final HTML
+  return(paste0('<div class="footer-content">',
+                paste(footer_html, collapse = ""),
+                '</div>'))
+}
+
 survey_needs_updating <- function(paths) {
   # Re-render if any of the target files are missing
   targets <- c(paths$target_html, paths$target_head)
@@ -161,29 +238,32 @@ survey_needs_updating <- function(paths) {
 }
 
 render_survey_qmd <- function(paths, default_theme = TRUE) {
-  # Copy lua filter to local folder
-  lua_file <- 'surveydown.lua'
-  fs::file_copy(
-    system.file("lua/include-resources.lua", package = "surveydown"),
-    lua_file,
-    overwrite = TRUE
-  )
+    # Copy lua filter to local folder
+    lua_file <- 'surveydown.lua'
+    fs::file_copy(
+        system.file("lua/include-resources.lua", package = "surveydown"),
+        lua_file,
+        overwrite = TRUE
+    )
 
-  # Render with Lua filter and metadata
-  quarto::quarto_render(
-    paths$qmd,
-    metadata = list(
-      default_theme = default_theme
-    ),
-    pandoc_args = c(
-      "--embed-resources",
-      "--lua-filter=surveydown.lua"
-    ),
-    quiet = TRUE
-  )
+    # Render the survey.qmd file
+    quarto::quarto_render(
+        input = paths$qmd,
+        metadata = list(
+            default_theme = default_theme
+        ),
+        pandoc_args = c(
+            "--embed-resources",
+            "--lua-filter=surveydown.lua"
+        ),
+        # Turn off quiet mode to capture output
+        quiet = FALSE
+    )
 
-  # Delete local lua filter
-  fs::file_delete(lua_file)
+    # Delete lua file from root folder
+    if (file.exists(lua_file)) {
+        fs::file_delete(lua_file)
+    }
 }
 
 extract_head_content <- function(html_content) {
@@ -290,6 +370,22 @@ sd_question <- function(
     resize       = NULL,
     row          = NULL
 ) {
+
+  # Define valid question types
+  valid_types <- c(
+    "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons",
+    "text", "textarea", "numeric", "slider", "date", "daterange", "matrix"
+  )
+
+  # Check if provided type is valid
+  if (!type %in% valid_types) {
+    stop(
+      sprintf(
+        "Invalid question type: '%s'. Valid types are: %s",
+        type, paste(sort(valid_types), collapse = "', '")
+      )
+    )
+  }
 
   output <- NULL
 
@@ -400,25 +496,31 @@ sd_question <- function(
 
   } else if (type == "slider") {
 
+    slider_values <- make_slider_values(option)
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+      session <- shiny::getDefaultReactiveDomain()
+      session$userData[[paste0(id, "_values")]] <- slider_values
+    }
+
     output <- shinyWidgets::sliderTextInput(
-      inputId      = id,
-      label        = label,
-      choices      = option,
-      selected     = selected,
-      force_edges  = force_edges,
-      grid         = grid,
-      animate      = FALSE,
-      hide_min_max = FALSE,
-      from_fixed   = FALSE,
-      to_fixed     = FALSE,
-      from_min     = NULL,
-      from_max     = NULL,
-      to_min       = NULL,
-      to_max       = NULL,
-      pre          = NULL,
-      post         = NULL,
-      dragRange    = TRUE
+      inputId     = id,
+      label       = label,
+      choices     = names(slider_values),
+      selected    = selected,
+      force_edges = force_edges,
+      grid        = grid
     )
+
+    js_convert <- sprintf("
+      $(document).on('change', '#%s', function() {
+        var valueMap = %s;
+        var currentValue = $(this).val();
+        Shiny.setInputValue('%s', valueMap[currentValue]);
+      });
+    ", id, jsonlite::toJSON(as.list(slider_values)), id)
+
+    output <- shiny::tagAppendChild(output,
+                                    shiny::tags$script(htmltools::HTML(js_convert)))
 
   } else if (type == "date") {
 
@@ -505,6 +607,14 @@ sd_question <- function(
     # If not in a reactive context, just return the element
     return(output_div)
   }
+}
+
+make_slider_values <- function(labels) {
+  values <- tolower(gsub("[^[:alnum:]]", "_", labels))
+  values <- gsub("_{2,}", "_", values)  # Replace multiple underscores with single
+  values <- gsub("^_|_$", "", values)   # Remove leading/trailing underscores
+  names(values) <- labels
+  return(values)
 }
 
 #' Create a Custom Question with a Shiny Widget

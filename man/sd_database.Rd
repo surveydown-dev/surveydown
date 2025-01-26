@@ -18,19 +18,19 @@ sd_database(
 )
 }
 \arguments{
-\item{host}{Character string. The host address of the Supabase database.}
+\item{host}{Character string. The host address of the PostgreSQL database.}
 
-\item{dbname}{Character string. The name of the Supabase database.}
+\item{dbname}{Character string. The name of the PostgreSQL database.}
 
-\item{port}{Integer. The port number for the Supabase database connection.}
+\item{port}{Integer. The port number for the PostgreSQL database connection.}
 
-\item{user}{Character string. The username for the Supabase database
+\item{user}{Character string. The username for the PostgreSQL database
 connection.}
 
 \item{table}{Character string. The name of the table to interact with in
 the Supabase database.}
 
-\item{password}{Character string. The password for the Supabase database
+\item{password}{Character string. The password for the PostgreSQL database
 connection. NOTE: While you can provide a hard-coded password here, we do
 NOT recommend doing so for security purposes. Instead, you should establish
 a password with \code{surveydown::sd_set_password()}, which will create a local

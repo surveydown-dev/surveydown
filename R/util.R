@@ -28,6 +28,8 @@ list_name_md_to_html <- function(list) {
 #'
 #' @noRd
 .onAttach <- function(libname, pkgname) {
+  # Set cli option to suppress theme warning
+  options(cli.ignore_unknown_rstudio_theme = TRUE)
 
   # Add special folders to resource path
   folders <- c('_survey', 'images', 'css', 'js', 'www')
@@ -158,13 +160,6 @@ vector_to_json_array <- function(vec) {
   sprintf("[%s]", paste(quoted_elements, collapse = ","))
 }
 
-# Dynamically load JS files
-load_js_file <- function(name) {
-  js_file_path <- system.file("js", name, package = "surveydown")
-  js_code <- paste(readLines(js_file_path), collapse = "\n")
-  shinyjs::runjs(js_code)
-}
-
 tibble_to_list_of_lists <- function(tbl) {
   if (!is.data.frame(tbl)) {
     stop("Input must be a data frame or tibble")
@@ -184,89 +179,51 @@ tibble_to_list_of_lists <- function(tbl) {
 
 #' Create a new survey template
 #'
-#' This function creates a new survey template by copying files from the
-#' package's template directory to a specified path. It handles file conflicts
-#' and provides appropriate warnings and feedback.
-#'
 #' @param path A character string specifying the directory where the survey
 #'   template should be created. Defaults to the current working directory.
-#' @param structure A character string specifying the template structure to use.
-#'   Must be either `"single"` or `"multi"`. Defaults to `"single"`.
 #'
-#' @return Invisible `NULL`. The function is called for its side effects of
-#'   creating files and providing user feedback.
-#'
-#' @details
-#' The function performs the following steps:
-#' \itemize{
-#'   \item If the specified path is the current working directory, it asks for user confirmation.
-#'   \item Validates the specified structure (`"single"` or `"multi"`).
-#'   \item Creates the target directory if it doesn't exist.
-#'   \item Copies all files from the package's template directory (based on the specified structure) to the target path.
-#'   \item Preserves the directory structure of the template.
-#'   \item Skips existing files and provides warnings for each skipped file.
-#'   \item Handles .Rproj files specially, skipping if any .Rproj file already exists in the target directory.
-#'   \item Provides feedback on whether files were copied or if all files already existed.
-#' }
+#' @return Invisible `NULL`. The function is called for its side effects.
 #'
 #' @export
-#'
-#' @examples
-#' if (interactive()) {
-#'   # Create a single-page survey template
-#'   sd_create_survey(structure = "single")
-#'
-#'   # Create a multi-page survey template
-#'   sd_create_survey(structure = "multi")
-#' }
-sd_create_survey <- function(path = getwd(), structure = "single") {
-  # Check if using current directory and confirm with user
-  if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
-    stop("Operation aborted by the user.")
-  }
-
-  # Validate the structure parameter
-  if (!structure %in% c("single", "multi")) {
-    stop("Invalid structure. Choose either 'single' or 'multi'.")
-  }
-
-  # Create the directory if it doesn't exist
-  dir.create(path, recursive = TRUE, showWarnings = FALSE)
-
-  # Get the path to the template folder and list files
-  template_path <- system.file(file.path("templates", structure), package = "surveydown")
-  if (!dir.exists(template_path)) {
-    stop(paste("Template directory for", structure, "structure does not exist."))
-  }
-  template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
-
-  # Copy files, checking for conflicts
-  files_copied <- sapply(template_files, function(file) {
-    relative_path <- sub(template_path, "", file)
-    target_file <- file.path(path, relative_path)
-
-    # Ensure target directory exists
-    dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
-
-    file_name <- basename(file)
-    if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
-      warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
-      return(FALSE)
-    } else if (file.exists(target_file)) {
-      warning(paste("Skipping", file_name, "since it already exists."), call. = FALSE, immediate. = TRUE)
-      return(FALSE)
-    } else {
-      file.copy(from = file, to = target_file, overwrite = FALSE)
-      return(TRUE)
+sd_create_survey <- function(path = getwd()) {
+    if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
+        stop("Operation aborted by the user.")
     }
-  })
 
-  # Provide feedback to the user
-  if (any(files_copied)) {
-    usethis::ui_done(paste(structure, "version of template created at", path))
-  } else {
-    usethis::ui_done("Since all files exist, no file was added.")
-  }
+    dir.create(path, recursive = TRUE, showWarnings = FALSE)
+
+    template_path <- system.file("template", package = "surveydown")
+    if (!dir.exists(template_path)) {
+        stop("Template directory does not exist.")
+    }
+    template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
+
+    files_copied <- sapply(template_files, function(file) {
+        relative_path <- sub(template_path, "", file)
+        target_file <- file.path(path, relative_path)
+
+        dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
+
+        file_name <- basename(file)
+        if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
+            warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
+            return(FALSE)
+        } else if (file.exists(target_file)) {
+            warning(paste("Skipping", file_name, "since it already exists."), call. = FALSE, immediate. = TRUE)
+            return(FALSE)
+        } else {
+            file.copy(from = file, to = target_file, overwrite = FALSE)
+            return(TRUE)
+        }
+    })
+
+    if (any(files_copied)) {
+        usethis::ui_done(paste("Template created at", path))
+    } else {
+        usethis::ui_done("Since all files exist, no file was added.")
+    }
+
+    invisible(NULL)
 }
 
 #' Required Set Up Function

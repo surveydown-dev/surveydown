@@ -25,7 +25,8 @@ template:
 reference:
 - title: Survey Data
   contents:
-  - sd_database
+  - sd_db_config
+  - sd_db_connect
   - sd_get_data
 - title: Control Logic
   contents:
@@ -34,9 +35,6 @@ reference:
 - title: Server
   contents:
   - sd_server
-  - sd_get_data
-  - sd_set_password
-  - sd_show_password
   - sd_store_value
   - sd_copy_value
   - sd_get_url_pars
@@ -55,6 +53,7 @@ reference:
   - sd_ui
 - title: Utilities
   contents:
+  - sd_dashboard
   - sd_create_survey
   - sd_create_translations
   - sd_include_folder
@@ -64,3 +63,8 @@ reference:
 - title: Version Control
   contents:
   - sd_version
+- title: Depreciated
+  contents:
+  - sd_database
+  - sd_set_password
+  - sd_show_password

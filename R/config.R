@@ -2,7 +2,6 @@ run_config <- function(
     required_questions,
     all_questions_required,
     start_page,
-    admin_page,
     skip_if,
     show_if,
     rate_survey,
@@ -89,7 +88,6 @@ run_config <- function(
     question_ids = question_ids,
     question_required = question_required,
     start_page = start_page,
-    admin_page = admin_page,
     question_structure = question_structure
   )
   return(config)
