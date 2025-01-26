@@ -236,7 +236,6 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE) {
     if (length(missing) > 0) {
         cli::cli_alert_warning("Missing required database configuration:")
         cli::cli_bullets(paste0("* ", missing))
-        db_fail_messages()
         return(NULL)
     }
 
@@ -257,7 +256,6 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE) {
         cli::cli_alert_warning("Failed to connect to the database:")
         cli::cli_text(conditionMessage(e))
         cli::cli_text("")
-        db_fail_messages()
         return(NULL)
     })
 }

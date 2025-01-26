@@ -27,7 +27,6 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-VignetteBuilder: knitr
 Depends:
     R (>= 4.0.0)
 Suggests:
@@ -43,8 +42,8 @@ Imports:
     DT,
     fs,
     htmltools,
+    jsonlite,
     markdown,
-    miniUI,
     pool,
     quarto,
     RPostgres,

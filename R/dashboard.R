@@ -29,11 +29,6 @@
 #' sd_dashboard()
 #' }
 #'
-#' @import shiny
-#' @import DBI
-#' @import pool
-#' @importFrom graphics axis legend mtext par plot.new
-#' @importFrom utils write.csv
 #' @export
 sd_dashboard <- function() {
     if (file.exists(".env")) {
@@ -345,16 +340,15 @@ sd_dashboard <- function() {
         })
 
         # Downloadable CSV of survey data
-        output$download_survey_data <- downloadHandler(
+        output$download_survey_data <- shiny::downloadHandler(
             filename = function() {
                 paste0(input$table_select, "_", Sys.Date(), ".csv")
             },
             content = function(file) {
                 data <- survey_data()
-                write.csv(data, file, row.names = FALSE)
+                utils::write.csv(data, file, row.names = FALSE)
             }
         )
-
 
         # Value Boxes
         output$total_responses <- shiny::renderText({
@@ -395,17 +389,17 @@ sd_dashboard <- function() {
             line_color <- if (input$dark_mode == "dark") "#3498db" else "#0062cc"
 
             if (is.null(data) || nrow(data) == 0 || !("time_start" %in% names(data))) {
-                par(bg = bg_color, fg = text_color)
-                plot.new()
-                text(0.5, 0.5, "No data available to display", col = text_color, cex = 1.2)
+                graphics::par(bg = bg_color, fg = text_color)
+                graphics::plot.new()
+                graphics::text(0.5, 0.5, "No data available to display", col = text_color, cex = 1.2)
                 return()
             }
 
             dates <- try(as.Date(data$time_start))
             if (inherits(dates, "try-error") || length(dates) == 0 || all(is.na(dates))) {
-                par(bg = bg_color, fg = text_color)
-                plot.new()
-                text(0.5, 0.5, "Unable to process date data", col = text_color, cex = 1.2)
+                graphics::par(bg = bg_color, fg = text_color)
+                graphics::plot.new()
+                graphics::text(0.5, 0.5, "Unable to process date data", col = text_color, cex = 1.2)
                 return()
             }
 
@@ -418,17 +412,17 @@ sd_dashboard <- function() {
             cumulative_responses <- cumsum(all_counts)
 
             # Plot setup with theme
-            par(bg = bg_color, fg = text_color, col.axis = text_color, col.lab = text_color,
+            graphics::par(bg = bg_color, fg = text_color, col.axis = text_color, col.lab = text_color,
                 mar = c(4, 4, 2, 2))
 
             # Add grid first
-            plot(date_range, cumulative_responses, type = "n",
+            graphics::plot(date_range, cumulative_responses, type = "n",
                  xlab = "Date", ylab = "Cumulative Responses")
-            grid(col = grid_color, lty = "dotted")
+            graphics::grid(col = grid_color, lty = "dotted")
 
             # Add line and points
-            lines(date_range, cumulative_responses, col = line_color, lwd = 2)
-            points(date_range, cumulative_responses, col = line_color, pch = 16)
+            graphics::lines(date_range, cumulative_responses, col = line_color, lwd = 2)
+            graphics::points(date_range, cumulative_responses, col = line_color, pch = 16)
         }, bg = "transparent")
 
         output$daily_trend <- shiny::renderPlot({
@@ -441,17 +435,17 @@ sd_dashboard <- function() {
             bar_border <- if (input$dark_mode == "dark") "#00008B" else "#00008B"
 
             if (is.null(data) || nrow(data) == 0 || !("time_start" %in% names(data))) {
-                par(bg = bg_color, fg = text_color)
-                plot.new()
-                text(0.5, 0.5, "No data available to display", col = text_color, cex = 1.2)
+                graphics::par(bg = bg_color, fg = text_color)
+                graphics::plot.new()
+                graphics::text(0.5, 0.5, "No data available to display", col = text_color, cex = 1.2)
                 return()
             }
 
             dates <- try(as.Date(data$time_start))
             if (inherits(dates, "try-error") || length(dates) == 0 || all(is.na(dates))) {
-                par(bg = bg_color, fg = text_color)
-                plot.new()
-                text(0.5, 0.5, "Unable to process date data", col = text_color, cex = 1.2)
+                graphics::par(bg = bg_color, fg = text_color)
+                graphics::plot.new()
+                graphics::text(0.5, 0.5, "Unable to process date data", col = text_color, cex = 1.2)
                 return()
             }
 
@@ -463,11 +457,11 @@ sd_dashboard <- function() {
             all_counts[names(daily_counts)] <- daily_counts
 
             # Plot setup with theme
-            par(bg = bg_color, fg = text_color, col.axis = text_color, col.lab = text_color,
+            graphics::par(bg = bg_color, fg = text_color, col.axis = text_color, col.lab = text_color,
                 mar = c(5, 4, 2, 2))  # Increased bottom margin for date labels
 
             # Create barplot
-            bp <- barplot(all_counts,
+            bp <- graphics::barplot(all_counts,
                           col = bar_color,
                           border = bar_border,
                           xlab = "Date",
@@ -477,10 +471,10 @@ sd_dashboard <- function() {
             )
 
             # Add gridlines
-            grid(col = grid_color, lty = "dotted")
+            graphics::grid(col = grid_color, lty = "dotted")
 
             # Add x-axis with rotated labels
-            axis(1,
+            graphics::axis(1,
                  at = bp,
                  labels = format(date_range, "%b %d"),
                  las = 2,
