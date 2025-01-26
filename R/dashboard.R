@@ -67,7 +67,7 @@ sd_dashboard <- function() {
                         #DropDown Table Selection
                         shiny::selectInput(
                             "table_select",
-                            "Choose a table to view:",
+                            "Choose a database table to view:",
                             choices = c("Loading..." = ""),
                             width = "20%",
                             selectize = FALSE
@@ -118,8 +118,8 @@ sd_dashboard <- function() {
                         )
             ),
 
-            #Settings Page
-            bslib::nav_panel(title = "Settings",
+            # Settings Page
+            bslib::nav_panel(title = "DB Config",
                          bslib::card(
                              bslib::card_header("Current Database Settings"),
                              bslib::card_body(
