@@ -529,5 +529,5 @@ sd_dashboard <- function() {
     }
 
     # Run the Shiny app
-    shiny::shinyApp(ui, server)
+    shiny::shinyApp(ui, server, options = list(launch.browser = TRUE))
 }
