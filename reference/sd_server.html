@@ -13,7 +13,7 @@ and exit survey functionality."><meta property="og:image" content="https://pkg.s
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,6 @@ and exit survey functionality.</p>
 <span>  required_questions <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  all_questions_required <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  start_page <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  admin_page <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  auto_scroll <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  rate_survey <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  language <span class="op">=</span> <span class="st">"en"</span>,</span>
@@ -81,11 +80,6 @@ survey will be required. Defaults to <code>FALSE</code>.</p></dd>
 <dt id="arg-start-page">start_page<a class="anchor" aria-label="anchor" href="#arg-start-page"></a></dt>
 <dd><p>Character string. The ID of the page to start on.
 Defaults to <code>NULL</code>.</p></dd>
-
-
-<dt id="arg-admin-page">admin_page<a class="anchor" aria-label="anchor" href="#arg-admin-page"></a></dt>
-<dd><p>Logical. Whether to include an admin page for viewing and
-downloading survey data. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-auto-scroll">auto_scroll<a class="anchor" aria-label="anchor" href="#arg-auto-scroll"></a></dt>
@@ -125,7 +119,6 @@ the 'shiny' application.</p>
 <li><p>Handles page navigation and skip logic.</p></li>
 <li><p>Manages required questions.</p></li>
 <li><p>Performs database operation.</p></li>
-<li><p>Sets up admin functionality if enabled with the <code>admin_page</code> argument.</p></li>
 <li><p>Controls auto-scrolling behavior based on the <code>auto_scroll</code> argument.</p></li>
 <li><p>Uses sweetalert for warning messages when required questions are not
 answered.</p></li>
@@ -194,7 +187,6 @@ confirmation dialog. The rating, if provided, is saved with the survey data.</p>
 <span class="r-in"><span>      required_questions <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
 <span class="r-in"><span>      all_questions_required <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>      start_page <span class="op">=</span> <span class="cn">NULL</span>,</span></span>
-<span class="r-in"><span>      admin_page <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>      auto_scroll <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>      rate_survey <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>      language <span class="op">=</span> <span class="st">"en"</span>,</span></span>

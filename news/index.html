@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,13 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.0" id="surveydown-080">surveydown 0.8.0<a class="anchor" aria-label="anchor" href="#surveydown-080"></a></h2>
+<ul><li>New function for setting up the database configuration: <code><a href="../reference/sd_db_config.html">sd_db_config()</a></code>. Stores database parameters in a local .env file. Replaces <code><a href="../reference/sd_set_password.html">sd_set_password()</a></code> and <code><a href="../reference/sd_show_password.html">sd_show_password()</a></code>, which are now depreciated.</li>
+<li>New function for connecting to database: <code>sd_db_connect</code>. Replaces older <code><a href="../reference/sd_database.html">sd_database()</a></code> function, which is now depreciated.</li>
+<li>New <code><a href="../reference/sd_dashboard.html">sd_dashboard()</a></code> that locally runs an interactive shiny app for monitoring data in database.</li>
+<li>Bug fix: Fixed the slider question type options. They we previously in the opposite order from all other question types (label = value), see <a href="https://github.com/surveydown-dev/surveydown/issues/166" class="external-link">#166</a>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.2" id="surveydown-072">surveydown 0.7.2<a class="anchor" aria-label="anchor" href="#surveydown-072"></a></h2><p class="text-muted">CRAN release: 2024-12-13</p>
 <ul><li>Bug fix: The <code>mc_multiple</code> question type could not resume its UI if multiple options are selected. Now it’s solved.</li>
