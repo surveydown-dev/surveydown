@@ -30,11 +30,8 @@
 #' }
 #'
 #' @import shiny
-#' @import shinydashboard
 #' @import DBI
 #' @import pool
-#' @importFrom DT renderDT datatable
-#' @importFrom RPostgres Postgres
 #' @importFrom graphics axis legend mtext par plot.new
 #' @importFrom utils write.csv
 #' @export

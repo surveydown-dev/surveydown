@@ -610,7 +610,9 @@ sd_question <- function(
 }
 
 make_slider_values <- function(labels) {
-  values <- janitor::make_clean_names(labels, case = "snake")
+  values <- tolower(gsub("[^[:alnum:]]", "_", labels))
+  values <- gsub("_{2,}", "_", values)  # Replace multiple underscores with single
+  values <- gsub("^_|_$", "", values)   # Remove leading/trailing underscores
   names(values) <- labels
   return(values)
 }

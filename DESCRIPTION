@@ -36,13 +36,13 @@ Suggests:
     testthat, 
     glue
 Imports:
+    bslib,
     cli,
     DBI,
     dotenv,
     DT,
     fs,
     htmltools,
-    janitor,
     markdown,
     miniUI,
     pool,
@@ -51,7 +51,6 @@ Imports:
     rstudioapi,
     rvest,
     shiny,
-    shinydashboard,
     shinyjs,
     shinyWidgets,
     usethis,
