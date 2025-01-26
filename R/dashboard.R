@@ -202,12 +202,14 @@ sd_dashboard <- function() {
             current_db = NULL
         )
 
-        # Connection attempt function
+        # Initial connection check
         attempt_connection <- function(config = NULL) {
             tryCatch({
                 if (is.null(config)) {
+                    # Use default connection from .env
                     db <- sd_db_connect()
                 } else {
+                    # Use provided config
                     pool <- pool::dbPool(
                         RPostgres::Postgres(),
                         host = config$host,
@@ -233,36 +235,29 @@ sd_dashboard <- function() {
             })
         }
 
-        # Initial connection and table loading
-        shiny::observe({
-            # Try initial connection if not connected
-            if (!rv$connection_status) {
-                attempt_connection()
-            }
 
-            # Handle table selection based on connection status
+        # Initial connection attempt
+        shiny::observe({
+            attempt_connection()
+        })
+
+        shiny::observe({
             if (rv$connection_status && !is.null(rv$current_db)) {
                 tryCatch({
-                    # Get tables
                     tables <- pool::poolWithTransaction(rv$current_db$db, function(conn) {
-                        DBI::dbListTables(conn)
+                        all_tables <- DBI::dbListTables(conn)
+                        all_tables[!grepl("^pg_", all_tables)]
                     })
-                    filtered_tables <- tables[!grepl("^pg_", tables)]
 
-                    # Get default table
+                    # Set default table as first choice if available
                     default_table <- Sys.getenv("SD_TABLE", "")
-                    if (default_table %in% filtered_tables) {
-                        # Set default table first
-                        filtered_tables <- c(default_table, setdiff(filtered_tables, default_table))
-                        shiny::updateSelectInput(session, "table_select",
-                                                 choices = filtered_tables,
-                                                 selected = default_table
-                        )
-                    } else {
-                        shiny::updateSelectInput(session, "table_select",
-                                                 choices = if (length(filtered_tables) > 0) filtered_tables else c("No tables found" = "")
-                        )
+                    if (default_table %in% tables) {
+                        tables <- c(default_table, setdiff(tables, default_table))
                     }
+
+                    shiny::updateSelectInput(session, "table_select",
+                                             choices = if (length(tables) > 0) tables else c("No tables found" = "")
+                    )
                 }, error = function(e) {
                     shiny::updateSelectInput(session, "table_select",
                                              choices = c("Connection error" = "")
