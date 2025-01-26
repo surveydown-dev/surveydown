@@ -52,7 +52,7 @@ sd_db_config <- function(
     # Get current values if file exists
     current <- list(
         host = "localhost",
-        port = "5432",
+        port = "6543",
         dbname = "postgres",
         user = "username",
         password = "password",
