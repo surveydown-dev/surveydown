@@ -8,3 +8,4 @@
 
 ## Notes
 * This is a new release.
+* Removed broken url.
