@@ -110,7 +110,7 @@
 # surveydown 0.3.3
 
 - Enhance: `sd_server()` now has a new parameter called `auto_scroll`. It's default to `TRUE`, which enables auto scrolling that tracks the user's input, can be turned off by changing to `FALSE`. Thanks to the contribution from [Zain Hoda](https://github.com/zainhoda1).
-- Enhance: `sd_question()` now has the `"matrix"` type. The [documentation page](https://surveydown.org/question-types#matrix) is updated.
+- Enhance: `sd_question()` now has the `"matrix"` type. 
 - Enhance: Asterisk, as an indication of required questions, is now moved to the top right corner of question containers.
 - Enhance: Replaced the default shiny alert with `sweetalert`. 
 
