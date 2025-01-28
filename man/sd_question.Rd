@@ -13,7 +13,7 @@ sd_question(
   status = "default",
   width = "100\%",
   height = NULL,
-  selected = NULL,
+  selected = FALSE,
   label_select = "Choose an option...",
   grid = TRUE,
   individual = TRUE,
@@ -22,7 +22,8 @@ sd_question(
   option = NULL,
   placeholder = NULL,
   resize = NULL,
-  row = NULL
+  row = NULL,
+  initial_value = NULL
 )
 }
 \arguments{
@@ -63,6 +64,8 @@ sd_question(
 \item{resize}{Character string. Resize option for textarea input. Defaults to NULL.}
 
 \item{row}{List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.}
+
+\item{initial_value}{Initial value for text boxes and numeric input}
 }
 \value{
 A 'shiny' UI element wrapped in a div with a data attribute for

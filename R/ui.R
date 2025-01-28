@@ -220,6 +220,7 @@ extract_head_content <- function(html_content) {
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
 #' @param row List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.
+#' @param initial_value Initial value for text boxes and numeric input
 #'
 #' @details
 #' The function supports various question types:
@@ -283,7 +284,7 @@ sd_question <- function(
     status       = "default",
     width        = "100%",
     height       = NULL,
-    selected     = NULL,
+    selected     = FALSE,
     label_select = "Choose an option...",
     grid         = TRUE,
     individual   = TRUE,
@@ -292,7 +293,8 @@ sd_question <- function(
     option       = NULL,
     placeholder  = NULL,
     resize       = NULL,
-    row          = NULL
+    row          = NULL,
+    initial_value = NULL
 ) {
 
   output <- NULL
@@ -320,7 +322,7 @@ sd_question <- function(
       label    = label,
       choices  = option,
       multiple = FALSE,
-      selected = FALSE
+      selected = selected
     )
   } else if (type == "mc") {
 
@@ -328,7 +330,7 @@ sd_question <- function(
       inputId  = id,
       label    = label,
       choices  = option,
-      selected = FALSE
+      selected = selected
     )
 
   } else if (type == "mc_multiple") {
@@ -337,7 +339,7 @@ sd_question <- function(
       inputId  = id,
       label    = label,
       choices  = option,
-      selected = FALSE
+      selected = selected
     )
 
   } else if (type == "mc_buttons") {
@@ -347,7 +349,7 @@ sd_question <- function(
       label     = label,
       choices   = list_name_md_to_html(option),
       direction = direction,
-      selected  = character(0)
+      selected  = selected
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
@@ -364,7 +366,8 @@ sd_question <- function(
       choices    = list_name_md_to_html(option),
       direction  = direction,
       individual = individual,
-      justified  = FALSE
+      justified  = FALSE,
+      selected = selected
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
@@ -405,7 +408,8 @@ sd_question <- function(
     output <- shiny::textInput(
       inputId     = id,
       label       = label,
-      placeholder = option
+      placeholder = option,
+      value = initial_value
     )
 
   } else if (type == "textarea") {
@@ -415,7 +419,7 @@ sd_question <- function(
       label       = label,
       height      = "100px",
       cols        = cols,
-      value       = NULL,
+      value = initial_value,
       rows        = "6",
       placeholder = placeholder,
       resize      = resize
@@ -426,7 +430,7 @@ sd_question <- function(
     output <- shiny::numericInput(
       inputId = id,
       label   = label,
-      value   = NULL
+      value   = initial_value
     )
 
   } else if (type == "slider") {
@@ -749,6 +753,32 @@ sd_next <- function(next_page = NULL, label = NULL) {
       )
     )
   )
+}
+
+#' @export
+sd_next2 <- function(next_page = NULL, label = NULL) {
+    # Get translations
+    translations <- get_translations()$translations
+
+    # If no label provided, use default
+    if (is.null(label)) {
+        label <- translations[['next']]
+    }
+
+    button_id <- "page_id_next"  # Placeholder ID
+    shiny::tagList(
+        shiny::div(
+            `data-next-page` = if (!is.null(next_page)) next_page else "",
+            style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
+            shiny::actionButton(
+                inputId = button_id,
+                label = label,
+                class = "sd-enter-button",
+                style = "display: block; margin: auto;",
+                onclick = "Shiny.setInputValue('end_clicked', true, {priority: 'event'}); Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
+            )
+        )
+    )
 }
 
 # Generate Next Button ID
