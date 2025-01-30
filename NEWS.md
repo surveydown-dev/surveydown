@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.8.1
+
+- Updated the template used in `sd_create_survey()` to match the new database configuration introduced in v0.8.0.
+
 # surveydown 0.8.0
 
 - New function for setting up the database configuration: `sd_db_config()`. Stores database parameters in a local .env file. Replaces `sd_set_password()` and `sd_show_password()`, which are now depreciated.
