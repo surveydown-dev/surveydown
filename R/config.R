@@ -234,11 +234,11 @@ extract_html_pages <- function(
 
         # Determine if the question is required
         is_required <- if (is_matrix) {
-          FALSE  # Matrix questions are not required by default
+            all_questions_required || question_id %in% required_questions
         } else if (all_questions_required) {
-          TRUE
+            TRUE
         } else {
-          question_id %in% required_questions
+            question_id %in% required_questions
         }
 
         # Track required questions and display asterisk
