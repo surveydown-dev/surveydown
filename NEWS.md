@@ -3,6 +3,7 @@
 # surveydown 0.8.1
 
 - Updated the template used in `sd_create_survey()` to match the new database configuration introduced in v0.8.0.
+- Fixed [Issue 170](https://github.com/surveydown-dev/surveydown/issues/170): Now the matrix question type can have all subquestions defined as required with `sd_server(required_questions = "matrix_question")`.
 
 # surveydown 0.8.0
 
