@@ -243,9 +243,17 @@ extract_html_pages <- function(
 
         # Track required questions and display asterisk
         if (is_required) {
-          asterisk <- rvest::html_element(container, ".hidden-asterisk")
-          xml2::xml_attr(asterisk, "style") <- "display: inline;"
-          required_question_ids <- c(required_question_ids, question_id)
+            if (is_matrix) {
+                # Only show asterisks for subquestions, not the main matrix question
+                sub_asterisks <- rvest::html_elements(container, ".matrix-question td .hidden-asterisk")
+                for (asterisk in sub_asterisks) {
+                    xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                }
+            } else {
+                asterisk <- rvest::html_element(container, ".hidden-asterisk")
+                xml2::xml_attr(asterisk, "style") <- "display: inline;"
+            }
+            required_question_ids <- c(required_question_ids, question_id)
         }
         if (!is.null(show_if)) {
           if (question_id %in% show_if$targets) {
