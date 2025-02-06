@@ -354,8 +354,7 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
           status = "default", width = "100%", height = NULL, selected = NULL, 
           label_select = "Choose an option...", grid = TRUE, individual = TRUE, 
           justified = FALSE, force_edges = TRUE, option = NULL, placeholder = NULL, 
-          resize = NULL, row = NULL) 
-{
+          resize = NULL, row = NULL) {
   valid_types <- c("select", "mc", "mc_multiple", "mc_buttons", 
                    "mc_multiple_buttons", "text", "textarea", "numeric", 
                    "slider", "date", "daterange", "matrix", "slider_integer")
@@ -425,6 +424,7 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
                           id, jsonlite::toJSON(as.list(slider_values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
   }
+  
   else if (type == "slider_integer") {
     slider_values <- option
     if (!is.null(shiny::getDefaultReactiveDomain())) {
@@ -438,6 +438,7 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
                           id, jsonlite::toJSON(as.list(slider_values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
   }
+  
   else if (type == "date") {
     output <- shiny::dateInput(inputId = id, label = label, 
                                value = NULL, min = NULL, max = NULL, format = "mm/dd/yyyy", 
@@ -484,7 +485,7 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
 
 
   # Create wrapper div
-  output_div <- make_question_container(id, output, width)
+output_div <- make_question_container(id, output, width)
 
   if (!is.null(shiny::getDefaultReactiveDomain())) {
     # In a reactive context, directly add to output with renderUI
