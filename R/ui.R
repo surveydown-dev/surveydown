@@ -437,74 +437,91 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
                           id, jsonlite::toJSON(as.list(slider_values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
-  }
+  } else if (type == "date") {
   
-  else if (type == "date") {
-    output <- shiny::dateInput(inputId = id, label = label, 
-                               value = NULL, min = NULL, max = NULL, format = "mm/dd/yyyy", 
-                               startview = "month", weekstart = 0, language = language, 
-                               autoclose = TRUE, datesdisabled = NULL, daysofweekdisabled = NULL)
-    output <- date_interaction(output, id)
-  }
-  else if (type == "daterange") {
-    output <- shiny::dateRangeInput(inputId = id, label = label, 
-                                    start = NULL, end = NULL, min = NULL, max = NULL, 
-                                    format = "mm/dd/yyyy", startview = "month", weekstart = 0, 
-                                    language = language, separator = "-", autoclose = TRUE)
-    output <- date_interaction(output, id)
-  }
-  else if (type == "matrix") {
-    header <- shiny::tags$tr(shiny::tags$th(""), lapply(names(option), 
-                                                        function(opt) shiny::tags$th(opt)))
-    rows <- lapply(row, function(q_id) {
-      full_id <- paste(id, q_id, sep = "_")
-      shiny::tags$tr(shiny::tags$td(names(row)[row == q_id]), 
-                     shiny::tags$td(colspan = length(option), sd_question(type = "mc", 
-                                                                          id = full_id, label = NULL, option = option, 
-                                                                          direction = "horizontal")))
-    })
-    output <- shiny::div(class = "matrix-question-container", 
-                         shiny::tags$label(class = "control-label", label), 
-                         shiny::tags$table(class = "matrix-question", header, 
-                                           shiny::tags$tbody(rows)))
-  }
-  output_div <- make_question_container(id, output, width)
-  if (!is.null(shiny::getDefaultReactiveDomain())) {
-    shiny::isolate({
-      output_div <- shiny::tags$div(output)
-      output <- shiny::getDefaultReactiveDomain()$output
-      output[[id]] <- shiny::renderUI({
-        output_div
-      })
-    })
-  }
-  else {
-    return(output_div)
-  }
+  output <- shiny::dateInput(
+    inputId            = id,
+    label              = label,
+    value              = NULL,
+    min                = NULL,
+    max                = NULL,
+    format             = "mm/dd/yyyy",
+    startview          = "month",
+    weekstart          = 0,
+    language           = language,
+    autoclose          = TRUE,
+    datesdisabled      = NULL,
+    daysofweekdisabled = NULL
+  )
+  
+  output <- date_interaction(output, id)
+  
+} else if (type == "daterange") {
+  
+  output <- shiny::dateRangeInput(
+    inputId   = id,
+    label     = label,
+    start     = NULL,
+    end       = NULL,
+    min       = NULL,
+    max       = NULL,
+    format    = "mm/dd/yyyy",
+    startview = "month",
+    weekstart = 0,
+    language  = language,
+    separator = "-",
+    autoclose = TRUE
+  )
+  
+  output <- date_interaction(output, id)
+  
+} else if (type == "matrix") {
+  header <- shiny::tags$tr(
+    shiny::tags$th(""),
+    lapply(names(option), function(opt) shiny::tags$th(opt))
+  )
+  rows <- lapply(row, function(q_id) {
+    full_id <- paste(id, q_id, sep = "_")
+    shiny::tags$tr(
+      shiny::tags$td(names(row)[row == q_id]),
+      shiny::tags$td(
+        colspan = length(option),
+        sd_question(
+          type = "mc",
+          id = full_id,
+          label = NULL,
+          option = option,
+          direction = "horizontal"
+        )
+      )
+    )
+  })
+  
+  output <- shiny::div(
+    class = "matrix-question-container",
+    shiny::tags$label(class = "control-label", label),
+    shiny::tags$table(
+      class = "matrix-question",
+      header,
+      shiny::tags$tbody(rows)
+    )
+  )
 }
 
-  # Create wrapper div
-output_div <- make_question_container(id, output, width){
+# Create wrapper div
+output_div <- make_question_container(id, output, width)
 
-  if (!is.null(shiny::getDefaultReactiveDomain())) {
-    # In a reactive context, directly add to output with renderUI
-    shiny::isolate({
-      output_div <- shiny::tags$div(output)
-      output <- shiny::getDefaultReactiveDomain()$output
-      output[[id]] <- shiny::renderUI({ output_div })
-    })
-  } else {
-    # If not in a reactive context, just return the element
-    return(output_div)
-  }
+if (!is.null(shiny::getDefaultReactiveDomain())) {
+  # In a reactive context, directly add to output with renderUI
+  shiny::isolate({
+    output_div <- shiny::tags$div(output)
+    output <- shiny::getDefaultReactiveDomain()$output
+    output[[id]] <- shiny::renderUI({ output_div })
+  })
+} else {
+  # If not in a reactive context, just return the element
+  return(output_div)
 }
-
-make_slider_values <- function(labels) {
-  values <- tolower(gsub("[^[:alnum:]]", "_", labels))
-  values <- gsub("_{2,}", "_", values)  # Replace multiple underscores with single
-  values <- gsub("^_|_$", "", values)   # Remove leading/trailing underscores
-  names(values) <- labels
-  return(values)
 }
 
 #' Create a Custom Question with a Shiny Widget
