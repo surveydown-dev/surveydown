@@ -483,9 +483,8 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
   }
 }
 
-
   # Create wrapper div
-output_div <- make_question_container(id, output, width)
+output_div <- make_question_container(id, output, width){
 
   if (!is.null(shiny::getDefaultReactiveDomain())) {
     # In a reactive context, directly add to output with renderUI
