@@ -350,248 +350,138 @@ extract_head_content <- function(html_content) {
 #' }
 #'
 #' @export
-sd_question <- function(
-    type,
-    id,
-    label,
-    cols         = "80",
-    direction    = "horizontal",
-    status       = "default",
-    width        = "100%",
-    height       = NULL,
-    selected     = NULL,
-    label_select = "Choose an option...",
-    grid         = TRUE,
-    individual   = TRUE,
-    justified    = FALSE,
-    force_edges  = TRUE,
-    option       = NULL,
-    placeholder  = NULL,
-    resize       = NULL,
-    row          = NULL
-) {
-
-  # Define valid question types
-  valid_types <- c(
-    "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons",
-    "text", "textarea", "numeric", "slider", "date", "daterange", "matrix"
-  )
-
-  # Check if provided type is valid
+sd_question <- function (type, id, label, cols = "80", direction = "horizontal", 
+          status = "default", width = "100%", height = NULL, selected = NULL, 
+          label_select = "Choose an option...", grid = TRUE, individual = TRUE, 
+          justified = FALSE, force_edges = TRUE, option = NULL, placeholder = NULL, 
+          resize = NULL, row = NULL) 
+{
+  valid_types <- c("select", "mc", "mc_multiple", "mc_buttons", 
+                   "mc_multiple_buttons", "text", "textarea", "numeric", 
+                   "slider", "date", "daterange", "matrix", "slider_integer")
   if (!type %in% valid_types) {
-    stop(
-      sprintf(
-        "Invalid question type: '%s'. Valid types are: %s",
-        type, paste(sort(valid_types), collapse = "', '")
-      )
-    )
+    stop(sprintf("Invalid question type: '%s'. Valid types are: %s", 
+                 type, paste(sort(valid_types), collapse = "', '")))
   }
-
   output <- NULL
-
-  # Load translations for selected label and date language option
   translations <- get_translations()
   language <- translations$language
   translations <- translations$translations
-
-  # Check if question if answered
-  js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
-
-  # Create label with hidden asterisk
+  js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", 
+                            id)
   label <- markdown_to_html(label)
-
   if (type == "select") {
-    label_select <- translations[['choose_option']]
-
-    # Add blank option for visible selected option
+    label_select <- translations[["choose_option"]]
     option <- c("", option)
     names(option)[1] <- label_select
-
-    output <- shiny::selectInput(
-      inputId  = id,
-      label    = label,
-      choices  = option,
-      multiple = FALSE,
-      selected = FALSE
-    )
-  } else if (type == "mc") {
-
-    output <- shiny::radioButtons(
-      inputId  = id,
-      label    = label,
-      choices  = option,
-      selected = FALSE
-    )
-
-  } else if (type == "mc_multiple") {
-
-    output <- shiny::checkboxGroupInput(
-      inputId  = id,
-      label    = label,
-      choices  = option,
-      selected = FALSE
-    )
-
-  } else if (type == "mc_buttons") {
-
-    output <- shinyWidgets::radioGroupButtons(
-      inputId   = id,
-      label     = label,
-      choices   = list_name_md_to_html(option),
-      direction = direction,
-      selected  = character(0)
-    )
-
-    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
-            $(document).on('click', '#%s .btn', function() {
-                %s
-            });
-        ", id, js_interaction))))
-
-  } else if (type == "mc_multiple_buttons") {
-
-    output <- shinyWidgets::checkboxGroupButtons(
-      inputId    = id,
-      label      = label,
-      choices    = list_name_md_to_html(option),
-      direction  = direction,
-      individual = individual,
-      justified  = FALSE
-    )
-
-    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
-            $(document).on('click', '#%s .btn', function() {
-                %s
-            });
-        ", id, js_interaction))))
-
-  } else if (type == "text") {
-
-    output <- shiny::textInput(
-      inputId     = id,
-      label       = label,
-      placeholder = option
-    )
-
-  } else if (type == "textarea") {
-
-    output <- shiny::textAreaInput(
-      inputId     = id,
-      label       = label,
-      height      = "100px",
-      cols        = cols,
-      value       = NULL,
-      rows        = "6",
-      placeholder = placeholder,
-      resize      = resize
-    )
-
-  } else if (type == "numeric") {
-
-    output <- shiny::numericInput(
-      inputId = id,
-      label   = label,
-      value   = NULL
-    )
-
-  } else if (type == "slider") {
-
+    output <- shiny::selectInput(inputId = id, label = label, 
+                                 choices = option, multiple = FALSE, selected = FALSE)
+  }
+  else if (type == "mc") {
+    output <- shiny::radioButtons(inputId = id, label = label, 
+                                  choices = option, selected = FALSE)
+  }
+  else if (type == "mc_multiple") {
+    output <- shiny::checkboxGroupInput(inputId = id, label = label, 
+                                        choices = option, selected = FALSE)
+  }
+  else if (type == "mc_buttons") {
+    output <- shinyWidgets::radioGroupButtons(inputId = id, 
+                                              label = label, choices = list_name_md_to_html(option), 
+                                              direction = direction, selected = character(0))
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
+                                                                                       id, js_interaction))))
+  }
+  else if (type == "mc_multiple_buttons") {
+    output <- shinyWidgets::checkboxGroupButtons(inputId = id, 
+                                                 label = label, choices = list_name_md_to_html(option), 
+                                                 direction = direction, individual = individual, justified = FALSE)
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
+                                                                                       id, js_interaction))))
+  }
+  else if (type == "text") {
+    output <- shiny::textInput(inputId = id, label = label, 
+                               placeholder = option)
+  }
+  else if (type == "textarea") {
+    output <- shiny::textAreaInput(inputId = id, label = label, 
+                                   height = "100px", cols = cols, value = NULL, rows = "6", 
+                                   placeholder = placeholder, resize = resize)
+  }
+  else if (type == "numeric") {
+    output <- shiny::numericInput(inputId = id, label = label, 
+                                  value = NULL)
+  }
+  else if (type == "slider") {
     slider_values <- make_slider_values(option)
     if (!is.null(shiny::getDefaultReactiveDomain())) {
       session <- shiny::getDefaultReactiveDomain()
       session$userData[[paste0(id, "_values")]] <- slider_values
     }
-
-    output <- shinyWidgets::sliderTextInput(
-      inputId     = id,
-      label       = label,
-      choices     = names(slider_values),
-      selected    = selected,
-      force_edges = force_edges,
-      grid        = grid
-    )
-
-    js_convert <- sprintf("
-      $(document).on('change', '#%s', function() {
-        var valueMap = %s;
-        var currentValue = $(this).val();
-        Shiny.setInputValue('%s', valueMap[currentValue]);
-      });
-    ", id, jsonlite::toJSON(as.list(slider_values)), id)
-
-    output <- shiny::tagAppendChild(output,
-                                    shiny::tags$script(htmltools::HTML(js_convert)))
-
-  } else if (type == "date") {
-
-    output <- shiny::dateInput(
-      inputId            = id,
-      label              = label,
-      value              = NULL,
-      min                = NULL,
-      max                = NULL,
-      format             = "mm/dd/yyyy",
-      startview          = "month",
-      weekstart          = 0,
-      language           = language,
-      autoclose          = TRUE,
-      datesdisabled      = NULL,
-      daysofweekdisabled = NULL
-    )
-
+    output <- shinyWidgets::sliderTextInput(inputId = id, 
+                                            label = label, choices = names(slider_values), selected = selected, 
+                                            force_edges = force_edges, grid = grid)
+    js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
+                          id, jsonlite::toJSON(as.list(slider_values)), id)
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
+  }
+  else if (type == "slider_integer") {
+    slider_values <- option
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+      session <- shiny::getDefaultReactiveDomain()
+      session$userData[[paste0(id, "_values")]] <- slider_values
+    }
+    output <- shiny::sliderInput(inputId = id, label = label, 
+                                 min = min(slider_values), max = max(slider_values), 
+                                 value = median(slider_values))
+    js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
+                          id, jsonlite::toJSON(as.list(slider_values)), id)
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
+  }
+  else if (type == "date") {
+    output <- shiny::dateInput(inputId = id, label = label, 
+                               value = NULL, min = NULL, max = NULL, format = "mm/dd/yyyy", 
+                               startview = "month", weekstart = 0, language = language, 
+                               autoclose = TRUE, datesdisabled = NULL, daysofweekdisabled = NULL)
     output <- date_interaction(output, id)
-
-  } else if (type == "daterange") {
-
-    output <- shiny::dateRangeInput(
-      inputId   = id,
-      label     = label,
-      start     = NULL,
-      end       = NULL,
-      min       = NULL,
-      max       = NULL,
-      format    = "mm/dd/yyyy",
-      startview = "month",
-      weekstart = 0,
-      language  = language,
-      separator = "-",
-      autoclose = TRUE
-    )
-
+  }
+  else if (type == "daterange") {
+    output <- shiny::dateRangeInput(inputId = id, label = label, 
+                                    start = NULL, end = NULL, min = NULL, max = NULL, 
+                                    format = "mm/dd/yyyy", startview = "month", weekstart = 0, 
+                                    language = language, separator = "-", autoclose = TRUE)
     output <- date_interaction(output, id)
-
-  } else if (type == "matrix") {
-    header <- shiny::tags$tr(
-      shiny::tags$th(""),
-      lapply(names(option), function(opt) shiny::tags$th(opt))
-    )
+  }
+  else if (type == "matrix") {
+    header <- shiny::tags$tr(shiny::tags$th(""), lapply(names(option), 
+                                                        function(opt) shiny::tags$th(opt)))
     rows <- lapply(row, function(q_id) {
       full_id <- paste(id, q_id, sep = "_")
-      shiny::tags$tr(
-        shiny::tags$td(names(row)[row == q_id]),
-        shiny::tags$td(
-          colspan = length(option),
-          sd_question(
-            type = "mc",
-            id = full_id,
-            label = NULL,
-            option = option,
-            direction = "horizontal"
-          )
-        )
-      )
+      shiny::tags$tr(shiny::tags$td(names(row)[row == q_id]), 
+                     shiny::tags$td(colspan = length(option), sd_question(type = "mc", 
+                                                                          id = full_id, label = NULL, option = option, 
+                                                                          direction = "horizontal")))
     })
-
-    output <- shiny::div(
-      class = "matrix-question-container",
-      shiny::tags$label(class = "control-label", label),
-      shiny::tags$table(
-        class = "matrix-question",
-        header,
-        shiny::tags$tbody(rows)
-      )
-    )
+    output <- shiny::div(class = "matrix-question-container", 
+                         shiny::tags$label(class = "control-label", label), 
+                         shiny::tags$table(class = "matrix-question", header, 
+                                           shiny::tags$tbody(rows)))
   }
+  output_div <- make_question_container(id, output, width)
+  if (!is.null(shiny::getDefaultReactiveDomain())) {
+    shiny::isolate({
+      output_div <- shiny::tags$div(output)
+      output <- shiny::getDefaultReactiveDomain()$output
+      output[[id]] <- shiny::renderUI({
+        output_div
+      })
+    })
+  }
+  else {
+    return(output_div)
+  }
+}
+
 
   # Create wrapper div
   output_div <- make_question_container(id, output, width)
