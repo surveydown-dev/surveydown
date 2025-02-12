@@ -204,60 +204,68 @@ sd_db_config <- function(
 #' }
 #'
 #' @export
-sd_db_connect <- function(env_file = ".env", ignore = FALSE) {
-    if (ignore) {
-        cli::cli_alert_info("Database connection ignored. Saving data to local CSV file.")
-        return(NULL)
-    }
-
-    # Load environment variables
-    if (!file.exists(env_file)) {
-        cli::cli_alert_warning("No .env file found.")
-        cli::cli_alert_info("Run the following to configure your database:")
-        cli::cli_code("sd_db_config()")
-        return(NULL)
-    }
-
-    dotenv::load_dot_env(env_file)
-
-    # Get all required parameters
-    params <- list(
-        host = Sys.getenv("SD_HOST"),
-        port = Sys.getenv("SD_PORT"),
-        dbname = Sys.getenv("SD_DBNAME"),
-        user = Sys.getenv("SD_USER"),
-        password = Sys.getenv("SD_PASSWORD"),
-        table = Sys.getenv("SD_TABLE"),
-        gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer")
+sd_db_connect <- function(env_file = ".env", ignore = FALSE, gssencmode = "prefer") {
+  if (ignore) {
+    cli::cli_alert_info("Database connection ignored. Saving data to local CSV file.")
+    return(NULL)
+  }
+  
+  # Load environment variables
+  if (!file.exists(env_file)) {
+    cli::cli_alert_warning("No .env file found.")
+    cli::cli_alert_info("Run the following to configure your database:")
+    cli::cli_code("sd_db_config()")
+    return(NULL)
+  }
+  
+  dotenv::load_dot_env(env_file)
+  
+  # Get all required parameters
+  params <- list(
+    host = Sys.getenv("SD_HOST"),
+    port = Sys.getenv("SD_PORT"),
+    dbname = Sys.getenv("SD_DBNAME"),
+    user = Sys.getenv("SD_USER"),
+    password = Sys.getenv("SD_PASSWORD"),
+    table = Sys.getenv("SD_TABLE")
+  )
+  
+  # Check for missing required parameters
+  missing <- names(params)[!nchar(unlist(params))]
+  if (length(missing) > 0) {
+    cli::cli_alert_warning("Missing required database configuration:")
+    cli::cli_bullets(paste0("* ", missing))
+    return(NULL)
+  }
+  
+  # Create connection
+  tryCatch({
+    # Build connection arguments
+    conn_args <- list(
+      drv = RPostgres::Postgres(),
+      host = params$host,
+      dbname = params$dbname,
+      port = params$port,
+      user = params$user,
+      password = params$password
     )
-
-    # Check for missing required parameters
-    missing <- names(params)[!nchar(unlist(params))]
-    if (length(missing) > 0) {
-        cli::cli_alert_warning("Missing required database configuration:")
-        cli::cli_bullets(paste0("* ", missing))
-        return(NULL)
+    
+    # Add gssencmode unless it's explicitly set to NULL
+    if (!is.null(gssencmode)) {
+      conn_args$gssencmode <- gssencmode
     }
-
-    # Create connection
-    tryCatch({
-        pool <- pool::dbPool(
-            RPostgres::Postgres(),
-            host = params$host,
-            dbname = params$dbname,
-            port = params$port,
-            user = params$user,
-            password = params$password,
-            gssencmode = params$gssencmode
-        )
-        cli::cli_alert_success("Successfully connected to the database.")
-        return(list(db = pool, table = params$table))
-    }, error = function(e) {
-        cli::cli_alert_warning("Failed to connect to the database:")
-        cli::cli_text(conditionMessage(e))
-        cli::cli_text("")
-        return(NULL)
-    })
+    
+    # Create pool with dynamic arguments
+    pool <- do.call(pool::dbPool, conn_args)
+    
+    cli::cli_alert_success("Successfully connected to the database.")
+    return(list(db = pool, table = params$table))
+  }, error = function(e) {
+    cli::cli_alert_warning("Failed to connect to the database:")
+    cli::cli_text(conditionMessage(e))
+    cli::cli_text("")
+    return(NULL)
+  })
 }
 
 #' Fetch data from a database table with automatic reactivity detection
