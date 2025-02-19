@@ -433,7 +433,7 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
      
       if(is.null(default)){default = median(values)}
       
-        output <- shiny::sliderInput(gsub('^.*_', '', type), label,  # each slider type is given as a string after '_'. e.g. 'target'
+        output <- shiny::sliderInput(inputID = gsub('^.*_', '', type), label = label,  # each slider type is given as a string after '_'. e.g. 'target'
                     min = min(values), max = max(values), value = default, 
                     ...) 
     }
