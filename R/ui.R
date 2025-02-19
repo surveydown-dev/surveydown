@@ -285,6 +285,10 @@ extract_head_content <- function(html_content) {
 #'   "numeric", "slider", "date", "daterange", and "matrix".
 #' @param id A unique identifier for the question, which will be used as the variable name in the resulting survey data.
 #' @param label Character string. The label for the UI element, which can be formatted with markdown.
+#' @param values Numeric. Values to be used for slider 'type' questions, if not supplied will attempt to coerce the 'label' values to numeric. 
+#' See ?shiny::sliderInput for details. 
+#' @param default Numeric, length 1 (for a single sided slider), or 2 for a two sided (range based) slider. 
+#' Values to be used as the starting default for the slider. Defaults to the median of values, or if not supplied, label. 
 #' @param cols Integer. Number of columns for the textarea input. Defaults to 80.
 #' @param direction Character string. The direction for button groups ("horizontal" or "vertical"). Defaults to "horizontal".
 #' @param status Character string. The status for button groups. Defaults to "default".
@@ -350,11 +354,11 @@ extract_head_content <- function(html_content) {
 #' }
 #'
 #' @export
-sd_question <- function (type, id, label, cols = "80", direction = "horizontal", 
+sd_question <- function (type, id, label, values = NULL, cols = "80", direction = "horizontal", 
           status = "default", width = "100%", height = NULL, selected = NULL, 
           label_select = "Choose an option...", grid = TRUE, individual = TRUE, 
           justified = FALSE, force_edges = TRUE, option = NULL, placeholder = NULL, 
-          resize = NULL, row = NULL) {
+          resize = NULL, row = NULL, ...) {
   valid_types <- c("select", "mc", "mc_multiple", "mc_buttons", 
                    "mc_multiple_buttons", "text", "textarea", "numeric", 
                    "slider", "date", "daterange", "matrix", "slider_integer")
@@ -410,33 +414,34 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
   else if (type == "numeric") {
     output <- shiny::numericInput(inputId = id, label = label, 
                                   value = NULL)
-  }
-  else if (type == "slider") {
-    slider_values <- make_slider_values(option)
-    if (!is.null(shiny::getDefaultReactiveDomain())) {
-      session <- shiny::getDefaultReactiveDomain()
-      session$userData[[paste0(id, "_values")]] <- slider_values
+  } else if (grepl(type, 'slider')){
+    
+    # dispatch to the original character text slide which comes from shidywidgets::
+    
+    if (type == "slider"){
+      
+      slider_values <- make_slider_values(option)
+      if (!is.null(shiny::getDefaultReactiveDomain())) {
+        session <- shiny::getDefaultReactiveDomain()
+        session$userData[[paste0(id, "_values")]] <- slider_values
+      }
+      
+      output <- shinyWidgets::sliderTextInput(inputId = id, label = label,
+                                              choices = names(slider_values), selected = selected, 
+                                              force_edges = force_edges, grid = grid)
+    } else { # numeric sliders are supported using shiny::
+     
+      if(is.null(default)){default = median(values)}
+      
+        sliderInput(gsub('^.*_', '', type), label,  # each slider type is given as a string after '_'. e.g. 'target'
+                    min = min(values), max = max(values), value = default, 
+                    ...) 
     }
-    output <- shinyWidgets::sliderTextInput(inputId = id, 
-                                            label = label, choices = names(slider_values), selected = selected, 
-                                            force_edges = force_edges, grid = grid)
+    
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
                           id, jsonlite::toJSON(as.list(slider_values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
-  }
-  
-  else if (type == "slider_integer") {
-    slider_values <- option
-    if (!is.null(shiny::getDefaultReactiveDomain())) {
-      session <- shiny::getDefaultReactiveDomain()
-      session$userData[[paste0(id, "_values")]] <- slider_values
-    }
-    output <- shiny::sliderInput(inputId = id, label = label, 
-                                 min = min(slider_values), max = max(slider_values), 
-                                 value = median(slider_values))
-    js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
-                          id, jsonlite::toJSON(as.list(slider_values)), id)
-    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
+    
   } else if (type == "date") {
   
   output <- shiny::dateInput(
