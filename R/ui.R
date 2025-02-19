@@ -361,7 +361,8 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
           resize = NULL, row = NULL, ...) {
   valid_types <- c("select", "mc", "mc_multiple", "mc_buttons", 
                    "mc_multiple_buttons", "text", "textarea", "numeric", 
-                   "slider", "date", "daterange", "matrix", "slider_integer")
+                   "slider", "date", "daterange", "matrix", "slider_integer", 
+                   "slider_range", "slider_decimal", "slider_format", "slider_animation")
   if (!type %in% valid_types) {
     stop(sprintf("Invalid question type: '%s'. Valid types are: %s", 
                  type, paste(sort(valid_types), collapse = "', '")))
@@ -433,7 +434,7 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
      
       if(is.null(default)){default = median(values)}
       
-        sliderInput(gsub('^.*_', '', type), label,  # each slider type is given as a string after '_'. e.g. 'target'
+        shiny::sliderInput(gsub('^.*_', '', type), label,  # each slider type is given as a string after '_'. e.g. 'target'
                     min = min(values), max = max(values), value = default, 
                     ...) 
     }
