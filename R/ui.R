@@ -414,27 +414,26 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
   }
   else if (type == "numeric") {
     output <- shiny::numericInput(inputId = id, label = label, value = NULL)
-  } else if (grepl(type, 'slider')){
+  } else if (grepl(type, 'slider')) {
     
     # dispatch to the original character text slide which comes from shidywidgets::
     
-    if (type == "slider"){
-      
+    if(!is.null(option)){
       values <- make_slider_values(option)
-      if (!is.null(shiny::getDefaultReactiveDomain())) {
-        session <- shiny::getDefaultReactiveDomain()
-        session$userData[[paste0(id, "_values")]] <- values
+      values <- make_slider_values(option)
       }
-      
+    
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+      session <- shiny::getDefaultReactiveDomain()
+      session$userData[[paste0(id, "_values")]] <- values
+    }
+    
+    if (type == "slider"){
+    
       output <- shinyWidgets::sliderTextInput(inputId = id, label = label,
-                                              choices = names(slider_values), selected = selected, 
+                                              choices = names(values), selected = selected, 
                                               force_edges = force_edges, grid = grid)
     } else { # numeric sliders are supported using shiny::
-     
-      if (!is.null(shiny::getDefaultReactiveDomain())) {
-        session <- shiny::getDefaultReactiveDomain()
-        session$userData[[paste0(id, "_values")]] <- values
-      }
       
       if(is.null(default)){default = median(values)}
       input <- gsub('^.*_', '', type)
