@@ -551,7 +551,7 @@ sd_question <- function(
 
   } else if (type == "daterange") {
 
-  output <- shiny::dateRangeInput(
+    output <- shiny::dateRangeInput(
       inputId   = id,
       label     = label,
       start     = NULL,
@@ -570,7 +570,7 @@ sd_question <- function(
 
   } else if (type == "matrix") {
 
-   header <- shiny::tags$tr(
+   header <- shiny::tags$tr( {
       shiny::tags$th(""),
       lapply(names(option), function(opt) shiny::tags$th(opt)))
     rows <- lapply(row, function(q_id) {
@@ -589,14 +589,15 @@ sd_question <- function(
       )
     )
   })
-    output <- shiny::div(
-      class = "matrix-question-container",
-      shiny::tags$label(class = "control-label", label),
-      shiny::tags$table(
-        class = "matrix-question",
-        header,
-        shiny::tags$tbody(rows)
-      )
+    
+  output <- shiny::div(
+    class = "matrix-question-container",
+    shiny::tags$label(class = "control-label", label),
+    shiny::tags$table(
+      class = "matrix-question",
+      header,
+      shiny::tags$tbody(rows)
+     )
     )
   }
 
