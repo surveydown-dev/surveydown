@@ -352,7 +352,7 @@ extract_head_content <- function(html_content) {
 #' }
 #'
 #' @export
-sd_question <- function (type, id, label, values = NULL, cols = "80", direction = "horizontal", 
+sd_question <- function (type, id, label, cols = "80", direction = "horizontal", 
           status = "default", width = "100%", height = NULL, selected = NULL, 
           label_select = "Choose an option...", grid = TRUE, individual = TRUE, 
           justified = FALSE, force_edges = TRUE, option = NULL, placeholder = NULL, 
@@ -431,7 +431,7 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
 
         if(!exists('value')){value <- median(slider_values)}
       output <- shiny::sliderInput(inputId = id, label = label, 
-                                     min = min(slider_values), max = max(slider_values), 
+                                     min = min(slider_values), max = max(slider_values), value = value
                                    ...)
     }  
 
