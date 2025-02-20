@@ -429,10 +429,12 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
                                               force_edges = force_edges, grid = grid)
       } else {
 
-        if(!exists('value')){value <- median(slider_values)}
-      output <- shiny::sliderInput(
-        inputId = id, label = label, min = min(slider_values),
-        max = max(slider_values), value = value, ...)
+        allArgs <- match.call()
+        zInArgs <- ("value" %in% names(allArgs))
+        if(zInArgs){value <- median(slider_values)} else {value <- allArgs$value}
+        output <- shiny::sliderInput(
+          inputId = id, label = label, min = min(slider_values),
+          max = max(slider_values), value = value, ...)
     }  
 
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
