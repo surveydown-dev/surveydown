@@ -375,7 +375,7 @@ sd_question <- function(
     default      = NULL,
     ...
     ) {
-  
+
   # Define valid question types
   valid_types <- c(
     "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", 
@@ -468,7 +468,7 @@ sd_question <- function(
       inputId     = id,
       label       = label,
       placeholder = option
-      )
+    )
 
   } else if (type == "textarea") {
 
@@ -545,12 +545,12 @@ sd_question <- function(
       datesdisabled      = NULL,
       daysofweekdisabled = NULL
     )
-    
+
     output <- date_interaction(output, id)
 
   } else if (type == "daterange") {
 
-   output <- shiny::dateRangeInput(
+  output <- shiny::dateRangeInput(
       inputId   = id,
       label     = label,
       start     = NULL,
