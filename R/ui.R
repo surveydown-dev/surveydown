@@ -454,12 +454,12 @@ sd_question <- function(
   } else if (type == "mc_multiple_buttons") {
 
     output <- shinyWidgets::checkboxGroupButtons(
-      inputId = id, 
-      label = label,
-      choices = list_name_md_to_html(option), 
-      direction = direction, 
-      individual = individual, 
-      justified = FALSE
+      inputId    = id,
+      label      = label,
+      choices    = list_name_md_to_html(option),
+      direction  = direction,
+      individual = individual,
+      justified  = FALSE
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ",  id, js_interaction))))
