@@ -357,22 +357,22 @@ sd_question <- function (
     type,
     id,
     label,
-    cols         = "80", 
-    direction    = "horizontal", 
-    status       = "default", 
+    cols         = "80",
+    direction    = "horizontal",
+    status       = "default",
     width        = "100%",
-    height       = NULL, 
+    height       = NULL,
     selected     = NULL,
-    label_select = "Choose an option...", 
+    label_select = "Choose an option...",
     grid         = TRUE,
-    individual   = TRUE, 
-    justified    = FALSE, 
+    individual   = TRUE,
+    justified    = FALSE,
     force_edges  = TRUE,
     option       = NULL,
-    placeholder  = NULL, 
+    placeholder  = NULL,
     resize       = NULL,
     default      = NULL,
-    row          = NULL, 
+    row          = NULL,
     ...
     ) {
   valid_types <- c(
@@ -403,10 +403,10 @@ sd_question <- function (
     option <- c("", option)
     names(option)[1] <- label_select
     output <- shiny::selectInput(
-      inputId  = id, 
-      label    = label, 
+      inputId  = id,
+      label    = label,
       choices  = option,
-      multiple = FALSE, 
+      multiple = FALSE,
       selected = FALSE
       )
   } else if (type == "mc") {
@@ -419,18 +419,18 @@ sd_question <- function (
   }
   else if (type == "mc_multiple") {
     output <- shiny::checkboxGroupInput(
-      inputId  = id, 
-      label    = label, 
-      choices  = option, 
+      inputId  = id,
+      label    = label,
+      choices  = option,
       selected = FALSE
       )
   }
   else if (type == "mc_buttons") {
     output <- shinyWidgets::radioGroupButtons(
-      inputId   = id, 
-      label     = label, 
-      choices   = list_name_md_to_html(option), 
-      direction = direction, 
+      inputId   = id,
+      label     = label,
+      choices   = list_name_md_to_html(option),
+      direction = direction,
       selected  = character(0)
       )
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
@@ -445,27 +445,27 @@ sd_question <- function (
   }
   else if (type == "text") {
     output <- shiny::textInput(
-      inputId     = id, 
-      label       = label, 
+      inputId     = id,
+      label       = label,
       placeholder = option
       )
   }
   else if (type == "textarea") {
     output <- shiny::textAreaInput(
-      inputId     = id, 
-      label       = label, 
+      inputId     = id,
+      label       = label,
       height      = "100px",
-      cols        = cols, 
-      value       = NULL, 
-      rows        = "6", 
-      placeholder = placeholder, 
+      cols        = cols,
+      value       = NULL,
+      rows        = "6",
+      placeholder = placeholder,
       resize      = resize
       )
   }
   else if (type == "numeric") {
     output <- shiny::numericInput(
       inputId = id,
-      label   = label, 
+      label   = label,
       value   = NULL
       )
     
@@ -482,11 +482,11 @@ sd_question <- function (
     
     if(type=='slider'){
       output <- shinyWidgets::sliderTextInput(
-        inputId     = id, 
-        label       = label, 
+        inputId     = id,
+        label       = label,
         choices     = names(slider_values),
-        selected    = selected, 
-        force_edges = force_edges, 
+        selected    = selected,
+        force_edges = force_edges,
         grid        = grid
         )
       } else {
@@ -495,7 +495,7 @@ sd_question <- function (
         
         output <- shiny::sliderInput(
           inputId = id,
-          label = label, 
+          label = label,
           min = min(slider_values),
           max = max(slider_values),
           value = default,
