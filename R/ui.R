@@ -402,7 +402,8 @@ sd_question <- function(
   
   # Check if question if answered
   js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
-  # Create label with hidden asterisk
+ 
+   # Create label with hidden asterisk
   label <- markdown_to_html(label)
   
   if (type == "select") {
@@ -419,6 +420,7 @@ sd_question <- function(
       multiple = FALSE,
       selected = FALSE
     )
+    
   } else if (type == "mc") {
     
     output <- shiny::radioButtons(
@@ -427,6 +429,7 @@ sd_question <- function(
       choices  = option,
       selected = FALSE
     )
+    
   } else if (type == "mc_multiple") {
     
     output <- shiny::checkboxGroupInput(
@@ -435,6 +438,7 @@ sd_question <- function(
       choices  = option,
       selected = FALSE
     )
+    
   } else if (type == "mc_buttons") {
     
     output <- shinyWidgets::radioGroupButtons(
@@ -454,7 +458,9 @@ sd_question <- function(
       label = label, choices = list_name_md_to_html(option), 
       direction = direction, 
       individual = individual, 
-      justified = FALSE)
+      justified = FALSE
+    )
+    
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ",  id, js_interaction))))
   } else if (type == "text") {
     
@@ -463,6 +469,7 @@ sd_question <- function(
       label       = label,
       placeholder = option
       )
+    
   } else if (type == "textarea") {
     
     output <- shiny::textAreaInput(
@@ -475,6 +482,7 @@ sd_question <- function(
       placeholder = placeholder,
       resize      = resize
     )
+    
   } else if (type == "numeric") {
     
     output <- shiny::numericInput(
@@ -504,6 +512,7 @@ sd_question <- function(
         force_edges = force_edges,
         grid        = grid
         )
+      
       } else {
         if(is.null(default)){default <- median(slider_values)} 
         output <- shiny::sliderInput(
@@ -514,6 +523,7 @@ sd_question <- function(
           value   = default,
           ...
         )
+        
     }
 
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", id, jsonlite::toJSON(as.list(slider_values)), id)
