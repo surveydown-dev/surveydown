@@ -428,6 +428,8 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
                                               label = label, choices = names(slider_values), selected = selected, 
                                               force_edges = force_edges, grid = grid)
       } else {
+
+        if(!exists('value')){value <- median(slider_values)}
       output <- shiny::sliderInput(inputId = id, label = label, 
                                      min = min(slider_values), max = max(slider_values), 
                                    ...)
