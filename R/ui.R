@@ -494,6 +494,10 @@ sd_question <- function(
 
   } else if (grepl('slider', type)) {
 
+    # type slider actually dispatches to two functions. One for text values, 
+    # 'shinyWidgets::sliderTextInput', and another for numeric values 'shiny::sliderInput'. 
+    # They are covered within this same statement because 3/4 of their steps can
+    # be processed in the same fashion. 
     if(type == 'slider'){slider_values <- make_slider_values(option)} else {
       slider_values <- option
     }  
@@ -572,7 +576,8 @@ sd_question <- function(
 
    header <- shiny::tags$tr( {
       shiny::tags$th(""),
-      lapply(names(option), function(opt) shiny::tags$th(opt)))
+      lapply(names(option), function(opt) shiny::tags$th(opt))
+     )
     rows <- lapply(row, function(q_id) {
       full_id <- paste(id, q_id, sep = "_")
       shiny::tags$tr(
