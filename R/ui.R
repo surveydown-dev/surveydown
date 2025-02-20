@@ -420,10 +420,10 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
     
     if (type == "slider"){
       
-      slider_values <- make_slider_values(option)
+      values <- make_slider_values(option)
       if (!is.null(shiny::getDefaultReactiveDomain())) {
         session <- shiny::getDefaultReactiveDomain()
-        session$userData[[paste0(id, "_values")]] <- slider_values
+        session$userData[[paste0(id, "_values")]] <- values
       }
       
       output <- shinyWidgets::sliderTextInput(inputId = id, label = label,
@@ -445,7 +445,7 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
     }
     
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
-                          id, jsonlite::toJSON(as.list(slider_values)), id)
+                          id, jsonlite::toJSON(as.list(values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
     
   } else if (type == "date") {
