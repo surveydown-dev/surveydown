@@ -371,15 +371,19 @@ sd_question <- function (
     option       = NULL,
     placeholder  = NULL,
     resize       = NULL,
-    default      = NULL,
     row          = NULL,
+    default      = NULL,
     ...
     ) {
+  
+  # Define valid question types
   valid_types <- c(
     "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", 
     "text", "textarea", "numeric", "slider", "date", "daterange", "matrix",
     "slider_numeric"
     )
+  
+  # Check if provided type is valid
   if (!type %in% valid_types) {
     stop(
       sprintf(
@@ -395,11 +399,17 @@ sd_question <- function (
   translations <- get_translations()
   language <- translations$language
   translations <- translations$translations
+  
+  # Check if question if answered
   js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
+  
+  # Create label with hidden asterisk
   label <- markdown_to_html(label)
   
   if (type == "select") {
     label_select <- translations[["choose_option"]]
+    
+    # Add blank option for visible selected option
     option <- c("", option)
     names(option)[1] <- label_select
     output <- shiny::selectInput(
@@ -408,47 +418,51 @@ sd_question <- function (
       choices  = option,
       multiple = FALSE,
       selected = FALSE
-      )
+    )
   } else if (type == "mc") {
+    
     output <- shiny::radioButtons(
       inputId  = id,
       label    = label,
       choices  = option,
       selected = FALSE
-      )
+    )
   } else if (type == "mc_multiple") {
+    
     output <- shiny::checkboxGroupInput(
       inputId  = id,
       label    = label,
       choices  = option,
       selected = FALSE
-      )
+    )
   } else if (type == "mc_buttons") {
+    
     output <- shinyWidgets::radioGroupButtons(
       inputId   = id,
       label     = label,
       choices   = list_name_md_to_html(option),
       direction = direction,
       selected  = character(0)
-      )
-    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
-                                                                                       id, js_interaction))))
+    )
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", id, js_interaction))))
   } else if (type == "mc_multiple_buttons") {
+    
     output <- shinyWidgets::checkboxGroupButtons(
       inputId = id, 
       label = label, choices = list_name_md_to_html(option), 
       direction = direction, 
       individual = individual, 
       justified = FALSE)
-    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
-                                                                                       id, js_interaction))))
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ",  id, js_interaction))))
   } else if (type == "text") {
+    
     output <- shiny::textInput(
       inputId     = id,
       label       = label,
       placeholder = option
       )
   } else if (type == "textarea") {
+    
     output <- shiny::textAreaInput(
       inputId     = id,
       label       = label,
@@ -478,6 +492,7 @@ sd_question <- function (
     }
     
     if(type == 'slider'){
+      
       output <- shinyWidgets::sliderTextInput(
         inputId     = id,
         label       = label,
@@ -497,7 +512,7 @@ sd_question <- function (
           max     = max(slider_values),
           value   = default,
           ...
-          )
+        )
     }  
 
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", id, jsonlite::toJSON(as.list(slider_values)), id)
@@ -542,6 +557,7 @@ output <- date_interaction(output, id)
   output <- date_interaction(output, id)
   
 } else if (type == "matrix") {
+  
   header <- shiny::tags$tr(
     shiny::tags$th(""),
     lapply(names(option), function(opt) shiny::tags$th(opt))
