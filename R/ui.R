@@ -354,82 +354,84 @@ extract_head_content <- function(html_content) {
 #'
 #' @export
 sd_question <- function (
-    type, 
-    id, 
+    type,
+    id,
     label,
-    cols = "80", 
-    direction = "horizontal", 
-    status = "default", 
-    width = "100%",
-    height = NULL, 
-    selected = NULL,
+    cols         = "80", 
+    direction    = "horizontal", 
+    status       = "default", 
+    width        = "100%",
+    height       = NULL, 
+    selected     = NULL,
     label_select = "Choose an option...", 
-    grid = TRUE,
-    individual = TRUE, 
-    justified = FALSE, 
-    force_edges = TRUE,
-    option = NULL,
-    placeholder = NULL, 
-    resize = NULL,
-    default = NULL,
-    row = NULL, 
+    grid         = TRUE,
+    individual   = TRUE, 
+    justified    = FALSE, 
+    force_edges  = TRUE,
+    option       = NULL,
+    placeholder  = NULL, 
+    resize       = NULL,
+    default      = NULL,
+    row          = NULL, 
     ...
     ) {
-  valid_types <- c("select", "mc", "mc_multiple", "mc_buttons", 
-                   "mc_multiple_buttons", "text", "textarea", "numeric", 
-                   "slider", "date", "daterange", "matrix", "slider_numeric")
+  valid_types <- c(
+    "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", 
+    "text", "textarea", "numeric", "slider", "date", "daterange", "matrix",
+    "slider_numeric"
+    )
   if (!type %in% valid_types) {
     stop(
       sprintf(
-        "Invalid question type: '%s'. Valid types are: %s", 
+        "Invalid question type: '%s'. Valid types are: %s",
         type, paste(sort(valid_types), collapse = "', '")
         )
-      )
+     )
   }
+  
   output <- NULL
   
   # Load translations for selected label and date language option
   translations <- get_translations()
   language <- translations$language
   translations <- translations$translations
-  js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", 
-                            id)
+  js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
   label <- markdown_to_html(label)
+  
   if (type == "select") {
     label_select <- translations[["choose_option"]]
     option <- c("", option)
     names(option)[1] <- label_select
     output <- shiny::selectInput(
-      inputId = id, 
-      label = label, 
-      choices = option,
+      inputId  = id, 
+      label    = label, 
+      choices  = option,
       multiple = FALSE, 
       selected = FALSE
       )
-  }
-  else if (type == "mc") {
+  } else if (type == "mc") {
     output <- shiny::radioButtons(
-      inputId = id, 
-      label = label, 
-      choices = option,
+      inputId  = id,
+      label    = label,
+      choices  = option,
       selected = FALSE
       )
   }
   else if (type == "mc_multiple") {
     output <- shiny::checkboxGroupInput(
-      inputId = id, 
-      label = label, 
-      choices = option, 
+      inputId  = id, 
+      label    = label, 
+      choices  = option, 
       selected = FALSE
       )
   }
   else if (type == "mc_buttons") {
     output <- shinyWidgets::radioGroupButtons(
-      inputId = id, 
-      label = label, 
-      choices = list_name_md_to_html(option), 
+      inputId   = id, 
+      label     = label, 
+      choices   = list_name_md_to_html(option), 
       direction = direction, 
-      selected = character(0)
+      selected  = character(0)
       )
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
                                                                                        id, js_interaction))))
@@ -443,28 +445,28 @@ sd_question <- function (
   }
   else if (type == "text") {
     output <- shiny::textInput(
-      inputId = id, 
-      label = label, 
+      inputId     = id, 
+      label       = label, 
       placeholder = option
       )
   }
   else if (type == "textarea") {
     output <- shiny::textAreaInput(
-      inputId = id, 
-      label = label, 
-      height = "100px",
-      cols = cols, 
-      value = NULL, 
-      rows = "6", 
+      inputId     = id, 
+      label       = label, 
+      height      = "100px",
+      cols        = cols, 
+      value       = NULL, 
+      rows        = "6", 
       placeholder = placeholder, 
-      resize = resize
+      resize      = resize
       )
   }
   else if (type == "numeric") {
     output <- shiny::numericInput(
       inputId = id,
-      label = label, 
-      value = NULL
+      label   = label, 
+      value   = NULL
       )
     
   } else if (grepl('slider', type)) {
@@ -480,12 +482,12 @@ sd_question <- function (
     
     if(type=='slider'){
       output <- shinyWidgets::sliderTextInput(
-        inputId = id, 
-        label = label, 
-        choices = names(slider_values),
-        selected = selected, 
+        inputId     = id, 
+        label       = label, 
+        choices     = names(slider_values),
+        selected    = selected, 
         force_edges = force_edges, 
-        grid = grid
+        grid        = grid
         )
       } else {
 
@@ -507,22 +509,22 @@ sd_question <- function (
     
   } else if (type == "date") {
   
-  output <- shiny::dateInput(
-    inputId            = id,
-    label              = label,
-    value              = NULL,
-    min                = NULL,
-    max                = NULL,
-    format             = "mm/dd/yyyy",
-    startview          = "month",
-    weekstart          = 0,
-    language           = language,
-    autoclose          = TRUE,
-    datesdisabled      = NULL,
-    daysofweekdisabled = NULL
-  )
-  
-  output <- date_interaction(output, id)
+output <- shiny::dateInput(
+  inputId            = id,
+  label              = label,
+  value              = NULL,
+  min                = NULL,
+  max                = NULL,
+  format             = "mm/dd/yyyy",
+  startview          = "month",
+  weekstart          = 0,
+  language           = language,
+  autoclose          = TRUE,
+  datesdisabled      = NULL,
+  daysofweekdisabled = NULL
+)
+
+output <- date_interaction(output, id)
   
   } else if (type == "daterange") {
   
