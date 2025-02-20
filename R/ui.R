@@ -517,79 +517,78 @@ sd_question <- function(
 
   } else if (type == "date") {
 
-output <- shiny::dateInput(
-  inputId            = id,
-  label              = label,
-  value              = NULL,
-  min                = NULL,
-  max                = NULL,
-  format             = "mm/dd/yyyy",
-  startview          = "month",
-  weekstart          = 0,
-  language           = language,
-  autoclose          = TRUE,
-  datesdisabled      = NULL,
-  daysofweekdisabled = NULL
-)
+    output <- shiny::dateInput(
+      inputId            = id,
+      label              = label,
+      value              = NULL,
+      min                = NULL,
+      max                = NULL,
+      format             = "mm/dd/yyyy",
+      startview          = "month",
+      weekstart          = 0,
+      language           = language,
+      autoclose          = TRUE,
+      datesdisabled      = NULL,
+      daysofweekdisabled = NULL
+    )
 
-output <- date_interaction(output, id)
+  output <- date_interaction(output, id)
   
   } else if (type == "daterange") {
   
-  output <- shiny::dateRangeInput(
-    inputId   = id,
-    label     = label,
-    start     = NULL,
-    end       = NULL,
-    min       = NULL,
-    max       = NULL,
-    format    = "mm/dd/yyyy",
-    startview = "month",
-    weekstart = 0,
-    language  = language,
-    separator = "-",
-    autoclose = TRUE
+   output <- shiny::dateRangeInput(
+      inputId   = id,
+      label     = label,
+      start     = NULL,
+      end       = NULL,
+      min       = NULL,
+      max       = NULL,
+      format    = "mm/dd/yyyy",
+      startview = "month",
+      weekstart = 0,
+      language  = language,
+      separator = "-",
+      autoclose = TRUE
+    )
+  
+    output <- date_interaction(output, id)
+  
+  } else if (type == "matrix") {
+  
+   header <- shiny::tags$tr(
+      shiny::tags$th(""),
+      lapply(names(option), function(opt) shiny::tags$th(opt))
   )
-  
-  output <- date_interaction(output, id)
-  
-} else if (type == "matrix") {
-  
-  header <- shiny::tags$tr(
-    shiny::tags$th(""),
-    lapply(names(option), function(opt) shiny::tags$th(opt))
-  )
-  rows <- lapply(row, function(q_id) {
-    full_id <- paste(id, q_id, sep = "_")
-    shiny::tags$tr(
-      shiny::tags$td(names(row)[row == q_id]),
-      shiny::tags$td(
-        colspan = length(option),
-        sd_question(
-          type = "mc",
-          id = full_id,
-          label = NULL,
-          option = option,
-          direction = "horizontal"
+    rows <- lapply(row, function(q_id) {
+      full_id <- paste(id, q_id, sep = "_")
+      shiny::tags$tr(
+        shiny::tags$td(names(row)[row == q_id]),
+        shiny::tags$td(
+          colspan = length(option),
+          sd_question(
+            type = "mc",
+            id = full_id,
+            label = NULL,
+            option = option,
+            direction = "horizontal"
         )
       )
     )
   })
   
-  output <- shiny::div(
-    class = "matrix-question-container",
-    shiny::tags$label(class = "control-label", label),
-    shiny::tags$table(
-      class = "matrix-question",
-      header,
-      shiny::tags$tbody(rows)
+    output <- shiny::div(
+      class = "matrix-question-container",
+      shiny::tags$label(class = "control-label", label),
+      shiny::tags$table(
+        class = "matrix-question",
+        header,
+        shiny::tags$tbody(rows)
+      )
     )
-  )
-}
+  }
   
   # Create wrapper div
   output_div <- make_question_container(id, output, width)
-  
   if (!is.null(shiny::getDefaultReactiveDomain())) {
     # In a reactive context, directly add to output with renderUI
     shiny::isolate({
