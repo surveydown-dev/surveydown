@@ -433,17 +433,19 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
   
   else if (type == "slider_numeric") {
     slider_values <- option
+    
     if (!is.null(shiny::getDefaultReactiveDomain())) {
       session <- shiny::getDefaultReactiveDomain()
       session$userData[[paste0(id, "_values")]] <- slider_values
     }
+    
     output <- shiny::sliderInput(inputId = id, label = label, 
                                  min = min(slider_values), max = max(slider_values), 
                                  value = median(slider_values), ...)
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
                           id, jsonlite::toJSON(as.list(slider_values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
-  }
+    
   } else if (type == "date") {
   
   output <- shiny::dateInput(
