@@ -375,14 +375,12 @@ sd_question <- function(
     default      = NULL,
     ...
     ) {
-  
   # Define valid question types
   valid_types <- c(
     "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", 
     "text", "textarea", "numeric", "slider", "date", "daterange", "matrix",
     "slider_numeric"
   )
-  
   # Check if provided type is valid
   if (!type %in% valid_types) {
     stop(
@@ -403,7 +401,6 @@ sd_question <- function(
   label <- markdown_to_html(label)
   if (type == "select") {
     label_select <- translations[["choose_option"]]
-    
     # Add blank option for visible selected option
     option <- c("", option)
     names(option)[1] <- label_select
@@ -415,7 +412,6 @@ sd_question <- function(
       selected = FALSE
     )
   } else if (type == "mc") {
-    
     output <- shiny::radioButtons(
       inputId  = id,
       label    = label,
@@ -423,7 +419,6 @@ sd_question <- function(
       selected = FALSE
     )
   } else if (type == "mc_multiple") {
-    
     output <- shiny::checkboxGroupInput(
       inputId  = id,
       label    = label,
@@ -431,7 +426,6 @@ sd_question <- function(
       selected = FALSE
     )
   } else if (type == "mc_buttons") {
-    
     output <- shinyWidgets::radioGroupButtons(
       inputId   = id,
       label     = label,
@@ -443,7 +437,6 @@ sd_question <- function(
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", id, js_interaction))))
     
   } else if (type == "mc_multiple_buttons") {
-    
     output <- shinyWidgets::checkboxGroupButtons(
       inputId = id, 
       label = label, choices = list_name_md_to_html(option), 
@@ -452,14 +445,12 @@ sd_question <- function(
       justified = FALSE)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ",  id, js_interaction))))
   } else if (type == "text") {
-    
     output <- shiny::textInput(
       inputId     = id,
       label       = label,
       placeholder = option
       )
   } else if (type == "textarea") {
-    
     output <- shiny::textAreaInput(
       inputId     = id,
       label       = label,
@@ -478,7 +469,6 @@ sd_question <- function(
       )
     
   } else if (grepl('slider', type)) {
-    
     if(type == 'slider'){slider_values <- make_slider_values(option)} else {
       slider_values <- option
     }  
@@ -489,7 +479,6 @@ sd_question <- function(
     }
     
     if(type == 'slider'){
-      
       output <- shinyWidgets::sliderTextInput(
         inputId     = id,
         label       = label,
@@ -499,9 +488,7 @@ sd_question <- function(
         grid        = grid
         )
       } else {
-
         if(is.null(default)){default <- median(slider_values)} 
-        
         output <- shiny::sliderInput(
           inputId = id,
           label   = label,
@@ -575,7 +562,6 @@ sd_question <- function(
       )
     )
   })
-  
     output <- shiny::div(
       class = "matrix-question-container",
       shiny::tags$label(class = "control-label", label),
@@ -586,7 +572,6 @@ sd_question <- function(
       )
     )
   }
-  
   # Create wrapper div
   output_div <- make_question_container(id, output, width)
   if (!is.null(shiny::getDefaultReactiveDomain())) {
