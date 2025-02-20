@@ -407,7 +407,7 @@ sd_question <- function(
   label <- markdown_to_html(label)
 
   if (type == "select") {
-    label_select <- translations[["choose_option"]]
+    label_select <- translations[['choose_option']]
 
     # Add blank option for visible selected option
     option <- c("", option)
@@ -490,7 +490,7 @@ sd_question <- function(
       inputId = id,
       label   = label,
       value   = NULL
-      )
+    )
 
   } else if (grepl('slider', type)) {
 
