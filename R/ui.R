@@ -361,8 +361,7 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
           resize = NULL, row = NULL, ...) {
   valid_types <- c("select", "mc", "mc_multiple", "mc_buttons", 
                    "mc_multiple_buttons", "text", "textarea", "numeric", 
-                   "slider", "date", "daterange", "matrix", "slider_integer", 
-                   "slider_range", "slider_decimal", "slider_format", "slider_animation")
+                   "slider", "date", "daterange", "matrix", "slider_numeric")
   if (!type %in% valid_types) {
     stop(sprintf("Invalid question type: '%s'. Valid types are: %s", 
                  type, paste(sort(valid_types), collapse = "', '")))
@@ -414,38 +413,37 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
   }
   else if (type == "numeric") {
     output <- shiny::numericInput(inputId = id, label = label, value = NULL)
-  } else if (grepl(type, 'slider')) {
     
-    # dispatch to the original character text slide which comes from shidywidgets::
+  }   else if (type == "slider") {
     
-    if(!is.null(option)){
-      values <- make_slider_values(option)
-      }
+    slider_values <- make_slider_values(option)
     
     if (!is.null(shiny::getDefaultReactiveDomain())) {
       session <- shiny::getDefaultReactiveDomain()
-      session$userData[[paste0(id, "_values")]] <- values
+      session$userData[[paste0(id, "_values")]] <- slider_values
     }
     
-    if (type == "slider_integer"){
-    
-      output <- shinyWidgets::sliderTextInput(inputId = 'slider_integer', label = label,
-                                              choices = names(values), selected = selected, 
-                                              force_edges = force_edges, grid = grid)
-    } else { # numeric sliders are supported using shiny::
-      
-      if(is.null(default)){default = median(values)}
-      input <- gsub('^.*_', '', type)
-      
-      output <- shiny::sliderInput(inputID = input, label = label,  # each slider type is given as a string after '_'. e.g. 'target'
-                    min = min(values), max = max(values), value = default, 
-                    ...) 
-    }
-    
+    output <- shinyWidgets::sliderTextInput(inputId = id, 
+                                            label = label, choices = names(slider_values), selected = selected, 
+                                            force_edges = force_edges, grid = grid)
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
-                          id, jsonlite::toJSON(as.list(values)), id)
+                          id, jsonlite::toJSON(as.list(slider_values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
-    
+  }
+  
+  else if (type == "slider_numeric") {
+    slider_values <- option
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+      session <- shiny::getDefaultReactiveDomain()
+      session$userData[[paste0(id, "_values")]] <- slider_values
+    }
+    output <- shiny::sliderInput(inputId = id, label = label, 
+                                 min = min(slider_values), max = max(slider_values), 
+                                 value = median(slider_values), ...)
+    js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
+                          id, jsonlite::toJSON(as.list(slider_values)), id)
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
+  }
   } else if (type == "date") {
   
   output <- shiny::dateInput(
