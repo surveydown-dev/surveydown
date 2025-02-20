@@ -282,13 +282,9 @@ extract_head_content <- function(html_content) {
 #'
 #' @param type Specifies the type of question. Possible values are "select", "mc",
 #'   "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-#'   "numeric", "slider", "date", "daterange", and "matrix".
+#'   "numeric", "slider", 'slider_numeric', "date", "daterange", and "matrix".
 #' @param id A unique identifier for the question, which will be used as the variable name in the resulting survey data.
 #' @param label Character string. The label for the UI element, which can be formatted with markdown.
-#' @param values Numeric. Values to be used for slider 'type' questions, if not supplied will attempt to coerce the 'label' values to numeric. 
-#' See ?shiny::sliderInput for details. 
-#' @param default Numeric, length 1 (for a single sided slider), or 2 for a two sided (range based) slider. 
-#' Values to be used as the starting default for the slider. Defaults to the median of values, or if not supplied, label. 
 #' @param cols Integer. Number of columns for the textarea input. Defaults to 80.
 #' @param direction Character string. The direction for button groups ("horizontal" or "vertical"). Defaults to "horizontal".
 #' @param status Character string. The status for button groups. Defaults to "default".
@@ -300,11 +296,13 @@ extract_head_content <- function(html_content) {
 #' @param individual Logical. Whether buttons in a group should be individually styled. Defaults to TRUE.
 #' @param justified Logical. Whether buttons in a group should fill the width of the parent div. Defaults to FALSE.
 #' @param force_edges Logical. Whether to force edges for slider input. Defaults to TRUE.
-#' @param option List. Options for the select, radio, checkbox, and slider inputs.
+#' @param option List, or numeric vector (for numeric sliders). Options for the select, radio, checkbox, and slider inputs.
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
 #' @param row List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.
-#'
+#' @param default Numeric, length 1 (for a single sided slider), or 2 for a two sided (range based) slider. 
+#' Values to be used as the starting default for the slider. Defaults to the median of values, or if not supplied, label. 
+#' @param ... Further arguments passed to shiny::sliderInput. 
 #' @details
 #' The function supports various question types:
 #' - "select": A dropdown selection
@@ -430,9 +428,10 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
                                               label = label, choices = names(slider_values), selected = selected, 
                                               force_edges = force_edges, grid = grid)
       } else {
+        if(is.null(value)){value = median(slider_values)}
       output <- shiny::sliderInput(inputId = id, label = label, 
                                      min = min(slider_values), max = max(slider_values), 
-                                     value = median(slider_values), ...)
+                                     value = value, ...)
     }  
 
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
