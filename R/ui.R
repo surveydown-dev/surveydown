@@ -420,7 +420,6 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
     
     if(!is.null(option)){
       values <- make_slider_values(option)
-      values <- make_slider_values(option)
       }
     
     if (!is.null(shiny::getDefaultReactiveDomain())) {
