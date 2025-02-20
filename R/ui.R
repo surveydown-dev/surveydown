@@ -431,9 +431,15 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
                                               force_edges = force_edges, grid = grid)
     } else { # numeric sliders are supported using shiny::
      
-      if(is.null(default)){default = median(values)}
+      if (!is.null(shiny::getDefaultReactiveDomain())) {
+        session <- shiny::getDefaultReactiveDomain()
+        session$userData[[paste0(id, "_values")]] <- values
+      }
       
-        output <- shiny::sliderInput(inputID = gsub('^.*_', '', type), label = label,  # each slider type is given as a string after '_'. e.g. 'target'
+      if(is.null(default)){default = median(values)}
+      input <- gsub('^.*_', '', type)
+      
+      output <- shiny::sliderInput(inputID = input, label = label,  # each slider type is given as a string after '_'. e.g. 'target'
                     min = min(values), max = max(values), value = default, 
                     ...) 
     }
