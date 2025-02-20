@@ -353,7 +353,7 @@ extract_head_content <- function(html_content) {
 #' }
 #'
 #' @export
-sd_question <- function (
+sd_question <- function(
     type,
     id,
     label,
@@ -381,7 +381,7 @@ sd_question <- function (
     "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", 
     "text", "textarea", "numeric", "slider", "date", "daterange", "matrix",
     "slider_numeric"
-    )
+  )
   
   # Check if provided type is valid
   if (!type %in% valid_types) {
@@ -389,23 +389,18 @@ sd_question <- function (
       sprintf(
         "Invalid question type: '%s'. Valid types are: %s",
         type, paste(sort(valid_types), collapse = "', '")
-        )
-     )
+      )
+    )
   }
-  
   output <- NULL
-  
   # Load translations for selected label and date language option
   translations <- get_translations()
   language <- translations$language
   translations <- translations$translations
-  
   # Check if question if answered
   js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
-  
   # Create label with hidden asterisk
   label <- markdown_to_html(label)
-  
   if (type == "select") {
     label_select <- translations[["choose_option"]]
     
@@ -444,7 +439,9 @@ sd_question <- function (
       direction = direction,
       selected  = character(0)
     )
+    
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", id, js_interaction))))
+    
   } else if (type == "mc_multiple_buttons") {
     
     output <- shinyWidgets::checkboxGroupButtons(
@@ -472,7 +469,7 @@ sd_question <- function (
       rows        = "6",
       placeholder = placeholder,
       resize      = resize
-      )
+    )
   } else if (type == "numeric") {
     output <- shiny::numericInput(
       inputId = id,
@@ -513,13 +510,13 @@ sd_question <- function (
           value   = default,
           ...
         )
-    }  
+    }
 
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", id, jsonlite::toJSON(as.list(slider_values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
-    
+
   } else if (type == "date") {
-  
+
 output <- shiny::dateInput(
   inputId            = id,
   label              = label,
@@ -589,21 +586,21 @@ output <- date_interaction(output, id)
     )
   )
 }
-
-# Create wrapper div
-output_div <- make_question_container(id, output, width)
-
-if (!is.null(shiny::getDefaultReactiveDomain())) {
-  # In a reactive context, directly add to output with renderUI
-  shiny::isolate({
-    output_div <- shiny::tags$div(output)
-    output <- shiny::getDefaultReactiveDomain()$output
-    output[[id]] <- shiny::renderUI({ output_div })
-  })
-} else {
-  # If not in a reactive context, just return the element
-  return(output_div)
-}
+  
+  # Create wrapper div
+  output_div <- make_question_container(id, output, width)
+  
+  if (!is.null(shiny::getDefaultReactiveDomain())) {
+    # In a reactive context, directly add to output with renderUI
+    shiny::isolate({
+      output_div <- shiny::tags$div(output)
+      output <- shiny::getDefaultReactiveDomain()$output
+      output[[id]] <- shiny::renderUI({ output_div })
+    })
+  } else {
+    # If not in a reactive context, just return the element
+    return(output_div)
+  }
 }
 
 make_slider_values <- function(labels) {
