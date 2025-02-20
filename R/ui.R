@@ -392,27 +392,27 @@ sd_question <- function(
       )
     )
   }
-  
+
   output <- NULL
-  
+
   # Load translations for selected label and date language option
   translations <- get_translations()
   language <- translations$language
   translations <- translations$translations
-  
+
   # Check if question if answered
   js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
- 
+
    # Create label with hidden asterisk
   label <- markdown_to_html(label)
-  
+
   if (type == "select") {
     label_select <- translations[["choose_option"]]
-    
+
     # Add blank option for visible selected option
     option <- c("", option)
     names(option)[1] <- label_select
-    
+
     output <- shiny::selectInput(
       inputId  = id,
       label    = label,
@@ -420,27 +420,27 @@ sd_question <- function(
       multiple = FALSE,
       selected = FALSE
     )
-    
+
   } else if (type == "mc") {
-    
+
     output <- shiny::radioButtons(
       inputId  = id,
       label    = label,
       choices  = option,
       selected = FALSE
     )
-    
+
   } else if (type == "mc_multiple") {
-    
+
     output <- shiny::checkboxGroupInput(
       inputId  = id,
       label    = label,
       choices  = option,
       selected = FALSE
     )
-    
+
   } else if (type == "mc_buttons") {
-    
+
     output <- shinyWidgets::radioGroupButtons(
       inputId   = id,
       label     = label,
@@ -448,11 +448,11 @@ sd_question <- function(
       direction = direction,
       selected  = character(0)
     )
-    
+
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", id, js_interaction))))
-    
+
   } else if (type == "mc_multiple_buttons") {
-    
+
     output <- shinyWidgets::checkboxGroupButtons(
       inputId = id, 
       label = label, choices = list_name_md_to_html(option), 
@@ -460,18 +460,18 @@ sd_question <- function(
       individual = individual, 
       justified = FALSE
     )
-    
+
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ",  id, js_interaction))))
   } else if (type == "text") {
-    
+
     output <- shiny::textInput(
       inputId     = id,
       label       = label,
       placeholder = option
       )
-    
+
   } else if (type == "textarea") {
-    
+
     output <- shiny::textAreaInput(
       inputId     = id,
       label       = label,
@@ -482,26 +482,26 @@ sd_question <- function(
       placeholder = placeholder,
       resize      = resize
     )
-    
+
   } else if (type == "numeric") {
-    
+
     output <- shiny::numericInput(
       inputId = id,
       label   = label,
       value   = NULL
       )
-    
+
   } else if (grepl('slider', type)) {
-    
+
     if(type == 'slider'){slider_values <- make_slider_values(option)} else {
       slider_values <- option
     }  
-    
+
     if (!is.null(shiny::getDefaultReactiveDomain())) {
       session <- shiny::getDefaultReactiveDomain()
       session$userData[[paste0(id, "_values")]] <- slider_values
     }
-    
+
     if(type == 'slider'){
       
       output <- shinyWidgets::sliderTextInput(
@@ -512,7 +512,7 @@ sd_question <- function(
         force_edges = force_edges,
         grid        = grid
         )
-      
+
       } else {
         if(is.null(default)){default <- median(slider_values)} 
         output <- shiny::sliderInput(
@@ -568,7 +568,7 @@ sd_question <- function(
     output <- date_interaction(output, id)
   
   } else if (type == "matrix") {
-  
+
    header <- shiny::tags$tr(
       shiny::tags$th(""),
       lapply(names(option), function(opt) shiny::tags$th(opt))
@@ -599,8 +599,10 @@ sd_question <- function(
       )
     )
   }
+
   # Create wrapper div
   output_div <- make_question_container(id, output, width)
+
   if (!is.null(shiny::getDefaultReactiveDomain())) {
     # In a reactive context, directly add to output with renderUI
     shiny::isolate({
