@@ -433,7 +433,7 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
         
         output <- shiny::sliderInput(
           inputId = id, label = label, min = min(slider_values),
-          max = max(slider_values), value = default)
+          max = max(slider_values), value = default, ...)
     }  
 
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
