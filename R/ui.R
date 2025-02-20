@@ -356,7 +356,7 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
           status = "default", width = "100%", height = NULL, selected = NULL, 
           label_select = "Choose an option...", grid = TRUE, individual = TRUE, 
           justified = FALSE, force_edges = TRUE, option = NULL, placeholder = NULL, 
-          resize = NULL, row = NULL, ...) {
+          resize = NULL, default = NULL, row = NULL, ...) {
   valid_types <- c("select", "mc", "mc_multiple", "mc_buttons", 
                    "mc_multiple_buttons", "text", "textarea", "numeric", 
                    "slider", "date", "daterange", "matrix", "slider_numeric")
@@ -429,16 +429,11 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
                                               force_edges = force_edges, grid = grid)
       } else {
 
-        allArgs <- match.call()
-        zInArgs <- ("value" %in% names(allArgs))
-        if(zInArgs){
-          value <- allArgs$value; 
-          allArgs$value <- NULL 
-        } else {value <- median(slider_values)}
+        if(is.null(default)){default <- median(slider_values)} 
         
         output <- shiny::sliderInput(
           inputId = id, label = label, min = min(slider_values),
-          max = max(slider_values), value = value)
+          max = max(slider_values), value = default)
     }  
 
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
