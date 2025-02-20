@@ -431,7 +431,8 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
 
         allArgs <- match.call()
         zInArgs <- ("value" %in% names(allArgs))
-        if(zInArgs){value <- median(slider_values)} else {value <- allArgs$value}
+        if(zInArgs){value <- allArgs$value} else {value <- median(slider_values)}
+        
         output <- shiny::sliderInput(
           inputId = id, label = label, min = min(slider_values),
           max = max(slider_values), value = value, ...)
