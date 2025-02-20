@@ -301,8 +301,8 @@ extract_head_content <- function(html_content) {
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
 #' @param row List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.
 #' @param default Numeric, length 1 (for a single sided slider), or 2 for a two sided (range based) slider. 
-#' Values to be used as the starting default for the slider. Defaults to the median of values, or if not supplied, label. 
-#' @param ... Further arguments passed to shiny::sliderInput. 
+#' Values to be used as the starting default for the slider. Defaults to the median of values.  
+#' @param ... Further arguments passed to ?shiny::sliderInput. 
 #' @details
 #' The function supports various question types:
 #' - "select": A dropdown selection
@@ -314,6 +314,7 @@ extract_head_content <- function(html_content) {
 #' - "textarea": Multi-line text input
 #' - "numeric": Numeric input
 #' - "slider": Slider input
+#' - "slider_numeric": Extended numeric slider types  
 #' - "date": Date input
 #' - "daterange": Date range input
 #' - "matrix": Matrix-style question with rows and columns
@@ -352,19 +353,42 @@ extract_head_content <- function(html_content) {
 #' }
 #'
 #' @export
-sd_question <- function (type, id, label, cols = "80", direction = "horizontal", 
-          status = "default", width = "100%", height = NULL, selected = NULL, 
-          label_select = "Choose an option...", grid = TRUE, individual = TRUE, 
-          justified = FALSE, force_edges = TRUE, option = NULL, placeholder = NULL, 
-          resize = NULL, default = NULL, row = NULL, ...) {
+sd_question <- function (
+    type, 
+    id, 
+    label,
+    cols = "80", 
+    direction = "horizontal", 
+    status = "default", 
+    width = "100%",
+    height = NULL, 
+    selected = NULL,
+    label_select = "Choose an option...", 
+    grid = TRUE,
+    individual = TRUE, 
+    justified = FALSE, 
+    force_edges = TRUE,
+    option = NULL,
+    placeholder = NULL, 
+    resize = NULL,
+    default = NULL,
+    row = NULL, 
+    ...
+    ) {
   valid_types <- c("select", "mc", "mc_multiple", "mc_buttons", 
                    "mc_multiple_buttons", "text", "textarea", "numeric", 
                    "slider", "date", "daterange", "matrix", "slider_numeric")
   if (!type %in% valid_types) {
-    stop(sprintf("Invalid question type: '%s'. Valid types are: %s", 
-                 type, paste(sort(valid_types), collapse = "', '")))
+    stop(
+      sprintf(
+        "Invalid question type: '%s'. Valid types are: %s", 
+        type, paste(sort(valid_types), collapse = "', '")
+        )
+      )
   }
   output <- NULL
+  
+  # Load translations for selected label and date language option
   translations <- get_translations()
   language <- translations$language
   translations <- translations$translations
@@ -375,21 +399,38 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
     label_select <- translations[["choose_option"]]
     option <- c("", option)
     names(option)[1] <- label_select
-    output <- shiny::selectInput(inputId = id, label = label, 
-                                 choices = option, multiple = FALSE, selected = FALSE)
+    output <- shiny::selectInput(
+      inputId = id, 
+      label = label, 
+      choices = option,
+      multiple = FALSE, 
+      selected = FALSE
+      )
   }
   else if (type == "mc") {
-    output <- shiny::radioButtons(inputId = id, label = label, 
-                                  choices = option, selected = FALSE)
+    output <- shiny::radioButtons(
+      inputId = id, 
+      label = label, 
+      choices = option,
+      selected = FALSE
+      )
   }
   else if (type == "mc_multiple") {
-    output <- shiny::checkboxGroupInput(inputId = id, label = label, 
-                                        choices = option, selected = FALSE)
+    output <- shiny::checkboxGroupInput(
+      inputId = id, 
+      label = label, 
+      choices = option, 
+      selected = FALSE
+      )
   }
   else if (type == "mc_buttons") {
-    output <- shinyWidgets::radioGroupButtons(inputId = id, 
-                                              label = label, choices = list_name_md_to_html(option), 
-                                              direction = direction, selected = character(0))
+    output <- shinyWidgets::radioGroupButtons(
+      inputId = id, 
+      label = label, 
+      choices = list_name_md_to_html(option), 
+      direction = direction, 
+      selected = character(0)
+      )
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
                                                                                        id, js_interaction))))
   }
@@ -401,16 +442,30 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
                                                                                        id, js_interaction))))
   }
   else if (type == "text") {
-    output <- shiny::textInput(inputId = id, label = label, 
-                               placeholder = option)
+    output <- shiny::textInput(
+      inputId = id, 
+      label = label, 
+      placeholder = option
+      )
   }
   else if (type == "textarea") {
-    output <- shiny::textAreaInput(inputId = id, label = label, 
-                                   height = "100px", cols = cols, value = NULL, rows = "6", 
-                                   placeholder = placeholder, resize = resize)
+    output <- shiny::textAreaInput(
+      inputId = id, 
+      label = label, 
+      height = "100px",
+      cols = cols, 
+      value = NULL, 
+      rows = "6", 
+      placeholder = placeholder, 
+      resize = resize
+      )
   }
   else if (type == "numeric") {
-    output <- shiny::numericInput(inputId = id, label = label, value = NULL)
+    output <- shiny::numericInput(
+      inputId = id,
+      label = label, 
+      value = NULL
+      )
     
   } else if (grepl('slider', type)) {
     
@@ -424,16 +479,26 @@ sd_question <- function (type, id, label, cols = "80", direction = "horizontal",
     }
     
     if(type=='slider'){
-      output <- shinyWidgets::sliderTextInput(inputId = id, 
-                                              label = label, choices = names(slider_values), selected = selected, 
-                                              force_edges = force_edges, grid = grid)
+      output <- shinyWidgets::sliderTextInput(
+        inputId = id, 
+        label = label, 
+        choices = names(slider_values),
+        selected = selected, 
+        force_edges = force_edges, 
+        grid = grid
+        )
       } else {
 
         if(is.null(default)){default <- median(slider_values)} 
         
         output <- shiny::sliderInput(
-          inputId = id, label = label, min = min(slider_values),
-          max = max(slider_values), value = default, ...)
+          inputId = id,
+          label = label, 
+          min = min(slider_values),
+          max = max(slider_values),
+          value = default,
+          ...
+          )
     }  
 
     js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
