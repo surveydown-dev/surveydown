@@ -427,9 +427,9 @@ sd_question <- function (type, id, label, values = NULL, cols = "80", direction 
       session$userData[[paste0(id, "_values")]] <- values
     }
     
-    if (type == "slider"){
+    if (type == "slider_integer"){
     
-      output <- shinyWidgets::sliderTextInput(inputId = id, label = label,
+      output <- shinyWidgets::sliderTextInput(inputId = 'slider_integer', label = label,
                                               choices = names(values), selected = selected, 
                                               force_edges = force_edges, grid = grid)
     } else { # numeric sliders are supported using shiny::
