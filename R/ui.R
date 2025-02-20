@@ -511,7 +511,7 @@ sd_question <- function(
         selected    = selected,
         force_edges = force_edges,
         grid        = grid
-        )
+      )
 
       } else {
         if(is.null(default)){default <- median(slider_values)} 
@@ -545,11 +545,11 @@ sd_question <- function(
       datesdisabled      = NULL,
       daysofweekdisabled = NULL
     )
+    
+    output <- date_interaction(output, id)
 
-  output <- date_interaction(output, id)
-  
   } else if (type == "daterange") {
-  
+
    output <- shiny::dateRangeInput(
       inputId   = id,
       label     = label,
@@ -564,15 +564,14 @@ sd_question <- function(
       separator = "-",
       autoclose = TRUE
     )
-  
+
     output <- date_interaction(output, id)
-  
+
   } else if (type == "matrix") {
 
    header <- shiny::tags$tr(
       shiny::tags$th(""),
-      lapply(names(option), function(opt) shiny::tags$th(opt))
-  )
+      lapply(names(option), function(opt) shiny::tags$th(opt)))
     rows <- lapply(row, function(q_id) {
       full_id <- paste(id, q_id, sep = "_")
       shiny::tags$tr(
