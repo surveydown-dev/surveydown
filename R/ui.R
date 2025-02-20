@@ -382,7 +382,7 @@ sd_question <- function(
     "text", "textarea", "numeric", "slider", "date", "daterange", "matrix",
     "slider_numeric"
   )
-  
+
   # Check if provided type is valid
   if (!type %in% valid_types) {
     stop(
@@ -403,7 +403,7 @@ sd_question <- function(
   # Check if question if answered
   js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
 
-   # Create label with hidden asterisk
+  # Create label with hidden asterisk
   label <- markdown_to_html(label)
 
   if (type == "select") {
@@ -455,7 +455,8 @@ sd_question <- function(
 
     output <- shinyWidgets::checkboxGroupButtons(
       inputId = id, 
-      label = label, choices = list_name_md_to_html(option), 
+      label = label,
+      choices = list_name_md_to_html(option), 
       direction = direction, 
       individual = individual, 
       justified = FALSE
