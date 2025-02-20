@@ -416,16 +416,14 @@ sd_question <- function (
       choices  = option,
       selected = FALSE
       )
-  }
-  else if (type == "mc_multiple") {
+  } else if (type == "mc_multiple") {
     output <- shiny::checkboxGroupInput(
       inputId  = id,
       label    = label,
       choices  = option,
       selected = FALSE
       )
-  }
-  else if (type == "mc_buttons") {
+  } else if (type == "mc_buttons") {
     output <- shinyWidgets::radioGroupButtons(
       inputId   = id,
       label     = label,
@@ -435,22 +433,22 @@ sd_question <- function (
       )
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
                                                                                        id, js_interaction))))
-  }
-  else if (type == "mc_multiple_buttons") {
-    output <- shinyWidgets::checkboxGroupButtons(inputId = id, 
-                                                 label = label, choices = list_name_md_to_html(option), 
-                                                 direction = direction, individual = individual, justified = FALSE)
+  } else if (type == "mc_multiple_buttons") {
+    output <- shinyWidgets::checkboxGroupButtons(
+      inputId = id, 
+      label = label, choices = list_name_md_to_html(option), 
+      direction = direction, 
+      individual = individual, 
+      justified = FALSE)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", 
                                                                                        id, js_interaction))))
-  }
-  else if (type == "text") {
+  } else if (type == "text") {
     output <- shiny::textInput(
       inputId     = id,
       label       = label,
       placeholder = option
       )
-  }
-  else if (type == "textarea") {
+  } else if (type == "textarea") {
     output <- shiny::textAreaInput(
       inputId     = id,
       label       = label,
@@ -461,8 +459,7 @@ sd_question <- function (
       placeholder = placeholder,
       resize      = resize
       )
-  }
-  else if (type == "numeric") {
+  } else if (type == "numeric") {
     output <- shiny::numericInput(
       inputId = id,
       label   = label,
@@ -471,7 +468,7 @@ sd_question <- function (
     
   } else if (grepl('slider', type)) {
     
-    if(type=='slider'){slider_values <- make_slider_values(option)} else {
+    if(type == 'slider'){slider_values <- make_slider_values(option)} else {
       slider_values <- option
     }  
     
@@ -480,7 +477,7 @@ sd_question <- function (
       session$userData[[paste0(id, "_values")]] <- slider_values
     }
     
-    if(type=='slider'){
+    if(type == 'slider'){
       output <- shinyWidgets::sliderTextInput(
         inputId     = id,
         label       = label,
@@ -495,16 +492,15 @@ sd_question <- function (
         
         output <- shiny::sliderInput(
           inputId = id,
-          label = label,
-          min = min(slider_values),
-          max = max(slider_values),
-          value = default,
+          label   = label,
+          min     = min(slider_values),
+          max     = max(slider_values),
+          value   = default,
           ...
           )
     }  
 
-    js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", 
-                          id, jsonlite::toJSON(as.list(slider_values)), id)
+    js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", id, jsonlite::toJSON(as.list(slider_values)), id)
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
     
   } else if (type == "date") {
