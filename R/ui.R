@@ -221,7 +221,8 @@ extract_head_content <- function(html_content) {
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
 #' @param row List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.
 #' @param initial_value Initial value for text boxes and numeric input
-#'
+#' @param addon For the InputAddon text field, an additional Unicode character to
+#' display next to the widget (purely for aesthetic purposes)
 #' @details
 #' The function supports various question types:
 #' - "select": A dropdown selection
@@ -235,6 +236,7 @@ extract_head_content <- function(html_content) {
 #' different buckets based on the sortsurvey bucket_list_survey question (see [sortsurvey::bucket_list_survey()])
 #' - "text": Single-line text input
 #' - "textarea": Multi-line text input
+#' - "textAddOn": A single-line text input allowing for additional features (see [shinyWidgets::textInputAddon()])
 #' - "numeric": Numeric input
 #' - "slider": Slider input
 #' - "date": Date input
@@ -274,6 +276,7 @@ extract_head_content <- function(html_content) {
 #'   setwd(orig_dir)
 #' }
 #' @importFrom sortsurvey rank_list_survey bucket_list_survey
+#' @importFrom shinyWidgets textInputAddon
 #' @export
 sd_question <- function(
     type,
@@ -294,7 +297,8 @@ sd_question <- function(
     placeholder  = NULL,
     resize       = NULL,
     row          = NULL,
-    initial_value = NULL
+    initial_value = NULL,
+    addon = NULL
 ) {
 
   output <- NULL
@@ -425,6 +429,18 @@ sd_question <- function(
       resize      = resize
     )
 
+  } else if (type == "textAddOn") {
+
+      output <- shinyWidgets::textInputAddon(
+          inputId     = id,
+          label       = label,
+          width = "auto",
+          addon = addon,
+          value = initial_value,
+          placeholder = placeholder
+      )
+
+
   } else if (type == "numeric") {
 
     output <- shiny::numericInput(
@@ -434,6 +450,10 @@ sd_question <- function(
     )
 
   } else if (type == "slider") {
+
+      # selected cannot be FALSE for this widget
+
+      if(is.logical(selected)) selected <- NULL
 
     output <- shinyWidgets::sliderTextInput(
       inputId      = id,
@@ -765,7 +785,7 @@ sd_next2 <- function(next_page = NULL, label = NULL) {
         label <- translations[['next']]
     }
 
-    button_id <- "page_id_next"  # Placeholder ID
+    button_id <- "page_id_next_custom"  # Placeholder ID
     shiny::tagList(
         shiny::div(
             `data-next-page` = if (!is.null(next_page)) next_page else "",
@@ -778,6 +798,45 @@ sd_next2 <- function(next_page = NULL, label = NULL) {
                 onclick = "Shiny.setInputValue('end_clicked', true, {priority: 'event'}); Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
             )
         )
+    )
+}
+
+#' @export
+sd_next_list <- function(inputId, label = "Next") {
+    tagList(
+        # JavaScript to extract 'country' from URL and send it to Shiny
+        tags$script(HTML("
+      $(document).ready(function() {
+        var params = new URLSearchParams(window.location.search);
+        var country = params.get('country');
+        Shiny.setInputValue('url_country', country);
+      });
+    ")),
+
+        div(
+            id = inputId,
+            `data-next-page` = "",  # This will be updated dynamically
+            style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
+            actionButton(
+                inputId = paste0(inputId, "_button"),
+                label = label,
+                class = "sd-enter-button",
+                style = "display: block; margin: auto;",
+                onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
+            )
+        ),
+
+        # JavaScript to update the button's data-next-page attribute dynamically
+        tags$script(HTML("
+      document.addEventListener('DOMContentLoaded', function() {
+        Shiny.addCustomMessageHandler('updateNextPage', function(message) {
+          var buttonDiv = document.getElementById(message.id);
+          if (buttonDiv) {
+            buttonDiv.setAttribute('data-next-page', message.next_page);
+          }
+        });
+      });
+    "))
     )
 }
 

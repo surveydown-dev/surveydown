@@ -23,7 +23,8 @@ sd_question(
   placeholder = NULL,
   resize = NULL,
   row = NULL,
-  initial_value = NULL
+  initial_value = NULL,
+  addon = NULL
 )
 }
 \arguments{
@@ -66,6 +67,9 @@ sd_question(
 \item{row}{List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.}
 
 \item{initial_value}{Initial value for text boxes and numeric input}
+
+\item{addon}{For the InputAddon text field, an additional Unicode character to
+display next to the widget (purely for aesthetic purposes)}
 }
 \value{
 A 'shiny' UI element wrapped in a div with a data attribute for
@@ -88,6 +92,7 @@ choices using drag and drop based on the sortsurvey rank_list_survey question (s
 different buckets based on the sortsurvey bucket_list_survey question (see \code{\link[sortsurvey:bucket_list_survey]{sortsurvey::bucket_list_survey()}})
 \item "text": Single-line text input
 \item "textarea": Multi-line text input
+\item "textAddOn": A single-line text input allowing for additional features (see \code{\link[shinyWidgets:textInputAddon]{shinyWidgets::textInputAddon()}})
 \item "numeric": Numeric input
 \item "slider": Slider input
 \item "date": Date input
