@@ -38,7 +38,7 @@ Defaults to \code{FALSE}.}
 \item{language}{Set the language for the survey system messages. Include
 your own in a \code{translations.yml} file, or choose a built in one from
 the following list: English (\code{"en"}), German (\code{"de"}), Spanish (\code{"es"}),
-French (\code{"fr"}), Italian (\code{"it"}). Simplified Chinese (\code{"zh-CN"}).
+French (\code{"fr"}), Italian (\code{"it"}), Simplified Chinese (\code{"zh-CN"}).
 Defaults to \code{"en"}.}
 
 \item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management

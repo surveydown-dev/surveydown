@@ -1,27 +1,33 @@
-# remotes::install_github("surveydown-dev/surveydown", force = TRUE)
+# install.packages("surveydown")
 library(surveydown)
 
-# Database setup
 
-# surveydown stores data on a database that you define at https://supabase.com/
-# To connect to a database, update the sd_database() function with details
-# from your supabase database. For this demo, we set ignore = TRUE, which will
-# ignore the settings and won't attempt to connect to the database. This is
-# helpful for local testing if you don't want to record testing data in the
-# database table. See the documentation for details:
-# https://surveydown.org/store-data
+# Database setup --------------------------------------------------------------
+#
+# Details at: https://surveydown.org/manuals/storing-data
+#
+# surveydown stores data on any PostgreSQL database. We recommend
+# https://supabase.com/ for a free and easy to use service.
+#
+# Once you have your database ready, run the following function to store your
+# database configuration parameters in a local .env file:
+#
+# sd_db_config()
+#
+# Once your parameters are stored, you are ready to connect to your database.
+# For this demo, we set ignore = TRUE in the following code, which will ignore
+# the connection settings and won't attempt to connect to the database. This is
+# helpful if you don't want to record testing data in the database table while
+# doing local testing. Once you're ready to collect survey responses, set
+# ignore = FALSE or just delete this argument.
 
-db <- sd_database(
-  host   = "",
-  dbname = "",
-  port   = "",
-  user   = "",
-  table  = "",
+db <- sd_db_connect(
   ignore = TRUE
 )
 
 
-# Server setup
+# Server setup ----------------------------------------------------------------
+
 server <- function(input, output, session) {
 
   # Define any conditional skip logic here (skip to page if a condition is true)

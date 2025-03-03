@@ -22,7 +22,7 @@
 #' @param language Set the language for the survey system messages. Include
 #'   your own in a `translations.yml` file, or choose a built in one from
 #'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
-#'   French (`"fr"`), Italian (`"it"`). Simplified Chinese (`"zh-CN"`).
+#'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
 #'   Defaults to `"en"`.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
 #'   for storing and restoring survey progress. Defaults to `TRUE`.
@@ -500,7 +500,12 @@ sd_server <- function(
         required_questions <- page$required_questions
         is_visible <- question_visibility()[required_questions]
         all(vapply(required_questions, function(q) {
-            !is_visible[q] || check_answer(q, input)
+            if (!is_visible[q]) return(TRUE)
+            if (question_structure[[q]]$is_matrix) {
+                all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input)))
+            } else {
+                check_answer(q, input)
+            }
         }, logical(1)))
     }
 

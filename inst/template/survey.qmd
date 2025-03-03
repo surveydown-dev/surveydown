@@ -15,7 +15,7 @@ library(surveydown)
 
 This is a simple demonstration of a surveydown survey. It has two pages with one question on each page.
 
-Here is a basic "multiple choice" question, created using `type = 'mc'` inside the `sd_question()` function:
+Here is a basic "multiple choice" question:
 
 ```{r}
 sd_question(
@@ -30,7 +30,7 @@ sd_question(
 )
 ```
 
-You need to insert next buttons with `sd_next()` and set the `next_page` argument to the name of the page you want to go to next.
+You need to insert next buttons with `sd_next()` on each page. By default, it will go to the next page defined in the `survey.qmd` file, but you can also specify the page with the `next_page` argument set to the name of the page you want to go to next.
 
 ```{r}
 sd_next(next_page = 'page2')
@@ -51,7 +51,7 @@ sd_question(
   label = "Write a silly word here:"
 )
 
-sd_next(next_page = 'end')
+sd_next()
 ```
 
 :::
