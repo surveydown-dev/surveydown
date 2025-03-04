@@ -282,7 +282,7 @@ extract_head_content <- function(html_content) {
 #'
 #' @param type Specifies the type of question. Possible values are "select", "mc",
 #'   "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-#'   "numeric", "slider", "date", "daterange", and "matrix".
+#'   "numeric", "slider", 'slider_numeric', "date", "daterange", and "matrix".
 #' @param id A unique identifier for the question, which will be used as the variable name in the resulting survey data.
 #' @param label Character string. The label for the UI element, which can be formatted with markdown.
 #' @param cols Integer. Number of columns for the textarea input. Defaults to 80.
@@ -296,11 +296,13 @@ extract_head_content <- function(html_content) {
 #' @param individual Logical. Whether buttons in a group should be individually styled. Defaults to TRUE.
 #' @param justified Logical. Whether buttons in a group should fill the width of the parent div. Defaults to FALSE.
 #' @param force_edges Logical. Whether to force edges for slider input. Defaults to TRUE.
-#' @param option List. Options for the select, radio, checkbox, and slider inputs.
+#' @param option List, or numeric vector (for numeric sliders). Options for the select, radio, checkbox, and slider inputs.
 #' @param placeholder Character string. Placeholder text for text and textarea inputs.
 #' @param resize Character string. Resize option for textarea input. Defaults to NULL.
 #' @param row List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.
-#'
+#' @param default Numeric, length 1 (for a single sided slider), or 2 for a two sided (range based) slider. 
+#' Values to be used as the starting default for the slider. Defaults to the median of values.  
+#' @param ... Further arguments passed to ?shiny::sliderInput. 
 #' @details
 #' The function supports various question types:
 #' - "select": A dropdown selection
@@ -312,6 +314,7 @@ extract_head_content <- function(html_content) {
 #' - "textarea": Multi-line text input
 #' - "numeric": Numeric input
 #' - "slider": Slider input
+#' - "slider_numeric": Extended numeric slider types  
 #' - "date": Date input
 #' - "daterange": Date range input
 #' - "matrix": Matrix-style question with rows and columns
@@ -368,13 +371,16 @@ sd_question <- function(
     option       = NULL,
     placeholder  = NULL,
     resize       = NULL,
-    row          = NULL
-) {
+    row          = NULL,
+    default      = NULL,
+    ...
+    ) {
 
   # Define valid question types
   valid_types <- c(
-    "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons",
-    "text", "textarea", "numeric", "slider", "date", "daterange", "matrix"
+    "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons", 
+    "text", "textarea", "numeric", "slider", "date", "daterange", "matrix",
+    "slider_numeric"
   )
 
   # Check if provided type is valid
@@ -414,6 +420,7 @@ sd_question <- function(
       multiple = FALSE,
       selected = FALSE
     )
+
   } else if (type == "mc") {
 
     output <- shiny::radioButtons(
@@ -442,11 +449,7 @@ sd_question <- function(
       selected  = character(0)
     )
 
-    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
-            $(document).on('click', '#%s .btn', function() {
-                %s
-            });
-        ", id, js_interaction))))
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ", id, js_interaction))))
 
   } else if (type == "mc_multiple_buttons") {
 
@@ -459,12 +462,7 @@ sd_question <- function(
       justified  = FALSE
     )
 
-    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
-            $(document).on('click', '#%s .btn', function() {
-                %s
-            });
-        ", id, js_interaction))))
-
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("\n            $(document).on('click', '#%s .btn', function() {\n                %s\n            });\n        ",  id, js_interaction))))
   } else if (type == "text") {
 
     output <- shiny::textInput(
@@ -494,33 +492,47 @@ sd_question <- function(
       value   = NULL
     )
 
-  } else if (type == "slider") {
+  } else if (grepl('slider', type)) {
 
-    slider_values <- make_slider_values(option)
+    # type slider actually dispatches to two functions. One for text values, 
+    # 'shinyWidgets::sliderTextInput', and another for numeric values 'shiny::sliderInput'. 
+    # They are covered within this same statement because 3/4 of their steps can
+    # be processed in the same fashion. 
+    if(type == 'slider'){slider_values <- make_slider_values(option)} else {
+      slider_values <- option
+    }  
+
     if (!is.null(shiny::getDefaultReactiveDomain())) {
       session <- shiny::getDefaultReactiveDomain()
       session$userData[[paste0(id, "_values")]] <- slider_values
     }
 
-    output <- shinyWidgets::sliderTextInput(
-      inputId     = id,
-      label       = label,
-      choices     = names(slider_values),
-      selected    = selected,
-      force_edges = force_edges,
-      grid        = grid
-    )
+    if(type == 'slider'){
+      
+      output <- shinyWidgets::sliderTextInput(
+        inputId     = id,
+        label       = label,
+        choices     = names(slider_values),
+        selected    = selected,
+        force_edges = force_edges,
+        grid        = grid
+      )
 
-    js_convert <- sprintf("
-      $(document).on('change', '#%s', function() {
-        var valueMap = %s;
-        var currentValue = $(this).val();
-        Shiny.setInputValue('%s', valueMap[currentValue]);
-      });
-    ", id, jsonlite::toJSON(as.list(slider_values)), id)
+      } else {
+        if(is.null(default)){default <- median(slider_values)} 
+        output <- shiny::sliderInput(
+          inputId = id,
+          label   = label,
+          min     = min(slider_values),
+          max     = max(slider_values),
+          value   = default,
+          ...
+        )
+        
+    }
 
-    output <- shiny::tagAppendChild(output,
-                                    shiny::tags$script(htmltools::HTML(js_convert)))
+    js_convert <- sprintf("\n      $(document).on('change', '#%s', function() {\n        var valueMap = %s;\n        var currentValue = $(this).val();\n        Shiny.setInputValue('%s', valueMap[currentValue]);\n      });\n    ", id, jsonlite::toJSON(as.list(slider_values)), id)
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_convert)))
 
   } else if (type == "date") {
 
@@ -561,10 +573,11 @@ sd_question <- function(
     output <- date_interaction(output, id)
 
   } else if (type == "matrix") {
-    header <- shiny::tags$tr(
+
+   header <- shiny::tags$tr(
       shiny::tags$th(""),
       lapply(names(option), function(opt) shiny::tags$th(opt))
-    )
+     )
     rows <- lapply(row, function(q_id) {
       full_id <- paste(id, q_id, sep = "_")
       shiny::tags$tr(
@@ -577,19 +590,19 @@ sd_question <- function(
             label = NULL,
             option = option,
             direction = "horizontal"
-          )
         )
       )
-    })
-
-    output <- shiny::div(
-      class = "matrix-question-container",
-      shiny::tags$label(class = "control-label", label),
-      shiny::tags$table(
-        class = "matrix-question",
-        header,
-        shiny::tags$tbody(rows)
-      )
+    )
+  })
+    
+  output <- shiny::div(
+    class = "matrix-question-container",
+    shiny::tags$label(class = "control-label", label),
+    shiny::tags$table(
+      class = "matrix-question",
+      header,
+      shiny::tags$tbody(rows)
+     )
     )
   }
 
