@@ -574,7 +574,7 @@ sd_question <- function(
 
   } else if (type == "matrix") {
 
-   header <- shiny::tags$tr( {
+   header <- shiny::tags$tr(
       shiny::tags$th("")
       lapply(names(option), function(opt) shiny::tags$th(opt))
      )
