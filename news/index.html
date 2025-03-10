@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,12 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.8.2" id="surveydown-082">surveydown 0.8.2<a class="anchor" aria-label="anchor" href="#surveydown-082"></a></h2>
+<ul><li>Added <code>"slider_numeric"</code> type to <code><a href="../reference/sd_question.html">sd_question()</a></code>, which supports both single and dual numeric sliders.</li>
+<li>Added the <code>...</code> argument to all question types in <code><a href="../reference/sd_question.html">sd_question()</a></code> so that users can pass other input arguments specific to each input type.</li>
+<li>Move the <code>gssencmode</code> parameter out of the database settings and made it an argument in <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code> so that users can pass <code>NULL</code> if needed to completely ignore it when making connections.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.1" id="surveydown-081">surveydown 0.8.1<a class="anchor" aria-label="anchor" href="#surveydown-081"></a></h2>
 <ul><li>Updated the template used in <code><a href="../reference/sd_create_survey.html">sd_create_survey()</a></code> to match the new database configuration introduced in v0.8.0.</li>

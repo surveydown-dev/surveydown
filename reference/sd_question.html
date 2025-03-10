@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,9 @@
 <span>  option <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  placeholder <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  resize <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  row <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  row <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  default <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -64,37 +66,45 @@
 
 
 <dl><dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Specifies the type of question. Possible values are "select", "mc",
-"mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-"numeric", "slider", "date", "daterange", and "matrix".</p></dd>
+<dd><p>Specifies the type of question. Possible values are <code>"select"</code>,
+<code>"mc"</code>, <code>"mc_multiple"</code>, <code>"mc_buttons"</code>, <code>"mc_multiple_buttons"</code>, <code>"text"</code>,
+<code>"textarea"</code>, <code>"numeric"</code>, <code>"slider"</code>, <code>"slider_numeric"</code>, <code>"date"</code>,
+<code>"daterange"</code>, and <code>"matrix"</code>.</p></dd>
 
 
 <dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
-<dd><p>A unique identifier for the question, which will be used as the variable name in the resulting survey data.</p></dd>
+<dd><p>A unique identifier for the question, which will be used as the
+variable name in the resulting survey data.</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
-<dd><p>Character string. The label for the UI element, which can be formatted with markdown.</p></dd>
+<dd><p>Character string. The label for the UI element, which can be
+formatted with markdown.</p></dd>
 
 
 <dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>
-<dd><p>Integer. Number of columns for the textarea input. Defaults to 80.</p></dd>
+<dd><p>Integer. Number of columns for the <code>"textarea"</code> question type.
+Defaults to 80.</p></dd>
 
 
 <dt id="arg-direction">direction<a class="anchor" aria-label="anchor" href="#arg-direction"></a></dt>
-<dd><p>Character string. The direction for button groups ("horizontal" or "vertical"). Defaults to "horizontal".</p></dd>
+<dd><p>Character string. The direction for button groups
+(<code>"horizontal"</code> or <code>"vertical"</code>). Defaults to <code>"horizontal"</code>.</p></dd>
 
 
 <dt id="arg-status">status<a class="anchor" aria-label="anchor" href="#arg-status"></a></dt>
-<dd><p>Character string. The status for button groups. Defaults to "default".</p></dd>
+<dd><p>Character string. The status for button groups.
+Defaults to <code>"default"</code>.</p></dd>
 
 
 <dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
-<dd><p>Character string. The width of the UI element. Defaults to "100%".</p></dd>
+<dd><p>Character string. The width of the UI element.
+Defaults to <code>"100%"</code>.</p></dd>
 
 
 <dt id="arg-height">height<a class="anchor" aria-label="anchor" href="#arg-height"></a></dt>
-<dd><p>Character string. The height of the textarea input. Defaults to "100px".</p></dd>
+<dd><p>Character string. The height of the input for the
+<code>"textarea"</code> question type. Defaults to <code>"100px"</code>.</p></dd>
 
 
 <dt id="arg-selected">selected<a class="anchor" aria-label="anchor" href="#arg-selected"></a></dt>
@@ -102,39 +112,61 @@
 
 
 <dt id="arg-label-select">label_select<a class="anchor" aria-label="anchor" href="#arg-label-select"></a></dt>
-<dd><p>Character string. The label for the select input. Defaults to "Choose an option...".</p></dd>
+<dd><p>Character string. The label for the select input.
+Defaults to <code>"Choose an option..."</code>.</p></dd>
 
 
 <dt id="arg-grid">grid<a class="anchor" aria-label="anchor" href="#arg-grid"></a></dt>
-<dd><p>Logical. Whether to show a grid for slider input. Defaults to TRUE.</p></dd>
+<dd><p>Logical. Whether to show a grid for slider input.
+Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-individual">individual<a class="anchor" aria-label="anchor" href="#arg-individual"></a></dt>
-<dd><p>Logical. Whether buttons in a group should be individually styled. Defaults to TRUE.</p></dd>
+<dd><p>Logical. Whether buttons in a group should be individually
+styled. Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-justified">justified<a class="anchor" aria-label="anchor" href="#arg-justified"></a></dt>
-<dd><p>Logical. Whether buttons in a group should fill the width of the parent div. Defaults to FALSE.</p></dd>
+<dd><p>Logical. Whether buttons in a group should fill the width
+of the parent div. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-force-edges">force_edges<a class="anchor" aria-label="anchor" href="#arg-force-edges"></a></dt>
-<dd><p>Logical. Whether to force edges for slider input. Defaults to TRUE.</p></dd>
+<dd><p>Logical. Whether to force edges for slider input.
+Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-option">option<a class="anchor" aria-label="anchor" href="#arg-option"></a></dt>
-<dd><p>List. Options for the select, radio, checkbox, and slider inputs.</p></dd>
+<dd><p>Named vector for the <code>"select"</code>, <code>"radio"</code>, <code>"checkbox"</code>,
+and <code>"slider"</code> question types, or numeric vector for <code>"slider_numeric"</code>
+question type.</p></dd>
 
 
 <dt id="arg-placeholder">placeholder<a class="anchor" aria-label="anchor" href="#arg-placeholder"></a></dt>
-<dd><p>Character string. Placeholder text for text and textarea inputs.</p></dd>
+<dd><p>Character string. Placeholder text for <code>"text"</code> and
+<code>"textarea"</code> question types.</p></dd>
 
 
 <dt id="arg-resize">resize<a class="anchor" aria-label="anchor" href="#arg-resize"></a></dt>
-<dd><p>Character string. Resize option for textarea input. Defaults to NULL.</p></dd>
+<dd><p>Character string. Resize option for textarea input.
+Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-row">row<a class="anchor" aria-label="anchor" href="#arg-row"></a></dt>
-<dd><p>List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.</p></dd>
+<dd><p>List. Used for <code>"matrix"</code> type questions. Contains the row labels
+and their corresponding IDs.</p></dd>
+
+
+<dt id="arg-default">default<a class="anchor" aria-label="anchor" href="#arg-default"></a></dt>
+<dd><p>Numeric, length 1 (for a single sided slider), or 2 for a
+two sided (range based) slider. Values to be used as the starting default
+for the slider. Defaults to the median of values.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Additional arguments, often specific to different input types.
+Examples include <code>pre</code>, <code>sep</code>, <code>step</code>, and <code>animate</code> for <code>"slider"</code> and
+<code>"slider_numeric"</code> question types, etc.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -144,19 +176,20 @@ question ID.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>The function supports various question types:</p><ul><li><p>"select": A dropdown selection</p></li>
-<li><p>"mc": Multiple choice (single selection)</p></li>
-<li><p>"mc_multiple": Multiple choice (multiple selections allowed)</p></li>
-<li><p>"mc_buttons": Multiple choice with button-style options (single selection)</p></li>
-<li><p>"mc_multiple_buttons": Multiple choice with button-style options (multiple selections allowed)</p></li>
-<li><p>"text": Single-line text input</p></li>
-<li><p>"textarea": Multi-line text input</p></li>
-<li><p>"numeric": Numeric input</p></li>
-<li><p>"slider": Slider input</p></li>
-<li><p>"date": Date input</p></li>
-<li><p>"daterange": Date range input</p></li>
-<li><p>"matrix": Matrix-style question with rows and columns</p></li>
-</ul><p>For "matrix" type questions, use the <code>row</code> parameter to define the rows of
+    <p>The function supports various question types:</p><ul><li><p><code>"select"</code>: A dropdown selection</p></li>
+<li><p><code>"mc"</code>: Multiple choice (single selection)</p></li>
+<li><p><code>"mc_multiple"</code>: Multiple choice (multiple selections allowed)</p></li>
+<li><p><code>"mc_buttons"</code>: Multiple choice with button-style options (single selection)</p></li>
+<li><p><code>"mc_multiple_buttons"</code>: Multiple choice with button-style options (multiple selections allowed)</p></li>
+<li><p><code>"text"</code>: Single-line text question</p></li>
+<li><p><code>"textarea"</code>: Multi-line text question</p></li>
+<li><p><code>"numeric"</code>: Numeric question</p></li>
+<li><p><code>"slider"</code>: Slider question</p></li>
+<li><p><code>"slider_numeric"</code>: Extended numeric slider question</p></li>
+<li><p><code>"date"</code>: Date question</p></li>
+<li><p><code>"daterange"</code>: Date range question</p></li>
+<li><p><code>"matrix"</code>: Matrix-style question with rows and columns</p></li>
+</ul><p>For <code>"matrix"</code> type questions, use the <code>row</code> parameter to define the rows of
 the matrix. Each element in the <code>row</code> list should have a name (used as the
 row ID) and a value (used as the row label).</p>
     </div>
