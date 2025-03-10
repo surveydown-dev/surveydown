@@ -129,7 +129,6 @@ sd_dashboard <- function() {
                                      shiny::tags$strong("Port:"), shiny::span(Sys.getenv("SD_PORT", "Not set")),
                                      shiny::tags$strong("Database:"), shiny::span(Sys.getenv("SD_DBNAME", "Not set")),
                                      shiny::tags$strong("User:"), shiny::span(Sys.getenv("SD_USER", "Not set")),
-                                     shiny::tags$strong("GSS Mode:"), shiny::span(Sys.getenv("SD_GSSENCMODE", "Not set")),
                                      shiny::tags$strong("Default Table:"), shiny::span(Sys.getenv("SD_TABLE", "Not set"))
                                  )
                              )
@@ -167,9 +166,6 @@ sd_dashboard <- function() {
                                          )
                                      )
                                  ),
-                                 shiny::selectInput("gssencmode", "GSS Encryption Mode",
-                                                    choices = c("prefer", "disable", "require"),
-                                                    selected = Sys.getenv("SD_GSSENCMODE", "prefer")),
                                  shiny::textInput("default_table", "Development Table:",
                                                   value = Sys.getenv("SD_TABLE", "responses")),
                                  shiny::div(
@@ -208,8 +204,7 @@ sd_dashboard <- function() {
                         dbname = config$dbname,
                         port = config$port,
                         user = config$user,
-                        password = config$password,
-                        gssencmode = config$gssencmode
+                        password = config$password
                     )
                     db <- list(db = pool)
                 }
@@ -281,8 +276,7 @@ sd_dashboard <- function() {
                 port = input$port,
                 dbname = input$dbname,
                 user = input$user,
-                password = input$password,
-                gssencmode = input$gssencmode
+                password = input$password
             )
 
             success <- attempt_connection(config)
@@ -296,7 +290,6 @@ sd_dashboard <- function() {
                     sprintf("SD_DBNAME=%s", input$dbname),
                     sprintf("SD_USER=%s", input$user),
                     sprintf("SD_PASSWORD=%s", input$password),
-                    sprintf("SD_GSSENCMODE=%s", input$gssencmode),
                     sprintf("SD_TABLE=%s", input$default_table),
                     sep = "\n"
                 )

@@ -9,7 +9,6 @@
 #' @param user Character string. Database user
 #' @param table Character string. Table name
 #' @param password Character string. Database password
-#' @param gssencmode Character string. GSS encryption mode
 #' @param interactive Logical. Whether to use interactive setup. Defaults to TRUE if no parameters provided
 #'
 #' @return Invisibly returns a list of the current configuration settings
@@ -43,7 +42,6 @@ sd_db_config <- function(
     user = NULL,
     table = NULL,
     password = NULL,
-    gssencmode = NULL,
     interactive = NULL
 ) {
     path <- getwd()
@@ -56,8 +54,7 @@ sd_db_config <- function(
         dbname = "postgres",
         user = "username",
         password = "password",
-        table = "responses",
-        gssencmode = "prefer"
+        table = "responses"
     )
 
     # If .env exists, read current values
@@ -69,12 +66,11 @@ sd_db_config <- function(
         current$user <- Sys.getenv("SD_USER", current$user)
         current$password <- Sys.getenv("SD_PASSWORD", current$password)
         current$table <- Sys.getenv("SD_TABLE", current$table)
-        current$gssencmode <- Sys.getenv("SD_GSSENCMODE", current$gssencmode)
     }
 
     # If no parameters provided and interactive not set, default to interactive
     if (is.null(interactive) &&
-        all(sapply(list(host, dbname, port, user, table, password, gssencmode), is.null))) {
+        all(sapply(list(host, dbname, port, user, table, password), is.null))) {
         interactive <- TRUE
     } else if (is.null(interactive)) {
         interactive <- FALSE
@@ -109,10 +105,6 @@ sd_db_config <- function(
         input <- readline(sprintf("Table name [%s]: ", current$table))
         table <- if (input == "") current$table else input
 
-        # Get gssencmode
-        input <- readline(sprintf("GSS encryption mode [%s]: ", current$gssencmode))
-        gssencmode <- if (input == "") current$gssencmode else input
-
     } else {
         # For non-interactive mode, use current values if not provided
         host <- if (!is.null(host)) host else current$host
@@ -121,7 +113,6 @@ sd_db_config <- function(
         user <- if (!is.null(user)) user else current$user
         password <- if (!is.null(password)) password else current$password
         table <- if (!is.null(table)) table else current$table
-        gssencmode <- if (!is.null(gssencmode)) gssencmode else current$gssencmode
     }
 
     # Create template content using direct variables
@@ -133,7 +124,6 @@ sd_db_config <- function(
         sprintf("SD_USER=%s", user),
         sprintf("SD_TABLE=%s", table),
         sprintf("SD_PASSWORD=%s", password),
-        sprintf("SD_GSSENCMODE=%s", gssencmode),
         sep = "\n"
     )
 
@@ -161,7 +151,6 @@ sd_db_config <- function(
     cli::cli_text("SD_USER={user}")
     cli::cli_text("SD_TABLE={table}")
     cli::cli_text("SD_PASSWORD={if(password == '') '' else '****'}")
-    cli::cli_text("SD_GSSENCMODE={gssencmode}")
 
     # Return new configuration
     current <- list(
@@ -170,8 +159,7 @@ sd_db_config <- function(
         port = port,
         user = user,
         password = password,
-        table = table,
-        gssencmode = gssencmode
+        table = table
     )
     invisible(current)
 }
@@ -185,6 +173,11 @@ sd_db_config <- function(
 #' @param env_file Character string. Path to the env file. Defaults to ".env"
 #' @param ignore Logical. If `TRUE`, data will be saved to a local CSV file
 #' instead of the database. Defaults to `FALSE`.
+#' @param gssencmode Character string. The GSS encryption mode for the database
+#'   connection. Defaults to `"prefer"`. NOTE: If you have verified all
+#'   connection details are correct but still cannot access the database,
+#'   consider setting this to `"disable"`. This can be necessary if you're on a
+#'   secure connection, such as a VPN.
 #'
 #' @return A list containing the database connection pool (`db`) and table name (`table`),
 #'   or `NULL` if ignore is `TRUE` or if connection fails
@@ -204,60 +197,84 @@ sd_db_config <- function(
 #' }
 #'
 #' @export
-sd_db_connect <- function(env_file = ".env", ignore = FALSE) {
-    if (ignore) {
-        cli::cli_alert_info("Database connection ignored. Saving data to local CSV file.")
-        return(NULL)
-    }
+sd_db_connect <- function(
+    env_file = ".env",
+    ignore = FALSE,
+    gssencmode = "prefer"
+) {
 
-    # Load environment variables
-    if (!file.exists(env_file)) {
-        cli::cli_alert_warning("No .env file found.")
-        cli::cli_alert_info("Run the following to configure your database:")
-        cli::cli_code("sd_db_config()")
-        return(NULL)
-    }
+  if (ignore) {
+    cli::cli_alert_info("Database connection ignored. Saving data to local CSV file.")
+    return(NULL)
+  }
 
-    dotenv::load_dot_env(env_file)
+  # Load environment variables
+  if (!file.exists(env_file)) {
+    cli::cli_alert_warning("No .env file found.")
+    cli::cli_alert_info("Run the following to configure your database:")
+    cli::cli_code("sd_db_config()")
+    return(NULL)
+  }
 
-    # Get all required parameters
-    params <- list(
-        host = Sys.getenv("SD_HOST"),
-        port = Sys.getenv("SD_PORT"),
-        dbname = Sys.getenv("SD_DBNAME"),
-        user = Sys.getenv("SD_USER"),
-        password = Sys.getenv("SD_PASSWORD"),
-        table = Sys.getenv("SD_TABLE"),
-        gssencmode = Sys.getenv("SD_GSSENCMODE", "prefer")
+  dotenv::load_dot_env(env_file)
+
+  # Get all required parameters
+  params <- list(
+    host = Sys.getenv("SD_HOST"),
+    port = Sys.getenv("SD_PORT"),
+    dbname = Sys.getenv("SD_DBNAME"),
+    user = Sys.getenv("SD_USER"),
+    password = Sys.getenv("SD_PASSWORD"),
+    table = Sys.getenv("SD_TABLE")
+  )
+
+  # Check for missing required parameters
+  missing <- names(params)[!nchar(unlist(params))]
+  if (length(missing) > 0) {
+    cli::cli_alert_warning("Missing required database configuration:")
+    cli::cli_bullets(paste0("* ", missing))
+    return(NULL)
+  }
+
+  # Create connection
+  tryCatch({
+    # Build connection arguments
+    conn_args <- list(
+      drv = RPostgres::Postgres(),
+      host = params$host,
+      dbname = params$dbname,
+      port = params$port,
+      user = params$user,
+      password = params$password
     )
 
-    # Check for missing required parameters
-    missing <- names(params)[!nchar(unlist(params))]
-    if (length(missing) > 0) {
-        cli::cli_alert_warning("Missing required database configuration:")
-        cli::cli_bullets(paste0("* ", missing))
-        return(NULL)
+    # Add gssencmode unless it's explicitly set to NULL
+    if (!is.null(gssencmode)) {
+      if (!gssencmode %in% c("prefer", "disable")) {
+        cli::cli_alert_warning(
+          "Invalid 'gssencmode' setting. Must be set to 'prefer', 'disable', or NULL...setting to 'prefer'"
+        )
+        conn_args$gssencmode <- "prefer"
+      } else {
+        conn_args$gssencmode <- gssencmode
+      }
+    } else {
+      cli::cli_alert_warning(
+        "'gssencmode' is set to NULL, so the 'gssencmode' parameter will not be passed to the database connection."
+      )
     }
 
-    # Create connection
-    tryCatch({
-        pool <- pool::dbPool(
-            RPostgres::Postgres(),
-            host = params$host,
-            dbname = params$dbname,
-            port = params$port,
-            user = params$user,
-            password = params$password,
-            gssencmode = params$gssencmode
-        )
-        cli::cli_alert_success("Successfully connected to the database.")
-        return(list(db = pool, table = params$table))
-    }, error = function(e) {
-        cli::cli_alert_warning("Failed to connect to the database:")
-        cli::cli_text(conditionMessage(e))
-        cli::cli_text("")
-        return(NULL)
-    })
+    # Create pool with dynamic arguments
+    pool <- do.call(pool::dbPool, conn_args)
+
+    cli::cli_alert_success("Successfully connected to the database.")
+    return(list(db = pool, table = params$table))
+  }, error = function(e) {
+    cli::cli_alert_warning("Failed to connect to the database:")
+    cli::cli_text(conditionMessage(e))
+    cli::cli_text("")
+    return(NULL)
+  })
 }
 
 #' Fetch data from a database table with automatic reactivity detection
