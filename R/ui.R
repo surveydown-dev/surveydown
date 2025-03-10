@@ -602,7 +602,7 @@ sd_question <- function(
       }
 
       if (is.null(default)) {
-          default <- median(slider_values)
+          default <- stats::median(slider_values)
       }
 
       # Check if this is a range slider
