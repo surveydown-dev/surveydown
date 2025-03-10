@@ -185,6 +185,11 @@ sd_db_config <- function(
 #' @param env_file Character string. Path to the env file. Defaults to ".env"
 #' @param ignore Logical. If `TRUE`, data will be saved to a local CSV file
 #' instead of the database. Defaults to `FALSE`.
+#' @param gssencmode Character string. The GSS encryption mode for the database
+#'   connection. Defaults to `"prefer"`. NOTE: If you have verified all
+#'   connection details are correct but still cannot access the database,
+#'   consider setting this to `"disable"`. This can be necessary if you're on a
+#'   secure connection, such as a VPN.
 #'
 #' @return A list containing the database connection pool (`db`) and table name (`table`),
 #'   or `NULL` if ignore is `TRUE` or if connection fails
@@ -204,12 +209,17 @@ sd_db_config <- function(
 #' }
 #'
 #' @export
-sd_db_connect <- function(env_file = ".env", ignore = FALSE, gssencmode = "prefer") {
+sd_db_connect <- function(
+    env_file = ".env",
+    ignore = FALSE,
+    gssencmode = "prefer"
+) {
+
   if (ignore) {
     cli::cli_alert_info("Database connection ignored. Saving data to local CSV file.")
     return(NULL)
   }
-  
+
   # Load environment variables
   if (!file.exists(env_file)) {
     cli::cli_alert_warning("No .env file found.")
@@ -217,9 +227,9 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE, gssencmode = "prefe
     cli::cli_code("sd_db_config()")
     return(NULL)
   }
-  
+
   dotenv::load_dot_env(env_file)
-  
+
   # Get all required parameters
   params <- list(
     host = Sys.getenv("SD_HOST"),
@@ -229,7 +239,7 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE, gssencmode = "prefe
     password = Sys.getenv("SD_PASSWORD"),
     table = Sys.getenv("SD_TABLE")
   )
-  
+
   # Check for missing required parameters
   missing <- names(params)[!nchar(unlist(params))]
   if (length(missing) > 0) {
@@ -237,7 +247,7 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE, gssencmode = "prefe
     cli::cli_bullets(paste0("* ", missing))
     return(NULL)
   }
-  
+
   # Create connection
   tryCatch({
     # Build connection arguments
@@ -249,15 +259,26 @@ sd_db_connect <- function(env_file = ".env", ignore = FALSE, gssencmode = "prefe
       user = params$user,
       password = params$password
     )
-    
+
     # Add gssencmode unless it's explicitly set to NULL
     if (!is.null(gssencmode)) {
-      conn_args$gssencmode <- gssencmode
+      if (!gssencmode %in% c("prefer", "disable")) {
+        cli::cli_alert_warning(
+          "Invalid 'gssencmode' setting. Must be set to 'prefer', 'disable', or NULL...setting to 'prefer'"
+        )
+        conn_args$gssencmode <- "prefer"
+      } else {
+        conn_args$gssencmode <- gssencmode
+      }
+    } else {
+      cli::cli_alert_warning(
+        "'gssencmode' is set to NULL, so the 'gssencmode' parameter will not be passed to the database connection."
+      )
     }
-    
+
     # Create pool with dynamic arguments
     pool <- do.call(pool::dbPool, conn_args)
-    
+
     cli::cli_alert_success("Successfully connected to the database.")
     return(list(db = pool, table = params$table))
   }, error = function(e) {
