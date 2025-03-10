@@ -9,7 +9,6 @@
 #' @param user Character string. Database user
 #' @param table Character string. Table name
 #' @param password Character string. Database password
-#' @param gssencmode Character string. GSS encryption mode
 #' @param interactive Logical. Whether to use interactive setup. Defaults to TRUE if no parameters provided
 #'
 #' @return Invisibly returns a list of the current configuration settings
@@ -43,7 +42,6 @@ sd_db_config <- function(
     user = NULL,
     table = NULL,
     password = NULL,
-    gssencmode = NULL,
     interactive = NULL
 ) {
     path <- getwd()
@@ -56,8 +54,7 @@ sd_db_config <- function(
         dbname = "postgres",
         user = "username",
         password = "password",
-        table = "responses",
-        gssencmode = "prefer"
+        table = "responses"
     )
 
     # If .env exists, read current values
@@ -69,12 +66,11 @@ sd_db_config <- function(
         current$user <- Sys.getenv("SD_USER", current$user)
         current$password <- Sys.getenv("SD_PASSWORD", current$password)
         current$table <- Sys.getenv("SD_TABLE", current$table)
-        current$gssencmode <- Sys.getenv("SD_GSSENCMODE", current$gssencmode)
     }
 
     # If no parameters provided and interactive not set, default to interactive
     if (is.null(interactive) &&
-        all(sapply(list(host, dbname, port, user, table, password, gssencmode), is.null))) {
+        all(sapply(list(host, dbname, port, user, table, password), is.null))) {
         interactive <- TRUE
     } else if (is.null(interactive)) {
         interactive <- FALSE
@@ -109,10 +105,6 @@ sd_db_config <- function(
         input <- readline(sprintf("Table name [%s]: ", current$table))
         table <- if (input == "") current$table else input
 
-        # Get gssencmode
-        input <- readline(sprintf("GSS encryption mode [%s]: ", current$gssencmode))
-        gssencmode <- if (input == "") current$gssencmode else input
-
     } else {
         # For non-interactive mode, use current values if not provided
         host <- if (!is.null(host)) host else current$host
@@ -121,7 +113,6 @@ sd_db_config <- function(
         user <- if (!is.null(user)) user else current$user
         password <- if (!is.null(password)) password else current$password
         table <- if (!is.null(table)) table else current$table
-        gssencmode <- if (!is.null(gssencmode)) gssencmode else current$gssencmode
     }
 
     # Create template content using direct variables
@@ -133,7 +124,6 @@ sd_db_config <- function(
         sprintf("SD_USER=%s", user),
         sprintf("SD_TABLE=%s", table),
         sprintf("SD_PASSWORD=%s", password),
-        sprintf("SD_GSSENCMODE=%s", gssencmode),
         sep = "\n"
     )
 
@@ -161,7 +151,6 @@ sd_db_config <- function(
     cli::cli_text("SD_USER={user}")
     cli::cli_text("SD_TABLE={table}")
     cli::cli_text("SD_PASSWORD={if(password == '') '' else '****'}")
-    cli::cli_text("SD_GSSENCMODE={gssencmode}")
 
     # Return new configuration
     current <- list(
@@ -170,8 +159,7 @@ sd_db_config <- function(
         port = port,
         user = user,
         password = password,
-        table = table,
-        gssencmode = gssencmode
+        table = table
     )
     invisible(current)
 }
