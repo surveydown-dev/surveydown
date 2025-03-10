@@ -11,7 +11,6 @@ sd_db_config(
   user = NULL,
   table = NULL,
   password = NULL,
-  gssencmode = NULL,
   interactive = NULL
 )
 }
@@ -27,8 +26,6 @@ sd_db_config(
 \item{table}{Character string. Table name}
 
 \item{password}{Character string. Database password}
-
-\item{gssencmode}{Character string. GSS encryption mode}
 
 \item{interactive}{Logical. Whether to use interactive setup. Defaults to TRUE if no parameters provided}
 }

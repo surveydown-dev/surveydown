@@ -1,5 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.8.2
+
+- Added `"slider_numeric"` type to `sd_question()`, which supports both single and dual numeric sliders.
+- Added the `...` argument to all question types in `sd_question()` so that users can pass other input arguments specific to each input type.
+- Move the `gssencmode` parameter out of the database settings and made it an argument in `sd_db_connect()` so that users can pass `NULL` if needed to completely ignore it when making connections.
+
 # surveydown 0.8.1
 
 - Updated the template used in `sd_create_survey()` to match the new database configuration introduced in v0.8.0.
