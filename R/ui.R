@@ -529,61 +529,141 @@ sd_question <- function(
       ...
     )
 
-  } else if (type %in% c("slider", "slider_numeric")) {
+  } else if (type == "slider") {
+      # For text-based slider, we need to ensure labels are displayed correctly
 
-    # Handles both types of sliders
-    # For text values, uses 'shinyWidgets::sliderTextInput'
-    # For numeric values, uses 'shiny::sliderInput'
+      # First, understand option format:
+      # option = c("Label 1" = "value1", "Label 2" = "value2", ...)
 
-    if (type == 'slider') {
-      slider_values <- make_slider_values(option)
-    } else {
-      slider_values <- option
-    }
+      # Extract display labels and values
+      display_labels <- names(option)
+      values <- unname(option)
 
-    if (!is.null(shiny::getDefaultReactiveDomain())) {
-      session <- shiny::getDefaultReactiveDomain()
-      session$userData[[paste0(id, "_values")]] <- slider_values
-    }
+      # Value to display mapping (for finding the display label from a selected value)
+      value_to_label <- display_labels
+      names(value_to_label) <- values
 
-    if (type == 'slider') {
+      # Create a choices vector that sliderTextInput will use
+      slider_choices <- display_labels
 
-      output <- shinyWidgets::sliderTextInput(
-        inputId     = id,
-        label       = label,
-        choices     = names(slider_values),
-        selected    = selected,
-        force_edges = force_edges,
-        grid        = grid,
-        ...
-      )
-
-    } else {
-      if (is.null(default)) {
-        default <- median(slider_values)
+      # Determine the selected display label based on the selected value
+      selected_label <- NULL
+      if (!is.null(selected) && selected != "") {
+          selected_label <- value_to_label[selected]
       }
-      output <- shiny::sliderInput(
-        inputId = id,
-        label   = label,
-        min     = min(slider_values),
-        max     = max(slider_values),
-        value   = default,
-        ...
+
+      # If no valid selection, default to first choice
+      if (is.null(selected_label) || is.na(selected_label)) {
+          selected_label <- slider_choices[1]
+      }
+
+      # Store the mapping for later use in JavaScript
+      value_map <- option
+
+      if (!is.null(shiny::getDefaultReactiveDomain())) {
+          session <- shiny::getDefaultReactiveDomain()
+          session$userData[[paste0(id, "_values")]] <- value_map
+      }
+
+      # Create the slider with display labels
+      output <- shinyWidgets::sliderTextInput(
+          inputId     = id,
+          label       = label,
+          choices     = slider_choices,  # These are the display labels
+          selected    = selected_label,  # Must be a display label, not a value
+          force_edges = force_edges,
+          grid        = grid,
+          ...
       )
 
-    }
+      # JavaScript to map the display label back to the stored value
+      js_convert <- sprintf("
+    $(document).on('change', '#%s', function() {
+      var valueMap = %s;
+      var currentLabel = $(this).val();
 
-    js_convert <- sprintf("
-      $(document).on('change', '#%s', function() {
-        var valueMap = %s;
-        var currentValue = $(this).val();
-        Shiny.setInputValue('%s', valueMap[currentValue]);
+      // Find the internal value that matches this display label
+      Shiny.setInputValue('%s', valueMap[currentLabel]);
+    });
+  ", id, jsonlite::toJSON(as.list(value_map)), id)
+
+      output <- shiny::tagAppendChild(
+          output,
+          shiny::tags$script(htmltools::HTML(js_convert))
+      )
+
+    } else if (type == "slider_numeric") {
+      # Handle numeric slider - supports BOTH single and range values
+      slider_values <- option
+
+      if (!is.null(shiny::getDefaultReactiveDomain())) {
+          session <- shiny::getDefaultReactiveDomain()
+          session$userData[[paste0(id, "_values")]] <- slider_values
+      }
+
+      if (is.null(default)) {
+          default <- median(slider_values)
+      }
+
+      # Check if this is a range slider
+      is_range <- is.numeric(default) && length(default) > 1
+
+      # Create the slider
+      output <- shiny::sliderInput(
+          inputId = id,
+          label   = label,
+          min     = min(slider_values),
+          max     = max(slider_values),
+          value   = default,  # Can be single value or vector of length 2 for range
+          ...
+      )
+
+      # For range sliders, add a custom observer that manually creates a string value
+      if (is_range) {
+          # Add JavaScript to force a manual string representation of the range
+          js_range_handler <- sprintf("
+      $(document).on('slidechange', '#%s', function(event, ui) {
+        // Track interaction for progress
+        Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+
+        // Force a string representation for range sliders
+        if (ui.values) {
+          var rangeString = ui.values.join(', ');
+          Shiny.setInputValue('%s_manual_range', rangeString);
+        }
       });
-    ", id, jsonlite::toJSON(as.list(slider_values)), id)
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(js_convert))
-    )
+    ", id, id, id)
+
+          output <- shiny::tagAppendChild(
+              output,
+              shiny::tags$script(htmltools::HTML(js_range_handler))
+          )
+
+          # Add an observer in the server to capture this string value
+          if (!is.null(shiny::getDefaultReactiveDomain())) {
+              shiny::observe({
+                  # Get the range string from our custom input
+                  range_string <- shiny::getDefaultReactiveDomain()$input[[paste0(id, "_manual_range")]]
+
+                  if (!is.null(range_string) && range_string != "") {
+                      # Store this directly using the main id
+                      sd_store_value(range_string, id)
+                  }
+              })
+          }
+      } else {
+          # For single sliders, just track interaction
+          js_single_handler <- sprintf("
+      $(document).on('slidechange', '#%s', function() {
+        Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+      });
+    ", id, id)
+
+          output <- shiny::tagAppendChild(
+              output,
+              shiny::tags$script(htmltools::HTML(js_single_handler))
+          )
+      }
 
   } else if (type == "date") {
 
@@ -674,14 +754,6 @@ sd_question <- function(
     # If not in a reactive context, just return the element
     return(output_div)
   }
-}
-
-make_slider_values <- function(labels) {
-  values <- tolower(gsub("[^[:alnum:]]", "_", labels))
-  values <- gsub("_{2,}", "_", values)  # Replace multiple underscores with single
-  values <- gsub("^_|_$", "", values)   # Remove leading/trailing underscores
-  names(values) <- labels
-  return(values)
 }
 
 #' Create a Custom Question with a Shiny Widget
