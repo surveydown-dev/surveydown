@@ -949,55 +949,6 @@ sd_show_password <- function() {
 #' }
 #'
 #' @export
-#' Store a value in the survey data
-#'
-#' This function allows storing additional values to be included in the survey
-#' data, such as respondent IDs or other metadata.
-#'
-#' @param value The value to be stored. This can be any R object that can be
-#'   coerced to a character string.
-#' @param id (Optional) Character string. The id (name) of the value in the
-#'   data. If not provided, the name of the `value` variable will be used.
-#'
-#' @return `NULL` (invisibly)
-#'
-#' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_ui.qmd",
-#'                              package = "surveydown")
-#'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "basic_survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Create a respondent ID to store
-#'     respondentID <- 42
-#'
-#'     # Store the respondentID
-#'     sd_store_value(respondentID)
-#'
-#'     # Store the respondentID as the variable "respID"
-#'     sd_store_value(respondentID, "respID")
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
-#' }
-#'
-#' @export
 sd_store_value <- function(value, id = NULL) {
     if (is.null(id)) {
         id <- deparse(substitute(value))
@@ -1034,6 +985,70 @@ sd_store_value <- function(value, id = NULL) {
     })
 
     invisible(NULL)
+}
+
+#' Create a reactive value that is also stored in survey data
+#'
+#' This function creates a reactive value similar to Shiny's reactive() function,
+#' but also automatically stores the calculated value in the survey data.
+#'
+#' @param id Character string. The id (name) of the value to be stored in the data.
+#' @param expr An expression that calculates a value based on inputs
+#' @param blank_na Logical. If TRUE, NA values are converted to empty strings. Default is TRUE.
+#'
+#' @return A reactive expression that can be called like a function
+#'
+#' @examples
+#' \dontrun{
+#' # In your server function:
+#' product <- sd_reactive("product", {
+#'   input$first_number * input$second_number
+#' })
+#'
+#' # Use the reactive value elsewhere
+#' output$result <- renderText({
+#'   paste("The product is:", product())
+#' })
+#'
+#' # In your survey.qmd file, display the value:
+#' The product is: `r sd_output("product", type = "value")`.
+#' }
+#'
+#' @export
+sd_reactive <- function(id, expr, blank_na = TRUE) {
+    # Validate id
+    if (!is.character(id) || length(id) != 1) {
+        stop("'id' must be a single character string")
+    }
+
+    # Capture the expression and its environment
+    expr_call <- substitute(expr)
+    expr_env <- parent.frame()
+
+    # Create a reactive expression
+    reactive_expr <- shiny::reactive({
+        # Get current session
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            warning("sd_reactive() must be called within a Shiny reactive context")
+            return(NULL)
+        }
+
+        # Evaluate the expression in its original environment
+        # This ensures that 'input' and other objects are found
+        result <- eval(expr_call, envir = expr_env)
+
+        # Store the value in the survey data
+        if (is.null(result) || (length(result) == 1 && is.na(result))) {
+            sd_store_value("", id)
+            return(if (blank_na) "" else result)
+        } else {
+            sd_store_value(result, id)
+            return(result)
+        }
+    })
+
+    return(reactive_expr)
 }
 
 #' Create a copy of a value
