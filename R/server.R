@@ -359,6 +359,10 @@ sd_server <- function(
     # Reactive value to track which fields have changed
     changed_fields <- shiny::reactiveVal(names(initial_data))
 
+    # Expose all_data and changed_fields to session's userData for use by sd_store_value
+    session$userData$all_data <- all_data
+    session$userData$changed_fields <- changed_fields
+
     # Update checkpoint 1 - when session starts
     shiny::isolate({
         update_data()
@@ -945,6 +949,55 @@ sd_show_password <- function() {
 #' }
 #'
 #' @export
+#' Store a value in the survey data
+#'
+#' This function allows storing additional values to be included in the survey
+#' data, such as respondent IDs or other metadata.
+#'
+#' @param value The value to be stored. This can be any R object that can be
+#'   coerced to a character string.
+#' @param id (Optional) Character string. The id (name) of the value in the
+#'   data. If not provided, the name of the `value` variable will be used.
+#'
+#' @return `NULL` (invisibly)
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_ui.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "basic_survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'
+#'     # Create a respondent ID to store
+#'     respondentID <- 42
+#'
+#'     # Store the respondentID
+#'     sd_store_value(respondentID)
+#'
+#'     # Store the respondentID as the variable "respID"
+#'     sd_store_value(respondentID, "respID")
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
+#' }
+#'
+#' @export
 sd_store_value <- function(value, id = NULL) {
     if (is.null(id)) {
         id <- deparse(substitute(value))
@@ -955,15 +1008,29 @@ sd_store_value <- function(value, id = NULL) {
         if (is.null(session)) {
             stop("sd_store_value must be called from within a Shiny reactive context")
         }
+
+        # Initialize stored_values if it doesn't exist
         if (is.null(session$userData$stored_values)) {
             session$userData$stored_values <- list()
         }
+
         formatted_value <- format_question_value(value)
         session$userData$stored_values[[id]] <- formatted_value
 
         # Make value accessible in the UI
         output <- shiny::getDefaultReactiveDomain()$output
         output[[paste0(id, "_value")]] <- shiny::renderText({ formatted_value })
+
+        # Get access to all_data and update it if available
+        # This allows the stored value to be accessible through sd_output
+        if (!is.null(session$userData$all_data)) {
+            session$userData$all_data[[id]] <- formatted_value
+            # Add to changed fields to trigger database update
+            if (!is.null(session$userData$changed_fields)) {
+                current_fields <- session$userData$changed_fields()
+                session$userData$changed_fields(c(current_fields, id))
+            }
+        }
     })
 
     invisible(NULL)
