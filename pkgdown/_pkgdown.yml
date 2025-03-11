@@ -37,6 +37,7 @@ reference:
   - sd_server
   - sd_store_value
   - sd_copy_value
+  - sd_reactive
   - sd_get_url_pars
   - sd_is_answered
 - title: Survey UI
