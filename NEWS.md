@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.8.3
+
+- Added `sd_reactive()` function to store reactive values in the data, addressing #179.
+
 # surveydown 0.8.2
 
 - Added `"slider_numeric"` type to `sd_question()`, which supports both single and dual numeric sliders.

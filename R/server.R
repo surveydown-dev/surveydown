@@ -359,6 +359,10 @@ sd_server <- function(
     # Reactive value to track which fields have changed
     changed_fields <- shiny::reactiveVal(names(initial_data))
 
+    # Expose all_data and changed_fields to session's userData for use by sd_store_value
+    session$userData$all_data <- all_data
+    session$userData$changed_fields <- changed_fields
+
     # Update checkpoint 1 - when session starts
     shiny::isolate({
         update_data()
@@ -955,18 +959,96 @@ sd_store_value <- function(value, id = NULL) {
         if (is.null(session)) {
             stop("sd_store_value must be called from within a Shiny reactive context")
         }
+
+        # Initialize stored_values if it doesn't exist
         if (is.null(session$userData$stored_values)) {
             session$userData$stored_values <- list()
         }
+
         formatted_value <- format_question_value(value)
         session$userData$stored_values[[id]] <- formatted_value
 
         # Make value accessible in the UI
         output <- shiny::getDefaultReactiveDomain()$output
         output[[paste0(id, "_value")]] <- shiny::renderText({ formatted_value })
+
+        # Get access to all_data and update it if available
+        # This allows the stored value to be accessible through sd_output
+        if (!is.null(session$userData$all_data)) {
+            session$userData$all_data[[id]] <- formatted_value
+            # Add to changed fields to trigger database update
+            if (!is.null(session$userData$changed_fields)) {
+                current_fields <- session$userData$changed_fields()
+                session$userData$changed_fields(c(current_fields, id))
+            }
+        }
     })
 
     invisible(NULL)
+}
+
+#' Create a reactive value that is also stored in survey data
+#'
+#' This function creates a reactive value similar to Shiny's reactive() function,
+#' but also automatically stores the calculated value in the survey data.
+#'
+#' @param id Character string. The id (name) of the value to be stored in the data.
+#' @param expr An expression that calculates a value based on inputs
+#' @param blank_na Logical. If TRUE, NA values are converted to empty strings. Default is TRUE.
+#'
+#' @return A reactive expression that can be called like a function
+#'
+#' @examples
+#' \dontrun{
+#' # In your server function:
+#' product <- sd_reactive("product", {
+#'   input$first_number * input$second_number
+#' })
+#'
+#' # Use the reactive value elsewhere
+#' output$result <- renderText({
+#'   paste("The product is:", product())
+#' })
+#'
+#' # In your survey.qmd file, display the value:
+#' The product is: `r sd_output("product", type = "value")`.
+#' }
+#'
+#' @export
+sd_reactive <- function(id, expr, blank_na = TRUE) {
+    # Validate id
+    if (!is.character(id) || length(id) != 1) {
+        stop("'id' must be a single character string")
+    }
+
+    # Capture the expression and its environment
+    expr_call <- substitute(expr)
+    expr_env <- parent.frame()
+
+    # Create a reactive expression
+    reactive_expr <- shiny::reactive({
+        # Get current session
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            warning("sd_reactive() must be called within a Shiny reactive context")
+            return(NULL)
+        }
+
+        # Evaluate the expression in its original environment
+        # This ensures that 'input' and other objects are found
+        result <- eval(expr_call, envir = expr_env)
+
+        # Store the value in the survey data
+        if (is.null(result) || (length(result) == 1 && is.na(result))) {
+            sd_store_value("", id)
+            return(if (blank_na) "" else result)
+        } else {
+            sd_store_value(result, id)
+            return(result)
+        }
+    })
+
+    return(reactive_expr)
 }
 
 #' Create a copy of a value
