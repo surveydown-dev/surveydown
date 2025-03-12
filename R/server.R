@@ -782,8 +782,8 @@ sd_show_if <- function(...) {
             # Store the calling environment for later evaluation
             rule$calling_env <- calling_env
 
-            # For debugging
-            cat("Captured show_if condition: ", deparse(rule$condition), "\n")
+            # # For debugging
+            # cat("Captured show_if condition: ", deparse(rule$condition), "\n")
 
             return(rule)
         }, error = function(e) {
