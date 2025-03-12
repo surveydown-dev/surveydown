@@ -3,6 +3,7 @@ run_config <- function(
     all_questions_required,
     start_page,
     skip_forward,
+    skip_backward,
     show_if,
     rate_survey,
     language
@@ -77,9 +78,12 @@ run_config <- function(
     start_page <- page_ids[1]
   }
 
-  # Check skip_forward and show_if inputs
+  # Check skip_forward, skip_backward, and show_if inputs
   question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
-  check_skip_show(question_ids, question_values, page_ids, skip_forward, show_if)
+  check_skip_show(
+    question_ids, question_values, page_ids,
+    skip_forward, skip_backward, show_if
+  )
 
   # Store all config settings
   config <- list(
@@ -479,13 +483,24 @@ get_output_ids <- function() {
 }
 
 check_skip_show <- function(
-    question_ids, question_values, page_ids, skip_forward, show_if
+    question_ids, question_values, page_ids,
+    skip_forward, skip_backward, show_if
 ) {
   if (!is.null(skip_forward)) {
     invalid_skip_targets <- setdiff(skip_forward$targets, page_ids)
     if (length(invalid_skip_targets) > 0) {
       stop(sprintf(
-        "Invalid skip_forward targets: %s. These must be valid page IDs.",
+        "Invalid sd_skip_forward targets: %s. These must be valid page IDs.",
+        paste(invalid_skip_targets, collapse = ", "))
+      )
+    }
+  }
+
+  if (!is.null(skip_backward)) {
+    invalid_skip_targets <- setdiff(skip_backward$targets, page_ids)
+    if (length(invalid_skip_targets) > 0) {
+      stop(sprintf(
+        "Invalid sd_skip_backward targets: %s. These must be valid page IDs.",
         paste(invalid_skip_targets, collapse = ", "))
       )
     }
