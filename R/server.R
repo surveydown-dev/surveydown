@@ -136,7 +136,6 @@ sd_server <- function(
     # Get any skip or show conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
     skip_forward <- shiny::getDefaultReactiveDomain()$userData$skip_forward
-    skip_backward <- shiny::getDefaultReactiveDomain()$userData$skip_backward
 
     # Run the configuration settings
     config <- run_config(
@@ -144,7 +143,6 @@ sd_server <- function(
         all_questions_required,
         start_page,
         skip_forward,
-        skip_backward,
         show_if,
         rate_survey,
         language
@@ -529,9 +527,9 @@ sd_server <- function(
                         page, page_ids, page_id_to_index
                     )
                     next_page_id <- handle_skip_logic(
-                        input, skip_forward, skip_backward,
+                        input, skip_forward,
                         current_page_id, next_page_id,
-                        page_id_to_index, pages
+                        page_id_to_index
                     )
                     if (!is.null(next_page_id) && check_required(page)) {
                         # Set the current page as the next page
@@ -688,7 +686,7 @@ sd_server <- function(
 #'   setwd(orig_dir)
 #' }
 #'
-#' @seealso `sd_skip_backward()`, `sd_show_if()`
+#' @seealso `sd_show_if()`
 #'
 #' @export
 sd_skip_forward <- function(...) {
@@ -729,99 +727,10 @@ sd_skip_forward <- function(...) {
     })
 }
 
-#' Define backward skip conditions for survey pages
-#'
-#' @description
-#' This function is used to define conditions under which certain pages in the
-#' survey should be skipped back to (backward only). It takes one or more formulas
-#' where the left-hand side is the condition and the right-hand side is the target page ID.
-#'
-#' @param ... One or more formulas defining skip conditions.
-#'   The left-hand side of each formula should be a condition based on input
-#'   values, and the right-hand side should be the ID of the page to skip to if
-#'   the condition is met. Only backward skipping (to pages earlier in the sequence) is allowed.
-#'
-#' @return A list of parsed conditions, where each element contains the
-#' condition and the target page ID.
-#'
-#' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_skip_backward.qmd",
-#'                              package = "surveydown")
-#'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Skip backward based on review input
-#'     sd_skip_backward(
-#'       input$needs_correction == "yes" ~ "initial_page",
-#'       input$needs_revision == "yes" ~ "revision_page"
-#'     )
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
-#' }
-#'
-#' @seealso `sd_skip_forward()`, `sd_show_if()`
-#'
-#' @export
-sd_skip_backward <- function(...) {
-    conditions <- parse_conditions(...)
-    calling_env <- parent.frame()
-
-    # Process each condition
-    processed_conditions <- lapply(conditions, function(rule) {
-        tryCatch({
-            # Store the original condition for use with function calls
-            rule$original_condition <- rule$condition
-
-            # Extract any reactive expressions that might be called
-            # We're storing the environment for potential evaluation later
-            rule$calling_env <- calling_env
-
-            # # For debugging
-            # cat("Captured condition: ", deparse(rule$condition), "\n")
-
-            return(rule)
-        }, error = function(e) {
-            warning("Error processing condition: ", e$message)
-            return(rule)
-        })
-    })
-
-    # Store in userData
-    shiny::isolate({
-        session <- shiny::getDefaultReactiveDomain()
-        if (is.null(session)) {
-            stop("sd_skip_backward must be called within a Shiny reactive context")
-        }
-        if (is.null(session$userData$skip_backward)) {
-            session$userData$skip_backward <- list()
-        }
-        session$userData$skip_backward$conditions <- processed_conditions
-        session$userData$skip_backward$targets <- get_unique_targets(processed_conditions)
-    })
-}
-
 #' Define skip conditions for survey pages (Deprecated)
 #'
 #' @description
-#' This function is deprecated. Please use `sd_skip_forward()` or `sd_skip_backward()` instead.
+#' This function is deprecated. Please use `sd_skip_forward()` instead.
 #'
 #' This function is used to define conditions under which certain pages in the
 #' survey should be skipped. It now behaves like `sd_skip_forward()` where only forward
@@ -838,7 +747,7 @@ sd_skip_backward <- function(...) {
 #' @export
 sd_skip_if <- function(...) {
     # v0.9.0
-    .Deprecated(msg = "Please use sd_skip_forward() for forward skipping or sd_skip_backward() for backward skipping. This function now functions the same as sd_skip_forward().")
+    .Deprecated("sd_skip_forward()")
 
     sd_skip_forward(...)
 }
@@ -889,7 +798,7 @@ sd_skip_if <- function(...) {
 #'   setwd(orig_dir)
 #' }
 #'
-#' @seealso `sd_skip_forward()`, `sd_skip_backward()`
+#' @seealso `sd_skip_forward()`
 #'
 #' @export
 sd_show_if <- function(...) {
@@ -1213,12 +1122,16 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
         }
     })
 
-    # Auto-trigger the evaluation once to ensure value is available
-    # This creates an observer that will run once when the session initializes
-    shiny::observeEvent(shiny::getDefaultReactiveDomain()$clientData, {
-        # This forces the reactive to run once right away
-        reactive_expr()
-    }, once = TRUE)
+    # Create an observer to watch for changes in inputs
+    # This ensures that when inputs change, the reactive is re-calculated
+    # and the value is updated in the survey data
+    shiny::observe({
+        # Force the reactive to re-evaluate
+        result <- reactive_expr()
+
+        # The sd_store_value call is already inside the reactive,
+        # so we don't need to call it again here
+    })
 
     return(reactive_expr)
 }
@@ -1485,19 +1398,14 @@ get_default_next_page <- function(page, page_ids, page_id_to_index) {
 }
 
 handle_skip_logic <- function(
-    input, skip_forward, skip_backward,
-    current_page_id, next_page_id, page_id_to_index, pages
+    input, skip_forward, current_page_id, next_page_id, page_id_to_index
 ) {
-    if (is.null(next_page_id) |
-        (is.null(skip_forward) & is.null(skip_backward))
-    ) {
+    if (is.null(next_page_id) | is.null(skip_forward)) {
         return(next_page_id)
     }
 
     # Get the current page index and page object
     current_page_index <- page_id_to_index[current_page_id]
-    current_page <- pages[[current_page_index]]
-    current_page_questions <- current_page$questions
 
     # Loop through each skip forward logic condition
     if (!is.null(skip_forward) && !is.null(skip_forward$conditions)) {
@@ -1505,30 +1413,14 @@ handle_skip_logic <- function(
         for (i in seq_along(conditions)) {
             rule <- conditions[[i]]
 
-            # Skip if already on target page
+            # Ignore the condition if already on target page
             if (current_page_id == rule$target) {
                 next
             }
 
-            # Skip if not a forward direction skip
+            # Ignore the condition if not a forward direction skip
             target_page_index <- page_id_to_index[rule$target]
             if (target_page_index <= current_page_index) {
-                next
-            }
-
-            # Extract question IDs from the condition
-            question_ids <- extract_question_ids_from_condition(
-                deparse(rule$original_condition)
-            )
-
-            # Check if any of these questions are on the current page
-            question_on_current_page <- any(
-                question_ids %in% current_page_questions
-            )
-
-            # If none of the questions in the condition are on this page,
-            # don't apply the forward skip
-            if (!question_on_current_page) {
                 next
             }
 
@@ -1550,85 +1442,7 @@ handle_skip_logic <- function(
         }
     }
 
-    # Loop through each skip backward logic condition
-    if (!is.null(skip_backward) && !is.null(skip_backward$conditions)) {
-        conditions <- skip_backward$conditions
-        for (i in seq_along(conditions)) {
-            rule <- conditions[[i]]
-
-            # Skip if already on target page
-            if (current_page_id == rule$target) {
-                next
-            }
-
-            # Skip if not a backward direction skip
-            target_page_index <- page_id_to_index[rule$target]
-            if (target_page_index >= current_page_index) {
-                next
-            }
-
-            # Extract question IDs from the condition
-            question_ids <- extract_question_ids_from_condition(
-                deparse(rule$original_condition)
-            )
-
-            # Check if any of these questions are on the current page
-            question_on_current_page <- any(
-                question_ids %in% current_page_questions
-            )
-
-            # If none of the questions in the condition are on this page,
-            # don't apply the backward skip
-            if (!question_on_current_page) {
-                next
-            }
-
-            # Evaluate the condition
-            condition_result <- tryCatch({
-                evaluate_condition(rule)
-            }, error = function(e) {
-                warning(sprintf(
-                    "Error in sd_skip_backward condition for target '%s': %s",
-                    rule$target, conditionMessage(e))
-                )
-                FALSE
-            })
-
-            # Check if the condition is met
-            if (condition_result) {
-                return(rule$target)
-            }
-        }
-    }
-
     return(next_page_id)
-}
-
-# Helper function to extract question IDs from a condition expression
-extract_question_ids_from_condition <- function(condition_str) {
-    # Pattern to match input$X or input[["X"]] or input['X']
-    pattern <- "input\\$(\\w+)|input\\[\\[[\"\']([^\"\']+)[\"\']\\]\\]|input\\[[\"\']([^\"\']+)[\"\']\\]"
-    matches <- gregexpr(pattern, condition_str, perl = TRUE)
-    results <- character(0)
-
-    if (matches[[1]][1] != -1) {
-        matched_strings <- regmatches(condition_str, matches)[[1]]
-        for (match in matched_strings) {
-            # Extract just the question ID
-            if (grepl("input\\$", match)) {
-                question_id <- sub("input\\$", "", match)
-                results <- c(results, question_id)
-            } else if (grepl("input\\[\\[", match)) {
-                question_id <- sub("input\\[\\[[\"\']([^\"\']+)[\"\']\\]\\]", "\\1", match)
-                results <- c(results, question_id)
-            } else if (grepl("input\\[", match)) {
-                question_id <- sub("input\\[[\"\']([^\"\']+)[\"\']\\]", "\\1", match)
-                results <- c(results, question_id)
-            }
-        }
-    }
-
-    return(unique(results))
 }
 
 # Check if a single question is answered

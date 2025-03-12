@@ -2,7 +2,9 @@
 
 # surveydown 0.9.0
 
-- Major overhaul to how page skipping logic is handled. The `sd_skip_if()` function is depreciated, and two new functions are put in it's place: `sd_skip_forward()` and `sd_skip_backward()`. These give the user more control over skipping logic, and logic was put in place to try to avoid unintended skipping loops. The main logic added is a requirement that the question that triggers the skipping (forward or backward) must be on the current page for the skip to trigger. This is the main feature that avoids skipping loops.
+- Overhauled how page skipping logic is handled for improved performance and consistency with different skipping conditions users provide.
+- The `sd_skip_if()` function is depreciated and replaced with `sd_skip_forward()` for clarity of what the function does.
+- Skipping logic is now strictly forward to avoid unintended skipping logic loops.
 
 # surveydown 0.8.4
 
