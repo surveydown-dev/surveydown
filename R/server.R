@@ -684,8 +684,29 @@ sd_server <- function(
 #' @export
 sd_skip_if <- function(...) {
     conditions <- parse_conditions(...)
+    calling_env <- parent.frame()
 
-    # Create a list in userData to store the skip_if targets
+    # Process each condition
+    processed_conditions <- lapply(conditions, function(rule) {
+        tryCatch({
+            # Store the original condition for use with function calls
+            rule$original_condition <- rule$condition
+
+            # Extract any reactive expressions that might be called
+            # We're storing the environment for potential evaluation later
+            rule$calling_env <- calling_env
+
+            # # For debugging
+            # cat("Captured condition: ", deparse(rule$condition), "\n")
+
+            return(rule)
+        }, error = function(e) {
+            warning("Error processing condition: ", e$message)
+            return(rule)
+        })
+    })
+
+    # Store in userData
     shiny::isolate({
         session <- shiny::getDefaultReactiveDomain()
         if (is.null(session)) {
@@ -694,8 +715,8 @@ sd_skip_if <- function(...) {
         if (is.null(session$userData$skip_if)) {
             session$userData$skip_if <- list()
         }
-        session$userData$skip_if$conditions <- conditions
-        session$userData$skip_if$targets <- get_unique_targets(conditions)
+        session$userData$skip_if$conditions <- processed_conditions
+        session$userData$skip_if$targets <- get_unique_targets(processed_conditions)
     })
 }
 
@@ -750,6 +771,27 @@ sd_skip_if <- function(...) {
 #' @export
 sd_show_if <- function(...) {
     conditions <- parse_conditions(...)
+    calling_env <- parent.frame()
+
+    # Process each condition
+    processed_conditions <- lapply(conditions, function(rule) {
+        tryCatch({
+            # Store the original condition for use with function calls
+            rule$original_condition <- rule$condition
+
+            # Store the calling environment for later evaluation
+            rule$calling_env <- calling_env
+
+            # For debugging
+            cat("Captured show_if condition: ", deparse(rule$condition), "\n")
+
+            return(rule)
+        }, error = function(e) {
+            warning("Error processing show_if condition: ", e$message)
+            return(rule)
+        })
+    })
+
     # Create a list in userData to store the show_if targets
     shiny::isolate({
         session <- shiny::getDefaultReactiveDomain()
@@ -759,8 +801,8 @@ sd_show_if <- function(...) {
         if (is.null(session$userData$show_if)) {
             session$userData$show_if <- list()
         }
-        session$userData$show_if$conditions <- conditions
-        session$userData$show_if$targets <- get_unique_targets(conditions)
+        session$userData$show_if$conditions <- processed_conditions
+        session$userData$show_if$targets <- get_unique_targets(processed_conditions)
     })
 }
 
@@ -1048,6 +1090,13 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
         }
     })
 
+    # Auto-trigger the evaluation once to ensure value is available
+    # This creates an observer that will run once when the session initializes
+    shiny::observeEvent(shiny::getDefaultReactiveDomain()$clientData, {
+        # This forces the reactive to run once right away
+        reactive_expr()
+    }, once = TRUE)
+
     return(reactive_expr)
 }
 
@@ -1231,10 +1280,21 @@ parse_conditions <- function(...) {
 }
 
 evaluate_condition <- function(rule) {
-    isTRUE(eval(
-        rule$condition,
-        envir = list(input = shiny::getDefaultReactiveDomain()$input)
-    ))
+    # Create a safe evaluation environment that can handle reactive expressions
+    session <- shiny::getDefaultReactiveDomain()
+    eval_env <- list(input = session$input)
+
+    # Try to evaluate using the original condition (which might have function calls)
+    tryCatch({
+        # Use both the original calling environment and the input
+        result <- eval(rule$original_condition,
+                       envir = rule$calling_env,
+                       enclos = environment())
+        return(isTRUE(result))
+    }, error = function(e) {
+        warning("Error in condition evaluation: ", e$message)
+        return(FALSE)
+    })
 }
 
 get_stored_vals <- function(session) {
