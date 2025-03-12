@@ -771,6 +771,27 @@ sd_skip_if <- function(...) {
 #' @export
 sd_show_if <- function(...) {
     conditions <- parse_conditions(...)
+    calling_env <- parent.frame()
+
+    # Process each condition
+    processed_conditions <- lapply(conditions, function(rule) {
+        tryCatch({
+            # Store the original condition for use with function calls
+            rule$original_condition <- rule$condition
+
+            # Store the calling environment for later evaluation
+            rule$calling_env <- calling_env
+
+            # For debugging
+            cat("Captured show_if condition: ", deparse(rule$condition), "\n")
+
+            return(rule)
+        }, error = function(e) {
+            warning("Error processing show_if condition: ", e$message)
+            return(rule)
+        })
+    })
+
     # Create a list in userData to store the show_if targets
     shiny::isolate({
         session <- shiny::getDefaultReactiveDomain()
@@ -780,8 +801,8 @@ sd_show_if <- function(...) {
         if (is.null(session$userData$show_if)) {
             session$userData$show_if <- list()
         }
-        session$userData$show_if$conditions <- conditions
-        session$userData$show_if$targets <- get_unique_targets(conditions)
+        session$userData$show_if$conditions <- processed_conditions
+        session$userData$show_if$targets <- get_unique_targets(processed_conditions)
     })
 }
 
@@ -1257,13 +1278,6 @@ parse_conditions <- function(...) {
         )
     })
 }
-
-# evaluate_condition <- function(rule) {
-#     isTRUE(eval(
-#         rule$condition,
-#         envir = list(input = shiny::getDefaultReactiveDomain()$input)
-#     ))
-# }
 
 evaluate_condition <- function(rule) {
     # Create a safe evaluation environment that can handle reactive expressions
