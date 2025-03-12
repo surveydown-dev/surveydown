@@ -696,8 +696,8 @@ sd_skip_if <- function(...) {
             # We're storing the environment for potential evaluation later
             rule$calling_env <- calling_env
 
-            # For debugging
-            cat("Captured condition: ", deparse(rule$condition), "\n")
+            # # For debugging
+            # cat("Captured condition: ", deparse(rule$condition), "\n")
 
             return(rule)
         }, error = function(e) {
@@ -1068,6 +1068,13 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
             return(result)
         }
     })
+
+    # Auto-trigger the evaluation once to ensure value is available
+    # This creates an observer that will run once when the session initializes
+    shiny::observeEvent(shiny::getDefaultReactiveDomain()$clientData, {
+        # This forces the reactive to run once right away
+        reactive_expr()
+    }, once = TRUE)
 
     return(reactive_expr)
 }
