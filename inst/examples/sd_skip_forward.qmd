@@ -1,0 +1,116 @@
+---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+
+::: {#initial_page .sd-page}
+
+# Fruit Selection
+
+Please select your favorite fruit.
+
+```{r}
+sd_question(
+  type   = 'mc',
+  id     = 'fav_fruit',
+  label  = 'What is your favorite fruit?',
+  option = c(
+    'Apple'  = 'apple',
+    'Orange' = 'orange',
+    'Other'  = 'other'
+  )
+)
+
+sd_next()
+```
+
+:::
+
+::: {#default_page .sd-page}
+
+# Default Next Page
+
+This is the default next page that appears if no skip conditions are met.
+
+```{r}
+sd_question(
+  type   = 'text',
+  id     = 'default_text',
+  label  = 'This is the default page. We did not expect to see you here!'
+)
+
+sd_next()
+```
+
+:::
+
+::: {#apple_page .sd-page}
+
+# Apple Page
+
+You selected Apple as your favorite fruit.
+
+```{r}
+sd_question(
+  type   = 'text',
+  id     = 'apple_text',
+  label  = 'Tell us something about apples:'
+)
+
+sd_next(next_page = "summary_page")
+```
+
+:::
+
+::: {#orange_page .sd-page}
+
+# Orange Page
+
+You selected Orange as your favorite fruit.
+
+```{r}
+sd_question(
+  type   = 'text',
+  id     = 'orange_text',
+  label  = 'Tell us something about oranges:'
+)
+
+sd_next(next_page = "summary_page")
+```
+
+:::
+
+::: {#other_page .sd-page}
+
+# Other Fruit Page
+
+You selected Other as your favorite fruit.
+
+```{r}
+sd_question(
+  type   = 'text',
+  id     = 'other_text',
+  label  = 'What is your favorite fruit and why?'
+)
+
+sd_next(next_page = "summary_page")
+```
+
+:::
+
+::: {#summary_page .sd-page}
+
+# Survey Summary
+
+Thank you for completing our fruit survey!
+
+```{r}
+sd_close("Exit Survey")
+```
+
+:::
