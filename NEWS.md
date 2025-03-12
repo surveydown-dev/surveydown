@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.8.4
+
+- Add support for `sd_skip_if()` to be able to use static values and reactive expressions as conditions.
+- Add support for `sd_show_if()` to be able to use static values and reactive expressions as conditions.
+
 # surveydown 0.8.3
 
 - Added `sd_reactive()` function to store reactive values in the data, addressing #179.
