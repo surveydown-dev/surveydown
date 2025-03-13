@@ -1108,29 +1108,41 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
             return(NULL)
         }
 
-        # Evaluate the expression in its original environment
-        # This ensures that 'input' and other objects are found
-        result <- eval(expr_call, envir = expr_env)
+        # Use tryCatch to safely evaluate the expression
+        tryCatch({
+            # Evaluate the expression in its original environment
+            result <- eval(expr_call, envir = expr_env)
 
-        # Store the value in the survey data
-        if (is.null(result) || (length(result) == 1 && is.na(result))) {
+            # Store the value in the survey data
+            if (is.null(result) || (length(result) == 1 && is.na(result))) {
+                sd_store_value("", id)
+                return(if (blank_na) "" else result)
+            } else {
+                sd_store_value(result, id)
+                return(result)
+            }
+        }, error = function(e) {
+            warning("Error in sd_reactive for ", id, ": ", e$message)
             sd_store_value("", id)
-            return(if (blank_na) "" else result)
-        } else {
-            sd_store_value(result, id)
-            return(result)
-        }
+            return(if (blank_na) "" else NULL)
+        })
     })
 
-    # Create an observer to watch for changes in inputs
-    # This ensures that when inputs change, the reactive is re-calculated
-    # and the value is updated in the survey data
-    shiny::observe({
-        # Force the reactive to re-evaluate
-        result <- reactive_expr()
+    # Auto-trigger the evaluation once to ensure value is available
+    # This creates an observer that will run once when the session initializes
+    shiny::observeEvent(shiny::getDefaultReactiveDomain()$clientData, {
+        # This forces the reactive to run once right away
+        reactive_expr()
+    }, once = TRUE)
 
-        # The sd_store_value call is already inside the reactive,
-        # so we don't need to call it again here
+    # Create a separate observer that will monitor the reactive expression
+    shiny::observe({
+        # Wrap in tryCatch to prevent errors from crashing the app
+        tryCatch({
+            reactive_expr()
+        }, error = function(e) {
+            warning("Error in sd_reactive observer for ", id, ": ", e$message)
+        })
     })
 
     return(reactive_expr)
