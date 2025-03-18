@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.8.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,12 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.0" id="surveydown-090">surveydown 0.9.0<a class="anchor" aria-label="anchor" href="#surveydown-090"></a></h2>
+<ul><li>Overhauled how page skipping logic is handled for improved performance and consistency with different skipping conditions users provide.</li>
+<li>The <code><a href="../reference/sd_skip_if.html">sd_skip_if()</a></code> function is depreciated and replaced with <code><a href="../reference/sd_skip_forward.html">sd_skip_forward()</a></code> for clarity of what the function does.</li>
+<li>Skipping logic is now strictly forward to avoid unintended skipping logic loops.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.8.4" id="surveydown-084">surveydown 0.8.4<a class="anchor" aria-label="anchor" href="#surveydown-084"></a></h2>
 <ul><li>Add support for <code><a href="../reference/sd_skip_if.html">sd_skip_if()</a></code> to be able to use static values and reactive expressions as conditions.</li>
