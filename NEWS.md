@@ -1,5 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.9.0
+
+- Overhauled how page skipping logic is handled for improved performance and consistency with different skipping conditions users provide.
+- The `sd_skip_if()` function is depreciated and replaced with `sd_skip_forward()` for clarity of what the function does.
+- Skipping logic is now strictly forward to avoid unintended skipping logic loops.
+
 # surveydown 0.8.4
 
 - Add support for `sd_skip_if()` to be able to use static values and reactive expressions as conditions.

@@ -31,7 +31,7 @@ reference:
 - title: Control Logic
   contents:
   - sd_show_if
-  - sd_skip_if
+  - sd_skip_forward
 - title: Server
   contents:
   - sd_server
@@ -69,3 +69,4 @@ reference:
   - sd_database
   - sd_set_password
   - sd_show_password
+  - sd_skip_if
