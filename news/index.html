@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,12 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.1" id="surveydown-091">surveydown 0.9.1<a class="anchor" aria-label="anchor" href="#surveydown-091"></a></h2>
+<ul><li>
+<code><a href="../reference/sd_dashboard.html">sd_dashboard()</a></code> now accepts an argument of <code>gssencmode</code>, defaults to <code>"prefer"</code>. This is same logic as the <code>gssencmode</code> argument in <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code>.</li>
+<li>To further explain this update, both <code><a href="../reference/sd_dashboard.html">sd_dashboard()</a></code> and <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code> accepts the <code>gssencmode</code> argument to embrace the different <code>gssencmode</code> situations of the internet connection. It is not embedded into <code><a href="../reference/sd_db_config.html">sd_db_config()</a></code> because <code>gssencmode</code> is not accessible for all connections (some may have <code>NULL</code>). This extra argument for <code><a href="../reference/sd_dashboard.html">sd_dashboard()</a></code> and <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code> can be considered as a work-around.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.9.0" id="surveydown-090">surveydown 0.9.0<a class="anchor" aria-label="anchor" href="#surveydown-090"></a></h2>
 <ul><li>Overhauled how page skipping logic is handled for improved performance and consistency with different skipping conditions users provide.</li>
