@@ -18,6 +18,10 @@
 #' - Downloadable survey responses data table
 #' - Database connection configuration and testing
 #'
+#' @param gssencmode Character string. The GSS encryption mode for the database
+#'   connection. Defaults to `"prefer"`. Set to `"disable"` if you're having
+#'   connection issues on a secure connection like a VPN.
+#'
 #' @return
 #' Launches a Shiny application with the survey dashboard.
 #' The function does not return a value; it is called for its side effects
@@ -25,12 +29,15 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Launch the survey dashboard
+#' # Launch the survey dashboard with default settings
 #' sd_dashboard()
+#'
+#' # Launch with disabled GSS encryption (for VPN connections)
+#' sd_dashboard(gssencmode = "disable")
 #' }
 #'
 #' @export
-sd_dashboard <- function() {
+sd_dashboard <- function(gssencmode = "prefer") {
     if (file.exists(".env")) {
         dotenv::load_dot_env(".env")
     }
@@ -145,22 +152,17 @@ sd_dashboard <- function() {
                                      style = "position: relative;",
                                      shiny::div(
                                          style = "display: flex; align-items: center;",
-                                         shiny::div(
-                                             style = "flex-grow: 1;",
-                                             shiny::passwordInput(
-                                                 "password",
-                                                 "Password:",
-                                                 value = Sys.getenv("SD_PASSWORD", ""),
-                                                 width = "100%"
-                                             )
+                                         shiny::passwordInput(
+                                             "password",
+                                             "Password:",
+                                             value = Sys.getenv("SD_PASSWORD", "")
                                          ),
                                          shiny::div(
-                                             style = "margin-left: 10px; margin-top: 10px;",
+                                             style = "margin-left: 10px; margin-top: 1em;",
                                              shiny::actionButton(
                                                  "toggle_password",
                                                  "Show",
                                                  class = "btn-sm btn-secondary",
-                                                 style = "padding: 2px 8px; font-size: 12px;",
                                                  onclick = "myFunction()"
                                              )
                                          )
@@ -171,7 +173,8 @@ sd_dashboard <- function() {
                                  shiny::div(
                                      style = "margin-top: 20px;",
                                      shiny::actionButton("test_connection", "Test Connection",
-                                                         class = "btn-primary w-100")
+                                                         class = "btn-primary",
+                                                         style = "width: 300px;")
                                  ),
                                  shiny::textOutput("connection_status")
                              )
@@ -194,17 +197,18 @@ sd_dashboard <- function() {
         attempt_connection <- function(config = NULL) {
             tryCatch({
                 if (is.null(config)) {
-                    # Use default connection from .env
-                    db <- sd_db_connect()
+                    # Use default connection from .env with the specified gssencmode
+                    db <- sd_db_connect(gssencmode = gssencmode)
                 } else {
-                    # Use provided config
+                    # Use provided config with the specified gssencmode
                     pool <- pool::dbPool(
                         RPostgres::Postgres(),
                         host = config$host,
                         dbname = config$dbname,
                         port = config$port,
                         user = config$user,
-                        password = config$password
+                        password = config$password,
+                        gssencmode = gssencmode
                     )
                     db <- list(db = pool)
                 }

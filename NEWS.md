@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.9.1
+
+- `sd_dashboard()` now accepts an argument of `gssencmode`, defaults to `"prefer"`. This is same logic as the `gssencmode` argument in `sd_db_connect()`.
+- To further explain this update, both `sd_dashboard()` and `sd_db_connect()` accepts the `gssencmode` argument to embrace the different `gssencmode` situations of the internet connection. It is not embedded into `sd_db_config()` because `gssencmode` is not accessible for all connections (some may have `NULL`). This extra argument for `sd_dashboard()` and `sd_db_connect()` can be considered as a work-around.
+
 # surveydown 0.9.0
 
 - Overhauled how page skipping logic is handled for improved performance and consistency with different skipping conditions users provide.

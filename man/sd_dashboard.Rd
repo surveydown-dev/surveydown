@@ -4,7 +4,12 @@
 \alias{sd_dashboard}
 \title{Launch Survey Dashboard}
 \usage{
-sd_dashboard()
+sd_dashboard(gssencmode = "prefer")
+}
+\arguments{
+\item{gssencmode}{Character string. The GSS encryption mode for the database
+connection. Defaults to \code{"prefer"}. Set to \code{"disable"} if you're having
+connection issues on a secure connection like a VPN.}
 }
 \value{
 Launches a Shiny application with the survey dashboard.
@@ -35,8 +40,11 @@ completion rate, and average rating
 }
 \examples{
 \dontrun{
-# Launch the survey dashboard
+# Launch the survey dashboard with default settings
 sd_dashboard()
+
+# Launch with disabled GSS encryption (for VPN connections)
+sd_dashboard(gssencmode = "disable")
 }
 
 }
