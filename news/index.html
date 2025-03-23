@@ -40,7 +40,7 @@
 <li>To further explain this update, both <code><a href="../reference/sd_dashboard.html">sd_dashboard()</a></code> and <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code> accepts the <code>gssencmode</code> argument to embrace the different <code>gssencmode</code> situations of the internet connection. It is not embedded into <code><a href="../reference/sd_db_config.html">sd_db_config()</a></code> because <code>gssencmode</code> is not accessible for all connections (some may have <code>NULL</code>). This extra argument for <code><a href="../reference/sd_dashboard.html">sd_dashboard()</a></code> and <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code> can be considered as a work-around.</li>
 </ul></div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.9.0" id="surveydown-090">surveydown 0.9.0<a class="anchor" aria-label="anchor" href="#surveydown-090"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.9.0" id="surveydown-090">surveydown 0.9.0<a class="anchor" aria-label="anchor" href="#surveydown-090"></a></h2><p class="text-muted">CRAN release: 2025-03-18</p>
 <ul><li>Overhauled how page skipping logic is handled for improved performance and consistency with different skipping conditions users provide.</li>
 <li>The <code><a href="../reference/sd_skip_if.html">sd_skip_if()</a></code> function is depreciated and replaced with <code><a href="../reference/sd_skip_forward.html">sd_skip_forward()</a></code> for clarity of what the function does.</li>
 <li>Skipping logic is now strictly forward to avoid unintended skipping logic loops.</li>
