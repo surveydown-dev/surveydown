@@ -40,6 +40,11 @@ The template includes:
 \item A placeholder for page contents
 \item An R code chunk with a placeholder for questions and a next button
 }
+
+Special page_id values:
+\itemize{
+\item When page_id is "end", a thank-you page template with \code{sd_close()} is inserted
+}
 }
 \examples{
 if (interactive()) {
@@ -50,6 +55,9 @@ if (interactive()) {
 
   # Insert a new page template with custom ID
   sd_add_page(page_id = "welcome")
+
+  # Insert an end/thank you page
+  sd_add_page(page_id = "end")
 }
 
 }

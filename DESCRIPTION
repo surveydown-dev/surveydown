@@ -49,7 +49,6 @@ Imports:
     shiny,
     shinyjs,
     shinyWidgets,
-    usethis,
     utils,
     xml2,
     yaml

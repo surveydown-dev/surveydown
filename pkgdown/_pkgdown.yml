@@ -69,5 +69,4 @@ reference:
   contents:
   - sd_database
   - sd_set_password
-  - sd_show_password
   - sd_skip_if

@@ -1,5 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.9.2
+
+- Remove `sd_show_password()` function entirely (previously was depreciated)
+- Remove the dependency on `usethis` package
+- Created internal `yesno()` function to replace `usethis::ui_yeah()`
+
 # surveydown 0.9.1
 
 - `sd_dashboard()` now accepts an argument of `gssencmode`, defaults to `"prefer"`. This is same logic as the `gssencmode` argument in `sd_db_connect()`.

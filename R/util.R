@@ -186,7 +186,7 @@ tibble_to_list_of_lists <- function(tbl) {
 #'
 #' @export
 sd_create_survey <- function(path = getwd()) {
-    if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
+    if (path == getwd() && !yesno(paste0('Use the current directory "', path, '" as the path?'))) {
         stop("Operation aborted by the user.")
     }
 
@@ -218,9 +218,9 @@ sd_create_survey <- function(path = getwd()) {
     })
 
     if (any(files_copied)) {
-        usethis::ui_done(paste("Template created at", path))
+        cli::cli_alert_success(paste("Template created at", path))
     } else {
-        usethis::ui_done("Since all files exist, no file was added.")
+        cli::cli_alert_success("Since all files exist, no file was added.")
     }
 
     invisible(NULL)
@@ -873,4 +873,35 @@ sd_create_translations <- function(language = "en", path = getwd()) {
     "\n\nModify it to provide custom messages in '", language, "'."
   )
   invisible(NULL)
+}
+
+# Replaces usethis::ui_yeah, inspired by internal yesno function in devtools
+yesno <- function(msg) {
+    # Define fun options for yes/no
+    yeses <- c("Yes", "Definitely", "For sure", "Yup", "Yeah", "Of course", "Absolutely")
+    nos <- c("No way", "Not yet", "I forget", "No", "Nope", "Uhhhh... Maybe?")
+
+    # Ensure message ends with question mark
+    if (!grepl("\\?\\s*$", msg)) {
+        msg <- paste0(msg, "?")
+    }
+
+    # Display the message
+    cli::cli_inform(msg)
+
+    # Create random options (1 yes, 2 no) and shuffle them
+    qs <- c(sample(yeses, 1), sample(nos, 2))
+    rand <- sample(length(qs))
+
+    # Display menu and get response
+    selection <- utils::menu(qs[rand])
+
+    # If nothing was selected (0), return FALSE
+    if (selection == 0) return(FALSE)
+
+    # Find which index corresponds to the yes option
+    yes_position <- which(rand == 1)
+
+    # Return TRUE if the yes option was selected
+    return(selection == yes_position)
 }
