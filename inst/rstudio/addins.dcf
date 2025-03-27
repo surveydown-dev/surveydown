@@ -2,3 +2,8 @@ Name: Add Survey Page
 Description: Create a new survey page with custom page ID
 Binding: sd_page_gadget
 Interactive: true
+
+Name: Add Survey Question
+Description: Create a new survey question with specified type
+Binding: sd_question_gadget
+Interactive: true

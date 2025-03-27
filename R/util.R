@@ -339,6 +339,23 @@ slider = 'sd_question(
 )
 
 ',
+slider_numeric = 'sd_question(
+  type  = "slider_numeric",
+  id    = "apple_slider",
+  label = "How many apple(s) do you eat per week?",
+  option = seq(0, 10, 1)
+)
+
+',
+slider_numeric_2 = 'sd_question(
+  type  = "slider_numeric",
+  id    = "apple_slider_range",
+  label = "What do you think is a reasonable range of weekly apple consumption?",
+  option = seq(0, 10, 1),
+  default = c(3, 5)
+)
+
+',
 date = 'sd_question(
   type  = "date",
   id    = "apple_date",
@@ -434,6 +451,102 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
   cursor <- context$selection[[1]]$range$start
   # Insert the template
   rstudioapi::insertText(location = cursor, text = template)
+}
+
+#' Show a Shiny gadget for selecting a question type
+#'
+#' This function displays a Shiny gadget that allows the user to select
+#' a question type from a dropdown menu. Once submitted, it calls
+#' sd_add_question() with the specified type.
+#'
+#' @param chunk Logical. If `TRUE`, the code will be generated with the R code
+#'   chunk wrapper. Defaults to `FALSE`.
+#'
+#' @return The selected question type (invisibly).
+#' @importFrom miniUI miniPage gadgetTitleBar miniContentPanel
+#' @importFrom shiny dialogViewer runGadget selectInput actionButton observeEvent stopApp tags HTML
+#' @export
+#'
+sd_question_gadget <- function(chunk = FALSE) {
+  # Get all available question types (in alphabetical order)
+  question_types <- c(
+    "Date" = "date",
+    "Date Range" = "daterange",
+    "Multiple Choice" = "mc",
+    "Multiple Choice (Multiple Selection)" = "mc_multiple",
+    "Multiple Choice Buttons" = "mc_buttons",
+    "Multiple Choice Buttons (Multiple Selection)" = "mc_multiple_buttons",
+    "Numeric Input" = "numeric",
+    "Select Dropdown" = "select",
+    "Slider" = "slider",
+    "Slider Numeric" = "slider_numeric",
+    "Slider Numeric Range" = "slider_numeric_2",
+    "Text Area" = "textarea",
+    "Text Input" = "text"
+  )
+
+  ui <- miniUI::miniPage(
+    shiny::tags$head(
+      shiny::tags$script(shiny::HTML("
+        $(document).ready(function() {
+          // Add event listener for Enter key
+          $(document).keypress(function(e) {
+            if(e.which == 13) { // 13 is the Enter key code
+              $('#submit').click();
+              return false;
+            }
+          });
+        });
+      "))
+    ),
+    miniUI::gadgetTitleBar("Add Survey Question"),
+    miniUI::miniContentPanel(
+      shiny::selectInput(
+        "question_type",
+        "Question Type:",
+        choices = question_types,
+        selected = "mc"
+      ),
+      shiny::checkboxInput(
+        "in_chunk",
+        "Insert in R code chunk",
+        value = FALSE
+      ),
+      shiny::actionButton("submit", "Create Question", class = "btn-primary")
+    )
+  )
+
+  server <- function(input, output, session) {
+    # When submit button is clicked
+    shiny::observeEvent(input$submit, {
+      # Get the selected question type
+      q_type <- input$question_type
+      use_chunk <- input$in_chunk
+
+      # Close the gadget and return the question type
+      shiny::stopApp(list(type = q_type, chunk = use_chunk))
+    })
+
+    # Also handle the "Done" button in the title bar
+    shiny::observeEvent(input$done, {
+      shiny::stopApp(NULL)  # Return NULL if canceled
+    })
+  }
+
+  # Run the gadget with a dialog viewer
+  result <- shiny::runGadget(
+    ui,
+    server,
+    viewer = shiny::dialogViewer("Add Survey Question", width = 400, height = 350)
+  )
+
+  # If a valid question type was returned, call sd_add_question
+  if (!is.null(result)) {
+    sd_add_question(type = result$type, chunk = result$chunk)
+  }
+
+  # Return the question type invisibly
+  invisible(if (!is.null(result)) result$type else NULL)
 }
 
 #' Add a Page Template to the Current Document
