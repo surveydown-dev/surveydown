@@ -9,7 +9,7 @@ footer: "Made with [surveydown](https://surveydown.org)"
 library(surveydown)
 ```
 
-::: {#welcome .sd-page}
+::: {.sd_page id=welcome}
 
 # Welcome to our survey!
 
@@ -38,7 +38,7 @@ sd_next(next_page = 'page2')
 
 :::
 
-::: {#page2 .sd-page}
+::: {.sd_page id=page2}
 
 This is another page in your survey.
 
@@ -56,14 +56,14 @@ sd_next()
 
 :::
 
-::: {#end .sd-page}
+::: {.sd_page id=end}
 
 ## End
 
 This it the last page in the survey.
 
 ```{r}
-sd_close("Exit Survey")
+sd_close()
 ```
 
 :::

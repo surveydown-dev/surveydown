@@ -1,5 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.10.0
+
+- New feature: gadgets added for creating survey pages and questions. It can be triggered under the "Addins" menu on the top of RStudio window, or by keyboard shortcut. To set up keyboard shortcut, go to "Tools -> Addins -> Browse Addins..."
+- Recommended page fence structure changed to: `.sd_page id=page_id`. The previous structure also works.
+- Updated template (triggered by `sd_create_survey()`) to match with new recommended page structure.
+
 # surveydown 0.9.2
 
 - Remove `sd_show_password()` function entirely (previously was depreciated)

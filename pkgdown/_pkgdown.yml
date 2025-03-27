@@ -62,6 +62,7 @@ reference:
   - sd_add_page
   - sd_add_question
   - sd_page_gadget
+  - sd_question_gadget
 - title: Version Control
   contents:
   - sd_version
