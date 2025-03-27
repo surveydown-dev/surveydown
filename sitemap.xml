@@ -27,15 +27,16 @@
 <url><loc>https://pkg.surveydown.org/reference/sd_is_answered.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_next.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_output.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_page_gadget.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_question.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_question_custom.html</loc></url>
+<url><loc>https://pkg.surveydown.org/reference/sd_question_gadget.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_reactive.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_redirect.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_server.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_set_password.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_setup.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_show_if.html</loc></url>
-<url><loc>https://pkg.surveydown.org/reference/sd_show_password.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_skip_forward.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_skip_if.html</loc></url>
 <url><loc>https://pkg.surveydown.org/reference/sd_store_value.html</loc></url>
