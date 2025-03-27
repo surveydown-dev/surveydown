@@ -40,6 +40,7 @@ Imports:
     htmltools,
     jsonlite,
     markdown,
+    miniUI,
     pool,
     quarto,
     RPostgres,

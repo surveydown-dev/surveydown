@@ -1,0 +1,4 @@
+Name: Add Survey Page
+Description: Create a new survey page with custom page ID
+Binding: sd_page_gadget
+Interactive: true

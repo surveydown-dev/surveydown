@@ -444,6 +444,9 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
 #' function call exists in the document, it will be removed before inserting
 #' the template.
 #'
+#' @param page_id A character string specifying the ID for the page.
+#'   Defaults to "page_id".
+#'
 #' @details
 #' IMPORTANT: This function should be run outside any division or R code chunk
 #' in your 'Quarto' document. Running it inside a division or code chunk may
@@ -454,10 +457,13 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
 #' 2. Inserts a template at the current cursor position.
 #'
 #' The template includes:
-#' - A div with class `'sd-page'` and a placeholder page ID
+#' - A div with class `'sd-page'` and the specified page ID
 #' - A placeholder for the page title
 #' - A placeholder for page contents
 #' - An R code chunk with a placeholder for questions and a next button
+#'
+#' Special page_id values:
+#' - When page_id is "end", a thank-you page template with `sd_close()` is inserted
 #'
 #' @return This function does not return a value. It modifies the active
 #' document as a side effect by inserting text and potentially removing a
@@ -467,16 +473,35 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Insert a new page template
+#'   # Insert a new page template with default ID
 #'   sd_add_page()
+#'
+#'   # Insert a new page template with custom ID
+#'   sd_add_page(page_id = "welcome")
+#'
+#'   # Insert an end/thank you page
+#'   sd_add_page(page_id = "end")
 #' }
 #'
 #' @export
-sd_add_page <- function() {
-  # Display a pop-up notice
-  message("Note: Run this function outside division or code chunk.")
+sd_add_page <- function(page_id = "page_id") {
 
-  template <- '::: {#page_id .sd-page}
+  # Different template for end page
+  if (page_id == "end") {
+    template <- '::: {#end .sd-page}
+
+## Thanks for taking our survey!
+
+```{r}
+# Close button
+sd_close()
+```
+
+:::
+
+'
+  } else {
+    template <- sprintf('::: {#%s .sd-page}
 
 # Page Title
 
@@ -491,13 +516,16 @@ sd_next()
 
 :::
 
-'
+', page_id)
+  }
+
   # Get the current document context
   context <- rstudioapi::getActiveDocumentContext()
   # Get all lines of the document
   lines <- context$contents
   # Find the line containing the function call
-  call_line <- which(grepl("sd_add_page\\(\\)", lines))
+  call_pattern <- "sd_add_page\\(.*\\)"
+  call_line <- which(grepl(call_pattern, lines))
 
   if (length(call_line) > 0) {
     # Remove the line containing the function call
@@ -513,6 +541,69 @@ sd_next()
   cursor <- context$selection[[1]]$range$start
   # Insert the template
   rstudioapi::insertText(location = cursor, text = template)
+}
+
+#' Show a Shiny gadget for entering a page ID
+#'
+#' This function displays a Shiny gadget that allows the user to input
+#' a page ID. Once submitted, it calls sd_add_page() with the specified ID.
+#'
+#' @return The entered page ID (invisibly).
+#' @importFrom miniUI miniPage gadgetTitleBar miniContentPanel
+#' @importFrom shiny dialogViewer runGadget textInput actionButton observeEvent stopApp
+#' @export
+#'
+sd_page_gadget <- function() {
+  ui <- miniUI::miniPage(
+    miniUI::gadgetTitleBar("Add Survey Page"),
+    miniUI::miniContentPanel(
+      shiny::textInput(
+        "page_id",
+        "Page ID:",
+        value = "",
+        placeholder = "Enter a unique page ID without spaces"
+      ),
+      shiny::helpText("For ending page, use \"end\" as your page ID"),
+      shiny::actionButton("submit", "Create Page", class = "btn-primary")
+    )
+  )
+
+  server <- function(input, output, session) {
+    # When submit button is clicked
+    shiny::observeEvent(input$submit, {
+      # Call the sd_add_page function with the provided page_id
+      page_id <- input$page_id
+
+      # Validate the page_id (simple validation for demo)
+      if (page_id == "") {
+        shiny::showNotification("Page ID cannot be empty", type = "error")
+        return()
+      }
+
+      # Close the gadget
+      shiny::stopApp(page_id)
+    })
+
+    # Also handle the "Done" button in the title bar
+    shiny::observeEvent(input$done, {
+      shiny::stopApp(NULL)  # Return NULL if canceled
+    })
+  }
+
+  # Run the gadget with a dialog viewer
+  page_id <- shiny::runGadget(
+    ui,
+    server,
+    viewer = shiny::dialogViewer("Add Survey Page", width = 400, height = 300)
+  )
+
+  # If a valid page_id was returned, insert the page
+  if (!is.null(page_id)) {
+    sd_add_page(page_id)
+  }
+
+  # Return the page_id invisibly
+  invisible(page_id)
 }
 
 #' Check Surveydown Version
