@@ -550,11 +550,27 @@ sd_next()
 #'
 #' @return The entered page ID (invisibly).
 #' @importFrom miniUI miniPage gadgetTitleBar miniContentPanel
-#' @importFrom shiny dialogViewer runGadget textInput actionButton observeEvent stopApp
+#' @importFrom shiny dialogViewer runGadget textInput actionButton observeEvent stopApp tags HTML
 #' @export
 #'
 sd_page_gadget <- function() {
   ui <- miniUI::miniPage(
+    shiny::tags$head(
+      shiny::tags$script(shiny::HTML("
+        $(document).ready(function() {
+          // Set focus to the page_id input when the gadget loads
+          $('#page_id').focus();
+
+          // Add event listener for Enter key
+          $('#page_id').keypress(function(e) {
+            if(e.which == 13) { // 13 is the Enter key code
+              $('#submit').click();
+              return false;
+            }
+          });
+        });
+      "))
+    ),
     miniUI::gadgetTitleBar("Add Survey Page"),
     miniUI::miniContentPanel(
       shiny::textInput(
