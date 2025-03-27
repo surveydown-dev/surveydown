@@ -1,6 +1,6 @@
 Package: surveydown
 Title: Markdown-Based Surveys Using 'Quarto' and 'shiny'
-Version: 0.9.1
+Version: 0.10.0
 Authors@R: c(
     person("John Paul", "Helveston", , "john.helveston@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-2657-9191")),
@@ -40,6 +40,7 @@ Imports:
     htmltools,
     jsonlite,
     markdown,
+    miniUI,
     pool,
     quarto,
     RPostgres,
@@ -48,7 +49,6 @@ Imports:
     shiny,
     shinyjs,
     shinyWidgets,
-    usethis,
     utils,
     xml2,
     yaml
