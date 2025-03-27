@@ -216,80 +216,100 @@ set_translations <- function(paths, language) {
 }
 
 extract_html_pages <- function(
-    paths, html_content, required_questions, all_questions_required, show_if
+        paths, html_content, required_questions, all_questions_required, show_if
 ) {
-  pages <- html_content |>
-    rvest::html_elements(".sd-page") |>
-    lapply(function(x) {
-      page_id <- rvest::html_attr(x, "id")
-      question_containers <- rvest::html_elements(x, ".question-container")
-      question_ids <- character(0)
-      required_question_ids <- character(0)
+    # Check for both sd-page and sd_page classes
+    pages_dash <- html_content |> rvest::html_elements(".sd-page")
+    pages_underscore <- html_content |> rvest::html_elements(".sd_page")
 
-      for (i in seq_along(question_containers)) {
-        container <- question_containers[[i]]
-        question_id <- rvest::html_attr(container, "data-question-id")
-        question_ids <- c(question_ids, question_id)
+    # Check if mixing of classes exists
+    if (length(pages_dash) > 0 && length(pages_underscore) > 0) {
+        stop("Mixed use of '.sd-page' and '.sd_page'. Please use only one style.")
+    }
 
-        # Check if it's a matrix question
-        is_matrix <- length(rvest::html_elements(container, ".matrix-question")) > 0
+    # Use whichever page style is found
+    if (length(pages_dash) > 0) {
+        pages_elements <- pages_dash
+        class_used <- ".sd-page"
+    } else if (length(pages_underscore) > 0) {
+        pages_elements <- pages_underscore
+        class_used <- ".sd_page"
+    } else {
+        stop("No survey pages found. Add divs with either '.sd-page' or '.sd_page' class.")
+    }
 
-        # Determine if the question is required
-        is_required <- if (is_matrix) {
-            all_questions_required || question_id %in% required_questions
-        } else if (all_questions_required) {
-            TRUE
-        } else {
-            question_id %in% required_questions
-        }
+    message("Using '", class_used, "' class for survey pages.")
 
-        # Track required questions and display asterisk
-        if (is_required) {
-            if (is_matrix) {
-                # Only show asterisks for subquestions, not the main matrix question
-                sub_asterisks <- rvest::html_elements(container, ".matrix-question td .hidden-asterisk")
-                for (asterisk in sub_asterisks) {
+    pages <- lapply(pages_elements, function(x) {
+        page_id <- rvest::html_attr(x, "id")
+        question_containers <- rvest::html_elements(x, ".question-container")
+        question_ids <- character(0)
+        required_question_ids <- character(0)
+
+        for (i in seq_along(question_containers)) {
+            container <- question_containers[[i]]
+            question_id <- rvest::html_attr(container, "data-question-id")
+            question_ids <- c(question_ids, question_id)
+
+            # Check if it's a matrix question
+            is_matrix <- length(rvest::html_elements(container, ".matrix-question")) > 0
+
+            # Determine if the question is required
+            is_required <- if (is_matrix) {
+                all_questions_required || question_id %in% required_questions
+            } else if (all_questions_required) {
+                TRUE
+            } else {
+                question_id %in% required_questions
+            }
+
+            # Track required questions and display asterisk
+            if (is_required) {
+                if (is_matrix) {
+                    # Only show asterisks for subquestions, not the main matrix question
+                    sub_asterisks <- rvest::html_elements(container, ".matrix-question td .hidden-asterisk")
+                    for (asterisk in sub_asterisks) {
+                        xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                    }
+                } else {
+                    asterisk <- rvest::html_element(container, ".hidden-asterisk")
                     xml2::xml_attr(asterisk, "style") <- "display: inline;"
                 }
-            } else {
-                asterisk <- rvest::html_element(container, ".hidden-asterisk")
-                xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                required_question_ids <- c(required_question_ids, question_id)
             }
-            required_question_ids <- c(required_question_ids, question_id)
+            if (!is.null(show_if)) {
+                if (question_id %in% show_if$targets) {
+                    current_style <- xml2::xml_attr(container, "style")
+                    new_style <- paste(current_style, "display: none;", sep = " ")
+                    xml2::xml_attr(container, "style") <- new_style
+                }
+            }
+            question_containers[[i]] <- container
         }
-        if (!is.null(show_if)) {
-          if (question_id %in% show_if$targets) {
-            current_style <- xml2::xml_attr(container, "style")
-            new_style <- paste(current_style, "display: none;", sep = " ")
-            xml2::xml_attr(container, "style") <- new_style
-          }
-        }
-        question_containers[[i]] <- container
-      }
 
-      # Update the 'Next' button ID and extract the next_page_id
-      next_button_id <- make_next_button_id(page_id)
-      next_button <- rvest::html_element(x, "#page_id_next")
-      if (is.na(next_button)) {
-        # No next button on this page
-        next_page_id <- NULL
-      } else {
-        xml2::xml_attr(next_button, "id") <- next_button_id
-        next_page_id <- rvest::html_attr(
-          xml2::xml_parent(next_button), "data-next-page"
+        # Update the 'Next' button ID and extract the next_page_id
+        next_button_id <- make_next_button_id(page_id)
+        next_button <- rvest::html_element(x, "#page_id_next")
+        if (is.na(next_button)) {
+            # No next button on this page
+            next_page_id <- NULL
+        } else {
+            xml2::xml_attr(next_button, "id") <- next_button_id
+            next_page_id <- rvest::html_attr(
+                xml2::xml_parent(next_button), "data-next-page"
+            )
+        }
+        list(
+            id = page_id,
+            questions = question_ids,
+            required_questions = required_question_ids,
+            next_button_id = next_button_id,
+            next_page_id = next_page_id,
+            content = as.character(x)
         )
-      }
-      list(
-        id = page_id,
-        questions = question_ids,
-        required_questions = required_question_ids,
-        next_button_id = next_button_id,
-        next_page_id = next_page_id,
-        content = as.character(x)
-      )
     })
-  saveRDS(pages, paths$target_pages)
-  return(pages)
+    saveRDS(pages, paths$target_pages)
+    return(pages)
 }
 
 # Get question structure ('smart': load YAML or extract from HTML and save to YAML)
