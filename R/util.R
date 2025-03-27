@@ -247,128 +247,109 @@ question_templates <- function(type = "mc") {
   templates <- list(
     mc = 'sd_question(
   type   = "mc",
-  id     = "like_apple",
-  label  = "Do you like apple?",
+  id     = "mc_id",
+  label  = "mc_label",
   option = c(
-    "Yes" = "yes",
-    "No"  = "no"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
   text = 'sd_question(
   type  = "text",
-  id    = "apple_text",
-  label = "Write a type of apple:"
+  id    = "text_id",
+  label = "text_label"
 )
-
 ',
 textarea = 'sd_question(
   type  = "textarea",
-  id    = "apple_textarea",
-  label = "What do you like about apple?"
+  id    = "textarea_id",
+  label = "textarea_label"
 )
-
 ',
 numeric = 'sd_question(
   type  = "numeric",
-  id    = "apple_numeric",
-  label = "How many apple(s) do you eat per day?"
+  id    = "numeric_id",
+  label = "numeric_label"
 )
-
 ',
 mc_buttons = 'sd_question(
   type   = "mc_buttons",
-  id     = "apple_mc_buttons",
-  label  = "Which apple do you prefer most?",
+  id     = "mc_buttons_id",
+  label  = "mc_buttons_label",
   option = c(
-    "Fuji"       = "fuji",
-    "Gala"       = "gala",
-    "Honeycrisp" = "honeycrisp"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
 mc_multiple = 'sd_question(
   type  = "mc_multiple",
-  id    = "apple_mc_multiple",
-  label = "What are your favorite apple types (select all that apply)?",
+  id    = "mc_multiple_id",
+  label = "mc_multiple_label",
   option = c(
-    "Fuji"       = "fuji",
-    "Gala"       = "gala",
-    "Honeycrisp" = "honeycrisp"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
 mc_multiple_buttons = 'sd_question(
   type  = "mc_multiple_buttons",
-  id    = "apple_mc_multiple_buttons",
-  label = "What are your favorite apple types (select all that apply)?",
+  id    = "mc_multiple_buttons_id",
+  label = "mc_multiple_buttons_label",
   option = c(
-    "Fuji"       = "fuji",
-    "Gala"       = "gala",
-    "Honeycrisp" = "honeycrisp"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
 select = 'sd_question(
   type  = "select",
-  id    = "apple_select",
-  label = "Which apple do you prefer most?",
+  id    = "select_id",
+  label = "select_label",
   option = c(
-    "Fuji"       = "fuji",
-    "Gala"       = "gala",
-    "Honeycrisp" = "honeycrisp"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
 slider = 'sd_question(
   type  = "slider",
-  id    = "apple_slider",
-  label = "To what extent do you like apple?",
+  id    = "slider_id",
+  label = "slider_label",
   option = c(
-    "Don\'t Like"    = "dont_like",
-    "Somewhat Like" = "somewhat",
-    "Neutral"       = "neutral",
-    "Like"          = "like",
-    "Strongly Like" = "strongly_like"
+    "Option A" = "option_a",
+    "Option B" = "option_b",
+    "Option C" = "option_c"
   )
 )
-
 ',
 slider_numeric = 'sd_question(
   type  = "slider_numeric",
-  id    = "apple_slider",
-  label = "How many apple(s) do you eat per week?",
+  id    = "slider_numeric_id",
+  label = "slider_numeric_label",
   option = seq(0, 10, 1)
 )
-
 ',
 slider_numeric_2 = 'sd_question(
   type  = "slider_numeric",
-  id    = "apple_slider_range",
-  label = "What do you think is a reasonable range of weekly apple consumption?",
+  id    = "slider_numeric_id",
+  label = "slider_numeric_label",
   option = seq(0, 10, 1),
   default = c(3, 5)
 )
-
 ',
 date = 'sd_question(
   type  = "date",
-  id    = "apple_date",
-  label = "What is the last day you had apple?"
+  id    = "date_id",
+  label = "date_label"
 )
-
 ',
 daterange = 'sd_question(
   type  = "daterange",
-  id    = "vacation_daterange",
-  label = "Please select the date range of your upcoming vacation."
+  id    = "daterange_id",
+  label = "daterange_label"
 )
-
 '
   )
 
@@ -398,12 +379,19 @@ return(templates[[type]])
 #'     \item `"date"`: Date input
 #'     \item `"daterange"`: Date range input
 #'   }
+#' @param id A character string specifying the ID for the question. If not provided,
+#'   a default ID based on the question type will be used. This ID should be unique
+#'   within your survey.
+#' @param label A character string specifying the label (question text) to display
+#'   to respondents. If not provided, a default label placeholder will be used.
 #' @param chunk Logical. If `TRUE`, the code will be generated with the R code
 #'   chunk wrapper. Defaults to `FALSE`.
 #' @details
 #' The function performs the following steps:
 #' 1. Checks for and removes any existing `sd_add_question()` function call in the document.
 #' 2. Inserts the appropriate question template at the current cursor position.
+#' 3. If an ID is provided, replaces the default ID in the template with the provided ID.
+#' 4. If a label is provided, replaces the default label in the template with the provided label.
 #'
 #' @return This function does not return a value. It modifies the active
 #' document as a side effect by inserting text and potentially removing a
@@ -416,41 +404,55 @@ return(templates[[type]])
 #'   # Insert a default multiple choice question template
 #'   sd_add_question()
 #'
-#'   # Insert a text input question template
-#'   sd_add_question("text")
+#'   # Insert a text input question with custom ID and label
+#'   sd_add_question("text", id = "user_email", label = "What is your email address?")
 #'
 #'   # Insert a slider question template
-#'   sd_add_question("slider")
+#'   sd_add_question("slider", id = "satisfaction", label = "How satisfied were you with our service?")
 #' }
 #'
 #' @export
-sd_add_question <- function(type = "mc", chunk = FALSE) {
-  template <- question_templates(type)
-  if (chunk) {
-    template <- paste0("```{r}\n", template, "```\n")
-  }
+sd_add_question <- function(type = "mc", id = NULL, label = NULL, chunk = FALSE) {
+    # Get the template
+    template <- question_templates(type)
 
-  # Get the current document context
-  context <- rstudioapi::getActiveDocumentContext()
-  # Get all lines of the document
-  lines <- context$contents
-  # Find the line containing the function call
-  call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+    # Replace the default ID with the provided ID if it's not NULL
+    if (!is.null(id) && id != "") {
+        # Replace the default ID in the template with the provided ID
+        template <- gsub(paste0(type, "_id"), id, template)
+    }
 
-  if (length(call_line) > 0) {
-    # Remove the line containing the function call
-    rstudioapi::modifyRange(
-      c(call_line, 1, call_line + 1, 1),
-      ""
-    )
-    # Update the context after removal
+    # Replace the default label with the provided label if it's not NULL
+    if (!is.null(label) && label != "") {
+        # Replace the default label in the template with the provided label
+        template <- gsub(paste0(type, "_label"), label, template)
+    }
+
+    if (chunk) {
+        template <- paste0("```{r}\n", template, "```\n")
+    }
+
+    # Get the current document context
     context <- rstudioapi::getActiveDocumentContext()
-  }
+    # Get all lines of the document
+    lines <- context$contents
+    # Find the line containing the function call
+    call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
 
-  # Get the current cursor position
-  cursor <- context$selection[[1]]$range$start
-  # Insert the template
-  rstudioapi::insertText(location = cursor, text = template)
+    if (length(call_line) > 0) {
+        # Remove the line containing the function call
+        rstudioapi::modifyRange(
+            c(call_line, 1, call_line + 1, 1),
+            ""
+        )
+        # Update the context after removal
+        context <- rstudioapi::getActiveDocumentContext()
+    }
+
+    # Get the current cursor position
+    cursor <- context$selection[[1]]$range$start
+    # Insert the template
+    rstudioapi::insertText(location = cursor, text = template)
 }
 
 #' Show a Shiny gadget for selecting a question type
@@ -468,26 +470,26 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
 #' @export
 #'
 sd_question_gadget <- function(chunk = FALSE) {
-  # Get all available question types (in alphabetical order)
-  question_types <- c(
-    "Date" = "date",
-    "Date Range" = "daterange",
-    "Multiple Choice" = "mc",
-    "Multiple Choice (Multiple Selection)" = "mc_multiple",
-    "Multiple Choice Buttons" = "mc_buttons",
-    "Multiple Choice Buttons (Multiple Selection)" = "mc_multiple_buttons",
-    "Numeric Input" = "numeric",
-    "Select Dropdown" = "select",
-    "Slider" = "slider",
-    "Slider Numeric" = "slider_numeric",
-    "Slider Numeric Range" = "slider_numeric_2",
-    "Text Area" = "textarea",
-    "Text Input" = "text"
-  )
+    # Get all available question types (in alphabetical order)
+    question_types <- c(
+        "Date" = "date",
+        "Date Range" = "daterange",
+        "Multiple Choice" = "mc",
+        "Multiple Choice (Multiple Selection)" = "mc_multiple",
+        "Multiple Choice Buttons" = "mc_buttons",
+        "Multiple Choice Buttons (Multiple Selection)" = "mc_multiple_buttons",
+        "Numeric Input" = "numeric",
+        "Select Dropdown" = "select",
+        "Slider" = "slider",
+        "Slider Numeric" = "slider_numeric",
+        "Slider Numeric Range" = "slider_numeric_2",
+        "Text Area" = "textarea",
+        "Text Input" = "text"
+    )
 
-  ui <- miniUI::miniPage(
-    shiny::tags$head(
-      shiny::tags$script(shiny::HTML("
+    ui <- miniUI::miniPage(
+        shiny::tags$head(
+            shiny::tags$script(shiny::HTML("
         $(document).ready(function() {
           // Add event listener for Enter key
           $(document).keypress(function(e) {
@@ -498,55 +500,85 @@ sd_question_gadget <- function(chunk = FALSE) {
           });
         });
       "))
-    ),
-    miniUI::gadgetTitleBar("Add Survey Question"),
-    miniUI::miniContentPanel(
-      shiny::selectInput(
-        "question_type",
-        "Question Type:",
-        choices = question_types,
-        selected = "mc"
-      ),
-      shiny::checkboxInput(
-        "in_chunk",
-        "Insert in R code chunk",
-        value = FALSE
-      ),
-      shiny::actionButton("submit", "Create Question", class = "btn-primary")
+        ),
+        miniUI::gadgetTitleBar("Add Survey Question"),
+        miniUI::miniContentPanel(
+            shiny::selectInput(
+                "question_type",
+                "Question Type:",
+                choices = question_types,
+                selected = "mc"
+            ),
+            shiny::textInput(
+                "question_id",
+                "Question ID:",
+                value = "",
+                placeholder = "Enter a unique question ID without spaces"
+            ),
+            shiny::textInput(
+                "question_label",
+                "Question Label:",
+                value = "",
+                placeholder = "Enter the question text to display to respondents"
+            ),
+            shiny::checkboxInput(
+                "in_chunk",
+                "Insert in R code chunk",
+                value = FALSE
+            ),
+            shiny::actionButton("submit", "Create Question", class = "btn-primary")
+        )
     )
-  )
 
-  server <- function(input, output, session) {
-    # When submit button is clicked
-    shiny::observeEvent(input$submit, {
-      # Get the selected question type
-      q_type <- input$question_type
-      use_chunk <- input$in_chunk
+    server <- function(input, output, session) {
+        # When submit button is clicked
+        shiny::observeEvent(input$submit, {
+            # Get the selected question type, ID, and label
+            q_type <- input$question_type
+            q_id <- input$question_id
+            q_label <- input$question_label
+            use_chunk <- input$in_chunk
 
-      # Close the gadget and return the question type
-      shiny::stopApp(list(type = q_type, chunk = use_chunk))
-    })
+            # Validate the question ID (simple validation)
+            if (q_id == "") {
+                shiny::showNotification("Question ID cannot be empty", type = "error")
+                return()
+            }
 
-    # Also handle the "Done" button in the title bar
-    shiny::observeEvent(input$done, {
-      shiny::stopApp(NULL)  # Return NULL if canceled
-    })
-  }
+            # Close the gadget and return the values
+            shiny::stopApp(list(
+                type = q_type,
+                id = q_id,
+                label = q_label,
+                chunk = use_chunk
+            ))
+        })
 
-  # Run the gadget with a dialog viewer
-  result <- shiny::runGadget(
-    ui,
-    server,
-    viewer = shiny::dialogViewer("Add Survey Question", width = 400, height = 350)
-  )
+        # Also handle the "Done" button in the title bar
+        shiny::observeEvent(input$done, {
+            shiny::stopApp(NULL)  # Return NULL if canceled
+        })
+    }
 
-  # If a valid question type was returned, call sd_add_question
-  if (!is.null(result)) {
-    sd_add_question(type = result$type, chunk = result$chunk)
-  }
+    # Run the gadget with a dialog viewer
+    result <- shiny::runGadget(
+        ui,
+        server,
+        viewer = shiny::dialogViewer("Add Survey Question", width = 400, height = 480)
+    )
 
-  # Return the question type invisibly
-  invisible(if (!is.null(result)) result$type else NULL)
+    # If a valid result was returned, call sd_add_question
+    if (!is.null(result)) {
+        sd_add_question(
+            type = result$type,
+            id = result$id,
+            label = result$label,
+            chunk = result$chunk
+        )
+    }
+
+    # Return the question type invisibly
+    invisible(if (!is.null(result)) result$type else NULL)
 }
 
 #' Add a Page Template to the Current Document
@@ -601,7 +633,7 @@ sd_add_page <- function(page_id = "page_id") {
 
   # Different template for end page
   if (page_id == "end") {
-    template <- '::: {#end .sd-page}
+    template <- '::: {.sd_page id=end}
 
 ## Thanks for taking our survey!
 
@@ -614,14 +646,12 @@ sd_close()
 
 '
   } else {
-    template <- sprintf('::: {#%s .sd-page}
+    template <- sprintf('::: {.sd-page id=%s}
 
-# Page Title
-
-Page contents...
+Add page contents...
 
 ```{r}
-# Insert your question here...
+# Insert questions...
 
 # Next button
 sd_next()
