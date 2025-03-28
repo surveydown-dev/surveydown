@@ -10,7 +10,7 @@ barposition: top
 ```{r}
 library(surveydown)
 ```
-::: {#page_id .sd-page}
+::: {.sd_page id=page_id}
 
 This is a sample survey
 

@@ -8,7 +8,7 @@ warning: false
 library(surveydown)
 ```
 
-::: {#initial_page .sd-page}
+::: {.sd_page id=initial_page}
 
 # Fruit Selection
 
@@ -31,7 +31,7 @@ sd_next()
 
 :::
 
-::: {#default_page .sd-page}
+::: {.sd_page id=default_page}
 
 # Default Next Page
 
@@ -49,7 +49,7 @@ sd_next()
 
 :::
 
-::: {#apple_page .sd-page}
+::: {.sd_page id=apple_page}
 
 # Apple Page
 
@@ -67,7 +67,7 @@ sd_next(next_page = "summary_page")
 
 :::
 
-::: {#orange_page .sd-page}
+::: {.sd_page id=orange_page}
 
 # Orange Page
 
@@ -85,7 +85,7 @@ sd_next(next_page = "summary_page")
 
 :::
 
-::: {#other_page .sd-page}
+::: {.sd_page id=other_page}
 
 # Other Fruit Page
 
@@ -103,7 +103,7 @@ sd_next(next_page = "summary_page")
 
 :::
 
-::: {#summary_page .sd-page}
+::: {.sd_page id=summary_page}
 
 # Survey Summary
 

@@ -8,7 +8,7 @@ warning: false
 library(surveydown)
 ```
 
-::: {#page_id .sd-page}
+::: {.sd_page id=page_id}
 
 This is a sample survey with redirect buttons
 
@@ -28,7 +28,7 @@ sd_next()
 
 :::
 
-::: {#end_page_1 .sd-page}
+::: {.sd_page id=end_page_1}
 
 This it the normal ending page with a static redirect button to google.com
 
@@ -44,7 +44,7 @@ sd_redirect(
 
 :::
 
-::: {#end_page_2 .sd-page}
+::: {.sd_page id=end_page_2}
 
 This is a reactive redirect button that contains a customized redirect url, including url parameters and an indicator of `status=0`.
 
