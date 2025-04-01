@@ -798,7 +798,7 @@ sd_version <- function() {
     pkg_needs_update <- local_surveydown_version < latest_surveydown_version
 
     if (pkg_needs_update) {
-      message("\nAn update is available. To update surveydown to the latest version, run: surveydown::sd_update()")
+      message("\nAn update is available. To update surveydown to the latest version, run: pak::pak('surveydown-dev/surveydown')")
     } else {
       message("\nsurveydown is up to date.")
     }
