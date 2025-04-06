@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.10.1
+
+- `sd_create_survey()` now accepts two arguments. The `template` argument is by default `"plain_template"`, which creates a default plain template of surveydown. It also accepts a list of templates that we created in the [templates repo](https://github.com/surveydown-dev/templates/tree/main). The `path` argument is unchanged. It defines the relative path of the template location.
+
 # surveydown 0.10.0
 
 - New feature: gadgets added for creating survey pages and questions. It can be triggered under the "Addins" menu on the top of RStudio window, or by keyboard shortcut. To set up keyboard shortcut, go to "Tools -> Addins -> Browse Addins..."

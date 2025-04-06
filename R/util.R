@@ -179,51 +179,181 @@ tibble_to_list_of_lists <- function(tbl) {
 
 #' Create a new survey template
 #'
+#' This function creates a new survey template by copying template files to the
+#' specified directory. You can choose from various predefined templates,
+#' including the default built-in template and specialized templates from the
+#' surveydown-dev/templates repository.
+#'
 #' @param path A character string specifying the directory where the survey
 #'   template should be created. Defaults to the current working directory.
+#' @param template A character string specifying the template to use.
+#'   Default is "plain_template" which uses the built-in package template.
+#'   Other options include:
+#'   \describe{
+#'     \item{plain_template}{The default built-in template}
+#'     \item{conditional_display}{Template demonstrating conditional display of questions}
+#'     \item{conditional_skipping}{Template showing conditional page skipping}
+#'     \item{conjoint_buttons}{Conjoint analysis with button interface}
+#'     \item{conjoint_tables}{Conjoint analysis with table interface}
+#'     \item{custom_leaflet_map}{Survey with interactive Leaflet maps}
+#'     \item{custom_plotly_chart}{Survey with Plotly visualizations}
+#'     \item{external_redirect}{Template with external site redirects}
+#'     \item{live_polling}{Live polling template for real-time surveys}
+#'     \item{question_types}{Showcases all available question types}
+#'     \item{random_options}{Survey with randomized question options}
+#'     \item{random_options_predefined}{Randomized options from predefined sets}
+#'     \item{reactive_drilldown}{Dynamic questions with drill-down capability}
+#'     \item{reactive_questions}{Survey with reactive questions}
+#'   }
+#'
+#' @details
+#' When creating a new survey template, this function will:
+#' 1. Check if the specified template is valid
+#' 2. Confirm the destination path with the user (if it's the current directory)
+#' 3. Download template files from GitHub if a non-default template is specified
+#' 4. Copy template files to the destination directory
+#' 5. Skip .Rproj files if one already exists in the destination
+#' 6. Prompt for confirmation before overwriting existing files
+#'
+#' External templates are downloaded from the surveydown-dev/templates GitHub repository.
 #'
 #' @return Invisible `NULL`. The function is called for its side effects.
 #'
+#' @examples
+#' if (interactive()) {
+#'   # Create a survey using the default template
+#'   sd_create_survey(path = "my_survey")
+#'
+#'   # Create a survey with the question_types template
+#'   sd_create_survey(path = "question_demo", template = "question_types")
+#'
+#'   # Create a conditional display survey template
+#'   sd_create_survey(path = "conditional_survey", template = "conditional_display")
+#' }
+#'
 #' @export
-sd_create_survey <- function(path = getwd()) {
-    if (path == getwd() && !yesno(paste0('Use the current directory "', path, '" as the path?'))) {
-        stop("Operation aborted by the user.")
-    }
+sd_create_survey <- function(path = getwd(), template = "plain_template") {
+  # Available templates from surveydown-dev/templates
+  available_templates <- c(
+    "plain_template",
+    "conditional_display",
+    "conditional_skipping",
+    "conjoint_buttons",
+    "conjoint_tables",
+    "custom_leaflet_map",
+    "custom_plotly_chart",
+    "external_redirect",
+    "live_polling",
+    "question_types",
+    "random_options",
+    "random_options_predefined",
+    "reactive_drilldown",
+    "reactive_questions"
+  )
 
-    dir.create(path, recursive = TRUE, showWarnings = FALSE)
+  # Check if template is valid
+  if (!template %in% available_templates) {
+    stop("Invalid template. Available templates are: ",
+         paste(available_templates, collapse = ", "))
+  }
 
+  if (path == getwd() && !yesno(paste0('Use the current directory "', path, '" as the path?'))) {
+    stop("Operation aborted by the user.")
+  }
+
+  dir.create(path, recursive = TRUE, showWarnings = FALSE)
+
+  # Determine where to get template files from
+  if (template == "plain_template") {
+    # Use built-in template
     template_path <- system.file("template", package = "surveydown")
-    if (!dir.exists(template_path)) {
-        stop("Template directory does not exist.")
+  } else {
+    # Download from GitHub
+    template_path <- download_template_from_github(template)
+  }
+
+  if (!dir.exists(template_path)) {
+    stop("Template directory does not exist.")
+  }
+
+  template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
+
+  files_copied <- sapply(template_files, function(file) {
+    relative_path <- sub(template_path, "", file)
+    target_file <- file.path(path, relative_path)
+
+    dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
+
+    file_name <- basename(file)
+
+    # Special handling for .Rproj files - skip if one already exists
+    if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
+      warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
+      return(FALSE)
     }
-    template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
-
-    files_copied <- sapply(template_files, function(file) {
-        relative_path <- sub(template_path, "", file)
-        target_file <- file.path(path, relative_path)
-
-        dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
-
-        file_name <- basename(file)
-        if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
-            warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
-            return(FALSE)
-        } else if (file.exists(target_file)) {
-            warning(paste("Skipping", file_name, "since it already exists."), call. = FALSE, immediate. = TRUE)
-            return(FALSE)
-        } else {
-            file.copy(from = file, to = target_file, overwrite = FALSE)
-            return(TRUE)
-        }
-    })
-
-    if (any(files_copied)) {
-        cli::cli_alert_success(paste("Template created at", path))
+    # For other files, prompt for confirmation if they already exist
+    else if (file.exists(target_file)) {
+      overwrite <- yesno(paste0("File '", file_name, "' already exists. Overwrite it"))
+      if (overwrite) {
+        file.copy(from = file, to = target_file, overwrite = TRUE)
+        message(paste("Overwriting", file_name))
+        return(TRUE)
+      } else {
+        message(paste("Skipping", file_name))
+        return(FALSE)
+      }
     } else {
-        cli::cli_alert_success("Since all files exist, no file was added.")
+      file.copy(from = file, to = target_file, overwrite = FALSE)
+      return(TRUE)
     }
+  })
 
-    invisible(NULL)
+  # Create success message that includes the template
+  if (any(files_copied)) {
+    if (template == "plain_template") {
+      cli::cli_alert_success(paste("Template created at", path))
+    } else {
+      cli::cli_alert_success(paste("Template of", template, "created at", path))
+    }
+  } else {
+    cli::cli_alert_success("Since all files exist, no file was added.")
+  }
+
+  # Clean up temp directory if needed
+  if (template != "plain_template") {
+    unlink(dirname(template_path), recursive = TRUE)
+  }
+
+  invisible(NULL)
+}
+
+# Helper function to download and extract a template from GitHub
+download_template_from_github <- function(template) {
+  # Create a temporary directory
+  temp_dir <- tempfile("surveydown_template_")
+  dir.create(temp_dir, recursive = TRUE)
+
+  # Download the specific template directory from GitHub
+  repo_url <- paste0(
+    "https://github.com/surveydown-dev/templates/archive/refs/heads/main.zip"
+  )
+
+  temp_zip <- file.path(temp_dir, "template.zip")
+
+  # Download the zip file
+  utils::download.file(repo_url, temp_zip, quiet = TRUE, mode = "wb")
+
+  # Extract the zip file
+  utils::unzip(temp_zip, exdir = temp_dir)
+
+  # Path to the extracted template folder
+  template_path <- file.path(temp_dir, "templates-main", template)
+
+  if (!dir.exists(template_path)) {
+    stop("Template '", template, "' not found in the repository")
+  }
+
+  return(template_path)
 }
 
 #' Required Set Up Function

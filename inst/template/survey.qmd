@@ -13,7 +13,7 @@ library(surveydown)
 
 # Welcome to our survey!
 
-This is a simple demonstration of a surveydown survey. It has two pages with one question on each page.
+This is a plain template of a surveydown survey. It has two pages with one question on each page.
 
 Here is a basic "multiple choice" question:
 

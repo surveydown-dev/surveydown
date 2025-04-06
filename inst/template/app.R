@@ -1,6 +1,11 @@
-# install.packages("surveydown")
-library(surveydown)
+# Package setup ---------------------------------------------------------------
 
+# Install required packages:
+# install.packages("pak")
+# pak::pak('surveydown-dev/surveydown') # Development version from github
+
+# Load packages
+library(surveydown)
 
 # Database setup --------------------------------------------------------------
 #
@@ -21,17 +26,18 @@ library(surveydown)
 # doing local testing. Once you're ready to collect survey responses, set
 # ignore = FALSE or just delete this argument.
 
-db <- sd_db_connect(
-  ignore = TRUE
-)
+db <- sd_db_connect(ignore = TRUE)
 
+# UI setup --------------------------------------------------------------------
+
+ui <- sd_ui()
 
 # Server setup ----------------------------------------------------------------
 
 server <- function(input, output, session) {
 
   # Define any conditional skip logic here (skip to page if a condition is true)
-  sd_skip_if()
+  sd_skip_forward()
 
   # Define any conditional display logic here (show a question if a condition is true)
   sd_show_if()
@@ -43,5 +49,5 @@ server <- function(input, output, session) {
 
 }
 
-# shinyApp() initiates your app - don't change it
-shiny::shinyApp(ui = sd_ui(), server = server)
+# Launch the app
+shiny::shinyApp(ui = ui, server = server)

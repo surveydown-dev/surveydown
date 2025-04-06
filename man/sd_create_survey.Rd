@@ -4,15 +4,64 @@
 \alias{sd_create_survey}
 \title{Create a new survey template}
 \usage{
-sd_create_survey(path = getwd())
+sd_create_survey(path = getwd(), template = "plain_template")
 }
 \arguments{
 \item{path}{A character string specifying the directory where the survey
 template should be created. Defaults to the current working directory.}
+
+\item{template}{A character string specifying the template to use.
+Default is "plain_template" which uses the built-in package template.
+Other options include:
+\describe{
+\item{plain_template}{The default built-in template}
+\item{conditional_display}{Template demonstrating conditional display of questions}
+\item{conditional_skipping}{Template showing conditional page skipping}
+\item{conjoint_buttons}{Conjoint analysis with button interface}
+\item{conjoint_tables}{Conjoint analysis with table interface}
+\item{custom_leaflet_map}{Survey with interactive Leaflet maps}
+\item{custom_plotly_chart}{Survey with Plotly visualizations}
+\item{external_redirect}{Template with external site redirects}
+\item{live_polling}{Live polling template for real-time surveys}
+\item{question_types}{Showcases all available question types}
+\item{random_options}{Survey with randomized question options}
+\item{random_options_predefined}{Randomized options from predefined sets}
+\item{reactive_drilldown}{Dynamic questions with drill-down capability}
+\item{reactive_questions}{Survey with reactive questions}
+}}
 }
 \value{
 Invisible \code{NULL}. The function is called for its side effects.
 }
 \description{
-Create a new survey template
+This function creates a new survey template by copying template files to the
+specified directory. You can choose from various predefined templates,
+including the default built-in template and specialized templates from the
+surveydown-dev/templates repository.
+}
+\details{
+When creating a new survey template, this function will:
+\enumerate{
+\item Check if the specified template is valid
+\item Confirm the destination path with the user (if it's the current directory)
+\item Download template files from GitHub if a non-default template is specified
+\item Copy template files to the destination directory
+\item Skip .Rproj files if one already exists in the destination
+\item Prompt for confirmation before overwriting existing files
+}
+
+External templates are downloaded from the surveydown-dev/templates GitHub repository.
+}
+\examples{
+if (interactive()) {
+  # Create a survey using the default template
+  sd_create_survey(path = "my_survey")
+
+  # Create a survey with the question_types template
+  sd_create_survey(path = "question_demo", template = "question_types")
+
+  # Create a conditional display survey template
+  sd_create_survey(path = "conditional_survey", template = "conditional_display")
+}
+
 }
