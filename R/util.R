@@ -191,8 +191,8 @@ tibble_to_list_of_lists <- function(tbl) {
 #'   Other options include:
 #'   \describe{
 #'     \item{plain_template}{The default built-in template}
-#'     \item{conditional_display}{Template demonstrating conditional display of questions}
-#'     \item{conditional_skipping}{Template showing conditional page skipping}
+#'     \item{conditional_display}{Template of conditional display of questions}
+#'     \item{conditional_navigation}{Template of conditional navigation of pages}
 #'     \item{conjoint_buttons}{Conjoint analysis with button interface}
 #'     \item{conjoint_tables}{Conjoint analysis with table interface}
 #'     \item{custom_leaflet_map}{Survey with interactive Leaflet maps}
@@ -237,7 +237,7 @@ sd_create_survey <- function(path = getwd(), template = "plain_template") {
   available_templates <- c(
     "plain_template",
     "conditional_display",
-    "conditional_skipping",
+    "conditional_navigation",
     "conjoint_buttons",
     "conjoint_tables",
     "custom_leaflet_map",

@@ -15,8 +15,8 @@ Default is "plain_template" which uses the built-in package template.
 Other options include:
 \describe{
 \item{plain_template}{The default built-in template}
-\item{conditional_display}{Template demonstrating conditional display of questions}
-\item{conditional_skipping}{Template showing conditional page skipping}
+\item{conditional_display}{Template of conditional display of questions}
+\item{conditional_navigation}{Template of conditional navigation of pages}
 \item{conjoint_buttons}{Conjoint analysis with button interface}
 \item{conjoint_tables}{Conjoint analysis with table interface}
 \item{custom_leaflet_map}{Survey with interactive Leaflet maps}
