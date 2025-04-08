@@ -31,7 +31,11 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project
 
 ## What is surveydown?
 
-**surveydown** is an open-source, markdown-based platform for interactive and reproducible Surveys using [R](https://www.r-project.org/), [Quarto](https://quarto.org/), [Shiny](https://shiny.posit.co/), and PostgreSQL databases like [Supabase](https://supabase.com/).
+**surveydown** is an open-source, markdown-based platform for
+programmable and reproducible Surveys using
+[R](https://www.r-project.org/), [Quarto](https://quarto.org/),
+[Shiny](https://shiny.posit.co/), and PostgreSQL databases like
+[Supabase](https://supabase.com/).
 
 <div align="center">
 <img src='man/figures/technologies.svg' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>

@@ -54,7 +54,7 @@
 # surveydown 0.7.2
 
 - Bug fix: The `mc_multiple` question type could not resume its UI if multiple options are selected. Now it's solved.
-- New feature: a new `sd_question_custom()` function is created for custom question definition. See the [`leaflet-map`](https://github.com/surveydown-dev/demos/tree/main/custom-leaflet-map) and [`plotly`](https://github.com/surveydown-dev/demos/tree/main/custom-plotly-chart) demo surveys for more details.
+- New feature: a new `sd_question_custom()` function is created for custom question definition. See the [`leaflet-map`](https://github.com/surveydown-dev/templates/tree/main/custom_leaflet_map) and [`plotly`](https://github.com/surveydown-dev/templates/tree/main/custom_plotly_chart) template surveys for more details.
 
 # surveydown 0.7.1
 

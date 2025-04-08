@@ -1,5 +1,5 @@
 Package: surveydown
-Title: Markdown-Based Surveys Using 'Quarto' and 'shiny'
+Title: Markdown-Based Programmable Surveys Using 'Quarto' and 'shiny'
 Version: 0.10.1
 Authors@R: c(
     person("John Paul", "Helveston", , "john.helveston@gmail.com", role = c("aut", "cre", "cph"),
@@ -10,7 +10,7 @@ Authors@R: c(
            comment = c(ORCID = "0009-0006-2942-0588")),
     person("Stefan", "Munnes", , "stefan.munnes@wzb.eu", role = "ctb")
   )
-Description: Generate surveys using markdown and R code chunks. Surveys
+Description: Generate programmable surveys using markdown and R code chunks. Surveys
     are composed of two files: a survey.qmd 'Quarto' file defining the
     survey content (pages, questions, etc), and an app.R file defining a
     'shiny' app with global settings (libraries, database configuration,

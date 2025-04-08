@@ -20,7 +20,7 @@ downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cr
 ## What is surveydown?
 
 **surveydown** is an open-source, markdown-based platform for
-interactive and reproducible Surveys using
+programmable and reproducible Surveys using
 [R](https://www.r-project.org/), [Quarto](https://quarto.org/),
 [Shiny](https://shiny.posit.co/), and PostgreSQL databases like
 [Supabase](https://supabase.com/).
