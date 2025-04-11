@@ -401,7 +401,7 @@ p:last-child,
 }
 
 /* STYLE 2: For YAML generated matrix questions */
-/* This is your new preferred style */
+/* This is your new preferred style with updated styling to match requirements */
 .question-container[data-question-id] .matrix-question-container {
   border: 1px solid #ddd;
   border-radius: 5px;
@@ -415,17 +415,27 @@ p:last-child,
   font-size: 16px;
 }
 
+/* Remove the font-weight: bold from headers to match the QMD version */
 .question-container[data-question-id] .matrix-question th {
-  font-weight: bold;
+  font-weight: normal;
   padding: 8px 12px;
   text-align: center;
 }
 
-.question-container[data-question-id] .matrix-question td {
+/* Add border lines to match QMD version */
+.question-container[data-question-id] .matrix-question th {
+  border-bottom: 1px solid #ddd;
+}
+
+.question-container[data-question-id] .matrix-question tbody tr:last-child td {
+  border-bottom: 1px solid #ddd;
+}
+
+.question-container[data-question-id] .matrix-question tbody tr td {
+  border-bottom: 1px solid #eee;
   padding: 8px 4px;
   text-align: center;
   vertical-align: middle;
-  border-top: 1px solid #eee;
 }
 
 .question-container[data-question-id] .matrix-question td:first-child {
@@ -433,6 +443,7 @@ p:last-child,
   padding-left: 15px;
 }
 
+/* Ensure first row has consistent styling */
 .question-container[data-question-id] .matrix-question tr:first-child td {
   border-top: none;
 }
@@ -464,6 +475,12 @@ p:last-child,
   background-color: transparent;
   padding: 0;
   margin-bottom: 0;
+}
+
+/* Add top and bottom borders to match QMD version */
+.question-container[data-question-id] .matrix-question {
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
 }
 
 /* SweetAlert custom styling */
