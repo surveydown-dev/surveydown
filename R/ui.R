@@ -375,9 +375,10 @@ extract_head_content <- function(html_content) {
 #'
 #' @export
 sd_question <- function(
-    type,
     id,
-    label,
+    type         = NULL,
+    label        = NULL,
+    option       = NULL,
     cols         = "80",
     direction    = "horizontal",
     status       = "default",
@@ -389,13 +390,64 @@ sd_question <- function(
     individual   = TRUE,
     justified    = FALSE,
     force_edges  = TRUE,
-    option       = NULL,
     placeholder  = NULL,
     resize       = NULL,
     row          = NULL,
     default      = NULL,
     ...
     ) {
+
+  # Check if only id is provided - this indicates a reference to the questions.yml file
+  id_only_provided <- !is.null(id) && 
+                      (is.null(type) || is.null(label) || is.null(option)) &&
+                      identical(cols, "80") && 
+                      identical(direction, "horizontal") && 
+                      identical(status, "default") && 
+                      identical(width, "100%")
+                      
+  if (id_only_provided) {
+    # Try to load the root questions.yml file to get the question details
+    root_questions_file <- "questions.yml"
+    if (file.exists(root_questions_file)) {
+      tryCatch({
+        root_questions <- yaml::read_yaml(root_questions_file)
+        if (!is.null(root_questions[[id]])) {
+          q_data <- root_questions[[id]]
+          
+          # Only override parameters that weren't explicitly provided
+          if (is.null(type)) type <- q_data$type
+          if (is.null(label)) label <- q_data$label
+          
+          # Handle different option formats based on question type
+          if (is.null(option) && !is.null(q_data$options)) {
+            if (is.list(q_data$options)) {
+              # Convert list to named vector for option parameter
+              option_names <- names(q_data$options)
+              option_values <- unlist(q_data$options)
+              option <- option_values
+              names(option) <- option_names
+            } else {
+              option <- q_data$options
+            }
+          }
+          
+          # Handle row for matrix questions
+          if (is.null(row) && !is.null(q_data$row) && is.list(q_data$row)) {
+            row_names <- names(q_data$row)
+            row_values <- unlist(q_data$row)
+            row <- row_values
+            names(row) <- row_names
+          }
+          
+          message("Loaded question '", id, "' details from root questions.yml file")
+        } else {
+          warning("Question ID '", id, "' not found in root questions.yml file")
+        }
+      }, error = function(e) {
+        warning("Error reading root questions.yml file: ", e$message)
+      })
+    }
+  }
 
   # Define valid question types
   valid_types <- c(
@@ -405,6 +457,10 @@ sd_question <- function(
   )
 
   # Check if provided type is valid
+  if (is.null(type)) {
+    stop("Question type is required but missing. Please provide a type or ensure it exists in the root questions.yml file.")
+  }
+  
   if (!type %in% valid_types) {
     stop(
       sprintf(
