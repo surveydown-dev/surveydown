@@ -9,6 +9,7 @@
 status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project.org/package=surveydown)
 [![metacran
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
+[![GitHub stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=social)](https://github.com/surveydown-dev/surveydown)
 <!-- badges: end -->
 
 > [!IMPORTANT]
