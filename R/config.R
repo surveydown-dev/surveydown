@@ -361,34 +361,72 @@ extract_question_structure_html <- function(html_content) {
 
     # Extract options for the question (slider)
     } else if (grepl("slider", type)) {
-      # Get display labels from data-swvalues attribute
-      options_labels_raw <- question_node |>
-        rvest::html_nodes("input") |>
-        rvest::html_attr("data-swvalues")
       
-      # Process labels
-      options_labels <- gsub("\\[|\\]|\\\"", "", options_labels_raw) |>
-        strsplit(",") |>
-        unlist()
+      # Check if this is a numeric slider
+      is_numeric_slider <- length(rvest::html_nodes(question_node, ".js-range-slider:not(.sw-slider-text)")) > 0
       
-      # Convert labels to snake_case for values
-      options_values <- sapply(options_labels, function(label) {
-        # Convert to lowercase
-        value <- tolower(label)
-        # Replace spaces and special characters with underscore
-        value <- gsub("[^a-z0-9]", "_", value)
-        # Replace multiple underscores with a single one
-        value <- gsub("_+", "_", value)
-        # Remove leading and trailing underscores
-        value <- gsub("^_|_$", "", value)
-        return(value)
-      })
-      
-      # Create named options list
-      options <- options_values
-      names(options) <- options_labels
-
-      question_structure[[question_id]]$options <- as.list(options)
+      if (is_numeric_slider) {
+        # Extract min, max, and step attributes from the numeric slider
+        slider_element <- rvest::html_nodes(question_node, ".js-range-slider")
+        
+        min_value <- as.numeric(rvest::html_attr(slider_element, "data-min"))
+        max_value <- as.numeric(rvest::html_attr(slider_element, "data-max"))
+        step_value <- as.numeric(rvest::html_attr(slider_element, "data-step"))
+        
+        # Check if this is a range slider (has data-to attribute)
+        is_range <- !is.na(rvest::html_attr(slider_element, "data-to"))
+        
+        # Default to step=1 if missing or invalid
+        if (is.na(step_value) || step_value <= 0) {
+          step_value <- 1
+        }
+        
+        # Generate sequence
+        numeric_values <- seq(min_value, max_value, by = step_value)
+        
+        # Create a named list with actual numeric values
+        # Start with empty list to ensure the types are preserved
+        named_options <- list()
+        for (val in numeric_values) {
+          named_options[[as.character(val)]] <- val
+        }
+        
+        # Note that this is a range slider in the structure if needed
+        if (is_range) {
+          question_structure[[question_id]]$is_range <- TRUE
+        }
+        
+        question_structure[[question_id]]$options <- named_options
+      } else {
+        # For regular text slider
+        options_labels_raw <- question_node |>
+          rvest::html_nodes(".js-range-slider") |>
+          rvest::html_attr("data-swvalues")
+        
+        # Process labels
+        options_labels <- gsub("\\[|\\]|\\\"", "", options_labels_raw) |>
+          strsplit(",") |>
+          unlist()
+        
+        # Convert labels to snake_case for values
+        options_values <- sapply(options_labels, function(label) {
+          # Convert to lowercase
+          value <- tolower(label)
+          # Replace spaces and special characters with underscore
+          value <- gsub("[^a-z0-9]", "_", value)
+          # Replace multiple underscores with a single one
+          value <- gsub("_+", "_", value)
+          # Remove leading and trailing underscores
+          value <- gsub("^_|_$", "", value)
+          return(value)
+        })
+        
+        # Create named options list
+        options <- options_values
+        names(options) <- options_labels
+        
+        question_structure[[question_id]]$options <- as.list(options)
+      }
     }
 
     # Extract the rows and options for the matrix main question
@@ -452,6 +490,22 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
     if (question$type == "select") {
       question$options <- question$options[-1]
     }
+
+    # Special handling for numeric slider options to ensure they remain numeric
+    if (question$type == "slider_numeric" && !is.null(question$options)) {
+      # Start at 1 to skip 0 if needed (based on your preference)
+      options_to_include <- seq_along(question$options)
+      if (length(question$options) > 0 && names(question$options)[1] == "0" && 
+          question$options[[1]] == 0) {
+        options_to_include <- options_to_include[-1]  # Skip the first element (0)
+      }
+      
+      # Create a new options list with just the elements you want
+      if (length(options_to_include) > 0) {
+        question$options <- question$options[options_to_include]
+      }
+    }
+    
     return(question)
   })
 
