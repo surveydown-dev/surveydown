@@ -359,16 +359,34 @@ extract_question_structure_html <- function(html_content) {
       # Write options to the question structure
       question_structure[[question_id]]$options <- as.list(options)
 
-      # Extract options for the question (slider)
+    # Extract options for the question (slider)
     } else if (grepl("slider", type)) {
-      options_raw <- question_node |>
+      # Get display labels from data-swvalues attribute
+      options_labels_raw <- question_node |>
         rvest::html_nodes("input") |>
         rvest::html_attr("data-swvalues")
-      options <- gsub("\\[|\\]|\\\"", "", options_raw) |>
+      
+      # Process labels
+      options_labels <- gsub("\\[|\\]|\\\"", "", options_labels_raw) |>
         strsplit(",") |>
         unlist()
-
-      # names(options) <- options # TODO no labels in html for slider
+      
+      # Convert labels to snake_case for values
+      options_values <- sapply(options_labels, function(label) {
+        # Convert to lowercase
+        value <- tolower(label)
+        # Replace spaces and special characters with underscore
+        value <- gsub("[^a-z0-9]", "_", value)
+        # Replace multiple underscores with a single one
+        value <- gsub("_+", "_", value)
+        # Remove leading and trailing underscores
+        value <- gsub("^_|_$", "", value)
+        return(value)
+      })
+      
+      # Create named options list
+      options <- options_values
+      names(options) <- options_labels
 
       question_structure[[question_id]]$options <- as.list(options)
     }
@@ -414,6 +432,7 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
     'checkbox-group-buttons' = 'mc_multiple_buttons',
     'shiny-input-select' = 'select',
     'js-range-slider sw-slider-text' = 'slider',
+    'js-range-slider' = 'slider_numeric',
     'shiny-date-input form-group shiny-input-container' = 'date',
     'shiny-date-range-input form-group shiny-input-container' = 'daterange'
   )

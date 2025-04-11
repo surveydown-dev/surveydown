@@ -622,16 +622,31 @@ sd_question <- function(
           ...
       )
 
+      # Store the values in a data attribute for extraction
+      values_json <- jsonlite::toJSON(values)
+      
+      # Add a data-values attribute to the input element for extraction
+      js_add_values <- sprintf('
+        $(document).ready(function() {
+          $("#%s input").attr("data-values", %s);
+        });
+      ', id, values_json)
+      
+      output <- shiny::tagAppendChild(
+          output,
+          shiny::tags$script(htmltools::HTML(js_add_values))
+      )
+
       # JavaScript to map the display label back to the stored value
       js_convert <- sprintf("
-    $(document).on('change', '#%s', function() {
-      var valueMap = %s;
-      var currentLabel = $(this).val();
+      $(document).on('change', '#%s', function() {
+        var valueMap = %s;
+        var currentLabel = $(this).val();
 
-      // Find the internal value that matches this display label
-      Shiny.setInputValue('%s', valueMap[currentLabel]);
-    });
-  ", id, jsonlite::toJSON(as.list(value_map)), id)
+        // Find the internal value that matches this display label
+        Shiny.setInputValue('%s', valueMap[currentLabel]);
+      });
+    ", id, jsonlite::toJSON(as.list(value_map)), id)
 
       output <- shiny::tagAppendChild(
           output,
