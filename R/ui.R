@@ -393,6 +393,7 @@ sd_question <- function(
     resize       = NULL,
     row          = NULL,
     default      = NULL,
+    yml          = "questions.yml",
     ...
     ) {
 
@@ -407,13 +408,12 @@ sd_question <- function(
   types_requiring_options <- c("select", "mc", "mc_multiple", "mc_buttons", 
                               "mc_multiple_buttons", "slider", "slider_numeric", "matrix")
   
-  # First check for missing arguments and try to load from questions.yml
+  # First check for missing arguments and try to load from specified yml file
   if (is.null(type) || is.null(label) || (is.null(option) && !is.null(type) && type %in% types_requiring_options)) {
-    # Attempt to load existing questions.yml 
-    root_questions_file <- "questions.yml"
-    if (file.exists(root_questions_file)) {
+    # Attempt to load existing yml file
+    if (file.exists(yml)) {
       tryCatch({
-        root_questions <- yaml::read_yaml(root_questions_file)
+        root_questions <- yaml::read_yaml(yml)
         if (!is.null(root_questions[[id]])) {
           q_data <- root_questions[[id]]
           
@@ -466,11 +466,14 @@ sd_question <- function(
             names(row) <- row_names
           }
         } else {
-          warning("Question ID '", id, "' not found in root questions.yml file")
+          warning("Question ID '", id, "' not found in specified yml file: ", yml)
         }
       }, error = function(e) {
-        warning("Error reading root questions.yml file: ", e$message)
+        warning("Error reading yml file '", yml, "': ", e$message)
       })
+    } else if (yml != "questions.yml") {
+      # Only show warning if a custom yml file was specified but not found
+      warning("Specified yml file '", yml, "' not found")
     }
   }
 
