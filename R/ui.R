@@ -298,16 +298,16 @@ extract_head_content <- function(html_content) {
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
 #'
+#' @param id A unique identifier for the question, which will be used as the
+#' variable name in the resulting survey data.
 #' @param type Specifies the type of question. Possible values are `"select"`,
 #' `"mc"`, `"mc_multiple"`, `"mc_buttons"`, `"mc_multiple_buttons"`, `"text"`,
 #' `"textarea"`, `"numeric"`, `"slider"`, `"slider_numeric"`, `"date"`,
-#' `"daterange"`, and `"matrix"`.
-#' @param id A unique identifier for the question, which will be used as the
-#' variable name in the resulting survey data.
+#' `"daterange"`, and `"matrix"`. Defaults to `NULL`.
 #' @param label Character string. The label for the UI element, which can be
-#' formatted with markdown.
+#' formatted with markdown. Defaults to `NULL`
 #' @param cols Integer. Number of columns for the `"textarea"` question type.
-#' Defaults to 80.
+#' Defaults to `80`.
 #' @param direction Character string. The direction for button groups
 #' (`"horizontal"` or `"vertical"`). Defaults to `"horizontal"`.
 #' @param status Character string. The status for button groups.
@@ -424,16 +424,21 @@ sd_question <- function(
   )
   
   # Define types that require options
-  types_requiring_options <- c("select", "mc", "mc_multiple", "mc_buttons", 
-                              "mc_multiple_buttons", "slider", "slider_numeric", "matrix")
+  types_requiring_options <- c(
+    "select", "mc", "mc_multiple", "mc_buttons",
+    "mc_multiple_buttons", "slider", "slider_numeric", "matrix"
+  )
   
-  # First check for missing arguments and try to load from specified yml file
-  if (is.null(type) || is.null(label) || (is.null(option) && !is.null(type) && type %in% types_requiring_options)) {
+  # First check for missing arguments and try to load from local yml file
+  missing_option <- is.null(option) && !is.null(type) && (type %in% types_requiring_options)
+  if (is.null(type) || is.null(label) || missing_option) {
     # Attempt to load existing yml file
     if (file.exists(yml)) {
       tryCatch({
         root_questions <- yaml::read_yaml(yml)
-        if (!is.null(root_questions[[id]])) {
+        if (is.null(root_questions[[id]])) {
+          stop("Question '", id, "' not found in yml file: ", yml)
+        } else {
           q_data <- root_questions[[id]]
           
           # Only override parameters that weren't provided
@@ -484,15 +489,13 @@ sd_question <- function(
             row <- row_values
             names(row) <- row_names
           }
-        } else {
-          warning("Question ID '", id, "' not found in specified yml file: ", yml)
         }
       }, error = function(e) {
-        warning("Error reading yml file '", yml, "': ", e$message)
+        stop("Error reading yml file '", yml, "': ", e$message)
       })
     } else if (yml != "questions.yml") {
-      # Only show warning if a custom yml file was specified but not found
-      warning("Specified yml file '", yml, "' not found")
+      # Only throw error if a custom yml file was specified but not found
+      stop("Specified yml file '", yml, "' not found")
     }
   }
 
