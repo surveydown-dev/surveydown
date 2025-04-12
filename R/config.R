@@ -376,6 +376,10 @@ extract_question_structure_html <- function(html_content) {
         # Check if this is a range slider (has data-to attribute)
         is_range <- !is.na(rvest::html_attr(slider_element, "data-to"))
         
+        # Get the from and to values for range sliders
+        from_value <- as.numeric(rvest::html_attr(slider_element, "data-from"))
+        to_value <- as.numeric(rvest::html_attr(slider_element, "data-to"))
+        
         # Default to step=1 if missing or invalid
         if (is.na(step_value) || step_value <= 0) {
           step_value <- 1
@@ -394,6 +398,11 @@ extract_question_structure_html <- function(html_content) {
         # Note that this is a range slider in the structure if needed
         if (is_range) {
           question_structure[[question_id]]$is_range <- TRUE
+          # Also store the default range values
+          question_structure[[question_id]]$default <- c(from_value, to_value)
+        } else if (!is.na(from_value)) {
+          # For single sliders, store the default value
+          question_structure[[question_id]]$default <- from_value
         }
         
         question_structure[[question_id]]$options <- named_options

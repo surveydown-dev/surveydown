@@ -422,6 +422,25 @@ sd_question <- function(
           }
         }
         
+        # Load default value for numeric sliders
+        if (is.null(default) && type == "slider_numeric" && !is.null(q_data$default)) {
+          default <- q_data$default
+        }
+        
+        # Handle range slider flag
+        if (type == "slider_numeric" && !is.null(q_data$is_range) && q_data$is_range) {
+          # If it's a range slider and we don't have a default value yet,
+          # create a default range using min/max from options
+          if (is.null(default) && !is.null(option)) {
+            options_numeric <- as.numeric(option)
+            min_val <- min(options_numeric)
+            max_val <- max(options_numeric)
+            # Default to 1/3 and 2/3 of the range
+            range_width <- max_val - min_val
+            default <- c(min_val + range_width/3, max_val - range_width/3)
+          }
+        }
+        
         # Handle row for matrix questions
         if (is.null(row) && !is.null(q_data$row) && is.list(q_data$row)) {
           row_names <- names(q_data$row)
@@ -576,10 +595,6 @@ sd_question <- function(
     )
 
   } else if (type == "slider") {
-      # For text-based slider, we need to ensure labels are displayed correctly
-
-      # First, understand option format:
-      # option = c("Label 1" = "value1", "Label 2" = "value2", ...)
 
       # Extract display labels and values
       display_labels <- names(option)
