@@ -521,14 +521,10 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
 
     # Special handling for numeric slider options to ensure they remain numeric
     if (question$type == "slider_numeric" && !is.null(question$options)) {
-      # Start at 1 to skip 0 if needed (based on your preference)
+      # Include all options
       options_to_include <- seq_along(question$options)
-      if (length(question$options) > 0 && names(question$options)[1] == "0" && 
-          question$options[[1]] == 0) {
-        options_to_include <- options_to_include[-1]  # Skip the first element (0)
-      }
       
-      # Create a new options list with just the elements you want
+      # Create a new options list with all elements
       if (length(options_to_include) > 0) {
         question$options <- question$options[options_to_include]
       }
