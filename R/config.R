@@ -33,10 +33,12 @@ run_config <- function(
     question_structure <- get_question_structure(paths, html_content)
 
     message(
-      "Survey contents saved to:\n",
-      "  ", paths$target_pages, "\n",
+      "Survey content saved to:\n",
+      "  ", paths$target_html, "\n",
       "  ", paths$target_head, "\n",
-      "  ", paths$target_questions
+      "  ", paths$target_pages, "\n",
+      "  ", paths$target_questions, "\n",
+      "  ", paths$target_transl
     )
 
   } else {
@@ -237,8 +239,6 @@ extract_html_pages <- function(
     } else {
         stop("No survey pages found. Add divs with either '.sd-page' or '.sd_page' class.")
     }
-
-    message("Using '", class_used, "' class for survey pages.")
 
     pages <- lapply(pages_elements, function(x) {
         page_id <- rvest::html_attr(x, "id")
