@@ -288,6 +288,36 @@ p:last-child,
     color: color-mix(in srgb, var(--theme-color) 80%, black);
 }
 
+
+/* SweetAlert custom styling */
+div:where(.swal2-container) .swal2-popup {
+  font-size: 1rem !important;
+}
+
+div:where(.swal2-container) .swal2-html-container {
+  padding: 0 2em;
+}
+
+/* Exit pop-up */
+.modal {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.modal-backdrop {
+  opacity: 0.5 !important;
+}
+
+.modal-dialog {
+  z-index: 1050 !important;
+}
+
+.modal-body .shiny-input-container .control-label {
+  text-align: center;
+  width: 100%;
+}
+
+
 /* Matrix question styling - BASE STYLES */
 .matrix-question-container {
   width: 100%;
@@ -483,30 +513,16 @@ p:last-child,
   border-bottom: 1px solid #ddd;
 }
 
-/* SweetAlert custom styling */
-div:where(.swal2-container) .swal2-popup {
-  font-size: 1rem !important;
+/* Border color for YAML-generated inputs to match QMD versions */
+.question-container[data-question-id] input[type="text"],
+.question-container[data-question-id] input[type="number"],
+.question-container[data-question-id] textarea,
+.question-container[data-question-id] select {
+  border: 1px solid #ddd;  /* Match the container border color */
 }
 
-div:where(.swal2-container) .swal2-html-container {
-  padding: 0 2em;
-}
-
-/* Exit pop-up */
-.modal {
-  display: block !important;
-  opacity: 1 !important;
-}
-
-.modal-backdrop {
-  opacity: 0.5 !important;
-}
-
-.modal-dialog {
-  z-index: 1050 !important;
-}
-
-.modal-body .shiny-input-container .control-label {
-  text-align: center;
-  width: 100%;
+/* Similarly for radio and checkbox */
+.question-container[data-question-id] input[type="radio"],
+.question-container[data-question-id] input[type="checkbox"] {
+  border-color: #ddd;
 }
