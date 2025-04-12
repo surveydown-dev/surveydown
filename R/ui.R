@@ -827,7 +827,7 @@ sd_question <- function(
           sd_question(
             type = "mc",
             id = full_id,
-            label = NULL,
+            label = "",
             option = option,
             direction = "horizontal",
             ...
