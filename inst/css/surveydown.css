@@ -339,13 +339,6 @@ p:last-child,
   padding: 4px;
 }
 
-.sd_page .matrix-question th,
-.sd-page .matrix-question th {
-  background-color: transparent;
-  font-weight: bold;
-  font-size: 18px;
-}
-
 .sd_page .table,
 .sd-page .table {
   --bs-table-striped-bg: #f9f9f9;
@@ -385,7 +378,7 @@ p:last-child,
 .sd-page .matrix-question .shiny-options-group .radio input {
   margin: 0;
   position: relative;
-  top: 1rem;
+  top: 0.5rem;
 }
 
 .sd_page .matrix-question .shiny-options-group .radio span,
@@ -433,7 +426,6 @@ p:last-child,
 
 .question-container[data-question-id] .matrix-question tbody tr td {
   border-bottom: 1px solid #eee;
-  padding: 8px 4px;
   text-align: center;
   vertical-align: middle;
 }
@@ -509,4 +501,18 @@ div:where(.swal2-container) .swal2-html-container {
 .modal-body .shiny-input-container .control-label {
   text-align: center;
   width: 100%;
+}
+
+/* Border color for YAML-generated inputs to match QMD versions */
+.question-container[data-question-id] input[type="text"],
+.question-container[data-question-id] input[type="number"],
+.question-container[data-question-id] textarea,
+.question-container[data-question-id] select {
+  border: 1px solid #ddd;  /* Match the container border color */
+}
+
+/* Similarly for radio and checkbox */
+.question-container[data-question-id] input[type="radio"],
+.question-container[data-question-id] input[type="checkbox"] {
+  border-color: #ddd;
 }
