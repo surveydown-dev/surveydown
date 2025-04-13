@@ -21,19 +21,29 @@ This function creates a reactive value similar to Shiny's reactive() function,
 but also automatically stores the calculated value in the survey data.
 }
 \examples{
-\dontrun{
-# In your server function:
-product <- sd_reactive("product", {
-  input$first_number * input$second_number
-})
+# This example shows how sd_reactive would be used in the app.R file
+if (interactive()) {
+  library(surveydown)
+  library(shiny)
 
-# Use the reactive value elsewhere
-output$result <- renderText({
-  paste("The product is:", product())
-})
+  # Demo app setup
+  server <- function(input, output, session) {
+    # Create a reactive value that is stored in survey data
+    product <- sd_reactive("product", {
+      as.numeric(input$first_number) * as.numeric(input$second_number)
+    })
 
-# In your survey.qmd file, display the value:
-The product is: `r sd_output("product", type = "value")`.
+    # Display the result
+    output$result <- renderText({
+      paste("The product is:", product())
+    })
+
+    # The rest of your survey setup...
+    sd_server()
+  }
+
+  # In your survey.qmd file, you would use:
+  # The product is: `r sd_output("product", type = "value")`
 }
 
 }
