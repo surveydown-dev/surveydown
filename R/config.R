@@ -138,25 +138,17 @@ survey_files_need_updating <- function(paths) {
 
   if ((time_qmd > time_pages) || (time_app > time_pages)) { return(TRUE) }
   
-  # Re-parse if questions.yml file has changed
-  default_yml <- "questions.yml"
-  if (fs::file_exists(default_yml)) {
-    time_yml <- file.info(default_yml)$mtime
-    if (time_yml > time_pages) { return(TRUE) }
-  }
+  # Check for changes in all YAML files in the project (excluding _survey/)
+  # find_all_yaml_files() defined in ui.R
+  yaml_files <- find_all_yaml_files()
   
-  # Check for other YAML files in the directory that might contain question definitions
-  # This will check all .yml and .yaml files in the current directory
-  yml_files <- fs::dir_ls(path = ".", glob = "*.y{a}?ml")
-  yml_files <- yml_files[yml_files != default_yml] # Exclude the default one we already checked
-  
-  for (yml_file in yml_files) {
+  for (yml_file in yaml_files) {
     if (fs::file_exists(yml_file)) {
       time_yml <- file.info(yml_file)$mtime
       if (time_yml > time_pages) { return(TRUE) }
     }
   }
-
+  
   # Re-parse if the user provided a 'translations.yml' file which is out of date
   if (fs::file_exists(paths$transl)) {
     time_transl <- file.info(paths$transl)$mtime
