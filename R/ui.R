@@ -222,17 +222,6 @@ get_footer <- function(metadata) {
                 '</div>'))
 }
 
-# Helper function to find all YAML files in the project
-find_all_yaml_files <- function() {
-  # Get all .yml and .yaml files in the current directory and subdirectories
-  all_files <- list.files(path = ".", pattern = "\\.ya?ml$", recursive = TRUE, full.names = TRUE)
-  
-  # Exclude files in the _survey/ folder
-  yaml_files <- all_files[!grepl("^\\._survey/", all_files)]
-  
-  return(yaml_files)
-}
-
 survey_needs_updating <- function(paths) {
   # Re-render if any of the target files are missing
   targets <- c(paths$target_html, paths$target_head)
@@ -244,10 +233,19 @@ survey_needs_updating <- function(paths) {
 
   if (time_qmd > time_html) { return(TRUE) }
   
-  # Check for changes in all YAML files in the project (excluding _survey/)
-  yaml_files <- find_all_yaml_files()
+  # Check for changes in questions.yml file
+  default_yml <- "questions.yml"
+  if (fs::file_exists(default_yml)) {
+    time_yml <- file.info(default_yml)$mtime
+    if (time_yml > time_html) { return(TRUE) }
+  }
   
-  for (yml_file in yaml_files) {
+  # Check for other YAML files in the directory that might contain question definitions
+  # This will check all .yml and .yaml files in the current directory
+  yml_files <- fs::dir_ls(path = ".", glob = "*.y{a}?ml")
+  yml_files <- yml_files[yml_files != default_yml] # Exclude the default one we already checked
+  
+  for (yml_file in yml_files) {
     if (fs::file_exists(yml_file)) {
       time_yml <- file.info(yml_file)$mtime
       if (time_yml > time_html) { return(TRUE) }
