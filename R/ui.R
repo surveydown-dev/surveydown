@@ -222,33 +222,38 @@ get_footer <- function(metadata) {
                 '</div>'))
 }
 
+find_all_yaml_files <- function() {
+  # Find all yml files
+  all_files <- list.files(path = ".", pattern = "\\.(yml|yaml)$", 
+                          recursive = TRUE, full.names = TRUE)
+  
+  # Exclude the _survey/ directory
+  yaml_files <- all_files[!grepl("^\\./?\\_survey/", all_files)]
+  
+  return(unique(yaml_files))
+}
+
 survey_needs_updating <- function(paths) {
   # Re-render if any of the target files are missing
   targets <- c(paths$target_html, paths$target_head)
   if (any(!fs::file_exists(targets))) { return(TRUE) }
 
-  # Re-render if '_survey/survey.html' file is out of date with 'survey.qmd' file
+  # Re-render if '_survey/survey.html' is out of date with 'survey.qmd'
   time_qmd <- file.info(paths$qmd)$mtime
   time_html <- file.info(paths$target_html)$mtime
 
   if (time_qmd > time_html) { return(TRUE) }
   
-  # Check for changes in questions.yml file
-  default_yml <- "questions.yml"
-  if (fs::file_exists(default_yml)) {
-    time_yml <- file.info(default_yml)$mtime
-    if (time_yml > time_html) { return(TRUE) }
-  }
+  # Find all YAML files
+  yaml_files <- find_all_yaml_files()
   
-  # Check for other YAML files in the directory that might contain question definitions
-  # This will check all .yml and .yaml files in the current directory
-  yml_files <- fs::dir_ls(path = ".", glob = "*.y{a}?ml")
-  yml_files <- yml_files[yml_files != default_yml] # Exclude the default one we already checked
-  
-  for (yml_file in yml_files) {
-    if (fs::file_exists(yml_file)) {
-      time_yml <- file.info(yml_file)$mtime
-      if (time_yml > time_html) { return(TRUE) }
+  # Check if any YAML file is newer than the rendered HTML
+  for (yaml_file in yaml_files) {
+    if (fs::file_exists(yaml_file)) {
+      time_yml <- file.info(yaml_file)$mtime
+      if (time_yml > time_html) { 
+        return(TRUE) 
+      }
     }
   }
 
@@ -339,6 +344,9 @@ extract_head_content <- function(html_content) {
 #' @param default Numeric, length 1 (for a single sided slider), or 2 for a
 #' two sided (range based) slider. Values to be used as the starting default
 #' for the slider. Defaults to the median of values.
+#' @param yml Character string. The name of the YAML file to load question configurations from.
+#' Defaults to `"questions.yml"`. Custom YAML files can be specified, either in 
+#' the root directory or subdirectories (e.g., `"folder/custom.yml"`).
 #' @param ... Additional arguments, often specific to different input types.
 #' Examples include `pre`, `sep`, `step`, and `animate` for `"slider"` and
 #' `"slider_numeric"` question types, etc.
