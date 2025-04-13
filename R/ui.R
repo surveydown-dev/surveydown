@@ -432,71 +432,71 @@ sd_question <- function(
   # First check for missing arguments and try to load from local yml file
   missing_option <- is.null(option) && !is.null(type) && (type %in% types_requiring_options)
   if (is.null(type) || is.null(label) || missing_option) {
-    # Attempt to load existing yml file
-    if (file.exists(yml)) {
-      tryCatch({
-        root_questions <- yaml::read_yaml(yml)
-        if (is.null(root_questions[[id]])) {
-          stop("Question '", id, "' not found in yml file: ", yml)
-        } else {
-          q_data <- root_questions[[id]]
-          
-          # Only override parameters that weren't provided
-          if (is.null(type)) {
-            type <- q_data$type
-          }
-          
-          if (is.null(label)) {
-            label <- q_data$label
-          }
-          
-          # Handle different option formats based on question type
-          if (is.null(option) && !is.null(q_data$options)) {
-            if (is.list(q_data$options)) {
-              # Convert list to named vector for option parameter
-              option_names <- names(q_data$options)
-              option_values <- unlist(q_data$options)
-              option <- option_values
-              names(option) <- option_names
-            } else {
-              option <- q_data$options
-            }
-          }
-          
-          # Load default value for numeric sliders
-          if (is.null(default) && type == "slider_numeric" && !is.null(q_data$default)) {
-            default <- q_data$default
-          }
-          
-          # Handle range slider flag
-          if (type == "slider_numeric" && !is.null(q_data$is_range) && q_data$is_range) {
-            # If it's a range slider and we don't have a default value yet,
-            # create a default range using min/max from options
-            if (is.null(default) && !is.null(option)) {
-              options_numeric <- as.numeric(option)
-              min_val <- min(options_numeric)
-              max_val <- max(options_numeric)
-              # Default to 1/3 and 2/3 of the range
-              range_width <- max_val - min_val
-              default <- c(min_val + range_width/3, max_val - range_width/3)
-            }
-          }
-          
-          # Handle row for matrix questions
-          if (is.null(row) && !is.null(q_data$row) && is.list(q_data$row)) {
-            row_names <- names(q_data$row)
-            row_values <- unlist(q_data$row)
-            row <- row_values
-            names(row) <- row_names
-          }
-        }
-      }, error = function(e) {
-        stop("Error reading yml file '", yml, "': ", e$message)
-      })
-    } else if (yml != "questions.yml") {
-      # Only throw error if a custom yml file was specified but not found
+    # Check if the yml file exists first
+    if (!file.exists(yml)) {
+      # Throw error if the yml file doesn't exist, regardless of whether it's the default or custom
       stop("Specified yml file '", yml, "' not found")
     }
+    # Attempt to load existing yml file
+    tryCatch({
+      root_questions <- yaml::read_yaml(yml)
+      if (is.null(root_questions[[id]])) {
+        stop("Question '", id, "' not found in yml file: ", yml)
+      } else {
+        q_data <- root_questions[[id]]
+        
+        # Only override parameters that weren't provided
+        if (is.null(type)) {
+          type <- q_data$type
+        }
+        
+        if (is.null(label)) {
+          label <- q_data$label
+        }
+        
+        # Handle different option formats based on question type
+        if (is.null(option) && !is.null(q_data$options)) {
+          if (is.list(q_data$options)) {
+            # Convert list to named vector for option parameter
+            option_names <- names(q_data$options)
+            option_values <- unlist(q_data$options)
+            option <- option_values
+            names(option) <- option_names
+          } else {
+            option <- q_data$options
+          }
+        }
+        
+        # Load default value for numeric sliders
+        if (is.null(default) && type == "slider_numeric" && !is.null(q_data$default)) {
+          default <- q_data$default
+        }
+        
+        # Handle range slider flag
+        if (type == "slider_numeric" && !is.null(q_data$is_range) && q_data$is_range) {
+          # If it's a range slider and we don't have a default value yet,
+          # create a default range using min/max from options
+          if (is.null(default) && !is.null(option)) {
+            options_numeric <- as.numeric(option)
+            min_val <- min(options_numeric)
+            max_val <- max(options_numeric)
+            # Default to 1/3 and 2/3 of the range
+            range_width <- max_val - min_val
+            default <- c(min_val + range_width/3, max_val - range_width/3)
+          }
+        }
+        
+        # Handle row for matrix questions
+        if (is.null(row) && !is.null(q_data$row) && is.list(q_data$row)) {
+          row_names <- names(q_data$row)
+          row_values <- unlist(q_data$row)
+          row <- row_values
+          names(row) <- row_names
+        }
+      }
+    }, error = function(e) {
+      stop("Error reading yml file '", yml, "': ", e$message)
+    })
   }
 
   # Check if provided type is valid
