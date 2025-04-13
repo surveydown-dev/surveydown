@@ -200,6 +200,7 @@ tibble_to_list_of_lists <- function(tbl) {
 #'     \item{external_redirect}{Template with external site redirects}
 #'     \item{live_polling}{Live polling template for real-time surveys}
 #'     \item{question_types}{Showcases all available question types}
+#'     \item{questions_yml}{Survey with questions defined in a YAML file}
 #'     \item{random_options}{Survey with randomized question options}
 #'     \item{random_options_predefined}{Randomized options from predefined sets}
 #'     \item{reactive_drilldown}{Dynamic questions with drill-down capability}
@@ -245,6 +246,7 @@ sd_create_survey <- function(path = getwd(), template = "default") {
     "external_redirect",
     "live_polling",
     "question_types",
+    "questions_yml",
     "random_options",
     "random_options_predefined",
     "reactive_drilldown",

@@ -4,6 +4,7 @@
 
 - New `yml` argument in `sd_question()`, defaults to `"questions.yml"`. This allows users to utilize yml files for question creation. For details, please refer to the [`questions_yml`](https://surveydown.org/templates/15_questions_yml) template. This enhances the reproducibility of survey design.
 - Update to `sd_create_survey()`: now the The `template` argument is by default `"default"`.
+- Update to `sd_create_survey()`: new `template = "questions_yml"` option to create a survey with the `questions_yml` template.
 
 # surveydown 0.10.1
 

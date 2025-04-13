@@ -24,6 +24,7 @@ Other options include:
 \item{external_redirect}{Template with external site redirects}
 \item{live_polling}{Live polling template for real-time surveys}
 \item{question_types}{Showcases all available question types}
+\item{questions_yml}{Survey with questions defined in a YAML file}
 \item{random_options}{Survey with randomized question options}
 \item{random_options_predefined}{Randomized options from predefined sets}
 \item{reactive_drilldown}{Dynamic questions with drill-down capability}
