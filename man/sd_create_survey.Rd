@@ -4,17 +4,17 @@
 \alias{sd_create_survey}
 \title{Create a new survey template}
 \usage{
-sd_create_survey(path = getwd(), template = "plain_template")
+sd_create_survey(path = getwd(), template = "default")
 }
 \arguments{
 \item{path}{A character string specifying the directory where the survey
 template should be created. Defaults to the current working directory.}
 
 \item{template}{A character string specifying the template to use.
-Default is "plain_template" which uses the built-in package template.
+Default is "default" which uses the built-in package template.
 Other options include:
 \describe{
-\item{plain_template}{The default built-in template}
+\item{default}{The default built-in template}
 \item{conditional_display}{Template of conditional display of questions}
 \item{conditional_navigation}{Template of conditional navigation of pages}
 \item{conjoint_buttons}{Conjoint analysis with button interface}
