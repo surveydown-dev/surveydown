@@ -443,13 +443,13 @@ sd_question <- function(
     # Check if the yml file exists first
     if (!file.exists(yml)) {
       # Throw error if the yml file doesn't exist, regardless of whether it's the default or custom
-      stop("Specified yml file '", yml, "' not found")
+      stop("Specified yml file '", yml, "' not found for question ", id)
     }
     # Attempt to load existing yml file
     tryCatch({
       root_questions <- yaml::read_yaml(yml)
       if (is.null(root_questions[[id]])) {
-        stop("Question '", id, "' not found in yml file: ", yml)
+        stop("Question '", id, "' not found in yml file ", yml)
       } else {
         q_data <- root_questions[[id]]
         
@@ -509,7 +509,7 @@ sd_question <- function(
 
   # Check if provided type is valid
   if (is.null(type)) {
-    stop("Question type is required but missing. Please provide a type or ensure it exists in the root questions.yml file.")
+    stop("Question type is required but missing. Please provide a type or ensure it exists in the questions.yml file.")
   }
   
   if (!type %in% valid_types) {
