@@ -776,7 +776,7 @@ sd_close()
 
 '
   } else {
-    template <- sprintf('::: {.sd-page id=%s}
+    template <- sprintf('::: {.sd_page id=%s}
 
 Add page contents...
 
