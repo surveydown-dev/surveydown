@@ -22,7 +22,7 @@ Here is a basic "multiple choice" question:
 sd_question(
   type  = 'mc',
   id    = 'penguins',
-  label = "Which type of penguin do you like the best?",
+  label = "What's your favorite penguin?",
   option = c(
     'Adélie'    = 'adelie',
     'Chinstrap' = 'chinstrap',
@@ -61,7 +61,7 @@ sd_next()
 
 ## End
 
-This it the last page in the survey.
+This is the last page in the survey.
 
 ```{r}
 sd_close()
