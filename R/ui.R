@@ -71,7 +71,6 @@ sd_ui <- function() {
 
     # Move rendered file
     fs::file_move(paths$root_html, paths$target_html)
-    message("Survey saved to ", paths$target_html, "\n")
 
     # Extract head content and save
     html_content <- rvest::read_html(paths$target_html)
@@ -223,16 +222,40 @@ get_footer <- function(metadata) {
                 '</div>'))
 }
 
+find_all_yaml_files <- function() {
+  # Find all yml files
+  all_files <- list.files(path = ".", pattern = "\\.(yml|yaml)$", 
+                          recursive = TRUE, full.names = TRUE)
+  
+  # Exclude the _survey/ directory
+  yaml_files <- all_files[!grepl("^\\./?\\_survey/", all_files)]
+  
+  return(unique(yaml_files))
+}
+
 survey_needs_updating <- function(paths) {
   # Re-render if any of the target files are missing
   targets <- c(paths$target_html, paths$target_head)
   if (any(!fs::file_exists(targets))) { return(TRUE) }
 
-  # Re-render if '_survey/survey.html' file is out of date with 'survey.qmd' file
+  # Re-render if '_survey/survey.html' is out of date with 'survey.qmd'
   time_qmd <- file.info(paths$qmd)$mtime
   time_html <- file.info(paths$target_html)$mtime
 
   if (time_qmd > time_html) { return(TRUE) }
+  
+  # Find all YAML files
+  yaml_files <- find_all_yaml_files()
+  
+  # Check if any YAML file is newer than the rendered HTML
+  for (yaml_file in yaml_files) {
+    if (fs::file_exists(yaml_file)) {
+      time_yml <- file.info(yaml_file)$mtime
+      if (time_yml > time_html) { 
+        return(TRUE) 
+      }
+    }
+  }
 
   return(FALSE)
 }
@@ -280,16 +303,16 @@ extract_head_content <- function(html_content) {
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
 #'
+#' @param id A unique identifier for the question, which will be used as the
+#' variable name in the resulting survey data.
 #' @param type Specifies the type of question. Possible values are `"select"`,
 #' `"mc"`, `"mc_multiple"`, `"mc_buttons"`, `"mc_multiple_buttons"`, `"text"`,
 #' `"textarea"`, `"numeric"`, `"slider"`, `"slider_numeric"`, `"date"`,
-#' `"daterange"`, and `"matrix"`.
-#' @param id A unique identifier for the question, which will be used as the
-#' variable name in the resulting survey data.
+#' `"daterange"`, and `"matrix"`. Defaults to `NULL`.
 #' @param label Character string. The label for the UI element, which can be
-#' formatted with markdown.
+#' formatted with markdown. Defaults to `NULL`
 #' @param cols Integer. Number of columns for the `"textarea"` question type.
-#' Defaults to 80.
+#' Defaults to `80`.
 #' @param direction Character string. The direction for button groups
 #' (`"horizontal"` or `"vertical"`). Defaults to `"horizontal"`.
 #' @param status Character string. The status for button groups.
@@ -321,6 +344,9 @@ extract_head_content <- function(html_content) {
 #' @param default Numeric, length 1 (for a single sided slider), or 2 for a
 #' two sided (range based) slider. Values to be used as the starting default
 #' for the slider. Defaults to the median of values.
+#' @param yml Character string. The name of the YAML file to load question configurations from.
+#' Defaults to `"questions.yml"`. Custom YAML files can be specified, either in 
+#' the root directory or subdirectories (e.g., `"folder/custom.yml"`).
 #' @param ... Additional arguments, often specific to different input types.
 #' Examples include `pre`, `sep`, `step`, and `animate` for `"slider"` and
 #' `"slider_numeric"` question types, etc.
@@ -375,9 +401,10 @@ extract_head_content <- function(html_content) {
 #'
 #' @export
 sd_question <- function(
-    type,
     id,
-    label,
+    type         = NULL,
+    label        = NULL,
+    option       = NULL,
     cols         = "80",
     direction    = "horizontal",
     status       = "default",
@@ -389,11 +416,11 @@ sd_question <- function(
     individual   = TRUE,
     justified    = FALSE,
     force_edges  = TRUE,
-    option       = NULL,
     placeholder  = NULL,
     resize       = NULL,
     row          = NULL,
     default      = NULL,
+    yml          = "questions.yml",
     ...
     ) {
 
@@ -403,8 +430,88 @@ sd_question <- function(
     "text", "textarea", "numeric", "slider", "slider_numeric", "date",
     "daterange", "matrix"
   )
+  
+  # Define types that require options
+  types_requiring_options <- c(
+    "select", "mc", "mc_multiple", "mc_buttons",
+    "mc_multiple_buttons", "slider", "slider_numeric", "matrix"
+  )
+  
+  # First check for missing arguments and try to load from local yml file
+  missing_option <- is.null(option) && !is.null(type) && (type %in% types_requiring_options)
+  if (is.null(type) || is.null(label) || missing_option) {
+    # Check if the yml file exists first
+    if (!file.exists(yml)) {
+      # Throw error if the yml file doesn't exist, regardless of whether it's the default or custom
+      stop("Specified yml file '", yml, "' not found for question ", id)
+    }
+    # Attempt to load existing yml file
+    tryCatch({
+      root_questions <- yaml::read_yaml(yml)
+      if (is.null(root_questions[[id]])) {
+        stop("Question '", id, "' not found in yml file ", yml)
+      } else {
+        q_data <- root_questions[[id]]
+        
+        # Only override parameters that weren't provided
+        if (is.null(type)) {
+          type <- q_data$type
+        }
+        
+        if (is.null(label)) {
+          label <- q_data$label
+        }
+        
+        # Handle different option formats based on question type
+        if (is.null(option) && !is.null(q_data$options)) {
+          if (is.list(q_data$options)) {
+            # Convert list to named vector for option parameter
+            option_names <- names(q_data$options)
+            option_values <- unlist(q_data$options)
+            option <- option_values
+            names(option) <- option_names
+          } else {
+            option <- q_data$options
+          }
+        }
+        
+        # Load default value for numeric sliders
+        if (is.null(default) && type == "slider_numeric" && !is.null(q_data$default)) {
+          default <- q_data$default
+        }
+        
+        # Handle range slider flag
+        if (type == "slider_numeric" && !is.null(q_data$is_range) && q_data$is_range) {
+          # If it's a range slider and we don't have a default value yet,
+          # create a default range using min/max from options
+          if (is.null(default) && !is.null(option)) {
+            options_numeric <- as.numeric(option)
+            min_val <- min(options_numeric)
+            max_val <- max(options_numeric)
+            # Default to 1/3 and 2/3 of the range
+            range_width <- max_val - min_val
+            default <- c(min_val + range_width/3, max_val - range_width/3)
+          }
+        }
+        
+        # Handle row for matrix questions
+        if (is.null(row) && !is.null(q_data$row) && is.list(q_data$row)) {
+          row_names <- names(q_data$row)
+          row_values <- unlist(q_data$row)
+          row <- row_values
+          names(row) <- row_names
+        }
+      }
+    }, error = function(e) {
+      stop("Error reading yml file '", yml, "': ", e$message)
+    })
+  }
 
   # Check if provided type is valid
+  if (is.null(type)) {
+    stop("Question type is required but missing. Please provide a type or ensure it exists in the questions.yml file.")
+  }
+  
   if (!type %in% valid_types) {
     stop(
       sprintf(
@@ -530,10 +637,6 @@ sd_question <- function(
     )
 
   } else if (type == "slider") {
-      # For text-based slider, we need to ensure labels are displayed correctly
-
-      # First, understand option format:
-      # option = c("Label 1" = "value1", "Label 2" = "value2", ...)
 
       # Extract display labels and values
       display_labels <- names(option)
@@ -576,16 +679,31 @@ sd_question <- function(
           ...
       )
 
+      # Store the values in a data attribute for extraction
+      values_json <- jsonlite::toJSON(values)
+      
+      # Add a data-values attribute to the input element for extraction
+      js_add_values <- sprintf('
+        $(document).ready(function() {
+          $("#%s input").attr("data-values", %s);
+        });
+      ', id, values_json)
+      
+      output <- shiny::tagAppendChild(
+          output,
+          shiny::tags$script(htmltools::HTML(js_add_values))
+      )
+
       # JavaScript to map the display label back to the stored value
       js_convert <- sprintf("
-    $(document).on('change', '#%s', function() {
-      var valueMap = %s;
-      var currentLabel = $(this).val();
+      $(document).on('change', '#%s', function() {
+        var valueMap = %s;
+        var currentLabel = $(this).val();
 
-      // Find the internal value that matches this display label
-      Shiny.setInputValue('%s', valueMap[currentLabel]);
-    });
-  ", id, jsonlite::toJSON(as.list(value_map)), id)
+        // Find the internal value that matches this display label
+        Shiny.setInputValue('%s', valueMap[currentLabel]);
+      });
+    ", id, jsonlite::toJSON(as.list(value_map)), id)
 
       output <- shiny::tagAppendChild(
           output,
@@ -720,7 +838,7 @@ sd_question <- function(
           sd_question(
             type = "mc",
             id = full_id,
-            label = NULL,
+            label = "",
             option = option,
             direction = "horizontal",
             ...

@@ -2,7 +2,8 @@
 format: html
 echo: false
 warning: false
-footer: "Made with [surveydown](https://surveydown.org)"
+footer-left: "Made with [surveydown](https://surveydown.org)"
+footer-right: '[<i class="bi bi-github"></i> Source Code](https://github.com/surveydown-dev/templates)'
 ---
 
 ```{r}
@@ -11,9 +12,9 @@ library(surveydown)
 
 ::: {.sd_page id=welcome}
 
-# Welcome to our survey!
+# Default Template
 
-This is a plain template of a surveydown survey. It has two pages with one question on each page.
+Welcome to surveydown! This is a default template of a surveydown survey. It has two pages with one question on each page.
 
 Here is a basic "multiple choice" question:
 

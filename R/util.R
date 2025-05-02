@@ -187,10 +187,10 @@ tibble_to_list_of_lists <- function(tbl) {
 #' @param path A character string specifying the directory where the survey
 #'   template should be created. Defaults to the current working directory.
 #' @param template A character string specifying the template to use.
-#'   Default is "plain_template" which uses the built-in package template.
+#'   Default is "default" which uses the built-in package template.
 #'   Other options include:
 #'   \describe{
-#'     \item{plain_template}{The default built-in template}
+#'     \item{default}{The default built-in template}
 #'     \item{conditional_display}{Template of conditional display of questions}
 #'     \item{conditional_navigation}{Template of conditional navigation of pages}
 #'     \item{conjoint_buttons}{Conjoint analysis with button interface}
@@ -200,6 +200,7 @@ tibble_to_list_of_lists <- function(tbl) {
 #'     \item{external_redirect}{Template with external site redirects}
 #'     \item{live_polling}{Live polling template for real-time surveys}
 #'     \item{question_types}{Showcases all available question types}
+#'     \item{questions_yml}{Survey with questions defined in a YAML file}
 #'     \item{random_options}{Survey with randomized question options}
 #'     \item{random_options_predefined}{Randomized options from predefined sets}
 #'     \item{reactive_drilldown}{Dynamic questions with drill-down capability}
@@ -232,10 +233,10 @@ tibble_to_list_of_lists <- function(tbl) {
 #' }
 #'
 #' @export
-sd_create_survey <- function(path = getwd(), template = "plain_template") {
+sd_create_survey <- function(path = getwd(), template = "default") {
   # Available templates from surveydown-dev/templates
   available_templates <- c(
-    "plain_template",
+    "default",
     "conditional_display",
     "conditional_navigation",
     "conjoint_buttons",
@@ -245,6 +246,7 @@ sd_create_survey <- function(path = getwd(), template = "plain_template") {
     "external_redirect",
     "live_polling",
     "question_types",
+    "questions_yml",
     "random_options",
     "random_options_predefined",
     "reactive_drilldown",
@@ -264,7 +266,7 @@ sd_create_survey <- function(path = getwd(), template = "plain_template") {
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
 
   # Determine where to get template files from
-  if (template == "plain_template") {
+  if (template == "default") {
     # Use built-in template
     template_path <- system.file("template", package = "surveydown")
   } else {
@@ -310,7 +312,7 @@ sd_create_survey <- function(path = getwd(), template = "plain_template") {
 
   # Create success message that includes the template
   if (any(files_copied)) {
-    if (template == "plain_template") {
+    if (template == "default") {
       cli::cli_alert_success(paste("Template created at", path))
     } else {
       cli::cli_alert_success(paste("Template of", template, "created at", path))
@@ -320,7 +322,7 @@ sd_create_survey <- function(path = getwd(), template = "plain_template") {
   }
 
   # Clean up temp directory if needed
-  if (template != "plain_template") {
+  if (template != "default") {
     unlink(dirname(template_path), recursive = TRUE)
   }
 

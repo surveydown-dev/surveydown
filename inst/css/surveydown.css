@@ -357,7 +357,7 @@ p:last-child,
 .matrix-question .shiny-options-group .radio input {
     margin: 0;
     position: relative;
-    top: 1rem; /* radio button position */
+    top: 0.5rem; /* radio button position */
 }
 
 /* Hide radio button labels */
@@ -370,6 +370,19 @@ p:last-child,
     text-align: left;
     font-weight: normal;
     padding-left: 15px; /* Add some left padding */
+}
+
+/* Container Borders */
+.question-container[data-question-id] input[type="text"],
+.question-container[data-question-id] input[type="number"],
+.question-container[data-question-id] textarea,
+.question-container[data-question-id] select {
+  border: 1px solid #ddd;
+}
+
+.question-container[data-question-id] input[type="radio"],
+.question-container[data-question-id] input[type="checkbox"] {
+  border-color: #ddd;
 }
 
 /* SweetAlert custom styling */

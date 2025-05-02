@@ -5,9 +5,10 @@
 \title{Create a survey question}
 \usage{
 sd_question(
-  type,
   id,
-  label,
+  type = NULL,
+  label = NULL,
+  option = NULL,
   cols = "80",
   direction = "horizontal",
   status = "default",
@@ -19,28 +20,32 @@ sd_question(
   individual = TRUE,
   justified = FALSE,
   force_edges = TRUE,
-  option = NULL,
   placeholder = NULL,
   resize = NULL,
   row = NULL,
   default = NULL,
+  yml = "questions.yml",
   ...
 )
 }
 \arguments{
-\item{type}{Specifies the type of question. Possible values are \code{"select"},
-\code{"mc"}, \code{"mc_multiple"}, \code{"mc_buttons"}, \code{"mc_multiple_buttons"}, \code{"text"},
-\code{"textarea"}, \code{"numeric"}, \code{"slider"}, \code{"slider_numeric"}, \code{"date"},
-\code{"daterange"}, and \code{"matrix"}.}
-
 \item{id}{A unique identifier for the question, which will be used as the
 variable name in the resulting survey data.}
 
+\item{type}{Specifies the type of question. Possible values are \code{"select"},
+\code{"mc"}, \code{"mc_multiple"}, \code{"mc_buttons"}, \code{"mc_multiple_buttons"}, \code{"text"},
+\code{"textarea"}, \code{"numeric"}, \code{"slider"}, \code{"slider_numeric"}, \code{"date"},
+\code{"daterange"}, and \code{"matrix"}. Defaults to \code{NULL}.}
+
 \item{label}{Character string. The label for the UI element, which can be
-formatted with markdown.}
+formatted with markdown. Defaults to \code{NULL}}
+
+\item{option}{Named vector for the \code{"select"}, \code{"radio"}, \code{"checkbox"},
+and \code{"slider"} question types, or numeric vector for \code{"slider_numeric"}
+question type.}
 
 \item{cols}{Integer. Number of columns for the \code{"textarea"} question type.
-Defaults to 80.}
+Defaults to \code{80}.}
 
 \item{direction}{Character string. The direction for button groups
 (\code{"horizontal"} or \code{"vertical"}). Defaults to \code{"horizontal"}.}
@@ -71,10 +76,6 @@ of the parent div. Defaults to \code{FALSE}.}
 \item{force_edges}{Logical. Whether to force edges for slider input.
 Defaults to \code{TRUE}.}
 
-\item{option}{Named vector for the \code{"select"}, \code{"radio"}, \code{"checkbox"},
-and \code{"slider"} question types, or numeric vector for \code{"slider_numeric"}
-question type.}
-
 \item{placeholder}{Character string. Placeholder text for \code{"text"} and
 \code{"textarea"} question types.}
 
@@ -87,6 +88,10 @@ and their corresponding IDs.}
 \item{default}{Numeric, length 1 (for a single sided slider), or 2 for a
 two sided (range based) slider. Values to be used as the starting default
 for the slider. Defaults to the median of values.}
+
+\item{yml}{Character string. The name of the YAML file to load question configurations from.
+Defaults to \code{"questions.yml"}. Custom YAML files can be specified, either in
+the root directory or subdirectories (e.g., \code{"folder/custom.yml"}).}
 
 \item{...}{Additional arguments, often specific to different input types.
 Examples include \code{pre}, \code{sep}, \code{step}, and \code{animate} for \code{"slider"} and
