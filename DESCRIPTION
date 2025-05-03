@@ -51,7 +51,8 @@ Imports:
     shinyWidgets,
     utils,
     xml2,
-    yaml
+    yaml,
+    shinyAce
 Suggests:
     glue,
     knitr,
