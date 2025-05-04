@@ -54,7 +54,7 @@ studio_ui <- function() {
   )
 }
 
-# UI - Structure tab (enhanced with management controls)
+# UI - Structure tab
 ui_structure_tab <- function() {
   shiny::tabPanel(
     "Structure",
@@ -64,18 +64,18 @@ ui_structure_tab <- function() {
         width = 3,
         shiny::div(
           style = "margin-top: 15px; padding: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px);",
-          shiny::h4("Survey Management"),
+          shiny::h4("Add Content"),
           
           # Add Page UI
           shiny::wellPanel(
-            shiny::h5("Add New Page"),
+            shiny::h5("Add Page"),
             shiny::textInput("new_page_id", "Page ID:", placeholder = "Enter page ID (e.g., welcome, questions, end)"),
             shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
           ),
           
           # Add Question UI
           shiny::wellPanel(
-            shiny::h5("Add New Question"),
+            shiny::h5("Add Question"),
             shiny::selectInput("page_for_question", "To Page:", choices = NULL),
             shiny::selectInput("question_type", "Question Type:", 
                       choices = c(
@@ -108,11 +108,6 @@ ui_structure_tab <- function() {
         shiny::div(
           style = "margin-top: 15px",
           shiny::h3("Survey Structure"),
-          shiny::div(
-            style = "margin-bottom: 15px",
-            shiny::p("This view shows the pages and questions in your survey as defined in survey.qmd."),
-            shiny::hr()
-          ),
           shiny::div(
             style = "overflow-y: auto; max-height: calc(100vh - 200px);",
             shiny::uiOutput("survey_structure")
@@ -341,7 +336,7 @@ server_file_handlers <- function(input, output, session, preview_status) {
   })
 }
 
-# Server - Structure handlers (enhanced with page and question management)
+# Server - Structure handlers
 server_structure_handlers <- function(input, output, session) {
   # Create a reactive value to track survey structure changes
   structure_trigger <- shiny::reactiveVal(0)
@@ -627,55 +622,46 @@ server_structure_handlers <- function(input, output, session) {
     # Create the structure visualization
     pages_ui <- lapply(survey_structure$page_ids, function(page_id) {
       questions <- survey_structure$pages[[page_id]]
-      
-      # If no questions found for this page
-      if (length(questions) == 0) {
-        questions_ui <- shiny::div(
-          style = "margin-left: 20px; font-style: italic;",
-          "No questions found on this page"
-        )
-      } else {
-        questions_ui <- lapply(questions, function(q) {
-          # Create the base question info UI
-          question_ui <- list(
+      questions_ui <- lapply(questions, function(q) {
+        # Create the base question info UI
+        question_ui <- list(
+          shiny::div(
+            style = "margin-left: 20px; margin-bottom: 15px; padding: 10px; border-left: 3px solid #5bc0de; background-color: #f8f9fa;",
             shiny::div(
-              style = "margin-left: 20px; margin-bottom: 15px; padding: 10px; border-left: 3px solid #5bc0de; background-color: #f8f9fa;",
-              shiny::div(
-                style = "font-weight: bold;",
-                paste0("Type: ", q$type)
-              ),
-              shiny::div(
-                paste0("ID: ", q$id)
-              ),
-              shiny::div(
-                paste0("Label: ", q$label)
-              )
+              style = "font-weight: bold;",
+              paste0("Type: ", q$type)
+            ),
+            shiny::div(
+              paste0("ID: ", q$id)
+            ),
+            shiny::div(
+              paste0("Label: ", q$label)
             )
           )
-          
-          # Add options if they exist and it's a multiple choice question
-          if (!is.null(q$options) && length(q$options) > 0) {
-            options_ui <- shiny::div(
-              style = "margin-top: 10px; margin-left: 20px; padding: 8px; background-color: #f0f0f0; border-radius: 4px;",
+        )
+        
+        # Add options if they exist and it's a multiple choice question
+        if (!is.null(q$options) && length(q$options) > 0) {
+          options_ui <- shiny::div(
+            style = "margin-top: 10px; margin-left: 20px; padding: 8px; background-color: #f0f0f0; border-radius: 4px;",
+            shiny::div(
+              style = "font-weight: bold; margin-bottom: 5px;",
+              "Options:"
+            ),
+            lapply(q$options, function(opt) {
               shiny::div(
-                style = "font-weight: bold; margin-bottom: 5px;",
-                "Options:"
-              ),
-              lapply(q$options, function(opt) {
-                shiny::div(
-                  style = "margin-left: 10px; margin-bottom: 3px;",
-                  paste0(opt$label, " = ", opt$value)
-                )
-              })
-            )
-            
-            # Append options UI to question UI
-            question_ui[[1]] <- shiny::tagAppendChild(question_ui[[1]], options_ui)
-          }
+                style = "margin-left: 10px; margin-bottom: 3px;",
+                paste0(opt$label, " = ", opt$value)
+              )
+            })
+          )
           
-          return(question_ui[[1]])
-        })
-      }
+          # Append options UI to question UI
+          question_ui[[1]] <- shiny::tagAppendChild(question_ui[[1]], options_ui)
+        }
+        
+        return(question_ui[[1]])
+      })
       
       shiny::div(
         style = "margin-bottom: 30px;",
@@ -693,7 +679,6 @@ server_structure_handlers <- function(input, output, session) {
     
     shiny::div(
       style = "padding: 10px;",
-      shiny::h4(paste0("Total Pages: ", length(survey_structure$page_ids))),
       pages_ui
     )
   })
