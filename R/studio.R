@@ -43,7 +43,7 @@ studio_ui <- function() {
     id = "tabset",
     theme = bslib::bs_theme(version = 5),
     
-    # Structure tab (new)
+    # Structure tab
     ui_structure_tab(),
     
     # Code tab
@@ -54,27 +54,67 @@ studio_ui <- function() {
   )
 }
 
-# UI - Structure tab (new)
+# UI - Structure tab (enhanced with management controls)
 ui_structure_tab <- function() {
   shiny::tabPanel(
     "Structure",
     shiny::fluidRow(
+      # Left side - Controls panel
       shiny::column(
-        width = 12,
+        width = 3,
+        shiny::div(
+          style = "margin-top: 15px; padding: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px);",
+          shiny::h4("Survey Management"),
+          
+          # Add Page UI
+          shiny::wellPanel(
+            shiny::h5("Add New Page"),
+            shiny::textInput("new_page_id", "Page ID:", placeholder = "Enter page ID (e.g., welcome, questions, end)"),
+            shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
+          ),
+          
+          # Add Question UI
+          shiny::wellPanel(
+            shiny::h5("Add New Question"),
+            shiny::selectInput("page_for_question", "To Page:", choices = NULL),
+            shiny::selectInput("question_type", "Question Type:", 
+                      choices = c(
+                        "Multiple Choice" = "mc",
+                        "Text Input" = "text",
+                        "Textarea" = "textarea",
+                        "Numeric Input" = "numeric",
+                        "Multiple Choice Buttons" = "mc_buttons",
+                        "Multiple Choice Multiple" = "mc_multiple",
+                        "Multiple Choice Multiple Buttons" = "mc_multiple_buttons",
+                        "Select Dropdown" = "select",
+                        "Slider" = "slider",
+                        "Slider Numeric" = "slider_numeric",
+                        "Date" = "date",
+                        "Date Range" = "daterange"
+                      )),
+            shiny::textInput("question_id", "Question ID:", placeholder = "Enter unique question ID"),
+            shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text"),
+            shiny::actionButton("add_question_btn", "Add Question", class = "btn-primary", style = "width: 100%;")
+          ),
+          
+          shiny::hr(),
+          shiny::actionButton("refresh_structure", "Refresh Structure", class = "btn-outline-secondary", style = "width: 100%;")
+        )
+      ),
+      
+      # Right side - Structure display
+      shiny::column(
+        width = 9,
         shiny::div(
           style = "margin-top: 15px",
           shiny::h3("Survey Structure"),
-          shiny::div(
-            style = "margin-bottom: 15px",
-            shiny::actionButton("refresh_structure", "Refresh Structure", class = "btn-primary")
-          ),
           shiny::div(
             style = "margin-bottom: 15px",
             shiny::p("This view shows the pages and questions in your survey as defined in survey.qmd."),
             shiny::hr()
           ),
           shiny::div(
-            style = "overflow-y: auto; max-height: 600px;",
+            style = "overflow-y: auto; max-height: calc(100vh - 200px);",
             shiny::uiOutput("survey_structure")
           )
         )
@@ -165,11 +205,90 @@ studio_server <- function() {
     # File handlers
     server_file_handlers(input, output, session, preview_status)
     
-    # Preview handlers
+    # Structure handlers (enhanced)
+    survey_structure <- server_structure_handlers(input, output, session)
+    
+    # Preview handlers - initialize AFTER structure handlers
     preview_handlers <- server_preview_handlers(input, output, session, preview_status)
     
-    # Structure handlers (new)
-    server_structure_handlers(input, output, session)
+    # Update page dropdown for question creation when pages change
+    shiny::observe({
+      page_ids <- survey_structure$get_page_ids()
+      if (!is.null(page_ids) && length(page_ids) > 0) {
+        shiny::updateSelectInput(session, "page_for_question", choices = page_ids)
+      }
+    })
+    
+    # Handle Add Page button
+    shiny::observeEvent(input$add_page_btn, {
+      page_id <- input$new_page_id
+      if (is.null(page_id) || page_id == "") {
+        shiny::showNotification("Please enter a page ID", type = "error")
+        return()
+      }
+      
+      # Get current editor content
+      current_content <- input$survey_editor
+      
+      # Use the page insertion function
+      updated_content <- insert_page_into_survey(page_id, current_content)
+      
+      # Update the editor with new content
+      shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+      
+      # Clear the page ID field
+      shiny::updateTextInput(session, "new_page_id", value = "")
+      
+      # Show success message
+      shiny::showNotification(paste("Page", page_id, "added successfully!"), type = "message")
+      
+      # Refresh structure
+      survey_structure$refresh()
+    })
+    
+    # Handle Add Question button
+    shiny::observeEvent(input$add_question_btn, {
+      # Validate inputs
+      if (is.null(input$page_for_question) || input$page_for_question == "") {
+        shiny::showNotification("Please select a page", type = "error")
+        return()
+      }
+      
+      if (is.null(input$question_id) || input$question_id == "") {
+        shiny::showNotification("Please enter a question ID", type = "error")
+        return()
+      }
+      
+      # Get current editor content
+      current_content <- input$survey_editor
+      
+      # Add question to the selected page in the survey.qmd file
+      updated_content <- insert_question_into_survey(
+        input$page_for_question,
+        input$question_type,
+        input$question_id,
+        input$question_label,
+        current_content
+      )
+      
+      # Check if the content was updated successfully
+      if (!is.null(updated_content)) {
+        # Update the editor with new content
+        shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+        
+        # Clear fields
+        shiny::updateTextInput(session, "question_id", value = "")
+        shiny::updateTextInput(session, "question_label", value = "")
+        
+        # Show success message
+        shiny::showNotification(paste("Question", input$question_id, "added to page", input$page_for_question), type = "message")
+        
+        # Refresh structure
+        survey_structure$refresh()
+      } else {
+        shiny::showNotification("Failed to add question. Check page ID and try again.", type = "error")
+      }
+    })
     
     # Refresh preview when button is clicked
     shiny::observeEvent(input$refresh_preview, {
@@ -184,21 +303,21 @@ studio_server <- function() {
       
       # Refresh structure when the Structure tab is selected
       if (input$tabset == "Structure") {
-        shiny::updateActionButton(session, "refresh_structure", label = "Refresh Structure")
+        survey_structure$refresh()
       }
     })
     
     # Clean up when session ends
     session$onSessionEnded(function() {
-      if (!is.null(preview_handlers$preview_process())) {
-        try(tools::pskill(preview_handlers$preview_process()), silent = TRUE)
+      # Safely access the preview process
+      process <- preview_handlers$preview_process()
+      if (!is.null(process)) {
+        try(tools::pskill(process), silent = TRUE)
       }
     })
   }
 }
 
-# Server - File handlers
-server_file_handlers <- function(input, output, session, preview_status) {
 # Server - File handlers
 server_file_handlers <- function(input, output, session, preview_status) {
   # Save survey.qmd file
@@ -221,19 +340,8 @@ server_file_handlers <- function(input, output, session, preview_status) {
     })
   })
 }
-  
-  # Save app.R file
-  shiny::observeEvent(input$save_app, {
-    tryCatch({
-      writeLines(input$app_editor, "app.R")
-      preview_status("App file saved successfully!")
-    }, error = function(e) {
-      preview_status(paste("Error saving app file:", e$message))
-    })
-  })
-}
 
-# Server - Structure handlers (new)
+# Server - Structure handlers (enhanced with page and question management)
 server_structure_handlers <- function(input, output, session) {
   # Create a reactive value to track survey structure changes
   structure_trigger <- shiny::reactiveVal(0)
@@ -590,17 +698,32 @@ server_structure_handlers <- function(input, output, session) {
     )
   })
   
-  # Refresh structure when button is clicked
-  shiny::observeEvent(input$refresh_structure, {
+  # Function to refresh the structure
+  refresh_structure <- function() {
     # Increment the trigger to force re-execution of renderUI
     structure_trigger(structure_trigger() + 1)
-    shiny::updateActionButton(session, "refresh_structure", label = "Structure Refreshed!")
+    if (exists("session") && !is.null(session)) {
+      shiny::updateActionButton(session, "refresh_structure", label = "Structure Refreshed!")
+    }
+  }
+  
+  # Function to get page IDs for dropdowns
+  get_page_ids <- function() {
+    survey_structure <- parse_survey_structure()
+    if (!is.null(survey_structure$error)) {
+      return(NULL)
+    }
+    return(survey_structure$page_ids)
+  }
+  
+  # Refresh structure when button is clicked
+  shiny::observeEvent(input$refresh_structure, {
+    refresh_structure()
   })
   
   # Automatically refresh structure when survey.qmd is saved
   shiny::observeEvent(input$save_survey, {
-    # Increment the trigger to force re-execution of renderUI
-    structure_trigger(structure_trigger() + 1)
+    refresh_structure()
   }, ignoreInit = TRUE)
   
   # Monitor editor changes with debounce
@@ -610,13 +733,231 @@ server_structure_handlers <- function(input, output, session) {
     # Only update if at least 1 second has passed since last update
     current_time <- Sys.time()
     if (difftime(current_time, last_update_time(), units = "secs") > 1) {
-      structure_trigger(structure_trigger() + 1)
+      refresh_structure()
       last_update_time(current_time)
     } else {
       # Schedule an update after 1 second
       shiny::invalidateLater(1000)
     }
   }, ignoreInit = TRUE)
+  
+  # Return functions for external use
+  list(
+    refresh = refresh_structure,
+    get_page_ids = get_page_ids
+  )
+}
+
+# Function to insert a new page into the survey.qmd file using the editor content
+insert_page_into_survey <- function(page_id, editor_content) {
+  if (is.null(editor_content)) {
+    return(NULL)
+  }
+  
+  # Convert editor_content to a character vector if it's not already
+  if (is.character(editor_content) && length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  # Find an appropriate place to insert the new page
+  # Typically, we insert after the last page or at the end of the file
+  
+  # Look for the last page closing tag
+  last_page_end <- max(which(grepl(":::", editor_content, fixed = TRUE)), 0)
+  
+  # If no page found, insert at the end of the file
+  if (last_page_end == 0) {
+    last_page_end <- length(editor_content)
+  }
+  
+  # Generate the page template
+  if (page_id == "end") {
+    page_template <- c(
+      "",
+      "::: {.sd_page id=end}",
+      "",
+      "## Thanks for taking our survey!",
+      "",
+      "```{r}",
+      "# Close button",
+      "sd_close()",
+      "```",
+      "",
+      ":::",
+      ""
+    )
+  } else {
+    page_template <- c(
+      "",
+      paste0("::: {.sd_page id=", page_id, "}"),
+      "",
+      "Add page contents...",
+      "",
+      "```{r}",
+      "# Insert questions...",
+      "",
+      "# Next button",
+      "sd_next()",
+      "```",
+      "",
+      ":::",
+      ""
+    )
+  }
+  
+  # Insert the page template after the last page or at the end
+  result <- c(
+    editor_content[1:last_page_end],
+    page_template,
+    if(last_page_end < length(editor_content)) editor_content[(last_page_end+1):length(editor_content)] else NULL
+  )
+  
+  # Return the updated content
+  return(paste(result, collapse = "\n"))
+}
+
+# Function to insert a question into a specific page in the survey.qmd file
+insert_question_into_survey <- function(page_id, question_type, question_id, question_label, editor_content) {
+  if (is.null(editor_content) || is.null(page_id)) {
+    return(NULL)
+  }
+  
+  # Convert editor_content to a character vector if it's not already
+  if (is.character(editor_content) && length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  # Find the page where we want to insert the question
+  page_start_pattern <- paste0("::: \\{.sd[_-]page id=", page_id, "\\}")
+  page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
+  
+  if (length(page_start_lines) == 0) {
+    return(NULL)
+  }
+  
+  # Use the first match if multiple pages with same ID (shouldn't happen but just in case)
+  page_start_line <- page_start_lines[1]
+  
+  # Find the R code block within this page where we should insert the question
+  r_block_start <- NULL
+  r_block_end <- NULL
+  page_end_line <- NULL
+  
+  for (i in page_start_line:length(editor_content)) {
+    if (grepl("^```\\{r\\}", editor_content[i])) {
+      r_block_start <- i
+    } else if (!is.null(r_block_start) && grepl("^```$", editor_content[i])) {
+      r_block_end <- i
+      break
+    } else if (grepl("^:::$", editor_content[i])) {
+      page_end_line <- i
+      break
+    }
+  }
+  
+  # If no R block found, need to create one or return false
+  if (is.null(r_block_start)) {
+    if (is.null(page_end_line)) {
+      return(NULL)
+    }
+    
+    # Create an R block before the page end
+    r_block_template <- c(
+      "```{r}",
+      "# Insert questions",
+      "",
+      "# Next button",
+      "sd_next()",
+      "```"
+    )
+    
+    # Insert the R block
+    editor_content <- c(
+      editor_content[1:(page_end_line-1)],
+      r_block_template,
+      editor_content[page_end_line:length(editor_content)]
+    )
+    
+    # Update the positions
+    r_block_start <- page_end_line
+    r_block_end <- page_end_line + length(r_block_template) - 1
+    page_end_line <- page_end_line + length(r_block_template)
+  }
+  
+  # Generate the question template based on type
+  question_code <- generate_question_code(question_type, question_id, question_label)
+  
+  # Find an appropriate position to insert the question
+  # Typically, we insert before the next button
+  next_button_line <- NULL
+  
+  for (i in r_block_start:r_block_end) {
+    if (grepl("sd_next\\(\\)", editor_content[i], perl = TRUE)) {
+      next_button_line <- i
+      break
+    }
+  }
+  
+  # If no next button found, insert at the end of the R block
+  if (is.null(next_button_line)) {
+    next_button_line <- r_block_end
+  }
+  
+  # Insert the question code before the next button or at the end of the R block
+  insertion_point <- next_button_line - 1
+  
+  # Insert the question code
+  result <- c(
+    editor_content[1:insertion_point],
+    question_code,
+    editor_content[(insertion_point+1):length(editor_content)]
+  )
+  
+  # Return the updated content
+  return(paste(result, collapse = "\n"))
+}
+
+# Helper function to generate question code
+generate_question_code <- function(type, id, label) {
+  # Ensure we have valid inputs
+  if (is.null(id) || id == "") id <- paste0(type, "_id")
+  if (is.null(label) || label == "") label <- paste0(type, "_label")
+  
+  # Generate appropriate code based on question type
+  if (type %in% c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons", "select", "slider")) {
+    return(c(
+      paste0("sd_question("),
+      paste0("  type   = \"", type, "\","),
+      paste0("  id     = \"", id, "\","),
+      paste0("  label  = \"", label, "\","),
+      paste0("  option = c("),
+      paste0("    \"Option A\" = \"option_a\","),
+      paste0("    \"Option B\" = \"option_b\""),
+      paste0("  )"),
+      paste0(")"),
+      ""
+    ))
+  } else if (type == "slider_numeric") {
+    return(c(
+      paste0("sd_question("),
+      paste0("  type   = \"", type, "\","),
+      paste0("  id     = \"", id, "\","),
+      paste0("  label  = \"", label, "\","),
+      paste0("  option = seq(0, 10, 1)"),
+      paste0(")"),
+      ""
+    ))
+  } else {
+    # Simple questions (text, textarea, numeric, date, daterange)
+    return(c(
+      paste0("sd_question("),
+      paste0("  type  = \"", type, "\","),
+      paste0("  id    = \"", id, "\","),
+      paste0("  label = \"", label, "\""),
+      paste0(")"),
+      ""
+    ))
+  }
 }
 
 # Server - Preview handlers
@@ -634,9 +975,15 @@ server_preview_handlers <- function(input, output, session, preview_status) {
   
   # Launch preview function
   refresh_preview <- function() {
+    # Get current process value inside a reactive context
+    current_process <- NULL
+    shiny::isolate({
+      current_process <- preview_process()
+    })
+    
     # Stop existing process if it exists
-    if (!is.null(preview_process())) {
-      try(tools::pskill(preview_process()), silent = TRUE)
+    if (!is.null(current_process)) {
+      try(tools::pskill(current_process), silent = TRUE)
       preview_process(NULL)
     }
     
@@ -644,6 +991,15 @@ server_preview_handlers <- function(input, output, session, preview_status) {
     if (!file.exists("survey.qmd") || !file.exists("app.R")) {
       preview_status("Error: survey.qmd or app.R file not found!")
       return()
+    }
+    
+    # Save current editor content to files before previewing
+    if (exists("input") && !is.null(input$survey_editor)) {
+      writeLines(input$survey_editor, "survey.qmd")
+    }
+    
+    if (exists("input") && !is.null(input$app_editor)) {
+      writeLines(input$app_editor, "app.R")
     }
     
     # Try to render the survey.qmd to HTML
@@ -675,7 +1031,10 @@ server_preview_handlers <- function(input, output, session, preview_status) {
       
       # Run the temp script in a separate R process
       r_path <- file.path(R.home("bin"), "R")
-      system2(r_path, c("--vanilla", "-f", temp_script), wait = FALSE, stdout = NULL, stderr = NULL)
+      new_process <- system2(r_path, c("--vanilla", "-f", temp_script), wait = FALSE, stdout = NULL, stderr = NULL)
+      
+      # Store the process ID
+      preview_process(new_process)
       
       # Display in iframe
       preview_url <- paste0("http://127.0.0.1:", preview_port)
