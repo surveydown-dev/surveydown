@@ -157,14 +157,16 @@ studio_server <- function() {
       shiny::p(status, style = paste0("color: ", color, ";"))
     })
     
-    # Preview frame
-    survey_app <- shiny::reactiveVal(NULL)
+    # Process to run the preview app
+    preview_process <- shiny::reactiveVal(NULL)
+    preview_port <- stats::runif(1, 3000, 8000) |> floor()
     
     # Launch preview when tab is selected or refresh button is clicked
     refresh_preview <- function() {
-      # Stop existing app if it exists
-      if (!is.null(survey_app())) {
-        try(shiny::stopApp(survey_app()), silent = TRUE)
+      # Stop existing process if it exists
+      if (!is.null(preview_process())) {
+        try(tools::pskill(preview_process()), silent = TRUE)
+        preview_process(NULL)
       }
       
       # Check if files exist
@@ -182,37 +184,44 @@ studio_server <- function() {
           quarto::quarto_render("survey.qmd", quiet = TRUE)
         }
         
-        # Source the app.R to get app
+        # Launch the app in a separate R process
         preview_status("Starting preview...")
-        app_env <- new.env()
-        source("app.R", local = app_env)
         
-        if (exists("ui", app_env) && exists("server", app_env)) {
-          # Launch app in a separate process
-          app <- shiny::shinyApp(ui = app_env$ui, server = app_env$server)
-          
-          # Store app reference for later stopping
-          survey_app(app)
-          
-          # Display in iframe
-          port <- floor(stats::runif(1, 3000, 8000))
-          preview_url <- paste0("http://127.0.0.1:", port)
-          
-          output$preview_frame <- shiny::renderUI({
-            shiny::tags$iframe(
-              src = preview_url,
-              width = "100%",
-              height = "100%",
-              style = "border: none;"
-            )
-          })
-          
-          # Start app in background
-          shiny::runApp(app, launch.browser = FALSE, port = port)
-          preview_status("Preview launched successfully!")
-        } else {
-          preview_status("Error: app.R doesn't contain proper ui and server objects!")
-        }
+        # Create a temporary R script to run the app
+        temp_script <- tempfile(fileext = ".R")
+        writeLines(
+          paste0(
+            "library(shiny)\n",
+            "port <- ", preview_port, "\n",
+            "setwd('", getwd(), "')\n",
+            "source('app.R')\n",
+            "options(shiny.port = port)\n",
+            "options(shiny.host = '127.0.0.1')\n",
+            "shiny::runApp(launch.browser = FALSE)\n"
+          ), 
+          temp_script
+        )
+        
+        # Run the temp script in a separate R process
+        r_path <- file.path(R.home("bin"), "R")
+        system2(r_path, c("--vanilla", "-f", temp_script), wait = FALSE, stdout = NULL, stderr = NULL)
+        
+        # Display in iframe
+        preview_url <- paste0("http://127.0.0.1:", preview_port)
+        
+        # Give the app a moment to start
+        Sys.sleep(2)
+        
+        output$preview_frame <- shiny::renderUI({
+          shiny::tags$iframe(
+            src = preview_url,
+            width = "100%",
+            height = "100%",
+            style = "border: none;"
+          )
+        })
+        
+        preview_status("Preview launched successfully!")
       }, error = function(e) {
         preview_status(paste("Error launching preview:", e$message))
       })
@@ -227,6 +236,13 @@ studio_server <- function() {
     shiny::observeEvent(input$tabset, {
       if (input$tabset == "Preview") {
         refresh_preview()
+      }
+    })
+    
+    # Clean up when session ends
+    session$onSessionEnded(function() {
+      if (!is.null(preview_process())) {
+        try(tools::pskill(preview_process()), silent = TRUE)
       }
     })
   }
