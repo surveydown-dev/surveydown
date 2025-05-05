@@ -166,17 +166,23 @@ ui_preview_tab <- function() {
   shiny::tabPanel(
     "Preview",
     shiny::div(
-      style = "margin-top: 15px",
+      style = "margin-top: 15px; height: calc(100vh - 100px);",
       shiny::div(
-        shiny::actionButton("refresh_preview", "Refresh Preview", class = "btn-primary"),
-        shiny::div(
-          style = "margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;",
-          shiny::uiOutput("preview_status")
+        style = "display: flex; align-items: center; margin-bottom: 10px;",
+        shiny::actionButton(
+          "refresh_preview", 
+          "Refresh Preview", 
+          class = "btn-primary",
+          style = "padding: 4px 8px; font-size: 14px;"
         ),
         shiny::div(
-          style = "margin-top: 10px; height: 600px; border: 1px solid #ddd; border-radius: 5px;",
-          shiny::uiOutput("preview_frame")
+          style = "margin-left: 15px; flex-grow: 1;",
+          shiny::uiOutput("preview_status")
         )
+      ),
+      shiny::div(
+        style = "height: calc(100vh - 140px); border: none;",
+        shiny::uiOutput("preview_frame")
       )
     )
   )
@@ -186,7 +192,7 @@ ui_preview_tab <- function() {
 studio_server <- function() {
   function(input, output, session) {
     # Reactive value to track preview status
-    preview_status <- shiny::reactiveVal("Ready")
+    preview_status <- shiny::reactiveVal("Waiting for preview")
     
     # File handlers
     server_file_handlers(input, output, session, preview_status)
@@ -197,6 +203,11 @@ studio_server <- function() {
     # Preview handlers - initialize AFTER structure handlers
     preview_handlers <- server_preview_handlers(input, output, session, preview_status)
     
+    # Launch preview automatically on startup
+    shiny::observe({
+      preview_handlers$refresh_preview()
+    }, priority = 1000) # High priority ensures this runs early
+
     # Update page dropdown for question creation when pages change
     shiny::observe({
       page_ids <- survey_structure$get_page_ids()
@@ -279,18 +290,6 @@ studio_server <- function() {
     # Refresh preview when button is clicked
     shiny::observeEvent(input$refresh_preview, {
       preview_handlers$refresh_preview()
-    })
-    
-    # Refresh preview when tab is selected
-    shiny::observeEvent(input$tabset, {
-      if (input$tabset == "Preview") {
-        preview_handlers$refresh_preview()
-      }
-      
-      # Refresh structure when the Construction tab is selected
-      if (input$tabset == "Construction") {
-        survey_structure$refresh()
-      }
     })
     
     # Clean up when session ends
@@ -946,7 +945,7 @@ server_preview_handlers <- function(input, output, session, preview_status) {
   output$preview_status <- shiny::renderUI({
     status <- preview_status()
     color <- if(grepl("Error", status)) "red" else "green"
-    shiny::p(status, style = paste0("color: ", color, ";"))
+    shiny::p(status, style = paste0("color: ", color, "; margin-top: 10px !important; margin-bottom: 10px !important;"))
   })
   
   # Launch preview function
@@ -978,59 +977,47 @@ server_preview_handlers <- function(input, output, session, preview_status) {
       writeLines(input$app_editor, "app.R")
     }
     
-    # Try to render the survey.qmd to HTML
-    tryCatch({
-      # Render the Quarto document if needed
-      if (!file.exists("survey.html") || 
-          file.info("survey.qmd")$mtime > file.info("survey.html")$mtime) {
-        preview_status("Rendering survey.qmd...")
-        quarto::quarto_render("survey.qmd", quiet = TRUE)
-      }
-      
-      # Launch the app in a separate R process
-      preview_status("Starting preview...")
-      
-      # Create a temporary R script to run the app
-      temp_script <- tempfile(fileext = ".R")
-      writeLines(
-        paste0(
-          "library(shiny)\n",
-          "port <- ", preview_port, "\n",
-          "setwd('", getwd(), "')\n",
-          "source('app.R')\n",
-          "options(shiny.port = port)\n",
-          "options(shiny.host = '127.0.0.1')\n",
-          "shiny::runApp(launch.browser = FALSE)\n"
-        ), 
-        temp_script
+    # Launch the app in a separate R process
+    preview_status("Starting preview...")
+    
+    # Create a temporary R script to run the app
+    temp_script <- tempfile(fileext = ".R")
+    writeLines(
+      paste0(
+        "library(shiny)\n",
+        "port <- ", preview_port, "\n",
+        "setwd('", getwd(), "')\n",
+        "source('app.R')\n",
+        "options(shiny.port = port)\n",
+        "options(shiny.host = '127.0.0.1')\n",
+        "shiny::runApp(launch.browser = FALSE)\n"
+      ), 
+      temp_script
+    )
+    
+    # Run the temp script in a separate R process
+    r_path <- file.path(R.home("bin"), "R")
+    new_process <- system2(r_path, c("--vanilla", "-f", temp_script), wait = FALSE, stdout = NULL, stderr = NULL)
+    
+    # Store the process ID
+    preview_process(new_process)
+    
+    # Display in iframe
+    preview_url <- paste0("http://127.0.0.1:", preview_port)
+    
+    # Give the app a moment to start
+    Sys.sleep(2)
+    
+    output$preview_frame <- shiny::renderUI({
+      shiny::tags$iframe(
+        src = preview_url,
+        width = "100%",
+        height = "100%",
+        style = "border: 1px solid #ddd; border-radius: 5px; display: block;"
       )
-      
-      # Run the temp script in a separate R process
-      r_path <- file.path(R.home("bin"), "R")
-      new_process <- system2(r_path, c("--vanilla", "-f", temp_script), wait = FALSE, stdout = NULL, stderr = NULL)
-      
-      # Store the process ID
-      preview_process(new_process)
-      
-      # Display in iframe
-      preview_url <- paste0("http://127.0.0.1:", preview_port)
-      
-      # Give the app a moment to start
-      Sys.sleep(2)
-      
-      output$preview_frame <- shiny::renderUI({
-        shiny::tags$iframe(
-          src = preview_url,
-          width = "100%",
-          height = "100%",
-          style = "border: 1px solid #ddd; border-radius: 5px; max-width: 800px; margin-left: auto; margin-right: auto; display: block;"
-        )
-      })
-      
-      preview_status("Preview launched successfully!")
-    }, error = function(e) {
-      preview_status(paste("Error launching preview:", e$message))
     })
+    
+    preview_status("Preview launched successfully!")
   }
   
   # Return the refresh function and process for cleanup
