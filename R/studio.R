@@ -168,16 +168,11 @@ ui_preview_tab <- function() {
     shiny::div(
       style = "margin-top: 15px; height: calc(100vh - 100px);",
       shiny::div(
-        style = "display: flex; align-items: center; margin-bottom: 10px;",
+        style = "text-align: center; margin-bottom: 10px;",
         shiny::actionButton(
           "refresh_preview", 
           "Refresh Preview", 
-          class = "btn-primary",
-          style = "padding: 4px 8px; font-size: 14px;"
-        ),
-        shiny::div(
-          style = "margin-left: 15px; flex-grow: 1;",
-          shiny::uiOutput("preview_status")
+          class = "btn-primary"
         )
       ),
       shiny::div(
@@ -191,17 +186,11 @@ ui_preview_tab <- function() {
 # Server - Framework
 studio_server <- function() {
   function(input, output, session) {
-    # Reactive value to track preview status
-    preview_status <- shiny::reactiveVal("Waiting for preview")
-    
-    # File handlers
-    server_file_handlers(input, output, session, preview_status)
-    
     # Structure handlers (enhanced)
     survey_structure <- server_structure_handlers(input, output, session)
     
     # Preview handlers - initialize AFTER structure handlers
-    preview_handlers <- server_preview_handlers(input, output, session, preview_status)
+    preview_handlers <- server_preview_handlers(input, output, session)
     
     # Launch preview automatically on startup
     shiny::observe({
@@ -304,14 +293,14 @@ studio_server <- function() {
 }
 
 # Server - File handlers
-server_file_handlers <- function(input, output, session, preview_status) {
+server_file_handlers <- function(input, output, session) {
   # Save survey.qmd file
   shiny::observeEvent(input$save_survey, {
     tryCatch({
       writeLines(input$survey_editor, "survey.qmd")
-      preview_status("Survey file saved successfully!")
+      shiny::showNotification("Survey file saved successfully!", type = "message")
     }, error = function(e) {
-      preview_status(paste("Error saving survey file:", e$message))
+      shiny::showNotification(paste("Error saving survey file:", e$message), type = "error")
     })
   })
   
@@ -319,9 +308,9 @@ server_file_handlers <- function(input, output, session, preview_status) {
   shiny::observeEvent(input$save_app, {
     tryCatch({
       writeLines(input$app_editor, "app.R")
-      preview_status("App file saved successfully!")
+      shiny::showNotification("App file saved successfully!", type = "message")
     }, error = function(e) {
-      preview_status(paste("Error saving app file:", e$message))
+      shiny::showNotification(paste("Error saving app file:", e$message), type = "error")
     })
   })
 }
@@ -936,17 +925,10 @@ generate_question_code <- function(type, id, label) {
 }
 
 # Server - Preview handlers
-server_preview_handlers <- function(input, output, session, preview_status) {
+server_preview_handlers <- function(input, output, session) {
   # Process to run the preview app
   preview_process <- shiny::reactiveVal(NULL)
   preview_port <- stats::runif(1, 3000, 8000) |> floor()
-  
-  # Preview status message
-  output$preview_status <- shiny::renderUI({
-    status <- preview_status()
-    color <- if(grepl("Error", status)) "red" else "green"
-    shiny::p(status, style = paste0("color: ", color, "; margin-top: 10px !important; margin-bottom: 10px !important;"))
-  })
   
   # Launch preview function
   refresh_preview <- function() {
@@ -964,7 +946,7 @@ server_preview_handlers <- function(input, output, session, preview_status) {
     
     # Check if files exist
     if (!file.exists("survey.qmd") || !file.exists("app.R")) {
-      preview_status("Error: survey.qmd or app.R file not found!")
+      shiny::showNotification("Error: survey.qmd or app.R file not found!", type = "error")
       return()
     }
     
@@ -978,7 +960,7 @@ server_preview_handlers <- function(input, output, session, preview_status) {
     }
     
     # Launch the app in a separate R process
-    preview_status("Starting preview...")
+    shiny::showNotification("Starting preview...", type = "message")
     
     # Create a temporary R script to run the app
     temp_script <- tempfile(fileext = ".R")
@@ -1017,7 +999,7 @@ server_preview_handlers <- function(input, output, session, preview_status) {
       )
     })
     
-    preview_status("Preview launched successfully!")
+    shiny::showNotification("Preview launched successfully!", type = "message")
   }
   
   # Return the refresh function and process for cleanup
