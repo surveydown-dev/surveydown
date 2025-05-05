@@ -168,15 +168,7 @@ ui_preview_tab <- function() {
     shiny::div(
       style = "margin-top: 15px; height: calc(100vh - 100px);",
       shiny::div(
-        style = "text-align: center; margin-bottom: 10px;",
-        shiny::actionButton(
-          "refresh_preview", 
-          "Refresh Preview", 
-          class = "btn-primary"
-        )
-      ),
-      shiny::div(
-        style = "height: calc(100vh - 140px); border: none;",
+        style = "height: calc(100vh - 90px); border: none;",
         shiny::uiOutput("preview_frame")
       )
     )
@@ -274,11 +266,6 @@ studio_server <- function() {
       } else {
         shiny::showNotification("Failed to add question. Check page ID and try again.", type = "error")
       }
-    })
-    
-    # Refresh preview when button is clicked
-    shiny::observeEvent(input$refresh_preview, {
-      preview_handlers$refresh_preview()
     })
     
     # Clean up when session ends
