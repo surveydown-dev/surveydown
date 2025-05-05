@@ -129,10 +129,6 @@ ui_construction_tab <- function() {
                   theme = "github",
                   height = "calc(100vh - 280px)",
                   fontSize = 14
-                ),
-                shiny::div(
-                  style = "margin-top: 10px",
-                  shiny::actionButton("save_survey", "Save survey.qmd", class = "btn-primary")
                 )
               )
             ),
@@ -147,10 +143,6 @@ ui_construction_tab <- function() {
                   theme = "github",
                   height = "calc(100vh - 280px)",
                   fontSize = 14
-                ),
-                shiny::div(
-                  style = "margin-top: 10px",
-                  shiny::actionButton("save_app", "Save app.R", class = "btn-primary")
                 )
               )
             )
@@ -268,6 +260,8 @@ studio_server <- function() {
       }
     })
     
+    # Button removed, preview only auto-launches on startup
+    
     # Clean up when session ends
     session$onSessionEnded(function() {
       # Safely access the preview process
@@ -281,24 +275,83 @@ studio_server <- function() {
 
 # Server - File handlers
 server_file_handlers <- function(input, output, session) {
-  # Save survey.qmd file
-  shiny::observeEvent(input$save_survey, {
-    tryCatch({
-      writeLines(input$survey_editor, "survey.qmd")
-      shiny::showNotification("Survey file saved successfully!", type = "message")
-    }, error = function(e) {
-      shiny::showNotification(paste("Error saving survey file:", e$message), type = "error")
-    })
+  # Create reactive values to track the last saved content and save timing
+  last_saved_survey <- shiny::reactiveVal("")
+  last_saved_app <- shiny::reactiveVal("")
+  last_survey_save_time <- shiny::reactiveVal(Sys.time())
+  last_app_save_time <- shiny::reactiveVal(Sys.time())
+  
+  # Initialize with current file contents
+  if (file.exists("survey.qmd")) {
+    content <- paste(readLines("survey.qmd", warn = FALSE), collapse = "\n")
+    last_saved_survey(content)
+  }
+  
+  if (file.exists("app.R")) {
+    content <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
+    last_saved_app(content)
+  }
+  
+  # Auto-save survey.qmd with debounce
+  shiny::observe({
+    # Only proceed if the editor content exists
+    if (is.null(input$survey_editor)) return()
+    
+    # Get current time
+    current_time <- Sys.time()
+    
+    # Get last save time
+    last_save <- last_survey_save_time()
+    
+    # Check if content changed from last saved version
+    if (input$survey_editor != last_saved_survey()) {
+      # If sufficient time has passed since last save (3 seconds)
+      if (difftime(current_time, last_save, units = "secs") > 3) {
+        # Save the file
+        tryCatch({
+          writeLines(input$survey_editor, "survey.qmd")
+          last_saved_survey(input$survey_editor)
+          last_survey_save_time(current_time)
+          shiny::showNotification("survey.qmd auto-saved", type = "message", duration = 1)
+        }, error = function(e) {
+          shiny::showNotification(paste("Error saving survey file:", e$message), type = "error")
+        })
+      } else {
+        # Schedule check again after the remainder of the debounce period
+        shiny::invalidateLater(1000)
+      }
+    }
   })
   
-  # Save app.R file
-  shiny::observeEvent(input$save_app, {
-    tryCatch({
-      writeLines(input$app_editor, "app.R")
-      shiny::showNotification("App file saved successfully!", type = "message")
-    }, error = function(e) {
-      shiny::showNotification(paste("Error saving app file:", e$message), type = "error")
-    })
+  # Auto-save app.R with debounce
+  shiny::observe({
+    # Only proceed if the editor content exists
+    if (is.null(input$app_editor)) return()
+    
+    # Get current time
+    current_time <- Sys.time()
+    
+    # Get last save time
+    last_save <- last_app_save_time()
+    
+    # Check if content changed from last saved version
+    if (input$app_editor != last_saved_app()) {
+      # If sufficient time has passed since last save (3 seconds)
+      if (difftime(current_time, last_save, units = "secs") > 3) {
+        # Save the file
+        tryCatch({
+          writeLines(input$app_editor, "app.R")
+          last_saved_app(input$app_editor)
+          last_app_save_time(current_time)
+          shiny::showNotification("app.R auto-saved", type = "message", duration = 1)
+        }, error = function(e) {
+          shiny::showNotification(paste("Error saving app file:", e$message), type = "error")
+        })
+      } else {
+        # Schedule check again after the remainder of the debounce period
+        shiny::invalidateLater(1000)
+      }
+    }
   })
 }
 
