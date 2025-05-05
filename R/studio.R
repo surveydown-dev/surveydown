@@ -43,124 +43,115 @@ studio_ui <- function() {
     id = "tabset",
     theme = bslib::bs_theme(version = 5),
     
-    # Structure tab
-    ui_structure_tab(),
-    
-    # Code tab
-    ui_code_tab(),
+    # Construction tab (merged Structure and Code)
+    ui_construction_tab(),
     
     # Preview tab
     ui_preview_tab()
   )
 }
 
-# UI - Structure tab
-ui_structure_tab <- function() {
+# UI - Construction tab (merged Structure and Code)
+ui_construction_tab <- function() {
   shiny::tabPanel(
-    "Structure",
+    "Construction",
     shiny::fluidRow(
-      # Left side - Controls panel
+      # Left side - Controls panel from Structure tab
       shiny::column(
         width = 3,
-        shiny::div(
-          style = "margin-top: 15px; padding: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px);",
-          shiny::h4("Add Content"),
-          
-          # Add Page UI
-          shiny::wellPanel(
-            shiny::h5("Add Page"),
-            shiny::textInput("new_page_id", "Page ID:", placeholder = "Enter page ID (e.g., welcome, questions, end)"),
-            shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
-          ),
-          
-          # Add Question UI
-          shiny::wellPanel(
-            shiny::h5("Add Question"),
-            shiny::selectInput("page_for_question", "To Page:", choices = NULL),
-            shiny::selectInput("question_type", "Question Type:", 
-                      choices = c(
-                        "Multiple Choice" = "mc",
-                        "Text Input" = "text",
-                        "Textarea" = "textarea",
-                        "Numeric Input" = "numeric",
-                        "Multiple Choice Buttons" = "mc_buttons",
-                        "Multiple Choice Multiple" = "mc_multiple",
-                        "Multiple Choice Multiple Buttons" = "mc_multiple_buttons",
-                        "Select Dropdown" = "select",
-                        "Slider" = "slider",
-                        "Slider Numeric" = "slider_numeric",
-                        "Date" = "date",
-                        "Date Range" = "daterange"
-                      )),
-            shiny::textInput("question_id", "Question ID:", placeholder = "Enter unique question ID"),
-            shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text"),
-            shiny::actionButton("add_question_btn", "Add Question", class = "btn-primary", style = "width: 100%;")
-          ),
-          
-          shiny::hr(),
-          shiny::actionButton("refresh_structure", "Refresh Structure", class = "btn-outline-secondary", style = "width: 100%;")
-        )
+        style = "margin-top: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px);",
+        shiny::h4("Add Content"),
+        
+        # Add Page UI
+        shiny::wellPanel(
+          shiny::h5("Add Page"),
+          shiny::textInput("new_page_id", "Page ID:", placeholder = "Enter page ID (e.g., welcome, questions, end)"),
+          shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
+        ),
+        
+        # Add Question UI
+        shiny::wellPanel(
+          shiny::h5("Add Question"),
+          shiny::selectInput("page_for_question", "To Page:", choices = NULL),
+          shiny::selectInput("question_type", "Question Type:", 
+                    choices = c(
+                      "Multiple Choice" = "mc",
+                      "Text Input" = "text",
+                      "Textarea" = "textarea",
+                      "Numeric Input" = "numeric",
+                      "Multiple Choice Buttons" = "mc_buttons",
+                      "Multiple Choice Multiple" = "mc_multiple",
+                      "Multiple Choice Multiple Buttons" = "mc_multiple_buttons",
+                      "Select Dropdown" = "select",
+                      "Slider" = "slider",
+                      "Slider Numeric" = "slider_numeric",
+                      "Date" = "date",
+                      "Date Range" = "daterange"
+                    )),
+          shiny::textInput("question_id", "Question ID:", placeholder = "Enter unique question ID"),
+          shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text"),
+          shiny::actionButton("add_question_btn", "Add Question", class = "btn-primary", style = "width: 100%;")
+        ),
+        
+        shiny::hr(),
+        shiny::actionButton("refresh_structure", "Refresh Structure", class = "btn-outline-secondary", style = "width: 100%;")
       ),
       
-      # Right side - Structure display
+      # Middle - Structure display from Structure tab
       shiny::column(
-        width = 9,
+        width = 4,
         shiny::div(
-          style = "margin-top: 15px",
-          shiny::h3("Survey Structure"),
+          style = "margin-top: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px); overflow-y: auto;",
+          shiny::h4("Survey Structure"),
           shiny::div(
             style = "overflow-y: auto; max-height: calc(100vh - 200px);",
             shiny::uiOutput("survey_structure")
           )
         )
-      )
-    )
-  )
-}
-
-# UI - Code tab
-ui_code_tab <- function() {
-  shiny::tabPanel(
-    "Code",
-    shiny::fluidRow(
+      ),
+      
+      # Right side - Code editing from Code tab
       shiny::column(
-        width = 12,
-        shiny::h3("Survey Files"),
-        shiny::tabsetPanel(
-          id = "code_tabs",
-          shiny::tabPanel(
-            "survey.qmd",
-            shiny::div(
-              style = "margin-top: 15px",
-              shinyAce::aceEditor(
-                outputId = "survey_editor",
-                value = readLines("survey.qmd", warn = FALSE),
-                mode = "markdown",
-                theme = "github",
-                height = "600px",
-                fontSize = 14
-              ),
+        width = 5,
+        shiny::div(
+          style = "margin-top: 15px; height: calc(100vh - 150px); overflow-y: auto;",
+          shiny::h4("Code"),
+          shiny::tabsetPanel(
+            id = "code_tabs",
+            shiny::tabPanel(
+              "survey.qmd",
               shiny::div(
-                style = "margin-top: 10px",
-                shiny::actionButton("save_survey", "Save survey.qmd", class = "btn-primary")
+                style = "margin-top: 15px",
+                shinyAce::aceEditor(
+                  outputId = "survey_editor",
+                  value = readLines("survey.qmd", warn = FALSE),
+                  mode = "markdown",
+                  theme = "github",
+                  height = "calc(100vh - 280px)",
+                  fontSize = 14
+                ),
+                shiny::div(
+                  style = "margin-top: 10px",
+                  shiny::actionButton("save_survey", "Save survey.qmd", class = "btn-primary")
+                )
               )
-            )
-          ),
-          shiny::tabPanel(
-            "app.R",
-            shiny::div(
-              style = "margin-top: 15px",
-              shinyAce::aceEditor(
-                outputId = "app_editor",
-                value = readLines("app.R", warn = FALSE),
-                mode = "r",
-                theme = "github",
-                height = "600px",
-                fontSize = 14
-              ),
+            ),
+            shiny::tabPanel(
+              "app.R",
               shiny::div(
-                style = "margin-top: 10px",
-                shiny::actionButton("save_app", "Save app.R", class = "btn-primary")
+                style = "margin-top: 15px",
+                shinyAce::aceEditor(
+                  outputId = "app_editor",
+                  value = readLines("app.R", warn = FALSE),
+                  mode = "r",
+                  theme = "github",
+                  height = "calc(100vh - 280px)",
+                  fontSize = 14
+                ),
+                shiny::div(
+                  style = "margin-top: 10px",
+                  shiny::actionButton("save_app", "Save app.R", class = "btn-primary")
+                )
               )
             )
           )
@@ -296,8 +287,8 @@ studio_server <- function() {
         preview_handlers$refresh_preview()
       }
       
-      # Refresh structure when the Structure tab is selected
-      if (input$tabset == "Structure") {
+      # Refresh structure when the Construction tab is selected
+      if (input$tabset == "Construction") {
         survey_structure$refresh()
       }
     })
@@ -1032,7 +1023,7 @@ server_preview_handlers <- function(input, output, session, preview_status) {
           src = preview_url,
           width = "100%",
           height = "100%",
-          style = "border: none;"
+          style = "border: 1px solid #ddd; border-radius: 5px; max-width: 800px; margin-left: auto; margin-right: auto; display: block;"
         )
       })
       
