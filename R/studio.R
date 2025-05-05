@@ -56,24 +56,27 @@ ui_construction_tab <- function() {
   shiny::tabPanel(
     "Construction",
     shiny::fluidRow(
-      # Left side - Controls panel from Structure tab
+      # Left - Add Content Panel
       shiny::column(
         width = 3,
         style = "margin-top: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px);",
-        shiny::h4("Add Content"),
         
         # Add Page UI
+        shiny::h5("Add Page", 
+            style = "text-align: center; background-color: #ffe0b2; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
         shiny::wellPanel(
-          shiny::h5("Add Page"),
+          style = "background-color: #fff3e0; border-color: #ffe0b2;",
           shiny::textInput("new_page_id", "Page ID:", placeholder = "Enter page ID (e.g., welcome, questions, end)"),
           shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
         ),
         
-        shiny::hr(),
+        shiny::tags$hr(style = "margin: 0.5rem 0;"),
 
         # Add Question UI
+        shiny::h5("Add Question", 
+            style = "text-align: center; background-color: #ffe0b2; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
         shiny::wellPanel(
-          shiny::h5("Add Question"),
+          style = "background-color: #fff3e0; border-color: #ffe0b2;",
           shiny::selectInput("page_for_question", "To Page:", choices = NULL),
           shiny::selectInput("question_type", "Question Type:", 
                     choices = c(
@@ -96,12 +99,23 @@ ui_construction_tab <- function() {
         )
       ),
       
-      # Middle - Structure display from Structure tab
+      # Middle - Structure Panel
+
+        shiny::h5("Add Page", 
+            style = "text-align: center; background-color: #ffe0b2; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
+        shiny::wellPanel(
+          style = "background-color: #fff3e0; border-color: #ffe0b2;",
+          shiny::textInput("new_page_id", "Page ID:", placeholder = "Enter page ID (e.g., welcome, questions, end)"),
+          shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
+        ),
+
+
       shiny::column(
         width = 4,
         shiny::div(
           style = "margin-top: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px); overflow-y: auto;",
-          shiny::h4("Survey Structure"),
+          shiny::h5("Structure", 
+                    style = "text-align: center; background-color: #cce5ff; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
           shiny::div(
             style = "overflow-y: auto; max-height: calc(100vh - 190px);",
             shiny::uiOutput("survey_structure")
@@ -109,12 +123,13 @@ ui_construction_tab <- function() {
         )
       ),
       
-      # Right side - Code editing from Code tab
+      # Right - Code Panel
       shiny::column(
         width = 5,
         shiny::div(
           style = "margin-top: 15px; height: calc(100vh - 140px); overflow-y: auto;",
-          shiny::h4("Code"),
+          shiny::h4("Code", 
+                    style = "text-align: center; background-color: #d4edda; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
           shiny::tabsetPanel(
             id = "code_tabs",
             shiny::tabPanel(
