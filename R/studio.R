@@ -69,6 +69,8 @@ ui_construction_tab <- function() {
           shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
         ),
         
+        shiny::hr(),
+
         # Add Question UI
         shiny::wellPanel(
           shiny::h5("Add Question"),
@@ -91,10 +93,7 @@ ui_construction_tab <- function() {
           shiny::textInput("question_id", "Question ID:", placeholder = "Enter unique question ID"),
           shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text"),
           shiny::actionButton("add_question_btn", "Add Question", class = "btn-primary", style = "width: 100%;")
-        ),
-        
-        shiny::hr(),
-        shiny::actionButton("refresh_structure", "Refresh Structure", class = "btn-outline-secondary", style = "width: 100%;")
+        )
       ),
       
       # Middle - Structure display from Structure tab
@@ -104,7 +103,7 @@ ui_construction_tab <- function() {
           style = "margin-top: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px); overflow-y: auto;",
           shiny::h4("Survey Structure"),
           shiny::div(
-            style = "overflow-y: auto; max-height: calc(100vh - 200px);",
+            style = "overflow-y: auto; max-height: calc(100vh - 190px);",
             shiny::uiOutput("survey_structure")
           )
         )
@@ -114,7 +113,7 @@ ui_construction_tab <- function() {
       shiny::column(
         width = 5,
         shiny::div(
-          style = "margin-top: 15px; height: calc(100vh - 150px); overflow-y: auto;",
+          style = "margin-top: 15px; height: calc(100vh - 140px); overflow-y: auto;",
           shiny::h4("Code"),
           shiny::tabsetPanel(
             id = "code_tabs",
@@ -127,8 +126,9 @@ ui_construction_tab <- function() {
                   value = readLines("survey.qmd", warn = FALSE),
                   mode = "markdown",
                   theme = "github",
-                  height = "calc(100vh - 280px)",
-                  fontSize = 14
+                  height = "calc(100vh - 250px)",
+                  fontSize = 14,
+                  wordWrap = TRUE
                 )
               )
             ),
@@ -141,8 +141,9 @@ ui_construction_tab <- function() {
                   value = readLines("app.R", warn = FALSE),
                   mode = "r",
                   theme = "github",
-                  height = "calc(100vh - 280px)",
-                  fontSize = 14
+                  height = "calc(100vh - 250px)",
+                  fontSize = 14,
+                  wordWrap = TRUE
                 )
               )
             )
@@ -706,9 +707,6 @@ server_structure_handlers <- function(input, output, session) {
   refresh_structure <- function() {
     # Increment the trigger to force re-execution of renderUI
     structure_trigger(structure_trigger() + 1)
-    if (exists("session") && !is.null(session)) {
-      shiny::updateActionButton(session, "refresh_structure", label = "Structure Refreshed!")
-    }
   }
   
   # Function to get page IDs for dropdowns
@@ -719,11 +717,6 @@ server_structure_handlers <- function(input, output, session) {
     }
     return(survey_structure$page_ids)
   }
-  
-  # Refresh structure when button is clicked
-  shiny::observeEvent(input$refresh_structure, {
-    refresh_structure()
-  })
   
   # Automatically refresh structure when survey.qmd is saved
   shiny::observeEvent(input$save_survey, {
