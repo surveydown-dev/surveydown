@@ -59,24 +59,24 @@ ui_construction_tab <- function() {
       # Left - Add Content Panel
       shiny::column(
         width = 3,
-        style = "margin-top: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px);",
+        style = "border-right: 1px solid #ddd; height: calc(100vh - 150px); overflow-y: auto;",
         
         # Add Page UI
         shiny::h5("Add Page", 
-            style = "text-align: center; background-color: #ffe0b2; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
+            style = "text-align: center; background-color: #ffe0b2; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
         shiny::wellPanel(
-          style = "background-color: #fff3e0; border-color: #ffe0b2;",
+          style = "background-color: #fff9f0; border-color: #ffe0b2; padding: 0.5rem;",
           shiny::textInput("new_page_id", "Page ID:", placeholder = "Enter page ID (e.g., welcome, questions, end)"),
           shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
         ),
         
-        shiny::tags$hr(style = "margin: 0.5rem 0;"),
+        shiny::tags$hr(style = "margin: 0.7rem 0;"),
 
         # Add Question UI
         shiny::h5("Add Question", 
-            style = "text-align: center; background-color: #ffe0b2; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
+            style = "text-align: center; background-color: #ffe0b2; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
         shiny::wellPanel(
-          style = "background-color: #fff3e0; border-color: #ffe0b2;",
+          style = "background-color: #fff3e0; border-color: #ffe0b2; padding: 0.5rem;",
           shiny::selectInput("page_for_question", "To Page:", choices = NULL),
           shiny::selectInput("question_type", "Question Type:", 
                     choices = c(
@@ -100,25 +100,19 @@ ui_construction_tab <- function() {
       ),
       
       # Middle - Structure Panel
-
-        shiny::h5("Add Page", 
-            style = "text-align: center; background-color: #ffe0b2; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
-        shiny::wellPanel(
-          style = "background-color: #fff3e0; border-color: #ffe0b2;",
-          shiny::textInput("new_page_id", "Page ID:", placeholder = "Enter page ID (e.g., welcome, questions, end)"),
-          shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
-        ),
-
-
       shiny::column(
         width = 4,
+        style = "border-right: 1px solid #ddd;",
         shiny::div(
-          style = "margin-top: 15px; border-right: 1px solid #ddd; height: calc(100vh - 150px); overflow-y: auto;",
+          style = "height: calc(100vh - 100px);",
           shiny::h5("Structure", 
-                    style = "text-align: center; background-color: #cce5ff; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
-          shiny::div(
-            style = "overflow-y: auto; max-height: calc(100vh - 190px);",
-            shiny::uiOutput("survey_structure")
+                    style = "text-align: center; background-color: #cce5ff; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
+          shiny::wellPanel(
+            style = "background-color: #f0f8ff; border-color: #cce5ff; padding: 0.5rem;",
+            shiny::div(
+              style = "overflow-y: auto; max-height: calc(100vh - 150px);",
+              shiny::uiOutput("survey_structure")
+            )
           )
         )
       ),
@@ -126,39 +120,43 @@ ui_construction_tab <- function() {
       # Right - Code Panel
       shiny::column(
         width = 5,
+        style = "border-right: 1px solid #ddd;",
         shiny::div(
-          style = "margin-top: 15px; height: calc(100vh - 140px); overflow-y: auto;",
-          shiny::h4("Code", 
-                    style = "text-align: center; background-color: #d4edda; padding: 8px; margin-bottom: 10px; border-radius: 4px;"),
-          shiny::tabsetPanel(
-            id = "code_tabs",
-            shiny::tabPanel(
-              "survey.qmd",
-              shiny::div(
-                style = "margin-top: 15px",
-                shinyAce::aceEditor(
-                  outputId = "survey_editor",
-                  value = readLines("survey.qmd", warn = FALSE),
-                  mode = "markdown",
-                  theme = "github",
-                  height = "calc(100vh - 250px)",
-                  fontSize = 14,
-                  wordWrap = TRUE
+          style = "height: calc(100vh - 100px);",
+          shiny::h5("Code", 
+                    style = "text-align: center; background-color: #d4edda; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
+          shiny::wellPanel(
+            style = "background-color: #f0fff0; border-color: #d4edda; padding: 0.5rem;",
+            shiny::tabsetPanel(
+              id = "code_tabs",
+              shiny::tabPanel(
+                "survey.qmd",
+                shiny::div(
+                  style = "margin-top: 15px",
+                  shinyAce::aceEditor(
+                    outputId = "survey_editor",
+                    value = readLines("survey.qmd", warn = FALSE),
+                    mode = "markdown",
+                    theme = "textmate",
+                    height = "calc(100vh - 225px)",
+                    fontSize = 14,
+                    wordWrap = TRUE
+                  )
                 )
-              )
-            ),
-            shiny::tabPanel(
-              "app.R",
-              shiny::div(
-                style = "margin-top: 15px",
-                shinyAce::aceEditor(
-                  outputId = "app_editor",
-                  value = readLines("app.R", warn = FALSE),
-                  mode = "r",
-                  theme = "github",
-                  height = "calc(100vh - 250px)",
-                  fontSize = 14,
-                  wordWrap = TRUE
+              ),
+              shiny::tabPanel(
+                "app.R",
+                shiny::div(
+                  style = "margin-top: 15px",
+                  shinyAce::aceEditor(
+                    outputId = "app_editor",
+                    value = readLines("app.R", warn = FALSE),
+                    mode = "r",
+                    theme = "chrome",
+                    height = "calc(100vh - 225px)",
+                    fontSize = 14,
+                    wordWrap = TRUE
+                  )
                 )
               )
             )
@@ -174,7 +172,7 @@ ui_preview_tab <- function() {
   shiny::tabPanel(
     "Preview",
     shiny::div(
-      style = "margin-top: 15px; height: calc(100vh - 100px);",
+      style = "height: calc(100vh - 100px);",
       shiny::div(
         style = "height: calc(100vh - 90px); border: none;",
         shiny::uiOutput("preview_frame")
@@ -699,7 +697,7 @@ server_structure_handlers <- function(input, output, session) {
       })
       
       shiny::div(
-        style = "margin-bottom: 30px;",
+        style = "margin-bottom: 10px;",
         shiny::div(
           style = "background-color: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 10px;",
           shiny::h4(paste0("Page: ", page_id)),
