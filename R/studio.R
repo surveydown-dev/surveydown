@@ -55,11 +55,20 @@ studio_ui <- function() {
 ui_construction_tab <- function() {
   shiny::tabPanel(
     "Construction",
+    # Custom CSS for Ace Editor
+    shiny::tags$head(
+      shiny::tags$style(HTML("
+        .shiny-ace.ace_editor {
+          margin-bottom: 0.1rem !important;
+        }
+      "))
+    ),
+
     shiny::fluidRow(
       # Left - Add Content Panel
       shiny::column(
         width = 3,
-        style = "border-right: 1px solid #ddd; height: calc(100vh - 150px); overflow-y: auto;",
+        style = "border-right: 1px solid #ddd;",
         
         # Add Page UI
         shiny::h5("Add Page", 
@@ -70,32 +79,35 @@ ui_construction_tab <- function() {
           shiny::actionButton("add_page_btn", "Add Page", class = "btn-success", style = "width: 100%;")
         ),
         
-        shiny::tags$hr(style = "margin: 0.7rem 0;"),
+        shiny::tags$hr(style = "margin: 1rem 0;"),
 
         # Add Question UI
         shiny::h5("Add Question", 
             style = "text-align: center; background-color: #ffe0b2; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
         shiny::wellPanel(
           style = "background-color: #fff3e0; border-color: #ffe0b2; padding: 0.5rem;",
-          shiny::selectInput("page_for_question", "To Page:", choices = NULL),
-          shiny::selectInput("question_type", "Question Type:", 
-                    choices = c(
-                      "Multiple Choice" = "mc",
-                      "Text Input" = "text",
-                      "Textarea" = "textarea",
-                      "Numeric Input" = "numeric",
-                      "Multiple Choice Buttons" = "mc_buttons",
-                      "Multiple Choice Multiple" = "mc_multiple",
-                      "Multiple Choice Multiple Buttons" = "mc_multiple_buttons",
-                      "Select Dropdown" = "select",
-                      "Slider" = "slider",
-                      "Slider Numeric" = "slider_numeric",
-                      "Date" = "date",
-                      "Date Range" = "daterange"
-                    )),
-          shiny::textInput("question_id", "Question ID:", placeholder = "Enter unique question ID"),
-          shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text"),
-          shiny::actionButton("add_question_btn", "Add Question", class = "btn-primary", style = "width: 100%;")
+          shiny::div(
+            style = "overflow-y: auto; height: calc(100vh - 378px);",
+            shiny::selectInput("page_for_question", "To Page:", choices = NULL),
+            shiny::selectInput("question_type", "Question Type:", 
+                      choices = c(
+                        "Multiple Choice" = "mc",
+                        "Text Input" = "text",
+                        "Textarea" = "textarea",
+                        "Numeric Input" = "numeric",
+                        "Multiple Choice Buttons" = "mc_buttons",
+                        "Multiple Choice Multiple" = "mc_multiple",
+                        "Multiple Choice Multiple Buttons" = "mc_multiple_buttons",
+                        "Select Dropdown" = "select",
+                        "Slider" = "slider",
+                        "Slider Numeric" = "slider_numeric",
+                        "Date" = "date",
+                        "Date Range" = "daterange"
+                      )),
+            shiny::textInput("question_id", "Question ID:", placeholder = "Enter unique question ID"),
+            shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text"),
+            shiny::actionButton("add_question_btn", "Add Question", class = "btn-primary", style = "width: 100%;")
+          )
         )
       ),
       
@@ -104,13 +116,12 @@ ui_construction_tab <- function() {
         width = 4,
         style = "border-right: 1px solid #ddd;",
         shiny::div(
-          style = "height: calc(100vh - 100px);",
           shiny::h5("Structure", 
                     style = "text-align: center; background-color: #cce5ff; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
           shiny::wellPanel(
             style = "background-color: #f0f8ff; border-color: #cce5ff; padding: 0.5rem;",
             shiny::div(
-              style = "overflow-y: auto; max-height: calc(100vh - 150px);",
+              style = "overflow-y: auto; height: calc(100vh - 150px);",
               shiny::uiOutput("survey_structure")
             )
           )
@@ -122,7 +133,7 @@ ui_construction_tab <- function() {
         width = 5,
         style = "border-right: 1px solid #ddd;",
         shiny::div(
-          style = "height: calc(100vh - 100px);",
+          style = "height: calc(100vh - 90px);",
           shiny::h5("Code", 
                     style = "text-align: center; background-color: #d4edda; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
           shiny::wellPanel(
@@ -132,13 +143,13 @@ ui_construction_tab <- function() {
               shiny::tabPanel(
                 "survey.qmd",
                 shiny::div(
-                  style = "margin-top: 15px",
+                  style = "margin-top: 10px",
                   shinyAce::aceEditor(
                     outputId = "survey_editor",
                     value = readLines("survey.qmd", warn = FALSE),
                     mode = "markdown",
                     theme = "textmate",
-                    height = "calc(100vh - 225px)",
+                    height = "calc(100vh - 203px)",
                     fontSize = 14,
                     wordWrap = TRUE
                   )
@@ -147,13 +158,13 @@ ui_construction_tab <- function() {
               shiny::tabPanel(
                 "app.R",
                 shiny::div(
-                  style = "margin-top: 15px",
+                  style = "margin-top: 10px",
                   shinyAce::aceEditor(
                     outputId = "app_editor",
                     value = readLines("app.R", warn = FALSE),
                     mode = "r",
                     theme = "chrome",
-                    height = "calc(100vh - 225px)",
+                    height = "calc(100vh - 203px)",
                     fontSize = 14,
                     wordWrap = TRUE
                   )
@@ -172,9 +183,8 @@ ui_preview_tab <- function() {
   shiny::tabPanel(
     "Preview",
     shiny::div(
-      style = "height: calc(100vh - 100px);",
       shiny::div(
-        style = "height: calc(100vh - 90px); border: none;",
+        style = "height: calc(100vh - 89px); border: none;",
         shiny::uiOutput("preview_frame")
       )
     )
@@ -659,16 +669,15 @@ server_structure_handlers <- function(input, output, session) {
         # Create the base question info UI
         question_ui <- list(
           shiny::div(
-            style = "margin-left: 20px; margin-bottom: 15px; padding: 10px; border-left: 3px solid #5bc0de; background-color: #f8f9fa;",
+            style = "margin-left: 10px; margin-bottom: 10px; padding: 10px; border-left: 3px solid #5bc0de; background-color: #f0f0f0;",
             shiny::div(
-              style = "font-weight: bold;",
-              paste0("Type: ", q$type)
+              shiny::HTML(paste0("<strong>Type:</strong> ", q$type))
             ),
             shiny::div(
-              paste0("ID: ", q$id)
+              shiny::HTML(paste0("<strong>ID:</strong> ", q$id))
             ),
             shiny::div(
-              paste0("Label: ", q$label)
+              shiny::HTML(paste0("<strong>Label:</strong> ", q$label))
             )
           )
         )
@@ -676,14 +685,10 @@ server_structure_handlers <- function(input, output, session) {
         # Add options if they exist and it's a multiple choice question
         if (!is.null(q$options) && length(q$options) > 0) {
           options_ui <- shiny::div(
-            style = "margin-top: 10px; margin-left: 20px; padding: 8px; background-color: #f0f0f0; border-radius: 4px;",
-            shiny::div(
-              style = "font-weight: bold; margin-bottom: 5px;",
-              "Options:"
-            ),
+            shiny::HTML("<strong>Options:</strong> "),
             lapply(q$options, function(opt) {
               shiny::div(
-                style = "margin-left: 10px; margin-bottom: 3px;",
+                style = "margin-left: 10px;",
                 paste0(opt$label, " = ", opt$value)
               )
             })
@@ -699,8 +704,8 @@ server_structure_handlers <- function(input, output, session) {
       shiny::div(
         style = "margin-bottom: 10px;",
         shiny::div(
-          style = "background-color: #e9ecef; padding: 10px; border-radius: 5px; margin-bottom: 10px;",
-          shiny::h4(paste0("Page: ", page_id)),
+          style = "background-color: #dddddd; padding: 10px; border-radius: 5px; margin-bottom: 10px;",
+          shiny::h5(paste0("Page: ", page_id)),
           shiny::div(
             style = "font-style: italic;",
             paste0("Questions: ", length(questions))
@@ -710,10 +715,8 @@ server_structure_handlers <- function(input, output, session) {
       )
     })
     
-    shiny::div(
-      style = "padding: 10px;",
-      pages_ui
-    )
+    pages_ui
+
   })
   
   # Function to refresh the structure
