@@ -996,9 +996,6 @@ insert_page_into_survey <- function(page_id, editor_content) {
     editor_content <- strsplit(editor_content, "\n")[[1]]
   }
   
-  # Find an appropriate place to insert the new page
-  # Typically, we insert after the last page or at the end of the file
-  
   # Look for the last page closing tag
   last_page_end <- max(which(grepl(":::", editor_content, fixed = TRUE)), 0)
   
@@ -1010,7 +1007,6 @@ insert_page_into_survey <- function(page_id, editor_content) {
   # Generate the page template
   if (page_id == "end") {
     page_template <- c(
-      "",
       "::: {.sd_page id=end}",
       "",
       "## Thanks for taking our survey!",
@@ -1025,15 +1021,9 @@ insert_page_into_survey <- function(page_id, editor_content) {
     )
   } else {
     page_template <- c(
-      "",
       paste0("::: {.sd_page id=", page_id, "}"),
       "",
-      "Add page contents...",
-      "",
       "```{r}",
-      "# Insert questions...",
-      "",
-      "# Next button",
       "sd_next()",
       "```",
       "",
