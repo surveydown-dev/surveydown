@@ -55,12 +55,153 @@ studio_ui <- function() {
 ui_construction_tab <- function() {
   shiny::tabPanel(
     "Construction",
-    # Custom CSS for Ace Editor
+    # Custom CSS for Ace Editor and interactive structure
     shiny::tags$head(
       shiny::tags$style(HTML("
         .shiny-ace.ace_editor {
           margin-bottom: 0.1rem !important;
         }
+        
+        /* Structure styling */
+        .page-header {
+          background-color: #dddddd; 
+          padding: 10px; 
+          border-radius: 5px; 
+          margin-bottom: 10px;
+          cursor: pointer;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .page-header:hover {
+          background-color: #c8c8c8;
+        }
+        
+        .page-header .toggle-icon {
+          margin-left: 10px;
+        }
+        
+        .page-header .drag-handle {
+          cursor: move;
+          margin-right: 10px;
+          color: #777;
+        }
+        
+        .page-header .drag-handle:hover {
+          color: #333;
+        }
+        
+        .question-item {
+          margin-left: 10px; 
+          margin-bottom: 10px; 
+          padding: 10px; 
+          border-left: 3px solid #5bc0de; 
+          background-color: #f0f0f0;
+          position: relative;
+        }
+        
+        .question-item .drag-handle {
+          position: absolute;
+          right: 10px;
+          top: 10px;
+          cursor: move;
+          color: #777;
+        }
+        
+        .question-item .drag-handle:hover {
+          color: #333;
+        }
+        
+        /* Ghost class for sortable.js */
+        .sortable-ghost {
+          opacity: 0.4;
+        }
+        
+        /* Drop placeholder */
+        .sortable-placeholder {
+          background-color: #f9f9f9;
+          border: 1px dashed #ccc;
+          margin: 5px 0;
+        }
+      ")),
+      # Include Sortable.js library
+      shiny::tags$script(src = "https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"),
+      # Custom JavaScript for toggle functionality
+      shiny::tags$script(HTML("
+        $(document).ready(function() {
+          // Initialize toggle functionality after DOM is ready
+          function initToggle() {
+            $('.page-header').off('click').on('click', function(e) {
+              // Don't toggle if clicking on drag handle
+              if (!$(e.target).hasClass('drag-handle') && 
+                  !$(e.target).closest('.drag-handle').length) {
+                var $questions = $(this).next('.questions-container');
+                $questions.slideToggle();
+                
+                // Toggle icon
+                var $icon = $(this).find('.toggle-icon i');
+                if ($icon.hasClass('fa-chevron-down')) {
+                  $icon.removeClass('fa-chevron-down').addClass('fa-chevron-right');
+                } else {
+                  $icon.removeClass('fa-chevron-right').addClass('fa-chevron-down');
+                }
+              }
+            });
+          }
+          
+          // Initialize drag and drop functionality
+          function initSortable() {
+            // Pages sortable
+            if (document.getElementById('pages-container')) {
+              new Sortable(document.getElementById('pages-container'), {
+                animation: 150,
+                handle: '.page-drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: function(evt) {
+                  // Send the new order to Shiny
+                  var pageOrder = [];
+                  $('#pages-container > div.page-wrapper').each(function() {
+                    pageOrder.push($(this).attr('data-page-id'));
+                  });
+                  
+                  Shiny.setInputValue('page_order', pageOrder);
+                }
+              });
+            }
+            
+            // Questions sortable - one for each page
+            $('.questions-container').each(function() {
+              var pageId = $(this).attr('data-page-id');
+              new Sortable(this, {
+                animation: 150,
+                handle: '.question-drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: function(evt) {
+                  // Send the new question order to Shiny
+                  var questionOrder = [];
+                  $('#page-' + pageId + '-questions > div.question-item').each(function() {
+                    questionOrder.push($(this).attr('data-question-id'));
+                  });
+                  
+                  Shiny.setInputValue('question_order_' + pageId, questionOrder);
+                }
+              });
+            });
+          }
+          
+          // Watch for changes to the structure output
+          var observer = new MutationObserver(function(mutations) {
+            initToggle();
+            initSortable();
+          });
+          
+          // Start observing changes to the survey structure
+          var target = document.getElementById('survey_structure');
+          if (target) {
+            observer.observe(target, { childList: true, subtree: true });
+          }
+        });
       "))
     ),
 
@@ -284,7 +425,66 @@ studio_server <- function() {
       }
     })
     
-    # Button removed, preview only auto-launches on startup
+    # Handle page reordering
+    shiny::observeEvent(input$page_order, {
+      if (length(input$page_order) > 0) {
+        # Get current editor content
+        current_content <- input$survey_editor
+        
+        # Update the pages order in the file
+        updated_content <- reorder_pages(input$page_order, current_content)
+        
+        if (!is.null(updated_content)) {
+          # Update the editor with the new content
+          shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+          
+          # Show success message
+          shiny::showNotification("Pages reordered successfully!", type = "message")
+          
+          # Refresh structure
+          survey_structure$refresh()
+        } else {
+          shiny::showNotification("Failed to reorder pages", type = "error")
+        }
+      }
+    }, ignoreInit = TRUE)
+    
+    # Handle question reordering for each page
+    shiny::observe({
+      page_ids <- survey_structure$get_page_ids()
+      
+      if (!is.null(page_ids) && length(page_ids) > 0) {
+        for (page_id in page_ids) {
+          local({
+            local_page_id <- page_id
+            input_name <- paste0("question_order_", local_page_id)
+            
+            shiny::observeEvent(input[[input_name]], {
+              if (length(input[[input_name]]) > 0) {
+                # Get current editor content
+                current_content <- input$survey_editor
+                
+                # Update the questions order in the file
+                updated_content <- reorder_questions(local_page_id, input[[input_name]], current_content)
+                
+                if (!is.null(updated_content)) {
+                  # Update the editor with the new content
+                  shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+                  
+                  # Show success message
+                  shiny::showNotification(paste("Questions in page", local_page_id, "reordered successfully!"), type = "message")
+                  
+                  # Refresh structure
+                  survey_structure$refresh()
+                } else {
+                  shiny::showNotification(paste("Failed to reorder questions in page", local_page_id), type = "error")
+                }
+              }
+            }, ignoreInit = TRUE)
+          })
+        }
+      }
+    })
     
     # Clean up when session ends
     session$onSessionEnded(function() {
@@ -639,7 +839,7 @@ server_structure_handlers <- function(input, output, session) {
     return(list(pages = pages, page_ids = page_ids))
   }
   
-  # Render the survey structure
+  # Render the survey structure with toggle and drag functionality
   output$survey_structure <- shiny::renderUI({
     # Re-render when the structure_trigger changes
     structure_trigger()
@@ -662,61 +862,85 @@ server_structure_handlers <- function(input, output, session) {
       ))
     }
     
-    # Create the structure visualization
-    pages_ui <- lapply(survey_structure$page_ids, function(page_id) {
-      questions <- survey_structure$pages[[page_id]]
-      questions_ui <- lapply(questions, function(q) {
-        # Create the base question info UI
-        question_ui <- list(
-          shiny::div(
-            style = "margin-left: 10px; margin-bottom: 10px; padding: 10px; border-left: 3px solid #5bc0de; background-color: #f0f0f0;",
-            shiny::div(
-              shiny::HTML(paste0("<strong>Type:</strong> ", q$type))
-            ),
-            shiny::div(
-              shiny::HTML(paste0("<strong>ID:</strong> ", q$id))
-            ),
-            shiny::div(
-              shiny::HTML(paste0("<strong>Label:</strong> ", q$label))
-            )
-          )
-        )
+    # Create the structure visualization with toggle and drag features
+    shiny::div(
+      id = "pages-container",
+      lapply(survey_structure$page_ids, function(page_id) {
+        questions <- survey_structure$pages[[page_id]]
         
-        # Add options if they exist and it's a multiple choice question
-        if (!is.null(q$options) && length(q$options) > 0) {
-          options_ui <- shiny::div(
-            shiny::HTML("<strong>Options:</strong> "),
-            lapply(q$options, function(opt) {
+        # Create each page with its questions
+        shiny::div(
+          class = "page-wrapper",
+          `data-page-id` = page_id,
+          
+          # Page header with toggle and drag handle
+          shiny::div(
+            class = "page-header",
+            shiny::div(
+              class = "page-drag-handle drag-handle",
+              shiny::icon("grip-lines")
+            ),
+            shiny::div(
+              shiny::h5(paste0("Page: ", page_id), style = "margin: 0;"),
               shiny::div(
-                style = "margin-left: 10px;",
-                paste0(opt$label, " = ", opt$value)
+                style = "font-style: italic;",
+                paste0("Questions: ", length(questions))
+              )
+            ),
+            shiny::div(
+              class = "toggle-icon",
+              shiny::icon("chevron-down")
+            )
+          ),
+          
+          # Questions container - initially visible
+          shiny::div(
+            class = "questions-container",
+            id = paste0("page-", page_id, "-questions"),
+            `data-page-id` = page_id,
+            style = "display: block;",
+            
+            # Add questions with drag handles
+            lapply(questions, function(q) {
+              shiny::div(
+                class = "question-item",
+                `data-question-id` = q$id,
+                
+                # Question content
+                shiny::div(
+                  shiny::HTML(paste0("<strong>Type:</strong> ", q$type))
+                ),
+                shiny::div(
+                  shiny::HTML(paste0("<strong>ID:</strong> ", q$id))
+                ),
+                shiny::div(
+                  shiny::HTML(paste0("<strong>Label:</strong> ", q$label))
+                ),
+                
+                # Add options if they exist
+                if (!is.null(q$options) && length(q$options) > 0) {
+                  shiny::div(
+                    shiny::HTML("<strong>Options:</strong> "),
+                    lapply(q$options, function(opt) {
+                      shiny::div(
+                        style = "margin-left: 10px;",
+                        paste0(opt$label, " = ", opt$value)
+                      )
+                    })
+                  )
+                },
+                
+                # Add drag handle for question
+                shiny::div(
+                  class = "question-drag-handle drag-handle",
+                  shiny::icon("grip-lines")
+                )
               )
             })
           )
-          
-          # Append options UI to question UI
-          question_ui[[1]] <- shiny::tagAppendChild(question_ui[[1]], options_ui)
-        }
-        
-        return(question_ui[[1]])
+        )
       })
-      
-      shiny::div(
-        style = "margin-bottom: 10px;",
-        shiny::div(
-          style = "background-color: #dddddd; padding: 10px; border-radius: 5px; margin-bottom: 10px;",
-          shiny::h5(paste0("Page: ", page_id)),
-          shiny::div(
-            style = "font-style: italic;",
-            paste0("Questions: ", length(questions))
-          )
-        ),
-        questions_ui
-      )
-    })
-    
-    pages_ui
-
+    )
   })
   
   # Function to refresh the structure
@@ -924,6 +1148,228 @@ insert_question_into_survey <- function(page_id, question_type, question_id, que
     editor_content[1:insertion_point],
     question_code,
     editor_content[(insertion_point+1):length(editor_content)]
+  )
+  
+  # Return the updated content
+  return(paste(result, collapse = "\n"))
+}
+
+# Function to reorder pages in the survey.qmd file
+reorder_pages <- function(new_order, editor_content) {
+  if (is.null(editor_content) || length(new_order) == 0) {
+    return(NULL)
+  }
+  
+  # Convert editor_content to a character vector if it's not already
+  if (is.character(editor_content) && length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  # Find each page's start and end lines
+  page_blocks <- list()
+  
+  for (page_id in new_order) {
+    # Find the page start
+    page_start_pattern <- paste0("::: \\{.sd[_-]page id=", page_id, "\\}")
+    page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
+    
+    if (length(page_start_lines) == 0) {
+      next  # Skip if page not found
+    }
+    
+    # Use the first match
+    page_start_line <- page_start_lines[1]
+    page_end_line <- NULL
+    
+    # Find the page end (the next ::: after the start)
+    for (i in page_start_line:length(editor_content)) {
+      if (i > page_start_line && grepl("^:::$", editor_content[i])) {
+        page_end_line <- i
+        break
+      }
+    }
+    
+    if (!is.null(page_end_line)) {
+      # Store the page block (including the closing tag)
+      page_blocks[[page_id]] <- list(
+        start = page_start_line,
+        end = page_end_line,
+        content = editor_content[page_start_line:page_end_line]
+      )
+    }
+  }
+  
+  # If we couldn't find all pages, return NULL
+  if (length(page_blocks) != length(new_order)) {
+    return(NULL)
+  }
+  
+  # Find the position where pages start
+  first_page_start <- min(sapply(page_blocks, function(block) block$start))
+  
+  # Find the position where pages end
+  last_page_end <- max(sapply(page_blocks, function(block) block$end))
+  
+  # Create the new content with reordered pages
+  new_content <- c(
+    # Content before the first page
+    editor_content[1:(first_page_start-1)]
+  )
+  
+  # Add each page in the new order
+  for (page_id in new_order) {
+    new_content <- c(
+      new_content,
+      page_blocks[[page_id]]$content
+    )
+  }
+  
+  # Add content after the last page
+  if (last_page_end < length(editor_content)) {
+    new_content <- c(
+      new_content,
+      editor_content[(last_page_end+1):length(editor_content)]
+    )
+  }
+  
+  # Return the updated content
+  return(paste(new_content, collapse = "\n"))
+}
+
+# Function to reorder questions within a page
+reorder_questions <- function(page_id, new_question_order, editor_content) {
+  if (is.null(editor_content) || is.null(page_id) || length(new_question_order) == 0) {
+    return(NULL)
+  }
+  
+  # Convert editor_content to a character vector if it's not already
+  if (is.character(editor_content) && length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  # Find the page
+  page_start_pattern <- paste0("::: \\{.sd[_-]page id=", page_id, "\\}")
+  page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
+  
+  if (length(page_start_lines) == 0) {
+    return(NULL)
+  }
+  
+  # Use the first match
+  page_start_line <- page_start_lines[1]
+  
+  # Find the R code block within this page
+  r_block_start <- NULL
+  r_block_end <- NULL
+  page_end_line <- NULL
+  
+  for (i in page_start_line:length(editor_content)) {
+    if (grepl("^```\\{r\\}", editor_content[i])) {
+      r_block_start <- i
+    } else if (!is.null(r_block_start) && grepl("^```$", editor_content[i])) {
+      r_block_end <- i
+      break
+    } else if (grepl("^:::$", editor_content[i])) {
+      page_end_line <- i
+      break
+    }
+  }
+  
+  # If no R block found, return NULL
+  if (is.null(r_block_start) || is.null(r_block_end)) {
+    return(NULL)
+  }
+  
+  # Extract the code block content
+  code_block <- editor_content[(r_block_start+1):(r_block_end-1)]
+  
+  # Find all the question blocks
+  question_blocks <- list()
+  next_button_line <- NULL
+  
+  # First, find the lines with sd_question calls
+  q_start_indices <- grep("sd_question\\s*\\(", code_block, perl = TRUE)
+  
+  for (i in seq_along(q_start_indices)) {
+    q_start <- q_start_indices[i]
+    q_end <- NULL
+    id <- NULL
+    
+    # Find the end of this question block (end of the sd_question call)
+    open_count <- 0
+    for (j in q_start:length(code_block)) {
+      line <- code_block[j]
+      open_count <- open_count + sum(gregexpr("\\(", line, fixed = TRUE)[[1]] > 0)
+      close_count <- sum(gregexpr("\\)", line, fixed = TRUE)[[1]] > 0)
+      open_count <- open_count - close_count
+      
+      # Extract the question ID
+      if (is.null(id)) {
+        id_match <- regexpr("id\\s*=\\s*[\"']([^\"']+)[\"']", line, perl = TRUE)
+        if (id_match > 0) {
+          id_string <- regmatches(line, id_match)
+          id <- gsub("id\\s*=\\s*[\"']([^\"']+)[\"']", "\\1", id_string)
+        }
+      }
+      
+      if (open_count <= 0) {
+        q_end <- j
+        break
+      }
+    }
+    
+    if (!is.null(q_end) && !is.null(id)) {
+      question_blocks[[id]] <- list(
+        start = q_start,
+        end = q_end,
+        content = code_block[q_start:q_end]
+      )
+    }
+  }
+  
+  # Find the next button line
+  next_button_index <- grep("sd_next\\(\\)", code_block, perl = TRUE)
+  if (length(next_button_index) > 0) {
+    next_button_line <- next_button_index[1]
+  }
+  
+  # If we couldn't find all questions or the next button, return NULL
+  if (length(question_blocks) != length(new_question_order)) {
+    return(NULL)
+  }
+  
+  # Create the new code block with reordered questions
+  new_code_block <- character(0)
+  
+  # Add any lines before the first question
+  first_q_start <- min(sapply(question_blocks, function(block) block$start))
+  if (first_q_start > 1) {
+    new_code_block <- c(new_code_block, code_block[1:(first_q_start-1)])
+  }
+  
+  # Add each question in the new order
+  for (q_id in new_question_order) {
+    if (!is.null(question_blocks[[q_id]])) {
+      new_code_block <- c(new_code_block, question_blocks[[q_id]]$content)
+    }
+  }
+  
+  # Add the next button and any remaining lines
+  if (!is.null(next_button_line)) {
+    new_code_block <- c(new_code_block, code_block[next_button_line:length(code_block)])
+  } else {
+    # Find the last question's end
+    last_q_end <- max(sapply(question_blocks, function(block) block$end))
+    if (last_q_end < length(code_block)) {
+      new_code_block <- c(new_code_block, code_block[(last_q_end+1):length(code_block)])
+    }
+  }
+  
+  # Create the updated editor content
+  result <- c(
+    editor_content[1:r_block_start],
+    new_code_block,
+    editor_content[r_block_end:length(editor_content)]
   )
   
   # Return the updated content
