@@ -1065,79 +1065,65 @@ insert_question_into_survey <- function(page_id, question_type, question_id, que
   # Use the first match if multiple pages with same ID (shouldn't happen but just in case)
   page_start_line <- page_start_lines[1]
   
-  # Find the R code block within this page where we should insert the question
-  r_block_start <- NULL
-  r_block_end <- NULL
+  # Find the end of the page
   page_end_line <- NULL
-  
   for (i in page_start_line:length(editor_content)) {
-    if (grepl("^```\\{r\\}", editor_content[i])) {
-      r_block_start <- i
-    } else if (!is.null(r_block_start) && grepl("^```$", editor_content[i])) {
-      r_block_end <- i
-      break
-    } else if (grepl("^:::$", editor_content[i])) {
+    if (grepl("^:::$", editor_content[i])) {
       page_end_line <- i
       break
     }
   }
   
-  # If no R block found, need to create one or return false
-  if (is.null(r_block_start)) {
-    if (is.null(page_end_line)) {
-      return(NULL)
+  if (is.null(page_end_line)) {
+    return(NULL)
+  }
+  
+  # Find the position to insert the question - before the next button or page end
+  insertion_point <- NULL
+  
+  # Look for a next button R chunk
+  for (i in page_start_line:page_end_line) {
+    if (grepl("^```\\{r\\}", editor_content[i])) {
+      chunk_start <- i
+      chunk_end <- NULL
+      
+      for (j in (i+1):page_end_line) {
+        if (grepl("^```$", editor_content[j])) {
+          chunk_end <- j
+          break
+        }
+      }
+      
+      if (!is.null(chunk_end)) {
+        chunk_content <- editor_content[(chunk_start+1):(chunk_end-1)]
+        if (any(grepl("sd_next\\(\\)", chunk_content, perl = TRUE))) {
+          insertion_point <- chunk_start
+          break
+        }
+      }
     }
-    
-    # Create an R block before the page end
-    r_block_template <- c(
-      "```{r}",
-      "# Insert questions",
-      "",
-      "# Next button",
-      "sd_next()",
-      "```"
-    )
-    
-    # Insert the R block
-    editor_content <- c(
-      editor_content[1:(page_end_line-1)],
-      r_block_template,
-      editor_content[page_end_line:length(editor_content)]
-    )
-    
-    # Update the positions
-    r_block_start <- page_end_line
-    r_block_end <- page_end_line + length(r_block_template) - 1
-    page_end_line <- page_end_line + length(r_block_template)
+  }
+  
+  # If no next button found, insert before the page end
+  if (is.null(insertion_point)) {
+    insertion_point <- page_end_line
   }
   
   # Generate the question template based on type
   question_code <- generate_question_code(question_type, question_id, question_label)
   
-  # Find an appropriate position to insert the question
-  # Typically, we insert before the next button
-  next_button_line <- NULL
-  
-  for (i in r_block_start:r_block_end) {
-    if (grepl("sd_next\\(\\)", editor_content[i], perl = TRUE)) {
-      next_button_line <- i
-      break
-    }
-  }
-  
-  # If no next button found, insert at the end of the R block
-  if (is.null(next_button_line)) {
-    next_button_line <- r_block_end
-  }
-  
-  # Insert the question code before the next button or at the end of the R block
-  insertion_point <- next_button_line - 1
-  
-  # Insert the question code
-  result <- c(
-    editor_content[1:insertion_point],
+  # Create the question chunk
+  question_chunk <- c(
+    "```{r}",
     question_code,
-    editor_content[(insertion_point+1):length(editor_content)]
+    "```"
+  )
+  
+  # Insert the question chunk
+  result <- c(
+    editor_content[1:(insertion_point-1)],
+    question_chunk,
+    editor_content[insertion_point:length(editor_content)]
   )
   
   # Return the updated content
@@ -1226,9 +1212,9 @@ reorder_pages <- function(new_order, editor_content) {
   return(paste(new_content, collapse = "\n"))
 }
 
-# Function to reorder questions within a page
-reorder_questions <- function(page_id, new_question_order, editor_content) {
-  if (is.null(editor_content) || is.null(page_id) || length(new_question_order) == 0) {
+# Function to split multiple questions in a chunk into individual chunks
+split_questions_in_page <- function(page_id, editor_content) {
+  if (is.null(editor_content) || is.null(page_id)) {
     return(NULL)
   }
   
@@ -1248,122 +1234,233 @@ reorder_questions <- function(page_id, new_question_order, editor_content) {
   # Use the first match
   page_start_line <- page_start_lines[1]
   
-  # Find the R code block within this page
-  r_block_start <- NULL
-  r_block_end <- NULL
+  # Find the page end
   page_end_line <- NULL
-  
   for (i in page_start_line:length(editor_content)) {
-    if (grepl("^```\\{r\\}", editor_content[i])) {
-      r_block_start <- i
-    } else if (!is.null(r_block_start) && grepl("^```$", editor_content[i])) {
-      r_block_end <- i
-      break
-    } else if (grepl("^:::$", editor_content[i])) {
+    if (grepl("^:::$", editor_content[i])) {
       page_end_line <- i
       break
     }
   }
   
-  # If no R block found, return NULL
-  if (is.null(r_block_start) || is.null(r_block_end)) {
+  if (is.null(page_end_line)) {
     return(NULL)
   }
   
-  # Extract the code block content
-  code_block <- editor_content[(r_block_start+1):(r_block_end-1)]
+  # Find all R code blocks with questions
+  r_blocks <- list()
+  current_block_start <- NULL
   
-  # Find all the question blocks
-  question_blocks <- list()
-  next_button_line <- NULL
+  for (i in page_start_line:page_end_line) {
+    if (grepl("^```\\{r\\}", editor_content[i])) {
+      current_block_start <- i
+    } else if (!is.null(current_block_start) && grepl("^```$", editor_content[i])) {
+      # Check if this block contains questions
+      block_content <- editor_content[(current_block_start+1):(i-1)]
+      if (any(grepl("sd_question", block_content))) {
+        r_blocks[[length(r_blocks) + 1]] <- list(
+          start = current_block_start,
+          end = i,
+          content = block_content
+        )
+      }
+      current_block_start <- NULL
+    }
+  }
   
-  # First, find the lines with sd_question calls
-  q_start_indices <- grep("sd_question\\s*\\(", code_block, perl = TRUE)
+  # If no blocks with questions found, return original content
+  if (length(r_blocks) == 0) {
+    return(editor_content)
+  }
   
-  for (i in seq_along(q_start_indices)) {
-    q_start <- q_start_indices[i]
-    q_end <- NULL
-    id <- NULL
+  # Process each block to split questions
+  modified_content <- editor_content
+  offset <- 0  # Track line number changes as we modify content
+  
+  for (block_idx in seq_along(r_blocks)) {
+    block <- r_blocks[[block_idx]]
+    adjusted_start <- block$start + offset
+    adjusted_end <- block$end + offset
     
-    # Find the end of this question block (end of the sd_question call)
-    open_count <- 0
-    for (j in q_start:length(code_block)) {
-      line <- code_block[j]
-      open_count <- open_count + sum(gregexpr("\\(", line, fixed = TRUE)[[1]] > 0)
-      close_count <- sum(gregexpr("\\)", line, fixed = TRUE)[[1]] > 0)
-      open_count <- open_count - close_count
+    # Find all question calls in this block
+    q_calls <- gregexpr("sd_question\\s*\\(", paste(block$content, collapse = "\n"), perl = TRUE)
+    if (q_calls[[1]][1] > 0) {
+      # Count how many questions in this block
+      num_questions <- length(q_calls[[1]])
       
-      # Extract the question ID
-      if (is.null(id)) {
-        id_match <- regexpr("id\\s*=\\s*[\"']([^\"']+)[\"']", line, perl = TRUE)
-        if (id_match > 0) {
-          id_string <- regmatches(line, id_match)
-          id <- gsub("id\\s*=\\s*[\"']([^\"']+)[\"']", "\\1", id_string)
+      if (num_questions > 1) {
+        # We need to split this block
+        block_content <- modified_content[(adjusted_start+1):(adjusted_end-1)]
+        
+        # Extract individual questions with proper parenthesis matching
+        q_blocks <- list()
+        q_start_indices <- grep("sd_question\\s*\\(", block_content, perl = TRUE)
+        
+        for (i in seq_along(q_start_indices)) {
+          q_start <- q_start_indices[i]
+          q_end <- NULL
+          
+          # Find the end of this question (matching parentheses)
+          open_count <- 0
+          for (j in q_start:length(block_content)) {
+            line <- block_content[j]
+            open_count <- open_count + sum(gregexpr("\\(", line, fixed = TRUE)[[1]] > 0)
+            close_count <- sum(gregexpr("\\)", line, fixed = TRUE)[[1]] > 0)
+            open_count <- open_count - close_count
+            
+            if (open_count <= 0) {
+              q_end <- j
+              break
+            }
+          }
+          
+          if (!is.null(q_end)) {
+            q_blocks[[length(q_blocks) + 1]] <- block_content[q_start:q_end]
+          }
+        }
+        
+        # Create new content with individual R chunks for each question
+        new_content <- character(0)
+        
+        # Add content before the block
+        new_content <- c(new_content, modified_content[1:(adjusted_start-1)])
+        
+        # Add each question in its own chunk
+        for (q_block in q_blocks) {
+          new_content <- c(
+            new_content,
+            "```{r}",
+            q_block,
+            "```"
+          )
+        }
+        
+        # Add content after the block
+        new_content <- c(new_content, modified_content[(adjusted_end+1):length(modified_content)])
+        
+        # Update the modified content and offset
+        modified_content <- new_content
+        offset <- offset + (length(q_blocks) * 2) - (adjusted_end - adjusted_start + 1)
+      }
+    }
+  }
+  
+  return(paste(modified_content, collapse = "\n"))
+}
+
+# Function to reorder questions within a page
+reorder_questions <- function(page_id, new_question_order, editor_content) {
+  if (is.null(editor_content) || is.null(page_id) || length(new_question_order) == 0) {
+    return(NULL)
+  }
+  
+  # First, split any multi-question chunks into individual chunks
+  editor_content <- split_questions_in_page(page_id, editor_content)
+  
+  # Convert editor_content to a character vector if it's not already
+  if (is.character(editor_content) && length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  # Find the page
+  page_start_pattern <- paste0("::: \\{.sd[_-]page id=", page_id, "\\}")
+  page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
+  
+  if (length(page_start_lines) == 0) {
+    return(NULL)
+  }
+  
+  # Use the first match
+  page_start_line <- page_start_lines[1]
+  
+  # Find the page end
+  page_end_line <- NULL
+  for (i in page_start_line:length(editor_content)) {
+    if (grepl("^:::$", editor_content[i])) {
+      page_end_line <- i
+      break
+    }
+  }
+  
+  if (is.null(page_end_line)) {
+    return(NULL)
+  }
+  
+  # Find all R code blocks with questions
+  question_chunks <- list()
+  current_chunk_start <- NULL
+  
+  for (i in page_start_line:page_end_line) {
+    if (grepl("^```\\{r\\}", editor_content[i])) {
+      current_chunk_start <- i
+    } else if (!is.null(current_chunk_start) && grepl("^```$", editor_content[i])) {
+      # Check if this chunk contains a question
+      chunk_content <- editor_content[(current_chunk_start+1):(i-1)]
+      if (any(grepl("sd_question", chunk_content))) {
+        # Extract question ID
+        id <- NULL
+        for (line in chunk_content) {
+          # Try single quotes
+          if (grepl("id\\s*=\\s*'([^']+)'", line, perl = TRUE)) {
+            id <- gsub(".*id\\s*=\\s*'([^']+)'.*", "\\1", line)
+            break
+          } 
+          # Try double quotes
+          else if (grepl("id\\s*=\\s*\"([^\"]+)\"", line, perl = TRUE)) {
+            id <- gsub(".*id\\s*=\\s*\"([^\"]+)\".*", "\\1", line)
+            break
+          }
+        }
+        
+        if (!is.null(id)) {
+          question_chunks[[id]] <- list(
+            start = current_chunk_start,
+            end = i,
+            content = editor_content[current_chunk_start:i]
+          )
         }
       }
-      
-      if (open_count <= 0) {
-        q_end <- j
-        break
-      }
-    }
-    
-    if (!is.null(q_end) && !is.null(id)) {
-      question_blocks[[id]] <- list(
-        start = q_start,
-        end = q_end,
-        content = code_block[q_start:q_end]
-      )
+      current_chunk_start <- NULL
     }
   }
   
-  # Find the next button line
-  next_button_index <- grep("sd_next\\(\\)", code_block, perl = TRUE)
-  if (length(next_button_index) > 0) {
-    next_button_line <- next_button_index[1]
-  }
-  
-  # If we couldn't find all questions or the next button, return NULL
-  if (length(question_blocks) != length(new_question_order)) {
+  # Check if we found all the questions in the new order
+  if (length(question_chunks) != length(new_question_order)) {
+    # Make sure all question IDs are found
+    missing_ids <- setdiff(new_question_order, names(question_chunks))
+    if (length(missing_ids) > 0) {
+      warning(paste("Could not find these question IDs:", paste(missing_ids, collapse=", ")))
+    }
     return(NULL)
   }
   
-  # Create the new code block with reordered questions
-  new_code_block <- character(0)
+  # Determine the range where questions should be placed
+  all_chunks_starts <- sapply(question_chunks, function(chunk) chunk$start)
+  all_chunks_ends <- sapply(question_chunks, function(chunk) chunk$end)
+  question_area_start <- min(all_chunks_starts)
+  question_area_end <- max(all_chunks_ends)
   
-  # Add any lines before the first question
-  first_q_start <- min(sapply(question_blocks, function(block) block$start))
-  if (first_q_start > 1) {
-    new_code_block <- c(new_code_block, code_block[1:(first_q_start-1)])
-  }
+  # Create the new content with reordered questions
+  new_content <- c(
+    # Content before questions
+    editor_content[1:(question_area_start-1)]
+  )
   
   # Add each question in the new order
   for (q_id in new_question_order) {
-    if (!is.null(question_blocks[[q_id]])) {
-      new_code_block <- c(new_code_block, question_blocks[[q_id]]$content)
+    if (!is.null(question_chunks[[q_id]])) {
+      new_content <- c(new_content, question_chunks[[q_id]]$content)
     }
   }
   
-  # Add the next button and any remaining lines
-  if (!is.null(next_button_line)) {
-    new_code_block <- c(new_code_block, code_block[next_button_line:length(code_block)])
-  } else {
-    # Find the last question's end
-    last_q_end <- max(sapply(question_blocks, function(block) block$end))
-    if (last_q_end < length(code_block)) {
-      new_code_block <- c(new_code_block, code_block[(last_q_end+1):length(code_block)])
-    }
-  }
-  
-  # Create the updated editor content
-  result <- c(
-    editor_content[1:r_block_start],
-    new_code_block,
-    editor_content[r_block_end:length(editor_content)]
+  # Add content after questions
+  new_content <- c(
+    new_content,
+    editor_content[(question_area_end+1):length(editor_content)]
   )
   
   # Return the updated content
-  return(paste(result, collapse = "\n"))
+  return(paste(new_content, collapse = "\n"))
 }
 
 # Helper function to generate question code
@@ -1383,8 +1480,7 @@ generate_question_code <- function(type, id, label) {
       paste0("    \"Option A\" = \"option_a\","),
       paste0("    \"Option B\" = \"option_b\""),
       paste0("  )"),
-      paste0(")"),
-      ""
+      paste0(")")
     ))
   } else if (type == "slider_numeric") {
     return(c(
@@ -1393,8 +1489,7 @@ generate_question_code <- function(type, id, label) {
       paste0("  id     = \"", id, "\","),
       paste0("  label  = \"", label, "\","),
       paste0("  option = seq(0, 10, 1)"),
-      paste0(")"),
-      ""
+      paste0(")")
     ))
   } else {
     # Simple questions (text, textarea, numeric, date, daterange)
@@ -1403,8 +1498,7 @@ generate_question_code <- function(type, id, label) {
       paste0("  type  = \"", type, "\","),
       paste0("  id    = \"", id, "\","),
       paste0("  label = \"", label, "\""),
-      paste0(")"),
-      ""
+      paste0(")")
     ))
   }
 }
