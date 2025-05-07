@@ -364,6 +364,9 @@ studio_server <- function() {
       # Get current editor content
       current_content <- input$survey_editor
       
+      # Apply R chunk separation first
+      current_content <- r_chunk_separation(current_content)
+      
       # Use the page insertion function
       updated_content <- insert_page_into_survey(page_id, current_content)
       
@@ -395,6 +398,9 @@ studio_server <- function() {
       
       # Get current editor content
       current_content <- input$survey_editor
+      
+      # Apply R chunk separation first
+      current_content <- r_chunk_separation(current_content)
       
       # Add question to the selected page in the survey.qmd file
       updated_content <- insert_question_into_survey(
@@ -429,6 +435,9 @@ studio_server <- function() {
       if (length(input$page_order) > 0) {
         # Get current editor content
         current_content <- input$survey_editor
+        
+        # Apply R chunk separation first
+        current_content <- r_chunk_separation(current_content)
         
         # Update the pages order in the file
         updated_content <- reorder_pages(input$page_order, current_content)
@@ -1187,6 +1196,125 @@ reorder_pages <- function(new_order, editor_content) {
   
   # Return the updated content
   return(paste(new_content, collapse = "\n"))
+}
+
+# Separate multiple sd_* function calls into individual R chunks
+r_chunk_separation <- function(editor_content) {
+  # Handle NULL input
+  if (is.null(editor_content)) {
+    return(NULL)
+  }
+  
+  # Ensure editor_content is a character vector split by lines
+  if (length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  result <- character(0)
+  i <- 1
+  
+  while (i <= length(editor_content)) {
+    # Check if this is the start of an R chunk
+    if (grepl("^```\\{r\\}", editor_content[i])) {
+      # Find the end of this chunk
+      chunk_start <- i
+      chunk_end <- NULL
+      
+      for (j in (i+1):length(editor_content)) {
+        if (grepl("^```$", editor_content[j])) {
+          chunk_end <- j
+          break
+        }
+      }
+      
+      # If we found a complete chunk
+      if (!is.null(chunk_end)) {
+        # Extract the chunk content (without the ```{r} and ```)
+        chunk_content <- editor_content[(chunk_start+1):(chunk_end-1)]
+        
+        # Check for sd_ function calls
+        sd_start_indices <- grep("\\bsd_[a-zA-Z0-9_]+\\s*\\(", chunk_content)
+        
+        # If multiple sd_ calls, split the chunk
+        if (length(sd_start_indices) > 1) {
+          # Process each sd_ call
+          for (start_idx in sd_start_indices) {
+            # Find the end of this call by tracking parentheses
+            call_end <- start_idx
+            paren_count <- 0
+            
+            # Count initial opening parentheses in the first line
+            opening <- gregexpr("\\(", chunk_content[start_idx])[[1]]
+            if (opening[1] > 0) {
+              paren_count <- length(opening)
+            }
+            
+            # Count initial closing parentheses in the first line
+            closing <- gregexpr("\\)", chunk_content[start_idx])[[1]]
+            if (closing[1] > 0) {
+              paren_count <- paren_count - length(closing)
+            }
+            
+            # If parentheses not balanced in first line, find the end
+            if (paren_count > 0) {
+              for (k in (start_idx+1):length(chunk_content)) {
+                # Update parenthesis count
+                opening <- gregexpr("\\(", chunk_content[k])[[1]]
+                if (opening[1] > 0) {
+                  paren_count <- paren_count + length(opening)
+                }
+                
+                closing <- gregexpr("\\)", chunk_content[k])[[1]]
+                if (closing[1] > 0) {
+                  paren_count <- paren_count - length(closing)
+                }
+                
+                # If balanced, we found the end
+                if (paren_count <= 0) {
+                  call_end <- k
+                  break
+                }
+              }
+            }
+            
+            # Add this call as a separate chunk to the result
+            result <- c(
+              result,
+              "```{r}",
+              chunk_content[start_idx:call_end],
+              "```",
+              ""  # Add an empty line between chunks
+            )
+          }
+          
+          # Skip past the original chunk
+          i <- chunk_end + 1
+        } else {
+          # No multiple sd_ calls, keep the chunk as is
+          result <- c(
+            result,
+            editor_content[chunk_start:chunk_end]
+          )
+          i <- chunk_end + 1
+        }
+      } else {
+        # If we couldn't find the end of the chunk, just add this line and continue
+        result <- c(result, editor_content[i])
+        i <- i + 1
+      }
+    } else {
+      # Not an R chunk start, just add this line and continue
+      result <- c(result, editor_content[i])
+      i <- i + 1
+    }
+  }
+  
+  # Remove trailing empty line if present
+  if (length(result) > 0 && result[length(result)] == "") {
+    result <- result[-length(result)]
+  }
+  
+  return(paste(result, collapse = "\n"))
 }
 
 # Function to split multiple questions in a chunk into individual chunks
