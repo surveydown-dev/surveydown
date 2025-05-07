@@ -5,9 +5,10 @@
 \title{Create a survey question}
 \usage{
 sd_question(
-  type,
   id,
-  label,
+  type = NULL,
+  label = NULL,
+  option = NULL,
   cols = "80",
   direction = "horizontal",
   status = "default",
@@ -19,50 +20,82 @@ sd_question(
   individual = TRUE,
   justified = FALSE,
   force_edges = TRUE,
-  option = NULL,
   placeholder = NULL,
   resize = NULL,
-  row = NULL
+  row = NULL,
+  default = NULL,
+  yml = "questions.yml",
+  ...
 )
 }
 \arguments{
-\item{type}{Specifies the type of question. Possible values are "select", "mc",
-"mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-"numeric", "slider", "date", "daterange", and "matrix".}
+\item{id}{A unique identifier for the question, which will be used as the
+variable name in the resulting survey data.}
 
-\item{id}{A unique identifier for the question, which will be used as the variable name in the resulting survey data.}
+\item{type}{Specifies the type of question. Possible values are \code{"select"},
+\code{"mc"}, \code{"mc_multiple"}, \code{"mc_buttons"}, \code{"mc_multiple_buttons"}, \code{"text"},
+\code{"textarea"}, \code{"numeric"}, \code{"slider"}, \code{"slider_numeric"}, \code{"date"},
+\code{"daterange"}, and \code{"matrix"}. Defaults to \code{NULL}.}
 
-\item{label}{Character string. The label for the UI element, which can be formatted with markdown.}
+\item{label}{Character string. The label for the UI element, which can be
+formatted with markdown. Defaults to \code{NULL}}
 
-\item{cols}{Integer. Number of columns for the textarea input. Defaults to 80.}
+\item{option}{Named vector for the \code{"select"}, \code{"radio"}, \code{"checkbox"},
+and \code{"slider"} question types, or numeric vector for \code{"slider_numeric"}
+question type.}
 
-\item{direction}{Character string. The direction for button groups ("horizontal" or "vertical"). Defaults to "horizontal".}
+\item{cols}{Integer. Number of columns for the \code{"textarea"} question type.
+Defaults to \code{80}.}
 
-\item{status}{Character string. The status for button groups. Defaults to "default".}
+\item{direction}{Character string. The direction for button groups
+(\code{"horizontal"} or \code{"vertical"}). Defaults to \code{"horizontal"}.}
 
-\item{width}{Character string. The width of the UI element. Defaults to "100\%".}
+\item{status}{Character string. The status for button groups.
+Defaults to \code{"default"}.}
 
-\item{height}{Character string. The height of the textarea input. Defaults to "100px".}
+\item{width}{Character string. The width of the UI element.
+Defaults to \code{"100\%"}.}
+
+\item{height}{Character string. The height of the input for the
+\code{"textarea"} question type. Defaults to \code{"100px"}.}
 
 \item{selected}{Value. The selected value(s) for certain input elements.}
 
-\item{label_select}{Character string. The label for the select input. Defaults to "Choose an option...".}
+\item{label_select}{Character string. The label for the select input.
+Defaults to \code{"Choose an option..."}.}
 
-\item{grid}{Logical. Whether to show a grid for slider input. Defaults to TRUE.}
+\item{grid}{Logical. Whether to show a grid for slider input.
+Defaults to \code{TRUE}.}
 
-\item{individual}{Logical. Whether buttons in a group should be individually styled. Defaults to TRUE.}
+\item{individual}{Logical. Whether buttons in a group should be individually
+styled. Defaults to \code{TRUE}.}
 
-\item{justified}{Logical. Whether buttons in a group should fill the width of the parent div. Defaults to FALSE.}
+\item{justified}{Logical. Whether buttons in a group should fill the width
+of the parent div. Defaults to \code{FALSE}.}
 
-\item{force_edges}{Logical. Whether to force edges for slider input. Defaults to TRUE.}
+\item{force_edges}{Logical. Whether to force edges for slider input.
+Defaults to \code{TRUE}.}
 
-\item{option}{List. Options for the select, radio, checkbox, and slider inputs.}
+\item{placeholder}{Character string. Placeholder text for \code{"text"} and
+\code{"textarea"} question types.}
 
-\item{placeholder}{Character string. Placeholder text for text and textarea inputs.}
+\item{resize}{Character string. Resize option for textarea input.
+Defaults to \code{NULL}.}
 
-\item{resize}{Character string. Resize option for textarea input. Defaults to NULL.}
+\item{row}{List. Used for \code{"matrix"} type questions. Contains the row labels
+and their corresponding IDs.}
 
-\item{row}{List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.}
+\item{default}{Numeric, length 1 (for a single sided slider), or 2 for a
+two sided (range based) slider. Values to be used as the starting default
+for the slider. Defaults to the median of values.}
+
+\item{yml}{Character string. The name of the YAML file to load question configurations from.
+Defaults to \code{"questions.yml"}. Custom YAML files can be specified, either in
+the root directory or subdirectories (e.g., \code{"folder/custom.yml"}).}
+
+\item{...}{Additional arguments, often specific to different input types.
+Examples include \code{pre}, \code{sep}, \code{step}, and \code{animate} for \code{"slider"} and
+\code{"slider_numeric"} question types, etc.}
 }
 \value{
 A 'shiny' UI element wrapped in a div with a data attribute for
@@ -74,25 +107,26 @@ This function creates various types of survey questions for use in a Surveydown 
 \details{
 The function supports various question types:
 \itemize{
-\item "select": A dropdown selection
-\item "mc": Multiple choice (single selection)
-\item "mc_multiple": Multiple choice (multiple selections allowed)
-\item "mc_buttons": Multiple choice with button-style options (single selection)
-\item "mc_multiple_buttons": Multiple choice with button-style options (multiple selections allowed)
+\item \code{"select"}: A dropdown selection
+\item \code{"mc"}: Multiple choice (single selection)
+\item \code{"mc_multiple"}: Multiple choice (multiple selections allowed)
+\item \code{"mc_buttons"}: Multiple choice with button-style options (single selection)
+\item \code{"mc_multiple_buttons"}: Multiple choice with button-style options (multiple selections allowed)
 \item "rank_list": Multiple choice in which the respondent can reorder the
 choices using drag and drop based on the sortsurvey rank_list_survey question (see \code{\link[sortsurvey:rank_list_survey]{sortsurvey::rank_list_survey()}})
 \item "bucket_list": Multiple choice options which the respondent can put into two
 different buckets based on the sortsurvey bucket_list_survey question (see \code{\link[sortsurvey:bucket_list_survey]{sortsurvey::bucket_list_survey()}})
-\item "text": Single-line text input
-\item "textarea": Multi-line text input
-\item "numeric": Numeric input
-\item "slider": Slider input
-\item "date": Date input
-\item "daterange": Date range input
-\item "matrix": Matrix-style question with rows and columns
+\item \code{"text"}: Single-line text question
+\item \code{"textarea"}: Multi-line text question
+\item \code{"numeric"}: Numeric question
+\item \code{"slider"}: Slider question
+\item \code{"slider_numeric"}: Extended numeric slider question
+\item \code{"date"}: Date question
+\item \code{"daterange"}: Date range question
+\item \code{"matrix"}: Matrix-style question with rows and columns
 }
 
-For "matrix" type questions, use the \code{row} parameter to define the rows of
+For \code{"matrix"} type questions, use the \code{row} parameter to define the rows of
 the matrix. Each element in the \code{row} list should have a name (used as the
 row ID) and a value (used as the row label).
 }

@@ -25,20 +25,19 @@ template:
 reference:
 - title: Survey Data
   contents:
-  - sd_database
+  - sd_db_config
+  - sd_db_connect
   - sd_get_data
 - title: Control Logic
   contents:
   - sd_show_if
-  - sd_skip_if
+  - sd_skip_forward
 - title: Server
   contents:
   - sd_server
-  - sd_get_data
-  - sd_set_password
-  - sd_show_password
   - sd_store_value
   - sd_copy_value
+  - sd_reactive
   - sd_get_url_pars
   - sd_is_answered
 - title: Survey UI
@@ -55,12 +54,20 @@ reference:
   - sd_ui
 - title: Utilities
   contents:
+  - sd_dashboard
   - sd_create_survey
   - sd_create_translations
   - sd_include_folder
   - sd_setup
   - sd_add_page
   - sd_add_question
+  - sd_page_gadget
+  - sd_question_gadget
 - title: Version Control
   contents:
   - sd_version
+- title: Depreciated
+  contents:
+  - sd_database
+  - sd_set_password
+  - sd_skip_if

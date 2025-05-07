@@ -7,7 +7,8 @@ warning: false
 ```{r}
 library(surveydown)
 ```
-::: {#page_id .sd-page}
+
+::: {.sd_page id=page_id}
 
 This is a sample survey
 
@@ -23,7 +24,7 @@ sd_next()
 
 :::
 
-::: {#end .sd-page}
+::: {.sd_page id=end}
 
 This is the end of the survey.
 

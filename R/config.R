@@ -2,8 +2,7 @@ run_config <- function(
     required_questions,
     all_questions_required,
     start_page,
-    admin_page,
-    skip_if,
+    skip_forward,
     show_if,
     rate_survey,
     language
@@ -34,10 +33,12 @@ run_config <- function(
     question_structure <- get_question_structure(paths, html_content)
 
     message(
-      "Survey contents saved to:\n",
-      "  ", paths$target_pages, "\n",
+      "Survey content saved to:\n",
+      "  ", paths$target_html, "\n",
       "  ", paths$target_head, "\n",
-      "  ", paths$target_questions
+      "  ", paths$target_pages, "\n",
+      "  ", paths$target_questions, "\n",
+      "  ", paths$target_transl
     )
 
   } else {
@@ -78,9 +79,11 @@ run_config <- function(
     start_page <- page_ids[1]
   }
 
-  # Check skip_if and show_if inputs
+  # Check skip_forward and show_if inputs
   question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
-  check_skip_show(question_ids, question_values, page_ids, skip_if, show_if)
+  check_skip_show(
+    question_ids, question_values, page_ids, skip_forward, show_if
+  )
 
   # Store all config settings
   config <- list(
@@ -89,7 +92,6 @@ run_config <- function(
     question_ids = question_ids,
     question_required = question_required,
     start_page = start_page,
-    admin_page = admin_page,
     question_structure = question_structure
   )
   return(config)
@@ -135,12 +137,27 @@ survey_files_need_updating <- function(paths) {
   time_pages <- file.info(paths$target_pages)$mtime
 
   if ((time_qmd > time_pages) || (time_app > time_pages)) { return(TRUE) }
-
+  
+  # Find all YAML files
+  # find_all_yaml_files() defined in ui.R
+  yaml_files <- find_all_yaml_files()
+  
+  # Check if any YAML file is newer than the parsed pages
+  for (yaml_file in yaml_files) {
+    if (fs::file_exists(yaml_file)) {
+      time_yml <- file.info(yaml_file)$mtime
+      if (time_yml > time_pages) { 
+        return(TRUE) 
+      }
+    }
+  }
+  
   # Re-parse if the user provided a 'translations.yml' file which is out of date
   if (fs::file_exists(paths$transl)) {
     time_transl <- file.info(paths$transl)$mtime
     if (time_transl > time_pages) { return(TRUE) }
   }
+  
   return(FALSE)
 }
 
@@ -216,72 +233,98 @@ set_translations <- function(paths, language) {
 }
 
 extract_html_pages <- function(
-    paths, html_content, required_questions, all_questions_required, show_if
+        paths, html_content, required_questions, all_questions_required, show_if
 ) {
-  pages <- html_content |>
-    rvest::html_elements(".sd-page") |>
-    lapply(function(x) {
-      page_id <- rvest::html_attr(x, "id")
-      question_containers <- rvest::html_elements(x, ".question-container")
-      question_ids <- character(0)
-      required_question_ids <- character(0)
+    # Check for both sd-page and sd_page classes
+    pages_dash <- html_content |> rvest::html_elements(".sd-page")
+    pages_underscore <- html_content |> rvest::html_elements(".sd_page")
 
-      for (i in seq_along(question_containers)) {
-        container <- question_containers[[i]]
-        question_id <- rvest::html_attr(container, "data-question-id")
-        question_ids <- c(question_ids, question_id)
+    # Check if mixing of classes exists
+    if (length(pages_dash) > 0 && length(pages_underscore) > 0) {
+        stop("Mixed use of '.sd-page' and '.sd_page'. Please use only one style.")
+    }
 
-        # Check if it's a matrix question
-        is_matrix <- length(rvest::html_elements(container, ".matrix-question")) > 0
+    # Use whichever page style is found
+    if (length(pages_dash) > 0) {
+        pages_elements <- pages_dash
+        class_used <- ".sd-page"
+    } else if (length(pages_underscore) > 0) {
+        pages_elements <- pages_underscore
+        class_used <- ".sd_page"
+    } else {
+        stop("No survey pages found. Add divs with either '.sd-page' or '.sd_page' class.")
+    }
 
-        # Determine if the question is required
-        is_required <- if (is_matrix) {
-          FALSE  # Matrix questions are not required by default
-        } else if (all_questions_required) {
-          TRUE
+    pages <- lapply(pages_elements, function(x) {
+        page_id <- rvest::html_attr(x, "id")
+        question_containers <- rvest::html_elements(x, ".question-container")
+        question_ids <- character(0)
+        required_question_ids <- character(0)
+
+        for (i in seq_along(question_containers)) {
+            container <- question_containers[[i]]
+            question_id <- rvest::html_attr(container, "data-question-id")
+            question_ids <- c(question_ids, question_id)
+
+            # Check if it's a matrix question
+            is_matrix <- length(rvest::html_elements(container, ".matrix-question")) > 0
+
+            # Determine if the question is required
+            is_required <- if (is_matrix) {
+                all_questions_required || question_id %in% required_questions
+            } else if (all_questions_required) {
+                TRUE
+            } else {
+                question_id %in% required_questions
+            }
+
+            # Track required questions and display asterisk
+            if (is_required) {
+                if (is_matrix) {
+                    # Only show asterisks for subquestions, not the main matrix question
+                    sub_asterisks <- rvest::html_elements(container, ".matrix-question td .hidden-asterisk")
+                    for (asterisk in sub_asterisks) {
+                        xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                    }
+                } else {
+                    asterisk <- rvest::html_element(container, ".hidden-asterisk")
+                    xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                }
+                required_question_ids <- c(required_question_ids, question_id)
+            }
+            if (!is.null(show_if)) {
+                if (question_id %in% show_if$targets) {
+                    current_style <- xml2::xml_attr(container, "style")
+                    new_style <- paste(current_style, "display: none;", sep = " ")
+                    xml2::xml_attr(container, "style") <- new_style
+                }
+            }
+            question_containers[[i]] <- container
+        }
+
+        # Update the 'Next' button ID and extract the next_page_id
+        next_button_id <- make_next_button_id(page_id)
+        next_button <- rvest::html_element(x, "#page_id_next")
+        if (is.na(next_button)) {
+            # No next button on this page
+            next_page_id <- NULL
         } else {
-          question_id %in% required_questions
+            xml2::xml_attr(next_button, "id") <- next_button_id
+            next_page_id <- rvest::html_attr(
+                xml2::xml_parent(next_button), "data-next-page"
+            )
         }
-
-        # Track required questions and display asterisk
-        if (is_required) {
-          asterisk <- rvest::html_element(container, ".hidden-asterisk")
-          xml2::xml_attr(asterisk, "style") <- "display: inline;"
-          required_question_ids <- c(required_question_ids, question_id)
-        }
-        if (!is.null(show_if)) {
-          if (question_id %in% show_if$targets) {
-            current_style <- xml2::xml_attr(container, "style")
-            new_style <- paste(current_style, "display: none;", sep = " ")
-            xml2::xml_attr(container, "style") <- new_style
-          }
-        }
-        question_containers[[i]] <- container
-      }
-
-      # Update the 'Next' button ID and extract the next_page_id
-      next_button_id <- make_next_button_id(page_id)
-      next_button <- rvest::html_element(x, "#page_id_next")
-      if (is.na(next_button)) {
-        # No next button on this page
-        next_page_id <- NULL
-      } else {
-        xml2::xml_attr(next_button, "id") <- next_button_id
-        next_page_id <- rvest::html_attr(
-          xml2::xml_parent(next_button), "data-next-page"
+        list(
+            id = page_id,
+            questions = question_ids,
+            required_questions = required_question_ids,
+            next_button_id = next_button_id,
+            next_page_id = next_page_id,
+            content = as.character(x)
         )
-      }
-      list(
-        id = page_id,
-        questions = question_ids,
-        required_questions = required_question_ids,
-        next_button_id = next_button_id,
-        next_page_id = next_page_id,
-        content = as.character(x)
-      )
     })
-  saveRDS(pages, paths$target_pages)
-  return(pages)
+    saveRDS(pages, paths$target_pages)
+    return(pages)
 }
 
 # Get question structure ('smart': load YAML or extract from HTML and save to YAML)
@@ -331,18 +374,83 @@ extract_question_structure_html <- function(html_content) {
       # Write options to the question structure
       question_structure[[question_id]]$options <- as.list(options)
 
-      # Extract options for the question (slider)
+    # Extract options for the question (slider)
     } else if (grepl("slider", type)) {
-      options_raw <- question_node |>
-        rvest::html_nodes("input") |>
-        rvest::html_attr("data-swvalues")
-      options <- gsub("\\[|\\]|\\\"", "", options_raw) |>
-        strsplit(",") |>
-        unlist()
-
-      # names(options) <- options # TODO no labels in html for slider
-
-      question_structure[[question_id]]$options <- as.list(options)
+      
+      # Check if this is a numeric slider
+      is_numeric_slider <- length(rvest::html_nodes(question_node, ".js-range-slider:not(.sw-slider-text)")) > 0
+      
+      if (is_numeric_slider) {
+        # Extract min, max, and step attributes from the numeric slider
+        slider_element <- rvest::html_nodes(question_node, ".js-range-slider")
+        
+        min_value <- as.numeric(rvest::html_attr(slider_element, "data-min"))
+        max_value <- as.numeric(rvest::html_attr(slider_element, "data-max"))
+        step_value <- as.numeric(rvest::html_attr(slider_element, "data-step"))
+        
+        # Check if this is a range slider (has data-to attribute)
+        is_range <- !is.na(rvest::html_attr(slider_element, "data-to"))
+        
+        # Get the from and to values for range sliders
+        from_value <- as.numeric(rvest::html_attr(slider_element, "data-from"))
+        to_value <- as.numeric(rvest::html_attr(slider_element, "data-to"))
+        
+        # Default to step=1 if missing or invalid
+        if (is.na(step_value) || step_value <= 0) {
+          step_value <- 1
+        }
+        
+        # Generate sequence
+        numeric_values <- seq(min_value, max_value, by = step_value)
+        
+        # Create a named list with actual numeric values
+        # Start with empty list to ensure the types are preserved
+        named_options <- list()
+        for (val in numeric_values) {
+          named_options[[as.character(val)]] <- val
+        }
+        
+        # Note that this is a range slider in the structure if needed
+        if (is_range) {
+          question_structure[[question_id]]$is_range <- TRUE
+          # Also store the default range values
+          question_structure[[question_id]]$default <- c(from_value, to_value)
+        } else if (!is.na(from_value)) {
+          # For single sliders, store the default value
+          question_structure[[question_id]]$default <- from_value
+        }
+        
+        question_structure[[question_id]]$options <- named_options
+      } else {
+        # For regular text slider
+        options_labels_raw <- question_node |>
+          rvest::html_nodes(".js-range-slider") |>
+          rvest::html_attr("data-swvalues")
+        
+        # Process labels
+        options_labels <- gsub("\\[|\\]|\\\"", "", options_labels_raw) |>
+          strsplit(",") |>
+          unlist()
+        
+        # Convert labels to snake_case for values
+        options_values <- sapply(options_labels, function(label) {
+          # Convert to lowercase
+          value <- tolower(label)
+          # Replace spaces and special characters with underscore
+          value <- gsub("[^a-z0-9]", "_", value)
+          # Replace multiple underscores with a single one
+          value <- gsub("_+", "_", value)
+          # Remove leading and trailing underscores
+          value <- gsub("^_|_$", "", value)
+          return(value)
+        })
+        
+        # Create named options list
+        options <- options_values
+        names(options) <- options_labels
+        
+        question_structure[[question_id]]$options <- as.list(options)
+      }
     }
 
     # Extract the rows and options for the matrix main question
@@ -386,6 +494,7 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
     'checkbox-group-buttons' = 'mc_multiple_buttons',
     'shiny-input-select' = 'select',
     'js-range-slider sw-slider-text' = 'slider',
+    'js-range-slider' = 'slider_numeric',
     'shiny-date-input form-group shiny-input-container' = 'date',
     'shiny-date-range-input form-group shiny-input-container' = 'daterange'
   )
@@ -405,6 +514,18 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
     if (question$type == "select") {
       question$options <- question$options[-1]
     }
+
+    # Special handling for numeric slider options to ensure they remain numeric
+    if (question$type == "slider_numeric" && !is.null(question$options)) {
+      # Include all options
+      options_to_include <- seq_along(question$options)
+      
+      # Create a new options list with all elements
+      if (length(options_to_include) > 0) {
+        question$options <- question$options[options_to_include]
+      }
+    }
+    
     return(question)
   })
 
@@ -473,13 +594,13 @@ get_output_ids <- function() {
 }
 
 check_skip_show <- function(
-    question_ids, question_values, page_ids, skip_if, show_if
+    question_ids, question_values, page_ids, skip_forward, show_if
 ) {
-  if (!is.null(skip_if)) {
-    invalid_skip_targets <- setdiff(skip_if$targets, page_ids)
+  if (!is.null(skip_forward)) {
+    invalid_skip_targets <- setdiff(skip_forward$targets, page_ids)
     if (length(invalid_skip_targets) > 0) {
       stop(sprintf(
-        "Invalid skip_if targets: %s. These must be valid page IDs.",
+        "Invalid sd_skip_forward targets: %s. These must be valid page IDs.",
         paste(invalid_skip_targets, collapse = ", "))
       )
     }

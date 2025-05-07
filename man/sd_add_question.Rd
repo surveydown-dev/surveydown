@@ -4,7 +4,7 @@
 \alias{sd_add_question}
 \title{Add a Question Template to the Current Document}
 \usage{
-sd_add_question(type = "mc", chunk = FALSE)
+sd_add_question(type = "mc", id = NULL, label = NULL, chunk = FALSE)
 }
 \arguments{
 \item{type}{A character string specifying the type of question template to
@@ -23,6 +23,13 @@ Default is \code{"mc"} (multiple choice). Available options are:
 \item \code{"date"}: Date input
 \item \code{"daterange"}: Date range input
 }}
+
+\item{id}{A character string specifying the ID for the question. If not provided,
+a default ID based on the question type will be used. This ID should be unique
+within your survey.}
+
+\item{label}{A character string specifying the label (question text) to display
+to respondents. If not provided, a default label placeholder will be used.}
 
 \item{chunk}{Logical. If \code{TRUE}, the code will be generated with the R code
 chunk wrapper. Defaults to \code{FALSE}.}
@@ -43,6 +50,8 @@ The function performs the following steps:
 \enumerate{
 \item Checks for and removes any existing \code{sd_add_question()} function call in the document.
 \item Inserts the appropriate question template at the current cursor position.
+\item If an ID is provided, replaces the default ID in the template with the provided ID.
+\item If a label is provided, replaces the default label in the template with the provided label.
 }
 }
 \examples{
@@ -52,11 +61,11 @@ if (interactive()) {
   # Insert a default multiple choice question template
   sd_add_question()
 
-  # Insert a text input question template
-  sd_add_question("text")
+  # Insert a text input question with custom ID and label
+  sd_add_question("text", id = "user_email", label = "What is your email address?")
 
   # Insert a slider question template
-  sd_add_question("slider")
+  sd_add_question("slider", id = "satisfaction", label = "How satisfied were you with our service?")
 }
 
 }

@@ -4,7 +4,11 @@
 \alias{sd_add_page}
 \title{Add a Page Template to the Current Document}
 \usage{
-sd_add_page()
+sd_add_page(page_id = "page_id")
+}
+\arguments{
+\item{page_id}{A character string specifying the ID for the page.
+Defaults to "page_id".}
 }
 \value{
 This function does not return a value. It modifies the active
@@ -31,18 +35,29 @@ The function performs the following steps:
 
 The template includes:
 \itemize{
-\item A div with class \code{'sd-page'} and a placeholder page ID
+\item A div with class \code{'sd-page'} and the specified page ID
 \item A placeholder for the page title
 \item A placeholder for page contents
 \item An R code chunk with a placeholder for questions and a next button
+}
+
+Special page_id values:
+\itemize{
+\item When page_id is "end", a thank-you page template with \code{sd_close()} is inserted
 }
 }
 \examples{
 if (interactive()) {
   library(surveydown)
 
-  # Insert a new page template
+  # Insert a new page template with default ID
   sd_add_page()
+
+  # Insert a new page template with custom ID
+  sd_add_page(page_id = "welcome")
+
+  # Insert an end/thank you page
+  sd_add_page(page_id = "end")
 }
 
 }

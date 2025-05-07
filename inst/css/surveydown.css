@@ -8,6 +8,7 @@
   --progressbar-position: top;
   --progress-bar-height: 10px;
   --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
+  --footer-height: calc(1rem * 2 + 1.5em);
 }
 
 /* Styles for container and wrapper */
@@ -35,6 +36,10 @@ body {
   max-width: 800px;
   margin: 0 auto !important;
   padding: 0 0 5px !important;
+}
+
+.container-fluid {
+  padding-bottom: 7rem;
 }
 
 /* Typography */
@@ -176,7 +181,12 @@ p, .form-group, .control-label {
 }
 
 #progressbar.bottom {
-  bottom: 0;
+  bottom: 0; /* Default position at very bottom when no footer */
+}
+
+/* When the footer exists, adjust bottom progress bar position */
+:has(.footer) #progressbar.bottom {
+  bottom: var(--footer-height);
 }
 
 #progressbar > div {
@@ -224,6 +234,58 @@ p:last-child,
   .checkbox-group-buttons .btn-group-container-sw {
     flex-direction: column;
   }
+}
+
+/* Footer styling */
+.footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1rem;
+    height: var(--footer-height);
+    background-color: color-mix(in srgb, var(--body-background-color) 90%, black);
+    border-top: 1px solid #eee;
+    color: #666;
+    z-index: 999;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+    height: 100%;
+}
+
+.footer-content.center {
+    justify-content: center;
+}
+
+.footer-left {
+    text-align: left;
+    margin-right: auto;
+}
+
+.footer-center {
+    text-align: center;
+    flex: 1;
+}
+
+.footer-right {
+    text-align: right;
+    margin-left: auto;
+}
+
+.footer a {
+    color: var(--theme-color);
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+    color: color-mix(in srgb, var(--theme-color) 80%, black);
 }
 
 /* Matrix question styling */
@@ -295,7 +357,7 @@ p:last-child,
 .matrix-question .shiny-options-group .radio input {
     margin: 0;
     position: relative;
-    top: 1rem; /* radio button position */
+    top: 0.5rem; /* radio button position */
 }
 
 /* Hide radio button labels */
@@ -310,8 +372,21 @@ p:last-child,
     padding-left: 15px; /* Add some left padding */
 }
 
+/* Container Borders */
+.question-container[data-question-id] input[type="text"],
+.question-container[data-question-id] input[type="number"],
+.question-container[data-question-id] textarea,
+.question-container[data-question-id] select {
+  border: 1px solid #ddd;
+}
+
+.question-container[data-question-id] input[type="radio"],
+.question-container[data-question-id] input[type="checkbox"] {
+  border-color: #ddd;
+}
+
 /* SweetAlert custom styling */
-.swal2-popup {
+div:where(.swal2-container) .swal2-popup {
   font-size: 1rem !important;
 }
 

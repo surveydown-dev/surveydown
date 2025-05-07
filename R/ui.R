@@ -59,28 +59,24 @@ sd_ui <- function() {
   }
   barcolor <- get_barcolor(metadata)
   barposition <- get_barposition(metadata)
+  footer <- get_footer(metadata)
 
   # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
   # Render the 'survey.qmd' file if changes detected
   if (survey_needs_updating(paths)) {
-    tryCatch({
-      # Render the 'survey.qmd' file
-      message("Changes detected...rendering 'survey.qmd' file...")
-      render_survey_qmd(paths, default_theme)
+    message("Changes detected...rendering 'survey.qmd' file...")
+    render_survey_qmd(paths, default_theme)
 
-      # Extract head content (for CSS and JS) and save to "_survey" folder
-      html_content <- rvest::read_html(paths$root_html)
-      head_content <- extract_head_content(html_content)
-      saveRDS(head_content, paths$target_head)
+    # Move rendered file
+    fs::file_move(paths$root_html, paths$target_html)
 
-      # Move rendered 'survey.html' into '_survey' folder
-      fs::file_move(paths$root_html, paths$target_html)
-      message("Survey saved to ", paths$target_html, "\n")
-    }, error = function(e) {
-      stop("Error rendering 'survey.qmd' file. Please review and revise the file. Error details: ", e$message)
-    })
+    # Extract head content and save
+    html_content <- rvest::read_html(paths$target_html)
+    head_content <- extract_head_content(html_content)
+    saveRDS(head_content, paths$target_head)
+
   } else {
     # If no changes, just load head content from '_survey/head.rds'
     head_content <- readRDS(paths$target_head)
@@ -114,7 +110,13 @@ sd_ui <- function() {
       shiny::tags$div(
         class = "content",
         shiny::uiOutput("main")
-      )
+      ),
+      if (nchar(footer) > 0) {
+        shiny::tags$div(
+          class = "footer",
+          shiny::HTML(footer)
+        )
+      }
     ) # fluidPage
   ) # shiny::tagList()
 }
@@ -146,44 +148,145 @@ get_barposition <- function(metadata) {
   return(barposition)
 }
 
+process_links <- function(text) {
+  if (is.null(text)) return("")
+
+  # Convert markdown links to HTML first
+  text <- gsub("\\[([^]]+)\\]\\(([^)]+)\\)",
+               '<a href="\\2">\\1</a>',
+               text)
+
+  # Then add target="_blank" to any HTML links that don't have it
+  pattern <- '<a [^>]*?href="[^"]*?"[^>]*?>'
+  matches <- gregexpr(pattern, text, perl = TRUE)
+  if (length(matches[[1]]) > 0 && matches[[1]][1] != -1) {
+    links <- regmatches(text, matches)[[1]]
+    for (link in links) {
+      if (!grepl('target=', link)) {
+        new_link <- sub('>', ' target="_blank">', link)
+        text <- sub(link, new_link, text, fixed = TRUE)
+      }
+    }
+  }
+
+  return(text)
+}
+
+get_footer <- function(metadata) {
+  # Get the metadata safely
+  meta <- metadata$formats$html$metadata
+  if (is.null(meta)) {
+    return("")
+  }
+
+  # Get footer-related fields
+  footer_left <- meta$`footer-left`
+  footer_right <- meta$`footer-right`
+  footer_center <- meta$`footer-center`
+  plain_footer <- meta$footer
+
+  # If footer-center doesn't exist but plain footer does, use plain footer
+  if (is.null(footer_center) && !is.null(plain_footer)) {
+    footer_center <- plain_footer
+  }
+
+  # If all are NULL, return empty string
+  if (is.null(footer_center) && is.null(footer_left) && is.null(footer_right)) {
+    return("")
+  }
+
+  # Process each section if it exists
+  footer_html <- c()
+
+  if (!is.null(footer_left) && nchar(footer_left) > 0) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-left">%s</div>',
+                             process_links(footer_left)))
+  }
+
+  if (!is.null(footer_center) && nchar(footer_center) > 0) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-center">%s</div>',
+                             process_links(footer_center)))
+  }
+
+  if (!is.null(footer_right) && nchar(footer_right) > 0) {
+    footer_html <- c(footer_html,
+                     sprintf('<div class="footer-right">%s</div>',
+                             process_links(footer_right)))
+  }
+
+  # Return the final HTML
+  return(paste0('<div class="footer-content">',
+                paste(footer_html, collapse = ""),
+                '</div>'))
+}
+
+find_all_yaml_files <- function() {
+  # Find all yml files
+  all_files <- list.files(path = ".", pattern = "\\.(yml|yaml)$", 
+                          recursive = TRUE, full.names = TRUE)
+  
+  # Exclude the _survey/ directory
+  yaml_files <- all_files[!grepl("^\\./?\\_survey/", all_files)]
+  
+  return(unique(yaml_files))
+}
+
 survey_needs_updating <- function(paths) {
   # Re-render if any of the target files are missing
   targets <- c(paths$target_html, paths$target_head)
   if (any(!fs::file_exists(targets))) { return(TRUE) }
 
-  # Re-render if '_survey/survey.html' file is out of date with 'survey.qmd' file
+  # Re-render if '_survey/survey.html' is out of date with 'survey.qmd'
   time_qmd <- file.info(paths$qmd)$mtime
   time_html <- file.info(paths$target_html)$mtime
 
   if (time_qmd > time_html) { return(TRUE) }
+  
+  # Find all YAML files
+  yaml_files <- find_all_yaml_files()
+  
+  # Check if any YAML file is newer than the rendered HTML
+  for (yaml_file in yaml_files) {
+    if (fs::file_exists(yaml_file)) {
+      time_yml <- file.info(yaml_file)$mtime
+      if (time_yml > time_html) { 
+        return(TRUE) 
+      }
+    }
+  }
 
   return(FALSE)
 }
 
 render_survey_qmd <- function(paths, default_theme = TRUE) {
-  # Copy lua filter to local folder
-  lua_file <- 'surveydown.lua'
-  fs::file_copy(
-    system.file("lua/include-resources.lua", package = "surveydown"),
-    lua_file,
-    overwrite = TRUE
-  )
+    # Copy lua filter to local folder
+    lua_file <- 'surveydown.lua'
+    fs::file_copy(
+        system.file("lua/include-resources.lua", package = "surveydown"),
+        lua_file,
+        overwrite = TRUE
+    )
 
-  # Render with Lua filter and metadata
-  quarto::quarto_render(
-    paths$qmd,
-    metadata = list(
-      default_theme = default_theme
-    ),
-    pandoc_args = c(
-      "--embed-resources",
-      "--lua-filter=surveydown.lua"
-    ),
-    quiet = TRUE
-  )
+    # Render the survey.qmd file
+    quarto::quarto_render(
+        input = paths$qmd,
+        metadata = list(
+            default_theme = default_theme
+        ),
+        pandoc_args = c(
+            "--embed-resources",
+            "--lua-filter=surveydown.lua"
+        ),
+        # Turn off quiet mode to capture output
+        quiet = FALSE
+    )
 
-  # Delete local lua filter
-  fs::file_delete(lua_file)
+    # Delete lua file from root folder
+    if (file.exists(lua_file)) {
+        fs::file_delete(lua_file)
+    }
 }
 
 extract_head_content <- function(html_content) {
@@ -200,47 +303,74 @@ extract_head_content <- function(html_content) {
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
 #'
-#' @param type Specifies the type of question. Possible values are "select", "mc",
-#'   "mc_multiple", "mc_buttons", "mc_multiple_buttons", "text", "textarea",
-#'   "numeric", "slider", "date", "daterange", and "matrix".
-#' @param id A unique identifier for the question, which will be used as the variable name in the resulting survey data.
-#' @param label Character string. The label for the UI element, which can be formatted with markdown.
-#' @param cols Integer. Number of columns for the textarea input. Defaults to 80.
-#' @param direction Character string. The direction for button groups ("horizontal" or "vertical"). Defaults to "horizontal".
-#' @param status Character string. The status for button groups. Defaults to "default".
-#' @param width Character string. The width of the UI element. Defaults to "100%".
-#' @param height Character string. The height of the textarea input. Defaults to "100px".
+#' @param id A unique identifier for the question, which will be used as the
+#' variable name in the resulting survey data.
+#' @param type Specifies the type of question. Possible values are `"select"`,
+#' `"mc"`, `"mc_multiple"`, `"mc_buttons"`, `"mc_multiple_buttons"`, `"text"`,
+#' `"textarea"`, `"numeric"`, `"slider"`, `"slider_numeric"`, `"date"`,
+#' `"daterange"`, and `"matrix"`. Defaults to `NULL`.
+#' @param label Character string. The label for the UI element, which can be
+#' formatted with markdown. Defaults to `NULL`
+#' @param cols Integer. Number of columns for the `"textarea"` question type.
+#' Defaults to `80`.
+#' @param direction Character string. The direction for button groups
+#' (`"horizontal"` or `"vertical"`). Defaults to `"horizontal"`.
+#' @param status Character string. The status for button groups.
+#' Defaults to `"default"`.
+#' @param width Character string. The width of the UI element.
+#' Defaults to `"100%"`.
+#' @param height Character string. The height of the input for the
+#' `"textarea"` question type. Defaults to `"100px"`.
 #' @param selected Value. The selected value(s) for certain input elements.
-#' @param label_select Character string. The label for the select input. Defaults to "Choose an option...".
-#' @param grid Logical. Whether to show a grid for slider input. Defaults to TRUE.
-#' @param individual Logical. Whether buttons in a group should be individually styled. Defaults to TRUE.
-#' @param justified Logical. Whether buttons in a group should fill the width of the parent div. Defaults to FALSE.
-#' @param force_edges Logical. Whether to force edges for slider input. Defaults to TRUE.
-#' @param option List. Options for the select, radio, checkbox, and slider inputs.
-#' @param placeholder Character string. Placeholder text for text and textarea inputs.
-#' @param resize Character string. Resize option for textarea input. Defaults to NULL.
-#' @param row List. Used for "matrix" type questions. Contains the row labels and their corresponding IDs.
-#'
+#' @param label_select Character string. The label for the select input.
+#' Defaults to `"Choose an option..."`.
+#' @param grid Logical. Whether to show a grid for slider input.
+#' Defaults to `TRUE`.
+#' @param individual Logical. Whether buttons in a group should be individually
+#'  styled. Defaults to `TRUE`.
+#' @param justified Logical. Whether buttons in a group should fill the width
+#' of the parent div. Defaults to `FALSE`.
+#' @param force_edges Logical. Whether to force edges for slider input.
+#' Defaults to `TRUE`.
+#' @param option Named vector for the `"select"`, `"radio"`, `"checkbox"`,
+#' and `"slider"` question types, or numeric vector for `"slider_numeric"`
+#' question type.
+#' @param placeholder Character string. Placeholder text for `"text"` and
+#' `"textarea"` question types.
+#' @param resize Character string. Resize option for textarea input.
+#' Defaults to `NULL`.
+#' @param row List. Used for `"matrix"` type questions. Contains the row labels
+#' and their corresponding IDs.
+#' @param default Numeric, length 1 (for a single sided slider), or 2 for a
+#' two sided (range based) slider. Values to be used as the starting default
+#' for the slider. Defaults to the median of values.
+#' @param yml Character string. The name of the YAML file to load question configurations from.
+#' Defaults to `"questions.yml"`. Custom YAML files can be specified, either in 
+#' the root directory or subdirectories (e.g., `"folder/custom.yml"`).
+#' @param ... Additional arguments, often specific to different input types.
+#' Examples include `pre`, `sep`, `step`, and `animate` for `"slider"` and
+#' `"slider_numeric"` question types, etc.
 #' @details
 #' The function supports various question types:
-#' - "select": A dropdown selection
-#' - "mc": Multiple choice (single selection)
-#' - "mc_multiple": Multiple choice (multiple selections allowed)
-#' - "mc_buttons": Multiple choice with button-style options (single selection)
-#' - "mc_multiple_buttons": Multiple choice with button-style options (multiple selections allowed)
+#' - `"select"`: A dropdown selection
+#' - `"mc"`: Multiple choice (single selection)
+#' - `"mc_multiple"`: Multiple choice (multiple selections allowed)
+#' - `"mc_buttons"`: Multiple choice with button-style options (single selection)
+#' - `"mc_multiple_buttons"`: Multiple choice with button-style options (multiple selections allowed)
+#' - `"text"`: Single-line text question
+#' - `"textarea"`: Multi-line text question
 #' - "rank_list": Multiple choice in which the respondent can reorder the
 #' choices using drag and drop based on the sortsurvey rank_list_survey question (see [sortsurvey::rank_list_survey()])
 #' - "bucket_list": Multiple choice options which the respondent can put into two
 #' different buckets based on the sortsurvey bucket_list_survey question (see [sortsurvey::bucket_list_survey()])
-#' - "text": Single-line text input
-#' - "textarea": Multi-line text input
-#' - "numeric": Numeric input
-#' - "slider": Slider input
-#' - "date": Date input
-#' - "daterange": Date range input
-#' - "matrix": Matrix-style question with rows and columns
+#' - `"numeric"`: Numeric question
+#' - `"slider"`: Slider question
+#' - `"slider_numeric"`: Extended numeric slider question
+#' - `"date"`: Date question
+#' - `"daterange"`: Date range question
+#' - `"matrix"`: Matrix-style question with rows and columns
 #'
-#' For "matrix" type questions, use the `row` parameter to define the rows of
+#' For `"matrix"` type questions, use the `row` parameter to define the rows of
 #' the matrix. Each element in the `row` list should have a name (used as the
 #' row ID) and a value (used as the row label).
 #'
@@ -275,9 +405,10 @@ extract_head_content <- function(html_content) {
 #' @importFrom sortsurvey rank_list_survey bucket_list_survey
 #' @export
 sd_question <- function(
-    type,
     id,
-    label,
+    type         = NULL,
+    label        = NULL,
+    option       = NULL,
     cols         = "80",
     direction    = "horizontal",
     status       = "default",
@@ -289,11 +420,110 @@ sd_question <- function(
     individual   = TRUE,
     justified    = FALSE,
     force_edges  = TRUE,
-    option       = NULL,
     placeholder  = NULL,
     resize       = NULL,
-    row          = NULL
-) {
+    row          = NULL,
+    default      = NULL,
+    yml          = "questions.yml",
+    ...
+    ) {
+
+  # Define valid question types
+  valid_types <- c(
+    "select", "mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons",
+    "text", "textarea", "numeric", "slider", "slider_numeric", "date",
+    "daterange", "matrix"
+  )
+  
+  # Define types that require options
+  types_requiring_options <- c(
+    "select", "mc", "mc_multiple", "mc_buttons",
+    "mc_multiple_buttons", "slider", "slider_numeric", "matrix"
+  )
+  
+  # First check for missing arguments and try to load from local yml file
+  missing_option <- is.null(option) && !is.null(type) && (type %in% types_requiring_options)
+  if (is.null(type) || is.null(label) || missing_option) {
+    # Check if the yml file exists first
+    if (!file.exists(yml)) {
+      # Throw error if the yml file doesn't exist, regardless of whether it's the default or custom
+      stop("Specified yml file '", yml, "' not found for question ", id)
+    }
+    # Attempt to load existing yml file
+    tryCatch({
+      root_questions <- yaml::read_yaml(yml)
+      if (is.null(root_questions[[id]])) {
+        stop("Question '", id, "' not found in yml file ", yml)
+      } else {
+        q_data <- root_questions[[id]]
+        
+        # Only override parameters that weren't provided
+        if (is.null(type)) {
+          type <- q_data$type
+        }
+        
+        if (is.null(label)) {
+          label <- q_data$label
+        }
+        
+        # Handle different option formats based on question type
+        if (is.null(option) && !is.null(q_data$options)) {
+          if (is.list(q_data$options)) {
+            # Convert list to named vector for option parameter
+            option_names <- names(q_data$options)
+            option_values <- unlist(q_data$options)
+            option <- option_values
+            names(option) <- option_names
+          } else {
+            option <- q_data$options
+          }
+        }
+        
+        # Load default value for numeric sliders
+        if (is.null(default) && type == "slider_numeric" && !is.null(q_data$default)) {
+          default <- q_data$default
+        }
+        
+        # Handle range slider flag
+        if (type == "slider_numeric" && !is.null(q_data$is_range) && q_data$is_range) {
+          # If it's a range slider and we don't have a default value yet,
+          # create a default range using min/max from options
+          if (is.null(default) && !is.null(option)) {
+            options_numeric <- as.numeric(option)
+            min_val <- min(options_numeric)
+            max_val <- max(options_numeric)
+            # Default to 1/3 and 2/3 of the range
+            range_width <- max_val - min_val
+            default <- c(min_val + range_width/3, max_val - range_width/3)
+          }
+        }
+        
+        # Handle row for matrix questions
+        if (is.null(row) && !is.null(q_data$row) && is.list(q_data$row)) {
+          row_names <- names(q_data$row)
+          row_values <- unlist(q_data$row)
+          row <- row_values
+          names(row) <- row_names
+        }
+      }
+    }, error = function(e) {
+      stop("Error reading yml file '", yml, "': ", e$message)
+    })
+  }
+
+  # Check if provided type is valid
+  if (is.null(type)) {
+    stop("Question type is required but missing. Please provide a type or ensure it exists in the questions.yml file.")
+  }
+  
+  if (!type %in% valid_types) {
+    stop(
+      sprintf(
+        "Invalid question type: '%s'. Valid types are: %s",
+        type, paste(sort(valid_types), collapse = "', '")
+      )
+    )
+  }
 
   output <- NULL
 
@@ -320,15 +550,18 @@ sd_question <- function(
       label    = label,
       choices  = option,
       multiple = FALSE,
-      selected = FALSE
+      selected = FALSE,
+      ...
     )
+
   } else if (type == "mc") {
 
     output <- shiny::radioButtons(
       inputId  = id,
       label    = label,
       choices  = option,
-      selected = FALSE
+      selected = FALSE,
+      ...
     )
 
   } else if (type == "mc_multiple") {
@@ -337,7 +570,8 @@ sd_question <- function(
       inputId  = id,
       label    = label,
       choices  = option,
-      selected = FALSE
+      selected = FALSE,
+      ...
     )
 
   } else if (type == "mc_buttons") {
@@ -347,7 +581,8 @@ sd_question <- function(
       label     = label,
       choices   = list_name_md_to_html(option),
       direction = direction,
-      selected  = character(0)
+      selected  = character(0),
+      ...
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
@@ -364,7 +599,8 @@ sd_question <- function(
       choices    = list_name_md_to_html(option),
       direction  = direction,
       individual = individual,
-      justified  = FALSE
+      justified  = FALSE,
+      ...
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
@@ -405,7 +641,8 @@ sd_question <- function(
     output <- shiny::textInput(
       inputId     = id,
       label       = label,
-      placeholder = option
+      placeholder = option,
+      ...
     )
 
   } else if (type == "textarea") {
@@ -418,7 +655,8 @@ sd_question <- function(
       value       = NULL,
       rows        = "6",
       placeholder = placeholder,
-      resize      = resize
+      resize      = resize,
+      ...
     )
 
   } else if (type == "numeric") {
@@ -426,30 +664,156 @@ sd_question <- function(
     output <- shiny::numericInput(
       inputId = id,
       label   = label,
-      value   = NULL
+      value   = NULL,
+      ...
     )
 
   } else if (type == "slider") {
 
-    output <- shinyWidgets::sliderTextInput(
-      inputId      = id,
-      label        = label,
-      choices      = option,
-      selected     = selected,
-      force_edges  = force_edges,
-      grid         = grid,
-      animate      = FALSE,
-      hide_min_max = FALSE,
-      from_fixed   = FALSE,
-      to_fixed     = FALSE,
-      from_min     = NULL,
-      from_max     = NULL,
-      to_min       = NULL,
-      to_max       = NULL,
-      pre          = NULL,
-      post         = NULL,
-      dragRange    = TRUE
-    )
+      # Extract display labels and values
+      display_labels <- names(option)
+      values <- unname(option)
+
+      # Value to display mapping (for finding the display label from a selected value)
+      value_to_label <- display_labels
+      names(value_to_label) <- values
+
+      # Create a choices vector that sliderTextInput will use
+      slider_choices <- display_labels
+
+      # Determine the selected display label based on the selected value
+      selected_label <- NULL
+      if (!is.null(selected) && selected != "") {
+          selected_label <- value_to_label[selected]
+      }
+
+      # If no valid selection, default to first choice
+      if (is.null(selected_label) || is.na(selected_label)) {
+          selected_label <- slider_choices[1]
+      }
+
+      # Store the mapping for later use in JavaScript
+      value_map <- option
+
+      if (!is.null(shiny::getDefaultReactiveDomain())) {
+          session <- shiny::getDefaultReactiveDomain()
+          session$userData[[paste0(id, "_values")]] <- value_map
+      }
+
+      # Create the slider with display labels
+      output <- shinyWidgets::sliderTextInput(
+          inputId     = id,
+          label       = label,
+          choices     = slider_choices,  # These are the display labels
+          selected    = selected_label,  # Must be a display label, not a value
+          force_edges = force_edges,
+          grid        = grid,
+          ...
+      )
+
+      # Store the values in a data attribute for extraction
+      values_json <- jsonlite::toJSON(values)
+      
+      # Add a data-values attribute to the input element for extraction
+      js_add_values <- sprintf('
+        $(document).ready(function() {
+          $("#%s input").attr("data-values", %s);
+        });
+      ', id, values_json)
+      
+      output <- shiny::tagAppendChild(
+          output,
+          shiny::tags$script(htmltools::HTML(js_add_values))
+      )
+
+      # JavaScript to map the display label back to the stored value
+      js_convert <- sprintf("
+      $(document).on('change', '#%s', function() {
+        var valueMap = %s;
+        var currentLabel = $(this).val();
+
+        // Find the internal value that matches this display label
+        Shiny.setInputValue('%s', valueMap[currentLabel]);
+      });
+    ", id, jsonlite::toJSON(as.list(value_map)), id)
+
+      output <- shiny::tagAppendChild(
+          output,
+          shiny::tags$script(htmltools::HTML(js_convert))
+      )
+
+    } else if (type == "slider_numeric") {
+      # Handle numeric slider - supports BOTH single and range values
+      slider_values <- option
+
+      if (!is.null(shiny::getDefaultReactiveDomain())) {
+          session <- shiny::getDefaultReactiveDomain()
+          session$userData[[paste0(id, "_values")]] <- slider_values
+      }
+
+      if (is.null(default)) {
+          default <- stats::median(slider_values)
+      }
+
+      # Check if this is a range slider
+      is_range <- is.numeric(default) && length(default) > 1
+
+      # Create the slider
+      output <- shiny::sliderInput(
+          inputId = id,
+          label   = label,
+          min     = min(slider_values),
+          max     = max(slider_values),
+          value   = default,  # Can be single value or vector of length 2 for range
+          ...
+      )
+
+      # For range sliders, add a custom observer that manually creates a string value
+      if (is_range) {
+          # Add JavaScript to force a manual string representation of the range
+          js_range_handler <- sprintf("
+      $(document).on('slidechange', '#%s', function(event, ui) {
+        // Track interaction for progress
+        Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+
+        // Force a string representation for range sliders
+        if (ui.values) {
+          var rangeString = ui.values.join(', ');
+          Shiny.setInputValue('%s_manual_range', rangeString);
+        }
+      });
+    ", id, id, id)
+
+          output <- shiny::tagAppendChild(
+              output,
+              shiny::tags$script(htmltools::HTML(js_range_handler))
+          )
+
+          # Add an observer in the server to capture this string value
+          if (!is.null(shiny::getDefaultReactiveDomain())) {
+              shiny::observe({
+                  # Get the range string from our custom input
+                  range_string <- shiny::getDefaultReactiveDomain()$input[[paste0(id, "_manual_range")]]
+
+                  if (!is.null(range_string) && range_string != "") {
+                      # Store this directly using the main id
+                      sd_store_value(range_string, id)
+                  }
+              })
+          }
+      } else {
+          # For single sliders, just track interaction
+          js_single_handler <- sprintf("
+      $(document).on('slidechange', '#%s', function() {
+        Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+      });
+    ", id, id)
+
+          output <- shiny::tagAppendChild(
+              output,
+              shiny::tags$script(htmltools::HTML(js_single_handler))
+          )
+      }
 
   } else if (type == "date") {
 
@@ -465,7 +829,8 @@ sd_question <- function(
       language           = language,
       autoclose          = TRUE,
       datesdisabled      = NULL,
-      daysofweekdisabled = NULL
+      daysofweekdisabled = NULL,
+      ...
     )
 
     output <- date_interaction(output, id)
@@ -484,12 +849,14 @@ sd_question <- function(
       weekstart = 0,
       language  = language,
       separator = "-",
-      autoclose = TRUE
+      autoclose = TRUE,
+      ...
     )
 
     output <- date_interaction(output, id)
 
   } else if (type == "matrix") {
+
     header <- shiny::tags$tr(
       shiny::tags$th(""),
       lapply(names(option), function(opt) shiny::tags$th(opt))
@@ -503,9 +870,10 @@ sd_question <- function(
           sd_question(
             type = "mc",
             id = full_id,
-            label = NULL,
+            label = "",
             option = option,
-            direction = "horizontal"
+            direction = "horizontal",
+            ...
           )
         )
       )

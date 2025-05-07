@@ -28,6 +28,8 @@ list_name_md_to_html <- function(list) {
 #'
 #' @noRd
 .onAttach <- function(libname, pkgname) {
+  # Set cli option to suppress theme warning
+  options(cli.ignore_unknown_rstudio_theme = TRUE)
 
   # Add special folders to resource path
   folders <- c('_survey', 'images', 'css', 'js', 'www')
@@ -158,13 +160,6 @@ vector_to_json_array <- function(vec) {
   sprintf("[%s]", paste(quoted_elements, collapse = ","))
 }
 
-# Dynamically load JS files
-load_js_file <- function(name) {
-  js_file_path <- system.file("js", name, package = "surveydown")
-  js_code <- paste(readLines(js_file_path), collapse = "\n")
-  shinyjs::runjs(js_code)
-}
-
 tibble_to_list_of_lists <- function(tbl) {
   if (!is.data.frame(tbl)) {
     stop("Input must be a data frame or tibble")
@@ -184,89 +179,183 @@ tibble_to_list_of_lists <- function(tbl) {
 
 #' Create a new survey template
 #'
-#' This function creates a new survey template by copying files from the
-#' package's template directory to a specified path. It handles file conflicts
-#' and provides appropriate warnings and feedback.
+#' This function creates a new survey template by copying template files to the
+#' specified directory. You can choose from various predefined templates,
+#' including the default built-in template and specialized templates from the
+#' surveydown-dev/templates repository.
 #'
 #' @param path A character string specifying the directory where the survey
 #'   template should be created. Defaults to the current working directory.
-#' @param structure A character string specifying the template structure to use.
-#'   Must be either `"single"` or `"multi"`. Defaults to `"single"`.
-#'
-#' @return Invisible `NULL`. The function is called for its side effects of
-#'   creating files and providing user feedback.
+#' @param template A character string specifying the template to use.
+#'   Default is "default" which uses the built-in package template.
+#'   Other options include:
+#'   \describe{
+#'     \item{default}{The default built-in template}
+#'     \item{conditional_display}{Template of conditional display of questions}
+#'     \item{conditional_navigation}{Template of conditional navigation of pages}
+#'     \item{conjoint_buttons}{Conjoint analysis with button interface}
+#'     \item{conjoint_tables}{Conjoint analysis with table interface}
+#'     \item{custom_leaflet_map}{Survey with interactive Leaflet maps}
+#'     \item{custom_plotly_chart}{Survey with Plotly visualizations}
+#'     \item{external_redirect}{Template with external site redirects}
+#'     \item{live_polling}{Live polling template for real-time surveys}
+#'     \item{question_types}{Showcases all available question types}
+#'     \item{questions_yml}{Survey with questions defined in a YAML file}
+#'     \item{random_options}{Survey with randomized question options}
+#'     \item{random_options_predefined}{Randomized options from predefined sets}
+#'     \item{reactive_drilldown}{Dynamic questions with drill-down capability}
+#'     \item{reactive_questions}{Survey with reactive questions}
+#'   }
 #'
 #' @details
-#' The function performs the following steps:
-#' \itemize{
-#'   \item If the specified path is the current working directory, it asks for user confirmation.
-#'   \item Validates the specified structure (`"single"` or `"multi"`).
-#'   \item Creates the target directory if it doesn't exist.
-#'   \item Copies all files from the package's template directory (based on the specified structure) to the target path.
-#'   \item Preserves the directory structure of the template.
-#'   \item Skips existing files and provides warnings for each skipped file.
-#'   \item Handles .Rproj files specially, skipping if any .Rproj file already exists in the target directory.
-#'   \item Provides feedback on whether files were copied or if all files already existed.
-#' }
+#' When creating a new survey template, this function will:
+#' 1. Check if the specified template is valid
+#' 2. Confirm the destination path with the user (if it's the current directory)
+#' 3. Download template files from GitHub if a non-default template is specified
+#' 4. Copy template files to the destination directory
+#' 5. Skip .Rproj files if one already exists in the destination
+#' 6. Prompt for confirmation before overwriting existing files
 #'
-#' @export
+#' External templates are downloaded from the surveydown-dev/templates GitHub repository.
+#'
+#' @return Invisible `NULL`. The function is called for its side effects.
 #'
 #' @examples
 #' if (interactive()) {
-#'   # Create a single-page survey template
-#'   sd_create_survey(structure = "single")
+#'   # Create a survey using the default template
+#'   sd_create_survey(path = "my_survey")
 #'
-#'   # Create a multi-page survey template
-#'   sd_create_survey(structure = "multi")
+#'   # Create a survey with the question_types template
+#'   sd_create_survey(path = "question_demo", template = "question_types")
+#'
+#'   # Create a conditional display survey template
+#'   sd_create_survey(path = "conditional_survey", template = "conditional_display")
 #' }
-sd_create_survey <- function(path = getwd(), structure = "single") {
-  # Check if using current directory and confirm with user
-  if (path == getwd() && !usethis::ui_yeah(paste("Use the current directory (", path, ") as the path?"))) {
+#'
+#' @export
+sd_create_survey <- function(path = getwd(), template = "default") {
+  # Available templates from surveydown-dev/templates
+  available_templates <- c(
+    "default",
+    "conditional_display",
+    "conditional_navigation",
+    "conjoint_buttons",
+    "conjoint_tables",
+    "custom_leaflet_map",
+    "custom_plotly_chart",
+    "external_redirect",
+    "live_polling",
+    "question_types",
+    "questions_yml",
+    "random_options",
+    "random_options_predefined",
+    "reactive_drilldown",
+    "reactive_questions"
+  )
+
+  # Check if template is valid
+  if (!template %in% available_templates) {
+    stop("Invalid template. Available templates are: ",
+         paste(available_templates, collapse = ", "))
+  }
+
+  if (path == getwd() && !yesno(paste0('Use the current directory "', path, '" as the path?'))) {
     stop("Operation aborted by the user.")
   }
 
-  # Validate the structure parameter
-  if (!structure %in% c("single", "multi")) {
-    stop("Invalid structure. Choose either 'single' or 'multi'.")
-  }
-
-  # Create the directory if it doesn't exist
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
 
-  # Get the path to the template folder and list files
-  template_path <- system.file(file.path("templates", structure), package = "surveydown")
-  if (!dir.exists(template_path)) {
-    stop(paste("Template directory for", structure, "structure does not exist."))
+  # Determine where to get template files from
+  if (template == "default") {
+    # Use built-in template
+    template_path <- system.file("template", package = "surveydown")
+  } else {
+    # Download from GitHub
+    template_path <- download_template_from_github(template)
   }
+
+  if (!dir.exists(template_path)) {
+    stop("Template directory does not exist.")
+  }
+
   template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
 
-  # Copy files, checking for conflicts
   files_copied <- sapply(template_files, function(file) {
     relative_path <- sub(template_path, "", file)
     target_file <- file.path(path, relative_path)
 
-    # Ensure target directory exists
     dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
 
     file_name <- basename(file)
+
+    # Special handling for .Rproj files - skip if one already exists
     if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
       warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
       return(FALSE)
-    } else if (file.exists(target_file)) {
-      warning(paste("Skipping", file_name, "since it already exists."), call. = FALSE, immediate. = TRUE)
-      return(FALSE)
+    }
+    # For other files, prompt for confirmation if they already exist
+    else if (file.exists(target_file)) {
+      overwrite <- yesno(paste0("File '", file_name, "' already exists. Overwrite it"))
+      if (overwrite) {
+        file.copy(from = file, to = target_file, overwrite = TRUE)
+        message(paste("Overwriting", file_name))
+        return(TRUE)
+      } else {
+        message(paste("Skipping", file_name))
+        return(FALSE)
+      }
     } else {
       file.copy(from = file, to = target_file, overwrite = FALSE)
       return(TRUE)
     }
   })
 
-  # Provide feedback to the user
+  # Create success message that includes the template
   if (any(files_copied)) {
-    usethis::ui_done(paste(structure, "version of template created at", path))
+    if (template == "default") {
+      cli::cli_alert_success(paste("Template created at", path))
+    } else {
+      cli::cli_alert_success(paste("Template of", template, "created at", path))
+    }
   } else {
-    usethis::ui_done("Since all files exist, no file was added.")
+    cli::cli_alert_success("Since all files exist, no file was added.")
   }
+
+  # Clean up temp directory if needed
+  if (template != "default") {
+    unlink(dirname(template_path), recursive = TRUE)
+  }
+
+  invisible(NULL)
+}
+
+# Helper function to download and extract a template from GitHub
+download_template_from_github <- function(template) {
+  # Create a temporary directory
+  temp_dir <- tempfile("surveydown_template_")
+  dir.create(temp_dir, recursive = TRUE)
+
+  # Download the specific template directory from GitHub
+  repo_url <- paste0(
+    "https://github.com/surveydown-dev/templates/archive/refs/heads/main.zip"
+  )
+
+  temp_zip <- file.path(temp_dir, "template.zip")
+
+  # Download the zip file
+  utils::download.file(repo_url, temp_zip, quiet = TRUE, mode = "wb")
+
+  # Extract the zip file
+  utils::unzip(temp_zip, exdir = temp_dir)
+
+  # Path to the extracted template folder
+  template_path <- file.path(temp_dir, "templates-main", template)
+
+  if (!dir.exists(template_path)) {
+    stop("Template '", template, "' not found in the repository")
+  }
+
+  return(template_path)
 }
 
 #' Required Set Up Function
@@ -290,111 +379,109 @@ question_templates <- function(type = "mc") {
   templates <- list(
     mc = 'sd_question(
   type   = "mc",
-  id     = "like_apple",
-  label  = "Do you like apple?",
+  id     = "mc_id",
+  label  = "mc_label",
   option = c(
-    "Yes" = "yes",
-    "No"  = "no"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
   text = 'sd_question(
   type  = "text",
-  id    = "apple_text",
-  label = "Write a type of apple:"
+  id    = "text_id",
+  label = "text_label"
 )
-
 ',
 textarea = 'sd_question(
   type  = "textarea",
-  id    = "apple_textarea",
-  label = "What do you like about apple?"
+  id    = "textarea_id",
+  label = "textarea_label"
 )
-
 ',
 numeric = 'sd_question(
   type  = "numeric",
-  id    = "apple_numeric",
-  label = "How many apple(s) do you eat per day?"
+  id    = "numeric_id",
+  label = "numeric_label"
 )
-
 ',
 mc_buttons = 'sd_question(
   type   = "mc_buttons",
-  id     = "apple_mc_buttons",
-  label  = "Which apple do you prefer most?",
+  id     = "mc_buttons_id",
+  label  = "mc_buttons_label",
   option = c(
-    "Fuji"       = "fuji",
-    "Gala"       = "gala",
-    "Honeycrisp" = "honeycrisp"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
 mc_multiple = 'sd_question(
   type  = "mc_multiple",
-  id    = "apple_mc_multiple",
-  label = "What are your favorite apple types (select all that apply)?",
+  id    = "mc_multiple_id",
+  label = "mc_multiple_label",
   option = c(
-    "Fuji"       = "fuji",
-    "Gala"       = "gala",
-    "Honeycrisp" = "honeycrisp"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
 mc_multiple_buttons = 'sd_question(
   type  = "mc_multiple_buttons",
-  id    = "apple_mc_multiple_buttons",
-  label = "What are your favorite apple types (select all that apply)?",
+  id    = "mc_multiple_buttons_id",
+  label = "mc_multiple_buttons_label",
   option = c(
-    "Fuji"       = "fuji",
-    "Gala"       = "gala",
-    "Honeycrisp" = "honeycrisp"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
 select = 'sd_question(
   type  = "select",
-  id    = "apple_select",
-  label = "Which apple do you prefer most?",
+  id    = "select_id",
+  label = "select_label",
   option = c(
-    "Fuji"       = "fuji",
-    "Gala"       = "gala",
-    "Honeycrisp" = "honeycrisp"
+    "Option A" = "option_a",
+    "Option B" = "option_b"
   )
 )
-
 ',
 slider = 'sd_question(
   type  = "slider",
-  id    = "apple_slider",
-  label = "To what extent do you like apple?",
+  id    = "slider_id",
+  label = "slider_label",
   option = c(
-    "Don\'t Like"    = "dont_like",
-    "Somewhat Like" = "somewhat",
-    "Neutral"       = "neutral",
-    "Like"          = "like",
-    "Strongly Like" = "strongly_like"
+    "Option A" = "option_a",
+    "Option B" = "option_b",
+    "Option C" = "option_c"
   )
 )
-
+',
+slider_numeric = 'sd_question(
+  type  = "slider_numeric",
+  id    = "slider_numeric_id",
+  label = "slider_numeric_label",
+  option = seq(0, 10, 1)
+)
+',
+slider_numeric_2 = 'sd_question(
+  type  = "slider_numeric",
+  id    = "slider_numeric_id",
+  label = "slider_numeric_label",
+  option = seq(0, 10, 1),
+  default = c(3, 5)
+)
 ',
 date = 'sd_question(
   type  = "date",
-  id    = "apple_date",
-  label = "What is the last day you had apple?"
+  id    = "date_id",
+  label = "date_label"
 )
-
 ',
 daterange = 'sd_question(
   type  = "daterange",
-  id    = "vacation_daterange",
-  label = "Please select the date range of your upcoming vacation."
+  id    = "daterange_id",
+  label = "daterange_label"
 )
-
 '
   )
 
@@ -424,12 +511,19 @@ return(templates[[type]])
 #'     \item `"date"`: Date input
 #'     \item `"daterange"`: Date range input
 #'   }
+#' @param id A character string specifying the ID for the question. If not provided,
+#'   a default ID based on the question type will be used. This ID should be unique
+#'   within your survey.
+#' @param label A character string specifying the label (question text) to display
+#'   to respondents. If not provided, a default label placeholder will be used.
 #' @param chunk Logical. If `TRUE`, the code will be generated with the R code
 #'   chunk wrapper. Defaults to `FALSE`.
 #' @details
 #' The function performs the following steps:
 #' 1. Checks for and removes any existing `sd_add_question()` function call in the document.
 #' 2. Inserts the appropriate question template at the current cursor position.
+#' 3. If an ID is provided, replaces the default ID in the template with the provided ID.
+#' 4. If a label is provided, replaces the default label in the template with the provided label.
 #'
 #' @return This function does not return a value. It modifies the active
 #' document as a side effect by inserting text and potentially removing a
@@ -442,18 +536,262 @@ return(templates[[type]])
 #'   # Insert a default multiple choice question template
 #'   sd_add_question()
 #'
-#'   # Insert a text input question template
-#'   sd_add_question("text")
+#'   # Insert a text input question with custom ID and label
+#'   sd_add_question("text", id = "user_email", label = "What is your email address?")
 #'
 #'   # Insert a slider question template
-#'   sd_add_question("slider")
+#'   sd_add_question("slider", id = "satisfaction", label = "How satisfied were you with our service?")
 #' }
 #'
 #' @export
-sd_add_question <- function(type = "mc", chunk = FALSE) {
-  template <- question_templates(type)
-  if (chunk) {
-    template <- paste0("```{r}\n", template, "```\n")
+sd_add_question <- function(type = "mc", id = NULL, label = NULL, chunk = FALSE) {
+    # Get the template
+    template <- question_templates(type)
+
+    # Replace the default ID with the provided ID if it's not NULL
+    if (!is.null(id) && id != "") {
+        # Replace the default ID in the template with the provided ID
+        template <- gsub(paste0(type, "_id"), id, template)
+    }
+
+    # Replace the default label with the provided label if it's not NULL
+    if (!is.null(label) && label != "") {
+        # Replace the default label in the template with the provided label
+        template <- gsub(paste0(type, "_label"), label, template)
+    }
+
+    if (chunk) {
+        template <- paste0("```{r}\n", template, "```\n")
+    }
+
+    # Get the current document context
+    context <- rstudioapi::getActiveDocumentContext()
+    # Get all lines of the document
+    lines <- context$contents
+    # Find the line containing the function call
+    call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+
+    if (length(call_line) > 0) {
+        # Remove the line containing the function call
+        rstudioapi::modifyRange(
+            c(call_line, 1, call_line + 1, 1),
+            ""
+        )
+        # Update the context after removal
+        context <- rstudioapi::getActiveDocumentContext()
+    }
+
+    # Get the current cursor position
+    cursor <- context$selection[[1]]$range$start
+    # Insert the template
+    rstudioapi::insertText(location = cursor, text = template)
+}
+
+#' Show a Shiny gadget for selecting a question type
+#'
+#' This function displays a Shiny gadget that allows the user to select
+#' a question type from a dropdown menu. Once submitted, it calls
+#' sd_add_question() with the specified type.
+#'
+#' @param chunk Logical. If `TRUE`, the code will be generated with the R code
+#'   chunk wrapper. Defaults to `FALSE`.
+#'
+#' @return The selected question type (invisibly).
+#' @importFrom miniUI miniPage gadgetTitleBar miniContentPanel
+#' @importFrom shiny dialogViewer runGadget selectInput actionButton observeEvent stopApp tags HTML
+#' @export
+#'
+sd_question_gadget <- function(chunk = FALSE) {
+    # Get all available question types (in alphabetical order)
+    question_types <- c(
+        "Date" = "date",
+        "Date Range" = "daterange",
+        "Multiple Choice" = "mc",
+        "Multiple Choice (Multiple Selection)" = "mc_multiple",
+        "Multiple Choice Buttons" = "mc_buttons",
+        "Multiple Choice Buttons (Multiple Selection)" = "mc_multiple_buttons",
+        "Numeric Input" = "numeric",
+        "Select Dropdown" = "select",
+        "Slider" = "slider",
+        "Slider Numeric" = "slider_numeric",
+        "Slider Numeric Range" = "slider_numeric_2",
+        "Text Area" = "textarea",
+        "Text Input" = "text"
+    )
+
+    ui <- miniUI::miniPage(
+        shiny::tags$head(
+            shiny::tags$script(shiny::HTML("
+        $(document).ready(function() {
+          // Add event listener for Enter key
+          $(document).keypress(function(e) {
+            if(e.which == 13) { // 13 is the Enter key code
+              $('#submit').click();
+              return false;
+            }
+          });
+        });
+      "))
+        ),
+        miniUI::gadgetTitleBar("Add Survey Question"),
+        miniUI::miniContentPanel(
+            shiny::selectInput(
+                "question_type",
+                "Question Type:",
+                choices = question_types,
+                selected = "mc"
+            ),
+            shiny::textInput(
+                "question_id",
+                "Question ID:",
+                value = "",
+                placeholder = "Enter a unique question ID without spaces"
+            ),
+            shiny::textInput(
+                "question_label",
+                "Question Label:",
+                value = "",
+                placeholder = "Enter the question text to display to respondents"
+            ),
+            shiny::checkboxInput(
+                "in_chunk",
+                "Insert in R code chunk",
+                value = FALSE
+            ),
+            shiny::actionButton("submit", "Create Question", class = "btn-primary")
+        )
+    )
+
+    server <- function(input, output, session) {
+        # When submit button is clicked
+        shiny::observeEvent(input$submit, {
+            # Get the selected question type, ID, and label
+            q_type <- input$question_type
+            q_id <- input$question_id
+            q_label <- input$question_label
+            use_chunk <- input$in_chunk
+
+            # Validate the question ID (simple validation)
+            if (q_id == "") {
+                shiny::showNotification("Question ID cannot be empty", type = "error")
+                return()
+            }
+
+            # Close the gadget and return the values
+            shiny::stopApp(list(
+                type = q_type,
+                id = q_id,
+                label = q_label,
+                chunk = use_chunk
+            ))
+        })
+
+        # Also handle the "Done" button in the title bar
+        shiny::observeEvent(input$done, {
+            shiny::stopApp(NULL)  # Return NULL if canceled
+        })
+    }
+
+    # Run the gadget with a dialog viewer
+    result <- shiny::runGadget(
+        ui,
+        server,
+        viewer = shiny::dialogViewer("Add Survey Question", width = 400, height = 480)
+    )
+
+    # If a valid result was returned, call sd_add_question
+    if (!is.null(result)) {
+        sd_add_question(
+            type = result$type,
+            id = result$id,
+            label = result$label,
+            chunk = result$chunk
+        )
+    }
+
+    # Return the question type invisibly
+    invisible(if (!is.null(result)) result$type else NULL)
+}
+
+#' Add a Page Template to the Current Document
+#'
+#' This function inserts a template for a surveydown page at the current cursor
+#' position in the active RStudio document. It provides a basic structure for a
+#' new page, including a title, content area, and a next button. If the
+#' function call exists in the document, it will be removed before inserting
+#' the template.
+#'
+#' @param page_id A character string specifying the ID for the page.
+#'   Defaults to "page_id".
+#'
+#' @details
+#' IMPORTANT: This function should be run outside any division or R code chunk
+#' in your 'Quarto' document. Running it inside a division or code chunk may
+#' result in an incorrect page structure.
+#'
+#' The function performs the following steps:
+#' 1. Checks for and removes any existing `sd_add_page()` function call in the document.
+#' 2. Inserts a template at the current cursor position.
+#'
+#' The template includes:
+#' - A div with class `'sd-page'` and the specified page ID
+#' - A placeholder for the page title
+#' - A placeholder for page contents
+#' - An R code chunk with a placeholder for questions and a next button
+#'
+#' Special page_id values:
+#' - When page_id is "end", a thank-you page template with `sd_close()` is inserted
+#'
+#' @return This function does not return a value. It modifies the active
+#' document as a side effect by inserting text and potentially removing a
+#' function call.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Insert a new page template with default ID
+#'   sd_add_page()
+#'
+#'   # Insert a new page template with custom ID
+#'   sd_add_page(page_id = "welcome")
+#'
+#'   # Insert an end/thank you page
+#'   sd_add_page(page_id = "end")
+#' }
+#'
+#' @export
+sd_add_page <- function(page_id = "page_id") {
+
+  # Different template for end page
+  if (page_id == "end") {
+    template <- '::: {.sd_page id=end}
+
+## Thanks for taking our survey!
+
+```{r}
+# Close button
+sd_close()
+```
+
+:::
+
+'
+  } else {
+    template <- sprintf('::: {.sd_page id=%s}
+
+Add page contents...
+
+```{r}
+# Insert questions...
+
+# Next button
+sd_next()
+```
+
+:::
+
+', page_id)
   }
 
   # Get the current document context
@@ -461,7 +799,8 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
   # Get all lines of the document
   lines <- context$contents
   # Find the line containing the function call
-  call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+  call_pattern <- "sd_add_page\\(.*\\)"
+  call_line <- which(grepl(call_pattern, lines))
 
   if (length(call_line) > 0) {
     # Remove the line containing the function call
@@ -479,83 +818,83 @@ sd_add_question <- function(type = "mc", chunk = FALSE) {
   rstudioapi::insertText(location = cursor, text = template)
 }
 
-#' Add a Page Template to the Current Document
+#' Show a Shiny gadget for entering a page ID
 #'
-#' This function inserts a template for a surveydown page at the current cursor
-#' position in the active RStudio document. It provides a basic structure for a
-#' new page, including a title, content area, and a next button. If the
-#' function call exists in the document, it will be removed before inserting
-#' the template.
+#' This function displays a Shiny gadget that allows the user to input
+#' a page ID. Once submitted, it calls sd_add_page() with the specified ID.
 #'
-#' @details
-#' IMPORTANT: This function should be run outside any division or R code chunk
-#' in your 'Quarto' document. Running it inside a division or code chunk may
-#' result in an incorrect page structure.
-#'
-#' The function performs the following steps:
-#' 1. Checks for and removes any existing `sd_add_page()` function call in the document.
-#' 2. Inserts a template at the current cursor position.
-#'
-#' The template includes:
-#' - A div with class `'sd-page'` and a placeholder page ID
-#' - A placeholder for the page title
-#' - A placeholder for page contents
-#' - An R code chunk with a placeholder for questions and a next button
-#'
-#' @return This function does not return a value. It modifies the active
-#' document as a side effect by inserting text and potentially removing a
-#' function call.
-#'
-#' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Insert a new page template
-#'   sd_add_page()
-#' }
-#'
+#' @return The entered page ID (invisibly).
+#' @importFrom miniUI miniPage gadgetTitleBar miniContentPanel
+#' @importFrom shiny dialogViewer runGadget textInput actionButton observeEvent stopApp tags HTML
 #' @export
-sd_add_page <- function() {
-  # Display a pop-up notice
-  message("Note: Run this function outside division or code chunk.")
+#'
+sd_page_gadget <- function() {
+  ui <- miniUI::miniPage(
+    shiny::tags$head(
+      shiny::tags$script(shiny::HTML("
+        $(document).ready(function() {
+          // Set focus to the page_id input when the gadget loads
+          $('#page_id').focus();
 
-  template <- '::: {#page_id .sd-page}
-
-# Page Title
-
-Page contents...
-
-```{r}
-# Insert your question here...
-
-# Next button
-sd_next()
-```
-
-:::
-
-'
-  # Get the current document context
-  context <- rstudioapi::getActiveDocumentContext()
-  # Get all lines of the document
-  lines <- context$contents
-  # Find the line containing the function call
-  call_line <- which(grepl("sd_add_page\\(\\)", lines))
-
-  if (length(call_line) > 0) {
-    # Remove the line containing the function call
-    rstudioapi::modifyRange(
-      c(call_line, 1, call_line + 1, 1),
-      ""
+          // Add event listener for Enter key
+          $('#page_id').keypress(function(e) {
+            if(e.which == 13) { // 13 is the Enter key code
+              $('#submit').click();
+              return false;
+            }
+          });
+        });
+      "))
+    ),
+    miniUI::gadgetTitleBar("Add Survey Page"),
+    miniUI::miniContentPanel(
+      shiny::textInput(
+        "page_id",
+        "Page ID:",
+        value = "",
+        placeholder = "Enter a unique page ID without spaces"
+      ),
+      shiny::helpText("For ending page, use \"end\" as your page ID"),
+      shiny::actionButton("submit", "Create Page", class = "btn-primary")
     )
-    # Update the context after removal
-    context <- rstudioapi::getActiveDocumentContext()
+  )
+
+  server <- function(input, output, session) {
+    # When submit button is clicked
+    shiny::observeEvent(input$submit, {
+      # Call the sd_add_page function with the provided page_id
+      page_id <- input$page_id
+
+      # Validate the page_id (simple validation for demo)
+      if (page_id == "") {
+        shiny::showNotification("Page ID cannot be empty", type = "error")
+        return()
+      }
+
+      # Close the gadget
+      shiny::stopApp(page_id)
+    })
+
+    # Also handle the "Done" button in the title bar
+    shiny::observeEvent(input$done, {
+      shiny::stopApp(NULL)  # Return NULL if canceled
+    })
   }
 
-  # Get the current cursor position
-  cursor <- context$selection[[1]]$range$start
-  # Insert the template
-  rstudioapi::insertText(location = cursor, text = template)
+  # Run the gadget with a dialog viewer
+  page_id <- shiny::runGadget(
+    ui,
+    server,
+    viewer = shiny::dialogViewer("Add Survey Page", width = 400, height = 300)
+  )
+
+  # If a valid page_id was returned, insert the page
+  if (!is.null(page_id)) {
+    sd_add_page(page_id)
+  }
+
+  # Return the page_id invisibly
+  invisible(page_id)
 }
 
 #' Check Surveydown Version
@@ -591,7 +930,7 @@ sd_version <- function() {
     pkg_needs_update <- local_surveydown_version < latest_surveydown_version
 
     if (pkg_needs_update) {
-      message("\nAn update is available. To update surveydown to the latest version, run: surveydown::sd_update()")
+      message("\nAn update is available. To update surveydown to the latest version, run: pak::pak('surveydown-dev/surveydown')")
     } else {
       message("\nsurveydown is up to date.")
     }
@@ -696,4 +1035,35 @@ sd_create_translations <- function(language = "en", path = getwd()) {
     "\n\nModify it to provide custom messages in '", language, "'."
   )
   invisible(NULL)
+}
+
+# Replaces usethis::ui_yeah, inspired by internal yesno function in devtools
+yesno <- function(msg) {
+    # Define fun options for yes/no
+    yeses <- c("Yes", "Definitely", "For sure", "Yup", "Yeah", "Of course", "Absolutely")
+    nos <- c("No way", "Not yet", "I forget", "No", "Nope", "Uhhhh... Maybe?")
+
+    # Ensure message ends with question mark
+    if (!grepl("\\?\\s*$", msg)) {
+        msg <- paste0(msg, "?")
+    }
+
+    # Display the message
+    cli::cli_inform(msg)
+
+    # Create random options (1 yes, 2 no) and shuffle them
+    qs <- c(sample(yeses, 1), sample(nos, 2))
+    rand <- sample(length(qs))
+
+    # Display menu and get response
+    selection <- utils::menu(qs[rand])
+
+    # If nothing was selected (0), return FALSE
+    if (selection == 0) return(FALSE)
+
+    # Find which index corresponds to the yes option
+    yes_position <- which(rand == 1)
+
+    # Return TRUE if the yes option was selected
+    return(selection == yes_position)
 }

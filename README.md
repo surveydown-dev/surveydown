@@ -4,27 +4,31 @@
 ## surveydown
 
 <!-- badges: start -->
+
 [![CRAN
 status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project.org/package=surveydown)
 [![metacran
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
+[![GitHub stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=social)](https://github.com/surveydown-dev/surveydown)
 <!-- badges: end -->
 
 > [!IMPORTANT]
 > surveydown is an early stage project under active development and may [not yet be a good fit for you](https://surveydown.org/faq.html#is-surveydown-right-for-me). If you are interested in experimenting with it, we welcome your [feedback](https://github.com/orgs/surveydown-dev/discussions)!
 
 > [!NOTE] 
-> Visit the main documentation site at [surveydown.org](https://surveydown.org) for more information!
+> Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
 
 ## What is surveydown?
 
-**surveydown** is a flexible, open-source platform for making surveys
-with [R](https://www.r-project.org/), [Quarto](https://quarto.org/),
-[Shiny](https://shiny.posit.co/), and [Supabase](https://supabase.com/).
+**surveydown** is an open-source, markdown-based platform for
+programmable and reproducible Surveys using
+[R](https://www.r-project.org/), [Quarto](https://quarto.org/),
+[Shiny](https://shiny.posit.co/), and PostgreSQL databases like
+[Supabase](https://supabase.com/).
 
 <div align="center">
 
-<img src='https://github.com/surveydown-dev/surveydown/blob/main/man/figures/technologies.png?raw=true' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
+<img src='man/figures/technologies.svg' width="550px" alt="image showing the three technologies used in the surveydown platform along with their logos: quarto (for designing surveys), shiny (for rendering the survey), and supabase (for storing data)"/>
 
 </div>
 

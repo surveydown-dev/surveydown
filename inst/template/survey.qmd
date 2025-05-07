@@ -1,0 +1,70 @@
+---
+format: html
+echo: false
+warning: false
+footer-left: "Made with [surveydown](https://surveydown.org)"
+footer-right: '[<i class="bi bi-github"></i> Source Code](https://github.com/surveydown-dev/templates)'
+---
+
+```{r}
+library(surveydown)
+```
+
+::: {.sd_page id=welcome}
+
+# Default Template
+
+Welcome to surveydown! This is a default template of a surveydown survey. It has two pages with one question on each page.
+
+Here is a basic "multiple choice" question:
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'penguins',
+  label = "What's your favorite penguin?",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo'
+  )
+)
+```
+
+You need to insert next buttons with `sd_next()` on each page. By default, it will go to the next page defined in the `survey.qmd` file, but you can also specify the page with the `next_page` argument set to the name of the page you want to go to next.
+
+```{r}
+sd_next(next_page = 'page2')
+```
+
+:::
+
+::: {.sd_page id=page2}
+
+This is another page in your survey.
+
+{surveydown} supports many types of questions. For example, here is a simple `text` type question:
+
+```{r}
+sd_question(
+  type  = "text",
+  id    = "silly_word",
+  label = "Write a silly word here:"
+)
+
+sd_next()
+```
+
+:::
+
+::: {.sd_page id=end}
+
+## End
+
+This is the last page in the survey.
+
+```{r}
+sd_close()
+```
+
+:::
