@@ -1062,7 +1062,7 @@ insert_question_into_survey <- function(page_id, question_type, question_id, que
     return(NULL)
   }
   
-  # Use the first match if multiple pages with same ID (shouldn't happen but just in case)
+  # Use the first match if multiple pages with same ID
   page_start_line <- page_start_lines[1]
   
   # Find the end of the page
@@ -1078,10 +1078,9 @@ insert_question_into_survey <- function(page_id, question_type, question_id, que
     return(NULL)
   }
   
-  # Find the position to insert the question - before the next button or page end
-  insertion_point <- NULL
+  # Find the next button chunk if it exists
+  next_button_start <- NULL
   
-  # Look for a next button R chunk
   for (i in page_start_line:page_end_line) {
     if (grepl("^```\\{r\\}", editor_content[i])) {
       chunk_start <- i
@@ -1096,20 +1095,18 @@ insert_question_into_survey <- function(page_id, question_type, question_id, que
       
       if (!is.null(chunk_end)) {
         chunk_content <- editor_content[(chunk_start+1):(chunk_end-1)]
-        if (any(grepl("sd_next\\(\\)", chunk_content, perl = TRUE))) {
-          insertion_point <- chunk_start
+        if (any(grepl("sd_next\\(", chunk_content, perl = TRUE))) {
+          next_button_start <- chunk_start
           break
         }
       }
     }
   }
   
-  # If no next button found, insert before the page end
-  if (is.null(insertion_point)) {
-    insertion_point <- page_end_line
-  }
+  # If no next button found, use a default insertion point before the page end
+  insertion_point <- ifelse(!is.null(next_button_start), next_button_start, page_end_line)
   
-  # Generate the question template based on type
+  # Generate the question code
   question_code <- generate_question_code(question_type, question_id, question_label)
   
   # Create the question chunk
@@ -1247,11 +1244,38 @@ split_questions_in_page <- function(page_id, editor_content) {
     return(NULL)
   }
   
-  # Find all R code blocks with questions
+  # Find the next button chunk
+  next_button_start <- NULL
+  next_button_end <- NULL
+  
+  for (i in page_start_line:page_end_line) {
+    if (grepl("^```\\{r\\}", editor_content[i])) {
+      chunk_start <- i
+      chunk_end <- NULL
+      
+      for (j in (i+1):page_end_line) {
+        if (grepl("^```$", editor_content[j])) {
+          chunk_end <- j
+          break
+        }
+      }
+      
+      if (!is.null(chunk_end)) {
+        chunk_content <- editor_content[(chunk_start+1):(chunk_end-1)]
+        if (any(grepl("sd_next\\(", chunk_content, perl = TRUE))) {
+          next_button_start <- chunk_start
+          next_button_end <- chunk_end
+          break
+        }
+      }
+    }
+  }
+  
+  # Find all R code blocks with questions, excluding the next button chunk
   r_blocks <- list()
   current_block_start <- NULL
   
-  for (i in page_start_line:page_end_line) {
+  for (i in page_start_line:(ifelse(!is.null(next_button_start), next_button_start - 1, page_end_line))) {
     if (grepl("^```\\{r\\}", editor_content[i])) {
       current_block_start <- i
     } else if (!is.null(current_block_start) && grepl("^```$", editor_content[i])) {
@@ -1386,11 +1410,41 @@ reorder_questions <- function(page_id, new_question_order, editor_content) {
     return(NULL)
   }
   
-  # Find all R code blocks with questions
+  # Find the next button chunk
+  next_button_start <- NULL
+  next_button_end <- NULL
+  
+  for (i in page_start_line:page_end_line) {
+    if (grepl("^```\\{r\\}", editor_content[i])) {
+      chunk_start <- i
+      chunk_end <- NULL
+      
+      for (j in (i+1):page_end_line) {
+        if (grepl("^```$", editor_content[j])) {
+          chunk_end <- j
+          break
+        }
+      }
+      
+      if (!is.null(chunk_end)) {
+        chunk_content <- editor_content[(chunk_start+1):(chunk_end-1)]
+        if (any(grepl("sd_next\\(", chunk_content, perl = TRUE))) {
+          next_button_start <- chunk_start
+          next_button_end <- chunk_end
+          break
+        }
+      }
+    }
+  }
+  
+  # Find all R code blocks with questions, excluding the next button chunk
   question_chunks <- list()
   current_chunk_start <- NULL
   
-  for (i in page_start_line:page_end_line) {
+  # Only consider chunks before the next button
+  search_end <- ifelse(!is.null(next_button_start), next_button_start - 1, page_end_line)
+  
+  for (i in page_start_line:search_end) {
     if (grepl("^```\\{r\\}", editor_content[i])) {
       current_chunk_start <- i
     } else if (!is.null(current_chunk_start) && grepl("^```$", editor_content[i])) {
@@ -1437,6 +1491,11 @@ reorder_questions <- function(page_id, new_question_order, editor_content) {
   # Determine the range where questions should be placed
   all_chunks_starts <- sapply(question_chunks, function(chunk) chunk$start)
   all_chunks_ends <- sapply(question_chunks, function(chunk) chunk$end)
+  
+  if (length(all_chunks_starts) == 0 || length(all_chunks_ends) == 0) {
+    return(NULL)
+  }
+  
   question_area_start <- min(all_chunks_starts)
   question_area_end <- max(all_chunks_ends)
   
@@ -1454,10 +1513,18 @@ reorder_questions <- function(page_id, new_question_order, editor_content) {
   }
   
   # Add content after questions
-  new_content <- c(
-    new_content,
-    editor_content[(question_area_end+1):length(editor_content)]
-  )
+  if (!is.null(next_button_start)) {
+    # If there's a next button, add content between questions and next button
+    if (question_area_end + 1 < next_button_start) {
+      new_content <- c(new_content, editor_content[(question_area_end+1):(next_button_start-1)])
+    }
+    
+    # Add the next button and everything after
+    new_content <- c(new_content, editor_content[next_button_start:length(editor_content)])
+  } else {
+    # If no next button, just add the remaining content
+    new_content <- c(new_content, editor_content[(question_area_end+1):length(editor_content)])
+  }
   
   # Return the updated content
   return(paste(new_content, collapse = "\n"))
