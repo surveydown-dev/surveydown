@@ -93,9 +93,9 @@ ui_construction_tab <- function() {
         }
         
         .question-item {
-          margin-left: 10px; 
+          margin-left: 5px; 
           margin-bottom: 10px; 
-          padding: 10px; 
+          padding: 5px 5px 5px 25px; 
           border-left: 3px solid #5bc0de; 
           background-color: #f0f0f0;
           position: relative;
@@ -103,8 +103,7 @@ ui_construction_tab <- function() {
         
         .question-item .drag-handle {
           position: absolute;
-          right: 10px;
-          top: 10px;
+          left: 5px;
           cursor: move;
           color: #777;
         }
@@ -880,13 +879,7 @@ server_structure_handlers <- function(input, output, session) {
               class = "page-drag-handle drag-handle",
               shiny::icon("grip-lines")
             ),
-            shiny::div(
-              shiny::h5(paste0("Page: ", page_id), style = "margin: 0;"),
-              shiny::div(
-                style = "font-style: italic;",
-                paste0("Questions: ", length(questions))
-              )
-            ),
+            shiny::h5(paste0("Page: ", page_id), style = "margin: 0;"),
             shiny::div(
               class = "toggle-icon",
               shiny::icon("chevron-down")
@@ -906,34 +899,21 @@ server_structure_handlers <- function(input, output, session) {
                 class = "question-item",
                 `data-question-id` = q$id,
                 
+                # Question drag handle
+                shiny::div(
+                  class = "question-drag-handle drag-handle",
+                  shiny::icon("grip-lines")
+                ),
+
                 # Question content
+                shiny::div(
+                  shiny::HTML(paste0("<strong>Question:</strong> ", q$id))
+                ),
                 shiny::div(
                   shiny::HTML(paste0("<strong>Type:</strong> ", q$type))
                 ),
                 shiny::div(
-                  shiny::HTML(paste0("<strong>ID:</strong> ", q$id))
-                ),
-                shiny::div(
                   shiny::HTML(paste0("<strong>Label:</strong> ", q$label))
-                ),
-                
-                # Add options if they exist
-                if (!is.null(q$options) && length(q$options) > 0) {
-                  shiny::div(
-                    shiny::HTML("<strong>Options:</strong> "),
-                    lapply(q$options, function(opt) {
-                      shiny::div(
-                        style = "margin-left: 10px;",
-                        paste0(opt$label, " = ", opt$value)
-                      )
-                    })
-                  )
-                },
-                
-                # Add drag handle for question
-                shiny::div(
-                  class = "question-drag-handle drag-handle",
-                  shiny::icon("grip-lines")
                 )
               )
             })
