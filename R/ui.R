@@ -359,6 +359,10 @@ extract_head_content <- function(html_content) {
 #' - `"mc_multiple_buttons"`: Multiple choice with button-style options (multiple selections allowed)
 #' - `"text"`: Single-line text question
 #' - `"textarea"`: Multi-line text question
+#' - "rank_list": Multiple choice in which the respondent can reorder the
+#' choices using drag and drop based on the sortsurvey rank_list_survey question (see [sortsurvey::rank_list_survey()])
+#' - "bucket_list": Multiple choice options which the respondent can put into two
+#' different buckets based on the sortsurvey bucket_list_survey question (see [sortsurvey::bucket_list_survey()])
 #' - `"numeric"`: Numeric question
 #' - `"slider"`: Slider question
 #' - `"slider_numeric"`: Extended numeric slider question
@@ -398,7 +402,7 @@ extract_head_content <- function(html_content) {
 #'   # Clean up
 #'   setwd(orig_dir)
 #' }
-#'
+#' @importFrom sortsurvey rank_list_survey bucket_list_survey
 #' @export
 sd_question <- function(
     id,
@@ -604,6 +608,34 @@ sd_question <- function(
                 %s
             });
         ", id, js_interaction))))
+
+  } else if(type == "rank_list") {
+
+      output <- rank_list_survey(
+          input_id    = id,
+          text      = label,
+          labels    = list_name_md_to_html(option),
+          options= sortsurvey::sortable_options(direction  = direction)
+      )
+
+  } else if (type=="bucket_list") {
+
+      bucket_list_survey(
+          header = label,
+          group_name = id,
+          add_rank_list(
+              text = "Drag from here",
+              labels = list_name_md_to_html(option)
+          ),
+          add_rank_list(
+              text = "to here",
+              labels = NULL
+          ),output_width="100%",
+          output_height="100%",
+          options= sortsurvey::sortable_options(direction  = direction),
+          # NOTE: direction doesn't seem to work in bucket list questions
+          orientation=direction)
+
   } else if (type == "text") {
 
     output <- shiny::textInput(
