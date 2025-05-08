@@ -696,116 +696,171 @@ server_structure_handlers <- function(input, output, session) {
           page_content <- raw_page_content
         }
         
-        # Ensure content starts with a newline to separate from ID
-        page_content <- trimws(page_content)
+        # Find all R code blocks with their exact positions
+        r_block_pattern <- "```\\{r\\}([\\s\\S]*?)```"
+        r_blocks <- gregexpr(r_block_pattern, page_content, perl = TRUE)
         
-        # Create a list to store all content items (questions and text)
         content_items <- list()
-        item_index <- 0
+        item_index <- 1
         
-        # Split the content by R code blocks to identify text sections
-        r_pattern <- "```\\{r\\}[\\s\\S]*?```"
-        text_parts <- strsplit(page_content, r_pattern, perl = TRUE)[[1]]
-        
-        # Extract R code blocks to identify questions
-        r_blocks_pattern <- "```\\{r\\}([\\s\\S]*?)```"
-        r_blocks <- gregexpr(r_blocks_pattern, page_content, perl = TRUE)
-        
-        # Process text sections
-        for (j in seq_along(text_parts)) {
-          text_part <- trimws(text_parts[j])
-          if (nchar(text_part) > 0) {
-            item_index <- item_index + 1
-            text_id <- paste0("text_", page_id, "_", j)
+        # If there are no R blocks, just add the entire content as a text section
+        if (r_blocks[[1]][1] == -1) {
+          if (nchar(trimws(page_content)) > 0) {
+            text_id <- paste0("text_", page_id, "_1")
             
             # Get preview (first 5 words)
-            words <- strsplit(text_part, "\\s+")[[1]]
+            words <- strsplit(trimws(page_content), "\\s+")[[1]]
             preview <- paste(head(words, 5), collapse = " ")
-            if (length(words) > 5) {
-              preview <- paste0(preview, "...")
-            }
+            if (length(words) > 5) preview <- paste0(preview, "...")
             
             content_items[[text_id]] <- list(
               id = text_id,
               preview = preview,
-              content = text_part,
-              position = item_index,  # For ordering
+              content = trimws(page_content),
+              position = 1,
               is_question = FALSE
             )
           }
-        }
-        
-        # Process R blocks for questions
-        if (r_blocks[[1]][1] != -1) {  # Check if there are any matches
-          r_block_matches <- regmatches(page_content, r_blocks)
-          if (length(r_block_matches) > 0 && length(r_block_matches[[1]]) > 0) {
-            for (j in seq_along(r_block_matches[[1]])) {
-              r_block <- r_block_matches[[1]][j]
+        } else {
+          # Get positions and lengths of all R blocks
+          r_positions <- r_blocks[[1]]
+          r_lengths <- attr(r_blocks[[1]], "match.length")
+          
+          # Get all R blocks
+          r_matches <- regmatches(page_content, r_blocks)[[1]]
+          
+          # Create a list to track all content segments in order
+          segments <- list()
+          
+          # Add text before first R block if exists
+          if (r_positions[1] > 1) {
+            text_content <- substr(page_content, 1, r_positions[1] - 1)
+            if (nchar(trimws(text_content)) > 0) {
+              segments[[length(segments) + 1]] <- list(
+                type = "text",
+                start = 1,
+                end = r_positions[1] - 1,
+                content = trimws(text_content)
+              )
+            }
+          }
+          
+          # Process each R block and text between blocks
+          for (j in seq_along(r_positions)) {
+            # Add the R block
+            block_start <- r_positions[j]
+            block_end <- block_start + r_lengths[j] - 1
+            r_block <- r_matches[j]
+            
+            # Extract code content
+            code_content <- gsub("```\\{r\\}", "", r_block)
+            code_content <- gsub("```$", "", code_content)
+            code_content <- trimws(code_content)
+            
+            # Check if it's a question
+            is_question <- grepl("sd_question\\s*\\(", code_content, perl = TRUE)
+            
+            segments[[length(segments) + 1]] <- list(
+              type = if(is_question) "question" else "r_block",
+              start = block_start,
+              end = block_end,
+              content = r_block,
+              code = code_content
+            )
+            
+            # Add text after this block if not the last block
+            if (j < length(r_positions)) {
+              next_start <- r_positions[j + 1]
+              text_start <- block_end + 1
+              text_end <- next_start - 1
               
-              # Extract the code content
-              code_content <- gsub("```\\{r\\}", "", r_block)
-              code_content <- gsub("```$", "", code_content)
-              code_content <- trimws(code_content)
-              
-              # Check if this is a question
-              if (grepl("sd_question\\s*\\(", code_content, perl = TRUE)) {
-                # Extract parameters safely
-                extract_param <- function(param_name, text) {
-                  # Try single quotes
-                  pattern <- paste0(param_name, "\\s*=\\s*'([^']*)'")
-                  match <- regexpr(pattern, text, perl = TRUE)
-                  
-                  if (match > 0) {
-                    # Check if capture group exists
-                    if (is.null(attr(match, "capture.start")) || 
-                        attr(match, "capture.start")[1] <= 0) {
-                      return("unknown")
-                    }
-                    
-                    start_pos <- attr(match, "capture.start")[1]
-                    length_val <- attr(match, "capture.length")[1]
-                    
-                    return(substr(text, start_pos, start_pos + length_val - 1))
-                  }
-                  
-                  # Try double quotes
-                  pattern <- paste0(param_name, '\\s*=\\s*"([^"]*)"')
-                  match <- regexpr(pattern, text, perl = TRUE)
-                  
-                  if (match > 0) {
-                    # Check if capture group exists
-                    if (is.null(attr(match, "capture.start")) || 
-                        attr(match, "capture.start")[1] <= 0) {
-                      return("unknown")
-                    }
-                    
-                    start_pos <- attr(match, "capture.start")[1]
-                    length_val <- attr(match, "capture.length")[1]
-                    
-                    return(substr(text, start_pos, start_pos + length_val - 1))
-                  }
-                  
-                  return("unknown")
-                }
-                
-                # Extract question parameters
-                type <- extract_param("type", code_content)
-                id <- extract_param("id", code_content)
-                label <- extract_param("label", code_content)
-                
-                # Only process if we have a valid ID
-                if (id != "unknown") {
-                  item_index <- item_index + 1
-                  
-                  content_items[[id]] <- list(
-                    type = type,
-                    id = id,
-                    label = label,
-                    raw = paste0("```{r}\n", code_content, "\n```"),
-                    position = item_index,  # For ordering
-                    is_question = TRUE
+              if (text_end >= text_start) {
+                text_content <- substr(page_content, text_start, text_end)
+                if (nchar(trimws(text_content)) > 0) {
+                  segments[[length(segments) + 1]] <- list(
+                    type = "text",
+                    start = text_start,
+                    end = text_end,
+                    content = trimws(text_content)
                   )
                 }
+              }
+            } else if (block_end < nchar(page_content)) {
+              # Add text after last block
+              text_content <- substr(page_content, block_end + 1, nchar(page_content))
+              if (nchar(trimws(text_content)) > 0) {
+                segments[[length(segments) + 1]] <- list(
+                  type = "text",
+                  start = block_end + 1,
+                  end = nchar(page_content),
+                  content = trimws(text_content)
+                )
+              }
+            }
+          }
+          
+          # Process segments into content items
+          text_counter <- 1
+          for (segment in segments) {
+            if (segment$type == "text") {
+              text_id <- paste0("text_", page_id, "_", text_counter)
+              text_counter <- text_counter + 1
+              
+              # Get preview
+              words <- strsplit(segment$content, "\\s+")[[1]]
+              preview <- paste(head(words, 5), collapse = " ")
+              if (length(words) > 5) preview <- paste0(preview, "...")
+              
+              content_items[[text_id]] <- list(
+                id = text_id,
+                preview = preview,
+                content = segment$content,
+                position = item_index,
+                is_question = FALSE
+              )
+              item_index <- item_index + 1
+            } else if (segment$type == "question") {
+              # Extract question parameters
+              extract_param <- function(param_name, text) {
+                # Try single quotes
+                pattern <- paste0(param_name, "\\s*=\\s*'([^']*)'")
+                match <- regexpr(pattern, text, perl = TRUE)
+                
+                if (match > 0 && !is.null(attr(match, "capture.start")) && 
+                    attr(match, "capture.start")[1] > 0) {
+                  start_pos <- attr(match, "capture.start")[1]
+                  length_val <- attr(match, "capture.length")[1]
+                  return(substr(text, start_pos, start_pos + length_val - 1))
+                }
+                
+                # Try double quotes
+                pattern <- paste0(param_name, '\\s*=\\s*"([^"]*)"')
+                match <- regexpr(pattern, text, perl = TRUE)
+                
+                if (match > 0 && !is.null(attr(match, "capture.start")) && 
+                    attr(match, "capture.start")[1] > 0) {
+                  start_pos <- attr(match, "capture.start")[1]
+                  length_val <- attr(match, "capture.length")[1]
+                  return(substr(text, start_pos, start_pos + length_val - 1))
+                }
+                
+                return("unknown")
+              }
+              
+              type <- extract_param("type", segment$code)
+              id <- extract_param("id", segment$code)
+              label <- extract_param("label", segment$code)
+              
+              if (id != "unknown") {
+                content_items[[id]] <- list(
+                  type = type,
+                  id = id,
+                  label = label,
+                  raw = segment$content,
+                  position = item_index,
+                  is_question = TRUE
+                )
+                item_index <- item_index + 1
               }
             }
           }
