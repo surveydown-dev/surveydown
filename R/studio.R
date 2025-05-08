@@ -198,15 +198,43 @@ ui_construction_tab <- function() {
                 handle: '.drag-handle',
                 ghostClass: 'sortable-ghost',
                 onEnd: function(evt) {
-                  // Send the new content order to Shiny
+                  // Create an array of objects
                   var contentOrder = [];
-                  $('#page-' + pageId + '-content > div').each(function() {
-                    var type = $(this).attr('data-content-type');
-                    var id = type === 'question' ? $(this).attr('data-question-id') : $(this).attr('data-text-id');
-                    contentOrder.push({type: type, id: id});
+                  
+                  // Select all direct children of the container
+                  $(this.el).children('div').each(function() {
+                    var $element = $(this);
+                    var type = $element.attr('data-content-type');
+                    
+                    // Get the ID based on the content type
+                    var id;
+                    if (type === 'question') {
+                      id = $element.attr('data-question-id');
+                    } else if (type === 'text') {
+                      id = $element.attr('data-text-id');
+                    }
+                    
+                    if (id && type) {
+                      // Add as a separate object with type and id properties
+                      contentOrder.push({
+                        type: type,
+                        id: id
+                      });
+                    }
                   });
                   
-                  Shiny.setInputValue('content_order_' + pageId, contentOrder);
+                  // Only send if we have content
+                  if (contentOrder.length > 0) {
+                    // Convert to a simple array of strings to avoid serialization issues
+                    var serializedOrder = [];
+                    for (var i = 0; i < contentOrder.length; i++) {
+                      serializedOrder.push(contentOrder[i].type);
+                      serializedOrder.push(contentOrder[i].id);
+                    }
+                    
+                    // Send the serialized array to Shiny
+                    Shiny.setInputValue('content_order_' + pageId, serializedOrder);
+                  }
                 }
               });
             });
@@ -477,7 +505,7 @@ studio_server <- function() {
       }
     }, ignoreInit = TRUE)
     
-    # Handle question and text reordering for each page
+    # Handle content reordering for each page
     shiny::observe({
       page_ids <- survey_structure$get_page_ids()
       
@@ -488,12 +516,44 @@ studio_server <- function() {
             input_name <- paste0("content_order_", local_page_id)
             
             shiny::observeEvent(input[[input_name]], {
-              if (length(input[[input_name]]) > 0) {
-                # Get current editor content
-                current_content <- input$survey_editor
-                
-                # Update the content order in the file
-                updated_content <- reorder_page_content(local_page_id, input[[input_name]], current_content)
+              # Print debugging information
+              flat_order <- input[[input_name]]
+              print(paste("Received content order for page:", local_page_id))
+              print(str(flat_order))
+              
+              # Convert flat vector to list of items
+              content_list <- list()
+              
+              # Process the flat vector (every two elements are a pair of type and id)
+              if (is.character(flat_order) && length(flat_order) >= 2) {
+                for (i in seq(1, length(flat_order), by = 2)) {
+                  if (i + 1 <= length(flat_order)) {
+                    content_list[[length(content_list) + 1]] <- list(
+                      type = flat_order[i],
+                      id = flat_order[i + 1]
+                    )
+                  }
+                }
+                print("Converted flat vector to list structure:")
+                print(str(content_list))
+              } else {
+                print("Invalid input format - expected a flat character vector")
+                shiny::showNotification("Invalid content order format", type = "error")
+                return(NULL)
+              }
+              
+              # Skip if no valid items
+              if (length(content_list) == 0) {
+                shiny::showNotification("No valid content items found", type = "error")
+                return(NULL)
+              }
+              
+              # Get current editor content
+              current_content <- input$survey_editor
+              
+              # Try to reorder content with error handling
+              tryCatch({
+                updated_content <- reorder_page_content(local_page_id, content_list, current_content)
                 
                 if (!is.null(updated_content)) {
                   # Update the editor with the new content
@@ -507,7 +567,11 @@ studio_server <- function() {
                 } else {
                   shiny::showNotification(paste("Failed to reorder content in page", local_page_id), type = "error")
                 }
-              }
+              }, error = function(e) {
+                # Log the error
+                print(paste("Error reordering content:", e$message))
+                shiny::showNotification(paste("Error:", e$message), type = "error")
+              })
             }, ignoreInit = TRUE)
           })
         }
@@ -1551,6 +1615,9 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     return(NULL)
   }
   
+  print("Processing reorder request:")
+  print(str(new_content_order))
+  
   # First, ensure the editor_content is properly split by lines
   if (is.character(editor_content) && length(editor_content) == 1) {
     editor_content <- strsplit(editor_content, "\n")[[1]]
@@ -1561,6 +1628,7 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
   page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
   
   if (length(page_start_lines) == 0) {
+    print("Page not found in editor content")
     return(NULL)
   }
   
@@ -1577,12 +1645,22 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
   }
   
   if (is.null(page_end_line)) {
+    print("Page end not found")
     return(NULL)
   }
   
   # Get the current survey structure
   survey_structure <- parse_survey_structure()
-  if (is.null(survey_structure) || !page_id %in% names(survey_structure$pages)) {
+  
+  # Check if survey structure is valid
+  if (is.null(survey_structure) || !("pages" %in% names(survey_structure))) {
+    print("Invalid survey structure")
+    return(NULL)
+  }
+  
+  # Check if page exists in survey structure
+  if (!page_id %in% names(survey_structure$pages)) {
+    print(paste("Page", page_id, "not found in survey structure"))
     return(NULL)
   }
   
@@ -1596,19 +1674,46 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
   )
   
   # Add content in the new order
-  for (item in new_content_order) {
+  for (i in seq_along(new_content_order)) {
+    item <- new_content_order[[i]]
+    
+    # Check if item has required fields
+    if (!is.list(item) || !all(c("type", "id") %in% names(item))) {
+      print(paste("Invalid item at position", i))
+      next  # Skip this item
+    }
+    
     item_id <- item$id
     item_type <- item$type
     
-    if (item_id %in% names(page_items)) {
-      current_item <- page_items[[item_id]]
-      
-      if (current_item$is_question) {
-        # Add question (R chunk)
+    print(paste("Processing item:", item_type, item_id))
+    
+    # Check if item exists in page items
+    if (!item_id %in% names(page_items)) {
+      print(paste("Item", item_id, "not found in page content"))
+      next  # Skip this item
+    }
+    
+    current_item <- page_items[[item_id]]
+    
+    # Check if current item is valid
+    if (!is.list(current_item) || !("is_question" %in% names(current_item))) {
+      print(paste("Invalid page item:", item_id))
+      next  # Skip this item
+    }
+    
+    # Add the content based on item type
+    if (current_item$is_question) {
+      # Add question (R chunk)
+      if ("raw" %in% names(current_item)) {
+        print(paste("Adding question:", item_id))
         r_chunk_lines <- strsplit(current_item$raw, "\n")[[1]]
         new_page_content <- c(new_page_content, r_chunk_lines, "")
-      } else {
-        # Add text section
+      }
+    } else {
+      # Add text section
+      if ("content" %in% names(current_item)) {
+        print(paste("Adding text:", item_id))
         text_lines <- strsplit(current_item$content, "\n")[[1]]
         new_page_content <- c(new_page_content, text_lines, "")
       }
@@ -1625,6 +1730,7 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     if (page_end_line < length(editor_content)) editor_content[(page_end_line+1):length(editor_content)] else NULL
   )
   
+  print("Reordering successful")
   return(paste(result, collapse = "\n"))
 }
 
