@@ -64,7 +64,7 @@ ui_construction_tab <- function() {
         
         /* Structure styling */
         .page-header {
-          background-color: #dddddd; 
+          background-color: #cce5ff; 
           padding: 10px; 
           border-radius: 5px; 
           margin-bottom: 10px;
@@ -75,7 +75,7 @@ ui_construction_tab <- function() {
         }
         
         .page-header:hover {
-          background-color: #c8c8c8;
+          background-color: #ADD8FF;
         }
         
         .page-header .toggle-icon {
@@ -721,7 +721,7 @@ server_structure_handlers <- function(input, output, session) {
               class = "page-drag-handle drag-handle",
               shiny::icon("grip-lines")
             ),
-            shiny::h5(paste0("Page: ", page_id), style = "margin: 0;"),
+            shiny::div(paste0("Page: ", page_id), style = "margin: 0; font-weight: bold;"),
             shiny::div(
               class = "toggle-icon",
               shiny::icon("chevron-down")
@@ -756,13 +756,13 @@ server_structure_handlers <- function(input, output, session) {
                     
                     # Question content
                     shiny::div(
-                      shiny::HTML(paste0("<strong>Question:</strong> ", item$id))
+                      shiny::HTML(paste0("<strong>Question: ", item$id, "</strong>"))
                     ),
                     shiny::div(
-                      shiny::HTML(paste0("<strong>Type:</strong> ", item$type))
+                      shiny::HTML(paste0("Type: ", item$type))
                     ),
                     shiny::div(
-                      shiny::HTML(paste0("<strong>Label:</strong> ", item$label))
+                      shiny::HTML(paste0("Label: ", item$label))
                     )
                   )
                 } else {
