@@ -664,7 +664,6 @@ server_structure_handlers <- function(input, output, session) {
     page_ids <- extracted_ids
     
     # Split content by pages
-    # We need to use both patterns to be safe
     split_pattern <- ":::\\s*\\{\\s*\\.sd[_-]page"
     page_splits <- strsplit(survey_content, split_pattern, perl = TRUE)[[1]]
     
@@ -674,228 +673,146 @@ server_structure_handlers <- function(input, output, session) {
     
     page_splits <- page_splits[-1]  # Remove the content before the first page
     
-    # Find end markers for pages to know where each page ends
-    end_markers <- gregexpr(":::", survey_content, fixed = TRUE)
-    
-    # Process each page to extract questions and markdown text
+    # Process each page to extract items in correct order
     pages <- list()
     for (i in seq_along(page_ids)) {
       page_id <- page_ids[i]
       
       # Use safer method to get page content
       if (i <= length(page_splits)) {
-        page_content <- page_splits[i]
+        raw_page_content <- page_splits[i]
         
         # Find the closing ::: for this page
-        closing_idx <- regexpr(":::", page_content, fixed = TRUE)
+        closing_idx <- regexpr(":::", raw_page_content, fixed = TRUE)
         if (closing_idx > 0) {
-          page_content <- substr(page_content, 1, closing_idx - 1)
+          raw_page_content <- substr(raw_page_content, 1, closing_idx - 1)
         }
         
-        # Extract all R code blocks
-        r_block_pattern <- "```\\{r\\}([\\s\\S]*?)```"
-        r_blocks <- gregexpr(r_block_pattern, page_content, perl = TRUE)
+        # Skip the id part at the beginning by finding the first closing brace
+        id_end_idx <- regexpr("}", raw_page_content, fixed = TRUE)
+        if (id_end_idx > 0) {
+          page_content <- substr(raw_page_content, id_end_idx + 1, nchar(raw_page_content))
+        } else {
+          page_content <- raw_page_content
+        }
         
-        # Initialize lists for both questions and text sections
-        questions_list <- list()
-        text_sections_list <- list()
+        # Ensure content starts with a newline to separate from ID
+        page_content <- trimws(page_content)
         
-        # If we have a valid page content, process it
-        if (nchar(page_content) > 0) {
-          # First, split the content by R blocks to identify text sections
-          text_parts <- strsplit(page_content, "```\\{r\\}[\\s\\S]*?```", perl = TRUE)[[1]]
-          
-          # Process each text part
-          for (j in seq_along(text_parts)) {
-            text_part <- trimws(text_parts[j])
+        # Create a list to store all content items (questions and text)
+        content_items <- list()
+        item_index <- 0
+        
+        # Split the content by R code blocks to identify text sections
+        r_pattern <- "```\\{r\\}[\\s\\S]*?```"
+        text_parts <- strsplit(page_content, r_pattern, perl = TRUE)[[1]]
+        
+        # Extract R code blocks to identify questions
+        r_blocks_pattern <- "```\\{r\\}([\\s\\S]*?)```"
+        r_blocks <- gregexpr(r_blocks_pattern, page_content, perl = TRUE)
+        
+        # Process text sections
+        for (j in seq_along(text_parts)) {
+          text_part <- trimws(text_parts[j])
+          if (nchar(text_part) > 0) {
+            item_index <- item_index + 1
+            text_id <- paste0("text_", page_id, "_", j)
             
-            if (nchar(text_part) > 0) {
-              # Generate a unique ID for the text section
-              text_id <- paste0("text_", page_id, "_", j)
-              
-              # Get the first few words for preview
-              words <- strsplit(text_part, "\\s+")[[1]]
-              preview <- paste(head(words, 5), collapse = " ")
-              if (length(words) > 5) {
-                preview <- paste0(preview, "...")
-              }
-              
-              text_sections_list <- c(text_sections_list, list(list(
-                id = text_id,
-                content = text_part,
-                preview = preview
-              )))
+            # Get preview (first 5 words)
+            words <- strsplit(text_part, "\\s+")[[1]]
+            preview <- paste(head(words, 5), collapse = " ")
+            if (length(words) > 5) {
+              preview <- paste0(preview, "...")
             }
-          }
-          
-          # Process R code blocks for questions as before
-          if (r_blocks[[1]][1] > 0) {
-            r_block_matches <- regmatches(page_content, r_blocks)
             
-            if (length(r_block_matches) > 0 && length(r_block_matches[[1]]) > 0) {
-              for (r_block in r_block_matches[[1]]) {
-                # Extract the code content between ```{r} and ```
-                code_content <- gsub("```\\{r\\}", "", r_block)
-                code_content <- gsub("```$", "", code_content)
-                
-                # Find sd_question calls
-                question_pattern <- "sd_question\\s*\\("
-                q_positions <- gregexpr(question_pattern, code_content, perl = TRUE)
-                
-                # Only proceed if we found any questions
-                if (q_positions[[1]][1] > 0) {
-                  q_starts <- q_positions[[1]]
+            content_items[[text_id]] <- list(
+              id = text_id,
+              preview = preview,
+              content = text_part,
+              position = item_index,  # For ordering
+              is_question = FALSE
+            )
+          }
+        }
+        
+        # Process R blocks for questions
+        if (r_blocks[[1]][1] != -1) {  # Check if there are any matches
+          r_block_matches <- regmatches(page_content, r_blocks)
+          if (length(r_block_matches) > 0 && length(r_block_matches[[1]]) > 0) {
+            for (j in seq_along(r_block_matches[[1]])) {
+              r_block <- r_block_matches[[1]][j]
+              
+              # Extract the code content
+              code_content <- gsub("```\\{r\\}", "", r_block)
+              code_content <- gsub("```$", "", code_content)
+              code_content <- trimws(code_content)
+              
+              # Check if this is a question
+              if (grepl("sd_question\\s*\\(", code_content, perl = TRUE)) {
+                # Extract parameters safely
+                extract_param <- function(param_name, text) {
+                  # Try single quotes
+                  pattern <- paste0(param_name, "\\s*=\\s*'([^']*)'")
+                  match <- regexpr(pattern, text, perl = TRUE)
                   
-                  for (j in seq_along(q_starts)) {
-                    # Find the closing parenthesis for this question
-                    q_start <- q_starts[j]
-                    
-                    # Extract from q_start to the end of the code block
-                    q_snippet <- substr(code_content, q_start, nchar(code_content))
-                    
-                    # Count opening and closing parentheses to find the matching closing parenthesis
-                    open_count <- 0
-                    close_count <- 0
-                    end_pos <- 0
-                    
-                    for (k in 1:nchar(q_snippet)) {
-                      char <- substr(q_snippet, k, k)
-                      if (char == "(") open_count <- open_count + 1
-                      if (char == ")") close_count <- close_count + 1
-                      
-                      if (open_count > 0 && open_count == close_count) {
-                        end_pos <- k
-                        break
-                      }
+                  if (match > 0) {
+                    # Check if capture group exists
+                    if (is.null(attr(match, "capture.start")) || 
+                        attr(match, "capture.start")[1] <= 0) {
+                      return("unknown")
                     }
                     
-                    if (end_pos > 0) {
-                      q_text <- substr(q_snippet, 1, end_pos)
-                      
-                      # Function to safely extract parameters
-                      extract_param <- function(param_name, text) {
-                        # Try with single quotes
-                        pattern <- paste0(param_name, "\\s*=\\s*'([^']*)'")
-                        match <- regexpr(pattern, text, perl = TRUE)
-                        
-                        if (match > 0 && attr(match, "capture.start")[1] > 0) {
-                          return(substr(text, 
-                                        attr(match, "capture.start")[1], 
-                                        attr(match, "capture.start")[1] + attr(match, "capture.length")[1] - 1))
-                        }
-                        
-                        # Try with double quotes
-                        pattern <- paste0(param_name, '\\s*=\\s*"([^"]*)"')
-                        match <- regexpr(pattern, text, perl = TRUE)
-                        
-                        if (match > 0 && attr(match, "capture.start")[1] > 0) {
-                          return(substr(text, 
-                                        attr(match, "capture.start")[1], 
-                                        attr(match, "capture.start")[1] + attr(match, "capture.length")[1] - 1))
-                        }
-                        
-                        return("unknown")
-                      }
-                      
-                      # Extract parameters
-                      type <- extract_param("type", q_text)
-                      id <- extract_param("id", q_text)
-                      label <- extract_param("label", q_text)
-                      
-                      # Extract options for multiple choice questions
-                      options_list <- NULL
-                      
-                      # Check if it's a multiple choice question
-                      if (grepl("'mc'", q_text, fixed = TRUE) || 
-                          grepl('"mc"', q_text, fixed = TRUE) ||
-                          grepl("'checkbox'", q_text, fixed = TRUE) || 
-                          grepl('"checkbox"', q_text, fixed = TRUE)) {
-                        
-                        # Check if there's an option parameter
-                        if (grepl("option\\s*=", q_text)) {
-                          # Find the option block
-                          option_start <- regexpr("option\\s*=\\s*c\\(", q_text, perl = TRUE)
-                          
-                          if (option_start > 0) {
-                            # Extract everything from option = c( to the end
-                            option_part <- substr(q_text, option_start, nchar(q_text))
-                            
-                            # Count parentheses to find the matching closing parenthesis
-                            open_count <- 0
-                            close_count <- 0
-                            option_end <- 0
-                            
-                            for (k in 1:nchar(option_part)) {
-                              char <- substr(option_part, k, k)
-                              if (char == "(") open_count <- open_count + 1
-                              if (char == ")") close_count <- close_count + 1
-                              
-                              if (open_count > 0 && open_count == close_count) {
-                                option_end <- k
-                                break
-                              }
-                            }
-                            
-                            if (option_end > 0) {
-                              # Extract the options block
-                              options_block <- substr(option_part, 1, option_end)
-                              
-                              # Extract individual options
-                              # Look for patterns like 'Label' = 'value' or "Label" = "value"
-                              opt_pattern <- "(['\"])([^'\"]+)\\1\\s*=\\s*(['\"])([^'\"]+)\\3"
-                              opt_matches <- gregexpr(opt_pattern, options_block, perl = TRUE)
-                              
-                              if (opt_matches[[1]][1] > 0) {
-                                options_list <- list()
-                                
-                                # Get all matches
-                                opt_texts <- regmatches(options_block, opt_matches)[[1]]
-                                
-                                for (opt_text in opt_texts) {
-                                  # Extract label and value using a different approach
-                                  label_pattern <- "(['\"])([^'\"]+)\\1"
-                                  label_matches <- gregexpr(label_pattern, opt_text, perl = TRUE)
-                                  
-                                  if (label_matches[[1]][1] > 0 && length(attr(label_matches[[1]], "match.length")) >= 2) {
-                                    # Extract the matched strings
-                                    labels <- regmatches(opt_text, label_matches)[[1]]
-                                    
-                                    if (length(labels) >= 2) {
-                                      opt_label <- gsub("^['\"]|['\"]$", "", labels[1])
-                                      opt_value <- gsub("^['\"]|['\"]$", "", labels[2])
-                                      
-                                      options_list <- c(options_list, list(list(
-                                        label = opt_label,
-                                        value = opt_value
-                                      )))
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                      
-                      questions_list <- c(questions_list, list(list(
-                        type = type,
-                        id = id,
-                        label = label,
-                        options = options_list
-                      )))
-                    }
+                    start_pos <- attr(match, "capture.start")[1]
+                    length_val <- attr(match, "capture.length")[1]
+                    
+                    return(substr(text, start_pos, start_pos + length_val - 1))
                   }
+                  
+                  # Try double quotes
+                  pattern <- paste0(param_name, '\\s*=\\s*"([^"]*)"')
+                  match <- regexpr(pattern, text, perl = TRUE)
+                  
+                  if (match > 0) {
+                    # Check if capture group exists
+                    if (is.null(attr(match, "capture.start")) || 
+                        attr(match, "capture.start")[1] <= 0) {
+                      return("unknown")
+                    }
+                    
+                    start_pos <- attr(match, "capture.start")[1]
+                    length_val <- attr(match, "capture.length")[1]
+                    
+                    return(substr(text, start_pos, start_pos + length_val - 1))
+                  }
+                  
+                  return("unknown")
+                }
+                
+                # Extract question parameters
+                type <- extract_param("type", code_content)
+                id <- extract_param("id", code_content)
+                label <- extract_param("label", code_content)
+                
+                # Only process if we have a valid ID
+                if (id != "unknown") {
+                  item_index <- item_index + 1
+                  
+                  content_items[[id]] <- list(
+                    type = type,
+                    id = id,
+                    label = label,
+                    raw = paste0("```{r}\n", code_content, "\n```"),
+                    position = item_index,  # For ordering
+                    is_question = TRUE
+                  )
                 }
               }
             }
           }
         }
         
-        # Store both questions and text sections for this page
-        pages[[page_id]] <- list(
-          questions = questions_list,
-          text_sections = text_sections_list
-        )
+        # Store the processed content items
+        pages[[page_id]] <- content_items
       }
     }
     
@@ -906,12 +823,6 @@ server_structure_handlers <- function(input, output, session) {
   output$survey_structure <- shiny::renderUI({
     # Re-render when the structure_trigger changes
     structure_trigger()
-    
-    # Also re-render when the editor content changes
-    if (exists("input") && !is.null(input$survey_editor)) {
-      # This ensures we're always using the latest content
-      # Even if not saved yet
-    }
     
     # Parse survey structure
     survey_structure <- parse_survey_structure()
@@ -929,14 +840,19 @@ server_structure_handlers <- function(input, output, session) {
     shiny::div(
       id = "pages-container",
       lapply(survey_structure$page_ids, function(page_id) {
-        page_data <- survey_structure$pages[[page_id]]
-        questions <- page_data$questions
-        text_sections <- page_data$text_sections
+        page_items <- survey_structure$pages[[page_id]]
         
-        # Combine questions and text sections to be displayed in order
-        # This will need to be enhanced with proper ordering logic
+        # Sort items by their position
+        if (length(page_items) > 0) {
+          # Get positions for sorting
+          positions <- sapply(page_items, function(item) item$position)
+          # Sort the page_items by position
+          sorted_items <- page_items[order(positions)]
+        } else {
+          sorted_items <- list()
+        }
         
-        # Create each page with its questions and text sections
+        # Create each page with its content items
         shiny::div(
           class = "page-wrapper",
           `data-page-id` = page_id,
@@ -955,62 +871,65 @@ server_structure_handlers <- function(input, output, session) {
             )
           ),
           
-          # Questions and text sections container - initially visible
+          # Content container - initially visible
           shiny::div(
             class = "questions-container",
             id = paste0("page-", page_id, "-content"),
             `data-page-id` = page_id,
             style = "display: block;",
             
-            # Add text sections and questions in the proper order
-            # For now, we'll display text sections first, then questions
-            # This will need to be enhanced to maintain proper order
-            
-            # Add text sections
-            lapply(text_sections, function(text) {
-              shiny::div(
-                class = "text-item",
-                `data-text-id` = text$id,
-                `data-content-type` = "text",
+            # Add content items in their original order
+            if (length(sorted_items) > 0) {
+              lapply(names(sorted_items), function(item_id) {
+                item <- sorted_items[[item_id]]
                 
-                # Text drag handle
-                shiny::div(
-                  class = "text-drag-handle drag-handle",
-                  shiny::icon("grip-lines")
-                ),
-                
-                # Text content preview
-                shiny::div(
-                  shiny::HTML(paste0("<strong>Text:</strong> ", text$preview))
-                )
-              )
-            }),
-            
-            # Add questions
-            lapply(questions, function(q) {
-              shiny::div(
-                class = "question-item",
-                `data-question-id` = q$id,
-                `data-content-type` = "question",
-                
-                # Question drag handle
-                shiny::div(
-                  class = "question-drag-handle drag-handle",
-                  shiny::icon("grip-lines")
-                ),
-
-                # Question content
-                shiny::div(
-                  shiny::HTML(paste0("<strong>Question:</strong> ", q$id))
-                ),
-                shiny::div(
-                  shiny::HTML(paste0("<strong>Type:</strong> ", q$type))
-                ),
-                shiny::div(
-                  shiny::HTML(paste0("<strong>Label:</strong> ", q$label))
-                )
-              )
-            })
+                if (item$is_question) {
+                  # It's a question
+                  shiny::div(
+                    class = "question-item",
+                    `data-question-id` = item$id,
+                    `data-content-type` = "question",
+                    `data-position` = item$position,
+                    
+                    # Question drag handle
+                    shiny::div(
+                      class = "question-drag-handle drag-handle",
+                      shiny::icon("grip-lines")
+                    ),
+                    
+                    # Question content
+                    shiny::div(
+                      shiny::HTML(paste0("<strong>Question:</strong> ", item$id))
+                    ),
+                    shiny::div(
+                      shiny::HTML(paste0("<strong>Type:</strong> ", item$type))
+                    ),
+                    shiny::div(
+                      shiny::HTML(paste0("<strong>Label:</strong> ", item$label))
+                    )
+                  )
+                } else {
+                  # It's a text section
+                  shiny::div(
+                    class = "text-item",
+                    `data-text-id` = item$id,
+                    `data-content-type` = "text",
+                    `data-position` = item$position,
+                    
+                    # Text drag handle
+                    shiny::div(
+                      class = "text-drag-handle drag-handle",
+                      shiny::icon("grip-lines")
+                    ),
+                    
+                    # Text content preview
+                    shiny::div(
+                      shiny::HTML(paste0("<strong>Text:</strong> ", item$preview))
+                    )
+                  )
+                }
+              })
+            }
           )
         )
       })
@@ -1600,119 +1519,49 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     return(NULL)
   }
   
-  # Extract the page content
-  page_content <- editor_content[page_start_line:page_end_line]
-  
-  # Parse the current structure of the page to identify text sections and questions
-  # This is simplistic and would need to be enhanced for a real implementation
-  r_chunk_starts <- grep("^```\\{r\\}", page_content)
-  r_chunk_ends <- grep("^```$", page_content)
-  
-  # Safety check
-  if (length(r_chunk_starts) != length(r_chunk_ends)) {
+  # Parse current structure
+  survey_structure <- parse_survey_structure()
+  if (!is.null(survey_structure$error) || !page_id %in% names(survey_structure$pages)) {
     return(NULL)
   }
   
-  # Identify text sections and questions
-  text_sections <- list()
-  questions <- list()
+  # Get page content
+  page_items <- survey_structure$pages[[page_id]]
   
-  # Extract text sections (content between R chunks)
-  if (length(r_chunk_starts) > 0) {
-    # Text before first R chunk
-    if (r_chunk_starts[1] > 2) {  # +1 for page start, +1 to start after that
-      text_content <- paste(page_content[2:(r_chunk_starts[1]-1)], collapse = "\n")
-      if (trimws(text_content) != "") {
-        text_sections[[paste0("text_", page_id, "_1")]] <- list(
-          start = 2,
-          end = r_chunk_starts[1] - 1,
-          content = text_content
-        )
-      }
-    }
-    
-    # Text between R chunks
-    for (i in 1:(length(r_chunk_starts)-1)) {
-      text_start <- r_chunk_ends[i] + 1
-      text_end <- r_chunk_starts[i+1] - 1
-      
-      if (text_end >= text_start) {
-        text_content <- paste(page_content[text_start:text_end], collapse = "\n")
-        if (trimws(text_content) != "") {
-          text_sections[[paste0("text_", page_id, "_", i+1)]] <- list(
-            start = text_start,
-            end = text_end,
-            content = text_content
-          )
-        }
-      }
-    }
-    
-    # Text after last R chunk
-    if (r_chunk_ends[length(r_chunk_ends)] < length(page_content) - 1) {
-      text_start <- r_chunk_ends[length(r_chunk_ends)] + 1
-      text_end <- length(page_content) - 1  # -1 to exclude the page end
-      
-      text_content <- paste(page_content[text_start:text_end], collapse = "\n")
-      if (trimws(text_content) != "") {
-        text_sections[[paste0("text_", page_id, "_", length(r_chunk_starts)+1)]] <- list(
-          start = text_start,
-          end = text_end,
-          content = text_content
-        )
-      }
-    }
-  }
+  # Create new page content
+  new_page_content <- c(
+    editor_content[page_start_line],  # Page opening tag
+    ""  # Add a blank line after the opening tag
+  )
   
-  # Extract questions (R chunks that contain sd_question)
-  for (i in seq_along(r_chunk_starts)) {
-    chunk_content <- page_content[r_chunk_starts[i]:r_chunk_ends[i]]
-    chunk_text <- paste(chunk_content, collapse = "\n")
-    
-    if (grepl("sd_question", chunk_text)) {
-      # Extract question ID
-      id_match <- regexpr("id\\s*=\\s*['\"]([^'\"]+)['\"]", chunk_text, perl = TRUE)
-      id <- NULL
-      
-      if (id_match > 0 && attr(id_match, "capture.start")[1] > 0) {
-        id <- substr(chunk_text, 
-                     attr(id_match, "capture.start")[1], 
-                     attr(id_match, "capture.start")[1] + attr(id_match, "capture.length")[1] - 1)
-      }
-      
-      if (!is.null(id)) {
-        questions[[id]] <- list(
-          start = r_chunk_starts[i],
-          end = r_chunk_ends[i],
-          content = chunk_content
-        )
-      }
-    }
-  }
-  
-  # Now, create the new ordered content
-  new_page_content <- page_content[1:1]  # Start with the page declaration
-  
+  # Add content in the new order
   for (item in new_content_order) {
-    if (item$type == "text") {
-      if (!is.null(text_sections[[item$id]])) {
-        new_page_content <- c(new_page_content, text_sections[[item$id]]$content)
-      }
-    } else if (item$type == "question") {
-      if (!is.null(questions[[item$id]])) {
-        new_page_content <- c(new_page_content, questions[[item$id]]$content)
+    item_id <- item$id
+    item_type <- item$type
+    
+    if (item_id %in% names(page_items)) {
+      current_item <- page_items[[item_id]]
+      
+      if (current_item$is_question) {
+        # Add question (R chunk)
+        r_chunk_lines <- strsplit(current_item$raw, "\n")[[1]]
+        new_page_content <- c(new_page_content, r_chunk_lines, "")
+      } else {
+        # Add text section
+        text_lines <- strsplit(current_item$content, "\n")[[1]]
+        new_page_content <- c(new_page_content, text_lines, "")
       }
     }
   }
   
-  # Add the page end
-  new_page_content <- c(new_page_content, page_content[length(page_content)])
+  # Add page closing tag
+  new_page_content <- c(new_page_content, ":::")
   
-  # Construct the final content
+  # Combine with content before and after the page
   result <- c(
     editor_content[1:(page_start_line-1)],
     new_page_content,
-    editor_content[(page_end_line+1):length(editor_content)]
+    if (page_end_line < length(editor_content)) editor_content[(page_end_line+1):length(editor_content)] else NULL
   )
   
   return(paste(result, collapse = "\n"))
