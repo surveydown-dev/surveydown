@@ -516,10 +516,8 @@ studio_server <- function() {
             input_name <- paste0("content_order_", local_page_id)
             
             shiny::observeEvent(input[[input_name]], {
-              # Print debugging information
+              # Get the flat array order
               flat_order <- input[[input_name]]
-              print(paste("Received content order for page:", local_page_id))
-              print(str(flat_order))
               
               # Convert flat vector to list of items
               content_list <- list()
@@ -534,10 +532,7 @@ studio_server <- function() {
                     )
                   }
                 }
-                print("Converted flat vector to list structure:")
-                print(str(content_list))
               } else {
-                print("Invalid input format - expected a flat character vector")
                 shiny::showNotification("Invalid content order format", type = "error")
                 return(NULL)
               }
@@ -568,8 +563,7 @@ studio_server <- function() {
                   shiny::showNotification(paste("Failed to reorder content in page", local_page_id), type = "error")
                 }
               }, error = function(e) {
-                # Log the error
-                print(paste("Error reordering content:", e$message))
+                # Show error notification
                 shiny::showNotification(paste("Error:", e$message), type = "error")
               })
             }, ignoreInit = TRUE)
@@ -1615,9 +1609,6 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     return(NULL)
   }
   
-  print("Processing reorder request:")
-  print(str(new_content_order))
-  
   # First, ensure the editor_content is properly split by lines
   if (is.character(editor_content) && length(editor_content) == 1) {
     editor_content <- strsplit(editor_content, "\n")[[1]]
@@ -1628,7 +1619,6 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
   page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
   
   if (length(page_start_lines) == 0) {
-    print("Page not found in editor content")
     return(NULL)
   }
   
@@ -1645,7 +1635,6 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
   }
   
   if (is.null(page_end_line)) {
-    print("Page end not found")
     return(NULL)
   }
   
@@ -1654,13 +1643,11 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
   
   # Check if survey structure is valid
   if (is.null(survey_structure) || !("pages" %in% names(survey_structure))) {
-    print("Invalid survey structure")
     return(NULL)
   }
   
   # Check if page exists in survey structure
   if (!page_id %in% names(survey_structure$pages)) {
-    print(paste("Page", page_id, "not found in survey structure"))
     return(NULL)
   }
   
@@ -1679,18 +1666,14 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     
     # Check if item has required fields
     if (!is.list(item) || !all(c("type", "id") %in% names(item))) {
-      print(paste("Invalid item at position", i))
       next  # Skip this item
     }
     
     item_id <- item$id
     item_type <- item$type
     
-    print(paste("Processing item:", item_type, item_id))
-    
     # Check if item exists in page items
     if (!item_id %in% names(page_items)) {
-      print(paste("Item", item_id, "not found in page content"))
       next  # Skip this item
     }
     
@@ -1698,7 +1681,6 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     
     # Check if current item is valid
     if (!is.list(current_item) || !("is_question" %in% names(current_item))) {
-      print(paste("Invalid page item:", item_id))
       next  # Skip this item
     }
     
@@ -1706,14 +1688,12 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     if (current_item$is_question) {
       # Add question (R chunk)
       if ("raw" %in% names(current_item)) {
-        print(paste("Adding question:", item_id))
         r_chunk_lines <- strsplit(current_item$raw, "\n")[[1]]
         new_page_content <- c(new_page_content, r_chunk_lines, "")
       }
     } else {
       # Add text section
       if ("content" %in% names(current_item)) {
-        print(paste("Adding text:", item_id))
         text_lines <- strsplit(current_item$content, "\n")[[1]]
         new_page_content <- c(new_page_content, text_lines, "")
       }
@@ -1730,7 +1710,6 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     if (page_end_line < length(editor_content)) editor_content[(page_end_line+1):length(editor_content)] else NULL
   )
   
-  print("Reordering successful")
   return(paste(result, collapse = "\n"))
 }
 
