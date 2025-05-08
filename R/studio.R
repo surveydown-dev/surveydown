@@ -612,272 +612,16 @@ server_structure_handlers <- function(input, output, session) {
   # Create a reactive value to track survey structure changes
   structure_trigger <- shiny::reactiveVal(0)
   
-  # Parse survey structure from survey.qmd file
-  parse_survey_structure <- function() {
-    # Read the survey.qmd file - use the current editor content if available
-    if (exists("input") && !is.null(input$survey_editor)) {
-      survey_content <- input$survey_editor
-      survey_content <- paste(survey_content, collapse = "\n")
-    } else if (file.exists("survey.qmd")) {
-      survey_content <- readLines("survey.qmd", warn = FALSE)
-      survey_content <- paste(survey_content, collapse = "\n")
-    } else {
-      return(list(error = "survey.qmd file not found!"))
-    }
-    
-    # Extract pages
-    # Try both patterns for page class (.sd_page and .sd-page)
-    page_pattern_underscore <- ":::\\s*\\{\\s*\\.sd_page\\s+id\\s*=\\s*([a-zA-Z0-9_]+)\\s*\\}"
-    page_pattern_dash <- ":::\\s*\\{\\s*\\.sd-page\\s+id\\s*=\\s*([a-zA-Z0-9_]+)\\s*\\}"
-    
-    # Check which pattern is used in the document
-    if (grepl(page_pattern_underscore, survey_content)) {
-      page_pattern <- page_pattern_underscore
-    } else if (grepl(page_pattern_dash, survey_content)) {
-      page_pattern <- page_pattern_dash
-    } else {
-      return(list(error = "No pages found in survey.qmd!"))
-    }
-    
-    # Find all pages
-    page_matches <- gregexpr(page_pattern, survey_content, perl = TRUE)
-    page_ids <- regmatches(survey_content, page_matches)
-    
-    if (length(page_ids) == 0 || length(page_ids[[1]]) == 0) {
-      return(list(error = "No pages found in survey.qmd!"))
-    }
-    
-    # Extract page IDs using safer extraction method
-    page_ids <- page_ids[[1]]
-    extracted_ids <- vector("character", length(page_ids))
-    
-    for (i in seq_along(page_ids)) {
-      id_match <- regexpr("id\\s*=\\s*([a-zA-Z0-9_]+)", page_ids[i], perl = TRUE)
-      if (id_match > 0) {
-        match_text <- regmatches(page_ids[i], list(id_match))[[1]]
-        extracted_ids[i] <- gsub("id\\s*=\\s*", "", match_text)
-      } else {
-        extracted_ids[i] <- paste("page", i)
-      }
-    }
-    
-    page_ids <- extracted_ids
-    
-    # Split content by pages
-    split_pattern <- ":::\\s*\\{\\s*\\.sd[_-]page"
-    page_splits <- strsplit(survey_content, split_pattern, perl = TRUE)[[1]]
-    
-    if (length(page_splits) <= 1) {
-      return(list(error = "Error parsing page content!"))
-    }
-    
-    page_splits <- page_splits[-1]  # Remove the content before the first page
-    
-    # Process each page to extract items in correct order
-    pages <- list()
-    for (i in seq_along(page_ids)) {
-      page_id <- page_ids[i]
-      
-      # Use safer method to get page content
-      if (i <= length(page_splits)) {
-        raw_page_content <- page_splits[i]
-        
-        # Find the closing ::: for this page
-        closing_idx <- regexpr(":::", raw_page_content, fixed = TRUE)
-        if (closing_idx > 0) {
-          raw_page_content <- substr(raw_page_content, 1, closing_idx - 1)
-        }
-        
-        # Skip the id part at the beginning by finding the first closing brace
-        id_end_idx <- regexpr("}", raw_page_content, fixed = TRUE)
-        if (id_end_idx > 0) {
-          page_content <- substr(raw_page_content, id_end_idx + 1, nchar(raw_page_content))
-        } else {
-          page_content <- raw_page_content
-        }
-        
-        # Find all R code blocks with their exact positions
-        r_block_pattern <- "```\\{r\\}([\\s\\S]*?)```"
-        r_blocks <- gregexpr(r_block_pattern, page_content, perl = TRUE)
-        
-        content_items <- list()
-        item_index <- 1
-        
-        # If there are no R blocks, just add the entire content as a text section
-        if (r_blocks[[1]][1] == -1) {
-          if (nchar(trimws(page_content)) > 0) {
-            text_id <- paste0("text_", page_id, "_1")
-            
-            # Get preview (first 5 words)
-            words <- strsplit(trimws(page_content), "\\s+")[[1]]
-            preview <- paste(head(words, 5), collapse = " ")
-            if (length(words) > 5) preview <- paste0(preview, "...")
-            
-            content_items[[text_id]] <- list(
-              id = text_id,
-              preview = preview,
-              content = trimws(page_content),
-              position = 1,
-              is_question = FALSE
-            )
-          }
-        } else {
-          # Get positions and lengths of all R blocks
-          r_positions <- r_blocks[[1]]
-          r_lengths <- attr(r_blocks[[1]], "match.length")
-          
-          # Get all R blocks
-          r_matches <- regmatches(page_content, r_blocks)[[1]]
-          
-          # Create a list to track all content segments in order
-          segments <- list()
-          
-          # Add text before first R block if exists
-          if (r_positions[1] > 1) {
-            text_content <- substr(page_content, 1, r_positions[1] - 1)
-            if (nchar(trimws(text_content)) > 0) {
-              segments[[length(segments) + 1]] <- list(
-                type = "text",
-                start = 1,
-                end = r_positions[1] - 1,
-                content = trimws(text_content)
-              )
-            }
-          }
-          
-          # Process each R block and text between blocks
-          for (j in seq_along(r_positions)) {
-            # Add the R block
-            block_start <- r_positions[j]
-            block_end <- block_start + r_lengths[j] - 1
-            r_block <- r_matches[j]
-            
-            # Extract code content
-            code_content <- gsub("```\\{r\\}", "", r_block)
-            code_content <- gsub("```$", "", code_content)
-            code_content <- trimws(code_content)
-            
-            # Check if it's a question
-            is_question <- grepl("sd_question\\s*\\(", code_content, perl = TRUE)
-            
-            segments[[length(segments) + 1]] <- list(
-              type = if(is_question) "question" else "r_block",
-              start = block_start,
-              end = block_end,
-              content = r_block,
-              code = code_content
-            )
-            
-            # Add text after this block if not the last block
-            if (j < length(r_positions)) {
-              next_start <- r_positions[j + 1]
-              text_start <- block_end + 1
-              text_end <- next_start - 1
-              
-              if (text_end >= text_start) {
-                text_content <- substr(page_content, text_start, text_end)
-                if (nchar(trimws(text_content)) > 0) {
-                  segments[[length(segments) + 1]] <- list(
-                    type = "text",
-                    start = text_start,
-                    end = text_end,
-                    content = trimws(text_content)
-                  )
-                }
-              }
-            } else if (block_end < nchar(page_content)) {
-              # Add text after last block
-              text_content <- substr(page_content, block_end + 1, nchar(page_content))
-              if (nchar(trimws(text_content)) > 0) {
-                segments[[length(segments) + 1]] <- list(
-                  type = "text",
-                  start = block_end + 1,
-                  end = nchar(page_content),
-                  content = trimws(text_content)
-                )
-              }
-            }
-          }
-          
-          # Process segments into content items
-          text_counter <- 1
-          for (segment in segments) {
-            if (segment$type == "text") {
-              text_id <- paste0("text_", page_id, "_", text_counter)
-              text_counter <- text_counter + 1
-              
-              # Get preview
-              words <- strsplit(segment$content, "\\s+")[[1]]
-              preview <- paste(head(words, 5), collapse = " ")
-              if (length(words) > 5) preview <- paste0(preview, "...")
-              
-              content_items[[text_id]] <- list(
-                id = text_id,
-                preview = preview,
-                content = segment$content,
-                position = item_index,
-                is_question = FALSE
-              )
-              item_index <- item_index + 1
-            } else if (segment$type == "question") {
-              # Extract question parameters
-              extract_param <- function(param_name, text) {
-                # Try single quotes
-                pattern <- paste0(param_name, "\\s*=\\s*'([^']*)'")
-                match <- regexpr(pattern, text, perl = TRUE)
-                
-                if (match > 0 && !is.null(attr(match, "capture.start")) && 
-                    attr(match, "capture.start")[1] > 0) {
-                  start_pos <- attr(match, "capture.start")[1]
-                  length_val <- attr(match, "capture.length")[1]
-                  return(substr(text, start_pos, start_pos + length_val - 1))
-                }
-                
-                # Try double quotes
-                pattern <- paste0(param_name, '\\s*=\\s*"([^"]*)"')
-                match <- regexpr(pattern, text, perl = TRUE)
-                
-                if (match > 0 && !is.null(attr(match, "capture.start")) && 
-                    attr(match, "capture.start")[1] > 0) {
-                  start_pos <- attr(match, "capture.start")[1]
-                  length_val <- attr(match, "capture.length")[1]
-                  return(substr(text, start_pos, start_pos + length_val - 1))
-                }
-                
-                return("unknown")
-              }
-              
-              type <- extract_param("type", segment$code)
-              id <- extract_param("id", segment$code)
-              label <- extract_param("label", segment$code)
-              
-              if (id != "unknown") {
-                content_items[[id]] <- list(
-                  type = type,
-                  id = id,
-                  label = label,
-                  raw = segment$content,
-                  position = item_index,
-                  is_question = TRUE
-                )
-                item_index <- item_index + 1
-              }
-            }
-          }
-        }
-        
-        # Store the processed content items
-        pages[[page_id]] <- content_items
-      }
-    }
-    
-    return(list(pages = pages, page_ids = page_ids))
-  }
-  
   # Render the survey structure with toggle and drag functionality
   output$survey_structure <- shiny::renderUI({
     # Re-render when the structure_trigger changes
     structure_trigger()
+    
+    # Also re-render when the editor content changes
+    if (exists("input") && !is.null(input$survey_editor)) {
+      # This ensures we're always using the latest content
+      # Even if not saved yet
+    }
     
     # Parse survey structure
     survey_structure <- parse_survey_structure()
@@ -1031,6 +775,268 @@ server_structure_handlers <- function(input, output, session) {
     refresh = refresh_structure,
     get_page_ids = get_page_ids
   )
+}
+
+# Parse survey structure from survey.qmd file
+parse_survey_structure <- function() {
+  # Read the survey.qmd file - use the current editor content if available
+  if (exists("input") && !is.null(input$survey_editor)) {
+    survey_content <- input$survey_editor
+    survey_content <- paste(survey_content, collapse = "\n")
+  } else if (file.exists("survey.qmd")) {
+    survey_content <- readLines("survey.qmd", warn = FALSE)
+    survey_content <- paste(survey_content, collapse = "\n")
+  } else {
+    return(list(error = "survey.qmd file not found!"))
+  }
+  
+  # Extract pages
+  # Try both patterns for page class (.sd_page and .sd-page)
+  page_pattern_underscore <- ":::\\s*\\{\\s*\\.sd_page\\s+id\\s*=\\s*([a-zA-Z0-9_]+)\\s*\\}"
+  page_pattern_dash <- ":::\\s*\\{\\s*\\.sd-page\\s+id\\s*=\\s*([a-zA-Z0-9_]+)\\s*\\}"
+  
+  # Check which pattern is used in the document
+  if (grepl(page_pattern_underscore, survey_content)) {
+    page_pattern <- page_pattern_underscore
+  } else if (grepl(page_pattern_dash, survey_content)) {
+    page_pattern <- page_pattern_dash
+  } else {
+    return(list(error = "No pages found in survey.qmd!"))
+  }
+  
+  # Find all pages
+  page_matches <- gregexpr(page_pattern, survey_content, perl = TRUE)
+  page_ids <- regmatches(survey_content, page_matches)
+  
+  if (length(page_ids) == 0 || length(page_ids[[1]]) == 0) {
+    return(list(error = "No pages found in survey.qmd!"))
+  }
+  
+  # Extract page IDs using safer extraction method
+  page_ids <- page_ids[[1]]
+  extracted_ids <- vector("character", length(page_ids))
+  
+  for (i in seq_along(page_ids)) {
+    id_match <- regexpr("id\\s*=\\s*([a-zA-Z0-9_]+)", page_ids[i], perl = TRUE)
+    if (id_match > 0) {
+      match_text <- regmatches(page_ids[i], list(id_match))[[1]]
+      extracted_ids[i] <- gsub("id\\s*=\\s*", "", match_text)
+    } else {
+      extracted_ids[i] <- paste("page", i)
+    }
+  }
+  
+  page_ids <- extracted_ids
+  
+  # Split content by pages
+  split_pattern <- ":::\\s*\\{\\s*\\.sd[_-]page"
+  page_splits <- strsplit(survey_content, split_pattern, perl = TRUE)[[1]]
+  
+  if (length(page_splits) <= 1) {
+    return(list(error = "Error parsing page content!"))
+  }
+  
+  page_splits <- page_splits[-1]  # Remove the content before the first page
+  
+  # Process each page to extract items in correct order
+  pages <- list()
+  for (i in seq_along(page_ids)) {
+    page_id <- page_ids[i]
+    
+    # Use safer method to get page content
+    if (i <= length(page_splits)) {
+      raw_page_content <- page_splits[i]
+      
+      # Find the closing ::: for this page
+      closing_idx <- regexpr(":::", raw_page_content, fixed = TRUE)
+      if (closing_idx > 0) {
+        raw_page_content <- substr(raw_page_content, 1, closing_idx - 1)
+      }
+      
+      # Skip the id part at the beginning by finding the first closing brace
+      id_end_idx <- regexpr("}", raw_page_content, fixed = TRUE)
+      if (id_end_idx > 0) {
+        page_content <- substr(raw_page_content, id_end_idx + 1, nchar(raw_page_content))
+      } else {
+        page_content <- raw_page_content
+      }
+      
+      # Find all R code blocks with their exact positions
+      r_block_pattern <- "```\\{r\\}([\\s\\S]*?)```"
+      r_blocks <- gregexpr(r_block_pattern, page_content, perl = TRUE)
+      
+      content_items <- list()
+      item_index <- 1
+      
+      # If there are no R blocks, just add the entire content as a text section
+      if (r_blocks[[1]][1] == -1) {
+        if (nchar(trimws(page_content)) > 0) {
+          text_id <- paste0("text_", page_id, "_1")
+          
+          # Get preview (first 5 words)
+          words <- strsplit(trimws(page_content), "\\s+")[[1]]
+          preview <- paste(head(words, 5), collapse = " ")
+          if (length(words) > 5) preview <- paste0(preview, "...")
+          
+          content_items[[text_id]] <- list(
+            id = text_id,
+            preview = preview,
+            content = trimws(page_content),
+            position = 1,
+            is_question = FALSE
+          )
+        }
+      } else {
+        # Get positions and lengths of all R blocks
+        r_positions <- r_blocks[[1]]
+        r_lengths <- attr(r_blocks[[1]], "match.length")
+        
+        # Get all R blocks
+        r_matches <- regmatches(page_content, r_blocks)[[1]]
+        
+        # Create a list to track all content segments in order
+        segments <- list()
+        
+        # Add text before first R block if exists
+        if (r_positions[1] > 1) {
+          text_content <- substr(page_content, 1, r_positions[1] - 1)
+          if (nchar(trimws(text_content)) > 0) {
+            segments[[length(segments) + 1]] <- list(
+              type = "text",
+              start = 1,
+              end = r_positions[1] - 1,
+              content = trimws(text_content)
+            )
+          }
+        }
+        
+        # Process each R block and text between blocks
+        for (j in seq_along(r_positions)) {
+          # Add the R block
+          block_start <- r_positions[j]
+          block_end <- block_start + r_lengths[j] - 1
+          r_block <- r_matches[j]
+          
+          # Extract code content
+          code_content <- gsub("```\\{r\\}", "", r_block)
+          code_content <- gsub("```$", "", code_content)
+          code_content <- trimws(code_content)
+          
+          # Check if it's a question
+          is_question <- grepl("sd_question\\s*\\(", code_content, perl = TRUE)
+          
+          segments[[length(segments) + 1]] <- list(
+            type = if(is_question) "question" else "r_block",
+            start = block_start,
+            end = block_end,
+            content = r_block,
+            code = code_content
+          )
+          
+          # Add text after this block if not the last block
+          if (j < length(r_positions)) {
+            next_start <- r_positions[j + 1]
+            text_start <- block_end + 1
+            text_end <- next_start - 1
+            
+            if (text_end >= text_start) {
+              text_content <- substr(page_content, text_start, text_end)
+              if (nchar(trimws(text_content)) > 0) {
+                segments[[length(segments) + 1]] <- list(
+                  type = "text",
+                  start = text_start,
+                  end = text_end,
+                  content = trimws(text_content)
+                )
+              }
+            }
+          } else if (block_end < nchar(page_content)) {
+            # Add text after last block
+            text_content <- substr(page_content, block_end + 1, nchar(page_content))
+            if (nchar(trimws(text_content)) > 0) {
+              segments[[length(segments) + 1]] <- list(
+                type = "text",
+                start = block_end + 1,
+                end = nchar(page_content),
+                content = trimws(text_content)
+              )
+            }
+          }
+        }
+        
+        # Process segments into content items
+        text_counter <- 1
+        for (segment in segments) {
+          if (segment$type == "text") {
+            text_id <- paste0("text_", page_id, "_", text_counter)
+            text_counter <- text_counter + 1
+            
+            # Get preview
+            words <- strsplit(segment$content, "\\s+")[[1]]
+            preview <- paste(head(words, 5), collapse = " ")
+            if (length(words) > 5) preview <- paste0(preview, "...")
+            
+            content_items[[text_id]] <- list(
+              id = text_id,
+              preview = preview,
+              content = segment$content,
+              position = item_index,
+              is_question = FALSE
+            )
+            item_index <- item_index + 1
+          } else if (segment$type == "question") {
+            # Extract question parameters
+            extract_param <- function(param_name, text) {
+              # Try single quotes
+              pattern <- paste0(param_name, "\\s*=\\s*'([^']*)'")
+              match <- regexpr(pattern, text, perl = TRUE)
+              
+              if (match > 0 && !is.null(attr(match, "capture.start")) && 
+                  attr(match, "capture.start")[1] > 0) {
+                start_pos <- attr(match, "capture.start")[1]
+                length_val <- attr(match, "capture.length")[1]
+                return(substr(text, start_pos, start_pos + length_val - 1))
+              }
+              
+              # Try double quotes
+              pattern <- paste0(param_name, '\\s*=\\s*"([^"]*)"')
+              match <- regexpr(pattern, text, perl = TRUE)
+              
+              if (match > 0 && !is.null(attr(match, "capture.start")) && 
+                  attr(match, "capture.start")[1] > 0) {
+                start_pos <- attr(match, "capture.start")[1]
+                length_val <- attr(match, "capture.length")[1]
+                return(substr(text, start_pos, start_pos + length_val - 1))
+              }
+              
+              return("unknown")
+            }
+            
+            type <- extract_param("type", segment$code)
+            id <- extract_param("id", segment$code)
+            label <- extract_param("label", segment$code)
+            
+            if (id != "unknown") {
+              content_items[[id]] <- list(
+                type = type,
+                id = id,
+                label = label,
+                raw = segment$content,
+                position = item_index,
+                is_question = TRUE
+              )
+              item_index <- item_index + 1
+            }
+          }
+        }
+      }
+      
+      # Store the processed content items
+      pages[[page_id]] <- content_items
+    }
+  }
+  
+  return(list(pages = pages, page_ids = page_ids))
 }
 
 # Function to insert a new page into the survey.qmd file using the editor content
@@ -1574,9 +1580,9 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     return(NULL)
   }
   
-  # Parse current structure
+  # Get the current survey structure
   survey_structure <- parse_survey_structure()
-  if (!is.null(survey_structure$error) || !page_id %in% names(survey_structure$pages)) {
+  if (is.null(survey_structure) || !page_id %in% names(survey_structure$pages)) {
     return(NULL)
   }
   
