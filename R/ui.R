@@ -582,10 +582,36 @@ sd_question <- function(
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
+            // Initially hide the button container
+            $('#%s .btn-group-container-sw').css('visibility', 'hidden');
+            
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
-        ", id, js_interaction))))
+            
+            // Equalize button widths immediately after DOM is ready
+            $(document).ready(function() {
+              var buttonContainer = $('#%s .btn-group-container-sw');
+              var buttons = buttonContainer.find('.btn');
+              var maxWidth = 0;
+              
+              // Find the maximum width
+              buttons.each(function() {
+                var width = $(this).outerWidth();
+                if (width > maxWidth) {
+                  maxWidth = width;
+                }
+              });
+              
+              // Set all buttons to the maximum width
+              buttons.each(function() {
+                $(this).css('width', maxWidth + 'px');
+              });
+              
+              // Show the buttons after width is set
+              buttonContainer.css('visibility', 'visible');
+            });
+        ", id, id, js_interaction, id))))
 
   } else if (type == "mc_multiple_buttons") {
 
@@ -600,10 +626,37 @@ sd_question <- function(
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
+            // Initially hide the button container
+            $('#%s .btn-group-container-sw').css('visibility', 'hidden');
+            
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
-        ", id, js_interaction))))
+            
+            // Equalize button widths immediately after DOM is ready
+            $(document).ready(function() {
+              var buttonContainer = $('#%s .btn-group-container-sw');
+              var buttons = buttonContainer.find('.btn');
+              var maxWidth = 0;
+              
+              // Find the maximum width
+              buttons.each(function() {
+                var width = $(this).outerWidth();
+                if (width > maxWidth) {
+                  maxWidth = width;
+                }
+              });
+              
+              // Set all buttons to the maximum width
+              buttons.each(function() {
+                $(this).css('width', maxWidth + 'px');
+              });
+              
+              // Show the buttons after width is set
+              buttonContainer.css('visibility', 'visible');
+            });
+        ", id, id, js_interaction, id))))
+
   } else if (type == "text") {
 
     output <- shiny::textInput(
