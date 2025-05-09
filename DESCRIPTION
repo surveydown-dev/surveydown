@@ -51,7 +51,6 @@ Imports:
     shinyWidgets,
     utils,
     xml2,
-    dragdrop
     yaml,
     sortsurvey
 URL: https://pkg.surveydown.org
