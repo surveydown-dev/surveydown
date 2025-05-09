@@ -207,6 +207,18 @@ p, .form-group, .control-label {
   color: #ffffff;
 }
 
+.btn-group, .btn-group-vertical {
+  flex-direction: column;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.btn-group .btn, .btn-group-vertical .btn {
+  width: 100%;
+  display: block;
+  text-align: center;
+}
+
 .action-button {
   background-color: color-mix(in srgb, var(--theme-color) 70%, transparent);
   transition: background-color 0.3s ease;
