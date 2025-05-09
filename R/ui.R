@@ -572,67 +572,38 @@ sd_question <- function(
 
   } else if (type == "mc_buttons") {
 
-      output <- shinyWidgets::radioGroupButtons(
-        inputId   = id,
-        label     = label,
-        choices   = list_name_md_to_html(option),
-        direction = direction,
-        selected  = character(0),
-        ...
-      )
+    output <- shinyWidgets::radioGroupButtons(
+      inputId   = id,
+      label     = label,
+      choices   = list_name_md_to_html(option),
+      direction = direction,
+      selected  = character(0),
+      ...
+    )
 
-      output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
-              $(document).on('click', '#%s .btn', function() {
-                  %s
-              });
-              
-              // Equal width buttons
-              $(document).ready(function() {
-                  // Find the widest button in this group
-                  var maxWidth = 0;
-                  $('#%s .btn').each(function() {
-                      $(this).css('width', 'auto'); // Reset width first
-                      var width = $(this).outerWidth();
-                      maxWidth = Math.max(maxWidth, width);
-                  });
-                  
-                  // Set all buttons to the max width
-                  $('#%s .btn').width(maxWidth);
-              });
-          ", id, js_interaction, id, id))))
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
+            $(document).on('click', '#%s .btn', function() {
+                %s
+            });
+        ", id, js_interaction))))
 
   } else if (type == "mc_multiple_buttons") {
 
-      output <- shinyWidgets::checkboxGroupButtons(
-        inputId    = id,
-        label      = label,
-        choices    = list_name_md_to_html(option),
-        direction  = direction,
-        individual = individual,
-        justified  = FALSE,
-        ...
-      )
+    output <- shinyWidgets::checkboxGroupButtons(
+      inputId    = id,
+      label      = label,
+      choices    = list_name_md_to_html(option),
+      direction  = direction,
+      individual = individual,
+      justified  = FALSE,
+      ...
+    )
 
-      output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
-              $(document).on('click', '#%s .btn', function() {
-                  %s
-              });
-              
-              // Equal width buttons
-              $(document).ready(function() {
-                  // Find the widest button in this group
-                  var maxWidth = 0;
-                  $('#%s .btn').each(function() {
-                      $(this).css('width', 'auto'); // Reset width first
-                      var width = $(this).outerWidth();
-                      maxWidth = Math.max(maxWidth, width);
-                  });
-                  
-                  // Set all buttons to the max width
-                  $('#%s .btn').width(maxWidth);
-              });
-          ", id, js_interaction, id, id))))
-          
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
+            $(document).on('click', '#%s .btn', function() {
+                %s
+            });
+        ", id, js_interaction))))
   } else if (type == "text") {
 
     output <- shiny::textInput(
