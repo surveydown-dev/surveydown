@@ -585,7 +585,28 @@ sd_question <- function(
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
-        ", id, js_interaction))))
+            
+            // Equalize button widths when the document is ready
+            $(document).ready(function() {
+              setTimeout(function() {
+                var buttons = $('#%s .btn');
+                var maxWidth = 0;
+                
+                // Find the maximum width
+                buttons.each(function() {
+                  var width = $(this).outerWidth();
+                  if (width > maxWidth) {
+                    maxWidth = width;
+                  }
+                });
+                
+                // Set all buttons to the maximum width
+                buttons.each(function() {
+                  $(this).css('width', maxWidth + 'px');
+                });
+              }, 100); // Small delay to ensure all styles are applied
+            });
+        ", id, js_interaction, id))))
 
   } else if (type == "mc_multiple_buttons") {
 
@@ -603,7 +624,29 @@ sd_question <- function(
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
-        ", id, js_interaction))))
+            
+            // Equalize button widths when the document is ready
+            $(document).ready(function() {
+              setTimeout(function() {
+                var buttons = $('#%s .btn');
+                var maxWidth = 0;
+                
+                // Find the maximum width
+                buttons.each(function() {
+                  var width = $(this).outerWidth();
+                  if (width > maxWidth) {
+                    maxWidth = width;
+                  }
+                });
+                
+                // Set all buttons to the maximum width
+                buttons.each(function() {
+                  $(this).css('width', maxWidth + 'px');
+                });
+              }, 100); // Small delay to ensure all styles are applied
+            });
+        ", id, js_interaction, id))))
+
   } else if (type == "text") {
 
     output <- shiny::textInput(
