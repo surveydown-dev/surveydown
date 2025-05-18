@@ -179,13 +179,17 @@ ui_construction_tab <- function() {
                 handle: '.page-drag-handle',
                 ghostClass: 'sortable-ghost',
                 onEnd: function(evt) {
-                  // Send the new order to Shiny
+                  // Gather the new page order
                   var pageOrder = [];
                   $('#pages-container > div.page-wrapper').each(function() {
                     pageOrder.push($(this).attr('data-page-id'));
                   });
                   
-                  Shiny.setInputValue('page_order', pageOrder);
+                  // Send both the separation trigger and page order to Shiny
+                  Shiny.setInputValue('page_drag_completed', {
+                    order: pageOrder,
+                    timestamp: new Date().getTime() // Add timestamp to ensure the event is always triggered
+                  });
                 }
               });
             }
@@ -232,8 +236,12 @@ ui_construction_tab <- function() {
                       serializedOrder.push(contentOrder[i].id);
                     }
                     
-                    // Send the serialized array to Shiny
-                    Shiny.setInputValue('content_order_' + pageId, serializedOrder);
+                    // Send both the separation trigger and content order to Shiny
+                    Shiny.setInputValue('content_drag_completed', {
+                      pageId: pageId,
+                      order: serializedOrder,
+                      timestamp: new Date().getTime() // Add timestamp to ensure the event is always triggered
+                    });
                   }
                 }
               });
@@ -481,14 +489,123 @@ studio_server <- function() {
       }
     })
     
+    # Combined handler for page drag and separation
+    shiny::observeEvent(input$page_drag_completed, {
+      # First, perform chunk separation
+      current_content <- input$survey_editor
+      separated_content <- r_chunk_separation(current_content)
+      
+      # Update the editor with separated content if changed
+      if (!identical(current_content, separated_content)) {
+        shinyAce::updateAceEditor(session, "survey_editor", value = separated_content)
+        # Allow a very brief moment for the editor to update
+        Sys.sleep(0.1)
+        
+        # Get the updated content
+        current_content <- separated_content
+        
+        # Show notification for separation
+        shiny::showNotification("R chunks with multiple functions have been separated", 
+                              type = "message", duration = 2)
+      } else {
+        # Use the original content if no separation occurred
+        current_content <- input$survey_editor
+      }
+      
+      # Then, handle the page reordering
+      if (length(input$page_drag_completed$order) > 0) {
+        updated_content <- reorder_pages(input$page_drag_completed$order, current_content)
+        
+        if (!is.null(updated_content)) {
+          # Update the editor with the new content
+          shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+          
+          # Refresh structure
+          survey_structure$refresh()
+        } else {
+          shiny::showNotification("Failed to reorder pages", type = "error")
+        }
+      }
+    }, ignoreInit = TRUE)
+
+    # Combined handler for content drag and separation
+    shiny::observeEvent(input$content_drag_completed, {
+      # Extract page ID and order
+      page_id <- input$content_drag_completed$pageId
+      flat_order <- input$content_drag_completed$order
+      
+      # First, perform chunk separation
+      current_content <- input$survey_editor
+      separated_content <- r_chunk_separation(current_content)
+      
+      # Update the editor with separated content if changed
+      if (!identical(current_content, separated_content)) {
+        shinyAce::updateAceEditor(session, "survey_editor", value = separated_content)
+        # Allow a very brief moment for the editor to update
+        Sys.sleep(0.1)
+        
+        # Get the updated content
+        current_content <- separated_content
+        
+        # Show notification for separation
+        shiny::showNotification("R chunks with multiple functions have been separated", 
+                              type = "message", duration = 2)
+      } else {
+        # Use the original content if no separation occurred
+        current_content <- input$survey_editor
+      }
+      
+      # Convert flat vector to list of items
+      content_list <- list()
+      
+      # Process the flat vector (every two elements are a pair of type and id)
+      if (is.character(flat_order) && length(flat_order) >= 2) {
+        for (i in seq(1, length(flat_order), by = 2)) {
+          if (i + 1 <= length(flat_order)) {
+            content_list[[length(content_list) + 1]] <- list(
+              type = flat_order[i],
+              id = flat_order[i + 1]
+            )
+          }
+        }
+      } else {
+        shiny::showNotification("Invalid content order format", type = "error")
+        return(NULL)
+      }
+      
+      # Skip if no valid items
+      if (length(content_list) == 0) {
+        shiny::showNotification("No valid content items found", type = "error")
+        return(NULL)
+      }
+      
+      # Try to reorder content with error handling
+      tryCatch({
+        updated_content <- reorder_page_content(page_id, content_list, current_content)
+        
+        if (!is.null(updated_content)) {
+          # Update the editor with the new content
+          shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+          
+          # Show success message
+          shiny::showNotification(paste("Content in page", page_id, "reordered successfully!"), type = "message")
+          
+          # Refresh structure
+          survey_structure$refresh()
+        } else {
+          shiny::showNotification(paste("Failed to reorder content in page", page_id), type = "error")
+        }
+      }, error = function(e) {
+        # Show error notification
+        shiny::showNotification(paste("Error:", e$message), type = "error")
+      })
+    }, ignoreInit = TRUE)
+
     # Handle page reordering
     shiny::observeEvent(input$page_order, {
       if (length(input$page_order) > 0) {
-        # Get current editor content
+        # Get current editor content AFTER it's been updated by the chunk separation
         current_content <- input$survey_editor
-        
-        # Apply R chunk separation first
-        current_content <- r_chunk_separation(current_content)
         
         # Update the pages order in the file
         updated_content <- reorder_pages(input$page_order, current_content)
@@ -503,7 +620,7 @@ studio_server <- function() {
           shiny::showNotification("Failed to reorder pages", type = "error")
         }
       }
-    }, ignoreInit = TRUE)
+    }, ignoreInit = TRUE, priority = 100) # Lower priority than separation handlers
     
     # Handle content reordering for each page
     shiny::observe({
@@ -543,7 +660,7 @@ studio_server <- function() {
                 return(NULL)
               }
               
-              # Get current editor content
+              # Get current editor content AFTER it's been updated by the chunk separation
               current_content <- input$survey_editor
               
               # Try to reorder content with error handling
@@ -566,7 +683,7 @@ studio_server <- function() {
                 # Show error notification
                 shiny::showNotification(paste("Error:", e$message), type = "error")
               })
-            }, ignoreInit = TRUE)
+            }, ignoreInit = TRUE, priority = 100) # Lower priority than separation handlers
           })
         }
       }
@@ -1355,7 +1472,7 @@ r_chunk_separation <- function(editor_content) {
         # Extract the chunk content (without the ```{r} and ```)
         chunk_content <- editor_content[(chunk_start+1):(chunk_end-1)]
         
-        # Check for sd_ function calls
+        # Check for any sd_ function calls
         sd_start_indices <- grep("\\bsd_[a-zA-Z0-9_]+\\s*\\(", chunk_content)
         
         # If multiple sd_ calls, split the chunk
