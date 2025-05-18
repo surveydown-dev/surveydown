@@ -415,6 +415,16 @@ studio_server <- function() {
     shiny::observe({
       preview_handlers$refresh_preview()
     }, priority = 1000) # High priority ensures this runs early
+    
+    # Separation handler for manual edits
+    shiny::observeEvent(input$survey_editor, {
+      shiny::invalidateLater(1000)
+      current_content <- input$survey_editor
+      separated_content <- r_chunk_separation(current_content)
+      if (!identical(current_content, separated_content)) {
+        shinyAce::updateAceEditor(session, "survey_editor", value = separated_content)
+      }
+    }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
     # Update page dropdown for question creation when pages change
     shiny::observe({
