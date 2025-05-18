@@ -172,6 +172,8 @@ ui_construction_tab <- function() {
           
           // Initialize drag and drop functionality
           function initSortable() {
+            // Clean up and reattach all sortable instances
+            
             // Pages sortable
             if (document.getElementById('pages-container')) {
               new Sortable(document.getElementById('pages-container'), {
@@ -219,7 +221,6 @@ ui_construction_tab <- function() {
                     }
                     
                     if (id && type) {
-                      // Add as a separate object with type and id properties
                       contentOrder.push({
                         type: type,
                         id: id
@@ -229,24 +230,35 @@ ui_construction_tab <- function() {
                   
                   // Only send if we have content
                   if (contentOrder.length > 0) {
-                    // Convert to a simple array of strings to avoid serialization issues
+                    // Convert to a simple array of strings
                     var serializedOrder = [];
                     for (var i = 0; i < contentOrder.length; i++) {
                       serializedOrder.push(contentOrder[i].type);
                       serializedOrder.push(contentOrder[i].id);
                     }
                     
-                    // Send both the separation trigger and content order to Shiny
+                    // Send event to Shiny with strict string format
                     Shiny.setInputValue('content_drag_completed', {
                       pageId: pageId,
                       order: serializedOrder,
-                      timestamp: new Date().getTime() // Add timestamp to ensure the event is always triggered
-                    });
+                      timestamp: new Date().getTime()
+                    }, {priority: 'event'});
                   }
                 }
               });
             });
           }
+
+          // Ensure sortable is reinitialized whenever the DOM changes
+          $(document).on('shiny:value', function(event) {
+            if (event.name === 'survey_structure') {
+              // Short delay to ensure DOM is updated
+              setTimeout(function() {
+                initToggle();
+                initSortable();
+              }, 100);
+            }
+          });
           
           // Watch for changes to the structure output
           var observer = new MutationObserver(function(mutations) {
@@ -558,18 +570,29 @@ studio_server <- function() {
       # Convert flat vector to list of items
       content_list <- list()
       
-      # Process the flat vector (every two elements are a pair of type and id)
-      if (is.character(flat_order) && length(flat_order) >= 2) {
-        for (i in seq(1, length(flat_order), by = 2)) {
-          if (i + 1 <= length(flat_order)) {
-            content_list[[length(content_list) + 1]] <- list(
-              type = flat_order[i],
-              id = flat_order[i + 1]
-            )
+      # Better format validation and conversion
+      if (is.vector(flat_order) || is.list(flat_order)) {
+        # Ensure we have a character vector to work with
+        if (!is.character(flat_order)) {
+          flat_order <- as.character(unlist(flat_order))
+        }
+        
+        # Process pairs of type and id
+        if (length(flat_order) >= 2) {
+          for (i in seq(1, length(flat_order), by = 2)) {
+            if (i + 1 <= length(flat_order)) {
+              content_list[[length(content_list) + 1]] <- list(
+                type = flat_order[i],
+                id = flat_order[i + 1]
+              )
+            }
           }
+        } else {
+          shiny::showNotification("Order data too short. Needed pairs of type/id values.", type = "error")
+          return(NULL)
         }
       } else {
-        shiny::showNotification("Invalid content order format", type = "error")
+        shiny::showNotification("Invalid content order format type", type = "error")
         return(NULL)
       }
       
@@ -592,11 +615,14 @@ studio_server <- function() {
           
           # Refresh structure
           survey_structure$refresh()
+          
+          # Force a slight delay before allowing another drag
+          shiny::invalidateLater(300)
         } else {
           shiny::showNotification(paste("Failed to reorder content in page", page_id), type = "error")
         }
       }, error = function(e) {
-        # Show error notification
+        # Show detailed error notification
         shiny::showNotification(paste("Error:", e$message), type = "error")
       })
     }, ignoreInit = TRUE)
@@ -621,73 +647,6 @@ studio_server <- function() {
         }
       }
     }, ignoreInit = TRUE, priority = 100) # Lower priority than separation handlers
-    
-    # Handle content reordering for each page
-    shiny::observe({
-      page_ids <- survey_structure$get_page_ids()
-      
-      if (!is.null(page_ids) && length(page_ids) > 0) {
-        for (page_id in page_ids) {
-          local({
-            local_page_id <- page_id
-            input_name <- paste0("content_order_", local_page_id)
-            
-            shiny::observeEvent(input[[input_name]], {
-              # Get the flat array order
-              flat_order <- input[[input_name]]
-              
-              # Convert flat vector to list of items
-              content_list <- list()
-              
-              # Process the flat vector (every two elements are a pair of type and id)
-              if (is.character(flat_order) && length(flat_order) >= 2) {
-                for (i in seq(1, length(flat_order), by = 2)) {
-                  if (i + 1 <= length(flat_order)) {
-                    content_list[[length(content_list) + 1]] <- list(
-                      type = flat_order[i],
-                      id = flat_order[i + 1]
-                    )
-                  }
-                }
-              } else {
-                shiny::showNotification("Invalid content order format", type = "error")
-                return(NULL)
-              }
-              
-              # Skip if no valid items
-              if (length(content_list) == 0) {
-                shiny::showNotification("No valid content items found", type = "error")
-                return(NULL)
-              }
-              
-              # Get current editor content AFTER it's been updated by the chunk separation
-              current_content <- input$survey_editor
-              
-              # Try to reorder content with error handling
-              tryCatch({
-                updated_content <- reorder_page_content(local_page_id, content_list, current_content)
-                
-                if (!is.null(updated_content)) {
-                  # Update the editor with the new content
-                  shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
-                  
-                  # Show success message
-                  shiny::showNotification(paste("Content in page", local_page_id, "reordered successfully!"), type = "message")
-                  
-                  # Refresh structure
-                  survey_structure$refresh()
-                } else {
-                  shiny::showNotification(paste("Failed to reorder content in page", local_page_id), type = "error")
-                }
-              }, error = function(e) {
-                # Show error notification
-                shiny::showNotification(paste("Error:", e$message), type = "error")
-              })
-            }, ignoreInit = TRUE, priority = 100) # Lower priority than separation handlers
-          })
-        }
-      }
-    })
     
     # Clean up when session ends
     session$onSessionEnded(function() {
@@ -914,6 +873,9 @@ server_structure_handlers <- function(input, output, session) {
   refresh_structure <- function() {
     # Increment the trigger to force re-execution of renderUI
     structure_trigger(structure_trigger() + 1)
+    
+    # Add a slight delay to ensure UI updates completely
+    shiny::invalidateLater(200)
   }
   
   # Function to get page IDs for dropdowns
