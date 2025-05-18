@@ -42,20 +42,17 @@ studio_ui <- function() {
     title = "surveydown Studio",
     id = "tabset",
     theme = bslib::bs_theme(version = 5),
-    
-    # Construction tab (merged Structure and Code)
     ui_construction_tab(),
-    
-    # Preview tab
     ui_preview_tab()
   )
 }
 
-# UI - Construction tab (merged Structure and Code)
+# UI - Construction tab
 ui_construction_tab <- function() {
   shiny::tabPanel(
     "Construction",
-    # Custom CSS for Ace Editor and interactive structure
+
+    # Custom CSS
     shiny::tags$head(
       shiny::tags$style(HTML("
         .shiny-ace.ace_editor {
@@ -145,9 +142,11 @@ ui_construction_tab <- function() {
           margin: 5px 0;
         }
       ")),
+
       # Include Sortable.js library
       shiny::tags$script(src = "https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"),
-      # Custom JavaScript for toggle functionality
+
+      # Custom JavaScript
       shiny::tags$script(HTML("
         $(document).ready(function() {
           // Initialize toggle functionality after DOM is ready
@@ -276,6 +275,7 @@ ui_construction_tab <- function() {
     ),
 
     shiny::fluidRow(
+
       # Left - Add Content Panel
       shiny::column(
         width = 3,
@@ -405,16 +405,13 @@ ui_preview_tab <- function() {
 # Server - Framework
 studio_server <- function() {
   function(input, output, session) {
-    # Structure handlers (enhanced)
     survey_structure <- server_structure_handlers(input, output, session)
-    
-    # Preview handlers - initialize AFTER structure handlers
     preview_handlers <- server_preview_handlers(input, output, session)
     
-    # Launch preview automatically on startup
+    # Launch preview on startup
     shiny::observe({
       preview_handlers$refresh_preview()
-    }, priority = 1000) # High priority ensures this runs early
+    }, priority = 1000)
     
     # Separation handler for manual edits
     shiny::observeEvent(input$survey_editor, {
@@ -511,7 +508,7 @@ studio_server <- function() {
       }
     })
     
-    # Combined handler for page drag and separation
+    # Handler for page drag and separation
     shiny::observeEvent(input$page_drag_completed, {
       # First, perform chunk separation
       current_content <- input$survey_editor
@@ -546,7 +543,7 @@ studio_server <- function() {
       }
     }, ignoreInit = TRUE)
 
-    # Combined handler for content drag and separation
+    # Handler for content drag and separation
     shiny::observeEvent(input$content_drag_completed, {
       # Extract page ID and order
       page_id <- input$content_drag_completed$pageId
