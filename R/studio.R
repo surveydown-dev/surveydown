@@ -515,10 +515,6 @@ studio_server <- function() {
         
         # Get the updated content
         current_content <- separated_content
-        
-        # Show notification for separation
-        shiny::showNotification("R chunks with multiple functions have been separated", 
-                              type = "message", duration = 2)
       } else {
         # Use the original content if no separation occurred
         current_content <- input$survey_editor
@@ -558,10 +554,6 @@ studio_server <- function() {
         
         # Get the updated content
         current_content <- separated_content
-        
-        # Show notification for separation
-        shiny::showNotification("R chunks with multiple functions have been separated", 
-                              type = "message", duration = 2)
       } else {
         # Use the original content if no separation occurred
         current_content <- input$survey_editor
@@ -604,16 +596,52 @@ studio_server <- function() {
       
       # Try to reorder content with error handling
       tryCatch({
+        # First ensure the content we're working with is fully separated
+        # Check for chunks with multiple sd_* functions in the dragged items
+        page_structure <- parse_survey_structure()
+        
+        if (!is.null(page_structure) && !is.null(page_structure$pages) && 
+            page_id %in% names(page_structure$pages)) {
+          
+          # Check if any dragged item has multiple sd_* calls
+          needs_separation <- FALSE
+          for (item in content_list) {
+            if (item$type == "question" && item$id %in% names(page_structure$pages[[page_id]])) {
+              question_item <- page_structure$pages[[page_id]][[item$id]]
+              if ("raw" %in% names(question_item)) {
+                # Count sd_ function calls in this chunk
+                raw_content <- question_item$raw
+                sd_calls <- gregexpr("\\bsd_[a-zA-Z0-9_]+\\s*\\(", raw_content)
+                if (sd_calls[[1]][1] > 0 && length(sd_calls[[1]]) > 1) {
+                  needs_separation <- TRUE
+                  break
+                }
+              }
+            }
+          }
+          
+          # If we need to separate content again due to dragged item
+          if (needs_separation) {
+            # Perform another separation specifically for this case
+            current_content <- r_chunk_separation(current_content)
+            shinyAce::updateAceEditor(session, "survey_editor", value = current_content)
+            shiny::showNotification("Separated multiple functions in dragged content", 
+                                  type = "message", duration = 2)
+            # Brief pause to let the editor update
+            Sys.sleep(0.1)
+          }
+        }
+        
         updated_content <- reorder_page_content(page_id, content_list, current_content)
         
         if (!is.null(updated_content)) {
+          # Apply another round of separation to ensure all chunks are properly separated
+          updated_content <- r_chunk_separation(updated_content)
+          
           # Update the editor with the new content
           shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
           
-          # Show success message
-          shiny::showNotification(paste("Content in page", page_id, "reordered successfully!"), type = "message")
-          
-          # Refresh structure
+          # Refresh structure using the correct variable reference
           survey_structure$refresh()
           
           # Force a slight delay before allowing another drag
@@ -1472,6 +1500,34 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
     return(NULL)
   }
   
+  # Extract the original page content
+  original_page_content <- editor_content[page_start_line:page_end_line]
+  
+  # Find any navigation R chunks (containing sd_next, sd_prev, sd_close, etc.)
+  navigation_chunks <- list()
+  in_chunk <- FALSE
+  chunk_start <- NULL
+  
+  for (i in seq_along(original_page_content)) {
+    line <- original_page_content[i]
+    
+    if (grepl("^```\\{r\\}", line)) {
+      in_chunk <- TRUE
+      chunk_start <- i
+    } else if (in_chunk && grepl("^```$", line)) {
+      in_chunk <- FALSE
+      # Check if this is a navigation chunk
+      chunk_content <- original_page_content[(chunk_start+1):(i-1)]
+      if (any(grepl("sd_next\\(|sd_prev\\(|sd_close\\(", chunk_content))) {
+        navigation_chunks[[length(navigation_chunks) + 1]] <- list(
+          start = chunk_start,
+          end = i,
+          lines = original_page_content[chunk_start:i]
+        )
+      }
+    }
+  }
+  
   # Get the current survey structure
   survey_structure <- parse_survey_structure()
   
@@ -1531,6 +1587,13 @@ reorder_page_content <- function(page_id, new_content_order, editor_content) {
         text_lines <- strsplit(current_item$content, "\n")[[1]]
         new_page_content <- c(new_page_content, text_lines, "")
       }
+    }
+  }
+  
+  # Add navigation chunks if they exist
+  if (length(navigation_chunks) > 0) {
+    for (chunk in navigation_chunks) {
+      new_page_content <- c(new_page_content, chunk$lines, "")
     }
   }
   
@@ -1622,9 +1685,6 @@ server_preview_handlers <- function(input, output, session) {
       writeLines(input$app_editor, "app.R")
     }
     
-    # Launch the app in a separate R process
-    shiny::showNotification("Starting preview...", type = "message")
-    
     # Create a temporary R script to run the app
     temp_script <- tempfile(fileext = ".R")
     writeLines(
@@ -1662,7 +1722,7 @@ server_preview_handlers <- function(input, output, session) {
       )
     })
     
-    shiny::showNotification("Preview launched successfully!", type = "message")
+    shiny::showNotification("Survey refreshed!", type = "message")
   }
   
   # Return the refresh function and process for cleanup
