@@ -24,8 +24,19 @@
 #'   sd_studio(path = "my_survey", template = "question_types")
 #' }
 sd_studio <- function(path = getwd(), template = "default") {
-  # Create the survey from the template
-  sd_create_survey(path = path, template = template)
+  # Check if the function was called with an explicit template parameter
+  template_explicitly_provided <- !missing(template)
+  
+  # Check if survey.qmd and app.R files already exist
+  survey_exists <- file.exists(file.path(path, "survey.qmd"))
+  app_exists <- file.exists(file.path(path, "app.R"))
+  
+  # Create a new survey if:
+  # 1. Template was explicitly provided (regardless of value), OR
+  # 2. One or both files don't exist
+  if (template_explicitly_provided || !survey_exists || !app_exists) {
+    sd_create_survey(path = path, template = template)
+  }
   
   # Set working directory to the survey path
   original_dir <- getwd()
