@@ -893,6 +893,86 @@ server_structure_handlers <- function(input, output, session) {
   )
 }
 
+# Server - Preview handlers
+server_preview_handlers <- function(input, output, session) {
+  # Process to run the preview app
+  preview_process <- shiny::reactiveVal(NULL)
+  preview_port <- stats::runif(1, 3000, 8000) |> floor()
+  
+  # Launch preview function
+  refresh_preview <- function() {
+    # Get current process value inside a reactive context
+    current_process <- NULL
+    shiny::isolate({
+      current_process <- preview_process()
+    })
+    
+    # Stop existing process if it exists
+    if (!is.null(current_process)) {
+      try(tools::pskill(current_process), silent = TRUE)
+      preview_process(NULL)
+    }
+    
+    # Check if files exist
+    if (!file.exists("survey.qmd") || !file.exists("app.R")) {
+      shiny::showNotification("Error: survey.qmd or app.R file not found!", type = "error")
+      return()
+    }
+    
+    # Save current editor content to files before previewing
+    if (exists("input") && !is.null(input$survey_editor)) {
+      writeLines(input$survey_editor, "survey.qmd")
+    }
+    
+    if (exists("input") && !is.null(input$app_editor)) {
+      writeLines(input$app_editor, "app.R")
+    }
+    
+    # Create a temporary R script to run the app
+    temp_script <- tempfile(fileext = ".R")
+    writeLines(
+      paste0(
+        "library(shiny)\n",
+        "port <- ", preview_port, "\n",
+        "setwd('", getwd(), "')\n",
+        "source('app.R')\n",
+        "options(shiny.port = port)\n",
+        "options(shiny.host = '127.0.0.1')\n",
+        "shiny::runApp(launch.browser = FALSE)\n"
+      ), 
+      temp_script
+    )
+    
+    # Run the temp script in a separate R process
+    r_path <- file.path(R.home("bin"), "R")
+    new_process <- system2(r_path, c("--vanilla", "-f", temp_script), wait = FALSE, stdout = NULL, stderr = NULL)
+    
+    # Store the process ID
+    preview_process(new_process)
+    
+    # Display in iframe
+    preview_url <- paste0("http://127.0.0.1:", preview_port)
+    
+    # Give the app a moment to start
+    Sys.sleep(2)
+    
+    output$preview_frame <- shiny::renderUI({
+      shiny::tags$iframe(
+        src = preview_url,
+        width = "100%",
+        height = "100%",
+        style = "border: 1px solid #ddd; border-radius: 5px; display: block;"
+      )
+    })
+  }
+  
+  # Return the refresh function and process for cleanup
+  list(
+    refresh_preview = refresh_preview,
+    preview_process = preview_process
+  )
+}
+
 # Parse survey structure from survey.qmd file
 parse_survey_structure <- function() {
   # Read the survey.qmd file - use the current editor content if available
@@ -1681,84 +1761,4 @@ generate_question_code <- function(type, id, label) {
       paste0(")")
     ))
   }
-}
-
-# Server - Preview handlers
-server_preview_handlers <- function(input, output, session) {
-  # Process to run the preview app
-  preview_process <- shiny::reactiveVal(NULL)
-  preview_port <- stats::runif(1, 3000, 8000) |> floor()
-  
-  # Launch preview function
-  refresh_preview <- function() {
-    # Get current process value inside a reactive context
-    current_process <- NULL
-    shiny::isolate({
-      current_process <- preview_process()
-    })
-    
-    # Stop existing process if it exists
-    if (!is.null(current_process)) {
-      try(tools::pskill(current_process), silent = TRUE)
-      preview_process(NULL)
-    }
-    
-    # Check if files exist
-    if (!file.exists("survey.qmd") || !file.exists("app.R")) {
-      shiny::showNotification("Error: survey.qmd or app.R file not found!", type = "error")
-      return()
-    }
-    
-    # Save current editor content to files before previewing
-    if (exists("input") && !is.null(input$survey_editor)) {
-      writeLines(input$survey_editor, "survey.qmd")
-    }
-    
-    if (exists("input") && !is.null(input$app_editor)) {
-      writeLines(input$app_editor, "app.R")
-    }
-    
-    # Create a temporary R script to run the app
-    temp_script <- tempfile(fileext = ".R")
-    writeLines(
-      paste0(
-        "library(shiny)\n",
-        "port <- ", preview_port, "\n",
-        "setwd('", getwd(), "')\n",
-        "source('app.R')\n",
-        "options(shiny.port = port)\n",
-        "options(shiny.host = '127.0.0.1')\n",
-        "shiny::runApp(launch.browser = FALSE)\n"
-      ), 
-      temp_script
-    )
-    
-    # Run the temp script in a separate R process
-    r_path <- file.path(R.home("bin"), "R")
-    new_process <- system2(r_path, c("--vanilla", "-f", temp_script), wait = FALSE, stdout = NULL, stderr = NULL)
-    
-    # Store the process ID
-    preview_process(new_process)
-    
-    # Display in iframe
-    preview_url <- paste0("http://127.0.0.1:", preview_port)
-    
-    # Give the app a moment to start
-    Sys.sleep(2)
-    
-    output$preview_frame <- shiny::renderUI({
-      shiny::tags$iframe(
-        src = preview_url,
-        width = "100%",
-        height = "100%",
-        style = "border: 1px solid #ddd; border-radius: 5px; display: block;"
-      )
-    })
-  }
-  
-  # Return the refresh function and process for cleanup
-  list(
-    refresh_preview = refresh_preview,
-    preview_process = preview_process
-  )
 }
