@@ -366,30 +366,14 @@ ui_construction_tab <- function() {
                 "survey.qmd",
                 shiny::div(
                   style = "margin-top: 10px",
-                  shinyAce::aceEditor(
-                    outputId = "survey_editor",
-                    value = readLines("survey.qmd", warn = FALSE),
-                    mode = "markdown",
-                    theme = "textmate",
-                    height = "calc(100vh - 203px)",
-                    fontSize = 14,
-                    wordWrap = TRUE
-                  )
+                  shiny::uiOutput("survey_editor_ui")
                 )
               ),
               shiny::tabPanel(
                 "app.R",
                 shiny::div(
                   style = "margin-top: 10px",
-                  shinyAce::aceEditor(
-                    outputId = "app_editor",
-                    value = readLines("app.R", warn = FALSE),
-                    mode = "r",
-                    theme = "chrome",
-                    height = "calc(100vh - 203px)",
-                    fontSize = 14,
-                    wordWrap = TRUE
-                  )
+                  shiny::uiOutput("app_editor_ui")
                 )
               )
             )
@@ -416,6 +400,37 @@ ui_preview_tab <- function() {
 # Server - Framework
 studio_server <- function() {
   function(input, output, session) {
+
+    output$survey_editor_ui <- shiny::renderUI({
+      # Reactively read the survey file
+      survey_content <- paste(readLines("survey.qmd", warn = FALSE), collapse = "\n")
+      
+      shinyAce::aceEditor(
+        outputId = "survey_editor",
+        value = survey_content,
+        mode = "markdown",
+        theme = "textmate",
+        height = "calc(100vh - 203px)",
+        fontSize = 14,
+        wordWrap = TRUE
+      )
+    })
+
+    output$app_editor_ui <- shiny::renderUI({
+      # Reactively read the app file
+      app_content <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
+      
+      shinyAce::aceEditor(
+        outputId = "app_editor",
+        value = app_content,
+        mode = "r",
+        theme = "chrome",
+        height = "calc(100vh - 203px)",
+        fontSize = 14,
+        wordWrap = TRUE
+      )
+    })
+
     survey_structure <- server_structure_handlers(input, output, session)
     preview_handlers <- server_preview_handlers(input, output, session)
     
@@ -1739,8 +1754,6 @@ server_preview_handlers <- function(input, output, session) {
         style = "border: 1px solid #ddd; border-radius: 5px; display: block;"
       )
     })
-    
-    shiny::showNotification("Survey refreshed!", type = "message")
   }
   
   # Return the refresh function and process for cleanup
