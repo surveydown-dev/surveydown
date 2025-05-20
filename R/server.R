@@ -334,7 +334,7 @@ sd_server <- function(
         # Create a minimal initial data just for table creation
         min_initial_data <- list(
             session_id = character(0),
-            client_ip,
+            client_ip = character(0),
             time_start = character(0),
             time_end = character(0)
         )
@@ -349,7 +349,7 @@ sd_server <- function(
 
     # Now handle session and get proper initial data
     initial_data <- get_initial_data(
-        session, session_id, time_start, all_ids, start_page_ts_id
+        session, session_id, client_ip, time_start, all_ids, start_page_ts_id
     )
     all_data <- do.call(shiny::reactiveValues, initial_data)
 
@@ -1332,11 +1332,11 @@ get_utc_timestamp <- function() {
 }
 
 get_initial_data <- function(
-        session, session_id, time_start, all_ids, start_page_ts_id
+        session, session_id,client_ip, time_start, all_ids, start_page_ts_id
 ) {
     # Initialize with static data
     data <- c(
-        list(session_id = session_id, time_start = time_start),
+        list(session_id = session_id, client_ip = client_ip, time_start = time_start),
         get_stored_vals(session)
     )
 
@@ -1558,7 +1558,8 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
                             start_page, current_page_id, question_ids,
                             question_ts_ids, progress_updater, use_cookies = TRUE) {
     # Check 1: if db is null, don't use cookies
-    if (is.null(db)) {
+    # is.null(db)
+    if (TRUE) {
         use_cookies <- FALSE
     }
 
