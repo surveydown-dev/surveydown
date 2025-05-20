@@ -365,6 +365,30 @@ studio_server <- function() {
       }
     })
     
+    # Handle delete page button clicks
+    shiny::observeEvent(input$delete_page_btn, {
+      # The input$delete_page_btn will contain the page ID when a button is clicked
+      page_id <- input$delete_page_btn
+      
+      if (!is.null(page_id) && page_id != "") {
+        # Get and prepare current editor content
+        current_content <- input$survey_editor
+        current_content <- r_chunk_separation(current_content)
+        
+        # Delete the page
+        updated_content <- delete_page_from_survey(page_id, current_content)
+        
+        # Update editor if successful
+        if (!is.null(updated_content)) {
+          shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+          shiny::showNotification(paste("Page", page_id, "deleted successfully!"), type = "message")
+          survey_structure$refresh()
+        } else {
+          shiny::showNotification(paste("Failed to delete page", page_id), type = "error")
+        }
+      }
+    }, ignoreInit = TRUE, ignoreNULL = TRUE)
+
     # Handle page drag and drop reordering
     shiny::observeEvent(input$page_drag_completed, {
       # Prepare and separate content
@@ -1261,6 +1285,23 @@ render_survey_structure <- function(survey_structure) {
             shiny::icon("grip-lines")
           ),
           shiny::div(paste0("Page: ", page_id), style = "margin: 0; font-weight: bold;"),
+          
+          # Add this new section for the delete button
+          shiny::div(
+            class = "page-actions",
+            style = "display: flex; gap: 5px;",
+            # Delete page button
+            shiny::actionButton(
+              inputId = "delete_page_btn_ui",  # Use a common ID for all buttons
+              label = NULL,
+              icon = shiny::icon("trash-alt"),
+              class = "btn-sm btn-outline-danger delete-page-btn",
+              title = "Delete page",
+              onclick = paste0("Shiny.setInputValue('delete_page_btn', '", page_id, "');"),
+              `data-page-id` = page_id
+            )
+          ),
+          
           shiny::div(
             class = "toggle-icon",
             shiny::icon("chevron-down")
@@ -1522,6 +1563,51 @@ create_text_item <- function(id, content, position) {
   )
 }
 
+# Delete a page from the survey.qmd file
+delete_page_from_survey <- function(page_id, editor_content) {
+  if (is.null(editor_content) || is.null(page_id)) {
+    return(NULL)
+  }
+  
+  # Ensure editor_content is in lines
+  if (is.character(editor_content) && length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  # Find the page
+  page_start_pattern <- paste0("::: \\{.sd[_-]page id=", page_id, "\\}")
+  page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
+  
+  if (length(page_start_lines) == 0) {
+    return(NULL)
+  }
+  
+  # Use the first match
+  page_start_line <- page_start_lines[1]
+  
+  # Find the end of the page
+  page_end_line <- NULL
+  for (i in page_start_line:length(editor_content)) {
+    if (grepl("^:::$", editor_content[i])) {
+      page_end_line <- i
+      break
+    }
+  }
+  
+  if (is.null(page_end_line)) {
+    return(NULL)
+  }
+  
+  # Remove the page
+  result <- c(
+    editor_content[1:(page_start_line-1)],
+    if(page_end_line < length(editor_content)) editor_content[(page_end_line+1):length(editor_content)] else NULL
+  )
+  
+  # Return the updated content
+  return(paste(result, collapse = "\n"))
+}
+
 # Extract question parameters
 extract_question_params <- function(code_text) {
   extract_param <- function(param_name, text) {
@@ -1748,9 +1834,12 @@ get_studio_js <- function() {
       // Initialize toggle functionality after DOM is ready
       function initToggle() {
         $('.page-header').off('click').on('click', function(e) {
-          // Don't toggle if clicking on drag handle
+          // Don't toggle if clicking on drag handle or delete button
           if (!$(e.target).hasClass('drag-handle') && 
-              !$(e.target).closest('.drag-handle').length) {
+              !$(e.target).closest('.drag-handle').length &&
+              !$(e.target).hasClass('delete-page-btn') &&
+              !$(e.target).closest('.delete-page-btn').length &&
+              !$(e.target).closest('.page-actions').length) {
             var $questions = $(this).next('.questions-container');
             $questions.slideToggle();
             
@@ -1775,6 +1864,8 @@ get_studio_js <- function() {
             animation: 150,
             handle: '.page-drag-handle',
             ghostClass: 'sortable-ghost',
+            filter: '.delete-page-btn, .page-actions', // Add this line to filter out these elements
+            preventOnFilter: true, // Add this line to prevent default when clicking on filtered elements
             onEnd: function(evt) {
               // Gather the new page order
               var pageOrder = [];
