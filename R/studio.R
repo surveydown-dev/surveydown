@@ -190,9 +190,20 @@ ui_preview_tab <- function() {
   shiny::tabPanel(
     "Preview",
     shiny::div(
+      style = "display: flex; flex-direction: column; align-items: center; height: calc(100vh - 89px);",
+      
+      # Preview iframe with reduced height to make room for button
       shiny::div(
-        style = "height: calc(100vh - 89px); border: none;",
+        style = "width: 100%; height: calc(100vh - 125px); border: none;",
         shiny::uiOutput("preview_frame")
+      ),
+      
+      # Centered button container
+      shiny::div(
+        style = "margin-top: 10px; text-align: center;",
+        shiny::actionButton("refresh_preview_btn", "Refresh Preview", 
+                           class = "btn-success btn-sm",
+                           icon = shiny::icon("sync"))
       )
     )
   )
@@ -236,6 +247,11 @@ studio_server <- function() {
     survey_structure <- server_structure_handlers(input, output, session)
     preview_handlers <- server_preview_handlers(input, output, session)
     
+    # Connect refresh button to preview function
+    shiny::observeEvent(input$refresh_preview_btn, {
+      preview_handlers$refresh_preview()
+    })
+
     # Launch preview on startup
     shiny::observe({
       preview_handlers$refresh_preview()
