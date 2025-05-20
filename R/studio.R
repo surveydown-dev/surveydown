@@ -87,32 +87,49 @@ ui_construction_tab <- function() {
         
         shiny::tags$hr(style = "margin: 1rem 0;"),
 
-        # Add Question UI
-        shiny::h5("Add Question", 
+        # Unified Add Content UI
+        shiny::h5("Add Content", 
             style = "text-align: center; background-color: #ffe0b2; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
         shiny::wellPanel(
           style = "background-color: #fff3e0; border-color: #ffe0b2; padding: 0.5rem;",
           shiny::div(
             style = "overflow-y: auto; height: calc(100vh - 378px);",
-            shiny::selectInput("page_for_question", "To Page:", choices = NULL),
-            shiny::selectInput("question_type", "Question Type:", 
-                      choices = c(
-                        "Multiple Choice" = "mc",
-                        "Text Input" = "text",
-                        "Textarea" = "textarea",
-                        "Numeric Input" = "numeric",
-                        "Multiple Choice Buttons" = "mc_buttons",
-                        "Multiple Choice Multiple" = "mc_multiple",
-                        "Multiple Choice Multiple Buttons" = "mc_multiple_buttons",
-                        "Select Dropdown" = "select",
-                        "Slider" = "slider",
-                        "Slider Numeric" = "slider_numeric",
-                        "Date" = "date",
-                        "Date Range" = "daterange"
-                      )),
-            shiny::textInput("question_id", "Question ID:", placeholder = "Enter unique question ID"),
-            shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text"),
-            shiny::actionButton("add_question_btn", "Add Question", class = "btn-primary", style = "width: 100%;")
+            
+            # Common inputs for both content types
+            shiny::selectInput("page_for_content", "To Page:", choices = NULL),
+            shiny::selectInput("content_type", "Content Type:", 
+                      choices = c("Text" = "text", "Question" = "question")),
+            
+            # Conditional UI based on content type
+            shiny::conditionalPanel(
+              condition = "input.content_type == 'text'",
+              shiny::textAreaInput("text_content", "Text:", rows = 3, 
+                                placeholder = "Enter markdown text to add to the page")
+            ),
+            
+            shiny::conditionalPanel(
+              condition = "input.content_type == 'question'",
+              shiny::selectInput("question_type", "Question Type:", 
+                        choices = c(
+                          "Multiple Choice" = "mc",
+                          "Text Input" = "text",
+                          "Textarea" = "textarea",
+                          "Numeric Input" = "numeric",
+                          "Multiple Choice Buttons" = "mc_buttons",
+                          "Multiple Choice Multiple" = "mc_multiple",
+                          "Multiple Choice Multiple Buttons" = "mc_multiple_buttons",
+                          "Select Dropdown" = "select",
+                          "Slider" = "slider",
+                          "Slider Numeric" = "slider_numeric",
+                          "Date" = "date",
+                          "Date Range" = "daterange"
+                        )),
+              shiny::textInput("question_id", "Question ID:", placeholder = "Enter unique question ID"),
+              shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text")
+            ),
+            
+            # Common add button
+            shiny::actionButton("add_content_btn", "Add Content", class = "btn-primary", style = "width: 100%; margin-top: 10px;")
           )
         )
       ),
@@ -234,14 +251,14 @@ studio_server <- function() {
       }
     }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
-    # Update page dropdown for question creation when pages change
+    # Update page dropdown for content creation when pages change
     shiny::observe({
       page_ids <- survey_structure$get_page_ids()
       if (!is.null(page_ids) && length(page_ids) > 0) {
-        shiny::updateSelectInput(session, "page_for_question", choices = page_ids)
+        shiny::updateSelectInput(session, "page_for_content", choices = page_ids)
       }
     })
-    
+
     # Handle Add Page button
     shiny::observeEvent(input$add_page_btn, {
       page_id <- input$new_page_id
@@ -266,16 +283,11 @@ studio_server <- function() {
       survey_structure$refresh()
     })
     
-    # Handle Add Question button
-    shiny::observeEvent(input$add_question_btn, {
-      # Validate inputs
-      if (is.null(input$page_for_question) || input$page_for_question == "") {
+    # Handle Add Content button
+    shiny::observeEvent(input$add_content_btn, {
+      # Validate common inputs
+      if (is.null(input$page_for_content) || input$page_for_content == "") {
         shiny::showNotification("Please select a page", type = "error")
-        return()
-      }
-      
-      if (is.null(input$question_id) || input$question_id == "") {
-        shiny::showNotification("Please enter a question ID", type = "error")
         return()
       }
       
@@ -283,24 +295,57 @@ studio_server <- function() {
       current_content <- input$survey_editor
       current_content <- r_chunk_separation(current_content)
       
-      # Insert the new question
-      updated_content <- insert_question_into_survey(
-        input$page_for_question,
-        input$question_type,
-        input$question_id,
-        input$question_label,
-        current_content
-      )
-      
-      # Update editor if successful
-      if (!is.null(updated_content)) {
-        shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
-        shiny::updateTextInput(session, "question_id", value = "")
-        shiny::updateTextInput(session, "question_label", value = "")
-        shiny::showNotification(paste("Question", input$question_id, "added to page", input$page_for_question), type = "message")
-        survey_structure$refresh()
-      } else {
-        shiny::showNotification("Failed to add question. Check page ID and try again.", type = "error")
+      # Process based on content type
+      if (input$content_type == "text") {
+        # Validate text inputs
+        if (is.null(input$text_content) || trimws(input$text_content) == "") {
+          shiny::showNotification("Please enter some text content", type = "error")
+          return()
+        }
+        
+        # Insert the new text
+        updated_content <- insert_text_into_survey(
+          input$page_for_content,
+          input$text_content,
+          current_content
+        )
+        
+        # Update editor if successful
+        if (!is.null(updated_content)) {
+          shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+          shiny::updateTextAreaInput(session, "text_content", value = "")
+          shiny::showNotification(paste("Text added to page", input$page_for_content), type = "message")
+          survey_structure$refresh()
+        } else {
+          shiny::showNotification("Failed to add text. Check page ID and try again.", type = "error")
+        }
+        
+      } else if (input$content_type == "question") {
+        # Validate question inputs
+        if (is.null(input$question_id) || input$question_id == "") {
+          shiny::showNotification("Please enter a question ID", type = "error")
+          return()
+        }
+        
+        # Insert the new question
+        updated_content <- insert_question_into_survey(
+          input$page_for_content,
+          input$question_type,
+          input$question_id,
+          input$question_label,
+          current_content
+        )
+        
+        # Update editor if successful
+        if (!is.null(updated_content)) {
+          shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+          shiny::updateTextInput(session, "question_id", value = "")
+          shiny::updateTextInput(session, "question_label", value = "")
+          shiny::showNotification(paste("Question", input$question_id, "added to page", input$page_for_content), type = "message")
+          survey_structure$refresh()
+        } else {
+          shiny::showNotification("Failed to add question. Check page ID and try again.", type = "error")
+        }
       }
     })
     
@@ -657,6 +702,59 @@ insert_question_into_survey <- function(page_id, question_type, question_id, que
   result <- c(
     editor_content[1:(insertion_point-1)],
     question_chunk,
+    editor_content[insertion_point:length(editor_content)]
+  )
+  
+  # Return the updated content
+  return(paste(result, collapse = "\n"))
+}
+
+# Insert text into a specific page
+insert_text_into_survey <- function(page_id, text_content, editor_content) {
+  if (is.null(editor_content) || is.null(page_id)) {
+    return(NULL)
+  }
+  
+  # Ensure editor_content is in lines
+  if (is.character(editor_content) && length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  # Find the page
+  page_start_pattern <- paste0("::: \\{.sd[_-]page id=", page_id, "\\}")
+  page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
+  
+  if (length(page_start_lines) == 0) {
+    return(NULL)
+  }
+  
+  # Use the first match
+  page_start_line <- page_start_lines[1]
+  
+  # Find the end of the page
+  page_end_line <- NULL
+  for (i in page_start_line:length(editor_content)) {
+    if (grepl("^:::$", editor_content[i])) {
+      page_end_line <- i
+      break
+    }
+  }
+  
+  if (is.null(page_end_line)) {
+    return(NULL)
+  }
+  
+  # Find the insertion point (before next button if exists)
+  insertion_point <- find_insertion_point(editor_content, page_start_line, page_end_line)
+  
+  # Format the text (ensure it has proper line breaks)
+  formatted_text <- strsplit(text_content, "\n")[[1]]
+  
+  # Insert the text
+  result <- c(
+    editor_content[1:(insertion_point-1)],
+    formatted_text,
+    "",  # Add an empty line after the text
     editor_content[insertion_point:length(editor_content)]
   )
   
