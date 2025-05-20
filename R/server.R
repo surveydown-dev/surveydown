@@ -178,6 +178,15 @@ sd_server <- function(
         }
     }
 
+    # Grab User IP
+
+    client_ip <- if (!is.null(session$request$HTTP_X_FORWARDED_FOR)) {
+        # Split by comma and take the first IP address
+        trimws(strsplit(session$request$HTTP_X_FORWARDED_FOR, ",")[[1]][1])
+    } else {
+        session$request$REMOTE_ADDR
+    }
+
     # Initialize session handling and session_id
     session_id <- session$token
     session_id <- handle_sessions(session_id, db, session, input, time_start, start_page,
@@ -325,6 +334,7 @@ sd_server <- function(
         # Create a minimal initial data just for table creation
         min_initial_data <- list(
             session_id = character(0),
+            client_ip,
             time_start = character(0),
             time_end = character(0)
         )
