@@ -645,7 +645,6 @@ server_preview_handlers <- function(input, output, session) {
         style = "border: 1px solid #ddd; border-radius: 5px; display: block;"
       )
     })
-    shiny::showNotification("Survey refreshed!", type = "message")
   }
   
   # Return the refresh function and process for cleanup
@@ -1322,12 +1321,11 @@ render_survey_structure <- function(survey_structure) {
             style = "display: flex; gap: 5px;",
             # Delete page button
             shiny::actionButton(
-              inputId = "delete_page_btn_ui",  # Use a common ID for all buttons
+              inputId = "delete_page_btn_ui",
               label = NULL,
               icon = shiny::icon("trash-alt"),
               class = "btn-sm btn-outline-danger delete-page-btn",
               title = "Delete page",
-              onclick = paste0("Shiny.setInputValue('delete_page_btn', '", page_id, "');"),
               `data-page-id` = page_id
             )
           ),
@@ -1400,8 +1398,6 @@ render_content_item <- function(item) {
           icon = shiny::icon("trash-alt"),
           class = "btn-sm btn-outline-danger delete-content-btn",
           title = "Delete question",
-          onclick = paste0("Shiny.setInputValue('delete_content_btn', { pageId: '", 
-                         item$page_id, "', contentId: '", item$id, "', contentType: 'question' });"),
           `data-content-id` = item$id,
           `data-page-id` = item$page_id
         )
@@ -2081,6 +2077,40 @@ get_studio_js <- function() {
         });
       }
       
+      // Add delete confirmation handlers
+      function initDeleteConfirmations() {
+        // Page delete confirmation
+        $(document).off('click', '.delete-page-btn').on('click', '.delete-page-btn', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          var pageId = $(this).attr('data-page-id');
+          if (confirm('Are you sure you want to delete page \"' + pageId + '\"?')) {
+            Shiny.setInputValue('delete_page_btn', pageId);
+          }
+          return false;
+        });
+        
+        // Content delete confirmation
+        $(document).off('click', '.delete-content-btn').on('click', '.delete-content-btn', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          var pageId = $(this).attr('data-page-id');
+          var contentId = $(this).attr('data-content-id');
+          var contentType = $(this).closest('[data-content-type]').attr('data-content-type');
+          
+          if (confirm('Are you sure you want to delete this ' + contentType + '?')) {
+            Shiny.setInputValue('delete_content_btn', { 
+              pageId: pageId, 
+              contentId: contentId, 
+              contentType: contentType 
+            });
+          }
+          return false;
+        });
+      }
+      
       // Initialize drag and drop functionality
       function initSortable() {
         // Clean up and reattach all sortable instances
@@ -2170,6 +2200,7 @@ get_studio_js <- function() {
           // Short delay to ensure DOM is updated
           setTimeout(function() {
             initToggle();
+            initDeleteConfirmations(); // Initialize delete confirmations
             initSortable();
           }, 100);
         }
@@ -2178,6 +2209,7 @@ get_studio_js <- function() {
       // Watch for changes to the structure output
       var observer = new MutationObserver(function(mutations) {
         initToggle();
+        initDeleteConfirmations(); // Initialize delete confirmations
         initSortable();
       });
       
@@ -2186,6 +2218,11 @@ get_studio_js <- function() {
       if (target) {
         observer.observe(target, { childList: true, subtree: true });
       }
+      
+      // Initialize right away on document ready
+      initToggle();
+      initDeleteConfirmations();
+      initSortable();
     });
   ")
 }
