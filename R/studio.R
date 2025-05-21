@@ -139,8 +139,33 @@ ui_construction_tab <- function() {
         width = 4,
         style = "border-right: 1px solid #ddd;",
         shiny::div(
-          shiny::h5("Structure", 
-                    style = "text-align: center; background-color: #cce5ff; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
+          # Structure header with undo/redo buttons
+          shiny::div(
+            style = "display: flex; justify-content: space-between; align-items: center; background-color: #cce5ff; padding: 6px; margin-bottom: 10px; border-radius: 4px;",
+            
+            # Undo button (left)
+            shiny::actionButton(
+              "undo_btn",
+              NULL,
+              icon = shiny::icon("undo"),
+              class = "btn-sm",
+              style = "background-color: #cce5ff; border-color: #007bff; color: #007bff; padding: 2px 5px; font-size: 0.8rem;"
+            ),
+            
+            # Structure title (center)
+            shiny::h5("Structure", style = "margin: 0; text-align: center; flex-grow: 1;"),
+            
+            # Redo button (right)
+            shiny::actionButton(
+              "redo_btn",
+              NULL,
+              icon = shiny::icon("redo"),
+              class = "btn-sm",
+              style = "background-color: #cce5ff; border-color: #007bff; color: #007bff; padding: 2px 5px; font-size: 0.8rem;"
+            )
+          ),
+          
+          # Structure content panel
           shiny::wellPanel(
             style = "background-color: #f0f8ff; border-color: #cce5ff; padding: 0.5rem;",
             shiny::div(
@@ -157,8 +182,34 @@ ui_construction_tab <- function() {
         style = "border-right: 1px solid #ddd;",
         shiny::div(
           style = "height: calc(100vh - 90px);",
-          shiny::h5("Code", 
-                    style = "text-align: center; background-color: #d4edda; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
+          
+          # Code header with undo/redo buttons
+          shiny::div(
+            style = "display: flex; justify-content: space-between; align-items: center; background-color: #d4edda; padding: 6px; margin-bottom: 10px; border-radius: 4px;",
+            
+            # Undo button (left)
+            shiny::actionButton(
+              "undo_btn",
+              NULL,
+              icon = shiny::icon("undo"),
+              class = "btn-sm",
+              style = "background-color: #d4edda; border-color: #28a745; color: #28a745; padding: 2px 5px; font-size: 0.8rem;"
+            ),
+            
+            # Code title (center)
+            shiny::h5("Code", style = "margin: 0; text-align: center; flex-grow: 1;"),
+            
+            # Redo button (right)
+            shiny::actionButton(
+              "redo_btn",
+              NULL,
+              icon = shiny::icon("redo"),
+              class = "btn-sm",
+              style = "background-color: #d4edda; border-color: #28a745; color: #28a745; padding: 2px 5px; font-size: 0.8rem;"
+            )
+          ),
+          
+          # Code panel with tabs
           shiny::wellPanel(
             style = "background-color: #f0fff0; border-color: #d4edda; padding: 0.5rem;",
             shiny::tabsetPanel(
@@ -418,6 +469,26 @@ studio_server <- function() {
         }
       }
     }, ignoreInit = TRUE, ignoreNULL = TRUE)
+
+    # Handle Undo button
+    shiny::observeEvent(input$undo_btn, {
+      # Determine which editor is active
+      if (input$code_tabs == "survey.qmd") {
+        session$sendCustomMessage("aceUndo", "survey_editor")
+      } else if (input$code_tabs == "app.R") {
+        session$sendCustomMessage("aceUndo", "app_editor")
+      }
+    })
+
+    # Handle Redo button
+    shiny::observeEvent(input$redo_btn, {
+      # Determine which editor is active
+      if (input$code_tabs == "survey.qmd") {
+        session$sendCustomMessage("aceRedo", "survey_editor")
+      } else if (input$code_tabs == "app.R") {
+        session$sendCustomMessage("aceRedo", "app_editor")
+      }
+    })
 
     # Handle page drag and drop reordering
     shiny::observeEvent(input$page_drag_completed, {
@@ -2054,6 +2125,25 @@ get_studio_css <- function() {
 get_studio_js <- function() {
   return("
     $(document).ready(function() {
+      // Handle undo/redo commands from Shiny
+      Shiny.addCustomMessageHandler('aceUndo', function(editorId) {
+        var editor = ace.edit(editorId);
+        editor.undo();
+        editor.clearSelection();
+        editor.navigateTo(0, 0);
+        editor.scrollToLine(0, true, true, function() {});
+        editor.focus();
+      });
+
+      Shiny.addCustomMessageHandler('aceRedo', function(editorId) {
+        var editor = ace.edit(editorId);
+        editor.redo();
+        editor.clearSelection();
+        editor.navigateTo(0, 0);
+        editor.scrollToLine(0, true, true, function() {});
+        editor.focus();
+      });
+      
       // Initialize toggle functionality after DOM is ready
       function initToggle() {
         $('.page-header').off('click').on('click', function(e) {
@@ -2085,7 +2175,7 @@ get_studio_js <- function() {
           e.stopPropagation();
           
           var pageId = $(this).attr('data-page-id');
-          if (confirm('Are you sure you want to delete page \"' + pageId + '\"?')) {
+          if (confirm('Are you sure you want to delete page \"' + pageId + '\"? This action cannot be undone.')) {
             Shiny.setInputValue('delete_page_btn', pageId);
           }
           return false;
@@ -2100,7 +2190,7 @@ get_studio_js <- function() {
           var contentId = $(this).attr('data-content-id');
           var contentType = $(this).closest('[data-content-type]').attr('data-content-type');
           
-          if (confirm('Are you sure you want to delete this ' + contentType + '?')) {
+          if (confirm('Are you sure you want to delete this ' + contentType + '? This action cannot be undone.')) {
             Shiny.setInputValue('delete_content_btn', { 
               pageId: pageId, 
               contentId: contentId, 
