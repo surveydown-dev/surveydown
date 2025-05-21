@@ -365,7 +365,7 @@ studio_server <- function() {
       }
     })
     
-    # Handle delete page button clicks
+    # Handle delete page button
     shiny::observeEvent(input$delete_page_btn, {
       # The input$delete_page_btn will contain the page ID when a button is clicked
       page_id <- input$delete_page_btn
@@ -381,10 +381,40 @@ studio_server <- function() {
         # Update editor if successful
         if (!is.null(updated_content)) {
           shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
-          shiny::showNotification(paste("Page", page_id, "deleted successfully!"), type = "message")
+          shiny::showNotification(paste0("Page \"", page_id, "\" deleted successfully!"), type = "message")
           survey_structure$refresh()
         } else {
           shiny::showNotification(paste("Failed to delete page", page_id), type = "error")
+        }
+      }
+    }, ignoreInit = TRUE, ignoreNULL = TRUE)
+
+    # Handle delete content button
+    shiny::observeEvent(input$delete_content_btn, {
+      req(input$delete_content_btn, input$survey_editor)
+      
+      # Extract content info from the input
+      content_info <- input$delete_content_btn
+      page_id <- content_info$pageId
+      content_id <- content_info$contentId
+      content_type <- content_info$contentType
+      
+      if (!is.null(page_id) && !is.null(content_id)) {
+        # Get and prepare current editor content
+        current_content <- input$survey_editor
+        current_content <- r_chunk_separation(current_content)
+        
+        # Delete the content
+        updated_content <- delete_content_from_survey(page_id, content_id, content_type, current_content)
+        
+        # Update editor if successful
+        if (!is.null(updated_content)) {
+          shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
+          shiny::showNotification(paste0(toupper(substr(content_type, 1, 1)), substr(content_type, 2, nchar(content_type)), 
+                                    " \"", content_id, "\" deleted successfully!"), type = "message")
+          survey_structure$refresh()
+        } else {
+          shiny::showNotification(paste("Failed to delete", content_type, content_id), type = "error")
         }
       }
     }, ignoreInit = TRUE, ignoreNULL = TRUE)
@@ -1345,13 +1375,33 @@ render_content_item <- function(item) {
       
       # Question content
       shiny::div(
+        style = "flex-grow: 1;",
         shiny::HTML(paste0("<strong>Question: ", item$id, "</strong>"))
       ),
       shiny::div(
+        style = "flex-grow: 1;",
         shiny::HTML(paste0("Type: ", item$type))
       ),
       shiny::div(
+        style = "flex-grow: 1;",
         shiny::HTML(paste0("Label: ", item$label))
+      ),
+      
+      # Content delete button
+      shiny::div(
+        class = "content-actions",
+        style = "margin-left: auto;",
+        shiny::actionButton(
+          inputId = "delete_content_btn_ui",
+          label = NULL,
+          icon = shiny::icon("trash-alt"),
+          class = "btn-sm btn-outline-danger delete-content-btn",
+          title = "Delete question",
+          onclick = paste0("Shiny.setInputValue('delete_content_btn', { pageId: '", 
+                         item$page_id, "', contentId: '", item$id, "', contentType: 'question' });"),
+          `data-content-id` = item$id,
+          `data-page-id` = item$page_id
+        )
       )
     )
   } else {
@@ -1370,7 +1420,25 @@ render_content_item <- function(item) {
       
       # Text content preview
       shiny::div(
+        style = "flex-grow: 1;",
         shiny::HTML(paste0("<strong>Text:</strong> ", item$preview))
+      ),
+      
+      # Content delete button
+      shiny::div(
+        class = "content-actions",
+        style = "margin-left: auto;",
+        shiny::actionButton(
+          inputId = "delete_content_btn_ui",
+          label = NULL,
+          icon = shiny::icon("trash-alt"),
+          class = "btn-sm btn-outline-danger delete-content-btn",
+          title = "Delete text",
+          onclick = paste0("Shiny.setInputValue('delete_content_btn', { pageId: '", 
+                         item$page_id, "', contentId: '", item$id, "', contentType: 'text' });"),
+          `data-content-id` = item$id,
+          `data-page-id` = item$page_id
+        )
       )
     )
   }
@@ -1513,7 +1581,12 @@ extract_page_items <- function(page_content, page_id) {
       text_id <- paste0("text_", page_id, "_", text_counter)
       text_counter <- text_counter + 1
       
-      content_items[[text_id]] <- create_text_item(text_id, segment$content, item_index)
+      content_items[[text_id]] <- create_text_item(
+        text_id, 
+        segment$content, 
+        item_index,
+        page_id
+      )
       item_index <- item_index + 1
     } else if (segment$type == "question") {
       # Extract question parameters
@@ -1525,7 +1598,8 @@ extract_page_items <- function(page_content, page_id) {
           question_params$id,
           question_params$label,
           segment$content,
-          item_index
+          item_index,
+          page_id
         )
         item_index <- item_index + 1
       }
@@ -1536,19 +1610,20 @@ extract_page_items <- function(page_content, page_id) {
 }
 
 # Create a question item
-create_question_item <- function(type, id, label, raw_content, position) {
+create_question_item <- function(type, id, label, raw_content, position, page_id) {
   list(
     type = type,
     id = id,
     label = label,
     raw = raw_content,
     position = position,
-    is_question = TRUE
+    is_question = TRUE,
+    page_id = page_id
   )
 }
 
 # Create a text item
-create_text_item <- function(id, content, position) {
+create_text_item <- function(id, content, position, page_id) {
   # Generate preview (first 5 words)
   words <- strsplit(content, "\\s+")[[1]]
   preview <- paste(head(words, 5), collapse = " ")
@@ -1559,7 +1634,8 @@ create_text_item <- function(id, content, position) {
     preview = preview,
     content = content,
     position = position,
-    is_question = FALSE
+    is_question = FALSE,
+    page_id = page_id
   )
 }
 
@@ -1606,6 +1682,131 @@ delete_page_from_survey <- function(page_id, editor_content) {
   
   # Return the updated content
   return(paste(result, collapse = "\n"))
+}
+
+# Delete content from a page in the survey
+delete_content_from_survey <- function(page_id, content_id, content_type, editor_content) {
+  if (is.null(editor_content) || is.null(page_id) || is.null(content_id)) {
+    return(NULL)
+  }
+  
+  # Ensure editor_content is in lines
+  if (is.character(editor_content) && length(editor_content) == 1) {
+    editor_content <- strsplit(editor_content, "\n")[[1]]
+  }
+  
+  # Find the page
+  page_start_pattern <- paste0("::: \\{.sd[_-]page id=", page_id, "\\}")
+  page_start_lines <- grep(page_start_pattern, editor_content, perl = TRUE)
+  
+  if (length(page_start_lines) == 0) {
+    return(NULL)
+  }
+  
+  # Use the first match
+  page_start_line <- page_start_lines[1]
+  
+  # Find the page end
+  page_end_line <- NULL
+  for (i in page_start_line:length(editor_content)) {
+    if (grepl("^:::$", editor_content[i])) {
+      page_end_line <- i
+      break
+    }
+  }
+  
+  if (is.null(page_end_line)) {
+    return(NULL)
+  }
+  
+  # Get the page content
+  page_content <- editor_content[page_start_line:page_end_line]
+  
+  # Parse the structure to find the content
+  survey_structure <- parse_survey_structure()
+  
+  if (is.null(survey_structure) || !("pages" %in% names(survey_structure)) ||
+      !(page_id %in% names(survey_structure$pages)) ||
+      !(content_id %in% names(survey_structure$pages[[page_id]]))) {
+    return(NULL)
+  }
+  
+  # Get the content item
+  content_item <- survey_structure$pages[[page_id]][[content_id]]
+  
+  # Depending on content type, find and remove it
+  if (content_type == "question" && content_item$is_question) {
+    # Remove the R chunk containing the question
+    r_block_pattern <- "```\\{r\\}([\\s\\S]*?)```"
+    r_blocks <- gregexpr(r_block_pattern, paste(page_content, collapse = "\n"), perl = TRUE)
+    r_matches <- regmatches(paste(page_content, collapse = "\n"), r_blocks)[[1]]
+    
+    for (r_block in r_matches) {
+      # Look for the question ID in the block
+      if (grepl(paste0('id\\s*=\\s*["\']', content_id, '["\']'), r_block, perl = TRUE)) {
+        # Remove this block from page content
+        updated_page_content <- gsub(gsub("([\\$\\^\\*\\+\\?\\(\\)\\[\\]\\{\\}\\.\\|])", "\\\\\\1", r_block), 
+                                 "", paste(page_content, collapse = "\n"), fixed = TRUE)
+        
+        # Rebuild the document
+        result <- c(
+          editor_content[1:(page_start_line-1)],
+          strsplit(updated_page_content, "\n")[[1]],
+          if (page_end_line < length(editor_content)) editor_content[(page_end_line+1):length(editor_content)] else NULL
+        )
+        
+        # Clean up any consecutive blank lines
+        result <- clean_consecutive_blank_lines(result)
+        
+        return(paste(result, collapse = "\n"))
+      }
+    }
+  } else if (content_type == "text" && !content_item$is_question) {
+    # For text items, we need to find the exact text and remove it
+    if ("content" %in% names(content_item)) {
+      text_content <- content_item$content
+      
+      # Escape special characters for regex
+      escaped_text <- gsub("([\\$\\^\\*\\+\\?\\(\\)\\[\\]\\{\\}\\.\\|])", "\\\\\\1", text_content)
+      
+      # Find and remove the text from page content
+      updated_page_content <- gsub(escaped_text, "", paste(page_content, collapse = "\n"), fixed = TRUE)
+      
+      # Rebuild the document
+      result <- c(
+        editor_content[1:(page_start_line-1)],
+        strsplit(updated_page_content, "\n")[[1]],
+        if (page_end_line < length(editor_content)) editor_content[(page_end_line+1):length(editor_content)] else NULL
+      )
+      
+      # Clean up any consecutive blank lines
+      result <- clean_consecutive_blank_lines(result)
+      
+      return(paste(result, collapse = "\n"))
+    }
+  }
+  
+  # If we get here, deletion failed
+  return(NULL)
+}
+
+# Helper function to clean up consecutive blank lines
+clean_consecutive_blank_lines <- function(lines) {
+  # Remove consecutive blank lines
+  result <- character(0)
+  prev_blank <- FALSE
+  
+  for (line in lines) {
+    current_blank <- trimws(line) == ""
+    
+    if (!(prev_blank && current_blank)) {
+      result <- c(result, line)
+    }
+    
+    prev_blank <- current_blank
+  }
+  
+  return(result)
 }
 
 # Extract question parameters
@@ -1812,7 +2013,21 @@ get_studio_css <- function() {
     .text-item .drag-handle:hover {
       color: #333;
     }
-    
+
+    .question-item, .text-item {
+      display: flex;
+      align-items: center;
+    }
+
+    .content-actions {
+      margin-right: 5px;
+    }
+
+    .delete-content-btn, .delete-page-btn {
+      padding: 2px 6px;
+      font-size: 0.8rem;
+    }
+
     /* Ghost class for sortable.js */
     .sortable-ghost {
       opacity: 0.4;
@@ -1889,6 +2104,8 @@ get_studio_js <- function() {
             animation: 150,
             handle: '.drag-handle',
             ghostClass: 'sortable-ghost',
+            filter: '.delete-content-btn, .content-actions',
+            preventOnFilter: true,
             onEnd: function(evt) {
               // Create an array of objects
               var contentOrder = [];
