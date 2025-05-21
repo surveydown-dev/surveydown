@@ -93,7 +93,7 @@ ui_construction_tab <- function() {
         shiny::wellPanel(
           style = "background-color: #fff3e0; border-color: #ffe0b2; padding: 0.5rem;",
           shiny::div(
-            style = "overflow-y: auto; height: calc(100vh - 378px);",
+            style = "overflow-y: auto; height: calc(100vh - 368px);",
             
             # Common inputs for both content types
             shiny::selectInput("page_for_content", "To Page:", choices = NULL),
@@ -169,7 +169,7 @@ ui_construction_tab <- function() {
           shiny::wellPanel(
             style = "background-color: #f0f8ff; border-color: #cce5ff; padding: 0.5rem;",
             shiny::div(
-              style = "overflow-y: auto; height: calc(100vh - 150px);",
+              style = "overflow-y: auto; height: calc(100vh - 140px);",
               shiny::uiOutput("survey_structure")
             )
           )
@@ -181,8 +181,6 @@ ui_construction_tab <- function() {
         width = 5,
         style = "border-right: 1px solid #ddd;",
         shiny::div(
-          style = "height: calc(100vh - 90px);",
-          
           # Code header with undo/redo buttons
           shiny::div(
             style = "display: flex; justify-content: space-between; align-items: center; background-color: #d4edda; padding: 6px; margin-bottom: 10px; border-radius: 4px;",
@@ -241,20 +239,20 @@ ui_preview_tab <- function() {
   shiny::tabPanel(
     "Preview",
     shiny::div(
-      style = "display: flex; flex-direction: column; align-items: center; height: calc(100vh - 89px);",
+      style = "display: flex; flex-direction: column; align-items: center; height: calc(100vh - 79px);",
       
-      # Preview iframe with reduced height to make room for button
+      # Centered button container (now at the top)
       shiny::div(
-        style = "width: 100%; height: calc(100vh - 125px); border: none;",
-        shiny::uiOutput("preview_frame")
-      ),
-      
-      # Centered button container
-      shiny::div(
-        style = "margin-top: 10px; text-align: center;",
+        style = "margin-bottom: 10px; text-align: center;",
         shiny::actionButton("refresh_preview_btn", "Refresh Preview", 
                            class = "btn-success btn-sm",
                            icon = shiny::icon("sync"))
+      ),
+      
+      # Preview iframe with adjusted height
+      shiny::div(
+        style = "width: 100%; height: calc(100vh - 115px); border: none;",
+        shiny::uiOutput("preview_frame")
       )
     )
   )
@@ -274,7 +272,7 @@ studio_server <- function() {
         value = survey_content,
         mode = "markdown",
         theme = "textmate",
-        height = "calc(100vh - 203px)",
+        height = "calc(100vh - 193px)",
         fontSize = 14,
         wordWrap = TRUE
       )
@@ -288,7 +286,7 @@ studio_server <- function() {
         value = app_content,
         mode = "r",
         theme = "chrome",
-        height = "calc(100vh - 203px)",
+        height = "calc(100vh - 193px)",
         fontSize = 14,
         wordWrap = TRUE
       )
@@ -2014,6 +2012,9 @@ launch_preview_server <- function(port) {
 # Function to get the custom CSS for the studio
 get_studio_css <- function() {
   return("
+    .navbar:not(.fixed-bottom):not(.navbar-fixed-bottom):not(.navbar-fixed-bottom)+div>.tab-content>.tab-pane {
+      margin-top: 10px !important;
+    }
     .shiny-ace.ace_editor {
       margin-bottom: 0.1rem !important;
     }
