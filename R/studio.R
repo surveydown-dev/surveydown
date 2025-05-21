@@ -1373,18 +1373,21 @@ render_content_item <- function(item) {
         shiny::icon("grip-lines")
       ),
       
-      # Question content
+      # Content wrapper - keeps the vertical layout
       shiny::div(
+        class = "content-wrapper",
         style = "flex-grow: 1;",
-        shiny::HTML(paste0("<strong>Question: ", item$id, "</strong>"))
-      ),
-      shiny::div(
-        style = "flex-grow: 1;",
-        shiny::HTML(paste0("Type: ", item$type))
-      ),
-      shiny::div(
-        style = "flex-grow: 1;",
-        shiny::HTML(paste0("Label: ", item$label))
+        
+        # Question content - each on its own line
+        shiny::div(
+          shiny::HTML(paste0("<strong>Question: ", item$id, "</strong>"))
+        ),
+        shiny::div(
+          shiny::HTML(paste0("Type: ", item$type))
+        ),
+        shiny::div(
+          shiny::HTML(paste0("Label: ", item$label))
+        )
       ),
       
       # Content delete button
@@ -1418,10 +1421,15 @@ render_content_item <- function(item) {
         shiny::icon("grip-lines")
       ),
       
-      # Text content preview
+      # Text content wrapper - keeps vertical layout if needed
       shiny::div(
+        class = "content-wrapper",
         style = "flex-grow: 1;",
-        shiny::HTML(paste0("<strong>Text:</strong> ", item$preview))
+        
+        # Text content preview
+        shiny::div(
+          shiny::HTML(paste0("<strong>Text:</strong> ", item$preview))
+        )
       ),
       
       # Content delete button
@@ -1973,6 +1981,10 @@ get_studio_css <- function() {
       color: #333;
     }
     
+    .page-actions {
+      margin-left: auto;
+    }
+
     .question-item {
       margin-left: 5px; 
       margin-bottom: 10px; 
