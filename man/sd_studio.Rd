@@ -2,13 +2,13 @@
 % Please edit documentation in R/studio.R
 \name{sd_studio}
 \alias{sd_studio}
-\title{Launch Surveydown Studio}
+\title{Launch surveydown Studio}
 \usage{
-sd_studio(path = tempdir(), template = "default")
+sd_studio(path = getwd(), template = "default")
 }
 \arguments{
 \item{path}{A character string specifying the directory where the survey
-template should be created. Defaults to a temporary directory.}
+template should be created. Defaults to the current working directory.}
 
 \item{template}{A character string specifying the template to use.
 Default is "default" which uses the built-in package template.

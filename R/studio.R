@@ -13,6 +13,8 @@
 #' @return No return value, called for its side effects of creating a survey
 #'   project and launching a Shiny app.
 #' @importFrom stats runif
+#' @importFrom utils head
+#' @importFrom shiny req
 #' @export
 #'
 #' @examples
@@ -24,24 +26,18 @@
 #'   sd_studio(path = "my_survey", template = "question_types")
 #' }
 sd_studio <- function(path = getwd(), template = "default") {
-  # Check if the function was called with an explicit template parameter
   template_explicitly_provided <- !missing(template)
-  
-  # Check if survey.qmd and app.R files already exist
   survey_exists <- file.exists(file.path(path, "survey.qmd"))
   app_exists <- file.exists(file.path(path, "app.R"))
-  
-  # Create a new survey if template was explicitly provided or files don't exist
+
   if (template_explicitly_provided || !survey_exists || !app_exists) {
     sd_create_survey(path = path, template = template)
   }
   
-  # Set working directory to the survey path
   original_dir <- getwd()
   on.exit(setwd(original_dir), add = TRUE)
   setwd(path)
   
-  # Launch the Shiny app
   shiny::shinyApp(ui = studio_ui(), server = studio_server())
 }
 
@@ -63,7 +59,6 @@ ui_construction_tab <- function() {
   shiny::tabPanel(
     "Construction",
 
-    # Custom CSS and JavaScript
     shiny::tags$head(
       shiny::tags$style(HTML(get_studio_css())),
       shiny::tags$script(src = "https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"),
@@ -87,7 +82,7 @@ ui_construction_tab <- function() {
         
         shiny::tags$hr(style = "margin: 1rem 0;"),
 
-        # Unified Add Content UI
+        # Add Content UI
         shiny::h5("Add Content", 
             style = "text-align: center; background-color: #ffe0b2; padding: 6px; margin-bottom: 10px; border-radius: 4px;"),
         shiny::wellPanel(
@@ -95,7 +90,7 @@ ui_construction_tab <- function() {
           shiny::div(
             style = "overflow-y: auto; height: calc(100vh - 368px);",
             
-            # Common inputs for both content types
+            # Inputs of content
             shiny::selectInput("page_for_content", "To Page:", choices = NULL),
             shiny::selectInput("content_type", "Content Type:", 
                       choices = c("Text" = "text", "Question" = "question")),
@@ -128,7 +123,7 @@ ui_construction_tab <- function() {
               shiny::textInput("question_label", "Question Label:", placeholder = "Enter question text")
             ),
             
-            # Common add button
+            # Add button
             shiny::actionButton("add_content_btn", "Add Content", class = "btn-primary", style = "width: 100%; margin-top: 10px;")
           )
         )
@@ -241,7 +236,7 @@ ui_preview_tab <- function() {
     shiny::div(
       style = "display: flex; flex-direction: column; align-items: center; height: calc(100vh - 79px);",
       
-      # Centered button container (now at the top)
+      # Refresh button container
       shiny::div(
         style = "margin-bottom: 10px; text-align: center;",
         shiny::actionButton("refresh_preview_btn", "Refresh Preview", 
@@ -515,7 +510,7 @@ studio_server <- function() {
       }
     }, ignoreInit = TRUE)
 
-    # Handle content drag and drop reordering within a page
+    # Handle content drag and drop reordering
     shiny::observeEvent(input$content_drag_completed, {
       # Extract page ID and order
       page_id <- input$content_drag_completed$pageId
@@ -567,21 +562,6 @@ studio_server <- function() {
         shiny::showNotification(paste("Error:", e$message), type = "error")
       })
     }, ignoreInit = TRUE)
-
-    # Handle page reordering
-    shiny::observeEvent(input$page_order, {
-      if (length(input$page_order) > 0) {
-        current_content <- input$survey_editor
-        updated_content <- reorder_pages(input$page_order, current_content)
-        
-        if (!is.null(updated_content)) {
-          shinyAce::updateAceEditor(session, "survey_editor", value = updated_content)
-          survey_structure$refresh()
-        } else {
-          shiny::showNotification("Failed to reorder pages", type = "error")
-        }
-      }
-    }, ignoreInit = TRUE, priority = 100)
     
     # Clean up when session ends
     session$onSessionEnded(function() {
@@ -633,11 +613,6 @@ server_structure_handlers <- function(input, output, session) {
     }
     return(survey_structure$page_ids)
   }
-  
-  # Refresh structure when survey.qmd is saved
-  shiny::observeEvent(input$save_survey, {
-    refresh_structure()
-  }, ignoreInit = TRUE)
   
   # Monitor editor changes with debounce
   last_update_time <- shiny::reactiveVal(Sys.time())
@@ -1299,8 +1274,8 @@ generate_question_code <- function(type, id, label) {
 # Parse survey structure from survey.qmd file
 parse_survey_structure <- function() {
   # Read the survey content
-  if (exists("input") && !is.null(input$survey_editor)) {
-    survey_content <- input$survey_editor
+  if (exists("input", envir = parent.frame()) && !is.null(get("input", envir = parent.frame())$survey_editor)) {
+    survey_content <- get("input", envir = parent.frame())$survey_editor
     survey_content <- paste(survey_content, collapse = "\n")
   } else if (file.exists("survey.qmd")) {
     survey_content <- readLines("survey.qmd", warn = FALSE)
