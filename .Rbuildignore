@@ -1,5 +1,5 @@
 ^data-raw$
-surveydown.Rproj
+^.*\.Rproj$
 ^\.Rproj\.user$
 ^docs$
 ^notes$

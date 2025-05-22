@@ -212,7 +212,7 @@ sd_db_connect <- function(
   if (!file.exists(env_file)) {
     cli::cli_alert_warning("No .env file found.")
     cli::cli_alert_info("Run the following to configure your database:")
-    cli::cli_code("sd_db_config()")
+    cli::cli_code("surveydown::sd_db_config()")
     return(NULL)
   }
 
