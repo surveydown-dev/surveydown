@@ -57,8 +57,14 @@
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
-<dd><p>Character string. Specifies the type of output. Can be
-<code>"question"</code>, <code>"value"</code>, or <code>NULL.</code> If <code>NULL</code>, the function behaves like
+<dd><p>Character string. Specifies the type of output corresponding
+with the question <code>id</code>. Can be <code>"question"</code>, <code>"value"</code>, <code>"label_option"</code>,
+<code>"label_question"</code>, or <code>NULL.</code> If <code>"question"</code>, it will display a
+question defined in the server. If <code>"value"</code>, it will display the value
+of question <code>id</code> selected by the respondent. If <code>"label_option"</code>, it will
+display the label of the option for question <code>id</code> selected by the
+respondent. If <code>"label_question"</code>, it will display the <code>label</code> argument
+value for question <code>id</code>. Finally, if <code>NULL</code>, the function behaves like
 <code><a href="https://rdrr.io/pkg/shiny/man/htmlOutput.html" class="external-link">shiny::uiOutput()</a></code>.</p></dd>
 
 
@@ -139,7 +145,7 @@ with the display style determined by the <code>display</code> parameter.</p></li
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.2.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
 </div>
 
     </footer></div>
