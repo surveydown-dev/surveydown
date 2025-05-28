@@ -224,12 +224,12 @@ get_footer <- function(metadata) {
 
 find_all_yaml_files <- function() {
   # Find all yml files
-  all_files <- list.files(path = ".", pattern = "\\.(yml|yaml)$", 
+  all_files <- list.files(path = ".", pattern = "\\.(yml|yaml)$",
                           recursive = TRUE, full.names = TRUE)
-  
+
   # Exclude the _survey/ directory
   yaml_files <- all_files[!grepl("^\\./?\\_survey/", all_files)]
-  
+
   return(unique(yaml_files))
 }
 
@@ -243,16 +243,16 @@ survey_needs_updating <- function(paths) {
   time_html <- file.info(paths$target_html)$mtime
 
   if (time_qmd > time_html) { return(TRUE) }
-  
+
   # Find all YAML files
   yaml_files <- find_all_yaml_files()
-  
+
   # Check if any YAML file is newer than the rendered HTML
   for (yaml_file in yaml_files) {
     if (fs::file_exists(yaml_file)) {
       time_yml <- file.info(yaml_file)$mtime
-      if (time_yml > time_html) { 
-        return(TRUE) 
+      if (time_yml > time_html) {
+        return(TRUE)
       }
     }
   }
@@ -345,7 +345,7 @@ extract_head_content <- function(html_content) {
 #' two sided (range based) slider. Values to be used as the starting default
 #' for the slider. Defaults to the median of values.
 #' @param yml Character string. The name of the YAML file to load question configurations from.
-#' Defaults to `"questions.yml"`. Custom YAML files can be specified, either in 
+#' Defaults to `"questions.yml"`. Custom YAML files can be specified, either in
 #' the root directory or subdirectories (e.g., `"folder/custom.yml"`).
 #' @param ... Additional arguments, often specific to different input types.
 #' Examples include `pre`, `sep`, `step`, and `animate` for `"slider"` and
@@ -430,13 +430,13 @@ sd_question <- function(
     "text", "textarea", "numeric", "slider", "slider_numeric", "date",
     "daterange", "matrix"
   )
-  
+
   # Define types that require options
   types_requiring_options <- c(
     "select", "mc", "mc_multiple", "mc_buttons",
     "mc_multiple_buttons", "slider", "slider_numeric", "matrix"
   )
-  
+
   # First check for missing arguments and try to load from local yml file
   missing_option <- is.null(option) && !is.null(type) && (type %in% types_requiring_options)
   if (is.null(type) || is.null(label) || missing_option) {
@@ -452,16 +452,16 @@ sd_question <- function(
         stop("Question '", id, "' not found in yml file ", yml)
       } else {
         q_data <- root_questions[[id]]
-        
+
         # Only override parameters that weren't provided
         if (is.null(type)) {
           type <- q_data$type
         }
-        
+
         if (is.null(label)) {
           label <- q_data$label
         }
-        
+
         # Handle different option formats based on question type
         if (is.null(option) && !is.null(q_data$options)) {
           if (is.list(q_data$options)) {
@@ -474,12 +474,12 @@ sd_question <- function(
             option <- q_data$options
           }
         }
-        
+
         # Load default value for numeric sliders
         if (is.null(default) && type == "slider_numeric" && !is.null(q_data$default)) {
           default <- q_data$default
         }
-        
+
         # Handle range slider flag
         if (type == "slider_numeric" && !is.null(q_data$is_range) && q_data$is_range) {
           # If it's a range slider and we don't have a default value yet,
@@ -493,7 +493,7 @@ sd_question <- function(
             default <- c(min_val + range_width/3, max_val - range_width/3)
           }
         }
-        
+
         # Handle row for matrix questions
         if (is.null(row) && !is.null(q_data$row) && is.list(q_data$row)) {
           row_names <- names(q_data$row)
@@ -511,7 +511,7 @@ sd_question <- function(
   if (is.null(type)) {
     stop("Question type is required but missing. Please provide a type or ensure it exists in the questions.yml file.")
   }
-  
+
   if (!type %in% valid_types) {
     stop(
       sprintf(
@@ -585,28 +585,7 @@ sd_question <- function(
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
-            
-            // Equalize button widths when the document is ready
-            $(document).ready(function() {
-              setTimeout(function() {
-                var buttons = $('#%s .btn');
-                var maxWidth = 0;
-                
-                // Find the maximum width
-                buttons.each(function() {
-                  var width = $(this).outerWidth();
-                  if (width > maxWidth) {
-                    maxWidth = width;
-                  }
-                });
-                
-                // Set all buttons to the maximum width
-                buttons.each(function() {
-                  $(this).css('width', maxWidth + 'px');
-                });
-              }, 100); // Small delay to ensure all styles are applied
-            });
-        ", id, js_interaction, id))))
+        ", id, js_interaction))))
 
   } else if (type == "mc_multiple_buttons") {
 
@@ -624,29 +603,7 @@ sd_question <- function(
             $(document).on('click', '#%s .btn', function() {
                 %s
             });
-            
-            // Equalize button widths when the document is ready
-            $(document).ready(function() {
-              setTimeout(function() {
-                var buttons = $('#%s .btn');
-                var maxWidth = 0;
-                
-                // Find the maximum width
-                buttons.each(function() {
-                  var width = $(this).outerWidth();
-                  if (width > maxWidth) {
-                    maxWidth = width;
-                  }
-                });
-                
-                // Set all buttons to the maximum width
-                buttons.each(function() {
-                  $(this).css('width', maxWidth + 'px');
-                });
-              }, 100); // Small delay to ensure all styles are applied
-            });
-        ", id, js_interaction, id))))
-
+        ", id, js_interaction))))
   } else if (type == "text") {
 
     output <- shiny::textInput(
@@ -724,14 +681,14 @@ sd_question <- function(
 
       # Store the values in a data attribute for extraction
       values_json <- jsonlite::toJSON(values)
-      
+
       # Add a data-values attribute to the input element for extraction
       js_add_values <- sprintf('
         $(document).ready(function() {
           $("#%s input").attr("data-values", %s);
         });
       ', id, values_json)
-      
+
       output <- shiny::tagAppendChild(
           output,
           shiny::tags$script(htmltools::HTML(js_add_values))
@@ -1529,9 +1486,15 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' Output Function for Displaying reactive objects and values
 #'
 #' @param id Character string. A unique identifier for the output element.
-#' @param type Character string. Specifies the type of output. Can be
-#'   `"question"`, `"value"`, or `NULL.` If `NULL`, the function behaves like
-#'   `shiny::uiOutput()`.
+#' @param type Character string. Specifies the type of output corresponding
+#'   with the question `id`. Can be `"question"`, `"value"`, `"label_option"`,
+#'    `"label_question"`, or `NULL.` If `"question"`, it will display a
+#'    question defined in the server. If `"value"`, it will display the value
+#'    of question `id` selected by the respondent. If `"label_option"`, it will
+#'    display the label of the option for question `id` selected by the
+#'    respondent. If `"label_question"`, it will display the `label` argument
+#'    value for question `id`. Finally, if `NULL`, the function behaves like
+#'    `shiny::uiOutput()`.
 #' @param width Character string. The width of the UI element. Defaults to
 #'   `"100%"`.
 #' @param display Character string. Specifies the display type for `"value"`

@@ -17,8 +17,14 @@ sd_output(
 \arguments{
 \item{id}{Character string. A unique identifier for the output element.}
 
-\item{type}{Character string. Specifies the type of output. Can be
-\code{"question"}, \code{"value"}, or \code{NULL.} If \code{NULL}, the function behaves like
+\item{type}{Character string. Specifies the type of output corresponding
+with the question \code{id}. Can be \code{"question"}, \code{"value"}, \code{"label_option"},
+\code{"label_question"}, or \code{NULL.} If \code{"question"}, it will display a
+question defined in the server. If \code{"value"}, it will display the value
+of question \code{id} selected by the respondent. If \code{"label_option"}, it will
+display the label of the option for question \code{id} selected by the
+respondent. If \code{"label_question"}, it will display the \code{label} argument
+value for question \code{id}. Finally, if \code{NULL}, the function behaves like
 \code{shiny::uiOutput()}.}
 
 \item{width}{Character string. The width of the UI element. Defaults to
