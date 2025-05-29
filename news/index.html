@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.11.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,13 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.1" id="surveydown-0111">surveydown 0.11.1<a class="anchor" aria-label="anchor" href="#surveydown-0111"></a></h2>
+<ul><li>
+<code><a href="../reference/sd_create_survey.html">sd_create_survey()</a></code> now accepts <code>template</code> as the first argument, and <code>path</code> as the second. This follows intuition that we firstly choose a template, and then define the location.</li>
+<li>
+<code><a href="../reference/sd_show_if.html">sd_show_if()</a></code> now works for both questions and pages with the same syntax. Therefore, we also added an ID check for the uniqueness of the <code>page_id</code> and <code>question_id</code> altogether. If there is a duplicated ID, the survey will stop and show an error.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.0" id="surveydown-0110">surveydown 0.11.0<a class="anchor" aria-label="anchor" href="#surveydown-0110"></a></h2><p class="text-muted">CRAN release: 2025-04-17</p>
 <ul><li>Questions can now be defined using an external yml file, defaulting to <code>"questions.yml"</code>.</li>
