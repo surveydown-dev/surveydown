@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.11.1
+
+- `sd_create_survey()` now accepts `template` as the first argument, and `path` as the second. This follows intuition that we firstly choose a template, and then define the location.
+- `sd_show_if()` now works for both questions and pages with the same syntax. Therefore, we also added an ID check for the uniqueness of the `page_id` and `question_id` altogether. If there is a duplicated ID, the survey will stop and show an error.
+
 # surveydown 0.11.0
 
 - Questions can now be defined using an external yml file, defaulting to `"questions.yml"`.

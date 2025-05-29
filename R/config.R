@@ -608,13 +608,14 @@ check_skip_show <- function(
 
   if (!is.null(show_if)) {
     # Get any potential question_ids from the output
+    # Now also include page_ids as valid targets
     invalid_show_targets <- setdiff(
       show_if$targets,
-      c(question_ids, get_output_ids())
+      c(question_ids, page_ids, get_output_ids())
     )
     if (length(invalid_show_targets) > 0) {
       stop(sprintf(
-        "Invalid show_if targets: %s. These must be question IDs defined in the survey.qmd file.",
+        "Invalid show_if targets: %s. These must be question IDs or page IDs defined in the survey.qmd file.",
         paste(invalid_show_targets, collapse = ", "))
       )
     }
@@ -623,23 +624,19 @@ check_skip_show <- function(
 }
 
 check_ids <- function(page_ids, question_ids) {
-  # Check for duplicate page IDs
-  duplicate_page_ids <- page_ids[duplicated(page_ids)]
-  if (length(duplicate_page_ids) > 0) {
-    stop("Duplicate page IDs found: ", paste(duplicate_page_ids, collapse = ", "))
-  }
-
-  # Check for duplicate question IDs
-  duplicate_question_ids <- question_ids[duplicated(question_ids)]
-  if (length(duplicate_question_ids) > 0) {
-    stop("Duplicate question IDs found: ", paste(duplicate_question_ids, collapse = ", "))
+  # Check for duplicated IDs
+  all_ids <- c(page_ids, question_ids)
+  duplicate_ids <- all_ids[duplicated(all_ids)]
+  if (length(duplicate_ids) > 0) {
+    stop("Duplicate IDs found: ", paste(duplicate_ids, collapse = ", "), 
+         ". All page IDs and question IDs must be unique.")
   }
 
   # Check for restricted IDs
   restricted_ids <- c("session_id", "time_start", "time_end", "exit_survey_rating", "current_page")
-  used_restricted_ids <- intersect(restricted_ids, question_ids)
+  used_restricted_ids <- intersect(restricted_ids, all_ids)
   if (length(used_restricted_ids) > 0) {
-    stop("Restricted question IDs found: ", paste(used_restricted_ids, collapse = ", "),
-         ". These IDs are reserved and should not be used for survey questions.")
+    stop("Restricted IDs found: ", paste(used_restricted_ids, collapse = ", "),
+         ". These IDs are reserved and should not be used for survey pages or questions.")
   }
 }

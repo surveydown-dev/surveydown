@@ -184,8 +184,6 @@ tibble_to_list_of_lists <- function(tbl) {
 #' including the default built-in template and specialized templates from the
 #' surveydown-dev/templates repository.
 #'
-#' @param path A character string specifying the directory where the survey
-#'   template should be created. Defaults to the current working directory.
 #' @param template A character string specifying the template to use.
 #'   Default is "default" which uses the built-in package template.
 #'   Other options include:
@@ -206,6 +204,8 @@ tibble_to_list_of_lists <- function(tbl) {
 #'     \item{reactive_drilldown}{Dynamic questions with drill-down capability}
 #'     \item{reactive_questions}{Survey with reactive questions}
 #'   }
+#' @param path A character string specifying the directory where the survey
+#'   template should be created. Defaults to the current working directory.
 #'
 #' @details
 #' When creating a new survey template, this function will:
@@ -222,18 +222,18 @@ tibble_to_list_of_lists <- function(tbl) {
 #'
 #' @examples
 #' if (interactive()) {
-#'   # Create a survey using the default template
+#'   # Create a survey with the "question_types" template in the "my_survey" directory
+#'   sd_create_survey(template = "question_types", path = "my_survey")
+#' 
+#'   # Create a survey using the default template in the "my_survey" directory
 #'   sd_create_survey(path = "my_survey")
 #'
-#'   # Create a survey with the question_types template
-#'   sd_create_survey(path = "question_demo", template = "question_types")
-#'
-#'   # Create a conditional display survey template
-#'   sd_create_survey(path = "conditional_survey", template = "conditional_display")
+#'   # Create a survey with default template in current directory
+#'   sd_create_survey("default")
 #' }
 #'
 #' @export
-sd_create_survey <- function(path = getwd(), template = "default") {
+sd_create_survey <- function(template = "default", path = getwd()) {
   # Available templates from surveydown-dev/templates
   available_templates <- c(
     "default",

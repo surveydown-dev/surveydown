@@ -199,26 +199,43 @@ sd_server <- function(
 
     # 2. show_if conditions ----
 
+    # Separate page and question conditions
+    separated_conditions <- if (!is.null(show_if)) {
+        separate_show_if_conditions(show_if$conditions, page_ids, question_ids)
+    } else {
+        list(page_conditions = list(), question_conditions = list())
+    }
+    page_conditions <- separated_conditions$page_conditions
+    question_conditions <- separated_conditions$question_conditions
+
+    # Store page conditions for use in navigation
+    session$userData$page_conditions <- page_conditions
+
     # Reactive to store visibility status of all questions
     question_visibility <- shiny::reactiveVal(
         stats::setNames(rep(TRUE, length(question_ids)), question_ids)
     )
 
-    # Observer to apply show_if conditions and update question_visibility
-    shiny::observe({
-        shiny::reactiveValuesToList(input)
-        show_if_results <- set_show_if_conditions(show_if)()
-        current_visibility <- question_visibility()
-        for (target in names(show_if_results)) {
-            current_visibility[target] <- show_if_results[[target]]
-            if (show_if_results[[target]]) {
-                shinyjs::show(paste0('container-', target))
-            } else {
-                shinyjs::hide(paste0('container-', target))
+    # Observer to apply show_if conditions and update question_visibility (questions only)
+    if (length(question_conditions) > 0) {
+        # Create a modified show_if object with only question conditions
+        question_show_if <- list(conditions = question_conditions)
+        
+        shiny::observe({
+            shiny::reactiveValuesToList(input)
+            show_if_results <- set_show_if_conditions(question_show_if)()
+            current_visibility <- question_visibility()
+            for (target in names(show_if_results)) {
+                current_visibility[target] <- show_if_results[[target]]
+                if (show_if_results[[target]]) {
+                    shinyjs::show(paste0('container-', target))
+                } else {
+                    shinyjs::hide(paste0('container-', target))
+                }
             }
-        }
-        question_visibility(current_visibility)
-    })
+            question_visibility(current_visibility)
+        })
+    }
 
     # 3. Update data ----
 
@@ -522,15 +539,32 @@ sd_server <- function(
                     timestamp <- get_utc_timestamp()
 
                     # Figure out page ids
-                    current_page_id <- page$id
+                    current_page_id_val <- page$id
                     next_page_id <- get_default_next_page(
                         page, page_ids, page_id_to_index
                     )
                     next_page_id <- handle_skip_logic(
                         input, skip_forward,
-                        current_page_id, next_page_id,
+                        current_page_id_val, next_page_id,
                         page_id_to_index
                     )
+                    
+                    # NEW: Handle page conditions - find the next eligible page
+                    if (!is.null(next_page_id) && length(page_conditions) > 0) {
+                        # Find the next page that should be shown based on page conditions
+                        eligible_page <- find_next_eligible_page(
+                            current_page_id_val, 
+                            list(page_ids = page_ids), 
+                            page_conditions, 
+                            session
+                        )
+                        
+                        # If we have page conditions and an eligible page was found, use it
+                        if (!is.null(eligible_page)) {
+                            next_page_id <- eligible_page
+                        }
+                    }
+                    
                     if (!is.null(next_page_id) && check_required(page)) {
                         # Set the current page as the next page
                         current_page_id(next_page_id)
@@ -752,18 +786,18 @@ sd_skip_if <- function(...) {
     sd_skip_forward(...)
 }
 
-#' Define show conditions for survey questions
+#' Define show conditions for survey questions and pages
 #'
 #' @description
-#' This function is used to define conditions under which certain questions in the survey should be shown.
-#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
+#' This function is used to define conditions under which certain questions or pages in the survey should be shown.
+#' It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID or page ID.
 #' If called with no arguments, it will return `NULL` and set no conditions.
 #'
 #' @param ... One or more formulas defining show conditions.
 #'   The left-hand side of each formula should be a condition based on input values,
-#'   and the right-hand side should be the ID of the question to show if the condition is met.
+#'   and the right-hand side should be the ID of the question or page to show if the condition is met.
 #'
-#' @return A list of parsed conditions, where each element contains the condition and the target question ID.
+#' @return A list of parsed conditions, where each element contains the condition and the target question or page ID.
 #'   Returns `NULL` if no conditions are provided.
 #'
 #' @examples
@@ -785,7 +819,9 @@ sd_skip_if <- function(...) {
 #'
 #'     sd_show_if(
 #'       # If "Other" is chosen, show the conditional question
-#'       input$fav_fruit == "other" ~ "fav_fruit_other"
+#'       input$fav_fruit == "other" ~ "fav_fruit_other",
+#'       # If condition is met, show specific page
+#'       input$category == "advanced" ~ "advanced_page"
 #'     )
 #'
 #'     sd_server()
@@ -1241,6 +1277,81 @@ sd_is_answered <- function(question_id) {
 }
 
 # Helper functions ----
+
+# Helper function to separate page and question conditions
+separate_show_if_conditions <- function(show_if_conditions, page_ids, question_ids) {
+    if (is.null(show_if_conditions) || length(show_if_conditions) == 0) {
+        return(list(page_conditions = list(), question_conditions = list()))
+    }
+    
+    page_conditions <- list()
+    question_conditions <- list()
+    
+    for (condition in show_if_conditions) {
+        target <- condition$target
+        if (target %in% page_ids) {
+            page_conditions <- c(page_conditions, list(condition))
+        } else if (target %in% question_ids) {
+            question_conditions <- c(question_conditions, list(condition))
+        } else {
+            warning(sprintf("Target '%s' is neither a page nor a question ID", target))
+        }
+    }
+    
+    return(list(page_conditions = page_conditions, question_conditions = question_conditions))
+}
+
+# Helper function to evaluate if a page should be shown based on conditions
+should_show_page <- function(page_id, page_conditions, session) {
+    if (length(page_conditions) == 0) {
+        return(TRUE)  # No conditions, always show
+    }
+    
+    # Check if this page has any conditions
+    page_condition <- NULL
+    for (condition in page_conditions) {
+        if (condition$target == page_id) {
+            page_condition <- condition
+            break
+        }
+    }
+    
+    # If no condition for this page, show it
+    if (is.null(page_condition)) {
+        return(TRUE)
+    }
+    
+    # Evaluate the condition
+    tryCatch({
+        result <- eval(page_condition$original_condition, envir = page_condition$calling_env)
+        return(isTRUE(result))
+    }, error = function(e) {
+        warning("Error evaluating page condition for ", page_id, ": ", e$message)
+        return(TRUE)  # Default to showing the page if evaluation fails
+    })
+}
+
+# Helper function to find the next eligible page to show
+find_next_eligible_page <- function(current_page_id, config, page_conditions, session) {
+    page_ids <- config$page_ids
+    current_index <- which(page_ids == current_page_id)
+    
+    if (length(current_index) == 0) {
+        return(NULL)  # Current page not found
+    }
+    
+    # Look for the next eligible page
+    for (i in (current_index + 1):length(page_ids)) {
+        if (i > length(page_ids)) break
+        
+        candidate_page <- page_ids[i]
+        if (should_show_page(candidate_page, page_conditions, session)) {
+            return(candidate_page)
+        }
+    }
+    
+    return(NULL)  # No eligible next page found
+}
 
 set_show_if_conditions <- function(show_if) {
     if (is.null(show_if) || length(show_if$conditions) == 0) {
