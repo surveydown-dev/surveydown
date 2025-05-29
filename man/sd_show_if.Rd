@@ -2,22 +2,22 @@
 % Please edit documentation in R/server.R
 \name{sd_show_if}
 \alias{sd_show_if}
-\title{Define show conditions for survey questions}
+\title{Define show conditions for survey questions and pages}
 \usage{
 sd_show_if(...)
 }
 \arguments{
 \item{...}{One or more formulas defining show conditions.
 The left-hand side of each formula should be a condition based on input values,
-and the right-hand side should be the ID of the question to show if the condition is met.}
+and the right-hand side should be the ID of the question or page to show if the condition is met.}
 }
 \value{
-A list of parsed conditions, where each element contains the condition and the target question ID.
+A list of parsed conditions, where each element contains the condition and the target question or page ID.
 Returns \code{NULL} if no conditions are provided.
 }
 \description{
-This function is used to define conditions under which certain questions in the survey should be shown.
-It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID.
+This function is used to define conditions under which certain questions or pages in the survey should be shown.
+It takes one or more formulas where the left-hand side is the condition and the right-hand side is the target question ID or page ID.
 If called with no arguments, it will return \code{NULL} and set no conditions.
 }
 \examples{
@@ -39,7 +39,9 @@ if (interactive()) {
 
     sd_show_if(
       # If "Other" is chosen, show the conditional question
-      input$fav_fruit == "other" ~ "fav_fruit_other"
+      input$fav_fruit == "other" ~ "fav_fruit_other",
+      # If condition is met, show specific page
+      input$category == "advanced" ~ "advanced_page"
     )
 
     sd_server()
