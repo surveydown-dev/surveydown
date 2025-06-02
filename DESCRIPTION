@@ -51,7 +51,10 @@ Imports:
     shinyWidgets,
     utils,
     xml2,
-    yaml
+    yaml,
+    sortsurvey
+URL: https://pkg.surveydown.org
+BugReports: https://github.com/surveydown-dev/surveydown/issues
 Suggests:
     glue,
     knitr,
