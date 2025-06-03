@@ -334,6 +334,7 @@ sd_server <- function(
         # Create a minimal initial data just for table creation
         min_initial_data <- list(
             session_id = character(0),
+            is_bot = character(0),
             client_ip = character(0),
             time_start = character(0),
             time_end = character(0)
@@ -571,10 +572,14 @@ sd_server <- function(
     })
 
     # Observer to max out the progress bar when we reach the last page
+    #BotWork begins here, at the end of the survey (when the progress bar is completed we will check to see if it is a bot/bad human)
     shiny::observe({
         page <- get_current_page()
         if (is.null(page$next_page_id)) {
             update_progress_bar(length(question_ids))
+
+            # Call bot checker when survey is completed
+            bot_checker(db, session_id)
         }
     })
 
@@ -1332,11 +1337,11 @@ get_utc_timestamp <- function() {
 }
 
 get_initial_data <- function(
-        session, session_id,client_ip, time_start, all_ids, start_page_ts_id
+        session, session_id, is_bot, client_ip, time_start, all_ids, start_page_ts_id
 ) {
     # Initialize with static data
     data <- c(
-        list(session_id = session_id, client_ip = client_ip, time_start = time_start),
+        list(session_id = session_id, is_bot = is_bot, client_ip = client_ip, time_start = time_start),
         get_stored_vals(session)
     )
 
