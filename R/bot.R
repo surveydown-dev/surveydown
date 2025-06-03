@@ -1,11 +1,9 @@
 bot_checker <- function(db, ignore_mode, session_id) {
 
     #This function will check multiple different parameters as set by numerous studies
-    #Here we will set a value between 0 - 3 where 0.5 represents the ideal human,
+    #Here we will set a value between 0 - 3 where 0.5 represents the ideal human, 1.5 represents a "bad human", and 2.5 represents a bot
+    #Values way above 2.5 result in highly confident guesses that the user is a bot
 
-
-
-    # Get user data for this session
     if (ignore_mode) {
         df <- if (file.exists("preview_data.csv")) {
             utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
@@ -24,88 +22,95 @@ bot_checker <- function(db, ignore_mode, session_id) {
     }
 
     current_bot_value <- as.numeric(user_data$is_bot)
-
+    sessions_to_update <- list()
 
     #------------------------- ALL CONDITIONS GO HERE -------------------------
 
-    # If user is too fast, update is_bot to 2
+    # Check if user is too fast
     if (is_fast(user_data)) {
-        # Create data_list for database update
         current_bot_value <- current_bot_value + 2
+        sessions_to_update[[session_id]] <- current_bot_value
     }
-
 
     suspicious_time_instances <- start_time_checker(user_data, df)
-
     if(suspicious_time_instances$boolean) {
-        current_bot_value <- current_bot_value + suspicious_time_instances$value
+        penalty <- suspicious_time_instances$value
+
+        current_bot_value <- current_bot_value + penalty
+        sessions_to_update[[session_id]] <- current_bot_value
+
+        # Update ALL suspicious sessions found
+        for (suspicious_session in suspicious_time_instances$session_ids) {
+            suspicious_row <- df[df$session_id == suspicious_session, ]
+            if (nrow(suspicious_row) > 0) {
+                suspicious_bot_value <- as.numeric(suspicious_row$is_bot) + penalty
+                sessions_to_update[[suspicious_session]] <- suspicious_bot_value
+            }
+        }
     }
 
+    # Check for IP violations
+    ip_violations <- ip_checker(user_data, df)
+    if(ip_violations$boolean) {
+        penalty <- ip_violations$value
 
-    # Future: Add other checks here
-    # is_straightlining(user_data)
-    # multiple_ips(user_data)
-    # Similar start times e.g. lets say time_start is +/- a few seconds of other table instances we update both values, the more instances the higher the penalty
+        # Update current session
+        current_bot_value <- current_bot_value + penalty
+        sessions_to_update[[session_id]] <- current_bot_value
 
-
-
-
-    data_list <- list(
-        session_id = session_id,
-        is_bot = as.character(current_bot_value)
-    )
-
+        # Update ALL sessions with same IP
+        for (ip_session in ip_violations$session_ids) {
+            # Get current bot value for this IP session
+            ip_row <- df[df$session_id == ip_session, ]
+            if (nrow(ip_row) > 0) {
+                ip_bot_value <- as.numeric(ip_row$is_bot) + penalty
+                sessions_to_update[[ip_session]] <- ip_bot_value
+            }
+        }
+    }
 
     #------------------------- END OF BOT CONDITIONS -------------------------
 
-    if(current_bot_value != as.numeric(user_data$is_bot)) {
-        # Define which fields we're updating
-        fields <- "is_bot"
+    # Update all flagged sessions
+    if (length(sessions_to_update) > 0) {
+        for (update_session_id in names(sessions_to_update)) {
+            new_bot_value <- sessions_to_update[[update_session_id]]
 
-        # Use appropriate update method based on mode
-        if (ignore_mode) {
-            if (file.access('.', 2) == 0) {
-                tryCatch({
-                    # Read existing data
-                    existing_data <- if (file.exists("preview_data.csv")) {
-                        utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
-                    } else {
-                        data.frame()
-                    }
-                    # Find if this session_id already exists
-                    session_idx <- which(existing_data$session_id == data_list$session_id)
-                    if (length(session_idx) > 0) {
-                        # Update existing session data
-                        existing_data[session_idx, "is_bot"] <- data_list[["is_bot"]]
-                        updated_data <- existing_data
-                    } else {
-                        # This shouldn't happen since we're updating existing data
-                        warning("Session not found in existing data for update")
-                        return()
-                    }
-                    # Write updated data back to file
-                    utils::write.csv(
-                        updated_data,
-                        "preview_data.csv",
-                        row.names = FALSE,
-                        na = ""
-                    )
-                }, error = function(e) {
-                    warning("Unable to write to preview_data.csv: ", e$message)
-                    message("Error details: ", e$message)
-                })
-            } else {
-                message("Running in a non-writable environment.")
-            }
-        } else {
-            # Database mode
-            database_uploading(
-                data_list = data_list,
-                db = db$db,
-                table = db$table,
-                changed_fields = fields
+            data_list <- list(
+                session_id = update_session_id,
+                is_bot = as.character(new_bot_value)
             )
+
+            # Update storage
+            if (ignore_mode) {
+                update_local_csv_session(update_session_id, new_bot_value)
+            } else {
+                database_uploading(
+                    data_list = data_list,
+                    db = db$db,
+                    table = db$table,
+                    changed_fields = "is_bot"
+                )
+            }
         }
+    }
+}
+
+#------------------------- ALL HELPER FUNCTIONS BELOW  -------------------------
+
+update_local_csv_session <- function(session_id, new_bot_value) {
+    if (file.access('.', 2) == 0) {
+        tryCatch({
+            existing_data <- utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
+            session_idx <- which(existing_data$session_id == session_id)
+
+            if (length(session_idx) > 0) {
+                existing_data[session_idx, "is_bot"] <- as.character(new_bot_value)
+                utils::write.csv(existing_data, "preview_data.csv", row.names = FALSE, na = "")
+            }
+        }, error = function(e) {
+            warning("Unable to update local CSV for session ", session_id, ": ", e$message)
+        })
     }
 }
 
@@ -169,11 +174,112 @@ is_fast <- function(user_data) {
 }
 
 
-start_time_checker <-  function(user_data, df) {
+start_time_checker <- function(user_data, df) {
+    # Get the user's start time
+    user_start_time <- as.POSIXct(user_data$time_start, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+    user_session_id <- user_data$session_id
+
+    # Initialize counter and list
+    under_5_seconds_count <- 0
+    suspicious_session_ids <- c()
+
+    # Loop through all rows in df
+    for (i in 1:nrow(df)) {
+        row_session_id <- df$session_id[i]
+
+        if (row_session_id == user_session_id) {
+            next
+        }
+
+        row_start_time <- as.POSIXct(df$time_start[i], format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+
+        time_diff <- abs(as.numeric(difftime(row_start_time, user_start_time, units = "secs")))
+
+        # If difference is under 5 seconds, add to counter and list
+        if (time_diff < 5) {
+            under_5_seconds_count <- under_5_seconds_count + 1
+            suspicious_session_ids <- c(suspicious_session_ids, row_session_id)
+        }
+    }
 
 
+    is_suspicious <- under_5_seconds_count > 2
 
-    return()
+    # Determine penalty value based on severity
+    penalty_value <- if (under_5_seconds_count >= 5) {
+        2
+    } else if (under_5_seconds_count > 2) {
+        1
+    } else {
+        0
+    }
+
+    return(list(
+        count = under_5_seconds_count,
+        session_ids = suspicious_session_ids,
+        boolean = is_suspicious,
+        value = penalty_value
+    ))
 }
+
+
+
+ip_checker <- function(user_data, df) {
+    user_session_id <- user_data$session_id
+    user_client_ip <- user_data$client_ip  # Store the user's IP
+
+    similar_ip_count <- 0
+    suspicious_session_ids <- c()
+
+    for(i in 1:nrow(df)) {
+        row_session_id <- df$session_id[i]
+
+        if (row_session_id == user_session_id) {
+            next
+        }
+
+        if(df$client_ip[i] == user_client_ip) {
+            similar_ip_count <- similar_ip_count + 1
+            suspicious_session_ids <- c(suspicious_session_ids, row_session_id)
+        }
+    }
+
+    is_suspicious <- similar_ip_count > 2
+
+    # Determine penalty value based on severity
+    penalty_value <- if (similar_ip_count >= 5) {
+        2
+    } else if (similar_ip_count > 2) {
+        1
+    } else {
+        0
+    }
+
+    return(list(
+        count = similar_ip_count,
+        session_ids = suspicious_session_ids,
+        boolean = is_suspicious,
+        value = penalty_value
+    ))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
