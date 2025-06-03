@@ -26,7 +26,7 @@ bot_checker <- function(db, ignore_mode, session_id) {
     # If user is too fast, update is_bot to 2
     if (is_fast(user_data)) {
         # Create data_list for database update
-        current_bot_value + 2
+        current_bot_value <- current_bot_value + 2
     }
 
 
@@ -46,53 +46,54 @@ bot_checker <- function(db, ignore_mode, session_id) {
 
     #------------------------- END OF BOT CONDITIONS -------------------------
 
+    if(current_bot_value != as.numeric(user_data$is_bot)) {
+        # Define which fields we're updating
+        fields <- "is_bot"
 
-    # Define which fields we're updating
-    fields <- "is_bot"
-
-    # Use appropriate update method based on mode
-    if (ignore_mode) {
-        if (file.access('.', 2) == 0) {
-            tryCatch({
-                # Read existing data
-                existing_data <- if (file.exists("preview_data.csv")) {
-                    utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
-                } else {
-                    data.frame()
-                }
-                # Find if this session_id already exists
-                session_idx <- which(existing_data$session_id == data_list$session_id)
-                if (length(session_idx) > 0) {
-                    # Update existing session data
-                    existing_data[session_idx, "is_bot"] <- data_list[["is_bot"]]
-                    updated_data <- existing_data
-                } else {
-                    # This shouldn't happen since we're updating existing data
-                    warning("Session not found in existing data for update")
-                    return()
-                }
-                # Write updated data back to file
-                utils::write.csv(
-                    updated_data,
-                    "preview_data.csv",
-                    row.names = FALSE,
-                    na = ""
-                )
-            }, error = function(e) {
-                warning("Unable to write to preview_data.csv: ", e$message)
-                message("Error details: ", e$message)
-            })
+        # Use appropriate update method based on mode
+        if (ignore_mode) {
+            if (file.access('.', 2) == 0) {
+                tryCatch({
+                    # Read existing data
+                    existing_data <- if (file.exists("preview_data.csv")) {
+                        utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
+                    } else {
+                        data.frame()
+                    }
+                    # Find if this session_id already exists
+                    session_idx <- which(existing_data$session_id == data_list$session_id)
+                    if (length(session_idx) > 0) {
+                        # Update existing session data
+                        existing_data[session_idx, "is_bot"] <- data_list[["is_bot"]]
+                        updated_data <- existing_data
+                    } else {
+                        # This shouldn't happen since we're updating existing data
+                        warning("Session not found in existing data for update")
+                        return()
+                    }
+                    # Write updated data back to file
+                    utils::write.csv(
+                        updated_data,
+                        "preview_data.csv",
+                        row.names = FALSE,
+                        na = ""
+                    )
+                }, error = function(e) {
+                    warning("Unable to write to preview_data.csv: ", e$message)
+                    message("Error details: ", e$message)
+                })
+            } else {
+                message("Running in a non-writable environment.")
+            }
         } else {
-            message("Running in a non-writable environment.")
+            # Database mode
+            database_uploading(
+                data_list = data_list,
+                db = db$db,
+                table = db$table,
+                changed_fields = fields
+            )
         }
-    } else {
-        # Database mode
-        database_uploading(
-            data_list = data_list,
-            db = db$db,
-            table = db$table,
-            changed_fields = fields
-        )
     }
 }
 
@@ -139,8 +140,8 @@ is_fast <- function(user_data) {
     valid_times <- question_times[!is.na(question_times)]
 
     # Define thresholds for "too fast"
-    VERY_FAST_THRESHOLD <- 1
-    FAST_THRESHOLD <- 5
+    VERY_FAST_THRESHOLD <- 2
+    FAST_THRESHOLD <- 4
 
     num_valid_questions <- length(valid_times)
     num_very_fast <- sum(valid_times < VERY_FAST_THRESHOLD)
@@ -149,8 +150,8 @@ is_fast <- function(user_data) {
     # Determine if user is answering too fast
     # Criteria: More than 50% of questions answered in under 5 seconds
     # OR more than 25% answered in under 1 second
-    is_too_fast <- (num_fast / num_valid_questions > 0.5) ||
-        (num_very_fast / num_valid_questions > 0.25)
+    is_too_fast <- (num_fast / num_valid_questions >= 0.5) ||
+        (num_very_fast / num_valid_questions >= 0.25)
 
     return(is_too_fast)
 }
