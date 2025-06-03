@@ -1,14 +1,13 @@
 bot_checker <- function(db, ignore_mode, session_id) {
+
     # Get user data for this session
     if (ignore_mode) {
-        # For local mode, read from CSV
         df <- if (file.exists("preview_data.csv")) {
             utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
         } else {
-            return()  # No data to check
+            return()
         }
     } else {
-        # For database mode
         df <- sd_get_data(db)
     }
 
@@ -19,78 +18,82 @@ bot_checker <- function(db, ignore_mode, session_id) {
         return()
     }
 
-    current_bot_value <- user_data$is_bot
+    current_bot_value <- as.numeric(user_data$is_bot)
 
-    # Check if user is answering too fast
-    is_too_fast <- is_fast(user_data)
+
+    #------------------------- ALL CONDITIONS GO HERE -------------------------
 
     # If user is too fast, update is_bot to 2
-    if (is_too_fast) {
+    if (is_fast(user_data)) {
         # Create data_list for database update
-        data_list <- list(
-            session_id = session_id,
-            is_bot = as.character(as.numeric(current_bot_value) + 2)
-        )
-
-        # Define which fields we're updating
-        fields <- "is_bot"
-
-        # Use appropriate update method based on mode
-        if (ignore_mode) {
-            if (file.access('.', 2) == 0) {
-                tryCatch({
-                    # Read existing data
-                    existing_data <- if (file.exists("preview_data.csv")) {
-                        utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
-                    } else {
-                        data.frame()
-                    }
-
-                    # Find if this session_id already exists
-                    session_idx <- which(existing_data$session_id == data_list$session_id)
-
-                    if (length(session_idx) > 0) {
-                        # Update existing session data
-                        existing_data[session_idx, "is_bot"] <- data_list[["is_bot"]]
-                        updated_data <- existing_data
-                    } else {
-                        # This shouldn't happen since we're updating existing data
-                        warning("Session not found in existing data for update")
-                        return()
-                    }
-
-                    # Write updated data back to file
-                    utils::write.csv(
-                        updated_data,
-                        "preview_data.csv",
-                        row.names = FALSE,
-                        na = ""
-                    )
-
-                    cat("Updated is_bot to", data_list[["is_bot"]], "for session", session_id, "in local CSV\n")
-
-                }, error = function(e) {
-                    warning("Unable to write to preview_data.csv: ", e$message)
-                    message("Error details: ", e$message)
-                })
-            } else {
-                message("Running in a non-writable environment.")
-            }
-        } else {
-            # Database mode
-            database_uploading(
-                data_list = data_list,
-                db = db$db,
-                table = db$table,
-                changed_fields = fields
-            )
-            cat("Updated is_bot to", data_list[["is_bot"]], "for session", session_id, "in database\n")
-        }
+        current_bot_value + 2
     }
+
+
 
     # Future: Add other checks here
     # is_straightlining(user_data)
     # multiple_ips(user_data)
+
+
+
+
+    data_list <- list(
+        session_id = session_id,
+        is_bot = as.character(current_bot_value)
+    )
+
+
+    #------------------------- END OF BOT CONDITIONS -------------------------
+
+
+    # Define which fields we're updating
+    fields <- "is_bot"
+
+    # Use appropriate update method based on mode
+    if (ignore_mode) {
+        if (file.access('.', 2) == 0) {
+            tryCatch({
+                # Read existing data
+                existing_data <- if (file.exists("preview_data.csv")) {
+                    utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
+                } else {
+                    data.frame()
+                }
+                # Find if this session_id already exists
+                session_idx <- which(existing_data$session_id == data_list$session_id)
+                if (length(session_idx) > 0) {
+                    # Update existing session data
+                    existing_data[session_idx, "is_bot"] <- data_list[["is_bot"]]
+                    updated_data <- existing_data
+                } else {
+                    # This shouldn't happen since we're updating existing data
+                    warning("Session not found in existing data for update")
+                    return()
+                }
+                # Write updated data back to file
+                utils::write.csv(
+                    updated_data,
+                    "preview_data.csv",
+                    row.names = FALSE,
+                    na = ""
+                )
+            }, error = function(e) {
+                warning("Unable to write to preview_data.csv: ", e$message)
+                message("Error details: ", e$message)
+            })
+        } else {
+            message("Running in a non-writable environment.")
+        }
+    } else {
+        # Database mode
+        database_uploading(
+            data_list = data_list,
+            db = db$db,
+            table = db$table,
+            changed_fields = fields
+        )
+    }
 }
 
 is_fast <- function(user_data) {
@@ -113,7 +116,6 @@ is_fast <- function(user_data) {
     for (col in time_q_cols) {
         current_time <- filtered_data[[col]]
 
-        # If current question has a valid timestamp
         if (!is.na(current_time) && current_time != "") {
             # Convert timestamps to POSIXct
             prev_parsed <- as.POSIXct(previous_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
@@ -129,19 +131,17 @@ is_fast <- function(user_data) {
             previous_time <- current_time
 
         } else {
-            # Question was skipped - store NA
             question_times[col] <- NA
         }
     }
 
-    # Remove NA values (skipped questions) for analysis
+    # Remove NA values
     valid_times <- question_times[!is.na(question_times)]
 
     # Define thresholds for "too fast"
     VERY_FAST_THRESHOLD <- 1
     FAST_THRESHOLD <- 5
 
-    # Calculate statistics
     num_valid_questions <- length(valid_times)
     num_very_fast <- sum(valid_times < VERY_FAST_THRESHOLD)
     num_fast <- sum(valid_times < FAST_THRESHOLD)
@@ -152,7 +152,6 @@ is_fast <- function(user_data) {
     is_too_fast <- (num_fast / num_valid_questions > 0.5) ||
         (num_very_fast / num_valid_questions > 0.25)
 
-    # Return only the boolean result
     return(is_too_fast)
 }
 

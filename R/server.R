@@ -577,14 +577,10 @@ sd_server <- function(
     })
 
     # Observer to max out the progress bar when we reach the last page
-    #BotWork begins here, at the end of the survey (when the progress bar is completed we will check to see if it is a bot/bad human)
     shiny::observe({
         page <- get_current_page()
         if (is.null(page$next_page_id)) {
             update_progress_bar(length(question_ids))
-
-            # Call bot checker when survey is completed
-            bot_checker(db, ignore_mode, session_id)
         }
     })
 
@@ -653,6 +649,10 @@ sd_server <- function(
     shiny::onSessionEnded(function() {
         shiny::isolate({
             update_data(time_last = TRUE)
+
+            #BotWork begins here, at the end of the survey (when the progress bar is completed we will check to see if it is a bot/bad human)
+            # Call bot checker when survey is completed
+            bot_checker(db, ignore_mode, session_id)
         })
     })
 }
