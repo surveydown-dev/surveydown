@@ -1,16 +1,164 @@
-bot_checker <- function(db, session_id) {
-    #change the is_bot value to 0 1 or 2
-    #we pass the db through because we need the connection to update it database_uploading() in db.r
-    # we have df, db, table (using Sys.getenv("SD_TABLE")), and changed fields (will have to see how its formatted).
-    #we need the session_id as well so we know what we are actually comparing just getting the db is not enough
-    df <- sd_get_data(db)
+bot_checker <- function(db, ignore_mode, session_id) {
+    # Get user data for this session
+    if (ignore_mode) {
+        # For local mode, read from CSV
+        df <- if (file.exists("preview_data.csv")) {
+            utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
+        } else {
+            return()  # No data to check
+        }
+    } else {
+        # For database mode
+        df <- sd_get_data(db)
+    }
 
+    user_data <- df[df$session_id == session_id, ]
 
+    if (nrow(user_data) == 0) {
+        warning("No data found for session_id: ", session_id)
+        return()
+    }
 
+    current_bot_value <- user_data$is_bot
 
+    # Check if user is answering too fast
+    is_too_fast <- is_fast(user_data)
 
+    # If user is too fast, update is_bot to 2
+    if (is_too_fast) {
+        # Create data_list for database update
+        data_list <- list(
+            session_id = session_id,
+            is_bot = as.character(as.numeric(current_bot_value) + 2)
+        )
 
+        # Define which fields we're updating
+        fields <- "is_bot"
+
+        # Use appropriate update method based on mode
+        if (ignore_mode) {
+            if (file.access('.', 2) == 0) {
+                tryCatch({
+                    # Read existing data
+                    existing_data <- if (file.exists("preview_data.csv")) {
+                        utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
+                    } else {
+                        data.frame()
+                    }
+
+                    # Find if this session_id already exists
+                    session_idx <- which(existing_data$session_id == data_list$session_id)
+
+                    if (length(session_idx) > 0) {
+                        # Update existing session data
+                        existing_data[session_idx, "is_bot"] <- data_list[["is_bot"]]
+                        updated_data <- existing_data
+                    } else {
+                        # This shouldn't happen since we're updating existing data
+                        warning("Session not found in existing data for update")
+                        return()
+                    }
+
+                    # Write updated data back to file
+                    utils::write.csv(
+                        updated_data,
+                        "preview_data.csv",
+                        row.names = FALSE,
+                        na = ""
+                    )
+
+                    cat("Updated is_bot to", data_list[["is_bot"]], "for session", session_id, "in local CSV\n")
+
+                }, error = function(e) {
+                    warning("Unable to write to preview_data.csv: ", e$message)
+                    message("Error details: ", e$message)
+                })
+            } else {
+                message("Running in a non-writable environment.")
+            }
+        } else {
+            # Database mode
+            database_uploading(
+                data_list = data_list,
+                db = db$db,
+                table = db$table,
+                changed_fields = fields
+            )
+            cat("Updated is_bot to", data_list[["is_bot"]], "for session", session_id, "in database\n")
+        }
+    }
+
+    # Future: Add other checks here
+    # is_straightlining(user_data)
+    # multiple_ips(user_data)
 }
+
+is_fast <- function(user_data) {
+    # Filter to only question time columns
+    cols_to_keep <- c("time_start", "time_end",
+                      names(user_data)[grepl("time_q", names(user_data))])
+    filtered_data <- user_data[, cols_to_keep]
+
+    # Get only the time_q columns (exclude time_start and time_end)
+    time_q_cols <- names(filtered_data)[grepl("^time_q", names(filtered_data))]
+
+    # Initialize vector to store time differences
+    question_times <- numeric(length(time_q_cols))
+    names(question_times) <- time_q_cols
+
+    # Start with time_start as the baseline
+    previous_time <- filtered_data$time_start
+
+    # Process each time_q column in order
+    for (col in time_q_cols) {
+        current_time <- filtered_data[[col]]
+
+        # If current question has a valid timestamp
+        if (!is.na(current_time) && current_time != "") {
+            # Convert timestamps to POSIXct
+            prev_parsed <- as.POSIXct(previous_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+            curr_parsed <- as.POSIXct(current_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+
+            # Calculate difference in seconds
+            time_diff_seconds <- as.numeric(difftime(curr_parsed, prev_parsed, units = "secs"))
+
+            # Store the time difference
+            question_times[col] <- round(time_diff_seconds, 2)
+
+            # Update previous_time for next calculation
+            previous_time <- current_time
+
+        } else {
+            # Question was skipped - store NA
+            question_times[col] <- NA
+        }
+    }
+
+    # Remove NA values (skipped questions) for analysis
+    valid_times <- question_times[!is.na(question_times)]
+
+    # Define thresholds for "too fast"
+    VERY_FAST_THRESHOLD <- 1
+    FAST_THRESHOLD <- 5
+
+    # Calculate statistics
+    num_valid_questions <- length(valid_times)
+    num_very_fast <- sum(valid_times < VERY_FAST_THRESHOLD)
+    num_fast <- sum(valid_times < FAST_THRESHOLD)
+
+    # Determine if user is answering too fast
+    # Criteria: More than 50% of questions answered in under 5 seconds
+    # OR more than 25% answered in under 1 second
+    is_too_fast <- (num_fast / num_valid_questions > 0.5) ||
+        (num_very_fast / num_valid_questions > 0.25)
+
+    # Return only the boolean result
+    return(is_too_fast)
+}
+
+
+
+
 
 #Next we will bot checker online -> we can make run during sd_dashboard() calls or sd_get_data
 

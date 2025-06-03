@@ -187,6 +187,11 @@ sd_server <- function(
         session$request$REMOTE_ADDR
     }
 
+    # Initialize Bot value 0.5 - Human, 1.5 - Bad/Lazy Human, 2.5 - Bot
+    # The reason we do it this way is to differentiated between the groups easier
+    # Innocent till proven guilty thus each respondent starts off valid
+    is_bot <- 0
+
     # Initialize session handling and session_id
     session_id <- session$token
     session_id <- handle_sessions(session_id, db, session, input, time_start, start_page,
@@ -350,7 +355,7 @@ sd_server <- function(
 
     # Now handle session and get proper initial data
     initial_data <- get_initial_data(
-        session, session_id, client_ip, time_start, all_ids, start_page_ts_id
+        session, session_id, is_bot, client_ip, time_start, all_ids, start_page_ts_id
     )
     all_data <- do.call(shiny::reactiveValues, initial_data)
 
@@ -579,7 +584,7 @@ sd_server <- function(
             update_progress_bar(length(question_ids))
 
             # Call bot checker when survey is completed
-            bot_checker(db, session_id)
+            bot_checker(db, ignore_mode, session_id)
         }
     })
 
