@@ -207,9 +207,9 @@ start_time_checker <- function(user_data, df) {
 
     # Determine penalty value based on severity
     penalty_value <- if (under_5_seconds_count >= 5) {
-        2
-    } else if (under_5_seconds_count > 2) {
         1
+    } else if (under_5_seconds_count > 2) {
+        0.5
     } else {
         0
     }
@@ -222,7 +222,7 @@ start_time_checker <- function(user_data, df) {
     ))
 }
 
-
+#------------------------- Research more on IPs before fully implementing this -------------------------
 
 ip_checker <- function(user_data, df) {
     user_session_id <- user_data$session_id
