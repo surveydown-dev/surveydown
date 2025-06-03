@@ -1,5 +1,10 @@
 bot_checker <- function(db, ignore_mode, session_id) {
 
+    #This function will check multiple different parameters as set by numerous studies
+    #Here we will set a value between 0 - 3 where 0.5 represents the ideal human,
+
+
+
     # Get user data for this session
     if (ignore_mode) {
         df <- if (file.exists("preview_data.csv")) {
@@ -30,10 +35,17 @@ bot_checker <- function(db, ignore_mode, session_id) {
     }
 
 
+    suspicious_time_instances <- start_time_checker(user_data, df)
+
+    if(suspicious_time_instances$boolean) {
+        current_bot_value <- current_bot_value + suspicious_time_instances$value
+    }
+
 
     # Future: Add other checks here
     # is_straightlining(user_data)
     # multiple_ips(user_data)
+    # Similar start times e.g. lets say time_start is +/- a few seconds of other table instances we update both values, the more instances the higher the penalty
 
 
 
@@ -157,8 +169,11 @@ is_fast <- function(user_data) {
 }
 
 
+start_time_checker <-  function(user_data, df) {
 
 
 
-#Next we will bot checker online -> we can make run during sd_dashboard() calls or sd_get_data
+    return()
+}
+
 
