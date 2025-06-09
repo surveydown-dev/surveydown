@@ -650,9 +650,16 @@ sd_server <- function(
         shiny::isolate({
             update_data(time_last = TRUE)
 
-            #BotWork begins here, at the end of the survey (when the progress bar is completed we will check to see if it is a bot/bad human)
-            # Call bot checker when survey is completed
-            bot_checker(db, ignore_mode, session_id, question_structure)
+            # Collect question labels for bot_checker
+            question_labels <- list()
+            for (q_id in question_ids) {
+                if (!is.null(question_structure[[q_id]])) {
+                    question_labels[[q_id]] <- question_structure[[q_id]]$label
+                }
+            }
+
+            # Call bot checker with question labels
+            bot_checker(db, ignore_mode, session_id, question_labels)
         })
     })
 }

@@ -446,37 +446,6 @@ sd_dashboard <- function(gssencmode = "prefer") {
             )
         })
 
-        # Dynamic theme for the integrity value box
-        #output$integrity_theme <- shiny::renderText({
-        #    shiny::req(survey_data())
-        #    data <- survey_data()
-#
-        #    if (!"is_bot" %in% names(data)) {
-        #        return("secondary")
-        #    }
-#
-        #    bot_scores <- as.numeric(data$is_bot[!is.na(data$is_bot)])
-        #    if (length(bot_scores) == 0) {
-        #        median_bot_score <- 0
-        #    } else {
-        #        median_bot_score <- median(bot_scores)
-        #    }
-#
-        #    integrity_score <- max(0, min(100, 100 - (median_bot_score / 4) * 100))
-#
-        #    # Return appropriate theme color
-        #    if (integrity_score >= 80) {
-        #        "success"    # Green
-        #    } else if (integrity_score >= 60) {
-        #        "primary"    # Blue
-        #    } else if (integrity_score >= 40) {
-        #        "warning"    # Orange
-        #    } else {
-        #        "danger"     # Red
-        #    }
-        #})
-
-
         # Response Trend Plot
         output$cumulative_trend <- shiny::renderPlot({
             data <- survey_data()

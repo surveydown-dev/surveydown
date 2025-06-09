@@ -1,4 +1,4 @@
-bot_checker <- function(db, ignore_mode, session_id) {
+bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
 
     #This function will check multiple different parameters as set by numerous studies
     #Here we will set a value between 0 - 3 where 0.5 represents the ideal human, 1.5 represents a "bad human", and 2.5 represents a bot
@@ -27,7 +27,7 @@ bot_checker <- function(db, ignore_mode, session_id) {
     #------------------------- ALL CONDITIONS GO HERE -------------------------
 
     # Check if user is too fast
-    if (is_fast(user_data, question_structure)) {
+    if (is_fast(user_data, question_labels)) {
         current_bot_value <- current_bot_value + 1.5
         sessions_to_update[[session_id]] <- current_bot_value
     }
@@ -120,7 +120,7 @@ update_local_csv_session <- function(session_id, new_bot_value) {
 }
 
 
-is_fast <- function(user_data, question_structure = NULL) {
+is_fast <- function(user_data, question_labels = NULL) {
     # Filter to only question time columns
     cols_to_keep <- c("time_start", "time_end",
                       names(user_data)[grepl("time_q", names(user_data))])
@@ -161,7 +161,7 @@ is_fast <- function(user_data, question_structure = NULL) {
     valid_times <- question_times[!is.na(question_times)]
 
     # WPM-based analysis
-    if (!is.null(question_structure)) {
+    if (!is.null(question_labels)) {
         # Use WPM analysis when question structure is available
         num_fast_wpm <- 0
         num_very_fast_wpm <- 0
@@ -170,9 +170,9 @@ is_fast <- function(user_data, question_structure = NULL) {
             # Extract question ID from time column (remove "time_q_" prefix)
             question_id <- gsub("^time_q_", "", col)
 
-            if (question_id %in% names(question_structure)) {
+            if (question_id %in% names(question_labels)) {
                 # Get question text
-                question_text <- question_structure[[question_id]]$label
+                question_text <- question_labels[[question_id]]
 
                 # Count words (simple split by spaces, remove HTML tags)
                 clean_text <- gsub("<[^>]*>", "", question_text)  # Remove HTML
