@@ -28,7 +28,7 @@ bot_checker <- function(db, ignore_mode, session_id) {
 
     # Check if user is too fast
     if (is_fast(user_data)) {
-        current_bot_value <- current_bot_value + 2
+        current_bot_value <- current_bot_value + 1.5
         sessions_to_update[[session_id]] <- current_bot_value
     }
 
@@ -81,7 +81,7 @@ bot_checker <- function(db, ignore_mode, session_id) {
                 is_bot = as.character(new_bot_value)
             )
 
-            # Update storage
+            # Update storage - Edit this section after dev
             if (ignore_mode) {
                 update_local_csv_session(update_session_id, new_bot_value)
             } else {
@@ -98,6 +98,8 @@ bot_checker <- function(db, ignore_mode, session_id) {
 
 #------------------------- ALL HELPER FUNCTIONS BELOW  -------------------------
 
+
+#This will be removed after dev
 update_local_csv_session <- function(session_id, new_bot_value) {
     if (file.access('.', 2) == 0) {
         tryCatch({
@@ -252,9 +254,9 @@ ip_checker <- function(user_data, df) {
 
     # Determine penalty value based on severity
     penalty_value <- if (similar_ip_count >= 5) {
-        2
-    } else if (similar_ip_count > 2) {
         1
+    } else if (similar_ip_count > 2) {
+        0.5
     } else {
         0
     }
