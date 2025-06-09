@@ -157,6 +157,14 @@ sd_server <- function(
     question_required  <- config$question_required
     page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
 
+    #For Bot Checker
+    question_labels <- list()
+    for (q_id in question_ids) {
+        if (!is.null(question_structure[[q_id]])) {
+            question_labels[[q_id]] <- question_structure[[q_id]]$label
+        }
+    }
+
     # Pre-compute timestamp IDs
     page_ts_ids      <- paste0("time_p_", page_ids)
     question_ts_ids  <- paste0("time_q_", question_ids)
@@ -190,6 +198,7 @@ sd_server <- function(
     # Initialize Bot value 0.5 - Human, 1.5 - Bad/Lazy Human, 2.5 - Bot
     # The reason we do it this way is to differentiated between the groups easier
     # Innocent till proven guilty thus each respondent starts off valid
+
     is_bot <- 0
 
     # Initialize session handling and session_id
@@ -236,13 +245,17 @@ sd_server <- function(
 
     # 3. Update data ----
 
-    update_data <- function(time_last = FALSE) {
+    update_data <- function(time_last = FALSE, allow_initial_bot = FALSE) {
         data_list <- latest_data()
         fields <- changed_fields()
 
-        # Only update fields that have actually changed and have values
+        # Exclude is_bot unless this is the initial upload
+        exclude_fields <- if (allow_initial_bot) character(0) else "is_bot"
+
+        data_list <- data_list[!names(data_list) %in% exclude_fields]
+        fields <- fields[!fields %in% exclude_fields]
+
         if (length(fields) > 0) {
-            # Filter out fields with empty values unless explicitly changed
             valid_fields <- character(0)
             for (field in fields) {
                 if (!is.null(data_list[[field]]) && data_list[[field]] != "") {
@@ -251,8 +264,8 @@ sd_server <- function(
             }
             fields <- valid_fields
         } else {
-            # On initial load or restoration, use all non-empty fields
             fields <- names(data_list)[sapply(data_list, function(x) !is.null(x) && x != "")]
+            fields <- fields[!fields %in% exclude_fields]
         }
 
         if (time_last) {
@@ -260,57 +273,45 @@ sd_server <- function(
             fields <- unique(c(fields, 'time_end'))
         }
 
-        # Local data handling
         if (ignore_mode) {
             if (file.access('.', 2) == 0) {
                 tryCatch({
-                    # Read existing data
                     existing_data <- if (file.exists("preview_data.csv")) {
                         utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
                     } else {
                         data.frame()
                     }
 
-                    # Convert current data_list to data frame
                     new_data <- as.data.frame(data_list, stringsAsFactors = FALSE)
 
-                    # If there is existing data, update or append based on session_id
                     if (nrow(existing_data) > 0) {
-                        # Find if this session_id already exists
                         session_idx <- which(existing_data$session_id == data_list$session_id)
 
                         if (length(session_idx) > 0) {
-                            # Update existing session data
                             for (field in fields) {
                                 if (field %in% names(existing_data)) {
                                     existing_data[session_idx, field] <- data_list[[field]]
                                 } else {
-                                    # Add new column with NAs, then update the specific row
                                     existing_data[[field]] <- NA
                                     existing_data[session_idx, field] <- data_list[[field]]
                                 }
                             }
                             updated_data <- existing_data
                         } else {
-                            # Ensure all columns from existing_data are in new_data
                             missing_cols <- setdiff(names(existing_data), names(new_data))
                             for (col in missing_cols) {
                                 new_data[[col]] <- NA
                             }
-                            # Ensure all columns from new_data are in existing_data
                             missing_cols <- setdiff(names(new_data), names(existing_data))
                             for (col in missing_cols) {
                                 existing_data[[col]] <- NA
                             }
-                            # Now both data frames should have the same columns
                             updated_data <- rbind(existing_data, new_data[names(existing_data)])
                         }
                     } else {
-                        # If no existing data, use new data
                         updated_data <- new_data
                     }
 
-                    # Write updated data back to file
                     utils::write.csv(
                         updated_data,
                         "preview_data.csv",
@@ -328,7 +329,6 @@ sd_server <- function(
             database_uploading(data_list, db$db, db$table, fields)
         }
 
-        # Only reset changed fields that were actually processed
         changed_fields(setdiff(changed_fields(), fields))
     }
 
@@ -381,7 +381,7 @@ sd_server <- function(
 
     # Update checkpoint 1 - when session starts
     shiny::isolate({
-        update_data()
+        update_data(allow_initial_bot = TRUE)
     })
 
     # 5. Main question observers ----
@@ -581,6 +581,9 @@ sd_server <- function(
         page <- get_current_page()
         if (is.null(page$next_page_id)) {
             update_progress_bar(length(question_ids))
+
+            #Bot Check Here
+            bot_checker(db, ignore_mode, session_id, question_labels)
         }
     })
 
@@ -649,17 +652,6 @@ sd_server <- function(
     shiny::onSessionEnded(function() {
         shiny::isolate({
             update_data(time_last = TRUE)
-
-            # Collect question labels for bot_checker
-            question_labels <- list()
-            for (q_id in question_ids) {
-                if (!is.null(question_structure[[q_id]])) {
-                    question_labels[[q_id]] <- question_structure[[q_id]]$label
-                }
-            }
-
-            # Call bot checker with question labels
-            bot_checker(db, ignore_mode, session_id, question_labels)
         })
     })
 }

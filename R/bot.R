@@ -1,33 +1,65 @@
-bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
+#This function will check multiple different parameters as set by numerous studies
+#Here we will set a value between 0 - 3 where 0.5 represents the ideal human, 1.5 represents a "bad human", and 2.5 represents a bot
+#Values way above 2.5 result in highly confident guesses that the user is a bot
 
-    #This function will check multiple different parameters as set by numerous studies
-    #Here we will set a value between 0 - 3 where 0.5 represents the ideal human, 1.5 represents a "bad human", and 2.5 represents a bot
-    #Values way above 2.5 result in highly confident guesses that the user is a bot
+
+
+
+
+# THERE MAY BE A BUG IN THE WAY QUESTION TIMES ARE CALCULATED BE AWARE BOGDAN
+
+
+
+
+
+bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
+    cat("BOT_CHECKER: Function started with session_id:", session_id, "\n")
 
     if (ignore_mode) {
-        df <- if (file.exists("preview_data.csv")) {
-            utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
-        } else {
-            return()
-        }
+        df <- utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
     } else {
-        df <- sd_get_data(db)
+        cat("BOT_CHECKER: Trying direct pool connection\n")
+
+        tryCatch({
+            # Try getting a direct connection from the pool
+            conn <- pool::poolCheckout(db$db)
+            cat("BOT_CHECKER: Got direct connection\n")
+
+            # Quick query
+            df <- DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s"', db$table))
+            cat("BOT_CHECKER: Direct query successful, got", nrow(df), "rows\n")
+
+            # Return connection to pool
+            pool::poolReturn(conn)
+            cat("BOT_CHECKER: Returned connection to pool\n")
+
+        }, error = function(e) {
+            cat("BOT_CHECKER: Direct connection failed:", e$message, "\n")
+            # Try to return connection even if there was an error
+            tryCatch(pool::poolReturn(conn), error = function(e2) {})
+            return()
+        })
     }
 
+    cat("BOT_CHECKER: About to filter for session_id\n")
+    # Rest of your code...
     user_data <- df[df$session_id == session_id, ]
 
     if (nrow(user_data) == 0) {
         warning("No data found for session_id: ", session_id)
         return()
     }
-
+    cat("2")
     current_bot_value <- as.numeric(user_data$is_bot)
     sessions_to_update <- list()
 
     #------------------------- ALL CONDITIONS GO HERE -------------------------
 
+
+    cat("BOT_CHECKER: About to call is_fast\n")
     # Check if user is too fast
     if (is_fast(user_data, question_labels)) {
+        cat("BOT_CHECKER: is_fast returned TRUE - updating bot value\n")
         current_bot_value <- current_bot_value + 1.5
         sessions_to_update[[session_id]] <- current_bot_value
     }
@@ -75,9 +107,13 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
     #------------------------- END OF BOT CONDITIONS -------------------------
 
     # Update all flagged sessions
+    # Update all flagged sessions
     if (length(sessions_to_update) > 0) {
+        cat("editing db\n")
         for (update_session_id in names(sessions_to_update)) {
             new_bot_value <- sessions_to_update[[update_session_id]]
+
+            cat("BOT_CHECKER: Processing session:", update_session_id, "with value:", new_bot_value, "\n")
 
             data_list <- list(
                 session_id = update_session_id,
@@ -88,12 +124,40 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
             if (ignore_mode) {
                 update_local_csv_session(update_session_id, new_bot_value)
             } else {
-                database_uploading(
-                    data_list = data_list,
-                    db = db$db,
-                    table = db$table,
-                    changed_fields = "is_bot"
-                )
+                cat("Uploading db\n")
+
+                # Add timeout and error handling
+                tryCatch({
+                    # Check if the connection is still valid
+                    cat("BOT_CHECKER: Testing connection...\n")
+                    test_result <- pool::poolWithTransaction(db$db, function(conn) {
+                        DBI::dbGetQuery(conn, "SELECT 1 as test")
+                    })
+                    cat("BOT_CHECKER: Connection test passed\n")
+
+                    # Try the update
+                    cat("BOT_CHECKER: Calling database_uploading...\n")
+                    database_uploading(
+                        data_list = data_list,
+                        db = db$db,
+                        table = db$table,
+                        changed_fields = "is_bot"
+                    )
+                    cat("DONE db\n")
+
+                    # Verify the update worked
+                    cat("BOT_CHECKER: Verifying update...\n")
+                    verify_result <- pool::poolWithTransaction(db$db, function(conn) {
+                        DBI::dbGetQuery(conn, sprintf('SELECT is_bot FROM "%s" WHERE session_id = $1', db$table),
+                                        params = list(update_session_id))
+                    })
+                    cat("BOT_CHECKER: Current is_bot value after update:", verify_result$is_bot, "\n")
+
+                }, error = function(e) {
+                    cat("BOT_CHECKER: Error during database update:", e$message, "\n")
+                    cat("BOT_CHECKER: Error class:", class(e), "\n")
+                    print(e)
+                })
             }
         }
     }
@@ -121,16 +185,49 @@ update_local_csv_session <- function(session_id, new_bot_value) {
 
 
 is_fast <- function(user_data, question_labels = NULL) {
-    # Your existing time calculation code...
+
+    cols_to_keep <- c("time_start", "time_end",
+                      names(user_data)[grepl("time_q", names(user_data))])
+    filtered_data <- user_data[, cols_to_keep]
+
+    # Get only the time_q columns (exclude time_start and time_end)
+    time_q_cols <- names(filtered_data)[grepl("^time_q", names(filtered_data))]
+
+    # Initialize vector to store time differences
+    question_times <- numeric(length(time_q_cols))
+    names(question_times) <- time_q_cols
+
+    # Start with time_start as the baseline
+    previous_time <- filtered_data$time_start
+
+    # Process each time_q column in order
+    for (col in time_q_cols) {
+        current_time <- filtered_data[[col]]
+        if (!is.na(current_time) && current_time != "") {
+            # Convert timestamps to POSIXct
+            prev_parsed <- as.POSIXct(previous_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+            curr_parsed <- as.POSIXct(current_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+
+            # Calculate difference in seconds
+            time_diff_seconds <- as.numeric(difftime(curr_parsed, prev_parsed, units = "secs"))
+
+            # Store the time difference
+            question_times[col] <- round(time_diff_seconds, 2)
+
+            # Update previous_time for next calculation
+            previous_time <- current_time
+        } else {
+            question_times[col] <- NA
+        }
+    }
+
+    # Remove NA values
+    valid_times <- question_times[!is.na(question_times)]
 
     # WPM-based analysis (requires question labels)
     if (is.null(question_labels) || length(question_labels) == 0) {
-        message("DEBUG: No question labels provided")
         return(FALSE)
     }
-
-    message("DEBUG: Available question labels: ", paste(names(question_labels), collapse = ", "))
-    message("DEBUG: Time columns found: ", paste(names(valid_times), collapse = ", "))
 
     num_fast_wpm <- 0
     num_very_fast_wpm <- 0
@@ -138,11 +235,9 @@ is_fast <- function(user_data, question_labels = NULL) {
     for (col in names(valid_times)) {
         # Extract question ID from time column (remove "time_q_" prefix)
         question_id <- gsub("^time_q_", "", col)
-        message("DEBUG: Processing time column '", col, "' -> question_id '", question_id, "'")
 
         if (question_id %in% names(question_labels)) {
             question_text <- question_labels[[question_id]]
-            message("DEBUG: Found question text: ", substr(question_text, 1, 50), "...")
 
             # Count words
             clean_text <- gsub("<[^>]*>", "", question_text)
@@ -155,28 +250,26 @@ is_fast <- function(user_data, question_labels = NULL) {
             min_time_250wpm <- (word_count / 250) * 60 + 2
             min_time_400wpm <- (word_count / 400) * 60 + 1
 
-            message("DEBUG: Question '", question_id, "': ", word_count, " words, ",
-                    actual_time, "s actual, need ", min_time_250wpm, "s (250wpm), ",
-                    min_time_400wpm, "s (400wpm)")
+            cat("DEBUG: Question '", question_id, "': ", word_count, " words, ",
+                actual_time, "s actual, need ", min_time_250wpm, "s (250wpm), ",
+                min_time_400wpm, "s (400wpm)\n")
 
             # Check if too fast
             if (actual_time < min_time_400wpm) {
                 num_very_fast_wpm <- num_very_fast_wpm + 1
-                message("DEBUG: VERY FAST detected!")
             } else if (actual_time < min_time_250wpm) {
-                num_fast_wpm <- num_fast_wpm + 1
-                message("DEBUG: FAST detected!")
+                num_fast_wpm <- num_fast_wpm + 0.5
             }
         } else {
-            message("DEBUG: Question ID '", question_id, "' not found in question_labels")
+            cat("DEBUG: Question ID '", question_id, "' not found in question_labels\n")
         }
     }
 
     num_valid_questions <- length(valid_times)
 
     # Determine if user is reading/answering too fast based on WPM
-    is_too_fast <- (num_fast_wpm / num_valid_questions >= 0.5) ||
-        (num_very_fast_wpm / num_valid_questions >= 0.25)
+    cat("Addition: ", num_fast_wpm + num_very_fast_wpm, "\n")
+    is_too_fast <- ((num_fast_wpm + num_very_fast_wpm) / num_valid_questions >= 0.5)
 
     return(is_too_fast)
 }

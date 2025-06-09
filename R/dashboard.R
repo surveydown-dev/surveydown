@@ -397,13 +397,14 @@ sd_dashboard <- function(gssencmode = "prefer") {
             # Calculate median is_bot value
             bot_scores <- as.numeric(data$is_bot[!is.na(data$is_bot)])
             if (length(bot_scores) == 0) {
-                median_bot_score <- 0
+                integrity_score <- 100
             } else {
-                median_bot_score <- median(bot_scores)
-            }
+                problematic_responses <- sum(bot_scores >= 1.0)  # Anyone with score ≥ 1.0 is problematic
+                total_responses <- length(bot_scores)
 
-            # Convert to 0-100 integrity scale (assuming is_bot ranges 0-4)
-            integrity_score <- max(0, min(100, 100 - (median_bot_score / 4) * 100))
+                problematic_percentage <- (problematic_responses / total_responses) * 100
+                integrity_score <- 100 - problematic_percentage
+            }
 
             # Determine status and display
             if (integrity_score >= 80) {
