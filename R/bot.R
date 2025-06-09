@@ -121,87 +121,62 @@ update_local_csv_session <- function(session_id, new_bot_value) {
 
 
 is_fast <- function(user_data, question_labels = NULL) {
-    # Filter to only question time columns
-    cols_to_keep <- c("time_start", "time_end",
-                      names(user_data)[grepl("time_q", names(user_data))])
-    filtered_data <- user_data[, cols_to_keep]
+    # Your existing time calculation code...
 
-    # Get only the time_q columns (exclude time_start and time_end)
-    time_q_cols <- names(filtered_data)[grepl("^time_q", names(filtered_data))]
-
-    # Initialize vector to store time differences
-    question_times <- numeric(length(time_q_cols))
-    names(question_times) <- time_q_cols
-
-    # Start with time_start as the baseline
-    previous_time <- filtered_data$time_start
-
-    # Process each time_q column in order
-    for (col in time_q_cols) {
-        current_time <- filtered_data[[col]]
-        if (!is.na(current_time) && current_time != "") {
-            # Convert timestamps to POSIXct
-            prev_parsed <- as.POSIXct(previous_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
-            curr_parsed <- as.POSIXct(current_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
-
-            # Calculate difference in seconds
-            time_diff_seconds <- as.numeric(difftime(curr_parsed, prev_parsed, units = "secs"))
-
-            # Store the time difference
-            question_times[col] <- round(time_diff_seconds, 2)
-
-            # Update previous_time for next calculation
-            previous_time <- current_time
-        } else {
-            question_times[col] <- NA
-        }
+    # WPM-based analysis (requires question labels)
+    if (is.null(question_labels) || length(question_labels) == 0) {
+        message("DEBUG: No question labels provided")
+        return(FALSE)
     }
 
-    # Remove NA values
-    valid_times <- question_times[!is.na(question_times)]
+    message("DEBUG: Available question labels: ", paste(names(question_labels), collapse = ", "))
+    message("DEBUG: Time columns found: ", paste(names(valid_times), collapse = ", "))
 
-    # WPM-based analysis
-    if (!is.null(question_labels)) {
-        # Use WPM analysis when question structure is available
-        num_fast_wpm <- 0
-        num_very_fast_wpm <- 0
+    num_fast_wpm <- 0
+    num_very_fast_wpm <- 0
 
-        for (col in names(valid_times)) {
-            # Extract question ID from time column (remove "time_q_" prefix)
-            question_id <- gsub("^time_q_", "", col)
+    for (col in names(valid_times)) {
+        # Extract question ID from time column (remove "time_q_" prefix)
+        question_id <- gsub("^time_q_", "", col)
+        message("DEBUG: Processing time column '", col, "' -> question_id '", question_id, "'")
 
-            if (question_id %in% names(question_labels)) {
-                # Get question text
-                question_text <- question_labels[[question_id]]
+        if (question_id %in% names(question_labels)) {
+            question_text <- question_labels[[question_id]]
+            message("DEBUG: Found question text: ", substr(question_text, 1, 50), "...")
 
-                # Count words (simple split by spaces, remove HTML tags)
-                clean_text <- gsub("<[^>]*>", "", question_text)  # Remove HTML
-                word_count <- length(strsplit(clean_text, "\\s+")[[1]])
+            # Count words
+            clean_text <- gsub("<[^>]*>", "", question_text)
+            word_count <- length(strsplit(clean_text, "\\s+")[[1]])
 
-                # Get actual time taken
-                actual_time <- valid_times[[col]]
+            # Get actual time taken
+            actual_time <- valid_times[[col]]
 
-                # Calculate minimum time needed for different WPM rates
-                # Reading time + 2 seconds for answering
-                min_time_250wpm <- (word_count / 250) * 60 + 2  # Normal reading + answer time
-                min_time_400wpm <- (word_count / 400) * 60 + 1  # Very fast reading + quick answer
+            # Calculate minimum times
+            min_time_250wpm <- (word_count / 250) * 60 + 2
+            min_time_400wpm <- (word_count / 400) * 60 + 1
 
-                # Check if too fast based on WPM
-                if (actual_time < min_time_400wpm) {
-                    num_very_fast_wpm <- num_very_fast_wpm + 1
-                } else if (actual_time < min_time_250wpm) {
-                    num_fast_wpm <- num_fast_wpm + 1
-                }
+            message("DEBUG: Question '", question_id, "': ", word_count, " words, ",
+                    actual_time, "s actual, need ", min_time_250wpm, "s (250wpm), ",
+                    min_time_400wpm, "s (400wpm)")
+
+            # Check if too fast
+            if (actual_time < min_time_400wpm) {
+                num_very_fast_wpm <- num_very_fast_wpm + 1
+                message("DEBUG: VERY FAST detected!")
+            } else if (actual_time < min_time_250wpm) {
+                num_fast_wpm <- num_fast_wpm + 1
+                message("DEBUG: FAST detected!")
             }
+        } else {
+            message("DEBUG: Question ID '", question_id, "' not found in question_labels")
         }
-
-        num_valid_questions <- length(valid_times)
-
-        # Determine if user is reading/answering too fast based on WPM
-        is_too_fast <- (num_fast_wpm / num_valid_questions >= 0.5) ||
-            (num_very_fast_wpm / num_valid_questions >= 0.25)
-
     }
+
+    num_valid_questions <- length(valid_times)
+
+    # Determine if user is reading/answering too fast based on WPM
+    is_too_fast <- (num_fast_wpm / num_valid_questions >= 0.5) ||
+        (num_very_fast_wpm / num_valid_questions >= 0.25)
 
     return(is_too_fast)
 }
