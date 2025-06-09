@@ -228,6 +228,10 @@ ip_checker <- function(user_data, df) {
     user_session_id <- user_data$session_id
     user_client_ip <- user_data$client_ip  # Store the user's IP
 
+    if (is_institutional_ip(user_client_ip)) {
+        return(list(count = 0, session_ids = c(), boolean = FALSE, value = 0))
+    }
+
     similar_ip_count <- 0
     suspicious_session_ids <- c()
 
@@ -261,6 +265,18 @@ ip_checker <- function(user_data, df) {
         boolean = is_suspicious,
         value = penalty_value
     ))
+}
+
+is_institutional_ip <- function(ip) {
+    # Common institutional/corporate IP patterns
+    institutional_patterns <- c(
+        "10\\.",        # Private Class A
+        "172\\.(1[6-9]|2[0-9]|3[0-1])\\.",  # Private Class B
+        "192\\.168\\.", # Private Class C
+        "127\\.",
+        "192\\.164\\." # GWU For some reason <- This may be a problem especially if other schools are similar this route may not be viable. (Studies also say the same)
+    )
+    any(sapply(institutional_patterns, function(p) grepl(p, ip)))
 }
 
 
