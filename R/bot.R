@@ -9,67 +9,43 @@
 # THERE MAY BE A BUG IN THE WAY QUESTION TIMES ARE CALCULATED BE AWARE BOGDAN
 
 
-
-
-
 bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
-    cat("BOT_CHECKER: Function started with session_id:", session_id, "\n")
-
     if (ignore_mode) {
         df <- utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
     } else {
-        cat("BOT_CHECKER: Trying direct pool connection\n")
-
         tryCatch({
-            # Try getting a direct connection from the pool
             conn <- pool::poolCheckout(db$db)
-            cat("BOT_CHECKER: Got direct connection\n")
-
-            # Quick query
             df <- DBI::dbGetQuery(conn, sprintf('SELECT * FROM "%s"', db$table))
-            cat("BOT_CHECKER: Direct query successful, got", nrow(df), "rows\n")
-
-            # Return connection to pool
             pool::poolReturn(conn)
-            cat("BOT_CHECKER: Returned connection to pool\n")
-
         }, error = function(e) {
-            cat("BOT_CHECKER: Direct connection failed:", e$message, "\n")
-            # Try to return connection even if there was an error
             tryCatch(pool::poolReturn(conn), error = function(e2) {})
             return()
         })
     }
 
-    cat("BOT_CHECKER: About to filter for session_id\n")
-    # Rest of your code...
     user_data <- df[df$session_id == session_id, ]
 
     if (nrow(user_data) == 0) {
         warning("No data found for session_id: ", session_id)
         return()
     }
-    cat("2")
+
     current_bot_value <- as.numeric(user_data$is_bot)
+    if (is.na(current_bot_value)) current_bot_value <- 0
+
     sessions_to_update <- list()
 
-    #------------------------- ALL CONDITIONS GO HERE -------------------------
-
-
-    cat("BOT_CHECKER: About to call is_fast\n")
     # Check if user is too fast
     if (is_fast(user_data, question_labels)) {
-        cat("BOT_CHECKER: is_fast returned TRUE - updating bot value\n")
         current_bot_value <- current_bot_value + 1.5
         sessions_to_update[[session_id]] <- current_bot_value
     }
 
-    #Check if User start times are close to one another
+    # Check if user start times are close to one another
     suspicious_time_instances <- start_time_checker(user_data, df)
 
     if(suspicious_time_instances$boolean) {
         penalty <- suspicious_time_instances$value
-
         current_bot_value <- current_bot_value + penalty
         sessions_to_update[[session_id]] <- current_bot_value
 
@@ -78,6 +54,7 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
             suspicious_row <- df[df$session_id == suspicious_session, ]
             if (nrow(suspicious_row) > 0) {
                 suspicious_bot_value <- as.numeric(suspicious_row$is_bot) + penalty
+                if (is.na(suspicious_bot_value)) suspicious_bot_value <- penalty
                 sessions_to_update[[suspicious_session]] <- suspicious_bot_value
             }
         }
@@ -107,56 +84,27 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
     #------------------------- END OF BOT CONDITIONS -------------------------
 
     # Update all flagged sessions
-    # Update all flagged sessions
     if (length(sessions_to_update) > 0) {
-        cat("editing db\n")
         for (update_session_id in names(sessions_to_update)) {
             new_bot_value <- sessions_to_update[[update_session_id]]
-
-            cat("BOT_CHECKER: Processing session:", update_session_id, "with value:", new_bot_value, "\n")
 
             data_list <- list(
                 session_id = update_session_id,
                 is_bot = as.character(new_bot_value)
             )
 
-            # Update storage - Edit this section after dev
             if (ignore_mode) {
                 update_local_csv_session(update_session_id, new_bot_value)
             } else {
-                cat("Uploading db\n")
-
-                # Add timeout and error handling
                 tryCatch({
-                    # Check if the connection is still valid
-                    cat("BOT_CHECKER: Testing connection...\n")
-                    test_result <- pool::poolWithTransaction(db$db, function(conn) {
-                        DBI::dbGetQuery(conn, "SELECT 1 as test")
-                    })
-                    cat("BOT_CHECKER: Connection test passed\n")
-
-                    # Try the update
-                    cat("BOT_CHECKER: Calling database_uploading...\n")
                     database_uploading(
                         data_list = data_list,
                         db = db$db,
                         table = db$table,
                         changed_fields = "is_bot"
                     )
-                    cat("DONE db\n")
-
-                    # Verify the update worked
-                    cat("BOT_CHECKER: Verifying update...\n")
-                    verify_result <- pool::poolWithTransaction(db$db, function(conn) {
-                        DBI::dbGetQuery(conn, sprintf('SELECT is_bot FROM "%s" WHERE session_id = $1', db$table),
-                                        params = list(update_session_id))
-                    })
-                    cat("BOT_CHECKER: Current is_bot value after update:", verify_result$is_bot, "\n")
-
                 }, error = function(e) {
-                    cat("BOT_CHECKER: Error during database update:", e$message, "\n")
-                    cat("BOT_CHECKER: Error class:", class(e), "\n")
-                    print(e)
+                    warning("Bot checker database update failed: ", e$message)
                 })
             }
         }
@@ -183,108 +131,97 @@ update_local_csv_session <- function(session_id, new_bot_value) {
     }
 }
 
-
 is_fast <- function(user_data, question_labels = NULL) {
+    all_time_cols <- names(user_data)[grepl("^time_", names(user_data))]
 
-    cols_to_keep <- c("time_start", "time_end",
-                      names(user_data)[grepl("time_q", names(user_data))])
-    filtered_data <- user_data[, cols_to_keep]
+    events <- list()
 
-    # Get only the time_q columns (exclude time_start and time_end)
-    time_q_cols <- names(filtered_data)[grepl("^time_q", names(filtered_data))]
-
-    # Initialize vector to store time differences
-    question_times <- numeric(length(time_q_cols))
-    names(question_times) <- time_q_cols
-
-    # Start with time_start as the baseline
-    previous_time <- filtered_data$time_start
-
-    # Process each time_q column in order
-    for (col in time_q_cols) {
-        current_time <- filtered_data[[col]]
-        if (!is.na(current_time) && current_time != "") {
-            # Convert timestamps to POSIXct
-            prev_parsed <- as.POSIXct(previous_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
-            curr_parsed <- as.POSIXct(current_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
-
-            # Calculate difference in seconds
-            time_diff_seconds <- as.numeric(difftime(curr_parsed, prev_parsed, units = "secs"))
-
-            # Store the time difference
-            question_times[col] <- round(time_diff_seconds, 2)
-
-            # Update previous_time for next calculation
-            previous_time <- current_time
-        } else {
-            question_times[col] <- NA
+    for (col in all_time_cols) {
+        timestamp <- user_data[[col]]
+        if (!is.na(timestamp) && timestamp != "" && !is.null(timestamp)) {
+            events[[col]] <- list(
+                time = as.POSIXct(timestamp, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
+                type = col
+            )
         }
     }
 
-    # Remove NA values
-    valid_times <- question_times[!is.na(question_times)]
+    # Add start time as the first event
+    if (!is.na(user_data$time_start) && user_data$time_start != "") {
+        events[["time_start"]] <- list(
+            time = as.POSIXct(user_data$time_start, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"),
+            type = "time_start"
+        )
+    }
 
-    # WPM-based analysis (requires question labels)
+    # Sort events by time
+    events <- events[order(sapply(events, function(x) x$time))]
+
+    # Calculate time spent on each question
+    question_times <- list()
+
+    for (i in 1:(length(events) - 1)) {
+        current_event <- events[[i]]
+        next_event <- events[[i + 1]]
+
+        if (grepl("^time_q_", current_event$type)) {
+            question_id <- gsub("^time_q_", "", current_event$type)
+            time_spent <- as.numeric(difftime(next_event$time, current_event$time, units = "secs"))
+
+            if (time_spent > 0) {
+                question_times[[question_id]] <- time_spent
+            }
+        }
+    }
+
     if (is.null(question_labels) || length(question_labels) == 0) {
         return(FALSE)
     }
 
     num_fast_wpm <- 0
     num_very_fast_wpm <- 0
+    valid_questions <- 0
 
-    for (col in names(valid_times)) {
-        # Extract question ID from time column (remove "time_q_" prefix)
-        question_id <- gsub("^time_q_", "", col)
-
+    for (question_id in names(question_times)) {
         if (question_id %in% names(question_labels)) {
             question_text <- question_labels[[question_id]]
 
-            # Count words
             clean_text <- gsub("<[^>]*>", "", question_text)
             word_count <- length(strsplit(clean_text, "\\s+")[[1]])
 
-            # Get actual time taken
-            actual_time <- valid_times[[col]]
+            actual_time <- question_times[[question_id]]
 
-            # Calculate minimum times
             min_time_250wpm <- (word_count / 250) * 60 + 2
             min_time_400wpm <- (word_count / 400) * 60 + 1
 
-            cat("DEBUG: Question '", question_id, "': ", word_count, " words, ",
-                actual_time, "s actual, need ", min_time_250wpm, "s (250wpm), ",
-                min_time_400wpm, "s (400wpm)\n")
-
-            # Check if too fast
             if (actual_time < min_time_400wpm) {
                 num_very_fast_wpm <- num_very_fast_wpm + 1
             } else if (actual_time < min_time_250wpm) {
                 num_fast_wpm <- num_fast_wpm + 0.5
             }
-        } else {
-            cat("DEBUG: Question ID '", question_id, "' not found in question_labels\n")
+
+            valid_questions <- valid_questions + 1
         }
     }
 
-    num_valid_questions <- length(valid_times)
+    if (valid_questions == 0) {
+        return(FALSE)
+    }
 
-    # Determine if user is reading/answering too fast based on WPM
-    cat("Addition: ", num_fast_wpm + num_very_fast_wpm, "\n")
-    is_too_fast <- ((num_fast_wpm + num_very_fast_wpm) / num_valid_questions >= 0.5)
+    total_fast_score <- num_fast_wpm + num_very_fast_wpm
+    fast_proportion <- total_fast_score / valid_questions
 
-    return(is_too_fast)
+    return(fast_proportion >= 0.5)
 }
 
 
 start_time_checker <- function(user_data, df) {
-    # Get the user's start time
     user_start_time <- as.POSIXct(user_data$time_start, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
     user_session_id <- user_data$session_id
 
-    # Initialize counter and list
     under_5_seconds_count <- 0
     suspicious_session_ids <- c()
 
-    # Loop through all rows in df
     for (i in 1:nrow(df)) {
         row_session_id <- df$session_id[i]
 
@@ -293,20 +230,16 @@ start_time_checker <- function(user_data, df) {
         }
 
         row_start_time <- as.POSIXct(df$time_start[i], format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
-
         time_diff <- abs(as.numeric(difftime(row_start_time, user_start_time, units = "secs")))
 
-        # If difference is under 5 seconds, add to counter and list
         if (time_diff < 5) {
             under_5_seconds_count <- under_5_seconds_count + 1
             suspicious_session_ids <- c(suspicious_session_ids, row_session_id)
         }
     }
 
-
     is_suspicious <- under_5_seconds_count > 2
 
-    # Determine penalty value based on severity
     penalty_value <- if (under_5_seconds_count > 5) {
         1
     } else if (under_5_seconds_count > 2) {
