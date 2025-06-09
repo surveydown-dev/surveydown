@@ -652,7 +652,7 @@ sd_server <- function(
 
             #BotWork begins here, at the end of the survey (when the progress bar is completed we will check to see if it is a bot/bad human)
             # Call bot checker when survey is completed
-            bot_checker(db, ignore_mode, session_id)
+            bot_checker(db, ignore_mode, session_id, question_structure)
         })
     })
 }
