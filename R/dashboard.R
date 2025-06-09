@@ -82,7 +82,7 @@ sd_dashboard <- function(gssencmode = "prefer") {
 
                         #Basic Information
                         bslib::layout_column_wrap(
-                            width = 1/3,
+                            width = 1/4,
                             heights_equal = "row",
                             bslib::value_box(
                                 title = "Total Responses",
@@ -98,6 +98,11 @@ sd_dashboard <- function(gssencmode = "prefer") {
                                 title = "Completion Rate",
                                 value = shiny::textOutput("completion_rate"),
                                 showcase = shiny::icon("check-circle")
+                            ),
+                            bslib::value_box(
+                                title = "Survey Integrity",
+                                value = shiny::htmlOutput("integrity_display"),
+                                showcase = shiny::icon("shield-halved")
                             )
                         ),
                         bslib::layout_column_wrap(
@@ -375,6 +380,102 @@ sd_dashboard <- function(gssencmode = "prefer") {
                 "0.0%"
             }
         })
+
+        output$integrity_display <- shiny::renderUI({
+            shiny::req(survey_data())
+            data <- survey_data()
+
+            # Check if is_bot column exists
+            if (!"is_bot" %in% names(data)) {
+                return(shiny::div(
+                    style = "text-align: center;",
+                    shiny::h3("N/A", style = "margin: 0; color: #666;"),
+                    shiny::p("No bot data", style = "font-size: 12px; margin: 0; color: #999;")
+                ))
+            }
+
+            # Calculate median is_bot value
+            bot_scores <- as.numeric(data$is_bot[!is.na(data$is_bot)])
+            if (length(bot_scores) == 0) {
+                median_bot_score <- 0
+            } else {
+                median_bot_score <- median(bot_scores)
+            }
+
+            # Convert to 0-100 integrity scale (assuming is_bot ranges 0-4)
+            integrity_score <- max(0, min(100, 100 - (median_bot_score / 4) * 100))
+
+            # Determine status and display
+            if (integrity_score >= 80) {
+                status <- "EXCELLENT"
+                color <- "#00C851"
+                message <- "High quality responses"
+            } else if (integrity_score >= 60) {
+                status <- "GOOD"
+                color <- "#2E7D32"
+                message <- "Mostly reliable data"
+            } else if (integrity_score >= 40) {
+                status <- "NEUTRAL"
+                color <- "#FF8F00"
+                message <- "Mixed response quality"
+            } else if (integrity_score >= 20) {
+                status <- "POOR"
+                color <- "#FF5722"
+                message <- "Suspicious activity detected"
+            } else {
+                status <- "COMPROMISED"
+                color <- "#D32F2F"
+                message <- "High bot activity detected"
+            }
+
+            # Return formatted display
+            shiny::div(
+                style = "text-align: center;",
+                shiny::h3(
+                    paste0(round(integrity_score)),
+                    style = paste0("margin: 0; color: ", color, "; font-weight: bold;")
+                ),
+                shiny::p(
+                    status,
+                    style = paste0("font-size: 14px; margin: 2px 0; color: ", color, "; font-weight: bold;")
+                ),
+                shiny::p(
+                    message,
+                    style = "font-size: 11px; margin: 0; color: #666;"
+                )
+            )
+        })
+
+        # Dynamic theme for the integrity value box
+        #output$integrity_theme <- shiny::renderText({
+        #    shiny::req(survey_data())
+        #    data <- survey_data()
+#
+        #    if (!"is_bot" %in% names(data)) {
+        #        return("secondary")
+        #    }
+#
+        #    bot_scores <- as.numeric(data$is_bot[!is.na(data$is_bot)])
+        #    if (length(bot_scores) == 0) {
+        #        median_bot_score <- 0
+        #    } else {
+        #        median_bot_score <- median(bot_scores)
+        #    }
+#
+        #    integrity_score <- max(0, min(100, 100 - (median_bot_score / 4) * 100))
+#
+        #    # Return appropriate theme color
+        #    if (integrity_score >= 80) {
+        #        "success"    # Green
+        #    } else if (integrity_score >= 60) {
+        #        "primary"    # Blue
+        #    } else if (integrity_score >= 40) {
+        #        "warning"    # Orange
+        #    } else {
+        #        "danger"     # Red
+        #    }
+        #})
+
 
         # Response Trend Plot
         output$cumulative_trend <- shiny::renderPlot({
