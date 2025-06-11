@@ -536,8 +536,6 @@ sd_server <- function(
             return(character(0))
         }
         
-        cat("Required questions for this page:", paste(required_questions, collapse = ", "), "\n")
-        
         is_visible <- question_visibility()[required_questions]
         unanswered <- character(0)
         
@@ -550,14 +548,11 @@ sd_server <- function(
                 check_answer(q, input, question_structure)
             }
             
-            cat("Question", q, "is answered:", is_answered, "\n")
-            
             if (!is_answered) {
                 unanswered <- c(unanswered, q)
             }
         }
         
-        cat("Unanswered questions:", paste(unanswered, collapse = ", "), "\n")
         return(unanswered)
     }
 
@@ -1580,17 +1575,10 @@ check_answer <- function(q, input, question_structure = NULL) {
     # These types often have default values that shouldn't count as "answered"
     interacted <- input[[paste0(q, "_interacted")]]
     
-    # Debug output
-    cat("Checking question:", q, "\n")
-    cat("  Answer:", paste(answer, collapse = ", "), "\n")
-    cat("  Answer type:", class(answer), "\n")
-    cat("  Interacted:", interacted, "\n")
-    
     # Get question type from question_structure if available
     q_type <- NULL
     if (!is.null(question_structure) && q %in% names(question_structure)) {
         q_type <- question_structure[[q]]$type
-        cat("  Question type:", q_type, "\n")
     }
     
     # Handle based on question type if available
@@ -1604,7 +1592,6 @@ check_answer <- function(q, input, question_structure = NULL) {
             if (!is.null(interacted)) {
                 return(isTRUE(interacted))
             } else {
-                cat("  Slider type detected without interaction tracking - considering unanswered\n")
                 return(FALSE)
             }
         }
@@ -1615,9 +1602,7 @@ check_answer <- function(q, input, question_structure = NULL) {
         if (!is.null(interacted)) {
             return(isTRUE(interacted))
         } else {
-            result <- any(nzchar(answer))
-            cat("  Character input (text), non-empty:", result, "\n")
-            return(result)
+            return(any(nzchar(answer)))
         }
     } else if (is.numeric(answer) || is.logical(answer)) {
         # For numeric inputs (including sliders), require user interaction
@@ -1630,7 +1615,6 @@ check_answer <- function(q, input, question_structure = NULL) {
             if (is.logical(answer) || all(is.na(answer))) {
                 return(FALSE)
             }
-            cat("  No interaction tracking - considering unanswered\n")
             return(FALSE)  # Require interaction tracking for numeric/slider types
         }
     } else if (inherits(answer, "Date")) {
