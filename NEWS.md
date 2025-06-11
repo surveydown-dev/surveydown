@@ -1,6 +1,6 @@
 # surveydown (development version)
 
-# surveydown 0.11.2
+# surveydown 0.12.0
 
 - Required question highlighting: Now upon clicking the "Next" button, the unanswered required questions will be highlighted.
 
