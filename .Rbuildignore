@@ -5,6 +5,7 @@
 ^notes$
 ^pkgdown$
 ^\.github$
+^\.claude$
 ^README\.Rmd$
 ^LICENSE\.md$
 ^logitr\.Rproj$
@@ -14,6 +15,7 @@
 ^doc$
 ^Meta$
 build.R
+CLAUDE.md
 ^cran-comments\.md$
 ^\.travis\.yml$
 ^CRAN-RELEASE$
