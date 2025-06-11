@@ -523,11 +523,42 @@ sd_server <- function(
         all(vapply(required_questions, function(q) {
             if (!is_visible[q]) return(TRUE)
             if (question_structure[[q]]$is_matrix) {
-                all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input)))
+                all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input, question_structure)))
             } else {
-                check_answer(q, input)
+                check_answer(q, input, question_structure)
             }
         }, logical(1)))
+    }
+    
+    get_unanswered_required <- function(page) {
+        required_questions <- page$required_questions
+        if (is.null(required_questions) || length(required_questions) == 0) {
+            return(character(0))
+        }
+        
+        cat("Required questions for this page:", paste(required_questions, collapse = ", "), "\n")
+        
+        is_visible <- question_visibility()[required_questions]
+        unanswered <- character(0)
+        
+        for (q in required_questions) {
+            if (!is_visible[q]) next
+            
+            is_answered <- if (question_structure[[q]]$is_matrix) {
+                all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input, question_structure)))
+            } else {
+                check_answer(q, input, question_structure)
+            }
+            
+            cat("Question", q, "is answered:", is_answered, "\n")
+            
+            if (!is_answered) {
+                unanswered <- c(unanswered, q)
+            }
+        }
+        
+        cat("Unanswered questions:", paste(unanswered, collapse = ", "), "\n")
+        return(unanswered)
     }
 
     # Determine which page is next, then update current_page_id() to it
@@ -566,6 +597,9 @@ sd_server <- function(
                     }
                     
                     if (!is.null(next_page_id) && check_required(page)) {
+                        # Clear any existing highlights before navigating
+                        session$sendCustomMessage("clearRequiredHighlights", list())
+                        
                         # Set the current page as the next page
                         current_page_id(next_page_id)
 
@@ -582,6 +616,20 @@ sd_server <- function(
                         # Update checkpoint 2 - upon going to the next page
                         update_data()
                     } else if (!is.null(next_page_id)) {
+                        # Get list of unanswered required questions
+                        unanswered_questions <- get_unanswered_required(page)
+                        
+                        # Always send as character vector, even if empty
+                        # This ensures consistent JSON formatting
+                        if (length(unanswered_questions) == 0) {
+                            unanswered_questions <- character(0)
+                        }
+                        
+                        # Send list to JavaScript for highlighting
+                        session$sendCustomMessage("highlightRequiredQuestions", 
+                                                  list(questions = unanswered_questions))
+                        
+                        # Show warning alert
                         shinyWidgets::sendSweetAlert(
                             session = session,
                             title = translations[["warning"]],
@@ -1524,13 +1572,84 @@ handle_skip_logic <- function(
 }
 
 # Check if a single question is answered
-check_answer <- function(q, input) {
+check_answer <- function(q, input, question_structure = NULL) {
     answer <- input[[q]]
     if (is.null(answer)) return(FALSE)
-    if (is.character(answer)) return(any(nzchar(answer)))
-    if (is.numeric(answer)) return(any(!is.na(answer)))
-    if (inherits(answer, "Date")) return(any(!is.na(answer)))
-    if (is.list(answer)) return(any(!sapply(answer, is.null)))
+    
+    # For question types that have default values, check if user has actually interacted
+    # These types often have default values that shouldn't count as "answered"
+    interacted <- input[[paste0(q, "_interacted")]]
+    
+    # Debug output
+    cat("Checking question:", q, "\n")
+    cat("  Answer:", paste(answer, collapse = ", "), "\n")
+    cat("  Answer type:", class(answer), "\n")
+    cat("  Interacted:", interacted, "\n")
+    
+    # Get question type from question_structure if available
+    q_type <- NULL
+    if (!is.null(question_structure) && q %in% names(question_structure)) {
+        q_type <- question_structure[[q]]$type
+        cat("  Question type:", q_type, "\n")
+    }
+    
+    # Handle based on question type if available
+    if (!is.null(q_type)) {
+        # Check if this is a slider type (could be "slider", "slider_numeric", or contain slider-related classes)
+        is_slider <- grepl("slider", q_type, ignore.case = TRUE) || 
+                    q_type %in% c("slider", "slider_numeric")
+        
+        if (is_slider) {
+            # Sliders always have defaults, require interaction tracking
+            if (!is.null(interacted)) {
+                return(isTRUE(interacted))
+            } else {
+                cat("  Slider type detected without interaction tracking - considering unanswered\n")
+                return(FALSE)
+            }
+        }
+    }
+    
+    if (is.character(answer)) {
+        # For regular text inputs, empty = unanswered, non-empty = answered
+        if (!is.null(interacted)) {
+            return(isTRUE(interacted))
+        } else {
+            result <- any(nzchar(answer))
+            cat("  Character input (text), non-empty:", result, "\n")
+            return(result)
+        }
+    } else if (is.numeric(answer) || is.logical(answer)) {
+        # For numeric inputs (including sliders), require user interaction
+        # Also handle logical NA from unset numeric inputs
+        if (!is.null(interacted)) {
+            return(isTRUE(interacted))
+        } else {
+            # Without interaction tracking, assume unanswered for these input types
+            # since they always have default values that shouldn't count as user input
+            if (is.logical(answer) || all(is.na(answer))) {
+                return(FALSE)
+            }
+            cat("  No interaction tracking - considering unanswered\n")
+            return(FALSE)  # Require interaction tracking for numeric/slider types
+        }
+    } else if (inherits(answer, "Date")) {
+        # For date inputs, require user interaction if available
+        if (!is.null(interacted)) {
+            return(isTRUE(interacted))
+        } else {
+            # Fallback: check if date is not NA and not today's date (common default)
+            return(any(!is.na(answer)) && !all(answer == Sys.Date()))
+        }
+    } else if (is.list(answer)) {
+        # For date ranges and other list inputs
+        if (!is.null(interacted)) {
+            return(isTRUE(interacted))
+        } else {
+            return(any(!sapply(answer, is.null)))
+        }
+    }
+    
     return(TRUE)  # Default to true for unknown types
 }
 

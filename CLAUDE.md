@@ -23,7 +23,7 @@ surveydown is an R package for creating markdown-based programmable surveys usin
   - `survey.qmd`: Example Quarto survey document
 
 - **inst/js/**: JavaScript modules for client-side functionality
-  - Auto-scroll, progress updates, cookies, countdown timers, navigation
+  - Auto-scroll, progress updates, cookies, countdown timers, navigation, required question highlighting
 
 ### Survey Structure
 
@@ -86,3 +86,14 @@ Main dependencies include:
 ## Database Integration
 
 The package is designed to work with PostgreSQL databases, with special support for Supabase. Database configuration is managed through `.env` files and the `sd_db_config()` function.
+
+## Required Question Highlighting
+
+The package includes functionality to highlight unanswered required questions when users attempt to navigate to the next page. Key components:
+
+- **CSS classes**: `.required-question-highlight` styles in `surveydown.css`
+- **JavaScript**: `highlight_required.js` handles client-side highlighting and scrolling
+- **Server logic**: `get_unanswered_required()` function identifies specific unanswered questions
+- **Integration**: Questions are highlighted when validation fails on Next button click
+
+The system automatically clears highlights when users start answering questions or successfully navigate pages.
