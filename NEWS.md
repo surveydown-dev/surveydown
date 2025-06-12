@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.12.1
+
+- Bug fix: In the `0.11.1` version, `sd_show_if()` works for pages as well, but it will make `sd_skip_forward()` totally ignored. Now this is fixed.
+
 # surveydown 0.12.0
 
 - Required question highlighting: Now upon clicking the "Next" button, the unanswered required questions will be highlighted.
