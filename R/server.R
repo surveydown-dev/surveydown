@@ -575,19 +575,21 @@ sd_server <- function(
                         page_id_to_index
                     )
                     
-                    # NEW: Handle page conditions - find the next eligible page
+                    # Handle page conditions - check if target page should be shown
                     if (!is.null(next_page_id) && length(page_conditions) > 0) {
-                        # Find the next page that should be shown based on page conditions
-                        eligible_page <- find_next_eligible_page(
-                            current_page_id_val, 
-                            list(page_ids = page_ids), 
-                            page_conditions, 
-                            session
-                        )
-                        
-                        # If we have page conditions and an eligible page was found, use it
-                        if (!is.null(eligible_page)) {
-                            next_page_id <- eligible_page
+                        # First check if the target page (from skip_forward or default) should be shown
+                        if (!should_show_page(next_page_id, page_conditions, session)) {
+                            # If target page shouldn't be shown, find next eligible page from that point
+                            eligible_page <- find_next_eligible_page_from_target(
+                                next_page_id, 
+                                page_ids, 
+                                page_conditions, 
+                                session
+                            )
+                            
+                            if (!is.null(eligible_page)) {
+                                next_page_id <- eligible_page
+                            }
                         }
                     }
                     
@@ -1320,6 +1322,25 @@ sd_is_answered <- function(question_id) {
 }
 
 # Helper functions ----
+
+# Helper function to find the next eligible page starting from a specific target
+find_next_eligible_page_from_target <- function(target_page_id, page_ids, page_conditions, session) {
+    target_index <- which(page_ids == target_page_id)
+    
+    if (length(target_index) == 0) {
+        return(NULL)  # Target page not found
+    }
+    
+    # Look for the next eligible page starting from the target
+    for (i in target_index:length(page_ids)) {
+        candidate_page <- page_ids[i]
+        if (should_show_page(candidate_page, page_conditions, session)) {
+            return(candidate_page)
+        }
+    }
+    
+    return(NULL)  # No eligible page found
+}
 
 # Helper function to separate page and question conditions
 separate_show_if_conditions <- function(show_if_conditions, page_ids, question_ids) {
