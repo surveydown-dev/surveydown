@@ -14,6 +14,7 @@ function Meta(meta)
         "cookies.js",
         "countdown.js",
         "enter_key.js",
+        "highlight_required.js",
         "keep_alive.js",
         "update_progress.js"
     }

@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.12.0
+
+- Required question highlighting: Now upon clicking the "Next" button, the unanswered required questions will be highlighted.
+
 # surveydown 0.11.1
 
 - `sd_create_survey()` now accepts `template` as the first argument, and `path` as the second. This follows intuition that we firstly choose a template, and then define the location.
