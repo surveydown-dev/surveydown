@@ -23,3 +23,4 @@ example1.rmarkdown
 .env
 preview_data.csv
 /.quarto/
+CLAUDE.md
