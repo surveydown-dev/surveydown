@@ -4,7 +4,7 @@
 \alias{sd_create_survey}
 \title{Create a new survey template}
 \usage{
-sd_create_survey(template = "default", path = getwd())
+sd_create_survey(template = "default", path = getwd(), ask = TRUE)
 }
 \arguments{
 \item{template}{A character string specifying the template to use.
@@ -30,6 +30,10 @@ Other options include:
 
 \item{path}{A character string specifying the directory where the survey
 template should be created. Defaults to the current working directory.}
+
+\item{ask}{Logical. If \code{TRUE} (default), prompts for user confirmation
+when creating the survey in the current directory. If \code{FALSE}, bypasses
+the confirmation prompt and proceeds without asking.}
 }
 \value{
 Invisible \code{NULL}. The function is called for its side effects.
@@ -63,6 +67,9 @@ if (interactive()) {
 
   # Create a survey with default template in current directory
   sd_create_survey("default")
+
+  # Create a survey without asking for confirmation
+  sd_create_survey(template = "default", path = "my_survey", ask = FALSE)
 }
 
 }

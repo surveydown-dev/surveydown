@@ -206,6 +206,9 @@ tibble_to_list_of_lists <- function(tbl) {
 #'   }
 #' @param path A character string specifying the directory where the survey
 #'   template should be created. Defaults to the current working directory.
+#' @param ask Logical. If `TRUE` (default), prompts for user confirmation
+#'   when creating the survey in the current directory. If `FALSE`, bypasses
+#'   the confirmation prompt and proceeds without asking.
 #'
 #' @details
 #' When creating a new survey template, this function will:
@@ -230,10 +233,13 @@ tibble_to_list_of_lists <- function(tbl) {
 #'
 #'   # Create a survey with default template in current directory
 #'   sd_create_survey("default")
+#'
+#'   # Create a survey without asking for confirmation
+#'   sd_create_survey(template = "default", path = "my_survey", ask = FALSE)
 #' }
 #'
 #' @export
-sd_create_survey <- function(template = "default", path = getwd()) {
+sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
   # Available templates from surveydown-dev/templates
   available_templates <- c(
     "default",
@@ -259,7 +265,7 @@ sd_create_survey <- function(template = "default", path = getwd()) {
          paste(available_templates, collapse = ", "))
   }
 
-  if (path == getwd() && !yesno(paste0('Use the current directory "', path, '" as the path?'))) {
+  if (ask && path == getwd() && !yesno(paste0('Use the current directory "', path, '" as the path?'))) {
     stop("Operation aborted by the user.")
   }
 

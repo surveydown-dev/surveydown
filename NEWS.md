@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.12.2
+
+- `sd_create_survey()` now accepts a new `ask` argument, defaults to `TRUE`. If `ask = FALSE`, the survey creation will proceed without asking.
+
 # surveydown 0.12.1
 
 - Bug fix: In the `0.11.1` version, `sd_show_if()` works for pages as well, but it will make `sd_skip_forward()` totally ignored. Now this is fixed.
