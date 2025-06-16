@@ -514,6 +514,27 @@ sd_server <- function(
             )
         )
     })
+    
+    # Observer to trigger blue highlighting for unanswered questions when page changes
+    shiny::observe({
+        current_page <- get_current_page()
+        # Delay to ensure page content is rendered
+        shiny::invalidateLater(500, session)
+        shiny::isolate({
+            if (!is.null(current_page)) {
+                unanswered_all <- get_unanswered_all(current_page)
+                
+                # Send blue highlighting for all unanswered questions
+                if (length(unanswered_all) > 0) {
+                    session$sendCustomMessage("highlightUnansweredQuestions", 
+                                            list(questions = unanswered_all))
+                } else {
+                    # Clear blue highlighting if no unanswered questions
+                    session$sendCustomMessage("clearUnansweredHighlights", list())
+                }
+            }
+        })
+    })
 
     # 7. Page navigation ----
 
@@ -540,6 +561,32 @@ sd_server <- function(
         unanswered <- character(0)
         
         for (q in required_questions) {
+            if (!is_visible[q]) next
+            
+            is_answered <- if (question_structure[[q]]$is_matrix) {
+                all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input, question_structure)))
+            } else {
+                check_answer(q, input, question_structure)
+            }
+            
+            if (!is_answered) {
+                unanswered <- c(unanswered, q)
+            }
+        }
+        
+        return(unanswered)
+    }
+    
+    get_unanswered_all <- function(page) {
+        page_questions <- page$questions
+        if (is.null(page_questions) || length(page_questions) == 0) {
+            return(character(0))
+        }
+        
+        is_visible <- question_visibility()[page_questions]
+        unanswered <- character(0)
+        
+        for (q in page_questions) {
             if (!is_visible[q]) next
             
             is_answered <- if (question_structure[[q]]$is_matrix) {

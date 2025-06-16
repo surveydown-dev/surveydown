@@ -3,6 +3,7 @@
 # surveydown 0.12.2
 
 - `sd_create_survey()` now accepts a new `ask` argument, defaults to `TRUE`. If `ask = FALSE`, the survey creation will proceed without asking.
+- Default question highlighting: Now the unanswered questions will be shaded in blue.
 
 # surveydown 0.12.1
 

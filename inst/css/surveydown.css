@@ -428,3 +428,34 @@ div:where(.swal2-container) .swal2-html-container {
   border-color: #dc3545 !important;
   box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
+
+/* Unanswered question highlighting (blue) */
+
+.unanswered-question-highlight .form-group {
+  border-color: #007bff !important;
+  background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+.unanswered-question-highlight .form-control {
+  border-color: #007bff !important;
+}
+
+.unanswered-question-highlight .form-control:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Priority system: red highlighting overrides blue */
+.required-question-highlight.unanswered-question-highlight .form-group {
+  border-color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.required-question-highlight.unanswered-question-highlight .form-control {
+  border-color: #dc3545 !important;
+}
+
+.required-question-highlight.unanswered-question-highlight .form-control:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
