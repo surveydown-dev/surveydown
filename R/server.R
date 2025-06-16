@@ -1568,7 +1568,7 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
                             question_ts_ids, progress_updater, use_cookies = TRUE) {
     # Check 1: if db is null, don't use cookies
     # is.null(db)
-    if (is.null(db)) {
+    if (TRUE) {
         use_cookies <- FALSE
     }
 
