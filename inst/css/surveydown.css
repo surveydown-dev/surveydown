@@ -415,7 +415,8 @@ div:where(.swal2-container) .swal2-html-container {
 
 /* Required question highlighting */
 
-.required-question-highlight .form-group {
+.required-question-highlight .form-group,
+.required-question-highlight.form-group {
   border-color: #dc3545 !important;
   background-color: rgba(220, 53, 69, 0.1) !important;
 }
@@ -431,7 +432,8 @@ div:where(.swal2-container) .swal2-html-container {
 
 /* Unanswered question highlighting (blue) */
 
-.unanswered-question-highlight .form-group {
+.unanswered-question-highlight .form-group,
+.unanswered-question-highlight.form-group {
   border-color: #007bff !important;
   background-color: rgba(0, 123, 255, 0.1) !important;
 }
@@ -446,7 +448,8 @@ div:where(.swal2-container) .swal2-html-container {
 }
 
 /* Priority system: red highlighting overrides blue */
-.required-question-highlight.unanswered-question-highlight .form-group {
+.required-question-highlight.unanswered-question-highlight .form-group,
+.required-question-highlight.unanswered-question-highlight.form-group {
   border-color: #dc3545 !important;
   background-color: rgba(220, 53, 69, 0.1) !important;
 }
