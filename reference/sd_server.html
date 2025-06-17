@@ -13,7 +13,7 @@ and exit survey functionality."><meta property="og:image" content="https://pkg.s
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,9 @@ and exit survey functionality.</p>
 <span>  auto_scroll <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  rate_survey <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  language <span class="op">=</span> <span class="st">"en"</span>,</span>
-<span>  use_cookies <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  use_cookies <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  highlight_unanswered <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  highlight_color <span class="op">=</span> <span class="st">"gray"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -104,6 +106,17 @@ Defaults to <code>"en"</code>.</p></dd>
 <dt id="arg-use-cookies">use_cookies<a class="anchor" aria-label="anchor" href="#arg-use-cookies"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, enables cookie-based session management
 for storing and restoring survey progress. Defaults to <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-highlight-unanswered">highlight_unanswered<a class="anchor" aria-label="anchor" href="#arg-highlight-unanswered"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, enables highlighting
+of all unanswered questions on page display. Defaults to <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-highlight-color">highlight_color<a class="anchor" aria-label="anchor" href="#arg-highlight-color"></a></dt>
+<dd><p>Character string. Color for highlighting unanswered
+questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
+Defaults to "gray".</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -190,7 +203,9 @@ confirmation dialog. The rating, if provided, is saved with the survey data.</p>
 <span class="r-in"><span>      auto_scroll <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>      rate_survey <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>      language <span class="op">=</span> <span class="st">"en"</span>,</span></span>
-<span class="r-in"><span>      use_cookies <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>      use_cookies <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>      highlight_unanswered <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>      highlight_color <span class="op">=</span> <span class="st">"gray"</span></span></span>
 <span class="r-in"><span>    <span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">}</span></span></span>
 <span class="r-in"><span></span></span>
