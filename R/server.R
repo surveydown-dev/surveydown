@@ -26,6 +26,8 @@
 #'   Defaults to `"en"`.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
 #'   for storing and restoring survey progress. Defaults to `TRUE`.
+#' @param highlight_unanswered Logical. If `TRUE`, enables blue highlighting
+#'   of all unanswered questions on page display. Defaults to `TRUE`.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -94,7 +96,8 @@
 #'       auto_scroll = FALSE,
 #'       rate_survey = FALSE,
 #'       language = "en",
-#'       use_cookies = TRUE
+#'       use_cookies = TRUE,
+#'       highlight_unanswered = TRUE
 #'     )
 #'   }
 #'
@@ -117,7 +120,8 @@ sd_server <- function(
     auto_scroll            = FALSE,
     rate_survey            = FALSE,
     language               = "en",
-    use_cookies            = TRUE
+    use_cookies            = TRUE,
+    highlight_unanswered   = TRUE
 ) {
 
     # 1. Initialize local variables ----
@@ -517,17 +521,19 @@ sd_server <- function(
     
     # Observer to trigger blue highlighting for unanswered questions when page changes
     shiny::observe({
-        current_page <- get_current_page()
-        if (!is.null(current_page)) {
-            unanswered_all <- get_unanswered_all(current_page)
-            
-            # Send blue highlighting for all unanswered questions
-            if (length(unanswered_all) > 0) {
-                session$sendCustomMessage("highlightUnansweredQuestions", 
-                                        list(questions = unanswered_all))
-            } else {
-                # Clear blue highlighting if no unanswered questions
-                session$sendCustomMessage("clearUnansweredHighlights", list())
+        if (highlight_unanswered) {
+            current_page <- get_current_page()
+            if (!is.null(current_page)) {
+                unanswered_all <- get_unanswered_all(current_page)
+                
+                # Send blue highlighting for all unanswered questions
+                if (length(unanswered_all) > 0) {
+                    session$sendCustomMessage("highlightUnansweredQuestions", 
+                                            list(questions = unanswered_all))
+                } else {
+                    # Clear blue highlighting if no unanswered questions
+                    session$sendCustomMessage("clearUnansweredHighlights", list())
+                }
             }
         }
     })
