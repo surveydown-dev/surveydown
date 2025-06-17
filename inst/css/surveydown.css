@@ -415,7 +415,8 @@ div:where(.swal2-container) .swal2-html-container {
 
 /* Required question highlighting */
 
-.required-question-highlight .form-group {
+.required-question-highlight .form-group,
+.required-question-highlight.form-group {
   border-color: #dc3545 !important;
   background-color: rgba(220, 53, 69, 0.1) !important;
 }
@@ -425,6 +426,123 @@ div:where(.swal2-container) .swal2-html-container {
 }
 
 .required-question-highlight .form-control:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Unanswered question highlighting (blue) */
+
+.unanswered-question-highlight .form-group,
+.unanswered-question-highlight.form-group {
+  border-color: #007bff !important;
+  background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+.unanswered-question-highlight .form-control {
+  border-color: #007bff !important;
+}
+
+.unanswered-question-highlight .form-control:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Unanswered question highlighting (orange) */
+
+.unanswered-question-highlight-orange .form-group,
+.unanswered-question-highlight-orange.form-group {
+  border-color: #fd7e14 !important;
+  background-color: rgba(253, 126, 20, 0.1) !important;
+}
+
+.unanswered-question-highlight-orange .form-control {
+  border-color: #fd7e14 !important;
+}
+
+.unanswered-question-highlight-orange .form-control:focus {
+  border-color: #fd7e14 !important;
+  box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.25) !important;
+}
+
+/* Unanswered question highlighting (green) */
+
+.unanswered-question-highlight-green .form-group,
+.unanswered-question-highlight-green.form-group {
+  border-color: #28a745 !important;
+  background-color: rgba(40, 167, 69, 0.1) !important;
+}
+
+.unanswered-question-highlight-green .form-control {
+  border-color: #28a745 !important;
+}
+
+.unanswered-question-highlight-green .form-control:focus {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+/* Unanswered question highlighting (purple) */
+
+.unanswered-question-highlight-purple .form-group,
+.unanswered-question-highlight-purple.form-group {
+  border-color: #6f42c1 !important;
+  background-color: rgba(111, 66, 193, 0.1) !important;
+}
+
+.unanswered-question-highlight-purple .form-control {
+  border-color: #6f42c1 !important;
+}
+
+.unanswered-question-highlight-purple .form-control:focus {
+  border-color: #6f42c1 !important;
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25) !important;
+}
+
+/* Unanswered question highlighting (gray) */
+
+.unanswered-question-highlight-gray .form-group,
+.unanswered-question-highlight-gray.form-group {
+  border-color: #6c757d !important;
+  background-color: rgba(108, 117, 125, 0.1) !important;
+}
+
+.unanswered-question-highlight-gray .form-control {
+  border-color: #6c757d !important;
+}
+
+.unanswered-question-highlight-gray .form-control:focus {
+  border-color: #6c757d !important;
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+}
+
+/* Priority system: red highlighting overrides all unanswered colors */
+.required-question-highlight.unanswered-question-highlight .form-group,
+.required-question-highlight.unanswered-question-highlight.form-group,
+.required-question-highlight.unanswered-question-highlight-orange .form-group,
+.required-question-highlight.unanswered-question-highlight-orange.form-group,
+.required-question-highlight.unanswered-question-highlight-green .form-group,
+.required-question-highlight.unanswered-question-highlight-green.form-group,
+.required-question-highlight.unanswered-question-highlight-purple .form-group,
+.required-question-highlight.unanswered-question-highlight-purple.form-group,
+.required-question-highlight.unanswered-question-highlight-gray .form-group,
+.required-question-highlight.unanswered-question-highlight-gray.form-group {
+  border-color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.required-question-highlight.unanswered-question-highlight .form-control,
+.required-question-highlight.unanswered-question-highlight-orange .form-control,
+.required-question-highlight.unanswered-question-highlight-green .form-control,
+.required-question-highlight.unanswered-question-highlight-purple .form-control,
+.required-question-highlight.unanswered-question-highlight-gray .form-control {
+  border-color: #dc3545 !important;
+}
+
+.required-question-highlight.unanswered-question-highlight .form-control:focus,
+.required-question-highlight.unanswered-question-highlight-orange .form-control:focus,
+.required-question-highlight.unanswered-question-highlight-green .form-control:focus,
+.required-question-highlight.unanswered-question-highlight-purple .form-control:focus,
+.required-question-highlight.unanswered-question-highlight-gray .form-control:focus {
   border-color: #dc3545 !important;
   box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }

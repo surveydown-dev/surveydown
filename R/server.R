@@ -26,6 +26,11 @@
 #'   Defaults to `"en"`.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
 #'   for storing and restoring survey progress. Defaults to `TRUE`.
+#' @param highlight_unanswered Logical. If `TRUE`, enables highlighting
+#'   of all unanswered questions on page display. Defaults to `TRUE`.
+#' @param highlight_color Character string. Color for highlighting unanswered
+#'   questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
+#'   Defaults to "gray".
 #'
 #' @details
 #' The function performs the following tasks:
@@ -94,7 +99,9 @@
 #'       auto_scroll = FALSE,
 #'       rate_survey = FALSE,
 #'       language = "en",
-#'       use_cookies = TRUE
+#'       use_cookies = TRUE,
+#'       highlight_unanswered = TRUE,
+#'       highlight_color = "gray"
 #'     )
 #'   }
 #'
@@ -117,7 +124,9 @@ sd_server <- function(
     auto_scroll            = FALSE,
     rate_survey            = FALSE,
     language               = "en",
-    use_cookies            = TRUE
+    use_cookies            = TRUE,
+    highlight_unanswered   = TRUE,
+    highlight_color        = "gray"
 ) {
 
     # 1. Initialize local variables ----
@@ -129,6 +138,11 @@ sd_server <- function(
     session    <- get("session", envir = parent_env)
 
     session$userData$db <- db
+
+    # Normalize color spelling (handle both gray and grey)
+    if (highlight_color == "grey") {
+        highlight_color <- "gray"
+    }
 
     # Tag start time
     time_start <- get_utc_timestamp()
@@ -514,6 +528,25 @@ sd_server <- function(
             )
         )
     })
+    
+    # Observer to trigger blue highlighting for unanswered questions when page changes
+    shiny::observe({
+        if (highlight_unanswered) {
+            current_page <- get_current_page()
+            if (!is.null(current_page)) {
+                unanswered_all <- get_unanswered_all(current_page)
+                
+                # Send highlighting for all unanswered questions with specified color
+                if (length(unanswered_all) > 0) {
+                    session$sendCustomMessage("highlightUnansweredQuestions", 
+                                            list(questions = unanswered_all, color = highlight_color))
+                } else {
+                    # Clear unanswered highlighting if no unanswered questions
+                    session$sendCustomMessage("clearUnansweredHighlights", list())
+                }
+            }
+        }
+    })
 
     # 7. Page navigation ----
 
@@ -542,14 +575,48 @@ sd_server <- function(
         for (q in required_questions) {
             if (!is_visible[q]) next
             
-            is_answered <- if (question_structure[[q]]$is_matrix) {
-                all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input, question_structure)))
+            if (question_structure[[q]]$is_matrix) {
+                # For matrix questions, check each subquestion individually
+                for (r in question_structure[[q]]$row) {
+                    subq_id <- paste0(q, "_", r)
+                    if (!check_answer(subq_id, input, question_structure)) {
+                        unanswered <- c(unanswered, subq_id)
+                    }
+                }
             } else {
-                check_answer(q, input, question_structure)
+                if (!check_answer(q, input, question_structure)) {
+                    unanswered <- c(unanswered, q)
+                }
             }
+        }
+        
+        return(unanswered)
+    }
+    
+    get_unanswered_all <- function(page) {
+        page_questions <- page$questions
+        if (is.null(page_questions) || length(page_questions) == 0) {
+            return(character(0))
+        }
+        
+        is_visible <- question_visibility()[page_questions]
+        unanswered <- character(0)
+        
+        for (q in page_questions) {
+            if (!is_visible[q]) next
             
-            if (!is_answered) {
-                unanswered <- c(unanswered, q)
+            if (question_structure[[q]]$is_matrix) {
+                # For matrix questions, check each subquestion individually
+                for (r in question_structure[[q]]$row) {
+                    subq_id <- paste0(q, "_", r)
+                    if (!check_answer(subq_id, input, question_structure)) {
+                        unanswered <- c(unanswered, subq_id)
+                    }
+                }
+            } else {
+                if (!check_answer(q, input, question_structure)) {
+                    unanswered <- c(unanswered, q)
+                }
             }
         }
         
