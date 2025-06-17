@@ -12,7 +12,9 @@ sd_server(
   auto_scroll = FALSE,
   rate_survey = FALSE,
   language = "en",
-  use_cookies = TRUE
+  use_cookies = TRUE,
+  highlight_unanswered = TRUE,
+  highlight_color = "gray"
 )
 }
 \arguments{
@@ -43,6 +45,13 @@ Defaults to \code{"en"}.}
 
 \item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management
 for storing and restoring survey progress. Defaults to \code{TRUE}.}
+
+\item{highlight_unanswered}{Logical. If \code{TRUE}, enables highlighting
+of all unanswered questions on page display. Defaults to \code{TRUE}.}
+
+\item{highlight_color}{Character string. Color for highlighting unanswered
+questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
+Defaults to "gray".}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
@@ -125,7 +134,9 @@ if (interactive()) {
       auto_scroll = FALSE,
       rate_survey = FALSE,
       language = "en",
-      use_cookies = TRUE
+      use_cookies = TRUE,
+      highlight_unanswered = TRUE,
+      highlight_color = "gray"
     )
   }
 

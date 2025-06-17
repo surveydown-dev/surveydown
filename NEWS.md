@@ -1,9 +1,13 @@
 # surveydown (development version)
 
+# surveydown 0.12.3
+
+- New argument for `sd_server()`: `highlight_unanswered` gives color shading for the unanswered questions, default to `TRUE`, can be turned off by changing to `FALSE`.
+- New argument for `sd_server()`: `highlight_color` changes the shading color, default to `"gray"` (or `"grey"` as an acceptable spelling), can be changed to `"blue"`, `"orange"`, `"green"`, or `"purple"`.
+
 # surveydown 0.12.2
 
 - `sd_create_survey()` now accepts a new `ask` argument, defaults to `TRUE`. If `ask = FALSE`, the survey creation will proceed without asking.
-- Default question highlighting: Now the unanswered questions will be shaded in blue.
 
 # surveydown 0.12.1
 
