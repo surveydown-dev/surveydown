@@ -186,6 +186,17 @@ is_fast <- function(user_data, question_labels = NULL) {
         if (question_id %in% names(question_labels)) {
             question_text <- question_labels[[question_id]]
 
+            # Add safety check for question_text
+            if (is.null(question_text) || !is.character(question_text) ||
+                length(question_text) == 0 || question_text == "") {
+                next
+            }
+
+            # If question_text is a vector, take the first element
+            if (length(question_text) > 1) {
+                question_text <- question_text[1]
+            }
+
             clean_text <- gsub("<[^>]*>", "", question_text)
             word_count <- length(strsplit(clean_text, "\\s+")[[1]])
 
