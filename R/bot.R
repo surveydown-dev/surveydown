@@ -47,22 +47,21 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
     }
 
     # Check if user start times are close to one another
-    suspicious_time_instances <- start_time_checker(user_data, df)
+    suspicious_timing <- start_time_checker(user_data, df)
 
-    if(suspicious_time_instances$boolean) {
-        penalty <- suspicious_time_instances$value  # This is now a letter
-        current_bot_value <- paste(current_bot_value, penalty, sep = "")
+    if (suspicious_timing$boolean) {
+        current_bot_value <- paste(current_bot_value, "C", sep = "")
         sessions_to_update[[session_id]] <- current_bot_value
 
         # Update ALL suspicious sessions found
-        for (suspicious_session in suspicious_time_instances$session_ids) {
+        for (suspicious_session in suspicious_timing$session_ids) {
             suspicious_row <- df[df$session_id == suspicious_session, ]
             if (nrow(suspicious_row) > 0) {
-                suspicious_bot_value <- suspicious_row$survey_flags
+                suspicious_bot_value <- suspicious_row$is_bot
                 if (is.na(suspicious_bot_value) || suspicious_bot_value == "" || suspicious_bot_value == "A") {
                     suspicious_bot_value <- ""
                 }
-                suspicious_bot_value <- paste(suspicious_bot_value, penalty, sep = "")
+                suspicious_bot_value <- paste(suspicious_bot_value, "C", sep = "")
                 sessions_to_update[[suspicious_session]] <- suspicious_bot_value
             }
         }
@@ -240,21 +239,9 @@ start_time_checker <- function(user_data, df) {
         }
     }
 
-    is_suspicious <- under_5_seconds_count > 2
-
-    penalty_letter <- if (under_5_seconds_count > 5) {
-        "C"
-    } else if (under_5_seconds_count > 2) {
-        "c"
-    } else {
-        ""   # No penalty (0-2)
-    }
-
     return(list(
-        count = under_5_seconds_count,
-        session_ids = suspicious_session_ids,
-        boolean = is_suspicious,
-        value = penalty_letter
+        boolean = under_5_seconds_count >= 5,
+        session_ids = suspicious_session_ids
     ))
 }
 

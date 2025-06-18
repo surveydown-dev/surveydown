@@ -201,7 +201,7 @@ sd_dashboard <- function(gssencmode = "prefer") {
                 tryCatch({
                     pool::poolClose(rv$current_db$db)
                     cat("Database pool closed successfully\n")
-                }, error = function(e) {
+                }, error = function(e) {go
                     cat("Error closing database connection:", e$message, "\n")
                 })
             }
@@ -407,48 +407,70 @@ sd_dashboard <- function(gssencmode = "prefer") {
             shiny::req(survey_data())
             data <- survey_data()
 
-            # Check if is_bot column exists
-            if (!"is_bot" %in% names(data)) {
+            # Check if survey_flags column exists (renamed from is_bot)
+            if (!"survey_flags" %in% names(data)) {
                 return(shiny::div(
                     style = "text-align: center;",
                     shiny::h3("N/A", style = "margin: 0; color: #666;"),
-                    shiny::p("No bot data", style = "font-size: 12px; margin: 0; color: #999;")
+                    shiny::p("No survey flags data", style = "font-size: 12px; margin: 0; color: #999;")
                 ))
             }
 
-            # Calculate median is_bot value
-            bot_scores <- as.numeric(data$is_bot[!is.na(data$is_bot)])
-            if (length(bot_scores) == 0) {
+            # Calculate integrity scores based on flag counts
+            flag_data <- data$survey_flags[!is.na(data$survey_flags)]
+
+            if (length(flag_data) == 0) {
                 integrity_score <- 100
             } else {
-                problematic_responses <- sum(bot_scores >= 1.0)  # Anyone with score ≥ 1.0 is problematic
-                total_responses <- length(bot_scores)
+                # Calculate individual scores
+                individual_scores <- sapply(flag_data, function(flags) {
+                    if (is.na(flags) || flags == "A") {
+                        return(0)    # Incomplete survey - no contribution to quality
+                    } else if (flags == "") {
+                        return(100)  # Clean completed survey
+                    }
 
-                problematic_percentage <- (problematic_responses / total_responses) * 100
-                integrity_score <- 100 - problematic_percentage
+                    # Count number of flag letters (A should already be handled above)
+                    flag_count <- nchar(flags)
+
+                    if (flag_count == 1) {
+                        return(30)   # Poor - 1 flag
+                    } else if (flag_count == 2) {
+                        return(10)   # Very poor - 2 flags
+                    } else {
+                        return(0)    # Extremely compromised - 3+ flags
+                    }
+                })
+
+                # Calculate average integrity score
+                integrity_score <- mean(individual_scores, na.rm = TRUE)
             }
 
-            # Determine status and display
-            if (integrity_score >= 80) {
+            # Updated thresholds for survey quality
+            if (integrity_score >= 90) {
                 status <- "EXCELLENT"
                 color <- "#00C851"
+                message <- "Outstanding data quality"
+            } else if (integrity_score >= 80) {
+                status <- "VERY GOOD"
+                color <- "#2E7D32"
                 message <- "High quality responses"
             } else if (integrity_score >= 60) {
                 status <- "GOOD"
-                color <- "#2E7D32"
-                message <- "Mostly reliable data"
+                color <- "#4CAF50"
+                message <- "Acceptable data quality"
             } else if (integrity_score >= 40) {
-                status <- "NEUTRAL"
+                status <- "CONCERNING"
                 color <- "#FF8F00"
-                message <- "Mixed response quality"
+                message <- "Multiple quality issues detected"
             } else if (integrity_score >= 20) {
                 status <- "POOR"
                 color <- "#FF5722"
-                message <- "Suspicious activity detected"
+                message <- "Significant quality problems"
             } else {
                 status <- "COMPROMISED"
                 color <- "#D32F2F"
-                message <- "High bot activity detected"
+                message <- "Survey integrity severely compromised"
             }
 
             # Return formatted display
