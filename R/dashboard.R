@@ -192,6 +192,28 @@ sd_dashboard <- function(gssencmode = "prefer") {
     #Server Block
 
     server <- function(input, output, session) {
+
+        session$onSessionEnded(function() {
+            cat("Session ended, cleaning up and stopping app...\n")
+
+            # Clean up database connections
+            if (!is.null(rv$current_db) && !is.null(rv$current_db$db)) {
+                tryCatch({
+                    pool::poolClose(rv$current_db$db)
+                    cat("Database pool closed successfully\n")
+                }, error = function(e) {
+                    cat("Error closing database connection:", e$message, "\n")
+                })
+            }
+
+            later::later(function() {
+                shiny::stopApp()
+            }, delay = 1)
+        })
+
+
+
+
         # Reactive values for connection status and database
         rv <- shiny::reactiveValues(
             connection_status = FALSE,

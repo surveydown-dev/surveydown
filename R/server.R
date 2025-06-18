@@ -197,9 +197,9 @@ sd_server <- function(
 
     # Initialize Bot value 0.5 - Human, 1.5 - Bad/Lazy Human, 2.5 - Bot
     # The reason we do it this way is to differentiated between the groups easier
-    # Innocent till proven guilty thus each respondent starts off valid
+    # Each person starts as a bot/bad human until the function is called (when the survey is fully completed)
 
-    is_bot <- 0
+    is_bot <- 3
 
     # Initialize session handling and session_id
     session_id <- session$token
