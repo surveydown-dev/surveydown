@@ -34,7 +34,9 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
     if (is.na(current_bot_value)) current_bot_value <- 0
 
     if(current_bot_value == 3) { #Reset value to 0 before checking anything else
+        cat("we are resetting\n")
         current_bot_value = current_bot_value - 3
+        cat(current_bot_value)
     }
 
 
