@@ -710,7 +710,20 @@ sd_server <- function(
     shiny::observe({
         page <- get_current_page()
         if (is.null(page$next_page_id)) {
-            update_progress_bar(length(question_ids))
+            # Check if there are questions on this page
+            page_questions <- page$questions
+            if (is.null(page_questions) || length(page_questions) == 0) {
+                # No questions on this page, set progress to 100%
+                update_progress_bar(length(question_ids))
+            } else {
+                # There are questions on this page, check if all questions are answered
+                # Use the same logic as get_unanswered_all to ensure consistency
+                unanswered <- get_unanswered_all(page)
+                if (length(unanswered) == 0) {
+                    # All questions are answered, set progress to 100%
+                    update_progress_bar(length(question_ids))
+                }
+            }
         }
     })
 
