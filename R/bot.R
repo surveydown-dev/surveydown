@@ -207,8 +207,8 @@ is_fast <- function(user_data, question_labels = NULL) {
 
             actual_time <- question_times[[question_id]]
 
-            min_time_250wpm <- (word_count / 250) * 60 + 2
-            min_time_400wpm <- (word_count / 400) * 60 + 1
+            min_time_250wpm <- (word_count / 250) * 60
+            min_time_400wpm <- (word_count / 400) * 60
 
             if (actual_time < min_time_400wpm) {
                 num_very_fast_wpm <- num_very_fast_wpm + 1
