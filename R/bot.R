@@ -262,7 +262,7 @@ start_time_checker <- function(user_data, df) {
     # Return the letter code instead of numeric penalty
     penalty_letter <- if (under_5_seconds_count > 2) {
         "C"  # High suspicious activity
-    } else if (under_5_seconds_count > 1) {
+    } else if (under_5_seconds_count => 1) {
         "c"  # Moderate suspicious activity (lowercase to differentiate)
     } else {
         ""   # No penalty
