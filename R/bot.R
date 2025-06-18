@@ -146,9 +146,7 @@ update_local_csv_session <- function(session_id, new_bot_value) {
 
 is_fast <- function(user_data, question_labels = NULL) {
     all_time_cols <- names(user_data)[grepl("^time_", names(user_data))]
-
     events <- list()
-
     for (col in all_time_cols) {
         timestamp <- user_data[[col]]
         if (!is.na(timestamp) && timestamp != "" && !is.null(timestamp)) {
@@ -158,7 +156,6 @@ is_fast <- function(user_data, question_labels = NULL) {
             )
         }
     }
-
     # Add start time as the first event
     if (!is.na(user_data$time_start) && user_data$time_start != "") {
         events[["time_start"]] <- list(
@@ -166,75 +163,57 @@ is_fast <- function(user_data, question_labels = NULL) {
             type = "time_start"
         )
     }
-
     # Sort events by time
     events <- events[order(sapply(events, function(x) x$time))]
 
-    # Calculate time spent on each question
     question_times <- list()
-
     for (i in 1:(length(events) - 1)) {
         current_event <- events[[i]]
         next_event <- events[[i + 1]]
-
         if (grepl("^time_q_", current_event$type)) {
             question_id <- gsub("^time_q_", "", current_event$type)
             time_spent <- as.numeric(difftime(next_event$time, current_event$time, units = "secs"))
-
             if (time_spent > 0) {
                 question_times[[question_id]] <- time_spent
             }
         }
     }
-
     if (is.null(question_labels) || length(question_labels) == 0) {
         return(FALSE)
     }
-
     num_fast_wpm <- 0
-    num_very_fast_wpm <- 0
+    num_very_fast_wmp <- 0
     valid_questions <- 0
-
     for (question_id in names(question_times)) {
-
         if (question_id %in% names(question_labels)) {
             question_text <- question_labels[[question_id]]
 
-            # Add safety check for question_text
             if (is.null(question_text) || !is.character(question_text) ||
                 length(question_text) == 0 || question_text == "") {
                 next
             }
 
-            # If question_text is a vector, take the first element
             if (length(question_text) > 1) {
                 question_text <- question_text[1]
             }
-
             clean_text <- gsub("<[^>]*>", "", question_text)
             word_count <- length(strsplit(clean_text, "\\s+")[[1]])
-
             actual_time <- question_times[[question_id]]
-
-            min_time_250wpm <- (word_count / 250) * 60
-            min_time_400wpm <- (word_count / 400) * 60
-
-            if (actual_time < min_time_400wpm) {
-                num_very_fast_wpm <- num_very_fast_wpm + 1
-            } else if (actual_time < min_time_250wpm) {
+            min_time_250wpm <- max(1, (word_count / 250) * 60)
+            min_time_400wpm <- max(1, (word_count / 400) * 60)
+            if (actual_time <= min_time_400wpm) {
+                num_very_fast_wmp <- num_very_fast_wmp + 1
+            } else if (actual_time <= min_time_250wpm) {
                 num_fast_wpm <- num_fast_wpm + 0.5
             }
             valid_questions <- valid_questions + 1
         }
     }
-
     if (valid_questions == 0) {
         return(FALSE)
     }
-
-    total_fast_score <- num_fast_wpm + num_very_fast_wpm
+    total_fast_score <- num_fast_wpm + num_very_fast_wmp
     fast_proportion <- total_fast_score / valid_questions
-
     return(fast_proportion >= 0.5)
 }
 
