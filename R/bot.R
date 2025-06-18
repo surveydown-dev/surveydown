@@ -192,7 +192,7 @@ is_fast <- function(user_data, question_labels = NULL) {
             cat("Timing calc:", previous_event$type, "->", current_event$type, "\n")
             cat("  Time spent:", time_spent, "seconds\n")
 
-            if (time_spent > 0) {
+            if (time_spent >= 0) {
                 question_times[[question_id]] <- time_spent
             }
         }
