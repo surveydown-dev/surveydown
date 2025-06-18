@@ -181,16 +181,15 @@ is_fast <- function(user_data, question_labels = NULL) {
     # Calculate time spent on each question
     question_times <- list()
 
-    for (i in 1:(length(events) - 1)) {
+    for (i in 2:length(events)) {
         current_event <- events[[i]]
-        next_event <- events[[i + 1]]
+        previous_event <- events[[i - 1]]
 
         if (grepl("^time_q_", current_event$type)) {
             question_id <- gsub("^time_q_", "", current_event$type)
-            time_spent <- as.numeric(difftime(next_event$time, current_event$time, units = "secs"))
+            time_spent <- as.numeric(difftime(current_event$time, previous_event$time, units = "secs"))
 
-            # Show timing calculation for ALL sessions
-            cat("Timing calc:", current_event$type, "->", next_event$type, "\n")
+            cat("Timing calc:", previous_event$type, "->", current_event$type, "\n")
             cat("  Time spent:", time_spent, "seconds\n")
 
             if (time_spent > 0) {
