@@ -33,9 +33,9 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
     current_bot_value <- user_data$is_bot
     if (is.na(current_bot_value)) current_bot_value <- ""
 
-    if(current_bot_value == 3) { #Reset value to 0 before checking anything else
+    if(current_bot_value == "A" || is.na(current_bot_value)) { #Reset value to 0 before checking anything else
         cat("we are resetting\n")
-        current_bot_value = current_bot_value - 3
+        current_bot_value = ""
         cat(current_bot_value)
     }
 
@@ -44,7 +44,7 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
 
     # Check if user is too fast
     if (is_fast(user_data, question_labels)) {
-        current_bot_value <- current_bot_value + 1.5
+        current_bot_value <- paste(current_bot_value, "B", sep = "")
         sessions_to_update[[session_id]] <- current_bot_value
     }
 
@@ -52,16 +52,19 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
     suspicious_time_instances <- start_time_checker(user_data, df)
 
     if(suspicious_time_instances$boolean) {
-        penalty <- suspicious_time_instances$value
-        current_bot_value <- current_bot_value + penalty
+        penalty <- suspicious_time_instances$value  # This is now a letter
+        current_bot_value <- paste(current_bot_value, penalty, sep = "")
         sessions_to_update[[session_id]] <- current_bot_value
 
         # Update ALL suspicious sessions found
         for (suspicious_session in suspicious_time_instances$session_ids) {
             suspicious_row <- df[df$session_id == suspicious_session, ]
             if (nrow(suspicious_row) > 0) {
-                suspicious_bot_value <- as.numeric(suspicious_row$is_bot) + penalty
-                if (is.na(suspicious_bot_value)) suspicious_bot_value <- penalty
+                suspicious_bot_value <- suspicious_row$is_bot
+                if (is.na(suspicious_bot_value) || suspicious_bot_value == "" || suspicious_bot_value == "A") {
+                    suspicious_bot_value <- ""
+                }
+                suspicious_bot_value <- paste(suspicious_bot_value, penalty, sep = "")
                 sessions_to_update[[suspicious_session]] <- suspicious_bot_value
             }
         }
@@ -258,19 +261,20 @@ start_time_checker <- function(user_data, df) {
 
     is_suspicious <- under_5_seconds_count > 2
 
-    penalty_value <- if (under_5_seconds_count > 5) {
-        1
+    # Return the letter code instead of numeric penalty
+    penalty_letter <- if (under_5_seconds_count > 5) {
+        "C"  # High suspicious activity
     } else if (under_5_seconds_count > 2) {
-        0.5
+        "c"  # Moderate suspicious activity (lowercase to differentiate)
     } else {
-        0
+        ""   # No penalty
     }
 
     return(list(
         count = under_5_seconds_count,
         session_ids = suspicious_session_ids,
         boolean = is_suspicious,
-        value = penalty_value
+        value = penalty_letter  # Now returns letter instead of number
     ))
 }
 
