@@ -30,7 +30,7 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
         return()
     }
 
-    current_bot_value <- user_data$is_bot
+    current_bot_value <- user_data$survey_flags
 
     sessions_to_update <- list()
 
@@ -58,7 +58,7 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
         for (suspicious_session in suspicious_time_instances$session_ids) {
             suspicious_row <- df[df$session_id == suspicious_session, ]
             if (nrow(suspicious_row) > 0) {
-                suspicious_bot_value <- suspicious_row$is_bot
+                suspicious_bot_value <- suspicious_row$survey_flags
                 if (is.na(suspicious_bot_value) || suspicious_bot_value == "" || suspicious_bot_value == "A") {
                     suspicious_bot_value <- ""
                 }
@@ -83,7 +83,7 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
     #        # Get current bot value for this IP session
     #        ip_row <- df[df$session_id == ip_session, ]
     #        if (nrow(ip_row) > 0) {
-    #            ip_bot_value <- as.numeric(ip_row$is_bot) + penalty
+    #            ip_bot_value <- as.numeric(ip_row$survey_flags) + penalty
     #            sessions_to_update[[ip_session]] <- ip_bot_value
     #        }
     #    }
@@ -98,7 +98,7 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
 
             data_list <- list(
                 session_id = update_session_id,
-                is_bot = as.character(new_bot_value)
+                survey_flags = as.character(new_bot_value)
             )
 
             if (ignore_mode) {
@@ -109,7 +109,7 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
                         data_list = data_list,
                         db = db$db,
                         table = db$table,
-                        changed_fields = "is_bot"
+                        changed_fields = "survey_flags"
                     )
                 }, error = function(e) {
                     warning("Bot checker database update failed: ", e$message)
@@ -130,7 +130,7 @@ update_local_csv_session <- function(session_id, new_bot_value) {
             session_idx <- which(existing_data$session_id == session_id)
 
             if (length(session_idx) > 0) {
-                existing_data[session_idx, "is_bot"] <- as.character(new_bot_value)
+                existing_data[session_idx, "survey_flags"] <- as.character(new_bot_value)
                 utils::write.csv(existing_data, "preview_data.csv", row.names = FALSE, na = "")
             }
         }, error = function(e) {

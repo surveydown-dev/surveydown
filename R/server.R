@@ -201,7 +201,7 @@ sd_server <- function(
     # The idea above is old (keeping just incase we ever revert), going to a character format A means survey not completed
 
     bot_check_completed <- shiny::reactiveVal(FALSE)
-    is_bot <- "A"
+    survey_flags <- "A"
 
     # Initialize session handling and session_id
     session_id <- session$token
@@ -251,8 +251,8 @@ sd_server <- function(
         data_list <- latest_data()
         fields <- changed_fields()
 
-        # Exclude is_bot unless this is the initial upload
-        exclude_fields <- if (allow_initial_bot) character(0) else "is_bot"
+        # Exclude survey_flags unless this is the initial upload
+        exclude_fields <- if (allow_initial_bot) character(0) else "survey_flags"
 
         data_list <- data_list[!names(data_list) %in% exclude_fields]
         fields <- fields[!fields %in% exclude_fields]
@@ -341,7 +341,7 @@ sd_server <- function(
         # Create a minimal initial data just for table creation
         min_initial_data <- list(
             session_id = character(0),
-            is_bot = character(0),
+            survey_flags = character(0),
             client_ip = character(0),
             time_start = character(0),
             time_end = character(0)
@@ -357,7 +357,7 @@ sd_server <- function(
 
     # Now handle session and get proper initial data
     initial_data <- get_initial_data(
-        session, session_id, is_bot, client_ip, time_start, all_ids, start_page_ts_id
+        session, session_id, survey_flags, client_ip, time_start, all_ids, start_page_ts_id
     )
     all_data <- do.call(shiny::reactiveValues, initial_data)
 
@@ -1343,11 +1343,11 @@ get_utc_timestamp <- function() {
 }
 
 get_initial_data <- function(
-        session, session_id, is_bot, client_ip, time_start, all_ids, start_page_ts_id
+        session, session_id, survey_flags, client_ip, time_start, all_ids, start_page_ts_id
 ) {
     # Initialize with static data
     data <- c(
-        list(session_id = session_id, is_bot = is_bot, client_ip = client_ip, time_start = time_start),
+        list(session_id = session_id, survey_flags = survey_flags, client_ip = client_ip, time_start = time_start),
         get_stored_vals(session)
     )
 
