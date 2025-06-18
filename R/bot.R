@@ -225,8 +225,8 @@ is_fast <- function(user_data, question_labels = NULL) {
             clean_text <- gsub("<[^>]*>", "", question_text)
             word_count <- length(strsplit(clean_text, "\\s+")[[1]])
             actual_time <- question_times[[question_id]]
-            min_time_250wpm <- round(((word_count / 250) * 60 + 1), digits = 0) #Added a second to simulate a response time (that is subjective)
-            min_time_400wpm <- round(((word_count / 400) * 60 + 1), digits = 0)
+            min_time_250wpm <- round(((word_count / 250) * 60 + 2), digits = 0) #Added two seconds to simulate a response time (that is subjective)
+            min_time_400wpm <- round(((word_count / 400) * 60 + 2), digits = 0)
 
             cat("Analyzing question:", question_id, "\n")
             cat("  Word count:", word_count, "\n")
