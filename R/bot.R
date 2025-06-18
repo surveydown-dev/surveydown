@@ -57,7 +57,7 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
         for (suspicious_session in suspicious_timing$session_ids) {
             suspicious_row <- df[df$session_id == suspicious_session, ]
             if (nrow(suspicious_row) > 0) {
-                suspicious_bot_value <- suspicious_row$is_bot
+                suspicious_bot_value <- suspicious_row$survey_flags
                 if (is.na(suspicious_bot_value) || suspicious_bot_value == "" || suspicious_bot_value == "A") {
                     suspicious_bot_value <- ""
                 }
