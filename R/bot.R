@@ -144,9 +144,6 @@ update_local_csv_session <- function(session_id, new_bot_value) {
 }
 
 is_fast <- function(user_data, question_labels = NULL) {
-
-    session_id <- user_data$session_id
-
     all_time_cols <- names(user_data)[grepl("^time_", names(user_data))]
     events <- list()
     for (col in all_time_cols) {
@@ -183,41 +180,6 @@ is_fast <- function(user_data, question_labels = NULL) {
     if (is.null(question_labels) || length(question_labels) == 0) {
         return(FALSE)
     }
-
-    # Debug the event sequence for the problematic session
-    if (session_id == "316f30065b1670890e92889545a9a2f4") {
-        cat("=== EVENT SEQUENCE FOR", session_id, "===\n")
-        for (i in 1:length(events)) {
-            cat(i, ":", events[[i]]$type, "at", as.character(events[[i]]$time), "\n")
-        }
-        cat("\n")
-    }
-
-    # Calculate time spent on each question
-    question_times <- list()
-
-    for (i in 1:(length(events) - 1)) {
-        current_event <- events[[i]]
-        next_event <- events[[i + 1]]
-
-        if (grepl("^time_q_", current_event$type)) {
-            question_id <- gsub("^time_q_", "", current_event$type)
-            time_spent <- as.numeric(difftime(next_event$time, current_event$time, units = "secs"))
-
-            # Debug timing calculation for problematic session
-            if (session_id == "316f30065b1670890e92889545a9a2f4") {
-                cat("Timing calc:", current_event$type, "->", next_event$type, "\n")
-                cat("  Time spent:", time_spent, "seconds\n")
-            }
-
-            if (time_spent > 0) {
-                question_times[[question_id]] <- time_spent
-            }
-        }
-    }
-
-
-
 
     num_fast_wpm <- 0
     num_very_fast_wmp <- 0
