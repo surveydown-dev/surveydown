@@ -238,7 +238,7 @@ start_time_checker <- function(user_data, df) {
     user_start_time <- as.POSIXct(user_data$time_start, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
     user_session_id <- user_data$session_id
 
-    under_threshold_count <- 0
+    under_5_seconds_count <- 0
     suspicious_session_ids <- c()
 
     for (i in 1:nrow(df)) {
@@ -250,24 +250,24 @@ start_time_checker <- function(user_data, df) {
         row_start_time <- as.POSIXct(df$time_start[i], format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
         time_diff <- abs(as.numeric(difftime(row_start_time, user_start_time, units = "secs")))
 
-        if (time_diff < 30) {
-            under_threshold_count <- under_threshold_count + 1
+        if (time_diff < 5) {
+            under_5_seconds_count <- under_5_seconds_count + 1
             suspicious_session_ids <- c(suspicious_session_ids, row_session_id)
         }
     }
 
-    is_suspicious <- under_threshold_count >= 1
+    is_suspicious <- under_5_seconds_count > 2  #
 
-    penalty_letter <- if (under_threshold_count > 2) {
-        "C"  # High suspicious activity
-    } else if (under_threshold_count >= 1) {
-        "c"  # Moderate suspicious activity
+    penalty_letter <- if (under_5_seconds_count > 5) {
+        "C"
+    } else if (under_5_seconds_count > 2) {
+        "c"
     } else {
-        ""   # No penalty
+        ""   # No penalty (0-2)
     }
 
     return(list(
-        count = under_threshold_count,
+        count = under_5_seconds_count,
         session_ids = suspicious_session_ids,
         boolean = is_suspicious,
         value = penalty_letter
