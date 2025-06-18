@@ -144,6 +144,9 @@ update_local_csv_session <- function(session_id, new_bot_value) {
 }
 
 is_fast <- function(user_data, question_labels = NULL) {
+
+    session_id <- user_data$session_id
+
     all_time_cols <- names(user_data)[grepl("^time_", names(user_data))]
     events <- list()
     for (col in all_time_cols) {
