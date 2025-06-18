@@ -32,13 +32,12 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
 
     current_bot_value <- user_data$is_bot
 
-
     sessions_to_update <- list()
 
     # Check if user is too fast
 
     if(current_bot_value == "A" || is.na(current_bot_value)) { #Reset value to "" before checking anything else
-        current_bot_value = "E"
+        current_bot_value <- "E"
         sessions_to_update[[session_id]] <- current_bot_value
     }
 
