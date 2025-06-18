@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.12.4
+
+- In `sd_question()`, `"numeric"` question type will only allow numeric inputs and `+`/`-` signs.
+- Progress bar won't force to 100% if the ending page has questions. It is useful for those one-page surveys without any Next button or even finish button. In our previous versions, this case will force the bar to 100% even with unanswered questions.
+
 # surveydown 0.12.3
 
 - New argument for `sd_server()`: `highlight_unanswered` gives color shading for the unanswered questions, default to `TRUE`, can be turned off by changing to `FALSE`.

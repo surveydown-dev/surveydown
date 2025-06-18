@@ -636,14 +636,43 @@ sd_question <- function(
       ...
     )
     
-    # Add interaction tracking for numeric inputs
+    # Add interaction tracking and input filtering for numeric inputs
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
         $(document).ready(function() {
             $('#%s').on('focus input change', function() {
                 Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
             });
+            
+            // Restrict input to numeric characters (0-9) and plus/minus signs
+            $('#%s').on('keypress', function(e) {
+                // Allow all key combinations with Ctrl or Cmd (for copy, paste, select all, etc.)
+                if (e.ctrlKey || e.metaKey) {
+                    return true;
+                }
+                
+                var char = String.fromCharCode(e.which);
+                // Allow: digits (0-9), plus sign (+), minus sign (-), backspace, delete, tab, escape, enter
+                if (/[0-9+\\-]/.test(char) || 
+                    e.which === 8 || e.which === 46 || e.which === 9 || e.which === 27 || e.which === 13) {
+                    return true;
+                }
+                e.preventDefault();
+                return false;
+            });
+            
+            // Also filter on paste events
+            $('#%s').on('paste', function(e) {
+                setTimeout(function() {
+                    var val = $('#%s').val();
+                    // Remove any characters that are not digits, plus, or minus
+                    var filtered = val.replace(/[^0-9+\\-]/g, '');
+                    if (val !== filtered) {
+                        $('#%s').val(filtered);
+                    }
+                }, 1);
+            });
         });
-    ", id, id))))
+    ", id, id, id, id, id, id))))
 
   } else if (type == "slider") {
 
