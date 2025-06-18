@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.4</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,11 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.12.4" id="surveydown-0124">surveydown 0.12.4<a class="anchor" aria-label="anchor" href="#surveydown-0124"></a></h2>
+<ul><li>In <code><a href="../reference/sd_question.html">sd_question()</a></code>, <code>"numeric"</code> question type will only allow numeric inputs and <code>+</code>/<code>-</code> signs.</li>
+<li>Progress bar won’t force to 100% if the ending page has questions. It is useful for those one-page surveys without any Next button or even finish button. In our previous versions, this case will force the bar to 100% even with unanswered questions.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.12.3" id="surveydown-0123">surveydown 0.12.3<a class="anchor" aria-label="anchor" href="#surveydown-0123"></a></h2>
 <ul><li>New argument for <code><a href="../reference/sd_server.html">sd_server()</a></code>: <code>highlight_unanswered</code> gives color shading for the unanswered questions, default to <code>TRUE</code>, can be turned off by changing to <code>FALSE</code>.</li>
