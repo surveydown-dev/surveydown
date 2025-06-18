@@ -31,18 +31,17 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
     }
 
     current_bot_value <- user_data$is_bot
-    if (is.na(current_bot_value)) current_bot_value <- ""
-
-    if(current_bot_value == "A" || is.na(current_bot_value)) { #Reset value to 0 before checking anything else
-        cat("we are resetting\n")
-        current_bot_value = ""
-        cat(current_bot_value)
-    }
 
 
     sessions_to_update <- list()
 
     # Check if user is too fast
+
+    if(current_bot_value == "A" || is.na(current_bot_value)) { #Reset value to "" before checking anything else
+        current_bot_value = ""
+        sessions_to_update[[session_id]] <- current_bot_value
+    }
+
     if (is_fast(user_data, question_labels)) {
         current_bot_value <- paste(current_bot_value, "B", sep = "")
         sessions_to_update[[session_id]] <- current_bot_value
