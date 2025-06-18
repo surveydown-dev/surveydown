@@ -251,18 +251,18 @@ start_time_checker <- function(user_data, df) {
         row_start_time <- as.POSIXct(df$time_start[i], format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
         time_diff <- abs(as.numeric(difftime(row_start_time, user_start_time, units = "secs")))
 
-        if (time_diff < 5) {
+        if (time_diff < 10) {
             under_5_seconds_count <- under_5_seconds_count + 1
             suspicious_session_ids <- c(suspicious_session_ids, row_session_id)
         }
     }
 
-    is_suspicious <- under_5_seconds_count > 2
+    is_suspicious <- under_5_seconds_count > 1
 
     # Return the letter code instead of numeric penalty
-    penalty_letter <- if (under_5_seconds_count > 5) {
+    penalty_letter <- if (under_5_seconds_count > 2) {
         "C"  # High suspicious activity
-    } else if (under_5_seconds_count > 2) {
+    } else if (under_5_seconds_count > 1) {
         "c"  # Moderate suspicious activity (lowercase to differentiate)
     } else {
         ""   # No penalty
