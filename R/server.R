@@ -198,8 +198,10 @@ sd_server <- function(
     # Initialize Bot value 0.5 - Human, 1.5 - Bad/Lazy Human, 2.5 - Bot
     # The reason we do it this way is to differentiated between the groups easier
     # Each person starts as a bot/bad human until the function is called (when the survey is fully completed)
+    # The idea above is old (keeping just incase we ever revert), going to a character format A means survey not completed
 
-    is_bot <- 3
+    bot_check_completed <- shiny::reactiveVal(FALSE)
+    is_bot <- "A"
 
     # Initialize session handling and session_id
     session_id <- session$token
@@ -579,11 +581,11 @@ sd_server <- function(
     # Observer to max out the progress bar when we reach the last page
     shiny::observe({
         page <- get_current_page()
-        if (is.null(page$next_page_id)) {
+        if (is.null(page$next_page_id) && !bot_check_completed()) {
             update_progress_bar(length(question_ids))
 
-            #Bot Check Here
             bot_checker(db, ignore_mode, session_id, question_labels)
+            bot_check_completed(TRUE)
         }
     })
 
