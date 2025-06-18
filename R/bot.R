@@ -196,6 +196,7 @@ is_fast <- function(user_data, question_labels = NULL) {
     valid_questions <- 0
 
     for (question_id in names(question_times)) {
+
         if (question_id %in% names(question_labels)) {
             question_text <- question_labels[[question_id]]
 
@@ -219,11 +220,10 @@ is_fast <- function(user_data, question_labels = NULL) {
             min_time_400wpm <- (word_count / 400) * 60
 
             if (actual_time < min_time_400wpm) {
-                num_very_fast_wpm <- num_very_fast_wmp + 1
+                num_very_fast_wpm <- num_very_fast_wpm + 1
             } else if (actual_time < min_time_250wpm) {
                 num_fast_wpm <- num_fast_wpm + 0.5
             }
-
             valid_questions <- valid_questions + 1
         }
     }
