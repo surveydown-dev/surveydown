@@ -144,6 +144,12 @@ update_local_csv_session <- function(session_id, new_bot_value) {
 }
 
 is_fast <- function(user_data, question_labels = NULL) {
+    # Extract session_id from user_data
+    session_id <- user_data$session_id
+
+    # Debug ALL sessions for now
+    cat("=== PROCESSING SESSION:", session_id, "===\n")
+
     all_time_cols <- names(user_data)[grepl("^time_", names(user_data))]
     events <- list()
     for (col in all_time_cols) {
@@ -165,25 +171,46 @@ is_fast <- function(user_data, question_labels = NULL) {
     # Sort events by time
     events <- events[order(sapply(events, function(x) x$time))]
 
+    # Show event sequence for ALL sessions
+    cat("EVENT SEQUENCE:\n")
+    for (i in 1:length(events)) {
+        cat(i, ":", events[[i]]$type, "at", as.character(events[[i]]$time), "\n")
+    }
+    cat("\n")
+
+    # Calculate time spent on each question
     question_times <- list()
+
     for (i in 1:(length(events) - 1)) {
         current_event <- events[[i]]
         next_event <- events[[i + 1]]
+
         if (grepl("^time_q_", current_event$type)) {
             question_id <- gsub("^time_q_", "", current_event$type)
             time_spent <- as.numeric(difftime(next_event$time, current_event$time, units = "secs"))
+
+            # Show timing calculation for ALL sessions
+            cat("Timing calc:", current_event$type, "->", next_event$type, "\n")
+            cat("  Time spent:", time_spent, "seconds\n")
+
             if (time_spent > 0) {
                 question_times[[question_id]] <- time_spent
             }
         }
     }
+
     if (is.null(question_labels) || length(question_labels) == 0) {
+        cat("No question labels provided - returning FALSE\n")
         return(FALSE)
     }
+
+    cat("Question times calculated:", names(question_times), "\n")
+    cat("Question labels available:", names(question_labels), "\n")
 
     num_fast_wpm <- 0
     num_very_fast_wmp <- 0
     valid_questions <- 0
+
     for (question_id in names(question_times)) {
         if (question_id %in% names(question_labels)) {
             question_text <- question_labels[[question_id]]
@@ -201,19 +228,37 @@ is_fast <- function(user_data, question_labels = NULL) {
             actual_time <- question_times[[question_id]]
             min_time_250wpm <- max(1, (word_count / 250) * 60)
             min_time_400wpm <- max(1, (word_count / 400) * 60)
+
+            cat("Analyzing question:", question_id, "\n")
+            cat("  Word count:", word_count, "\n")
+            cat("  Actual time:", actual_time, "\n")
+            cat("  Min 400WPM:", min_time_400wpm, "\n")
+            cat("  Min 250WPM:", min_time_250wpm, "\n")
+
             if (actual_time < min_time_400wpm) {
                 num_very_fast_wmp <- num_very_fast_wmp + 1
+                cat("  FLAGGED: Very fast!\n")
             } else if (actual_time < min_time_250wpm) {
                 num_fast_wpm <- num_fast_wpm + 0.5
+                cat("  FLAGGED: Fast!\n")
+            } else {
+                cat("  OK: Normal speed\n")
             }
             valid_questions <- valid_questions + 1
+        } else {
+            cat("Question", question_id, "not found in labels\n")
         }
     }
-    if (valid_questions == 0) {
-        return(FALSE)
-    }
+
     total_fast_score <- num_fast_wpm + num_very_fast_wmp
     fast_proportion <- total_fast_score / valid_questions
+
+    cat("SUMMARY:\n")
+    cat("  Valid questions:", valid_questions, "\n")
+    cat("  Fast score:", total_fast_score, "\n")
+    cat("  Fast proportion:", fast_proportion, "\n")
+    cat("  Flagged as fast reader:", fast_proportion >= 0.5, "\n\n")
+
     return(fast_proportion >= 0.5)
 }
 
