@@ -183,31 +183,20 @@ is_fast <- function(user_data, question_labels = NULL) {
     }
 
     if (is.null(question_labels) || length(question_labels) == 0) {
-        cat("No question labels provided for timing analysis\n")
         return(FALSE)
     }
-
-    cat("\n=== TIMING ANALYSIS DEBUG ===\n")
-    cat("Total questions with timing data:", length(question_times), "\n")
 
     num_fast_wpm <- 0
     num_very_fast_wpm <- 0
     valid_questions <- 0
 
     for (question_id in names(question_times)) {
-        # Check if this is a matrix sub-question
-        is_matrix_subquestion <- grepl("^rankings_", question_id)
-
-        cat("\n--- Question ID:", question_id, "---\n")
-        cat("Is matrix sub-question:", is_matrix_subquestion, "\n")
-
         if (question_id %in% names(question_labels)) {
             question_text <- question_labels[[question_id]]
 
             # Add safety check for question_text
             if (is.null(question_text) || !is.character(question_text) ||
                 length(question_text) == 0 || question_text == "") {
-                cat("Skipping - invalid question text\n")
                 next
             }
 
@@ -224,44 +213,22 @@ is_fast <- function(user_data, question_labels = NULL) {
             min_time_250wpm <- (word_count / 250) * 60
             min_time_400wpm <- (word_count / 400) * 60
 
-            cat("Question text snippet:", substr(clean_text, 1, 50), "...\n")
-            cat("Word count:", word_count, "\n")
-            cat("Actual time taken:", round(actual_time, 2), "seconds\n")
-            cat("Min time for 250 WPM:", round(min_time_250wpm, 2), "seconds\n")
-            cat("Min time for 400 WPM:", round(min_time_400wpm, 2), "seconds\n")
-
             if (actual_time < min_time_400wpm) {
-                num_very_fast_wpm <- num_very_fast_wpm + 1
-                cat("FLAGGED: Very fast (< 400 WPM threshold)\n")
+                num_very_fast_wpm <- num_very_fast_wmp + 1
             } else if (actual_time < min_time_250wpm) {
                 num_fast_wpm <- num_fast_wpm + 0.5
-                cat("FLAGGED: Fast (< 250 WPM threshold)\n")
-            } else {
-                cat("OK: Normal reading speed\n")
             }
 
             valid_questions <- valid_questions + 1
-        } else {
-            cat("Question not found in question_labels\n")
         }
     }
 
     if (valid_questions == 0) {
-        cat("No valid questions found for analysis\n")
         return(FALSE)
     }
 
     total_fast_score <- num_fast_wpm + num_very_fast_wpm
     fast_proportion <- total_fast_score / valid_questions
-
-    cat("\n=== SUMMARY ===\n")
-    cat("Valid questions analyzed:", valid_questions, "\n")
-    cat("Fast questions (250 WPM):", num_fast_wpm, "\n")
-    cat("Very fast questions (400 WPM):", num_very_fast_wpm, "\n")
-    cat("Total fast score:", total_fast_score, "\n")
-    cat("Fast proportion:", round(fast_proportion, 3), "\n")
-    cat("Threshold for flagging: 0.5\n")
-    cat("User flagged as fast:", fast_proportion >= 0.5, "\n")
 
     return(fast_proportion >= 0.5)
 }
