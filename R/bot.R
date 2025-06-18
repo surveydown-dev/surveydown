@@ -68,6 +68,11 @@ bot_checker <- function(db, ignore_mode, session_id, question_labels = NULL) {
         }
     }
 
+    if (is_straightlining(user_data)) {
+        current_bot_value <- paste(current_bot_value, "D", sep = "")
+        sessions_to_update[[session_id]] <- current_bot_value
+    }
+
     # Check for IP violations
     #ip_violations <- ip_checker(user_data, df)
     #
@@ -272,6 +277,37 @@ start_time_checker <- function(user_data, df) {
         boolean = is_suspicious,
         value = penalty_letter
     ))
+}
+
+
+is_straightlining <- function(user_data) {
+
+    rankings_cols <- names(user_data)[grepl("^rankings_", names(user_data)) & !grepl("^time_q_", names(user_data))]
+
+    if (length(rankings_cols) == 0) {
+        return(FALSE)
+    }
+
+    # Get all non-empty responses
+    responses <- c()
+    for (col in rankings_cols) {
+        value <- user_data[[col]]
+        if (!is.na(value) && value != "" && !is.null(value)) {
+            responses <- c(responses, value)
+        }
+    }
+
+    if (length(responses) < 2) {
+        return(FALSE)
+    }
+
+    response_counts <- table(responses)
+    most_common_count <- max(response_counts)
+    total_responses <- length(responses)
+
+    straightline_proportion <- most_common_count / total_responses
+
+    return(straightline_proportion >= 0.75)
 }
 
 #------------------------- Research more on IPs before fully implementing this -------------------------
