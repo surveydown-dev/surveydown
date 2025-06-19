@@ -1,3 +1,8 @@
+# Helper function to check if error is GSSAPI-related
+is_gssapi_error <- function(error_msg) {
+  grepl("invalid response to GSSAPI negotiation", error_msg, ignore.case = TRUE)
+}
+
 # Convert Markdown to HTML
 markdown_to_html <- function(text) {
   if (is.null(text)) { return(text) }

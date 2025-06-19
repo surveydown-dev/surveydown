@@ -168,16 +168,13 @@ sd_db_config <- function(
 #'
 #' Establish a connection to the database using settings from .env file. This function
 #' creates a connection pool for efficient database access and provides options for
-#' local data storage when needed.
+#' local data storage when needed. The function automatically handles GSSAPI negotiation
+#' errors by retrying with GSSAPI disabled if the initial connection fails due to 
+#' GSSAPI issues.
 #'
 #' @param env_file Character string. Path to the env file. Defaults to ".env"
 #' @param ignore Logical. If `TRUE`, data will be saved to a local CSV file
 #' instead of the database. Defaults to `FALSE`.
-#' @param gssencmode Character string. The GSS encryption mode for the database
-#'   connection. Defaults to `"prefer"`. NOTE: If you have verified all
-#'   connection details are correct but still cannot access the database,
-#'   consider setting this to `"disable"`. This can be necessary if you're on a
-#'   secure connection, such as a VPN.
 #'
 #' @return A list containing the database connection pool (`db`) and table name (`table`),
 #'   or `NULL` if ignore is `TRUE` or if connection fails
@@ -199,8 +196,7 @@ sd_db_config <- function(
 #' @export
 sd_db_connect <- function(
     env_file = ".env",
-    ignore = FALSE,
-    gssencmode = "prefer"
+    ignore = FALSE
 ) {
 
   if (ignore) {
@@ -236,44 +232,52 @@ sd_db_connect <- function(
     return(NULL)
   }
 
-  # Create connection
-  tryCatch({
-    # Build connection arguments
+  # Helper function to try connection with specific GSS encryption mode
+  try_connection <- function(gss_mode) {
     conn_args <- list(
       drv = RPostgres::Postgres(),
       host = params$host,
       dbname = params$dbname,
       port = params$port,
       user = params$user,
-      password = params$password
+      password = params$password,
+      gssencmode = gss_mode
     )
-
-    # Add gssencmode unless it's explicitly set to NULL
-    if (!is.null(gssencmode)) {
-      if (!gssencmode %in% c("prefer", "disable")) {
-        cli::cli_alert_warning(
-          "Invalid 'gssencmode' setting. Must be set to 'prefer', 'disable', or NULL...setting to 'prefer'"
-        )
-        conn_args$gssencmode <- "prefer"
-      } else {
-        conn_args$gssencmode <- gssencmode
-      }
-    } else {
-      cli::cli_alert_warning(
-        "'gssencmode' is set to NULL, so the 'gssencmode' parameter will not be passed to the database connection."
-      )
-    }
-
-    # Create pool with dynamic arguments
+    
     pool <- do.call(pool::dbPool, conn_args)
-
+    list(db = pool, table = params$table)
+  }
+  
+  # First attempt with "prefer"
+  tryCatch({
+    result <- try_connection("prefer")
     cli::cli_alert_success("Successfully connected to the database.")
-    return(list(db = pool, table = params$table))
+    return(result)
   }, error = function(e) {
-    cli::cli_alert_warning("Failed to connect to the database:")
-    cli::cli_text(conditionMessage(e))
-    cli::cli_text("")
-    return(NULL)
+    error_msg <- as.character(e$message)
+    
+    # If this is a GSSAPI error, try with "disable"
+    if (is_gssapi_error(error_msg)) {
+      cli::cli_alert_info("GSSAPI negotiation failed, retrying without GSSAPI...")
+      
+      tryCatch({
+        result <- try_connection("disable")
+        cli::cli_alert_success("Successfully connected to the database (GSSAPI disabled due to negotiation error).")
+        return(result)
+      }, error = function(e2) {
+        # Both attempts failed
+        cli::cli_alert_warning("Failed to connect to the database with both GSSAPI modes:")
+        cli::cli_text(conditionMessage(e2))
+        cli::cli_text("")
+        return(NULL)
+      })
+    } else {
+      # Not a GSSAPI error, just fail normally
+      cli::cli_alert_warning("Failed to connect to the database:")
+      cli::cli_text(conditionMessage(e))
+      cli::cli_text("")
+      return(NULL)
+    }
   })
 }
 
