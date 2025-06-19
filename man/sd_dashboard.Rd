@@ -4,12 +4,17 @@
 \alias{sd_dashboard}
 \title{Launch Survey Dashboard}
 \usage{
-sd_dashboard(gssencmode = "prefer")
+sd_dashboard(gssencmode = "auto")
 }
 \arguments{
 \item{gssencmode}{Character string. The GSS encryption mode for the database
-connection. Defaults to \code{"prefer"}. Set to \code{"disable"} if you're having
-connection issues on a secure connection like a VPN.}
+connection. Defaults to \code{"auto"}. Options are:
+\itemize{
+\item \code{"auto"}: Tries \code{"prefer"} first, then falls back to \code{"disable"} if GSSAPI negotiation fails
+\item \code{"prefer"}: Uses GSSAPI encryption if available, plain connection otherwise
+\item \code{"disable"}: Disables GSSAPI encryption entirely
+Set to \code{"disable"} if you're having connection issues on a secure connection like a VPN.
+}}
 }
 \value{
 Launches a Shiny application with the survey dashboard.

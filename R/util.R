@@ -1062,11 +1062,13 @@ try_db_connection <- function(params, gss_mode) {
 
   # Add gssencmode unless it's explicitly set to NULL
   if (!is.null(gss_mode)) {
-    if (!gss_mode %in% c("prefer", "disable")) {
+    if (!gss_mode %in% c("auto", "prefer", "disable")) {
       cli::cli_alert_warning(
-        "Invalid 'gssencmode' setting. Must be set to 'prefer', 'disable', or NULL...setting to 'prefer'"
+        "Invalid 'gssencmode' setting. Must be set to 'auto', 'prefer', 'disable', or NULL...setting to 'auto'"
       )
-      conn_args$gssencmode <- "prefer"
+      conn_args$gssencmode <- "prefer"  # Use prefer for auto mode
+    } else if (gss_mode == "auto") {
+      conn_args$gssencmode <- "prefer"  # Auto mode starts with prefer
     } else {
       conn_args$gssencmode <- gss_mode
     }

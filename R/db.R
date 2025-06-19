@@ -174,10 +174,12 @@ sd_db_config <- function(
 #' @param ignore Logical. If `TRUE`, data will be saved to a local CSV file
 #' instead of the database. Defaults to `FALSE`.
 #' @param gssencmode Character string. The GSS encryption mode for the database
-#'   connection. Defaults to `"prefer"`. NOTE: If you have verified all
-#'   connection details are correct but still cannot access the database,
-#'   consider setting this to `"disable"`. This can be necessary if you're on a
-#'   secure connection, such as a VPN.
+#'   connection. Defaults to `"auto"`. Options are:
+#'   - `"auto"`: Tries `"prefer"` first, then falls back to `"disable"` if GSSAPI negotiation fails
+#'   - `"prefer"`: Uses GSSAPI encryption if available, plain connection otherwise
+#'   - `"disable"`: Disables GSSAPI encryption entirely
+#'   NOTE: If you have verified all connection details are correct but still cannot
+#'   access the database, try setting this to `"disable"`.
 #'
 #' @return A list containing the database connection pool (`db`) and table name (`table`),
 #'   or `NULL` if ignore is `TRUE` or if connection fails
@@ -200,7 +202,7 @@ sd_db_config <- function(
 sd_db_connect <- function(
     env_file = ".env",
     ignore = FALSE,
-    gssencmode = "prefer"
+    gssencmode = "auto"
 ) {
 
   if (ignore) {
@@ -244,8 +246,8 @@ sd_db_connect <- function(
   }, error = function(e) {
     error_msg <- as.character(e$message)
     
-    # If this is a GSSAPI error and we're using "prefer", try with "disable"
-    if (is_gssapi_error(error_msg) && gssencmode == "prefer") {
+    # Only try fallback if we're in "auto" mode and it's a GSSAPI error
+    if (is_gssapi_error(error_msg) && gssencmode == "auto") {
       message("GSSAPI negotiation failed, retrying with gssencmode='disable'...")
       
       tryCatch({
@@ -260,7 +262,7 @@ sd_db_connect <- function(
         return(NULL)
       })
     } else {
-      # Not a GSSAPI error or already using "disable", just fail normally
+      # Not a GSSAPI error or not in auto mode, just fail normally
       cli::cli_alert_warning("Failed to connect to the database:")
       cli::cli_text(conditionMessage(e))
       cli::cli_text("")

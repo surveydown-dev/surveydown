@@ -19,8 +19,11 @@
 #' - Database connection configuration and testing
 #'
 #' @param gssencmode Character string. The GSS encryption mode for the database
-#'   connection. Defaults to `"prefer"`. Set to `"disable"` if you're having
-#'   connection issues on a secure connection like a VPN.
+#'   connection. Defaults to `"auto"`. Options are:
+#'   - `"auto"`: Tries `"prefer"` first, then falls back to `"disable"` if GSSAPI negotiation fails
+#'   - `"prefer"`: Uses GSSAPI encryption if available, plain connection otherwise
+#'   - `"disable"`: Disables GSSAPI encryption entirely
+#'   Set to `"disable"` if you're having connection issues on a secure connection like a VPN.
 #'
 #' @return
 #' Launches a Shiny application with the survey dashboard.
@@ -37,7 +40,7 @@
 #' }
 #'
 #' @export
-sd_dashboard <- function(gssencmode = "prefer") {
+sd_dashboard <- function(gssencmode = "auto") {
     if (file.exists(".env")) {
         dotenv::load_dot_env(".env")
     }
@@ -228,8 +231,8 @@ sd_dashboard <- function(gssencmode = "prefer") {
             }, error = function(e) {
                 error_msg <- as.character(e$message)
                 
-                # If this is a GSSAPI error and we're using "prefer", try with "disable"
-                if (is_gssapi_error(error_msg) && gss_mode == "prefer") {
+                # Only try fallback if we're in "auto" mode and it's a GSSAPI error
+                if (is_gssapi_error(error_msg) && gss_mode == "auto") {
                     message("GSSAPI negotiation failed, retrying with gssencmode='disable'...")
                     
                     tryCatch({
