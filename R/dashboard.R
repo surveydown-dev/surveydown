@@ -17,9 +17,10 @@
 #' - Response trend plot with daily and cumulative responses
 #' - Downloadable survey responses data table
 #' - Database connection configuration and testing
-#' 
-#' The function automatically handles GSSAPI negotiation errors by retrying
-#' with GSSAPI disabled if the initial connection fails due to GSSAPI issues.
+#'
+#' @param gssencmode Character string. The GSS encryption mode for the database
+#'   connection. Defaults to `"prefer"`. Set to `"disable"` if you're having
+#'   connection issues on a secure connection like a VPN.
 #'
 #' @return
 #' Launches a Shiny application with the survey dashboard.
@@ -28,12 +29,15 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Launch the survey dashboard
+#' # Launch the survey dashboard with default settings
 #' sd_dashboard()
+#'
+#' # Launch with disabled GSS encryption (for VPN connections)
+#' sd_dashboard(gssencmode = "disable")
 #' }
 #'
 #' @export
-sd_dashboard <- function() {
+sd_dashboard <- function(gssencmode = "prefer") {
     if (file.exists(".env")) {
         dotenv::load_dot_env(".env")
     }
@@ -189,62 +193,26 @@ sd_dashboard <- function() {
             current_db = NULL
         )
 
-        # Helper function to try connection with specific GSS encryption mode
-        try_connection <- function(gss_mode, config = NULL) {
-            if (is.null(config)) {
-                # Use default connection from .env but we can't use sd_db_connect
-                # because it has its own retry logic, so we'll replicate the logic here
-                if (!file.exists(".env")) {
-                    return(NULL)
-                }
-                
-                dotenv::load_dot_env(".env")
-                params <- list(
-                    host = Sys.getenv("SD_HOST"),
-                    port = Sys.getenv("SD_PORT"),
-                    dbname = Sys.getenv("SD_DBNAME"),
-                    user = Sys.getenv("SD_USER"),
-                    password = Sys.getenv("SD_PASSWORD"),
-                    table = Sys.getenv("SD_TABLE")
-                )
-                
-                # Check for missing parameters
-                missing <- names(params)[!nchar(unlist(params))]
-                if (length(missing) > 0) {
-                    return(NULL)
-                }
-                
-                pool <- pool::dbPool(
-                    RPostgres::Postgres(),
-                    host = params$host,
-                    dbname = params$dbname,
-                    port = params$port,
-                    user = params$user,
-                    password = params$password,
-                    gssencmode = gss_mode
-                )
-                list(db = pool, table = params$table)
-            } else {
-                # Use provided config with the specified gssencmode
-                pool <- pool::dbPool(
-                    RPostgres::Postgres(),
-                    host = config$host,
-                    dbname = config$dbname,
-                    port = config$port,
-                    user = config$user,
-                    password = config$password,
-                    gssencmode = gss_mode
-                )
-                list(db = pool)
-            }
-        }
-        
-        # Connection attempt with GSSAPI fallback
+        # Initial connection check
         attempt_connection <- function(config = NULL) {
-            # First attempt with "prefer"
             tryCatch({
-                db <- try_connection("prefer", config)
-                
+                if (is.null(config)) {
+                    # Use default connection from .env with the specified gssencmode
+                    db <- sd_db_connect(gssencmode = gssencmode)
+                } else {
+                    # Use provided config with the specified gssencmode
+                    pool <- pool::dbPool(
+                        RPostgres::Postgres(),
+                        host = config$host,
+                        dbname = config$dbname,
+                        port = config$port,
+                        user = config$user,
+                        password = config$password,
+                        gssencmode = gssencmode
+                    )
+                    db <- list(db = pool)
+                }
+
                 if (!is.null(db)) {
                     rv$connection_status <- TRUE
                     rv$current_db <- db
@@ -252,35 +220,9 @@ sd_dashboard <- function() {
                 }
                 return(FALSE)
             }, error = function(e) {
-                error_msg <- as.character(e$message)
-                
-                # If this is a GSSAPI error, try with "disable"
-                if (is_gssapi_error(error_msg)) {
-                    message("GSSAPI negotiation failed, retrying without GSSAPI...")
-                    
-                    tryCatch({
-                        db <- try_connection("disable", config)
-                        
-                        if (!is.null(db)) {
-                            rv$connection_status <- TRUE
-                            rv$current_db <- db
-                            message("Connection successful without GSSAPI")
-                            return(TRUE)
-                        }
-                        return(FALSE)
-                    }, error = function(e2) {
-                        # Both attempts failed
-                        rv$connection_status <- FALSE
-                        rv$current_db <- NULL
-                        warning("Connection failed with both GSSAPI modes: ", e2$message)
-                        return(FALSE)
-                    })
-                } else {
-                    # Not a GSSAPI error, just fail normally
-                    rv$connection_status <- FALSE
-                    rv$current_db <- NULL
-                    return(FALSE)
-                }
+                rv$connection_status <- FALSE
+                rv$current_db <- NULL
+                return(FALSE)
             })
         }
 
