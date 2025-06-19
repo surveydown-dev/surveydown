@@ -236,44 +236,36 @@ sd_db_connect <- function(
     return(NULL)
   }
 
-  # Create connection
+  # First attempt with the specified gssencmode
   tryCatch({
-    # Build connection arguments
-    conn_args <- list(
-      drv = RPostgres::Postgres(),
-      host = params$host,
-      dbname = params$dbname,
-      port = params$port,
-      user = params$user,
-      password = params$password
-    )
-
-    # Add gssencmode unless it's explicitly set to NULL
-    if (!is.null(gssencmode)) {
-      if (!gssencmode %in% c("prefer", "disable")) {
-        cli::cli_alert_warning(
-          "Invalid 'gssencmode' setting. Must be set to 'prefer', 'disable', or NULL...setting to 'prefer'"
-        )
-        conn_args$gssencmode <- "prefer"
-      } else {
-        conn_args$gssencmode <- gssencmode
-      }
-    } else {
-      cli::cli_alert_warning(
-        "'gssencmode' is set to NULL, so the 'gssencmode' parameter will not be passed to the database connection."
-      )
-    }
-
-    # Create pool with dynamic arguments
-    pool <- do.call(pool::dbPool, conn_args)
-
+    pool <- try_db_connection(params, gssencmode)
     cli::cli_alert_success("Successfully connected to the database.")
     return(list(db = pool, table = params$table))
   }, error = function(e) {
-    cli::cli_alert_warning("Failed to connect to the database:")
-    cli::cli_text(conditionMessage(e))
-    cli::cli_text("")
-    return(NULL)
+    error_msg <- as.character(e$message)
+    
+    # If this is a GSSAPI error and we're using "prefer", try with "disable"
+    if (is_gssapi_error(error_msg) && gssencmode == "prefer") {
+      message("GSSAPI negotiation failed, retrying with gssencmode='disable'...")
+      
+      tryCatch({
+        pool <- try_db_connection(params, "disable")
+        cli::cli_alert_success("Successfully connected to the database with gssencmode='disable'.")
+        return(list(db = pool, table = params$table))
+      }, error = function(e2) {
+        # Both attempts failed
+        cli::cli_alert_warning("Failed to connect to the database with both gssencmode='prefer' and 'disable':")
+        cli::cli_text(conditionMessage(e2))
+        cli::cli_text("")
+        return(NULL)
+      })
+    } else {
+      # Not a GSSAPI error or already using "disable", just fail normally
+      cli::cli_alert_warning("Failed to connect to the database:")
+      cli::cli_text(conditionMessage(e))
+      cli::cli_text("")
+      return(NULL)
+    }
   })
 }
 

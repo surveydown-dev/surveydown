@@ -194,35 +194,86 @@ sd_dashboard <- function(gssencmode = "prefer") {
         )
 
         # Initial connection check
-        attempt_connection <- function(config = NULL) {
-            tryCatch({
+        attempt_connection <- function(config = NULL, return_details = FALSE, gss_mode = gssencmode) {
+            # Helper function to try connection with specific gssencmode
+            try_connection <- function(gss_mode) {
                 if (is.null(config)) {
                     # Use default connection from .env with the specified gssencmode
-                    db <- sd_db_connect(gssencmode = gssencmode)
+                    sd_db_connect(gssencmode = gss_mode)
                 } else {
                     # Use provided config with the specified gssencmode
-                    pool <- pool::dbPool(
-                        RPostgres::Postgres(),
-                        host = config$host,
-                        dbname = config$dbname,
-                        port = config$port,
-                        user = config$user,
-                        password = config$password,
-                        gssencmode = gssencmode
-                    )
-                    db <- list(db = pool)
+                    pool <- try_db_connection(config, gss_mode)
+                    list(db = pool)
                 }
-
+            }
+            
+            # First attempt with the specified gssencmode
+            tryCatch({
+                db <- try_connection(gss_mode)
+                
                 if (!is.null(db)) {
                     rv$connection_status <- TRUE
                     rv$current_db <- db
-                    return(TRUE)
+                    if (return_details) {
+                        return(list(success = TRUE, fallback_used = FALSE, message = "Connection successful"))
+                    } else {
+                        return(TRUE)
+                    }
                 }
-                return(FALSE)
+                if (return_details) {
+                    return(list(success = FALSE, fallback_used = FALSE, message = "Connection failed"))
+                } else {
+                    return(FALSE)
+                }
             }, error = function(e) {
-                rv$connection_status <- FALSE
-                rv$current_db <- NULL
-                return(FALSE)
+                error_msg <- as.character(e$message)
+                
+                # If this is a GSSAPI error and we're using "prefer", try with "disable"
+                if (is_gssapi_error(error_msg) && gss_mode == "prefer") {
+                    message("GSSAPI negotiation failed, retrying with gssencmode='disable'...")
+                    
+                    tryCatch({
+                        db <- try_connection("disable")
+                        
+                        if (!is.null(db)) {
+                            rv$connection_status <- TRUE
+                            rv$current_db <- db
+                            message("Connection successful with gssencmode='disable'")
+                            if (return_details) {
+                                return(list(success = TRUE, fallback_used = TRUE, 
+                                           message = "Connection successful (GSSAPI disabled due to negotiation error)"))
+                            } else {
+                                return(TRUE)
+                            }
+                        }
+                        if (return_details) {
+                            return(list(success = FALSE, fallback_used = TRUE, 
+                                       message = "Connection failed with both GSSAPI modes"))
+                        } else {
+                            return(FALSE)
+                        }
+                    }, error = function(e2) {
+                        # Both attempts failed
+                        rv$connection_status <- FALSE
+                        rv$current_db <- NULL
+                        warning("Connection failed with both gssencmode='prefer' and 'disable': ", e2$message)
+                        if (return_details) {
+                            return(list(success = FALSE, fallback_used = TRUE, 
+                                       message = paste("Connection failed with both GSSAPI modes:", e2$message)))
+                        } else {
+                            return(FALSE)
+                        }
+                    })
+                } else {
+                    # Not a GSSAPI error or already using "disable", just fail normally
+                    rv$connection_status <- FALSE
+                    rv$current_db <- NULL
+                    if (return_details) {
+                        return(list(success = FALSE, fallback_used = FALSE, message = error_msg))
+                    } else {
+                        return(FALSE)
+                    }
+                }
             })
         }
 
