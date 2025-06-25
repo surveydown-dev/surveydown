@@ -553,20 +553,40 @@ sd_question <- function(
               valueToSave = params.defaultValue;
             } else if (questionType === 'slider_numeric_range') {
               valueToSave = params.defaultValue.join(', ');
+              console.log('Range slider auto-save - ID:', questionId, 'value:', valueToSave);
               Shiny.setInputValue(questionId + '_manual_range', valueToSave, {priority: 'event'});
               Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
+              console.log('Range slider auto-save - sent to Shiny:', questionId + '_manual_range', 'and', questionId + '_interacted');
               return;
             } else if (questionType === 'date') {
-              valueToSave = $('#' + questionId).val() || '';
+              // For date inputs, try multiple ways to get the value
+              var dateElement = $('#' + questionId);
+              var inputElement = dateElement.find('input[type=\"text\"]');
+              
+              // Try different methods to get the date value
+              valueToSave = inputElement.val() || 
+                           dateElement.val() || 
+                           dateElement.attr('data-date') || 
+                           dateElement.find('input').val() || '';
             } else if (questionType === 'daterange') {
-              var startDate = $('#' + questionId + ' input').eq(0).val() || '';
-              var endDate = $('#' + questionId + ' input').eq(1).val() || '';
-              valueToSave = [startDate, endDate];
+              // For date range inputs, get both start and end dates
+              var container = $('#' + questionId);
+              var startDate = container.find('input').eq(0).val() || '';
+              var endDate = container.find('input').eq(1).val() || '';
+              
+              // Join with comma and space to match expected format: 2025-06-17, 2025-06-18
+              if (startDate && endDate) {
+                valueToSave = startDate + ', ' + endDate;
+              } else if (startDate || endDate) {
+                valueToSave = (startDate || '') + ', ' + (endDate || '');
+              } else {
+                valueToSave = '';
+              }
             }
             
             // Mark as interacted and save value
             Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
-            if (valueToSave !== null) {
+            if (valueToSave !== null && valueToSave !== '') {
               Shiny.setInputValue(questionId, valueToSave, {priority: 'event'});
             }
           }
@@ -903,10 +923,31 @@ sd_question <- function(
               shiny::observe({
                   # Get the range string from our custom input
                   range_string <- shiny::getDefaultReactiveDomain()$input[[paste0(id, "_manual_range")]]
+                  interaction_flag <- shiny::getDefaultReactiveDomain()$input[[paste0(id, "_interacted")]]
+
+                  cat("Range slider observer - ID:", id, "range_string:", range_string, "interaction_flag:", interaction_flag, "\n")
 
                   if (!is.null(range_string) && range_string != "") {
                       # Store this directly using the main id
                       sd_store_value(range_string, id)
+                      cat("Range value stored for:", id, "\n")
+                      
+                      # If interaction flag is set, also store timestamp
+                      if (!is.null(interaction_flag) && interaction_flag) {
+                          session <- shiny::getDefaultReactiveDomain()
+                          if (!is.null(session$userData$all_data) && !is.null(session$userData$changed_fields)) {
+                              timestamp <- get_utc_timestamp()
+                              ts_id <- paste0(id, "_timestamp")
+                              session$userData$all_data[[ts_id]] <- timestamp
+                              current_fields <- session$userData$changed_fields()
+                              session$userData$changed_fields(c(current_fields, ts_id))
+                              cat("Range timestamp stored for:", id, "timestamp:", timestamp, "\n")
+                          } else {
+                              cat("Range timestamp NOT stored - missing userData:", id, "\n")
+                          }
+                      } else {
+                          cat("Range timestamp NOT stored - no interaction flag:", id, "\n")
+                      }
                   }
               })
           }
@@ -939,7 +980,7 @@ sd_question <- function(
       value              = NULL,
       min                = NULL,
       max                = NULL,
-      format             = "mm/dd/yyyy",
+      format             = "yyyy-mm-dd",
       startview          = "month",
       weekstart          = 0,
       language           = language,
@@ -975,7 +1016,7 @@ sd_question <- function(
       end       = NULL,
       min       = NULL,
       max       = NULL,
-      format    = "mm/dd/yyyy",
+      format    = "yyyy-mm-dd",
       startview = "month",
       weekstart = 0,
       language  = language,
