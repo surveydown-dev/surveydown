@@ -458,6 +458,77 @@ sd_server <- function(
         })
     })
 
+    # Manual range observers for range sliders auto-save
+    lapply(seq_along(question_ids), function(index) {
+        local({
+            local_id    <- question_ids[index]
+            local_ts_id <- question_ts_ids[index]
+            manual_id   <- paste0(local_id, "_manual_range")
+
+            shiny::observeEvent(input[[manual_id]], {
+                cat("Manual range observer triggered for:", local_id, "value:", input[[manual_id]], "\n")
+                
+                # Tag event time and update value  
+                timestamp            <- get_utc_timestamp()
+                value                <- input[[manual_id]]
+                formatted_value      <- format_question_value(value)
+                all_data[[local_id]] <- formatted_value
+
+                # Always update timestamp for manual range (auto-save scenario)
+                changed <- local_id
+                all_data[[local_ts_id]] <- timestamp
+                changed <- c(changed, local_ts_id)
+                
+                # Update progress if interacted
+                if (!is.null(input[[paste0(local_id, "_interacted")]])) {
+                    update_progress_bar(index)
+                }
+
+                # Update tracker of which fields changed
+                changed_fields(c(changed_fields(), changed))
+
+                # Get question labels and values from question structure
+                question_info  <- question_structure[[local_id]]
+                label_question <- question_info$label
+                options        <- question_info$options
+                label_options  <- names(options)
+
+                # For the selected value(s), get the corresponding label(s)
+                if (length(options) == length(label_options)) {
+                    names(options) <- label_options
+                }
+                label_option <- if (is.null(value) || length(value) == 0) {
+                    ""
+                } else {
+                    options[options %in% value] |>
+                        names() |>
+                        paste(collapse = ", ")
+                }
+
+                # Store the values and labels in output
+                output[[paste0(local_id, "_value")]] <- shiny::renderText({
+                    formatted_value
+                })
+                output[[paste0(local_id, "_label_option")]] <- shiny::renderText({
+                    label_option
+                })
+                output[[paste0(local_id, "_label_question")]] <- shiny::renderText({
+                    label_question
+                })
+            },
+            ignoreNULL = FALSE,
+            ignoreInit = TRUE)
+        })
+    })
+
+    # Debug observer to catch auto-save calls
+    shiny::observe({
+        debug_msg <- session$input$debug_range_autosave
+        if (!is.null(debug_msg)) {
+            cat("DEBUG Auto-save triggered from JS:", debug_msg, "\n")
+        }
+    })
+
     # Observer to update cookies with answers
     shiny::observe({
         # Get current page ID

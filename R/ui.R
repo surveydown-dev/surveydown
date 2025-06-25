@@ -553,10 +553,14 @@ sd_question <- function(
               valueToSave = params.defaultValue;
             } else if (questionType === 'slider_numeric_range') {
               valueToSave = params.defaultValue.join(', ');
-              console.log('Range slider auto-save - ID:', questionId, 'value:', valueToSave);
+              // DEBUG: Check if this is being called
+              if (typeof Rlog !== 'undefined') {
+                Rlog('Range auto-save for: ' + questionId + ' value: ' + valueToSave);
+              }
               Shiny.setInputValue(questionId + '_manual_range', valueToSave, {priority: 'event'});
               Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
-              console.log('Range slider auto-save - sent to Shiny:', questionId + '_manual_range', 'and', questionId + '_interacted');
+              // Send a debug message to R console
+              Shiny.setInputValue('debug_range_autosave', questionId + '|' + valueToSave, {priority: 'event'});
               return;
             } else if (questionType === 'date') {
               // For date inputs, try multiple ways to get the value
@@ -920,34 +924,50 @@ sd_question <- function(
 
           # Add an observer in the server to capture this string value
           if (!is.null(shiny::getDefaultReactiveDomain())) {
+              session <- shiny::getDefaultReactiveDomain()
+              
+              # Debug observer to catch auto-save calls
+              shiny::observe({
+                  debug_msg <- session$input$debug_range_autosave
+                  if (!is.null(debug_msg)) {
+                      cat("DEBUG Auto-save triggered from JS:", debug_msg, "\n")
+                  }
+              })
+              
               shiny::observe({
                   # Get the range string from our custom input
-                  range_string <- shiny::getDefaultReactiveDomain()$input[[paste0(id, "_manual_range")]]
-                  interaction_flag <- shiny::getDefaultReactiveDomain()$input[[paste0(id, "_interacted")]]
+                  range_string <- session$input[[paste0(id, "_manual_range")]]
+                  interaction_flag <- session$input[[paste0(id, "_interacted")]]
 
-                  cat("Range slider observer - ID:", id, "range_string:", range_string, "interaction_flag:", interaction_flag, "\n")
+                  cat("DEBUG Range Observer - ID:", id, "range_string:", range_string, "interaction_flag:", interaction_flag, "\n")
 
                   if (!is.null(range_string) && range_string != "") {
                       # Store this directly using the main id
                       sd_store_value(range_string, id)
-                      cat("Range value stored for:", id, "\n")
+                      cat("DEBUG Range value stored for:", id, "\n")
                       
-                      # If interaction flag is set, also store timestamp
+                      # Handle timestamp the same way as main observer
                       if (!is.null(interaction_flag) && interaction_flag) {
-                          session <- shiny::getDefaultReactiveDomain()
-                          if (!is.null(session$userData$all_data) && !is.null(session$userData$changed_fields)) {
+                          # Get access to all_data and changed_fields (same as main observer)
+                          all_data <- session$userData$all_data
+                          changed_fields <- session$userData$changed_fields
+                          
+                          cat("DEBUG Checking userData - all_data exists:", !is.null(all_data), "changed_fields exists:", !is.null(changed_fields), "\n")
+                          
+                          if (!is.null(all_data) && !is.null(changed_fields)) {
                               timestamp <- get_utc_timestamp()
                               ts_id <- paste0(id, "_timestamp")
-                              session$userData$all_data[[ts_id]] <- timestamp
-                              current_fields <- session$userData$changed_fields()
-                              session$userData$changed_fields(c(current_fields, ts_id))
-                              cat("Range timestamp stored for:", id, "timestamp:", timestamp, "\n")
+                              all_data[[ts_id]] <- timestamp
+                              changed_fields(c(changed_fields(), ts_id))
+                              cat("DEBUG Timestamp stored for:", id, "timestamp:", timestamp, "\n")
                           } else {
-                              cat("Range timestamp NOT stored - missing userData:", id, "\n")
+                              cat("DEBUG Could not store timestamp - missing userData\n")
                           }
                       } else {
-                          cat("Range timestamp NOT stored - no interaction flag:", id, "\n")
+                          cat("DEBUG No interaction flag, skipping timestamp\n")
                       }
+                  } else {
+                      cat("DEBUG No range string to process\n")
                   }
               })
           }
