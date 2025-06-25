@@ -584,8 +584,12 @@ sd_question <- function(
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
             $(document).on('click', '#%s .btn', function() {
                 %s
+                // Get the selected value from the active button
+                var selectedValue = $('#%s .btn.active').attr('data-value');
+                if (selectedValue === undefined) selectedValue = null;
+                Shiny.setInputValue('%s', selectedValue, {priority: 'event'});
             });
-        ", id, js_interaction))))
+        ", id, js_interaction, id, id))))
 
   } else if (type == "mc_multiple_buttons") {
 
@@ -596,14 +600,21 @@ sd_question <- function(
       direction  = direction,
       individual = individual,
       justified  = FALSE,
+      selected   = character(0),
       ...
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
             $(document).on('click', '#%s .btn', function() {
                 %s
+                // Get all selected values from active buttons
+                var selectedValues = [];
+                $('#%s .btn.active').each(function() {
+                    selectedValues.push($(this).attr('data-value'));
+                });
+                Shiny.setInputValue('%s', selectedValues, {priority: 'event'});
             });
-        ", id, js_interaction))))
+        ", id, js_interaction, id, id))))
   } else if (type == "text") {
 
     output <- shiny::textInput(
