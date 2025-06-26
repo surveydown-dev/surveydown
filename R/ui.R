@@ -568,8 +568,8 @@ sd_question <- function(
           
           // Handle different question types - use stored defaults, not current DOM values
           if (questionType === 'slider') {
-            // Use the original default value from params, not current DOM value
-            valueToSave = params.defaultValue;
+            // Skip auto-save for regular sliders
+            return;
           } else if (questionType === 'slider_numeric_single') {
             valueToSave = params.defaultValue;
           } else if (questionType === 'slider_numeric_range') {
@@ -899,9 +899,7 @@ sd_question <- function(
       });
     ", jsonlite::toJSON(as.list(value_map)), id, id, id, id)
       
-      # Add auto-save functionality
-      autosave_js <- create_autosave_js(id, "slider", list(valueMap = as.list(value_map)))
-      js_convert <- paste(js_convert, autosave_js, sep = "\n")
+      # Regular sliders don't need auto-save functionality
 
       output <- shiny::tagAppendChild(
           output,
