@@ -637,18 +637,14 @@ sd_server <- function(
     check_required <- function(page) {
         required_questions <- page$required_questions
         is_visible <- question_visibility()[required_questions]
-        cat("CHECK_REQUIRED after delay: Checking", length(required_questions), "questions\n")
         result <- all(vapply(required_questions, function(q) {
             if (!is_visible[q]) return(TRUE)
             if (question_structure[[q]]$is_matrix) {
                 all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input, question_structure)))
             } else {
-                answer_result <- check_answer(q, input, question_structure)
-                cat("  ", q, "interacted:", !is.null(input[[paste0(q, "_interacted")]]), "result:", answer_result, "\n")
-                return(answer_result)
+                check_answer(q, input, question_structure)
             }
         }, logical(1)))
-        cat("CHECK_REQUIRED result:", result, "\n")
         return(result)
     }
     
@@ -1765,7 +1761,6 @@ handle_skip_logic <- function(
 # Check if a single question is answered
 check_answer <- function(q, input, question_structure = NULL) {
     answer <- input[[q]]
-    cat("  DEBUG check_answer", q, "answer:", !is.null(answer), "value:", answer, "\n")
     if (is.null(answer)) return(FALSE)
     
     # For question types that have default values, check if user has actually interacted
@@ -1776,7 +1771,6 @@ check_answer <- function(q, input, question_structure = NULL) {
     autosave_timestamp <- input[[paste0(q, "_autosave_timestamp")]]
     if (is.null(interacted) && !is.null(autosave_timestamp)) {
         interacted <- TRUE
-        cat("  AUTO-SAVE TIMESTAMP DETECTED for", q, "\n")
     }
     
     # Smart auto-save detection: if question has a non-null value but no interaction,
@@ -1784,12 +1778,31 @@ check_answer <- function(q, input, question_structure = NULL) {
     if (is.null(interacted) && !is.null(answer)) {
         # Get question type from question_structure if available
         if (!is.null(question_structure) && q %in% names(question_structure)) {
-            q_type <- question_structure[[q]]$type
-            cat("  SMART DETECTION for", q, "type:", q_type, "\n")
+            q_type_raw <- question_structure[[q]]$type
+            
+            # Map raw HTML classes to proper question types (same as in write_question_structure_yaml)
+            type_replacement <- c(
+                'shiny-input-text form-control' = 'text',
+                'shiny-input-textarea form-control' = 'textarea',
+                'shiny-input-number form-control' = 'numeric',
+                'form-group shiny-input-radiogroup shiny-input-container' = 'mc',
+                'radio-group-buttons' = 'mc_buttons',
+                'form-group shiny-input-checkboxgroup shiny-input-container' = 'mc_multiple',
+                'checkbox-group-buttons' = 'mc_multiple_buttons',
+                'shiny-input-select' = 'select',
+                'js-range-slider sw-slider-text' = 'slider',
+                'js-range-slider' = 'slider_numeric',
+                'shiny-date-input form-group shiny-input-container' = 'date',
+                'shiny-date-range-input form-group shiny-input-container' = 'daterange'
+            )
+            
+            # Map the raw type to the proper type
+            q_type <- type_replacement[q_type_raw]
+            if (is.na(q_type)) q_type <- q_type_raw  # Fallback to raw if no mapping
+            
             # For auto-save supported types with default values, consider them answered
             if (!is.null(q_type) && q_type %in% c("slider", "slider_numeric", "date", "daterange")) {
                 interacted <- TRUE
-                cat("  AUTO-SAVE DETECTED for", q, "type:", q_type, "\n")
             }
         }
     }
