@@ -582,6 +582,8 @@ sd_question <- function(
             valueToSave = params.defaultValue.join(', ');
             Shiny.setInputValue(questionId + '_manual_range', valueToSave, {priority: 'event'});
             Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
+            Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
+            clearQuestionHighlighting(questionId);
             return;
           } else if (questionType === 'date') {
             // For date inputs, try multiple ways to get the value
@@ -616,6 +618,31 @@ sd_question <- function(
           }
           // Force timestamp update by sending a separate autosave timestamp signal
           Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
+          
+          // Clear gray highlighting since this question is now interacted
+          clearQuestionHighlighting(questionId);
+        }
+        
+        // Function to clear highlighting for this specific question
+        function clearQuestionHighlighting(questionId) {
+          // Find question container using multiple strategies
+          var questionContainer = $('[data-question-id=\\\"' + questionId + '\\\"]');
+          if (questionContainer.length === 0) {
+            questionContainer = $('#container-' + questionId);
+          }
+          if (questionContainer.length === 0) {
+            var input = $('#' + questionId);
+            if (input.length > 0) {
+              questionContainer = input.closest('.question-container, .form-group, .shiny-input-container');
+            }
+          }
+          
+          if (questionContainer.length > 0) {
+            // Remove all highlighting classes
+            questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
+            // Also remove from form controls inside
+            questionContainer.find('.form-control, input, select, textarea').removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
+          }
         }
         
         // Mark as interacted when user actually interacts
