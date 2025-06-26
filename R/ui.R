@@ -1386,7 +1386,7 @@ sd_next <- function(next_page = NULL, label = NULL) {
   shiny::tagList(
     shiny::div(
       `data-next-page` = if (!is.null(next_page)) next_page else "",
-      style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
+      style = "margin-top: 1rem; margin-bottom: 0.5rem;",
       shiny::actionButton(
         inputId = button_id,
         label = label,

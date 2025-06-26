@@ -80,7 +80,7 @@ p, .form-group, .control-label {
 .question-container {
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 1rem;
+  margin-bottom: auto;
   position: relative;
 }
 
@@ -296,8 +296,8 @@ p:last-child,
 
 .matrix-question-container .form-group {
     border: none;
-    background-color: transparent;
-    padding: 0;
+    padding: 0 0 1rem 0;
+    margin-bottom: 0;
 }
 
 .matrix-question {
