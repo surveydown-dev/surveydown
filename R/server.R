@@ -822,35 +822,70 @@ sd_server <- function(
 
     # Observer for the exit survey modal
     shiny::observeEvent(input$show_exit_modal, {
-        if (rate_survey) {
-            shiny::showModal(shiny::modalDialog(
-                title = translations[["rating_title"]],
-                sd_question(
-                    type   = 'mc_buttons',
-                    id     = 'survey_rating',
-                    label  = glue::glue("{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"),
-                    option = c(
-                        "1" = "1",
-                        "2" = "2",
-                        "3" = "3",
-                        "4" = "4",
-                        "5" = "5"
+        # Get current page for required question validation
+        page <- get_current_page()
+        
+        # Save current data before validation
+        update_data()
+        
+        # Check required questions before allowing exit
+        if (check_required(page)) {
+            # Clear any existing highlights before proceeding
+            session$sendCustomMessage("clearRequiredHighlights", list())
+            
+            # Proceed with exit modal
+            if (rate_survey) {
+                shiny::showModal(shiny::modalDialog(
+                    title = translations[["rating_title"]],
+                    sd_question(
+                        type   = 'mc_buttons',
+                        id     = 'survey_rating',
+                        label  = glue::glue("{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"),
+                        option = c(
+                            "1" = "1",
+                            "2" = "2",
+                            "3" = "3",
+                            "4" = "4",
+                            "5" = "5"
+                        )
+                    ),
+                    footer = shiny::tagList(
+                        shiny::modalButton(translations[["cancel"]]),
+                        shiny::actionButton("submit_rating", translations[["submit_exit"]])
                     )
-                ),
-                footer = shiny::tagList(
-                    shiny::modalButton(translations[["cancel"]]),
-                    shiny::actionButton("submit_rating", translations[["submit_exit"]])
-                )
-            ))
+                ))
+            } else {
+                shiny::showModal(shiny::modalDialog(
+                    title = translations[["confirm_exit"]],
+                    translations[["sure_exit"]],
+                    footer = shiny::tagList(
+                        shiny::modalButton(translations[["cancel"]]),
+                        shiny::actionButton("confirm_exit", translations[["exit"]])
+                    )
+                ))
+            }
         } else {
-            shiny::showModal(shiny::modalDialog(
-                title = translations[["confirm_exit"]],
-                translations[["sure_exit"]],
-                footer = shiny::tagList(
-                    shiny::modalButton(translations[["cancel"]]),
-                    shiny::actionButton("confirm_exit", translations[["exit"]])
-                )
-            ))
+            # Required questions validation failed - same logic as Next button
+            # Get list of unanswered required questions
+            unanswered_questions <- get_unanswered_required(page)
+            
+            # Always send as character vector, even if empty
+            # This ensures consistent JSON formatting
+            if (length(unanswered_questions) == 0) {
+                unanswered_questions <- character(0)
+            }
+            
+            # Send list to JavaScript for highlighting
+            session$sendCustomMessage("highlightRequiredQuestions", 
+                                      list(questions = unanswered_questions))
+            
+            # Show warning alert
+            shinyWidgets::sendSweetAlert(
+                session = session,
+                title = translations[["warning"]],
+                text = translations[["required"]],
+                type = "warning"
+            )
         }
     })
 
