@@ -549,18 +549,16 @@ sd_question <- function(
             if (questionType === 'slider') {
               var currentLabel = $('#' + questionId).val();
               valueToSave = params.valueMap[currentLabel];
+              // If mapping fails, use label as fallback
+              if (valueToSave === undefined) {
+                valueToSave = currentLabel;
+              }
             } else if (questionType === 'slider_numeric_single') {
               valueToSave = params.defaultValue;
             } else if (questionType === 'slider_numeric_range') {
               valueToSave = params.defaultValue.join(', ');
-              // DEBUG: Check if this is being called
-              if (typeof Rlog !== 'undefined') {
-                Rlog('Range auto-save for: ' + questionId + ' value: ' + valueToSave);
-              }
               Shiny.setInputValue(questionId + '_manual_range', valueToSave, {priority: 'event'});
               Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
-              // Send a debug message to R console
-              Shiny.setInputValue('debug_range_autosave', questionId + '|' + valueToSave, {priority: 'event'});
               return;
             } else if (questionType === 'date') {
               // For date inputs, try multiple ways to get the value
@@ -588,11 +586,13 @@ sd_question <- function(
               }
             }
             
-            // Mark as interacted and save value
+            // Mark as interacted and save value with timestamp trigger
             Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
             if (valueToSave !== null && valueToSave !== '') {
               Shiny.setInputValue(questionId, valueToSave, {priority: 'event'});
             }
+            // Force timestamp update by sending a separate autosave timestamp signal
+            Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
           }
         }
         

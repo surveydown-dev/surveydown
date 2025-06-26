@@ -412,6 +412,7 @@ sd_server <- function(
                 value                <- input[[local_id]]
                 formatted_value      <- format_question_value(value)
                 all_data[[local_id]] <- formatted_value
+                
 
                 # Update timestamp and progress if interacted
                 changed <- local_id
@@ -466,7 +467,6 @@ sd_server <- function(
             manual_id   <- paste0(local_id, "_manual_range")
 
             shiny::observeEvent(input[[manual_id]], {
-                cat("Manual range observer triggered for:", local_id, "value:", input[[manual_id]], "\n")
                 
                 # Tag event time and update value  
                 timestamp            <- get_utc_timestamp()
@@ -521,13 +521,26 @@ sd_server <- function(
         })
     })
 
-    # Debug observer to catch auto-save calls
-    shiny::observe({
-        debug_msg <- session$input$debug_range_autosave
-        if (!is.null(debug_msg)) {
-            cat("DEBUG Auto-save triggered from JS:", debug_msg, "\n")
-        }
+    # Auto-save timestamp observers
+    lapply(seq_along(question_ids), function(index) {
+        local({
+            local_id    <- question_ids[index]
+            local_ts_id <- question_ts_ids[index]
+            autosave_ts_id <- paste0(local_id, "_autosave_timestamp")
+
+            shiny::observeEvent(input[[autosave_ts_id]], {
+                # Force timestamp update for auto-saved questions
+                if (!is.null(input[[paste0(local_id, "_interacted")]])) {
+                    timestamp <- get_utc_timestamp()
+                    all_data[[local_ts_id]] <- timestamp
+                    changed_fields(c(changed_fields(), local_ts_id))
+                }
+            },
+            ignoreNULL = TRUE,
+            ignoreInit = TRUE)
+        })
     })
+
 
     # Observer to update cookies with answers
     shiny::observe({
@@ -624,14 +637,19 @@ sd_server <- function(
     check_required <- function(page) {
         required_questions <- page$required_questions
         is_visible <- question_visibility()[required_questions]
-        all(vapply(required_questions, function(q) {
+        cat("CHECK_REQUIRED after delay: Checking", length(required_questions), "questions\n")
+        result <- all(vapply(required_questions, function(q) {
             if (!is_visible[q]) return(TRUE)
             if (question_structure[[q]]$is_matrix) {
                 all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input, question_structure)))
             } else {
-                check_answer(q, input, question_structure)
+                answer_result <- check_answer(q, input, question_structure)
+                cat("  ", q, "interacted:", !is.null(input[[paste0(q, "_interacted")]]), "result:", answer_result, "\n")
+                return(answer_result)
             }
         }, logical(1)))
+        cat("CHECK_REQUIRED result:", result, "\n")
+        return(result)
     }
     
     get_unanswered_required <- function(page) {
@@ -694,10 +712,13 @@ sd_server <- function(
         return(unanswered)
     }
 
+
     # Determine which page is next, then update current_page_id() to it
     shiny::observe({
         lapply(pages, function(page) {
             shiny::observeEvent(input[[page$next_button_id]], {
+                
+                
                 shiny::isolate({
                     # Grab the time stamp of the page turn
                     timestamp <- get_utc_timestamp()
@@ -731,6 +752,9 @@ sd_server <- function(
                         }
                     }
                     
+                    # Save current data before validation
+                    update_data()
+                    
                     if (!is.null(next_page_id) && check_required(page)) {
                         # Clear any existing highlights before navigating
                         session$sendCustomMessage("clearRequiredHighlights", list())
@@ -748,7 +772,7 @@ sd_server <- function(
                         # Update tracker of which fields changed
                         changed_fields(c(changed_fields(), next_ts_id, "current_page"))
 
-                        # Update checkpoint 2 - upon going to the next page
+                        # Save navigation data to database
                         update_data()
                     } else if (!is.null(next_page_id)) {
                         # Get list of unanswered required questions
@@ -1741,11 +1765,34 @@ handle_skip_logic <- function(
 # Check if a single question is answered
 check_answer <- function(q, input, question_structure = NULL) {
     answer <- input[[q]]
+    cat("  DEBUG check_answer", q, "answer:", !is.null(answer), "value:", answer, "\n")
     if (is.null(answer)) return(FALSE)
     
     # For question types that have default values, check if user has actually interacted
     # These types often have default values that shouldn't count as "answered"
     interacted <- input[[paste0(q, "_interacted")]]
+    
+    # Also check for auto-save timestamp (indicates auto-save occurred)
+    autosave_timestamp <- input[[paste0(q, "_autosave_timestamp")]]
+    if (is.null(interacted) && !is.null(autosave_timestamp)) {
+        interacted <- TRUE
+        cat("  AUTO-SAVE TIMESTAMP DETECTED for", q, "\n")
+    }
+    
+    # Smart auto-save detection: if question has a non-null value but no interaction,
+    # and it's a question type that supports auto-save, consider it answered
+    if (is.null(interacted) && !is.null(answer)) {
+        # Get question type from question_structure if available
+        if (!is.null(question_structure) && q %in% names(question_structure)) {
+            q_type <- question_structure[[q]]$type
+            cat("  SMART DETECTION for", q, "type:", q_type, "\n")
+            # For auto-save supported types with default values, consider them answered
+            if (!is.null(q_type) && q_type %in% c("slider", "slider_numeric", "date", "daterange")) {
+                interacted <- TRUE
+                cat("  AUTO-SAVE DETECTED for", q, "type:", q_type, "\n")
+            }
+        }
+    }
     
     # Get question type from question_structure if available
     q_type <- NULL
