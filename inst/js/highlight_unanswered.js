@@ -92,6 +92,14 @@ $(document).ready(function() {
         clearUnansweredHighlights();
     });
     
+    // Custom message handler for delayed highlighting check
+    Shiny.addCustomMessageHandler("delayedHighlightCheck", function(data) {
+        setTimeout(function() {
+            // Trigger server-side highlighting check
+            Shiny.setInputValue("delayed_highlight_trigger", Date.now(), {priority: "event"});
+        }, data.delay);
+    });
+    
     // Clear highlights when user starts answering questions
     $(document).on('change input', '.question-container input, .question-container select, .question-container textarea', function() {
         var $this = $(this);

@@ -613,8 +613,22 @@ sd_server <- function(
         )
     })
     
-    # Observer to trigger blue highlighting for unanswered questions when page changes
+    # Observer to trigger gray highlighting for unanswered questions when page changes
     shiny::observe({
+        if (highlight_unanswered) {
+            current_page <- get_current_page()
+            if (!is.null(current_page)) {
+                # Use JavaScript to delay highlighting until after DOM is ready and widgets initialized
+                session$sendCustomMessage("delayedHighlightCheck", list(
+                    delay = 1000,  # 1 second delay
+                    page_id = current_page$id
+                ))
+            }
+        }
+    })
+    
+    # Observer for delayed highlighting check triggered by JavaScript
+    shiny::observeEvent(input$delayed_highlight_trigger, {
         if (highlight_unanswered) {
             current_page <- get_current_page()
             if (!is.null(current_page)) {
@@ -694,12 +708,12 @@ sd_server <- function(
                 # For matrix questions, check each subquestion individually
                 for (r in question_structure[[q]]$row) {
                     subq_id <- paste0(q, "_", r)
-                    if (!check_answer(subq_id, input, question_structure)) {
+                    if (!check_answer_for_highlighting(subq_id, input, question_structure)) {
                         unanswered <- c(unanswered, subq_id)
                     }
                 }
             } else {
-                if (!check_answer(q, input, question_structure)) {
+                if (!check_answer_for_highlighting(q, input, question_structure)) {
                     unanswered <- c(unanswered, q)
                 }
             }
@@ -1903,6 +1917,21 @@ check_answer <- function(q, input, question_structure = NULL) {
     }
     
     return(TRUE)  # Default to true for unknown types
+}
+
+# Check if a question should be highlighted (based on interaction only, no smart detection)
+check_answer_for_highlighting <- function(q, input, question_structure = NULL) {
+    # For highlighting purposes, only check actual user interaction
+    # Do NOT use smart detection - we want to show gray for untouched questions
+    interacted <- input[[paste0(q, "_interacted")]]
+    
+    # If user has explicitly interacted, don't highlight
+    if (!is.null(interacted) && isTRUE(interacted)) {
+        return(TRUE)  # Interacted = answered for highlighting purposes
+    }
+    
+    # For all question types, if no interaction flag, show as unanswered for highlighting
+    return(FALSE)
 }
 
 get_local_data <- function() {
