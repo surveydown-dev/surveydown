@@ -1043,6 +1043,45 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   invisible(NULL)
 }
 
+# Helper function to check if error is GSSAPI-related
+is_gssapi_error <- function(error_msg) {
+  grepl("invalid response to GSSAPI negotiation", error_msg, ignore.case = TRUE)
+}
+
+# Helper function to try database connection with specific gssencmode
+try_db_connection <- function(params, gss_mode) {
+  # Build connection arguments
+  conn_args <- list(
+    drv = RPostgres::Postgres(),
+    host = params$host,
+    dbname = params$dbname,
+    port = params$port,
+    user = params$user,
+    password = params$password
+  )
+
+  # Add gssencmode unless it's explicitly set to NULL
+  if (!is.null(gss_mode)) {
+    if (!gss_mode %in% c("auto", "prefer", "disable")) {
+      cli::cli_alert_warning(
+        "Invalid 'gssencmode' setting. Must be set to 'auto', 'prefer', 'disable', or NULL...setting to 'auto'"
+      )
+      conn_args$gssencmode <- "prefer"  # Use prefer for auto mode
+    } else if (gss_mode == "auto") {
+      conn_args$gssencmode <- "prefer"  # Auto mode starts with prefer
+    } else {
+      conn_args$gssencmode <- gss_mode
+    }
+  } else {
+    cli::cli_alert_warning(
+      "'gssencmode' is set to NULL, so the 'gssencmode' parameter will not be passed to the database connection."
+    )
+  }
+
+  # Create pool with dynamic arguments
+  do.call(pool::dbPool, conn_args)
+}
+
 # Replaces usethis::ui_yeah, inspired by internal yesno function in devtools
 yesno <- function(msg) {
     # Define fun options for yes/no

@@ -1,5 +1,12 @@
 # surveydown (development version)
 
+# surveydown 0.12.5
+
+- New argument: `gssencmode` now has values of `"auto"`, `"prefer"`, and `"disable"`, with `"auto"` being default.
+- New feature: Now re-rendering will be triggered by changing of either the `survey.qmd` or `app.R` file.
+- Bug fix: `slider`, `slider_numeric`, `date`, and `daterage` questions now will be marked as answered without user interaction if the Next/Close button is pushed, and will have their default value saved.
+- Bug fix: `mc_buttons` and `mc_multiple_buttons` now can properly save data.
+
 # surveydown 0.12.4
 
 - In `sd_question()`, `"numeric"` question type will only allow numeric inputs and `+`/`-` signs.

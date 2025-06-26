@@ -66,7 +66,7 @@ sd_ui <- function() {
 
   # Render the 'survey.qmd' file if changes detected
   if (survey_needs_updating(paths)) {
-    message("Changes detected...rendering 'survey.qmd' file...")
+    message("Changes detected...rendering survey files...")
     render_survey_qmd(paths, default_theme)
 
     # Move rendered file
@@ -243,6 +243,12 @@ survey_needs_updating <- function(paths) {
   time_html <- file.info(paths$target_html)$mtime
 
   if (time_qmd > time_html) { return(TRUE) }
+
+  # Re-render if '_survey/survey.html' is out of date with 'app.R'
+  if (fs::file_exists(paths$app)) {
+    time_app <- file.info(paths$app)$mtime
+    if (time_app > time_html) { return(TRUE) }
+  }
 
   # Find all YAML files
   yaml_files <- find_all_yaml_files()
@@ -531,6 +537,160 @@ sd_question <- function(
   # Check if question if answered
   js_interaction <- sprintf("Shiny.setInputValue('%s_interacted', true, {priority: 'event'});", id)
 
+  # Auto-save helper function for untouched questions
+  create_autosave_js <- function(question_id, question_type, params = list()) {
+    sprintf("
+      $(document).ready(function() {
+        var questionId = '%s';
+        var questionType = '%s';
+        var hasInteracted = false;
+        var params = %s;
+        
+        // Auto-save function for untouched questions
+        function autoSaveQuestion() {
+          // Check if user has already interacted with this question
+          var interactedInput = Shiny.shinyapp.$inputValues[questionId + '_interacted'];
+          if (interactedInput || hasInteracted) {
+            // Question was already interacted with, don't auto-save
+            return;
+          }
+          
+          // Double-check by looking at actual DOM changes for sliders
+          if (questionType === 'slider' || questionType === 'slider_numeric_single') {
+            var currentElement = $('#' + questionId);
+            var initialValue = currentElement.data('initial-value');
+            
+            // If we stored an initial value and current value differs, user interacted
+            if (initialValue !== undefined) {
+              var currentValue = currentElement.val();
+              if (currentValue != initialValue) {
+                hasInteracted = true;
+                return; // Don't auto-save, user made changes
+              }
+            }
+          }
+          
+          var valueToSave = null;
+          
+          // Handle different question types - use stored defaults, not current DOM values
+          if (questionType === 'slider') {
+            // Use the original default value from params, not current DOM value
+            valueToSave = params.defaultValue;
+          } else if (questionType === 'slider_numeric_single') {
+            valueToSave = params.defaultValue;
+          } else if (questionType === 'slider_numeric_range') {
+            valueToSave = params.defaultValue.join(', ');
+            Shiny.setInputValue(questionId + '_manual_range', valueToSave, {priority: 'event'});
+            Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
+            Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
+            clearQuestionHighlighting(questionId);
+            return;
+          } else if (questionType === 'date') {
+            // For date inputs, try multiple ways to get the value
+            var dateElement = $('#' + questionId);
+            var inputElement = dateElement.find('input[type=\"text\"]');
+            
+            // Try different methods to get the date value
+            valueToSave = inputElement.val() || 
+                         dateElement.val() || 
+                         dateElement.attr('data-date') || 
+                         dateElement.find('input').val() || '';
+          } else if (questionType === 'daterange') {
+            // For date range inputs, get both start and end dates
+            var container = $('#' + questionId);
+            var startDate = container.find('input').eq(0).val() || '';
+            var endDate = container.find('input').eq(1).val() || '';
+            
+            // Join with comma and space to match expected format: 2025-06-17, 2025-06-18
+            if (startDate && endDate) {
+              valueToSave = startDate + ', ' + endDate;
+            } else if (startDate || endDate) {
+              valueToSave = (startDate || '') + ', ' + (endDate || '');
+            } else {
+              valueToSave = '';
+            }
+          }
+          
+          // Mark as interacted and save value with timestamp trigger
+          Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
+          if (valueToSave !== null && valueToSave !== '') {
+            Shiny.setInputValue(questionId, valueToSave, {priority: 'event'});
+          }
+          // Force timestamp update by sending a separate autosave timestamp signal
+          Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
+          
+          // Clear gray highlighting since this question is now interacted
+          clearQuestionHighlighting(questionId);
+        }
+        
+        // Function to clear highlighting for this specific question
+        function clearQuestionHighlighting(questionId) {
+          // Find question container using multiple strategies
+          var questionContainer = $('[data-question-id=\\\"' + questionId + '\\\"]');
+          if (questionContainer.length === 0) {
+            questionContainer = $('#container-' + questionId);
+          }
+          if (questionContainer.length === 0) {
+            var input = $('#' + questionId);
+            if (input.length > 0) {
+              questionContainer = input.closest('.question-container, .form-group, .shiny-input-container');
+            }
+          }
+          
+          if (questionContainer.length > 0) {
+            // Remove all highlighting classes
+            questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
+            // Also remove from form controls inside
+            questionContainer.find('.form-control, input, select, textarea').removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
+          }
+        }
+        
+        // Mark as interacted when user actually interacts
+        window['markInteracted_' + questionId] = function() {
+          hasInteracted = true;
+        };
+        
+        // Store initial values for sliders to detect changes and bind additional interaction events
+        if (questionType === 'slider' || questionType === 'slider_numeric_single') {
+          setTimeout(function() {
+            var element = $('#' + questionId);
+            if (element.length > 0) {
+              element.data('initial-value', element.val());
+              
+              // Additional interaction tracking for edge cases
+              element.on('input change slide slidechange', function() {
+                hasInteracted = true;
+                window['markInteracted_' + questionId] && window['markInteracted_' + questionId]();
+              });
+            }
+          }, 100);
+        } else if (questionType === 'slider_numeric_range') {
+          // For range sliders, bind additional events to detect interactions
+          setTimeout(function() {
+            var element = $('#' + questionId);
+            if (element.length > 0) {
+              element.on('input change slide slidechange', function() {
+                hasInteracted = true;
+                window['markInteracted_' + questionId] && window['markInteracted_' + questionId]();
+              });
+            }
+          }, 100);
+        }
+        
+        // Listen for Next and Close button clicks
+        $(document).on('click', '.sd-enter-button', function(e) {
+          if ($(this).attr('onclick') && $(this).attr('onclick').includes('next_page')) {
+            autoSaveQuestion();
+          }
+        });
+        
+        $(document).on('click', '#close-survey-button', function(e) {
+          autoSaveQuestion();
+        });
+      });
+    ", question_id, question_type, jsonlite::toJSON(params))
+  }
+
   # Create label with hidden asterisk
   label <- markdown_to_html(label)
 
@@ -584,8 +744,18 @@ sd_question <- function(
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
             $(document).on('click', '#%s .btn', function() {
                 %s
+                // Small delay to allow button state to update
+                setTimeout(function() {
+                    var selectedValue = '';
+                    // Look for checked radio input within the container
+                    var checkedInput = $('#%s input[type=\"radio\"]:checked');
+                    if (checkedInput.length > 0) {
+                        selectedValue = checkedInput.val();
+                    }
+                    Shiny.setInputValue('%s', selectedValue, {priority: 'event'});
+                }, 50);
             });
-        ", id, js_interaction))))
+        ", id, js_interaction, id, id))))
 
   } else if (type == "mc_multiple_buttons") {
 
@@ -596,14 +766,24 @@ sd_question <- function(
       direction  = direction,
       individual = individual,
       justified  = FALSE,
+      selected   = character(0),
       ...
     )
 
     output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(sprintf("
             $(document).on('click', '#%s .btn', function() {
                 %s
+                // Small delay to allow button state to update
+                setTimeout(function() {
+                    var selectedValues = [];
+                    // Look for checked checkbox inputs within the container
+                    $('#%s input[type=\"checkbox\"]:checked').each(function() {
+                        selectedValues.push($(this).val());
+                    });
+                    Shiny.setInputValue('%s', selectedValues, {priority: 'event'});
+                }, 50);
             });
-        ", id, js_interaction))))
+        ", id, js_interaction, id, id))))
   } else if (type == "text") {
 
     output <- shiny::textInput(
@@ -735,12 +915,14 @@ sd_question <- function(
       # JavaScript to map the display label back to the stored value and track interaction
       js_convert <- sprintf("
       $(document).ready(function() {
+        var valueMap = %s;
+        
         $('#%s').on('focus mousedown change', function(e) {
-          var valueMap = %s;
           var currentLabel = $(this).val();
 
           // Track interaction on focus or mousedown (user initiated)
           if (e.type === 'focus' || e.type === 'mousedown') {
+            window['markInteracted_%s']();
             Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
           }
           
@@ -748,7 +930,17 @@ sd_question <- function(
           Shiny.setInputValue('%s', valueMap[currentLabel]);
         });
       });
-    ", id, jsonlite::toJSON(as.list(value_map)), id, id)
+    ", jsonlite::toJSON(as.list(value_map)), id, id, id, id)
+      
+      # Add auto-save functionality
+      # Convert selected_label to its corresponding value for auto-save
+      default_value <- value_map[[selected_label]]
+      autosave_js <- create_autosave_js(id, "slider", list(
+        valueMap = as.list(value_map),
+        defaultValue = default_value,
+        defaultLabel = selected_label
+      ))
+      js_convert <- paste(js_convert, autosave_js, sep = "\n")
 
       output <- shiny::tagAppendChild(
           output,
@@ -788,6 +980,7 @@ sd_question <- function(
       $(document).ready(function() {
         // Track interaction on mousedown/focus
         $('#%s').on('mousedown focus', function() {
+          window['markInteracted_%s']();
           Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
         });
         
@@ -800,7 +993,11 @@ sd_question <- function(
           }
         });
       });
-    ", id, id, id, id)
+    ", id, id, id, id, id)
+      
+          # Add auto-save functionality
+          autosave_js <- create_autosave_js(id, "slider_numeric_range", list(defaultValue = default))
+          js_range_handler <- paste(js_range_handler, autosave_js, sep = "\n")
 
           output <- shiny::tagAppendChild(
               output,
@@ -809,13 +1006,50 @@ sd_question <- function(
 
           # Add an observer in the server to capture this string value
           if (!is.null(shiny::getDefaultReactiveDomain())) {
+              session <- shiny::getDefaultReactiveDomain()
+              
+              # Debug observer to catch auto-save calls
+              shiny::observe({
+                  debug_msg <- session$input$debug_range_autosave
+                  if (!is.null(debug_msg)) {
+                      cat("DEBUG Auto-save triggered from JS:", debug_msg, "\n")
+                  }
+              })
+              
               shiny::observe({
                   # Get the range string from our custom input
-                  range_string <- shiny::getDefaultReactiveDomain()$input[[paste0(id, "_manual_range")]]
+                  range_string <- session$input[[paste0(id, "_manual_range")]]
+                  interaction_flag <- session$input[[paste0(id, "_interacted")]]
+
+                  cat("DEBUG Range Observer - ID:", id, "range_string:", range_string, "interaction_flag:", interaction_flag, "\n")
 
                   if (!is.null(range_string) && range_string != "") {
                       # Store this directly using the main id
                       sd_store_value(range_string, id)
+                      cat("DEBUG Range value stored for:", id, "\n")
+                      
+                      # Handle timestamp the same way as main observer
+                      if (!is.null(interaction_flag) && interaction_flag) {
+                          # Get access to all_data and changed_fields (same as main observer)
+                          all_data <- session$userData$all_data
+                          changed_fields <- session$userData$changed_fields
+                          
+                          cat("DEBUG Checking userData - all_data exists:", !is.null(all_data), "changed_fields exists:", !is.null(changed_fields), "\n")
+                          
+                          if (!is.null(all_data) && !is.null(changed_fields)) {
+                              timestamp <- get_utc_timestamp()
+                              ts_id <- paste0(id, "_timestamp")
+                              all_data[[ts_id]] <- timestamp
+                              changed_fields(c(changed_fields(), ts_id))
+                              cat("DEBUG Timestamp stored for:", id, "timestamp:", timestamp, "\n")
+                          } else {
+                              cat("DEBUG Could not store timestamp - missing userData\n")
+                          }
+                      } else {
+                          cat("DEBUG No interaction flag, skipping timestamp\n")
+                      }
+                  } else {
+                      cat("DEBUG No range string to process\n")
                   }
               })
           }
@@ -824,10 +1058,15 @@ sd_question <- function(
           js_single_handler <- sprintf("
       $(document).ready(function() {
         $('#%s').on('mousedown focus', function() {
+          window['markInteracted_%s']();
           Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
         });
       });
-    ", id, id)
+    ", id, id, id)
+      
+          # Add auto-save functionality
+          autosave_js <- create_autosave_js(id, "slider_numeric_single", list(defaultValue = default))
+          js_single_handler <- paste(js_single_handler, autosave_js, sep = "\n")
 
           output <- shiny::tagAppendChild(
               output,
@@ -843,7 +1082,7 @@ sd_question <- function(
       value              = NULL,
       min                = NULL,
       max                = NULL,
-      format             = "mm/dd/yyyy",
+      format             = "yyyy-mm-dd",
       startview          = "month",
       weekstart          = 0,
       language           = language,
@@ -853,7 +1092,22 @@ sd_question <- function(
       ...
     )
 
-    output <- date_interaction(output, id)
+    # Add interaction tracking
+    js_date_interaction <- sprintf(
+      "setTimeout(function() {
+              $('#%s').on('change', function() {
+                  window['markInteracted_%s']();
+                  Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+              });
+           }, 1000);",  # 1000 ms delay
+      id, id, id
+    )
+    
+    # Add auto-save functionality
+    autosave_js <- create_autosave_js(id, "date", list())
+    combined_js <- paste(js_date_interaction, autosave_js, sep = "\n")
+    
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(combined_js)))
 
   } else if (type == "daterange") {
 
@@ -864,7 +1118,7 @@ sd_question <- function(
       end       = NULL,
       min       = NULL,
       max       = NULL,
-      format    = "mm/dd/yyyy",
+      format    = "yyyy-mm-dd",
       startview = "month",
       weekstart = 0,
       language  = language,
@@ -873,7 +1127,22 @@ sd_question <- function(
       ...
     )
 
-    output <- date_interaction(output, id)
+    # Add interaction tracking
+    js_daterange_interaction <- sprintf(
+      "setTimeout(function() {
+              $('#%s').on('change', function() {
+                  window['markInteracted_%s']();
+                  Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+              });
+           }, 1000);",  # 1000 ms delay
+      id, id, id
+    )
+    
+    # Add auto-save functionality
+    autosave_js <- create_autosave_js(id, "daterange", list())
+    combined_js <- paste(js_daterange_interaction, autosave_js, sep = "\n")
+    
+    output <- shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(combined_js)))
 
   } else if (type == "matrix") {
 
@@ -1040,17 +1309,7 @@ sd_question_custom <- function(
     })
 }
 
-date_interaction <- function(output, id) {
-  js_code <- sprintf(
-    "setTimeout(function() {
-            $('#%s').on('change', function() {
-                Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
-            });
-         }, 1000);",  # 1000 ms delay
-    id, id
-  )
-  shiny::tagAppendChild(output, shiny::tags$script(htmltools::HTML(js_code)))
-}
+# date_interaction function removed - now using unified auto-save helper
 
 make_question_container <- function(id, object, width) {
   # Check if question if answered
