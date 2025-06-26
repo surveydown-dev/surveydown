@@ -542,64 +542,107 @@ sd_question <- function(
         
         // Auto-save function for untouched questions
         function autoSaveQuestion() {
-          if (!hasInteracted) {
-            var valueToSave = null;
-            
-            // Handle different question types
-            if (questionType === 'slider') {
-              var currentLabel = $('#' + questionId).val();
-              valueToSave = params.valueMap[currentLabel];
-              // If mapping fails, use label as fallback
-              if (valueToSave === undefined) {
-                valueToSave = currentLabel;
-              }
-            } else if (questionType === 'slider_numeric_single') {
-              valueToSave = params.defaultValue;
-            } else if (questionType === 'slider_numeric_range') {
-              valueToSave = params.defaultValue.join(', ');
-              Shiny.setInputValue(questionId + '_manual_range', valueToSave, {priority: 'event'});
-              Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
-              return;
-            } else if (questionType === 'date') {
-              // For date inputs, try multiple ways to get the value
-              var dateElement = $('#' + questionId);
-              var inputElement = dateElement.find('input[type=\"text\"]');
-              
-              // Try different methods to get the date value
-              valueToSave = inputElement.val() || 
-                           dateElement.val() || 
-                           dateElement.attr('data-date') || 
-                           dateElement.find('input').val() || '';
-            } else if (questionType === 'daterange') {
-              // For date range inputs, get both start and end dates
-              var container = $('#' + questionId);
-              var startDate = container.find('input').eq(0).val() || '';
-              var endDate = container.find('input').eq(1).val() || '';
-              
-              // Join with comma and space to match expected format: 2025-06-17, 2025-06-18
-              if (startDate && endDate) {
-                valueToSave = startDate + ', ' + endDate;
-              } else if (startDate || endDate) {
-                valueToSave = (startDate || '') + ', ' + (endDate || '');
-              } else {
-                valueToSave = '';
-              }
-            }
-            
-            // Mark as interacted and save value with timestamp trigger
-            Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
-            if (valueToSave !== null && valueToSave !== '') {
-              Shiny.setInputValue(questionId, valueToSave, {priority: 'event'});
-            }
-            // Force timestamp update by sending a separate autosave timestamp signal
-            Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
+          // Check if user has already interacted with this question
+          var interactedInput = Shiny.shinyapp.$inputValues[questionId + '_interacted'];
+          if (interactedInput || hasInteracted) {
+            // Question was already interacted with, don't auto-save
+            return;
           }
+          
+          // Double-check by looking at actual DOM changes for sliders
+          if (questionType === 'slider' || questionType === 'slider_numeric_single') {
+            var currentElement = $('#' + questionId);
+            var initialValue = currentElement.data('initial-value');
+            
+            // If we stored an initial value and current value differs, user interacted
+            if (initialValue !== undefined) {
+              var currentValue = currentElement.val();
+              if (currentValue != initialValue) {
+                hasInteracted = true;
+                return; // Don't auto-save, user made changes
+              }
+            }
+          }
+          
+          var valueToSave = null;
+          
+          // Handle different question types - use stored defaults, not current DOM values
+          if (questionType === 'slider') {
+            // Use the original default value from params, not current DOM value
+            valueToSave = params.defaultValue;
+          } else if (questionType === 'slider_numeric_single') {
+            valueToSave = params.defaultValue;
+          } else if (questionType === 'slider_numeric_range') {
+            valueToSave = params.defaultValue.join(', ');
+            Shiny.setInputValue(questionId + '_manual_range', valueToSave, {priority: 'event'});
+            Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
+            return;
+          } else if (questionType === 'date') {
+            // For date inputs, try multiple ways to get the value
+            var dateElement = $('#' + questionId);
+            var inputElement = dateElement.find('input[type=\"text\"]');
+            
+            // Try different methods to get the date value
+            valueToSave = inputElement.val() || 
+                         dateElement.val() || 
+                         dateElement.attr('data-date') || 
+                         dateElement.find('input').val() || '';
+          } else if (questionType === 'daterange') {
+            // For date range inputs, get both start and end dates
+            var container = $('#' + questionId);
+            var startDate = container.find('input').eq(0).val() || '';
+            var endDate = container.find('input').eq(1).val() || '';
+            
+            // Join with comma and space to match expected format: 2025-06-17, 2025-06-18
+            if (startDate && endDate) {
+              valueToSave = startDate + ', ' + endDate;
+            } else if (startDate || endDate) {
+              valueToSave = (startDate || '') + ', ' + (endDate || '');
+            } else {
+              valueToSave = '';
+            }
+          }
+          
+          // Mark as interacted and save value with timestamp trigger
+          Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
+          if (valueToSave !== null && valueToSave !== '') {
+            Shiny.setInputValue(questionId, valueToSave, {priority: 'event'});
+          }
+          // Force timestamp update by sending a separate autosave timestamp signal
+          Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
         }
         
         // Mark as interacted when user actually interacts
         window['markInteracted_' + questionId] = function() {
           hasInteracted = true;
         };
+        
+        // Store initial values for sliders to detect changes and bind additional interaction events
+        if (questionType === 'slider' || questionType === 'slider_numeric_single') {
+          setTimeout(function() {
+            var element = $('#' + questionId);
+            if (element.length > 0) {
+              element.data('initial-value', element.val());
+              
+              // Additional interaction tracking for edge cases
+              element.on('input change slide slidechange', function() {
+                hasInteracted = true;
+                window['markInteracted_' + questionId] && window['markInteracted_' + questionId]();
+              });
+            }
+          }, 100);
+        } else if (questionType === 'slider_numeric_range') {
+          // For range sliders, bind additional events to detect interactions
+          setTimeout(function() {
+            var element = $('#' + questionId);
+            if (element.length > 0) {
+              element.on('input change slide slidechange', function() {
+                hasInteracted = true;
+                window['markInteracted_' + questionId] && window['markInteracted_' + questionId]();
+              });
+            }
+          }, 100);
+        }
         
         // Listen for Next and Close button clicks
         $(document).on('click', '.sd-enter-button', function(e) {

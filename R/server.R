@@ -1773,8 +1773,8 @@ check_answer <- function(q, input, question_structure = NULL) {
         interacted <- TRUE
     }
     
-    # Smart auto-save detection: if question has a non-null value but no interaction,
-    # and it's a question type that supports auto-save, consider it answered
+    # Smart auto-save detection: ONLY apply if normal validation would fail
+    # This ensures we don't interfere with normal user interaction tracking
     if (is.null(interacted) && !is.null(answer)) {
         # Get question type from question_structure if available
         if (!is.null(question_structure) && q %in% names(question_structure)) {
@@ -1800,7 +1800,8 @@ check_answer <- function(q, input, question_structure = NULL) {
             q_type <- type_replacement[q_type_raw]
             if (is.na(q_type)) q_type <- q_type_raw  # Fallback to raw if no mapping
             
-            # For auto-save supported types with default values, consider them answered
+            # ONLY apply smart detection for auto-save supported types
+            # and ONLY when there's no interaction (meaning this is default value scenario)
             if (!is.null(q_type) && q_type %in% c("slider", "slider_numeric", "date", "daterange")) {
                 interacted <- TRUE
             }
