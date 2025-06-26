@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,13 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.12.5" id="surveydown-0125">surveydown 0.12.5<a class="anchor" aria-label="anchor" href="#surveydown-0125"></a></h2>
+<ul><li>New argument: <code>gssencmode</code> now has values of <code>"auto"</code>, <code>"prefer"</code>, and <code>"disable"</code>, with <code>"auto"</code> being default.</li>
+<li>New feature: Now re-rendering will be triggered by changing of either the <code>survey.qmd</code> or <code>app.R</code> file.</li>
+<li>Bug fix: <code>slider</code>, <code>slider_numeric</code>, <code>date</code>, and <code>daterage</code> questions now will be marked as answered without user interaction if the Next/Close button is pushed, and will have their default value saved.</li>
+<li>Bug fix: <code>mc_buttons</code> and <code>mc_multiple_buttons</code> now can properly save data.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.12.4" id="surveydown-0124">surveydown 0.12.4<a class="anchor" aria-label="anchor" href="#surveydown-0124"></a></h2>
 <ul><li>In <code><a href="../reference/sd_question.html">sd_question()</a></code>, <code>"numeric"</code> question type will only allow numeric inputs and <code>+</code>/<code>-</code> signs.</li>
