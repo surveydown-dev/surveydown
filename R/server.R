@@ -620,7 +620,7 @@ sd_server <- function(
             if (!is.null(current_page)) {
                 # Use JavaScript to delay highlighting until after DOM is ready and widgets initialized
                 session$sendCustomMessage("delayedHighlightCheck", list(
-                    delay = 1000,  # 1 second delay
+                    delay = 100,  # 0.1 second delay
                     page_id = current_page$id
                 ))
             }
