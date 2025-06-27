@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.12.6
+
+- UI update: Now `"matrix"` question type has better layout.
+- Bug fix: `"text"`, `"textarea"` and `"numeric"` types could bypass the "required" question check with mouse clicking on their areas. Now it's fixed.
+
 # surveydown 0.12.5
 
 - New argument: `gssencmode` now has values of `"auto"`, `"prefer"`, and `"disable"`, with `"auto"` being default.

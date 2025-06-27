@@ -1880,24 +1880,26 @@ check_answer <- function(q, input, question_structure = NULL) {
     }
     
     if (is.character(answer)) {
-        # For regular text inputs, empty = unanswered, non-empty = answered
-        if (!is.null(interacted)) {
-            return(isTRUE(interacted))
+        # For text/textarea inputs, require both interaction AND non-empty content
+        if (!is.null(interacted) && isTRUE(interacted)) {
+            return(any(nzchar(answer)))
         } else {
             return(any(nzchar(answer)))
         }
     } else if (is.numeric(answer) || is.logical(answer)) {
-        # For numeric inputs (including sliders), require user interaction
-        # Also handle logical NA from unset numeric inputs
-        if (!is.null(interacted)) {
-            return(isTRUE(interacted))
+        # For numeric text inputs (sliders are already handled above), require both interaction AND valid content
+        if (!is.null(interacted) && isTRUE(interacted)) {
+            # User interacted - check if they provided actual content
+            if (is.logical(answer) || all(is.na(answer))) {
+                return(FALSE)  # No valid content provided
+            }
+            return(TRUE)  # Valid content provided
         } else {
-            # Without interaction tracking, assume unanswered for these input types
-            # since they always have default values that shouldn't count as user input
+            # Without interaction tracking, check for valid content
             if (is.logical(answer) || all(is.na(answer))) {
                 return(FALSE)
             }
-            return(FALSE)  # Require interaction tracking for numeric/slider types
+            return(TRUE)
         }
     } else if (inherits(answer, "Date")) {
         # For date inputs, require user interaction if available
