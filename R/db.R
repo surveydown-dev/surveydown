@@ -211,16 +211,11 @@ sd_db_connect <- function(
   }
 
   # Load environment variables
-  if (!file.exists(env_file)) {
-    cli::cli_alert_warning("No .env file found.")
-    cli::cli_alert_info("Run the following to configure your database:")
-    cli::cli_code("surveydown::sd_db_config()")
-    return(NULL)
+  if (file.exists(env_file)) {
+    dotenv::load_dot_env(env_file)
   }
 
-  dotenv::load_dot_env(env_file)
-
-  # Get all required parameters
+  # Try to get all required parameters
   params <- list(
     host = Sys.getenv("SD_HOST"),
     port = Sys.getenv("SD_PORT"),
@@ -229,6 +224,14 @@ sd_db_connect <- function(
     password = Sys.getenv("SD_PASSWORD"),
     table = Sys.getenv("SD_TABLE")
   )
+
+  # Quit if database parameters are unavailable
+  if (all(params == "")) {
+    cli::cli_alert_warning("No .env file found and no environment variables set.")
+    cli::cli_alert_info("Run the following to configure your database:")
+    cli::cli_code("surveydown::sd_db_config()")
+    return(NULL)
+  }
 
   # Check for missing required parameters
   missing <- names(params)[!nchar(unlist(params))]
@@ -245,11 +248,11 @@ sd_db_connect <- function(
     return(list(db = pool, table = params$table))
   }, error = function(e) {
     error_msg <- as.character(e$message)
-    
+
     # Only try fallback if we're in "auto" mode and it's a GSSAPI error
     if (is_gssapi_error(error_msg) && gssencmode == "auto") {
       message("GSSAPI negotiation failed, retrying with gssencmode='disable'...")
-      
+
       tryCatch({
         pool <- try_db_connection(params, "disable")
         cli::cli_alert_success("Successfully connected to the database with gssencmode='disable'.")
