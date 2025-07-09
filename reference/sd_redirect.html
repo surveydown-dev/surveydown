@@ -11,7 +11,7 @@ URL. It can be used in both reactive and non-reactive contexts within
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.6</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,7 +59,9 @@ URL. It can be used in both reactive and non-reactive contexts within
 
 <dl><dt id="arg-id">id<a class="anchor" aria-label="anchor" href="#arg-id"></a></dt>
 <dd><p>A character string of a unique id to be used to identify the
-redirect button in the survey body.</p></dd>
+redirect button in the survey body. In reactive contexts, this becomes
+the output ID, while the actual button gets the ID <code>id + "_btn"</code> to
+avoid input/output conflicts.</p></dd>
 
 
 <dt id="arg-url">url<a class="anchor" aria-label="anchor" href="#arg-url"></a></dt>
@@ -89,9 +91,10 @@ tab (<code>TRUE</code>) or in the current tab (<code>FALSE</code>). Default is <
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>In a reactive context, returns a function that when called, renders
-the redirect element. In a non-reactive context, returns the redirect
-element directly.</p>
+    <p>In a reactive context, creates an output with the specified ID that
+can be displayed using <code><a href="sd_output.html">sd_output()</a></code>. The actual button element gets the
+ID <code>id + "_btn"</code> to prevent input/output conflicts. In a non-reactive
+context, returns the redirect element directly.</p>
     </div>
 
     <div class="section level2">
