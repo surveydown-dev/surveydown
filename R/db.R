@@ -214,6 +214,9 @@ sd_db_connect <- function(
   if (file.exists(env_file)) {
     dotenv::load_dot_env(env_file)
   }
+  else {
+    cli::cli_alert_info("No .env file found. Will attempt existing environment variables.")
+  }
 
   # Try to get all required parameters
   params <- list(
