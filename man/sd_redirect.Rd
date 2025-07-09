@@ -15,7 +15,9 @@ sd_redirect(
 }
 \arguments{
 \item{id}{A character string of a unique id to be used to identify the
-redirect button in the survey body.}
+redirect button in the survey body. In reactive contexts, this becomes
+the output ID, while the actual button gets the ID \code{id + "_btn"} to
+avoid input/output conflicts.}
 
 \item{url}{A character string specifying the URL to redirect to.}
 
@@ -33,9 +35,10 @@ occurs.}
 tab (\code{TRUE}) or in the current tab (\code{FALSE}). Default is \code{FALSE}.}
 }
 \value{
-In a reactive context, returns a function that when called, renders
-the redirect element. In a non-reactive context, returns the redirect
-element directly.
+In a reactive context, creates an output with the specified ID that
+can be displayed using \code{sd_output()}. The actual button element gets the
+ID \code{id + "_btn"} to prevent input/output conflicts. In a non-reactive
+context, returns the redirect element directly.
 }
 \description{
 This function creates a UI element that redirects the user to a specified

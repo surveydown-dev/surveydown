@@ -1498,7 +1498,9 @@ sd_close <- function(label = NULL) {
 #' 'shiny' applications.
 #'
 #' @param id A character string of a unique id to be used to identify the
-#'   redirect button in the survey body.
+#'   redirect button in the survey body. In reactive contexts, this becomes
+#'   the output ID, while the actual button gets the ID `id + "_btn"` to
+#'   avoid input/output conflicts.
 #' @param url A character string specifying the URL to redirect to.
 #' @param button A logical value indicating whether to create a button (`TRUE`)
 #'   or a text element (`FALSE`) for the redirect. Default is `TRUE`.
@@ -1510,9 +1512,10 @@ sd_close <- function(label = NULL) {
 #' @param newtab A logical value indicating whether to open the URL in a new
 #'   tab (`TRUE`) or in the current tab (`FALSE`). Default is `FALSE`.
 #'
-#' @return In a reactive context, returns a function that when called, renders
-#' the redirect element. In a non-reactive context, returns the redirect
-#' element directly.
+#' @return In a reactive context, creates an output with the specified ID that
+#' can be displayed using `sd_output()`. The actual button element gets the
+#' ID `id + "_btn"` to prevent input/output conflicts. In a non-reactive
+#' context, returns the redirect element directly.
 #'
 #' @examples
 #' if (interactive()) {
@@ -1583,7 +1586,9 @@ sd_redirect <- function(
     shiny::isolate({
       output <- shiny::getDefaultReactiveDomain()$output
       output[[id]] <- shiny::renderUI({
-        create_redirect_element(id, url, button, label, delay, newtab)
+        # Use a different ID for the actual input element to avoid conflicts
+        button_id <- paste0(id, "_btn")
+        create_redirect_element(button_id, url, button, label, delay, newtab)
       })
     })
   } else {
