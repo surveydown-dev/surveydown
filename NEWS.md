@@ -3,6 +3,7 @@
 # surveydown 0.12.7
 
 - Bug fix: The `sd_redirect()` function used to trigger Shiny Client error of duplicated IDs for input and output. Now it's fixed by adding a unique ID to the button.
+- Allow for environment variables to come from system (if available), PR #212
 
 # surveydown 0.12.6
 
