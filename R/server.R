@@ -207,13 +207,13 @@ sd_server <- function(
         # Capture browser information
         user_agent <- session$request$HTTP_USER_AGENT
         if (!is.null(user_agent)) {
-            parsed_ua <- uaparserjs::ua_parse(user_agent)
+            parsed_ua <- parse_user_agent(user_agent)
             browser_info <- paste0(
-                parsed_ua$ua.family,
+                parsed_ua$browser,
                 " v",
-                parsed_ua$ua.major,
+                parsed_ua$version,
                 ", ",
-                parsed_ua$os.family
+                parsed_ua$os
             )
             session$userData$stored_values[["browser"]] <- browser_info
         }

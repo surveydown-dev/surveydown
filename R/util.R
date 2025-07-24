@@ -1166,6 +1166,63 @@ try_db_connection <- function(params, gss_mode) {
   do.call(pool::dbPool, conn_args)
 }
 
+# Parse user agent string to extract browser information
+parse_user_agent <- function(user_agent) {
+  if (is.null(user_agent) || user_agent == "") {
+    return(list(browser = "Unknown", version = "Unknown", os = "Unknown"))
+  }
+  
+  # Browser detection patterns (order matters - more specific first)
+  browser_patterns <- list(
+    "Electron" = "Electron/([0-9]+)",
+    "Edge" = "Edge?/([0-9]+)", 
+    "Chrome" = "Chrome/([0-9]+)",
+    "Firefox" = "Firefox/([0-9]+)",
+    "Safari" = "Version/([0-9]+).*Safari",
+    "Opera" = "Opera/([0-9]+)|OPR/([0-9]+)",
+    "Internet Explorer" = "MSIE ([0-9]+)|Trident.*rv:([0-9]+)"
+  )
+  
+  # OS detection patterns (more comprehensive and matching uaparserjs format)
+  os_patterns <- list(
+    "Mac OS X" = "Mac OS X ([0-9._]+)",
+    "iOS" = "iPhone OS ([0-9._]+)|iOS ([0-9._]+)",
+    "Windows" = "Windows NT ([0-9.]+)",
+    "Android" = "Android ([0-9.]+)",
+    "Linux" = "Linux",
+    "Ubuntu" = "Ubuntu"
+  )
+  
+  # Extract browser and version
+  browser <- "Unknown"
+  version <- "Unknown"
+  for (name in names(browser_patterns)) {
+    pattern <- browser_patterns[[name]]
+    match <- regexpr(pattern, user_agent, perl = TRUE)
+    if (match > 0) {
+      browser <- name
+      version_match <- regmatches(user_agent, match)
+      # Extract the first number found in the match
+      version_num <- regmatches(version_match, regexpr("[0-9]+", version_match))
+      if (length(version_num) > 0) {
+        version <- version_num[1]
+      }
+      break
+    }
+  }
+  
+  # Extract OS
+  os <- "Unknown"
+  for (name in names(os_patterns)) {
+    if (grepl(os_patterns[[name]], user_agent, ignore.case = TRUE)) {
+      os <- name
+      break
+    }
+  }
+  
+  return(list(browser = browser, version = version, os = os))
+}
+
 # Replaces usethis::ui_yeah, inspired by internal yesno function in devtools
 yesno <- function(msg) {
   # Define fun options for yes/no

@@ -49,7 +49,6 @@ Imports:
     shiny,
     shinyjs,
     shinyWidgets,
-    uaparserjs,
     utils,
     xml2,
     yaml
