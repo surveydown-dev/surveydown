@@ -707,7 +707,9 @@ check_ids <- function(page_ids, question_ids) {
     "time_start",
     "time_end",
     "exit_survey_rating",
-    "current_page"
+    "current_page",
+    "browser",
+    "ip_address"
   )
   used_restricted_ids <- intersect(restricted_ids, all_ids)
   if (length(used_restricted_ids) > 0) {
