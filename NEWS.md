@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.12.8
+
+- New argument for `sd_server()`: `capture_metadata` automatically captures and stores browser information and IP address. Defaults to `TRUE`.
+
 # surveydown 0.12.7
 
 - Bug fix: The `sd_redirect()` function used to trigger Shiny Client error of duplicated IDs for input and output. Now it's fixed by adding a unique ID to the button.

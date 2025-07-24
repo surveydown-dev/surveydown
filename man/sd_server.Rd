@@ -14,7 +14,8 @@ sd_server(
   language = "en",
   use_cookies = TRUE,
   highlight_unanswered = TRUE,
-  highlight_color = "gray"
+  highlight_color = "gray",
+  capture_metadata = TRUE
 )
 }
 \arguments{
@@ -52,6 +53,11 @@ of all unanswered questions on page display. Defaults to \code{TRUE}.}
 \item{highlight_color}{Character string. Color for highlighting unanswered
 questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
 Defaults to "gray".}
+
+\item{capture_metadata}{Logical. If \code{TRUE}, automatically captures and stores
+browser information (browser name, version, and OS), IP address, and
+screen resolution.
+Defaults to \code{TRUE}.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
@@ -136,7 +142,8 @@ if (interactive()) {
       language = "en",
       use_cookies = TRUE,
       highlight_unanswered = TRUE,
-      highlight_color = "gray"
+      highlight_color = "gray",
+      capture_metadata = TRUE
     )
   }
 

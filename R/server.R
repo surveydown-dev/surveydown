@@ -31,6 +31,10 @@
 #' @param highlight_color Character string. Color for highlighting unanswered
 #'   questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
 #'   Defaults to "gray".
+#' @param capture_metadata Logical. If `TRUE`, automatically captures and stores
+#'   browser information (browser name, version, and OS), IP address, and
+#'   screen resolution.
+#'   Defaults to `TRUE`.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -101,7 +105,8 @@
 #'       language = "en",
 #'       use_cookies = TRUE,
 #'       highlight_unanswered = TRUE,
-#'       highlight_color = "gray"
+#'       highlight_color = "gray",
+#'       capture_metadata = TRUE
 #'     )
 #'   }
 #'
@@ -117,25 +122,25 @@
 #'
 #' @export
 sd_server <- function(
-    db                     = NULL,
-    required_questions     = NULL,
+    db = NULL,
+    required_questions = NULL,
     all_questions_required = FALSE,
-    start_page             = NULL,
-    auto_scroll            = FALSE,
-    rate_survey            = FALSE,
-    language               = "en",
-    use_cookies            = TRUE,
-    highlight_unanswered   = TRUE,
-    highlight_color        = "gray"
+    start_page = NULL,
+    auto_scroll = FALSE,
+    rate_survey = FALSE,
+    language = "en",
+    use_cookies = TRUE,
+    highlight_unanswered = TRUE,
+    highlight_color = "gray",
+    capture_metadata = TRUE
 ) {
-
     # 1. Initialize local variables ----
 
     # Get input, output, and session from the parent environment
     parent_env <- parent.frame()
-    input      <- get("input", envir = parent_env)
-    output     <- get("output", envir = parent_env)
-    session    <- get("session", envir = parent_env)
+    input <- get("input", envir = parent_env)
+    output <- get("output", envir = parent_env)
+    session <- get("session", envir = parent_env)
 
     session$userData$db <- db
 
@@ -163,19 +168,19 @@ sd_server <- function(
     )
 
     # Create local objects from config file
-    pages              <- config$pages
-    page_ids           <- config$page_ids
-    question_ids       <- config$question_ids
+    pages <- config$pages
+    page_ids <- config$page_ids
+    question_ids <- config$question_ids
     question_structure <- config$question_structure
-    start_page         <- config$start_page
-    question_required  <- config$question_required
-    page_id_to_index   <- stats::setNames(seq_along(page_ids), page_ids)
+    start_page <- config$start_page
+    question_required <- config$question_required
+    page_id_to_index <- stats::setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs
-    page_ts_ids      <- paste0("time_p_", page_ids)
-    question_ts_ids  <- paste0("time_q_", question_ids)
+    page_ts_ids <- paste0("time_p_", page_ids)
+    question_ts_ids <- paste0("time_q_", question_ids)
     start_page_ts_id <- page_ts_ids[which(page_ids == start_page)]
-    all_ids          <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
+    all_ids <- c('time_end', question_ids, question_ts_ids, page_ts_ids)
 
     # Create current_page_id reactive value
     current_page_id <- shiny::reactiveVal(start_page)
@@ -192,13 +197,56 @@ sd_server <- function(
         }
     }
 
+    # Capture metadata (browser, IP address, and screen resolution) if enabled
+    if (capture_metadata) {
+        # Initialize stored_values if needed
+        if (is.null(session$userData$stored_values)) {
+            session$userData$stored_values <- list()
+        }
+
+        # Capture browser information
+        user_agent <- session$request$HTTP_USER_AGENT
+        if (!is.null(user_agent)) {
+            parsed_ua <- uaparserjs::ua_parse(user_agent)
+            browser_info <- paste0(
+                parsed_ua$ua.family,
+                " v",
+                parsed_ua$ua.major,
+                ", ",
+                parsed_ua$os.family
+            )
+            session$userData$stored_values[["browser"]] <- browser_info
+        }
+
+        # Capture IP address
+        ip_address <- session$request$REMOTE_ADDR
+        if (!is.null(ip_address)) {
+            session$userData$stored_values[["ip_address"]] <- ip_address
+        }
+
+        # Screen resolution will be requested after all_data is initialized
+    }
+
     # Initialize session handling and session_id
     session_id <- session$token
-    session_id <- handle_sessions(session_id, db, session, input, time_start, start_page,
-                                  current_page_id, question_ids, question_ts_ids,
-                                  update_progress_bar, use_cookies)
+    session_id <- handle_sessions(
+        session_id,
+        db,
+        session,
+        input,
+        time_start,
+        start_page,
+        current_page_id,
+        question_ids,
+        question_ts_ids,
+        update_progress_bar,
+        use_cookies
+    )
     # Auto scroll
-    session$sendCustomMessage("updateSurveydownConfig", list(autoScrollEnabled = auto_scroll))
+    session$sendCustomMessage(
+        "updateSurveydownConfig",
+        list(autoScrollEnabled = auto_scroll)
+    )
 
     # Check if db is NULL (either blank or specified with ignore = TRUE)
     ignore_mode <- is.null(db)
@@ -208,8 +256,13 @@ sd_server <- function(
 
     # Keep-alive observer - this will be triggered every 60 seconds
     shiny::observeEvent(input$keepAlive, {
-        cat("Session keep-alive at", format(Sys.time(), "%m/%d/%Y %H:%M:%S"), "\n")
+        cat(
+            "Session keep-alive at",
+            format(Sys.time(), "%m/%d/%Y %H:%M:%S"),
+            "\n"
+        )
     })
+
 
     # 2. show_if conditions ----
 
@@ -234,7 +287,7 @@ sd_server <- function(
     if (length(question_conditions) > 0) {
         # Create a modified show_if object with only question conditions
         question_show_if <- list(conditions = question_conditions)
-        
+
         shiny::observe({
             shiny::reactiveValuesToList(input)
             show_if_results <- set_show_if_conditions(question_show_if)()
@@ -269,7 +322,9 @@ sd_server <- function(
             fields <- valid_fields
         } else {
             # On initial load or restoration, use all non-empty fields
-            fields <- names(data_list)[sapply(data_list, function(x) !is.null(x) && x != "")]
+            fields <- names(data_list)[sapply(data_list, function(x) {
+                !is.null(x) && x != ""
+            })]
         }
 
         if (time_last) {
@@ -280,64 +335,93 @@ sd_server <- function(
         # Local data handling
         if (ignore_mode) {
             if (file.access('.', 2) == 0) {
-                tryCatch({
-                    # Read existing data
-                    existing_data <- if (file.exists("preview_data.csv")) {
-                        utils::read.csv("preview_data.csv", stringsAsFactors = FALSE)
-                    } else {
-                        data.frame()
-                    }
-
-                    # Convert current data_list to data frame
-                    new_data <- as.data.frame(data_list, stringsAsFactors = FALSE)
-
-                    # If there is existing data, update or append based on session_id
-                    if (nrow(existing_data) > 0) {
-                        # Find if this session_id already exists
-                        session_idx <- which(existing_data$session_id == data_list$session_id)
-
-                        if (length(session_idx) > 0) {
-                            # Update existing session data
-                            for (field in fields) {
-                                if (field %in% names(existing_data)) {
-                                    existing_data[session_idx, field] <- data_list[[field]]
-                                } else {
-                                    # Add new column with NAs, then update the specific row
-                                    existing_data[[field]] <- NA
-                                    existing_data[session_idx, field] <- data_list[[field]]
-                                }
-                            }
-                            updated_data <- existing_data
+                tryCatch(
+                    {
+                        # Read existing data
+                        existing_data <- if (file.exists("preview_data.csv")) {
+                            utils::read.csv(
+                                "preview_data.csv",
+                                stringsAsFactors = FALSE
+                            )
                         } else {
-                            # Ensure all columns from existing_data are in new_data
-                            missing_cols <- setdiff(names(existing_data), names(new_data))
-                            for (col in missing_cols) {
-                                new_data[[col]] <- NA
-                            }
-                            # Ensure all columns from new_data are in existing_data
-                            missing_cols <- setdiff(names(new_data), names(existing_data))
-                            for (col in missing_cols) {
-                                existing_data[[col]] <- NA
-                            }
-                            # Now both data frames should have the same columns
-                            updated_data <- rbind(existing_data, new_data[names(existing_data)])
+                            data.frame()
                         }
-                    } else {
-                        # If no existing data, use new data
-                        updated_data <- new_data
-                    }
 
-                    # Write updated data back to file
-                    utils::write.csv(
-                        updated_data,
-                        "preview_data.csv",
-                        row.names = FALSE,
-                        na = ""
-                    )
-                }, error = function(e) {
-                    warning("Unable to write to preview_data.csv: ", e$message)
-                    message("Error details: ", e$message)
-                })
+                        # Convert current data_list to data frame
+                        new_data <- as.data.frame(
+                            data_list,
+                            stringsAsFactors = FALSE
+                        )
+
+                        # If there is existing data, update or append based on session_id
+                        if (nrow(existing_data) > 0) {
+                            # Find if this session_id already exists
+                            session_idx <- which(
+                                existing_data$session_id == data_list$session_id
+                            )
+
+                            if (length(session_idx) > 0) {
+                                # Update existing session data
+                                for (field in fields) {
+                                    if (field %in% names(existing_data)) {
+                                        existing_data[
+                                            session_idx,
+                                            field
+                                        ] <- data_list[[field]]
+                                    } else {
+                                        # Add new column with NAs, then update the specific row
+                                        existing_data[[field]] <- NA
+                                        existing_data[
+                                            session_idx,
+                                            field
+                                        ] <- data_list[[field]]
+                                    }
+                                }
+                                updated_data <- existing_data
+                            } else {
+                                # Ensure all columns from existing_data are in new_data
+                                missing_cols <- setdiff(
+                                    names(existing_data),
+                                    names(new_data)
+                                )
+                                for (col in missing_cols) {
+                                    new_data[[col]] <- NA
+                                }
+                                # Ensure all columns from new_data are in existing_data
+                                missing_cols <- setdiff(
+                                    names(new_data),
+                                    names(existing_data)
+                                )
+                                for (col in missing_cols) {
+                                    existing_data[[col]] <- NA
+                                }
+                                # Now both data frames should have the same columns
+                                updated_data <- rbind(
+                                    existing_data,
+                                    new_data[names(existing_data)]
+                                )
+                            }
+                        } else {
+                            # If no existing data, use new data
+                            updated_data <- new_data
+                        }
+
+                        # Write updated data back to file
+                        utils::write.csv(
+                            updated_data,
+                            "preview_data.csv",
+                            row.names = FALSE,
+                            na = ""
+                        )
+                    },
+                    error = function(e) {
+                        warning(
+                            "Unable to write to preview_data.csv: ",
+                            e$message
+                        )
+                        message("Error details: ", e$message)
+                    }
+                )
             } else {
                 message("Running in a non-writable environment.")
             }
@@ -370,7 +454,11 @@ sd_server <- function(
 
     # Now handle session and get proper initial data
     initial_data <- get_initial_data(
-        session, session_id, time_start, all_ids, start_page_ts_id
+        session,
+        session_id,
+        time_start,
+        all_ids,
+        start_page_ts_id
     )
     all_data <- do.call(shiny::reactiveValues, initial_data)
 
@@ -381,7 +469,13 @@ sd_server <- function(
 
         # Ensure all elements are of length 1, use "" for empty or NULL values
         data <- lapply(data, function(x) {
-            if (length(x) == 0 || is.null(x) || (is.na(x) && !is.character(x))) "" else as.character(x)[1]
+            if (
+                length(x) == 0 || is.null(x) || (is.na(x) && !is.character(x))
+            ) {
+                ""
+            } else {
+                as.character(x)[1]
+            }
         })
 
         data[names(data) != ""]
@@ -398,149 +492,168 @@ sd_server <- function(
     shiny::isolate({
         update_data()
     })
+    
 
     # 5. Main question observers ----
 
     lapply(seq_along(question_ids), function(index) {
         local({
-            local_id    <- question_ids[index]
+            local_id <- question_ids[index]
             local_ts_id <- question_ts_ids[index]
 
-            shiny::observeEvent(input[[local_id]], {
-                # Tag event time and update value
-                timestamp            <- get_utc_timestamp()
-                value                <- input[[local_id]]
-                formatted_value      <- format_question_value(value)
-                all_data[[local_id]] <- formatted_value
-                
+            shiny::observeEvent(
+                input[[local_id]],
+                {
+                    # Tag event time and update value
+                    timestamp <- get_utc_timestamp()
+                    value <- input[[local_id]]
+                    formatted_value <- format_question_value(value)
+                    all_data[[local_id]] <- formatted_value
 
-                # Update timestamp and progress if interacted
-                changed <- local_id
-                if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                    all_data[[local_ts_id]] <- timestamp
-                    changed <- c(changed, local_ts_id)
-                    update_progress_bar(index)
-                }
+                    # Update timestamp and progress if interacted
+                    changed <- local_id
+                    if (!is.null(input[[paste0(local_id, "_interacted")]])) {
+                        all_data[[local_ts_id]] <- timestamp
+                        changed <- c(changed, local_ts_id)
+                        update_progress_bar(index)
+                    }
 
-                # Update tracker of which fields changed
-                changed_fields(c(changed_fields(), changed))
+                    # Update tracker of which fields changed
+                    changed_fields(c(changed_fields(), changed))
 
-                # Get question labels and values from question structure
-                question_info  <- question_structure[[local_id]]
-                label_question <- question_info$label
-                options        <- question_info$options
-                label_options  <- names(options)
+                    # Get question labels and values from question structure
+                    question_info <- question_structure[[local_id]]
+                    label_question <- question_info$label
+                    options <- question_info$options
+                    label_options <- names(options)
 
-                # For the selected value(s), get the corresponding label(s)
-                if (length(options) == length(label_options)) {
-                    names(options) <- label_options
-                }
-                label_option <- if (is.null(value) || length(value) == 0) {
-                    ""
-                } else {
-                    options[options %in% value] |>
-                        names() |>
-                        paste(collapse = ", ")
-                }
+                    # For the selected value(s), get the corresponding label(s)
+                    if (length(options) == length(label_options)) {
+                        names(options) <- label_options
+                    }
+                    label_option <- if (is.null(value) || length(value) == 0) {
+                        ""
+                    } else {
+                        options[options %in% value] |>
+                            names() |>
+                            paste(collapse = ", ")
+                    }
 
-                # Store the values and labels in output
-                output[[paste0(local_id, "_value")]] <- shiny::renderText({
-                    formatted_value
-                })
-                output[[paste0(local_id, "_label_option")]] <- shiny::renderText({
-                    label_option
-                })
-                output[[paste0(local_id, "_label_question")]] <- shiny::renderText({
-                    label_question
-                })
-            },
-            ignoreNULL = FALSE,
-            ignoreInit = TRUE)
+                    # Store the values and labels in output
+                    output[[paste0(local_id, "_value")]] <- shiny::renderText({
+                        formatted_value
+                    })
+                    output[[paste0(
+                        local_id,
+                        "_label_option"
+                    )]] <- shiny::renderText({
+                        label_option
+                    })
+                    output[[paste0(
+                        local_id,
+                        "_label_question"
+                    )]] <- shiny::renderText({
+                        label_question
+                    })
+                },
+                ignoreNULL = FALSE,
+                ignoreInit = TRUE
+            )
         })
     })
 
     # Manual range observers for range sliders auto-save
     lapply(seq_along(question_ids), function(index) {
         local({
-            local_id    <- question_ids[index]
+            local_id <- question_ids[index]
             local_ts_id <- question_ts_ids[index]
-            manual_id   <- paste0(local_id, "_manual_range")
+            manual_id <- paste0(local_id, "_manual_range")
 
-            shiny::observeEvent(input[[manual_id]], {
-                
-                # Tag event time and update value  
-                timestamp            <- get_utc_timestamp()
-                value                <- input[[manual_id]]
-                formatted_value      <- format_question_value(value)
-                all_data[[local_id]] <- formatted_value
+            shiny::observeEvent(
+                input[[manual_id]],
+                {
+                    # Tag event time and update value
+                    timestamp <- get_utc_timestamp()
+                    value <- input[[manual_id]]
+                    formatted_value <- format_question_value(value)
+                    all_data[[local_id]] <- formatted_value
 
-                # Always update timestamp for manual range (auto-save scenario)
-                changed <- local_id
-                all_data[[local_ts_id]] <- timestamp
-                changed <- c(changed, local_ts_id)
-                
-                # Update progress if interacted
-                if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                    update_progress_bar(index)
-                }
+                    # Always update timestamp for manual range (auto-save scenario)
+                    changed <- local_id
+                    all_data[[local_ts_id]] <- timestamp
+                    changed <- c(changed, local_ts_id)
 
-                # Update tracker of which fields changed
-                changed_fields(c(changed_fields(), changed))
+                    # Update progress if interacted
+                    if (!is.null(input[[paste0(local_id, "_interacted")]])) {
+                        update_progress_bar(index)
+                    }
 
-                # Get question labels and values from question structure
-                question_info  <- question_structure[[local_id]]
-                label_question <- question_info$label
-                options        <- question_info$options
-                label_options  <- names(options)
+                    # Update tracker of which fields changed
+                    changed_fields(c(changed_fields(), changed))
 
-                # For the selected value(s), get the corresponding label(s)
-                if (length(options) == length(label_options)) {
-                    names(options) <- label_options
-                }
-                label_option <- if (is.null(value) || length(value) == 0) {
-                    ""
-                } else {
-                    options[options %in% value] |>
-                        names() |>
-                        paste(collapse = ", ")
-                }
+                    # Get question labels and values from question structure
+                    question_info <- question_structure[[local_id]]
+                    label_question <- question_info$label
+                    options <- question_info$options
+                    label_options <- names(options)
 
-                # Store the values and labels in output
-                output[[paste0(local_id, "_value")]] <- shiny::renderText({
-                    formatted_value
-                })
-                output[[paste0(local_id, "_label_option")]] <- shiny::renderText({
-                    label_option
-                })
-                output[[paste0(local_id, "_label_question")]] <- shiny::renderText({
-                    label_question
-                })
-            },
-            ignoreNULL = FALSE,
-            ignoreInit = TRUE)
+                    # For the selected value(s), get the corresponding label(s)
+                    if (length(options) == length(label_options)) {
+                        names(options) <- label_options
+                    }
+                    label_option <- if (is.null(value) || length(value) == 0) {
+                        ""
+                    } else {
+                        options[options %in% value] |>
+                            names() |>
+                            paste(collapse = ", ")
+                    }
+
+                    # Store the values and labels in output
+                    output[[paste0(local_id, "_value")]] <- shiny::renderText({
+                        formatted_value
+                    })
+                    output[[paste0(
+                        local_id,
+                        "_label_option"
+                    )]] <- shiny::renderText({
+                        label_option
+                    })
+                    output[[paste0(
+                        local_id,
+                        "_label_question"
+                    )]] <- shiny::renderText({
+                        label_question
+                    })
+                },
+                ignoreNULL = FALSE,
+                ignoreInit = TRUE
+            )
         })
     })
 
     # Auto-save timestamp observers
     lapply(seq_along(question_ids), function(index) {
         local({
-            local_id    <- question_ids[index]
+            local_id <- question_ids[index]
             local_ts_id <- question_ts_ids[index]
             autosave_ts_id <- paste0(local_id, "_autosave_timestamp")
 
-            shiny::observeEvent(input[[autosave_ts_id]], {
-                # Force timestamp update for auto-saved questions
-                if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                    timestamp <- get_utc_timestamp()
-                    all_data[[local_ts_id]] <- timestamp
-                    changed_fields(c(changed_fields(), local_ts_id))
-                }
-            },
-            ignoreNULL = TRUE,
-            ignoreInit = TRUE)
+            shiny::observeEvent(
+                input[[autosave_ts_id]],
+                {
+                    # Force timestamp update for auto-saved questions
+                    if (!is.null(input[[paste0(local_id, "_interacted")]])) {
+                        timestamp <- get_utc_timestamp()
+                        all_data[[local_ts_id]] <- timestamp
+                        changed_fields(c(changed_fields(), local_ts_id))
+                    }
+                },
+                ignoreNULL = TRUE,
+                ignoreInit = TRUE
+            )
         })
     })
-
 
     # Observer to update cookies with answers
     shiny::observe({
@@ -577,14 +690,16 @@ sd_server <- function(
         }
 
         # Send to client to update cookie
-        if (length(answers) > 0 && !is.null(db)) {  # Only update cookies in db mode
+        if (length(answers) > 0 && !is.null(db)) {
+            # Only update cookies in db mode
             page_data <- list(
                 answers = answers,
                 last_timestamp = last_timestamp
             )
-            session$sendCustomMessage("setAnswerData",
-                                      list(pageId = page_id,
-                                           pageData = page_data))
+            session$sendCustomMessage(
+                "setAnswerData",
+                list(pageId = page_id, pageData = page_data)
+            )
         }
     })
 
@@ -612,35 +727,46 @@ sd_server <- function(
             )
         )
     })
-    
+
     # Observer to trigger gray highlighting for unanswered questions when page changes
     shiny::observe({
         if (highlight_unanswered) {
             current_page <- get_current_page()
             if (!is.null(current_page)) {
                 # Use JavaScript to delay highlighting until after DOM is ready and widgets initialized
-                session$sendCustomMessage("delayedHighlightCheck", list(
-                    delay = 100,  # 0.1 second delay
-                    page_id = current_page$id
-                ))
+                session$sendCustomMessage(
+                    "delayedHighlightCheck",
+                    list(
+                        delay = 100, # 0.1 second delay
+                        page_id = current_page$id
+                    )
+                )
             }
         }
     })
-    
+
     # Observer for delayed highlighting check triggered by JavaScript
     shiny::observeEvent(input$delayed_highlight_trigger, {
         if (highlight_unanswered) {
             current_page <- get_current_page()
             if (!is.null(current_page)) {
                 unanswered_all <- get_unanswered_all(current_page)
-                
+
                 # Send highlighting for all unanswered questions with specified color
                 if (length(unanswered_all) > 0) {
-                    session$sendCustomMessage("highlightUnansweredQuestions", 
-                                            list(questions = unanswered_all, color = highlight_color))
+                    session$sendCustomMessage(
+                        "highlightUnansweredQuestions",
+                        list(
+                            questions = unanswered_all,
+                            color = highlight_color
+                        )
+                    )
                 } else {
                     # Clear unanswered highlighting if no unanswered questions
-                    session$sendCustomMessage("clearUnansweredHighlights", list())
+                    session$sendCustomMessage(
+                        "clearUnansweredHighlights",
+                        list()
+                    )
                 }
             }
         }
@@ -651,29 +777,43 @@ sd_server <- function(
     check_required <- function(page) {
         required_questions <- page$required_questions
         is_visible <- question_visibility()[required_questions]
-        result <- all(vapply(required_questions, function(q) {
-            if (!is_visible[q]) return(TRUE)
-            if (question_structure[[q]]$is_matrix) {
-                all(sapply(question_structure[[q]]$row, function(r) check_answer(paste0(q, "_", r), input, question_structure)))
-            } else {
-                check_answer(q, input, question_structure)
-            }
-        }, logical(1)))
+        result <- all(vapply(
+            required_questions,
+            function(q) {
+                if (!is_visible[q]) {
+                    return(TRUE)
+                }
+                if (question_structure[[q]]$is_matrix) {
+                    all(sapply(question_structure[[q]]$row, function(r) {
+                        check_answer(
+                            paste0(q, "_", r),
+                            input,
+                            question_structure
+                        )
+                    }))
+                } else {
+                    check_answer(q, input, question_structure)
+                }
+            },
+            logical(1)
+        ))
         return(result)
     }
-    
+
     get_unanswered_required <- function(page) {
         required_questions <- page$required_questions
         if (is.null(required_questions) || length(required_questions) == 0) {
             return(character(0))
         }
-        
+
         is_visible <- question_visibility()[required_questions]
         unanswered <- character(0)
-        
+
         for (q in required_questions) {
-            if (!is_visible[q]) next
-            
+            if (!is_visible[q]) {
+                next
+            }
+
             if (question_structure[[q]]$is_matrix) {
                 # For matrix questions, check each subquestion individually
                 for (r in question_structure[[q]]$row) {
@@ -688,47 +828,54 @@ sd_server <- function(
                 }
             }
         }
-        
+
         return(unanswered)
     }
-    
+
     get_unanswered_all <- function(page) {
         page_questions <- page$questions
         if (is.null(page_questions) || length(page_questions) == 0) {
             return(character(0))
         }
-        
+
         is_visible <- question_visibility()[page_questions]
         unanswered <- character(0)
-        
+
         for (q in page_questions) {
-            if (!is_visible[q]) next
-            
+            if (!is_visible[q]) {
+                next
+            }
+
             if (question_structure[[q]]$is_matrix) {
                 # For matrix questions, check each subquestion individually
                 for (r in question_structure[[q]]$row) {
                     subq_id <- paste0(q, "_", r)
-                    if (!check_answer_for_highlighting(subq_id, input, question_structure)) {
+                    if (
+                        !check_answer_for_highlighting(
+                            subq_id,
+                            input,
+                            question_structure
+                        )
+                    ) {
                         unanswered <- c(unanswered, subq_id)
                     }
                 }
             } else {
-                if (!check_answer_for_highlighting(q, input, question_structure)) {
+                if (
+                    !check_answer_for_highlighting(q, input, question_structure)
+                ) {
                     unanswered <- c(unanswered, q)
                 }
             }
         }
-        
+
         return(unanswered)
     }
-
 
     # Determine which page is next, then update current_page_id() to it
     shiny::observe({
         lapply(pages, function(page) {
             shiny::observeEvent(input[[page$next_button_id]], {
-                
-                
                 shiny::isolate({
                     # Grab the time stamp of the page turn
                     timestamp <- get_utc_timestamp()
@@ -736,68 +883,89 @@ sd_server <- function(
                     # Figure out page ids
                     current_page_id_val <- page$id
                     next_page_id <- get_default_next_page(
-                        page, page_ids, page_id_to_index
-                    )
-                    next_page_id <- handle_skip_logic(
-                        input, skip_forward,
-                        current_page_id_val, next_page_id,
+                        page,
+                        page_ids,
                         page_id_to_index
                     )
-                    
+                    next_page_id <- handle_skip_logic(
+                        input,
+                        skip_forward,
+                        current_page_id_val,
+                        next_page_id,
+                        page_id_to_index
+                    )
+
                     # Handle page conditions - check if target page should be shown
                     if (!is.null(next_page_id) && length(page_conditions) > 0) {
                         # First check if the target page (from skip_forward or default) should be shown
-                        if (!should_show_page(next_page_id, page_conditions, session)) {
-                            # If target page shouldn't be shown, find next eligible page from that point
-                            eligible_page <- find_next_eligible_page_from_target(
-                                next_page_id, 
-                                page_ids, 
-                                page_conditions, 
+                        if (
+                            !should_show_page(
+                                next_page_id,
+                                page_conditions,
                                 session
                             )
-                            
+                        ) {
+                            # If target page shouldn't be shown, find next eligible page from that point
+                            eligible_page <- find_next_eligible_page_from_target(
+                                next_page_id,
+                                page_ids,
+                                page_conditions,
+                                session
+                            )
+
                             if (!is.null(eligible_page)) {
                                 next_page_id <- eligible_page
                             }
                         }
                     }
-                    
+
                     # Save current data before validation
                     update_data()
-                    
+
                     if (!is.null(next_page_id) && check_required(page)) {
                         # Clear any existing highlights before navigating
-                        session$sendCustomMessage("clearRequiredHighlights", list())
-                        
+                        session$sendCustomMessage(
+                            "clearRequiredHighlights",
+                            list()
+                        )
+
                         # Set the current page as the next page
                         current_page_id(next_page_id)
 
                         # Update the page time stamp
-                        next_ts_id <- page_ts_ids[which(page_ids == next_page_id)]
+                        next_ts_id <- page_ts_ids[which(
+                            page_ids == next_page_id
+                        )]
                         all_data[[next_ts_id]] <- timestamp
 
                         # Save the current page to all_data
                         all_data[["current_page"]] <- next_page_id
 
                         # Update tracker of which fields changed
-                        changed_fields(c(changed_fields(), next_ts_id, "current_page"))
+                        changed_fields(c(
+                            changed_fields(),
+                            next_ts_id,
+                            "current_page"
+                        ))
 
                         # Save navigation data to database
                         update_data()
                     } else if (!is.null(next_page_id)) {
                         # Get list of unanswered required questions
                         unanswered_questions <- get_unanswered_required(page)
-                        
+
                         # Always send as character vector, even if empty
                         # This ensures consistent JSON formatting
                         if (length(unanswered_questions) == 0) {
                             unanswered_questions <- character(0)
                         }
-                        
+
                         # Send list to JavaScript for highlighting
-                        session$sendCustomMessage("highlightRequiredQuestions", 
-                                                  list(questions = unanswered_questions))
-                        
+                        session$sendCustomMessage(
+                            "highlightRequiredQuestions",
+                            list(questions = unanswered_questions)
+                        )
+
                         # Show warning alert
                         shinyWidgets::sendSweetAlert(
                             session = session,
@@ -838,23 +1006,25 @@ sd_server <- function(
     shiny::observeEvent(input$show_exit_modal, {
         # Get current page for required question validation
         page <- get_current_page()
-        
+
         # Save current data before validation
         update_data()
-        
+
         # Check required questions before allowing exit
         if (check_required(page)) {
             # Clear any existing highlights before proceeding
             session$sendCustomMessage("clearRequiredHighlights", list())
-            
+
             # Proceed with exit modal
             if (rate_survey) {
                 shiny::showModal(shiny::modalDialog(
                     title = translations[["rating_title"]],
                     sd_question(
-                        type   = 'mc_buttons',
-                        id     = 'survey_rating',
-                        label  = glue::glue("{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"),
+                        type = 'mc_buttons',
+                        id = 'survey_rating',
+                        label = glue::glue(
+                            "{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"
+                        ),
                         option = c(
                             "1" = "1",
                             "2" = "2",
@@ -865,7 +1035,10 @@ sd_server <- function(
                     ),
                     footer = shiny::tagList(
                         shiny::modalButton(translations[["cancel"]]),
-                        shiny::actionButton("submit_rating", translations[["submit_exit"]])
+                        shiny::actionButton(
+                            "submit_rating",
+                            translations[["submit_exit"]]
+                        )
                     )
                 ))
             } else {
@@ -874,7 +1047,10 @@ sd_server <- function(
                     translations[["sure_exit"]],
                     footer = shiny::tagList(
                         shiny::modalButton(translations[["cancel"]]),
-                        shiny::actionButton("confirm_exit", translations[["exit"]])
+                        shiny::actionButton(
+                            "confirm_exit",
+                            translations[["exit"]]
+                        )
                     )
                 ))
             }
@@ -882,17 +1058,19 @@ sd_server <- function(
             # Required questions validation failed - same logic as Next button
             # Get list of unanswered required questions
             unanswered_questions <- get_unanswered_required(page)
-            
+
             # Always send as character vector, even if empty
             # This ensures consistent JSON formatting
             if (length(unanswered_questions) == 0) {
                 unanswered_questions <- character(0)
             }
-            
+
             # Send list to JavaScript for highlighting
-            session$sendCustomMessage("highlightRequiredQuestions", 
-                                      list(questions = unanswered_questions))
-            
+            session$sendCustomMessage(
+                "highlightRequiredQuestions",
+                list(questions = unanswered_questions)
+            )
+
             # Show warning alert
             shinyWidgets::sendSweetAlert(
                 session = session,
@@ -994,35 +1172,42 @@ sd_skip_forward <- function(...) {
 
     # Process each condition
     processed_conditions <- lapply(conditions, function(rule) {
-        tryCatch({
-            # Store the original condition for use with function calls
-            rule$original_condition <- rule$condition
+        tryCatch(
+            {
+                # Store the original condition for use with function calls
+                rule$original_condition <- rule$condition
 
-            # Extract any reactive expressions that might be called
-            # We're storing the environment for potential evaluation later
-            rule$calling_env <- calling_env
+                # Extract any reactive expressions that might be called
+                # We're storing the environment for potential evaluation later
+                rule$calling_env <- calling_env
 
-            # # For debugging
-            # cat("Captured condition: ", deparse(rule$condition), "\n")
+                # # For debugging
+                # cat("Captured condition: ", deparse(rule$condition), "\n")
 
-            return(rule)
-        }, error = function(e) {
-            warning("Error processing condition: ", e$message)
-            return(rule)
-        })
+                return(rule)
+            },
+            error = function(e) {
+                warning("Error processing condition: ", e$message)
+                return(rule)
+            }
+        )
     })
 
     # Store in userData
     shiny::isolate({
         session <- shiny::getDefaultReactiveDomain()
         if (is.null(session)) {
-            stop("sd_skip_forward must be called within a Shiny reactive context")
+            stop(
+                "sd_skip_forward must be called within a Shiny reactive context"
+            )
         }
         if (is.null(session$userData$skip_forward)) {
             session$userData$skip_forward <- list()
         }
         session$userData$skip_forward$conditions <- processed_conditions
-        session$userData$skip_forward$targets <- get_unique_targets(processed_conditions)
+        session$userData$skip_forward$targets <- get_unique_targets(
+            processed_conditions
+        )
     })
 }
 
@@ -1108,21 +1293,24 @@ sd_show_if <- function(...) {
 
     # Process each condition
     processed_conditions <- lapply(conditions, function(rule) {
-        tryCatch({
-            # Store the original condition for use with function calls
-            rule$original_condition <- rule$condition
+        tryCatch(
+            {
+                # Store the original condition for use with function calls
+                rule$original_condition <- rule$condition
 
-            # Store the calling environment for later evaluation
-            rule$calling_env <- calling_env
+                # Store the calling environment for later evaluation
+                rule$calling_env <- calling_env
 
-            # # For debugging
-            # cat("Captured show_if condition: ", deparse(rule$condition), "\n")
+                # # For debugging
+                # cat("Captured show_if condition: ", deparse(rule$condition), "\n")
 
-            return(rule)
-        }, error = function(e) {
-            warning("Error processing show_if condition: ", e$message)
-            return(rule)
-        })
+                return(rule)
+            },
+            error = function(e) {
+                warning("Error processing show_if condition: ", e$message)
+                return(rule)
+            }
+        )
     })
 
     # Create a list in userData to store the show_if targets
@@ -1135,7 +1323,9 @@ sd_show_if <- function(...) {
             session$userData$show_if <- list()
         }
         session$userData$show_if$conditions <- processed_conditions
-        session$userData$show_if$targets <- get_unique_targets(processed_conditions)
+        session$userData$show_if$targets <- get_unique_targets(
+            processed_conditions
+        )
     })
 }
 
@@ -1169,7 +1359,6 @@ sd_show_if <- function(...) {
 #'
 #' @export
 sd_set_password <- function(password) {
-
     # v0.8.0
     .Deprecated("sd_db_config")
 
@@ -1206,8 +1395,13 @@ sd_set_password <- function(password) {
         gitignore_content <- readLines(gitignore_path)
         if (!".Renviron" %in% gitignore_content) {
             # Remove any trailing empty lines
-            while (length(gitignore_content) > 0 && gitignore_content[length(gitignore_content)] == "") {
-                gitignore_content <- gitignore_content[-length(gitignore_content)]
+            while (
+                length(gitignore_content) > 0 &&
+                    gitignore_content[length(gitignore_content)] == ""
+            ) {
+                gitignore_content <- gitignore_content[
+                    -length(gitignore_content)
+                ]
             }
             # Add .Renviron to the end without an extra newline
             gitignore_content <- c(gitignore_content, ".Renviron")
@@ -1277,7 +1471,9 @@ sd_store_value <- function(value, id = NULL) {
     shiny::isolate({
         session <- shiny::getDefaultReactiveDomain()
         if (is.null(session)) {
-            stop("sd_store_value must be called from within a Shiny reactive context")
+            stop(
+                "sd_store_value must be called from within a Shiny reactive context"
+            )
         }
 
         # Initialize stored_values if it doesn't exist
@@ -1290,7 +1486,9 @@ sd_store_value <- function(value, id = NULL) {
 
         # Make value accessible in the UI
         output <- shiny::getDefaultReactiveDomain()$output
-        output[[paste0(id, "_value")]] <- shiny::renderText({ formatted_value })
+        output[[paste0(id, "_value")]] <- shiny::renderText({
+            formatted_value
+        })
 
         # Get access to all_data and update it if available
         # This allows the stored value to be accessible through sd_output
@@ -1360,45 +1558,62 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
         # Get current session
         session <- shiny::getDefaultReactiveDomain()
         if (is.null(session)) {
-            warning("sd_reactive() must be called within a Shiny reactive context")
+            warning(
+                "sd_reactive() must be called within a Shiny reactive context"
+            )
             return(NULL)
         }
 
         # Use tryCatch to safely evaluate the expression
-        tryCatch({
-            # Evaluate the expression in its original environment
-            result <- eval(expr_call, envir = expr_env)
+        tryCatch(
+            {
+                # Evaluate the expression in its original environment
+                result <- eval(expr_call, envir = expr_env)
 
-            # Store the value in the survey data
-            if (is.null(result) || (length(result) == 1 && is.na(result))) {
+                # Store the value in the survey data
+                if (is.null(result) || (length(result) == 1 && is.na(result))) {
+                    sd_store_value("", id)
+                    return(if (blank_na) "" else result)
+                } else {
+                    sd_store_value(result, id)
+                    return(result)
+                }
+            },
+            error = function(e) {
+                warning("Error in sd_reactive for ", id, ": ", e$message)
                 sd_store_value("", id)
-                return(if (blank_na) "" else result)
-            } else {
-                sd_store_value(result, id)
-                return(result)
+                return(if (blank_na) "" else NULL)
             }
-        }, error = function(e) {
-            warning("Error in sd_reactive for ", id, ": ", e$message)
-            sd_store_value("", id)
-            return(if (blank_na) "" else NULL)
-        })
+        )
     })
 
     # Auto-trigger the evaluation once to ensure value is available
     # This creates an observer that will run once when the session initializes
-    shiny::observeEvent(shiny::getDefaultReactiveDomain()$clientData, {
-        # This forces the reactive to run once right away
-        reactive_expr()
-    }, once = TRUE)
+    shiny::observeEvent(
+        shiny::getDefaultReactiveDomain()$clientData,
+        {
+            # This forces the reactive to run once right away
+            reactive_expr()
+        },
+        once = TRUE
+    )
 
     # Create a separate observer that will monitor the reactive expression
     shiny::observe({
         # Wrap in tryCatch to prevent errors from crashing the app
-        tryCatch({
-            reactive_expr()
-        }, error = function(e) {
-            warning("Error in sd_reactive observer for ", id, ": ", e$message)
-        })
+        tryCatch(
+            {
+                reactive_expr()
+            },
+            error = function(e) {
+                warning(
+                    "Error in sd_reactive observer for ",
+                    id,
+                    ": ",
+                    e$message
+                )
+            }
+        )
     })
 
     return(reactive_expr)
@@ -1457,9 +1672,13 @@ sd_copy_value <- function(id, id_copy) {
         input <- shiny::getDefaultReactiveDomain()$input
         output_id <- paste0(id_copy, "_value")
         if (!is.null(output)) {
-            output[[output_id]] <- shiny::renderText({ input[[id]] })
+            output[[output_id]] <- shiny::renderText({
+                input[[id]]
+            })
         } else {
-            warning("sd_copy_value was not called within a Shiny reactive context")
+            warning(
+                "sd_copy_value was not called within a Shiny reactive context"
+            )
         }
     })
     invisible(NULL)
@@ -1512,7 +1731,9 @@ sd_is_answered <- function(question_id) {
     session <- shiny::getDefaultReactiveDomain()
 
     if (is.null(session)) {
-        stop("sd_is_answered() must be called from within a Shiny reactive context")
+        stop(
+            "sd_is_answered() must be called from within a Shiny reactive context"
+        )
     }
 
     # Access the input object from the session
@@ -1521,20 +1742,31 @@ sd_is_answered <- function(question_id) {
     # Check if it's a matrix question (ends with a number)
     if (!grepl("_\\d+$", question_id)) {
         # It's potentially a matrix question, check all sub-questions
-        sub_questions <- grep(paste0("^", question_id, "_"), names(input), value = TRUE)
+        sub_questions <- grep(
+            paste0("^", question_id, "_"),
+            names(input),
+            value = TRUE
+        )
 
         if (length(sub_questions) > 0) {
             # It's confirmed to be a matrix question
-            return(all(sapply(sub_questions, function(sq) !is.null(input[[sq]]) && nzchar(input[[sq]]))))
+            return(all(sapply(sub_questions, function(sq) {
+                !is.null(input[[sq]]) && nzchar(input[[sq]])
+            })))
         }
     }
 
     # For non-matrix questions or individual sub-questions
-    if (is.null(input[[question_id]])) return(FALSE)
+    if (is.null(input[[question_id]])) {
+        return(FALSE)
+    }
 
     if (is.list(input[[question_id]])) {
         # For questions that can have multiple answers (e.g., checkboxes)
-        return(length(input[[question_id]]) > 0 && any(nzchar(unlist(input[[question_id]]))))
+        return(
+            length(input[[question_id]]) > 0 &&
+                any(nzchar(unlist(input[[question_id]])))
+        )
     } else {
         # For single-answer questions
         return(!is.null(input[[question_id]]) && nzchar(input[[question_id]]))
@@ -1544,13 +1776,18 @@ sd_is_answered <- function(question_id) {
 # Helper functions ----
 
 # Helper function to find the next eligible page starting from a specific target
-find_next_eligible_page_from_target <- function(target_page_id, page_ids, page_conditions, session) {
+find_next_eligible_page_from_target <- function(
+    target_page_id,
+    page_ids,
+    page_conditions,
+    session
+) {
     target_index <- which(page_ids == target_page_id)
-    
+
     if (length(target_index) == 0) {
-        return(NULL)  # Target page not found
+        return(NULL) # Target page not found
     }
-    
+
     # Look for the next eligible page starting from the target
     for (i in target_index:length(page_ids)) {
         candidate_page <- page_ids[i]
@@ -1558,19 +1795,23 @@ find_next_eligible_page_from_target <- function(target_page_id, page_ids, page_c
             return(candidate_page)
         }
     }
-    
-    return(NULL)  # No eligible page found
+
+    return(NULL) # No eligible page found
 }
 
 # Helper function to separate page and question conditions
-separate_show_if_conditions <- function(show_if_conditions, page_ids, question_ids) {
+separate_show_if_conditions <- function(
+    show_if_conditions,
+    page_ids,
+    question_ids
+) {
     if (is.null(show_if_conditions) || length(show_if_conditions) == 0) {
         return(list(page_conditions = list(), question_conditions = list()))
     }
-    
+
     page_conditions <- list()
     question_conditions <- list()
-    
+
     for (condition in show_if_conditions) {
         target <- condition$target
         if (target %in% page_ids) {
@@ -1578,19 +1819,25 @@ separate_show_if_conditions <- function(show_if_conditions, page_ids, question_i
         } else if (target %in% question_ids) {
             question_conditions <- c(question_conditions, list(condition))
         } else {
-            warning(sprintf("Target '%s' is neither a page nor a question ID", target))
+            warning(sprintf(
+                "Target '%s' is neither a page nor a question ID",
+                target
+            ))
         }
     }
-    
-    return(list(page_conditions = page_conditions, question_conditions = question_conditions))
+
+    return(list(
+        page_conditions = page_conditions,
+        question_conditions = question_conditions
+    ))
 }
 
 # Helper function to evaluate if a page should be shown based on conditions
 should_show_page <- function(page_id, page_conditions, session) {
     if (length(page_conditions) == 0) {
-        return(TRUE)  # No conditions, always show
+        return(TRUE) # No conditions, always show
     }
-    
+
     # Check if this page has any conditions
     page_condition <- NULL
     for (condition in page_conditions) {
@@ -1599,42 +1846,60 @@ should_show_page <- function(page_id, page_conditions, session) {
             break
         }
     }
-    
+
     # If no condition for this page, show it
     if (is.null(page_condition)) {
         return(TRUE)
     }
-    
+
     # Evaluate the condition
-    tryCatch({
-        result <- eval(page_condition$original_condition, envir = page_condition$calling_env)
-        return(isTRUE(result))
-    }, error = function(e) {
-        warning("Error evaluating page condition for ", page_id, ": ", e$message)
-        return(TRUE)  # Default to showing the page if evaluation fails
-    })
+    tryCatch(
+        {
+            result <- eval(
+                page_condition$original_condition,
+                envir = page_condition$calling_env
+            )
+            return(isTRUE(result))
+        },
+        error = function(e) {
+            warning(
+                "Error evaluating page condition for ",
+                page_id,
+                ": ",
+                e$message
+            )
+            return(TRUE) # Default to showing the page if evaluation fails
+        }
+    )
 }
 
 # Helper function to find the next eligible page to show
-find_next_eligible_page <- function(current_page_id, config, page_conditions, session) {
+find_next_eligible_page <- function(
+    current_page_id,
+    config,
+    page_conditions,
+    session
+) {
     page_ids <- config$page_ids
     current_index <- which(page_ids == current_page_id)
-    
+
     if (length(current_index) == 0) {
-        return(NULL)  # Current page not found
+        return(NULL) # Current page not found
     }
-    
+
     # Look for the next eligible page
     for (i in (current_index + 1):length(page_ids)) {
-        if (i > length(page_ids)) break
-        
+        if (i > length(page_ids)) {
+            break
+        }
+
         candidate_page <- page_ids[i]
         if (should_show_page(candidate_page, page_conditions, session)) {
             return(candidate_page)
         }
     }
-    
-    return(NULL)  # No eligible next page found
+
+    return(NULL) # No eligible next page found
 }
 
 set_show_if_conditions <- function(show_if) {
@@ -1643,17 +1908,20 @@ set_show_if_conditions <- function(show_if) {
     }
     shiny::reactive({
         results <- lapply(show_if$conditions, function(rule) {
-            result <- tryCatch({
-                evaluate_condition(rule)
-            }, error = function(e) {
-                warning(sprintf(
-                    "Error in show_if condition for target '%s', condition '%s': %s",
-                    rule$target,
-                    deparse(rule$condition),
-                    conditionMessage(e)
-                ))
-                FALSE
-            })
+            result <- tryCatch(
+                {
+                    evaluate_condition(rule)
+                },
+                error = function(e) {
+                    warning(sprintf(
+                        "Error in show_if condition for target '%s', condition '%s': %s",
+                        rule$target,
+                        deparse(rule$condition),
+                        conditionMessage(e)
+                    ))
+                    FALSE
+                }
+            )
             stats::setNames(list(result), rule$target)
         })
         do.call(c, results)
@@ -1671,8 +1939,8 @@ parse_conditions <- function(...) {
             stop("Each condition must be a formula (condition ~ target)")
         }
         list(
-            condition = cond[[2]],  # Left-hand side of the formula
-            target = eval(cond[[3]])  # Right-hand side of the formula
+            condition = cond[[2]], # Left-hand side of the formula
+            target = eval(cond[[3]]) # Right-hand side of the formula
         )
     })
 }
@@ -1683,25 +1951,34 @@ evaluate_condition <- function(rule) {
     eval_env <- list(input = session$input)
 
     # Try to evaluate using the original condition (which might have function calls)
-    tryCatch({
-        # Use both the original calling environment and the input
-        result <- eval(rule$original_condition,
-                       envir = rule$calling_env,
-                       enclos = environment())
-        return(isTRUE(result))
-    }, error = function(e) {
-        warning("Error in condition evaluation: ", e$message)
-        return(FALSE)
-    })
+    tryCatch(
+        {
+            # Use both the original calling environment and the input
+            result <- eval(
+                rule$original_condition,
+                envir = rule$calling_env,
+                enclos = environment()
+            )
+            return(isTRUE(result))
+        },
+        error = function(e) {
+            warning("Error in condition evaluation: ", e$message)
+            return(FALSE)
+        }
+    )
 }
 
 get_stored_vals <- function(session) {
     shiny::isolate({
         if (is.null(session)) {
-            stop("get_stored_vals must be called from within a Shiny reactive context")
+            stop(
+                "get_stored_vals must be called from within a Shiny reactive context"
+            )
         }
         stored_vals <- session$userData$stored_values
-        if (is.null(stored_vals)) { return(NULL) }
+        if (is.null(stored_vals)) {
+            return(NULL)
+        }
 
         # Format stored values as a list
         formatted_vals <- lapply(stored_vals, function(val) {
@@ -1717,7 +1994,11 @@ get_utc_timestamp <- function() {
 }
 
 get_initial_data <- function(
-        session, session_id, time_start, all_ids, start_page_ts_id
+    session,
+    session_id,
+    time_start,
+    all_ids,
+    start_page_ts_id
 ) {
     # Initialize with static data
     data <- c(
@@ -1726,7 +2007,9 @@ get_initial_data <- function(
     )
 
     # Initialize question & timestamp values
-    for (id in all_ids) { data[[id]] <- "" }
+    for (id in all_ids) {
+        data[[id]] <- ""
+    }
     data[['time_start']] <- time_start
     data[[start_page_ts_id]] <- time_start
     data[['time_end']] <- ""
@@ -1746,7 +2029,9 @@ format_question_value <- function(val) {
 }
 
 get_default_next_page <- function(page, page_ids, page_id_to_index) {
-    if (is.null(page$next_page_id)) return(NULL)
+    if (is.null(page$next_page_id)) {
+        return(NULL)
+    }
     next_page_id <- page$next_page_id
     if (next_page_id == "") {
         index <- page_id_to_index[page$id] + 1
@@ -1760,7 +2045,11 @@ get_default_next_page <- function(page, page_ids, page_id_to_index) {
 }
 
 handle_skip_logic <- function(
-    input, skip_forward, current_page_id, next_page_id, page_id_to_index
+    input,
+    skip_forward,
+    current_page_id,
+    next_page_id,
+    page_id_to_index
 ) {
     if (is.null(next_page_id) | is.null(skip_forward)) {
         return(next_page_id)
@@ -1787,15 +2076,19 @@ handle_skip_logic <- function(
             }
 
             # Evaluate the condition
-            condition_result <- tryCatch({
-                evaluate_condition(rule)
-            }, error = function(e) {
-                warning(sprintf(
-                    "Error in sd_skip_forward condition for target '%s': %s",
-                    rule$target, conditionMessage(e))
-                )
-                FALSE
-            })
+            condition_result <- tryCatch(
+                {
+                    evaluate_condition(rule)
+                },
+                error = function(e) {
+                    warning(sprintf(
+                        "Error in sd_skip_forward condition for target '%s': %s",
+                        rule$target,
+                        conditionMessage(e)
+                    ))
+                    FALSE
+                }
+            )
 
             # Check if the condition is met
             if (condition_result) {
@@ -1810,25 +2103,27 @@ handle_skip_logic <- function(
 # Check if a single question is answered
 check_answer <- function(q, input, question_structure = NULL) {
     answer <- input[[q]]
-    if (is.null(answer)) return(FALSE)
-    
+    if (is.null(answer)) {
+        return(FALSE)
+    }
+
     # For question types that have default values, check if user has actually interacted
     # These types often have default values that shouldn't count as "answered"
     interacted <- input[[paste0(q, "_interacted")]]
-    
+
     # Also check for auto-save timestamp (indicates auto-save occurred)
     autosave_timestamp <- input[[paste0(q, "_autosave_timestamp")]]
     if (is.null(interacted) && !is.null(autosave_timestamp)) {
         interacted <- TRUE
     }
-    
+
     # Smart auto-save detection: ONLY apply if normal validation would fail
     # This ensures we don't interfere with normal user interaction tracking
     if (is.null(interacted) && !is.null(answer)) {
         # Get question type from question_structure if available
         if (!is.null(question_structure) && q %in% names(question_structure)) {
             q_type_raw <- question_structure[[q]]$type
-            
+
             # Map raw HTML classes to proper question types (same as in write_question_structure_yaml)
             type_replacement <- c(
                 'shiny-input-text form-control' = 'text',
@@ -1844,31 +2139,37 @@ check_answer <- function(q, input, question_structure = NULL) {
                 'shiny-date-input form-group shiny-input-container' = 'date',
                 'shiny-date-range-input form-group shiny-input-container' = 'daterange'
             )
-            
+
             # Map the raw type to the proper type
             q_type <- type_replacement[q_type_raw]
-            if (is.na(q_type)) q_type <- q_type_raw  # Fallback to raw if no mapping
-            
+            if (is.na(q_type)) {
+                q_type <- q_type_raw
+            } # Fallback to raw if no mapping
+
             # ONLY apply smart detection for auto-save supported types
             # and ONLY when there's no interaction (meaning this is default value scenario)
-            if (!is.null(q_type) && q_type %in% c("slider", "slider_numeric", "date", "daterange")) {
+            if (
+                !is.null(q_type) &&
+                    q_type %in%
+                        c("slider", "slider_numeric", "date", "daterange")
+            ) {
                 interacted <- TRUE
             }
         }
     }
-    
+
     # Get question type from question_structure if available
     q_type <- NULL
     if (!is.null(question_structure) && q %in% names(question_structure)) {
         q_type <- question_structure[[q]]$type
     }
-    
+
     # Handle based on question type if available
     if (!is.null(q_type)) {
         # Check if this is a slider type (could be "slider", "slider_numeric", or contain slider-related classes)
-        is_slider <- grepl("slider", q_type, ignore.case = TRUE) || 
-                    q_type %in% c("slider", "slider_numeric")
-        
+        is_slider <- grepl("slider", q_type, ignore.case = TRUE) ||
+            q_type %in% c("slider", "slider_numeric")
+
         if (is_slider) {
             # Sliders always have defaults, require interaction tracking
             if (!is.null(interacted)) {
@@ -1878,7 +2179,7 @@ check_answer <- function(q, input, question_structure = NULL) {
             }
         }
     }
-    
+
     if (is.character(answer)) {
         # For text/textarea inputs, require both interaction AND non-empty content
         if (!is.null(interacted) && isTRUE(interacted)) {
@@ -1891,9 +2192,9 @@ check_answer <- function(q, input, question_structure = NULL) {
         if (!is.null(interacted) && isTRUE(interacted)) {
             # User interacted - check if they provided actual content
             if (is.logical(answer) || all(is.na(answer))) {
-                return(FALSE)  # No valid content provided
+                return(FALSE) # No valid content provided
             }
-            return(TRUE)  # Valid content provided
+            return(TRUE) # Valid content provided
         } else {
             # Without interaction tracking, check for valid content
             if (is.logical(answer) || all(is.na(answer))) {
@@ -1917,8 +2218,8 @@ check_answer <- function(q, input, question_structure = NULL) {
             return(any(!sapply(answer, is.null)))
         }
     }
-    
-    return(TRUE)  # Default to true for unknown types
+
+    return(TRUE) # Default to true for unknown types
 }
 
 # Check if a question should be highlighted (based on interaction only, no smart detection)
@@ -1926,24 +2227,30 @@ check_answer_for_highlighting <- function(q, input, question_structure = NULL) {
     # For highlighting purposes, only check actual user interaction
     # Do NOT use smart detection - we want to show gray for untouched questions
     interacted <- input[[paste0(q, "_interacted")]]
-    
+
     # If user has explicitly interacted, don't highlight
     if (!is.null(interacted) && isTRUE(interacted)) {
-        return(TRUE)  # Interacted = answered for highlighting purposes
+        return(TRUE) # Interacted = answered for highlighting purposes
     }
-    
+
     # For all question types, if no interaction flag, show as unanswered for highlighting
     return(FALSE)
 }
 
 get_local_data <- function() {
     if (file.exists("preview_data.csv")) {
-        tryCatch({
-            return(utils::read.csv("preview_data.csv", stringsAsFactors = FALSE))
-        }, error = function(e) {
-            warning("Error reading preview_data.csv: ", e$message)
-            return(NULL)
-        })
+        tryCatch(
+            {
+                return(utils::read.csv(
+                    "preview_data.csv",
+                    stringsAsFactors = FALSE
+                ))
+            },
+            error = function(e) {
+                warning("Error reading preview_data.csv: ", e$message)
+                return(NULL)
+            }
+        )
     }
     return(NULL)
 }
@@ -1966,21 +2273,40 @@ get_cookie_data <- function(session, current_page_id) {
     return(page_data)
 }
 
-restore_current_page_values <- function(restore_data, session, page_filter = NULL) {
+restore_current_page_values <- function(
+    restore_data,
+    session,
+    page_filter = NULL
+) {
     for (col in names(restore_data)) {
         # Skip special columns
-        if (!col %in% c("session_id", "current_page", "time_start", "time_end")) {
+        if (
+            !col %in% c("session_id", "current_page", "time_start", "time_end")
+        ) {
             val <- restore_data[[col]]
             if (!is.null(val) && !is.na(val) && val != "") {
-                session$sendInputMessage(col, list(value = val, priority = "event"))
+                session$sendInputMessage(
+                    col,
+                    list(value = val, priority = "event")
+                )
             }
         }
     }
 }
 
-handle_data_restoration <- function(session_id, db, session, current_page_id, start_page,
-                                    question_ids, question_ts_ids, progress_updater) {
-    if (is.null(session_id)) return(NULL)
+handle_data_restoration <- function(
+    session_id,
+    db,
+    session,
+    current_page_id,
+    start_page,
+    question_ids,
+    question_ts_ids,
+    progress_updater
+) {
+    if (is.null(session_id)) {
+        return(NULL)
+    }
 
     # Get data based on source
     if (!is.null(db)) {
@@ -1990,17 +2316,25 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
     }
 
     # If no data available, return NULL
-    if (is.null(all_data)) return(NULL)
+    if (is.null(all_data)) {
+        return(NULL)
+    }
 
     restore_data <- all_data[all_data$session_id == session_id, ]
 
-    if (nrow(restore_data) == 0) return(NULL)
+    if (nrow(restore_data) == 0) {
+        return(NULL)
+    }
 
     shiny::isolate({
         # 1. Restore page state (using restore_data)
         if ("current_page" %in% names(restore_data)) {
             restored_page <- restore_data[["current_page"]]
-            if (!is.null(restored_page) && !is.na(restored_page) && nchar(restored_page) > 0) {
+            if (
+                !is.null(restored_page) &&
+                    !is.na(restored_page) &&
+                    nchar(restored_page) > 0
+            ) {
                 current_page_id(restored_page)
             } else {
                 current_page_id(start_page)
@@ -2017,7 +2351,11 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
 
         # 2. Find the last answered question for progress bar
         last_index <- 0
-        if (!is.null(db) && !is.null(answer_data) && !is.null(answer_data$last_timestamp)) {
+        if (
+            !is.null(db) &&
+                !is.null(answer_data) &&
+                !is.null(answer_data$last_timestamp)
+        ) {
             # Use last timestamp from cookie data in DB mode
             last_ts_id <- answer_data$last_timestamp$id
             # Find the index of this timestamp ID in our question_ts_ids
@@ -2029,7 +2367,12 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
                 ts_id <- question_ts_ids[i]
                 if (ts_id %in% names(restore_data)) {
                     ts_val <- restore_data[[ts_id]]
-                    if (length(ts_val) == 1 && !is.null(ts_val) && !is.na(ts_val) && ts_val != "") {
+                    if (
+                        length(ts_val) == 1 &&
+                            !is.null(ts_val) &&
+                            !is.na(ts_val) &&
+                            ts_val != ""
+                    ) {
                         last_index <- i
                     }
                 }
@@ -2041,12 +2384,19 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
         }
 
         # 3. Restore question values
-        if (!is.null(db) && !is.null(answer_data) && !is.null(answer_data$answers)) {
+        if (
+            !is.null(db) &&
+                !is.null(answer_data) &&
+                !is.null(answer_data$answers)
+        ) {
             # Use answer data from cookies for current page
             for (col in names(answer_data$answers)) {
                 val <- answer_data$answers[[col]]
                 if (!is.null(val) && !identical(val, "")) {
-                    session$sendInputMessage(col, list(value = val, priority = "event"))
+                    session$sendInputMessage(
+                        col,
+                        list(value = val, priority = "event")
+                    )
                 }
             }
         } else {
@@ -2057,9 +2407,19 @@ handle_data_restoration <- function(session_id, db, session, current_page_id, st
     return(restore_data)
 }
 
-handle_sessions <- function(session_id, db = NULL, session, input, time_start,
-                            start_page, current_page_id, question_ids,
-                            question_ts_ids, progress_updater, use_cookies = TRUE) {
+handle_sessions <- function(
+    session_id,
+    db = NULL,
+    session,
+    input,
+    time_start,
+    start_page,
+    current_page_id,
+    question_ids,
+    question_ts_ids,
+    progress_updater,
+    use_cookies = TRUE
+) {
     # Check 1: if db is null, don't use cookies
     if (is.null(db)) {
         use_cookies <- FALSE
@@ -2075,32 +2435,43 @@ handle_sessions <- function(session_id, db = NULL, session, input, time_start,
 
     # Do the cookie check synchronously in a reactive context
     shiny::isolate({
-
         # Check 3: Cookie exists and is valid?
         stored_id <- shiny::reactiveValuesToList(input)$stored_session_id
-        if (!is.null(stored_id) && nchar(stored_id) > 0 &&
-            # Check 4: Either DB connection exists or preview_data.csv is writable
-            (!is.null(db) || (file.exists("preview_data.csv") && file.access("preview_data.csv", 2) == 0))) {
-
+        if (
+            !is.null(stored_id) &&
+                nchar(stored_id) > 0 &&
+                # Check 4: Either DB connection exists or preview_data.csv is writable
+                (!is.null(db) ||
+                    (file.exists("preview_data.csv") &&
+                        file.access("preview_data.csv", 2) == 0))
+        ) {
             # Check 5: Session exists in DB or preview data?
             restore_data <- handle_data_restoration(
-                stored_id, db, session, current_page_id,
-                start_page, question_ids, question_ts_ids,
+                stored_id,
+                db,
+                session,
+                current_page_id,
+                start_page,
+                question_ids,
+                question_ts_ids,
                 progress_updater
             )
 
             if (!is.null(restore_data)) {
-
                 # All checks passed - use stored session
                 final_session_id <- stored_id
-                session$sendCustomMessage("setCookie", list(sessionId = stored_id))
+                session$sendCustomMessage(
+                    "setCookie",
+                    list(sessionId = stored_id)
+                )
             } else {
-
                 # Session not in DB - use new session
-                session$sendCustomMessage("setCookie", list(sessionId = session_id))
+                session$sendCustomMessage(
+                    "setCookie",
+                    list(sessionId = session_id)
+                )
             }
         } else {
-
             # No cookie or no DB connection - use new session
             session$sendCustomMessage("setCookie", list(sessionId = session_id))
         }
