@@ -69,8 +69,13 @@ sd_db_config <- function(
     }
 
     # If no parameters provided and interactive not set, default to interactive
-    if (is.null(interactive) &&
-        all(sapply(list(host, dbname, port, user, table, password), is.null))) {
+    if (
+        is.null(interactive) &&
+            all(sapply(
+                list(host, dbname, port, user, table, password),
+                is.null
+            ))
+    ) {
         interactive <- TRUE
     } else if (is.null(interactive)) {
         interactive <- FALSE
@@ -98,13 +103,15 @@ sd_db_config <- function(
         user <- if (input == "") current$user else input
 
         # Get password
-        input <- readline(sprintf("Password [%s]: ", if(current$password == "") "" else "****"))
+        input <- readline(sprintf(
+            "Password [%s]: ",
+            if (current$password == "") "" else "****"
+        ))
         password <- if (input == "") current$password else input
 
         # Get table
         input <- readline(sprintf("Table name [%s]: ", current$table))
         table <- if (input == "") current$table else input
-
     } else {
         # For non-interactive mode, use current values if not provided
         host <- if (!is.null(host)) host else current$host
@@ -204,77 +211,93 @@ sd_db_connect <- function(
     ignore = FALSE,
     gssencmode = "auto"
 ) {
-
-  if (ignore) {
-    cli::cli_alert_info("Database connection ignored. Saving data to local CSV file.")
-    return(NULL)
-  }
-
-  # Load environment variables
-  if (file.exists(env_file)) {
-    dotenv::load_dot_env(env_file)
-  }
-  else {
-    cli::cli_alert_info("No .env file found. Will attempt existing environment variables.")
-  }
-
-  # Try to get all required parameters
-  params <- list(
-    host = Sys.getenv("SD_HOST"),
-    port = Sys.getenv("SD_PORT"),
-    dbname = Sys.getenv("SD_DBNAME"),
-    user = Sys.getenv("SD_USER"),
-    password = Sys.getenv("SD_PASSWORD"),
-    table = Sys.getenv("SD_TABLE")
-  )
-
-  # Quit if database parameters are unavailable
-  if (all(params == "")) {
-    cli::cli_alert_warning("No .env file found and no environment variables set.")
-    cli::cli_alert_info("Run the following to configure your database:")
-    cli::cli_code("surveydown::sd_db_config()")
-    return(NULL)
-  }
-
-  # Check for missing required parameters
-  missing <- names(params)[!nchar(unlist(params))]
-  if (length(missing) > 0) {
-    cli::cli_alert_warning("Missing required database configuration:")
-    cli::cli_bullets(paste0("* ", missing))
-    return(NULL)
-  }
-
-  # First attempt with the specified gssencmode
-  tryCatch({
-    pool <- try_db_connection(params, gssencmode)
-    cli::cli_alert_success("Successfully connected to the database.")
-    return(list(db = pool, table = params$table))
-  }, error = function(e) {
-    error_msg <- as.character(e$message)
-
-    # Only try fallback if we're in "auto" mode and it's a GSSAPI error
-    if (is_gssapi_error(error_msg) && gssencmode == "auto") {
-      message("GSSAPI negotiation failed, retrying with gssencmode='disable'...")
-
-      tryCatch({
-        pool <- try_db_connection(params, "disable")
-        cli::cli_alert_success("Successfully connected to the database with gssencmode='disable'.")
-        return(list(db = pool, table = params$table))
-      }, error = function(e2) {
-        # Both attempts failed
-        cli::cli_alert_warning("Failed to connect to the database with both gssencmode='prefer' and 'disable':")
-        cli::cli_text(conditionMessage(e2))
-        cli::cli_text("")
+    if (ignore) {
+        cli::cli_alert_info(
+            "Database connection ignored. Saving data to local CSV file."
+        )
         return(NULL)
-      })
-    } else {
-      # Not a GSSAPI error or not in auto mode, just fail normally
-      cli::cli_alert_warning("Failed to connect to the database:")
-      cli::cli_text(conditionMessage(e))
-      cli::cli_text("")
-      return(NULL)
     }
-  })
+
+    # Load environment variables
+    if (file.exists(env_file)) {
+        dotenv::load_dot_env(env_file)
+    } else {
+        cli::cli_alert_info(
+            "No .env file found. Will attempt existing environment variables."
+        )
+    }
+
+    # Try to get all required parameters
+    params <- list(
+        host = Sys.getenv("SD_HOST"),
+        port = Sys.getenv("SD_PORT"),
+        dbname = Sys.getenv("SD_DBNAME"),
+        user = Sys.getenv("SD_USER"),
+        password = Sys.getenv("SD_PASSWORD"),
+        table = Sys.getenv("SD_TABLE")
+    )
+
+    # Quit if database parameters are unavailable
+    if (all(params == "")) {
+        cli::cli_alert_warning(
+            "No .env file found and no environment variables set."
+        )
+        cli::cli_alert_info("Run the following to configure your database:")
+        cli::cli_code("surveydown::sd_db_config()")
+        return(NULL)
+    }
+
+    # Check for missing required parameters
+    missing <- names(params)[!nchar(unlist(params))]
+    if (length(missing) > 0) {
+        cli::cli_alert_warning("Missing required database configuration:")
+        cli::cli_bullets(paste0("* ", missing))
+        return(NULL)
+    }
+
+    # First attempt with the specified gssencmode
+    tryCatch(
+        {
+            pool <- try_db_connection(params, gssencmode)
+            cli::cli_alert_success("Successfully connected to the database.")
+            return(list(db = pool, table = params$table))
+        },
+        error = function(e) {
+            error_msg <- as.character(e$message)
+
+            # Only try fallback if we're in "auto" mode and it's a GSSAPI error
+            if (is_gssapi_error(error_msg) && gssencmode == "auto") {
+                message(
+                    "GSSAPI negotiation failed, retrying with gssencmode='disable'..."
+                )
+
+                tryCatch(
+                    {
+                        pool <- try_db_connection(params, "disable")
+                        cli::cli_alert_success(
+                            "Successfully connected to the database with gssencmode='disable'."
+                        )
+                        return(list(db = pool, table = params$table))
+                    },
+                    error = function(e2) {
+                        # Both attempts failed
+                        cli::cli_alert_warning(
+                            "Failed to connect to the database with both gssencmode='prefer' and 'disable':"
+                        )
+                        cli::cli_text(conditionMessage(e2))
+                        cli::cli_text("")
+                        return(NULL)
+                    }
+                )
+            } else {
+                # Not a GSSAPI error or not in auto mode, just fail normally
+                cli::cli_alert_warning("Failed to connect to the database:")
+                cli::cli_text(conditionMessage(e))
+                cli::cli_text("")
+                return(NULL)
+            }
+        }
+    )
 }
 
 #' Fetch data from a database table with automatic reactivity detection
@@ -352,7 +375,9 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 
     if (!is.null(refresh_interval)) {
         if (is.null(shiny::getDefaultReactiveDomain())) {
-            stop('If refresh_interval is set to a positive number, sd_get_data() must be called within a reactive context for the data to continously update in the server.')
+            stop(
+                'If refresh_interval is set to a positive number, sd_get_data() must be called within a reactive context for the data to continously update in the server.'
+            )
         }
         if (!is.numeric(refresh_interval)) {
             stop('refresh_interval must be a positive number')
@@ -372,13 +397,15 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 
 # Convert to SQL
 r_to_sql_type <- function(r_type) {
-    switch(toupper(r_type),
-           CHARACTER = "TEXT",
-           INTEGER = "TEXT",
-           DOUBLE = "TEXT",
-           LOGICAL = "TEXT",
-           FACTOR = "TEXT",
-           "TEXT")
+    switch(
+        toupper(r_type),
+        CHARACTER = "TEXT",
+        INTEGER = "TEXT",
+        DOUBLE = "TEXT",
+        LOGICAL = "TEXT",
+        FACTOR = "TEXT",
+        "TEXT"
+    )
 }
 
 create_table <- function(data_list, db, table) {
@@ -390,13 +417,20 @@ create_table <- function(data_list, db, table) {
     })
 
     # Ensure session_id is the first column and set as PRIMARY KEY
-    col_def <- c('"session_id" TEXT PRIMARY KEY', col_def[names(col_def) != "session_id"])
+    col_def <- c(
+        '"session_id" TEXT PRIMARY KEY',
+        col_def[names(col_def) != "session_id"]
+    )
 
     # Join column definitions
     col_def_str <- paste(col_def, collapse = ", ")
 
     create_table_query <- paste0(
-        'CREATE TABLE IF NOT EXISTS "', table, '" (', col_def_str, ")"
+        'CREATE TABLE IF NOT EXISTS "',
+        table,
+        '" (',
+        col_def_str,
+        ")"
     )
 
     pool::poolWithTransaction(db, function(conn) {
@@ -404,7 +438,10 @@ create_table <- function(data_list, db, table) {
         DBI::dbExecute(conn, create_table_query)
 
         # Enable Row Level Security
-        DBI::dbExecute(conn, paste0('ALTER TABLE "', table, '" ENABLE ROW LEVEL SECURITY;'))
+        DBI::dbExecute(
+            conn,
+            paste0('ALTER TABLE "', table, '" ENABLE ROW LEVEL SECURITY;')
+        )
     })
 
     message(paste0('Table "', table, '" created in the database.'))
@@ -412,89 +449,118 @@ create_table <- function(data_list, db, table) {
 
 # Solution found in this issue:
 # https://github.com/r-dbi/DBI/issues/193
-sqlInterpolateList <- function(conn, sql, vars=list(), list_vars=list()) {
+sqlInterpolateList <- function(conn, sql, vars = list(), list_vars = list()) {
     if (length(list_vars) > 0) {
         for (name in names(list_vars)) {
-            sql <- sub(paste0("\\?", name), paste("?", name, "_list_var", 1:length(list_vars[[name]]), sep="", collapse=" , "), sql)
+            sql <- sub(
+                paste0("\\?", name),
+                paste(
+                    "?",
+                    name,
+                    "_list_var",
+                    1:length(list_vars[[name]]),
+                    sep = "",
+                    collapse = " , "
+                ),
+                sql
+            )
         }
         list_vars <- lapply(list_vars, function(sublist) {
             names(sublist) <- paste0("list_var", 1:length(sublist))
             sublist
-        }) |> unlist()
+        }) |>
+            unlist()
         # unlist gives names as "outer.inner" but DBI doesn't like names with periods
         names(list_vars) <- sub("\\.", "_", names(list_vars))
         vars <- c(vars, list_vars)
     }
-    DBI::sqlInterpolate(conn, sql, .dots=vars)
+    DBI::sqlInterpolate(conn, sql, .dots = vars)
 }
 
 database_uploading <- function(data_list, db, table, changed_fields) {
-    if(is.null(db)) {
+    if (is.null(db)) {
         return(warning("Databasing is not in use"))
     }
-    tryCatch({
-        pool::poolWithTransaction(db, function(conn) {
-            # Get the actual columns in the table
-            existing_cols <- DBI::dbListFields(conn, table)
+    tryCatch(
+        {
+            pool::poolWithTransaction(db, function(conn) {
+                # Get the actual columns in the table
+                existing_cols <- DBI::dbListFields(conn, table)
 
-            # Check for new fields
-            new_fields <- setdiff(names(data_list), existing_cols)
-            if (length(new_fields) > 0) {
-                # Add new fields to the table
-                for (field in new_fields) {
-                    DBI::dbExecute(conn, sprintf('ALTER TABLE "%s" ADD COLUMN "%s" TEXT', table, field))
+                # Check for new fields
+                new_fields <- setdiff(names(data_list), existing_cols)
+                if (length(new_fields) > 0) {
+                    # Add new fields to the table
+                    for (field in new_fields) {
+                        DBI::dbExecute(
+                            conn,
+                            sprintf(
+                                'ALTER TABLE "%s" ADD COLUMN "%s" TEXT',
+                                table,
+                                field
+                            )
+                        )
+                    }
+                    # Update existing_cols
+                    existing_cols <- c(existing_cols, new_fields)
                 }
-                # Update existing_cols
-                existing_cols <- c(existing_cols, new_fields)
-            }
 
-            # Filter data_list to only include existing columns and changed fields
-            data_list <- data_list[names(data_list) %in% c("session_id", intersect(changed_fields, existing_cols))]
+                # Filter data_list to only include existing columns and changed fields
+                data_list <- data_list[
+                    names(data_list) %in%
+                        c(
+                            "session_id",
+                            intersect(changed_fields, existing_cols)
+                        )
+                ]
 
-            # If there's nothing to update (only session_id), return early
-            if (length(data_list) <= 1) {
-                return()
-            }
+                # If there's nothing to update (only session_id), return early
+                if (length(data_list) <= 1) {
+                    return()
+                }
 
-            # Ensure session_id is the first column
-            cols <- c("session_id", setdiff(names(data_list), "session_id"))
-            data_list <- data_list[cols]
+                # Ensure session_id is the first column
+                cols <- c("session_id", setdiff(names(data_list), "session_id"))
+                data_list <- data_list[cols]
 
-            # Prepare the placeholders
-            placeholders <- paste0("?", names(data_list))
+                # Prepare the placeholders
+                placeholders <- paste0("?", names(data_list))
 
-            # Prepare the update set
-            update_cols <- setdiff(cols, "session_id")
-            update_set <- paste(sapply(update_cols, function(col) {
-                sprintf('"%s" = EXCLUDED."%s"', col, col)
-            }), collapse = ", ")
+                # Prepare the update set
+                update_cols <- setdiff(cols, "session_id")
+                update_set <- paste(
+                    sapply(update_cols, function(col) {
+                        sprintf('"%s" = EXCLUDED."%s"', col, col)
+                    }),
+                    collapse = ", "
+                )
 
-            # Prepare the SQL query template
-            query_template <- sprintf(
-                'INSERT INTO "%s" ("%s") VALUES (%s) ON CONFLICT (session_id) DO UPDATE SET %s',
-                table,
-                paste(cols, collapse = '", "'),
-                paste(placeholders, collapse = ", "),
-                update_set
-            )
+                # Prepare the SQL query template
+                query_template <- sprintf(
+                    'INSERT INTO "%s" ("%s") VALUES (%s) ON CONFLICT (session_id) DO UPDATE SET %s',
+                    table,
+                    paste(cols, collapse = '", "'),
+                    paste(placeholders, collapse = ", "),
+                    update_set
+                )
 
-            # Use sqlInterpolateList to safely insert values
-            query <- sqlInterpolateList(
-                conn,
-                query_template,
-                list_vars = data_list
-            )
+                # Use sqlInterpolateList to safely insert values
+                query <- sqlInterpolateList(
+                    conn,
+                    query_template,
+                    list_vars = data_list
+                )
 
-            # Execute the query
-            DBI::dbExecute(conn, query)
-        })
-    }, error = function(e) {
-        warning("Error in database operation: ", e$message)
-        print(e)  # Print the full error for debugging
-    })
+                # Execute the query
+                DBI::dbExecute(conn, query)
+            })
+        },
+        error = function(e) {
+            warning("Error in database operation: ", e$message)
+            print(e) # Print the full error for debugging
+        }
+    )
 }
-
-
 
 
 #' Connect to a 'PostgreSQL' Database with Automatic Cleanup
@@ -555,18 +621,17 @@ database_uploading <- function(data_list, db, table, changed_fields) {
 #' }
 #' @export
 sd_database <- function(
-    host       = NULL,
-    dbname     = NULL,
-    port       = NULL,
-    user       = NULL,
-    table      = NULL,
-    password   = Sys.getenv("SURVEYDOWN_PASSWORD"),
+    host = NULL,
+    dbname = NULL,
+    port = NULL,
+    user = NULL,
+    table = NULL,
+    password = Sys.getenv("SURVEYDOWN_PASSWORD"),
     gssencmode = "prefer",
-    ignore     = FALSE,
-    min_size   = 1,
-    max_size   = Inf
+    ignore = FALSE,
+    min_size = 1,
+    max_size = Inf
 ) {
-
     # v0.8.0
     .Deprecated("sd_db_connect")
 
@@ -576,44 +641,64 @@ sd_database <- function(
     }
 
     # Authentication/Checks for NULL Values
-    if (is.null(host) | is.null(dbname) | is.null(port) | is.null(user) | is.null(table)) {
-        message("One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local data.csv file *for previewing purposes only*.")
+    if (
+        is.null(host) |
+            is.null(dbname) |
+            is.null(port) |
+            is.null(user) |
+            is.null(table)
+    ) {
+        message(
+            "One or more of the required arguments in sd_database() are NULL, so the database is NOT connected; writing responses to local data.csv file *for previewing purposes only*."
+        )
         return(NULL)
     }
 
     if (!nchar(password)) {
-        stop("Please define your password using surveydown::sd_set_password().\n If you just did this, RESTART the R session to make sure the password environment variable is loaded.")
+        stop(
+            "Please define your password using surveydown::sd_set_password().\n If you just did this, RESTART the R session to make sure the password environment variable is loaded."
+        )
     }
 
-    tryCatch({
-        pool <- pool::dbPool(
-            RPostgres::Postgres(),
-            host = host,
-            dbname = dbname,
-            port = port,
-            user = user,
-            password = password,
-            gssencmode = gssencmode,
-            minSize = min_size,
-            maxSize = max_size
-        )
+    tryCatch(
+        {
+            pool <- pool::dbPool(
+                RPostgres::Postgres(),
+                host = host,
+                dbname = dbname,
+                port = port,
+                user = user,
+                password = password,
+                gssencmode = gssencmode,
+                minSize = min_size,
+                maxSize = max_size
+            )
 
-        # Set up automatic cleanup when the Shiny session ends
-        shiny::onStop(function() {
-            pool::poolClose(pool)
-        })
+            # Set up automatic cleanup when the Shiny session ends
+            shiny::onStop(function() {
+                pool::poolClose(pool)
+            })
 
-        message("Successfully connected to the database.")
-        return(list(db = pool, table = table))
-    }, error = function(e) {
-        stop(paste("Error: Failed to connect to the database.",
-                   "Details:", conditionMessage(e),
-                   "\nPlease check your connection details:",
-                   "\n- host:    ", host,
-                   "\n- dbname:  ", dbname,
-                   "\n- port:    ", port,
-                   "\n- user:    ", user,
-                   "\nTo update password, please use surveydown::sd_set_password().",
-                   "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disable' in the sd_database() function."))
-    })
+            message("Successfully connected to the database.")
+            return(list(db = pool, table = table))
+        },
+        error = function(e) {
+            stop(paste(
+                "Error: Failed to connect to the database.",
+                "Details:",
+                conditionMessage(e),
+                "\nPlease check your connection details:",
+                "\n- host:    ",
+                host,
+                "\n- dbname:  ",
+                dbname,
+                "\n- port:    ",
+                port,
+                "\n- user:    ",
+                user,
+                "\nTo update password, please use surveydown::sd_set_password().",
+                "\nIf you have verified all connection details are correct but still cannot access the database, consider setting the 'gssencmode' parameter to 'disable' in the sd_database() function."
+            ))
+        }
+    )
 }

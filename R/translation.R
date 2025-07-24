@@ -33,7 +33,7 @@ get_translations_default <- function() {
             "warning" = "Warning",
             "required" = "Please answer all required questions before proceeding.",
             "rating_title" = "Before you go...",
-            "rating_text"  = "Rate your survey experience:",
+            "rating_text" = "Rate your survey experience:",
             "rating_scale" = "from 1-poor to 5-excellent",
             # ui.R
             "next" = "Next",
@@ -77,7 +77,7 @@ get_translations_default <- function() {
             "warning" = "Advertencia",
             "required" = "Por favor, responda todas las preguntas obligatorias antes de continuar.",
             "rating_title" = "Antes de irse...",
-            "rating_text"  = "Califique su experiencia en la encuesta:",
+            "rating_text" = "Califique su experiencia en la encuesta:",
             "rating_scale" = "de 1-malo a 5-excelente",
             # ui.R
             "next" = "Siguiente",
@@ -99,7 +99,7 @@ get_translations_default <- function() {
             "warning" = "Avertissement",
             "required" = "Veuillez r\u00E9pondre \u00E0 toutes les questions obligatoires avant de continuer.",
             "rating_title" = "Avant de partir...",
-            "rating_text"  = "\u00C9valuez votre exp\u00E9rience du sondage :",
+            "rating_text" = "\u00C9valuez votre exp\u00E9rience du sondage :",
             "rating_scale" = "de 1-mauvais \u00E0 5-excellent",
             # ui.R
             "next" = "Suivant",
@@ -121,7 +121,7 @@ get_translations_default <- function() {
             "warning" = "Avviso",
             "required" = "Per favore, rispondi a tutte le domande obbligatorie prima di procedere.",
             "rating_title" = "Prima di andare...",
-            "rating_text"  = "Valuta la tua esperienza con il sondaggio:",
+            "rating_text" = "Valuta la tua esperienza con il sondaggio:",
             "rating_scale" = "da 1-scarso a 5-eccellente",
             # ui.R
             "next" = "Avanti",
@@ -136,37 +136,97 @@ get_translations_default <- function() {
         ),
         "zh-CN" = list(
             #server.R
-            "cancel" = "\u53d6\u6d88",  # 取消
-            "confirm_exit" = "\u786e\u8ba4\u9000\u51fa",  # 确认退出
-            "sure_exit" = "\u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f",  # 您确认要退出吗？
-            "submit_exit" = "\u63d0\u4ea4\u5e76\u9000\u51fa",  # 提交并退出
-            "warning" = "\u8b66\u544a",  # 警告
-            "required" = "\u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002",  # 请回答所有必填问题。
-            "rating_title" = "\u7a0d\u7b49\u4e00\u4e0b\u2026",  # 稍等一下…
-            "rating_text" = "\u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a",  # 请您为此次问卷打分：
-            "rating_scale" = "1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f",  # 1为非常不满意，5为非常满意
+            "cancel" = "\u53d6\u6d88", # 取消
+            "confirm_exit" = "\u786e\u8ba4\u9000\u51fa", # 确认退出
+            "sure_exit" = "\u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f", # 您确认要退出吗？
+            "submit_exit" = "\u63d0\u4ea4\u5e76\u9000\u51fa", # 提交并退出
+            "warning" = "\u8b66\u544a", # 警告
+            "required" = "\u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002", # 请回答所有必填问题。
+            "rating_title" = "\u7a0d\u7b49\u4e00\u4e0b\u2026", # 稍等一下…
+            "rating_text" = "\u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a", # 请您为此次问卷打分：
+            "rating_scale" = "1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f", # 1为非常不满意，5为非常满意
             # ui.R
-            "next" = "\u4e0b\u4e00\u9875",  # 下一页
-            "exit" = "\u9000\u51fa\u95ee\u5377",  # 退出问卷
-            "close_tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002",  # 请手动关闭本页面。
-            "choose_option" = "\u8bf7\u9009\u62e9\u4e00\u9879\u2026",  # 请选择一项…
-            "click" = "\u5355\u51fb\u6b64\u5904",  # 单击此处
-            "redirect" = "\u8df3\u8f6c\u5012\u8ba1\u65f6",  # 跳转倒计时
-            "seconds" = "\u79d2",  # 秒
-            "new_tab" = "\u5728\u65b0\u9875\u9762\u5f00\u542f",  # 在新页面开启
-            "redirect_error" = "\u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026"  # 错误：此文本无法触发任何跳转…
+            "next" = "\u4e0b\u4e00\u9875", # 下一页
+            "exit" = "\u9000\u51fa\u95ee\u5377", # 退出问卷
+            "close_tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002", # 请手动关闭本页面。
+            "choose_option" = "\u8bf7\u9009\u62e9\u4e00\u9879\u2026", # 请选择一项…
+            "click" = "\u5355\u51fb\u6b64\u5904", # 单击此处
+            "redirect" = "\u8df3\u8f6c\u5012\u8ba1\u65f6", # 跳转倒计时
+            "seconds" = "\u79d2", # 秒
+            "new_tab" = "\u5728\u65b0\u9875\u9762\u5f00\u542f", # 在新页面开启
+            "redirect_error" = "\u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026" # 错误：此文本无法触发任何跳转…
         )
     ))
 }
 
 get_valid_languages <- function() {
     return(c(
-        "ar", "az", "bg", "bs", "ca", "cs", "cy", "da", "de", "el", "en",
-        "en-AU", "en-GB", "eo", "es", "et", "eu", "fa", "fi", "fo", "fr-CH",
-        "fr", "gl", "he", "hr", "hu", "hy", "id", "is", "it-CH", "it", "ja",
-        "ka", "kh", "kk", "ko", "kr", "lt", "lv", "me", "mk", "mn", "ms", "nb",
-        "nl-BE", "nl", "no", "pl", "pt-BR", "pt", "ro", "rs-latin", "rs", "ru",
-        "sk", "sl", "sq", "sr-latin", "sr", "sv", "sw", "th", "tr", "uk", "vi",
-        "zh-CN", "zh-TW"
+        "ar",
+        "az",
+        "bg",
+        "bs",
+        "ca",
+        "cs",
+        "cy",
+        "da",
+        "de",
+        "el",
+        "en",
+        "en-AU",
+        "en-GB",
+        "eo",
+        "es",
+        "et",
+        "eu",
+        "fa",
+        "fi",
+        "fo",
+        "fr-CH",
+        "fr",
+        "gl",
+        "he",
+        "hr",
+        "hu",
+        "hy",
+        "id",
+        "is",
+        "it-CH",
+        "it",
+        "ja",
+        "ka",
+        "kh",
+        "kk",
+        "ko",
+        "kr",
+        "lt",
+        "lv",
+        "me",
+        "mk",
+        "mn",
+        "ms",
+        "nb",
+        "nl-BE",
+        "nl",
+        "no",
+        "pl",
+        "pt-BR",
+        "pt",
+        "ro",
+        "rs-latin",
+        "rs",
+        "ru",
+        "sk",
+        "sl",
+        "sq",
+        "sr-latin",
+        "sr",
+        "sv",
+        "sw",
+        "th",
+        "tr",
+        "uk",
+        "vi",
+        "zh-CN",
+        "zh-TW"
     ))
 }

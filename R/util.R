@@ -1,6 +1,8 @@
 # Convert Markdown to HTML
 markdown_to_html <- function(text) {
-  if (is.null(text)) { return(text) }
+  if (is.null(text)) {
+    return(text)
+  }
   return(shiny::HTML(markdown::renderMarkdown(text = text)))
 }
 
@@ -33,13 +35,19 @@ list_name_md_to_html <- function(list) {
 
   # Add special folders to resource path
   folders <- c('_survey', 'images', 'css', 'js', 'www')
-  for (folder in folders) { include_folder(folder) }
+  for (folder in folders) {
+    include_folder(folder)
+  }
 
   # Print package data
-  desc  <- utils::packageDescription(pkgname, libname)
+  desc <- utils::packageDescription(pkgname, libname)
   packageStartupMessage(
-    "Version:  ", desc$Version, "\n",
-    "Author:   ", "John Paul Helveston, Pingfan Hu, Bogdan Bunea (George Washington University)", "\n\n",
+    "Version:  ",
+    desc$Version,
+    "\n",
+    "Author:   ",
+    "John Paul Helveston, Pingfan Hu, Bogdan Bunea (George Washington University)",
+    "\n\n",
     "Consider submitting praise at\n",
     "https://github.com/jhelvy/surveydown/issues/41.\n\n",
     "Please cite our package in your publications, see:\ncitation(\"surveydown\")\n"
@@ -48,14 +56,18 @@ list_name_md_to_html <- function(list) {
 
 survey_file_exists <- function() {
   files <- basename(list.files(full.names = TRUE))
-  if ("survey.qmd" %in% files) { return(TRUE) }
+  if ("survey.qmd" %in% files) {
+    return(TRUE)
+  }
   return(FALSE)
 }
 
 app_file_exists <- function() {
-    files <- basename(list.files(full.names = TRUE))
-    if ("app.R" %in% files) { return(TRUE) }
-    return(FALSE)
+  files <- basename(list.files(full.names = TRUE))
+  if ("app.R" %in% files) {
+    return(TRUE)
+  }
+  return(FALSE)
 }
 
 check_files_missing <- function() {
@@ -129,12 +141,20 @@ sd_include_folder <- function(folder) {
   pre_included_folders <- names(shiny::resourcePaths())
 
   if (folder %in% pre_included_folders) {
-    message(paste("The folder", folder, "is already included by the package. No action needed."))
+    message(paste(
+      "The folder",
+      folder,
+      "is already included by the package. No action needed."
+    ))
     return(invisible(NULL))
   }
 
   if (!dir.exists(folder)) {
-    stop(paste("The folder", folder, "does not exist in the current directory."))
+    stop(paste(
+      "The folder",
+      folder,
+      "does not exist in the current directory."
+    ))
   }
 
   shiny::addResourcePath(folder, folder)
@@ -145,12 +165,14 @@ sd_include_folder <- function(folder) {
 
 # Convert Vector to JSON Array
 vector_to_json_array <- function(vec) {
-  if (length(vec) == 0) return("[]")
+  if (length(vec) == 0) {
+    return("[]")
+  }
 
   # Ensure all elements are properly quoted
   quoted_elements <- sapply(vec, function(x) {
     if (is.character(x)) {
-      sprintf('"%s"', gsub('"', '\\"', x))  # Escape any quotes within strings
+      sprintf('"%s"', gsub('"', '\\"', x)) # Escape any quotes within strings
     } else {
       as.character(x)
     }
@@ -227,7 +249,7 @@ tibble_to_list_of_lists <- function(tbl) {
 #' if (interactive()) {
 #'   # Create a survey with the "question_types" template in the "my_survey" directory
 #'   sd_create_survey(template = "question_types", path = "my_survey")
-#' 
+#'
 #'   # Create a survey using the default template in the "my_survey" directory
 #'   sd_create_survey(path = "my_survey")
 #'
@@ -261,11 +283,17 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
 
   # Check if template is valid
   if (!template %in% available_templates) {
-    stop("Invalid template. Available templates are: ",
-         paste(available_templates, collapse = ", "))
+    stop(
+      "Invalid template. Available templates are: ",
+      paste(available_templates, collapse = ", ")
+    )
   }
 
-  if (ask && path == getwd() && !yesno(paste0('Use the current directory "', path, '" as the path?'))) {
+  if (
+    ask &&
+      path == getwd() &&
+      !yesno(paste0('Use the current directory "', path, '" as the path?'))
+  ) {
     stop("Operation aborted by the user.")
   }
 
@@ -284,7 +312,11 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
     stop("Template directory does not exist.")
   }
 
-  template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
+  template_files <- list.files(
+    template_path,
+    full.names = TRUE,
+    recursive = TRUE
+  )
 
   files_copied <- sapply(template_files, function(file) {
     relative_path <- sub(template_path, "", file)
@@ -295,13 +327,23 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
     file_name <- basename(file)
 
     # Special handling for .Rproj files - skip if one already exists
-    if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
-      warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
+    if (
+      grepl("\\.Rproj$", file_name) &&
+        length(list.files(path, pattern = "\\.Rproj$"))
+    ) {
+      warning(
+        "Skipping the .Rproj file since one already exists.",
+        call. = FALSE,
+        immediate. = TRUE
+      )
       return(FALSE)
-    }
-    # For other files, prompt for confirmation if they already exist
-    else if (file.exists(target_file)) {
-      overwrite <- yesno(paste0("File '", file_name, "' already exists. Overwrite it"))
+    } else if (file.exists(target_file)) {
+      # For other files, prompt for confirmation if they already exist
+      overwrite <- yesno(paste0(
+        "File '",
+        file_name,
+        "' already exists. Overwrite it"
+      ))
       if (overwrite) {
         file.copy(from = file, to = target_file, overwrite = TRUE)
         message(paste("Overwriting", file_name))
@@ -393,25 +435,25 @@ question_templates <- function(type = "mc") {
   )
 )
 ',
-  text = 'sd_question(
+    text = 'sd_question(
   type  = "text",
   id    = "text_id",
   label = "text_label"
 )
 ',
-textarea = 'sd_question(
+    textarea = 'sd_question(
   type  = "textarea",
   id    = "textarea_id",
   label = "textarea_label"
 )
 ',
-numeric = 'sd_question(
+    numeric = 'sd_question(
   type  = "numeric",
   id    = "numeric_id",
   label = "numeric_label"
 )
 ',
-mc_buttons = 'sd_question(
+    mc_buttons = 'sd_question(
   type   = "mc_buttons",
   id     = "mc_buttons_id",
   label  = "mc_buttons_label",
@@ -421,7 +463,7 @@ mc_buttons = 'sd_question(
   )
 )
 ',
-mc_multiple = 'sd_question(
+    mc_multiple = 'sd_question(
   type  = "mc_multiple",
   id    = "mc_multiple_id",
   label = "mc_multiple_label",
@@ -431,7 +473,7 @@ mc_multiple = 'sd_question(
   )
 )
 ',
-mc_multiple_buttons = 'sd_question(
+    mc_multiple_buttons = 'sd_question(
   type  = "mc_multiple_buttons",
   id    = "mc_multiple_buttons_id",
   label = "mc_multiple_buttons_label",
@@ -441,7 +483,7 @@ mc_multiple_buttons = 'sd_question(
   )
 )
 ',
-select = 'sd_question(
+    select = 'sd_question(
   type  = "select",
   id    = "select_id",
   label = "select_label",
@@ -451,7 +493,7 @@ select = 'sd_question(
   )
 )
 ',
-slider = 'sd_question(
+    slider = 'sd_question(
   type  = "slider",
   id    = "slider_id",
   label = "slider_label",
@@ -462,14 +504,14 @@ slider = 'sd_question(
   )
 )
 ',
-slider_numeric = 'sd_question(
+    slider_numeric = 'sd_question(
   type  = "slider_numeric",
   id    = "slider_numeric_id",
   label = "slider_numeric_label",
   option = seq(0, 10, 1)
 )
 ',
-slider_numeric_2 = 'sd_question(
+    slider_numeric_2 = 'sd_question(
   type  = "slider_numeric",
   id    = "slider_numeric_id",
   label = "slider_numeric_label",
@@ -477,13 +519,13 @@ slider_numeric_2 = 'sd_question(
   default = c(3, 5)
 )
 ',
-date = 'sd_question(
+    date = 'sd_question(
   type  = "date",
   id    = "date_id",
   label = "date_label"
 )
 ',
-daterange = 'sd_question(
+    daterange = 'sd_question(
   type  = "daterange",
   id    = "daterange_id",
   label = "daterange_label"
@@ -491,7 +533,7 @@ daterange = 'sd_question(
 '
   )
 
-return(templates[[type]])
+  return(templates[[type]])
 }
 
 #' Add a Question Template to the Current Document
@@ -550,47 +592,52 @@ return(templates[[type]])
 #' }
 #'
 #' @export
-sd_add_question <- function(type = "mc", id = NULL, label = NULL, chunk = FALSE) {
-    # Get the template
-    template <- question_templates(type)
+sd_add_question <- function(
+  type = "mc",
+  id = NULL,
+  label = NULL,
+  chunk = FALSE
+) {
+  # Get the template
+  template <- question_templates(type)
 
-    # Replace the default ID with the provided ID if it's not NULL
-    if (!is.null(id) && id != "") {
-        # Replace the default ID in the template with the provided ID
-        template <- gsub(paste0(type, "_id"), id, template)
-    }
+  # Replace the default ID with the provided ID if it's not NULL
+  if (!is.null(id) && id != "") {
+    # Replace the default ID in the template with the provided ID
+    template <- gsub(paste0(type, "_id"), id, template)
+  }
 
-    # Replace the default label with the provided label if it's not NULL
-    if (!is.null(label) && label != "") {
-        # Replace the default label in the template with the provided label
-        template <- gsub(paste0(type, "_label"), label, template)
-    }
+  # Replace the default label with the provided label if it's not NULL
+  if (!is.null(label) && label != "") {
+    # Replace the default label in the template with the provided label
+    template <- gsub(paste0(type, "_label"), label, template)
+  }
 
-    if (chunk) {
-        template <- paste0("```{r}\n", template, "```\n")
-    }
+  if (chunk) {
+    template <- paste0("```{r}\n", template, "```\n")
+  }
 
-    # Get the current document context
+  # Get the current document context
+  context <- rstudioapi::getActiveDocumentContext()
+  # Get all lines of the document
+  lines <- context$contents
+  # Find the line containing the function call
+  call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+
+  if (length(call_line) > 0) {
+    # Remove the line containing the function call
+    rstudioapi::modifyRange(
+      c(call_line, 1, call_line + 1, 1),
+      ""
+    )
+    # Update the context after removal
     context <- rstudioapi::getActiveDocumentContext()
-    # Get all lines of the document
-    lines <- context$contents
-    # Find the line containing the function call
-    call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+  }
 
-    if (length(call_line) > 0) {
-        # Remove the line containing the function call
-        rstudioapi::modifyRange(
-            c(call_line, 1, call_line + 1, 1),
-            ""
-        )
-        # Update the context after removal
-        context <- rstudioapi::getActiveDocumentContext()
-    }
-
-    # Get the current cursor position
-    cursor <- context$selection[[1]]$range$start
-    # Insert the template
-    rstudioapi::insertText(location = cursor, text = template)
+  # Get the current cursor position
+  cursor <- context$selection[[1]]$range$start
+  # Insert the template
+  rstudioapi::insertText(location = cursor, text = template)
 }
 
 #' Show a Shiny gadget for selecting a question type
@@ -608,26 +655,27 @@ sd_add_question <- function(type = "mc", id = NULL, label = NULL, chunk = FALSE)
 #' @export
 #'
 sd_question_gadget <- function(chunk = FALSE) {
-    # Get all available question types (in alphabetical order)
-    question_types <- c(
-        "Date" = "date",
-        "Date Range" = "daterange",
-        "Multiple Choice" = "mc",
-        "Multiple Choice (Multiple Selection)" = "mc_multiple",
-        "Multiple Choice Buttons" = "mc_buttons",
-        "Multiple Choice Buttons (Multiple Selection)" = "mc_multiple_buttons",
-        "Numeric Input" = "numeric",
-        "Select Dropdown" = "select",
-        "Slider" = "slider",
-        "Slider Numeric" = "slider_numeric",
-        "Slider Numeric Range" = "slider_numeric_2",
-        "Text Area" = "textarea",
-        "Text Input" = "text"
-    )
+  # Get all available question types (in alphabetical order)
+  question_types <- c(
+    "Date" = "date",
+    "Date Range" = "daterange",
+    "Multiple Choice" = "mc",
+    "Multiple Choice (Multiple Selection)" = "mc_multiple",
+    "Multiple Choice Buttons" = "mc_buttons",
+    "Multiple Choice Buttons (Multiple Selection)" = "mc_multiple_buttons",
+    "Numeric Input" = "numeric",
+    "Select Dropdown" = "select",
+    "Slider" = "slider",
+    "Slider Numeric" = "slider_numeric",
+    "Slider Numeric Range" = "slider_numeric_2",
+    "Text Area" = "textarea",
+    "Text Input" = "text"
+  )
 
-    ui <- miniUI::miniPage(
-        shiny::tags$head(
-            shiny::tags$script(shiny::HTML("
+  ui <- miniUI::miniPage(
+    shiny::tags$head(
+      shiny::tags$script(shiny::HTML(
+        "
         $(document).ready(function() {
           // Add event listener for Enter key
           $(document).keypress(function(e) {
@@ -637,86 +685,91 @@ sd_question_gadget <- function(chunk = FALSE) {
             }
           });
         });
-      "))
-        ),
-        miniUI::gadgetTitleBar("Add Survey Question"),
-        miniUI::miniContentPanel(
-            shiny::selectInput(
-                "question_type",
-                "Question Type:",
-                choices = question_types,
-                selected = "mc"
-            ),
-            shiny::textInput(
-                "question_id",
-                "Question ID:",
-                value = "",
-                placeholder = "Enter a unique question ID without spaces"
-            ),
-            shiny::textInput(
-                "question_label",
-                "Question Label:",
-                value = "",
-                placeholder = "Enter the question text to display to respondents"
-            ),
-            shiny::checkboxInput(
-                "in_chunk",
-                "Insert in R code chunk",
-                value = FALSE
-            ),
-            shiny::actionButton("submit", "Create Question", class = "btn-primary")
-        )
+      "
+      ))
+    ),
+    miniUI::gadgetTitleBar("Add Survey Question"),
+    miniUI::miniContentPanel(
+      shiny::selectInput(
+        "question_type",
+        "Question Type:",
+        choices = question_types,
+        selected = "mc"
+      ),
+      shiny::textInput(
+        "question_id",
+        "Question ID:",
+        value = "",
+        placeholder = "Enter a unique question ID without spaces"
+      ),
+      shiny::textInput(
+        "question_label",
+        "Question Label:",
+        value = "",
+        placeholder = "Enter the question text to display to respondents"
+      ),
+      shiny::checkboxInput(
+        "in_chunk",
+        "Insert in R code chunk",
+        value = FALSE
+      ),
+      shiny::actionButton("submit", "Create Question", class = "btn-primary")
     )
+  )
 
-    server <- function(input, output, session) {
-        # When submit button is clicked
-        shiny::observeEvent(input$submit, {
-            # Get the selected question type, ID, and label
-            q_type <- input$question_type
-            q_id <- input$question_id
-            q_label <- input$question_label
-            use_chunk <- input$in_chunk
+  server <- function(input, output, session) {
+    # When submit button is clicked
+    shiny::observeEvent(input$submit, {
+      # Get the selected question type, ID, and label
+      q_type <- input$question_type
+      q_id <- input$question_id
+      q_label <- input$question_label
+      use_chunk <- input$in_chunk
 
-            # Validate the question ID (simple validation)
-            if (q_id == "") {
-                shiny::showNotification("Question ID cannot be empty", type = "error")
-                return()
-            }
+      # Validate the question ID (simple validation)
+      if (q_id == "") {
+        shiny::showNotification("Question ID cannot be empty", type = "error")
+        return()
+      }
 
-            # Close the gadget and return the values
-            shiny::stopApp(list(
-                type = q_type,
-                id = q_id,
-                label = q_label,
-                chunk = use_chunk
-            ))
-        })
+      # Close the gadget and return the values
+      shiny::stopApp(list(
+        type = q_type,
+        id = q_id,
+        label = q_label,
+        chunk = use_chunk
+      ))
+    })
 
-        # Also handle the "Done" button in the title bar
-        shiny::observeEvent(input$done, {
-            shiny::stopApp(NULL)  # Return NULL if canceled
-        })
-    }
+    # Also handle the "Done" button in the title bar
+    shiny::observeEvent(input$done, {
+      shiny::stopApp(NULL) # Return NULL if canceled
+    })
+  }
 
-    # Run the gadget with a dialog viewer
-    result <- shiny::runGadget(
-        ui,
-        server,
-        viewer = shiny::dialogViewer("Add Survey Question", width = 400, height = 480)
+  # Run the gadget with a dialog viewer
+  result <- shiny::runGadget(
+    ui,
+    server,
+    viewer = shiny::dialogViewer(
+      "Add Survey Question",
+      width = 400,
+      height = 480
     )
+  )
 
-    # If a valid result was returned, call sd_add_question
-    if (!is.null(result)) {
-        sd_add_question(
-            type = result$type,
-            id = result$id,
-            label = result$label,
-            chunk = result$chunk
-        )
-    }
+  # If a valid result was returned, call sd_add_question
+  if (!is.null(result)) {
+    sd_add_question(
+      type = result$type,
+      id = result$id,
+      label = result$label,
+      chunk = result$chunk
+    )
+  }
 
-    # Return the question type invisibly
-    invisible(if (!is.null(result)) result$type else NULL)
+  # Return the question type invisibly
+  invisible(if (!is.null(result)) result$type else NULL)
 }
 
 #' Add a Page Template to the Current Document
@@ -768,7 +821,6 @@ sd_question_gadget <- function(chunk = FALSE) {
 #'
 #' @export
 sd_add_page <- function(page_id = "page_id") {
-
   # Different template for end page
   if (page_id == "end") {
     template <- '::: {.sd_page id=end}
@@ -784,7 +836,8 @@ sd_close()
 
 '
   } else {
-    template <- sprintf('::: {.sd_page id=%s}
+    template <- sprintf(
+      '::: {.sd_page id=%s}
 
 Add page contents...
 
@@ -797,7 +850,9 @@ sd_next()
 
 :::
 
-', page_id)
+',
+      page_id
+    )
   }
 
   # Get the current document context
@@ -837,7 +892,8 @@ sd_next()
 sd_page_gadget <- function() {
   ui <- miniUI::miniPage(
     shiny::tags$head(
-      shiny::tags$script(shiny::HTML("
+      shiny::tags$script(shiny::HTML(
+        "
         $(document).ready(function() {
           // Set focus to the page_id input when the gadget loads
           $('#page_id').focus();
@@ -850,7 +906,8 @@ sd_page_gadget <- function() {
             }
           });
         });
-      "))
+      "
+      ))
     ),
     miniUI::gadgetTitleBar("Add Survey Page"),
     miniUI::miniContentPanel(
@@ -883,7 +940,7 @@ sd_page_gadget <- function() {
 
     # Also handle the "Done" button in the title bar
     shiny::observeEvent(input$done, {
-      shiny::stopApp(NULL)  # Return NULL if canceled
+      shiny::stopApp(NULL) # Return NULL if canceled
     })
   }
 
@@ -921,22 +978,35 @@ sd_version <- function() {
   local_surveydown_version <- utils::packageVersion("surveydown")
 
   # Get latest online version
-  latest_surveydown_version <- get_latest_version("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
+  latest_surveydown_version <- get_latest_version(
+    "https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION",
+    "Version: "
+  )
 
   # Display version information
   message("surveydown (local): ", local_surveydown_version)
-  message("surveydown (latest): ",
-          if(is.null(latest_surveydown_version)) "Unable to fetch" else latest_surveydown_version)
+  message(
+    "surveydown (latest): ",
+    if (is.null(latest_surveydown_version)) {
+      "Unable to fetch"
+    } else {
+      latest_surveydown_version
+    }
+  )
 
   # Check if update is needed
   if (is.null(latest_surveydown_version)) {
     message("\nUnable to determine if an update is available.")
-    message("Please ensure you have an active internet connection and try again later.")
+    message(
+      "Please ensure you have an active internet connection and try again later."
+    )
   } else {
     pkg_needs_update <- local_surveydown_version < latest_surveydown_version
 
     if (pkg_needs_update) {
-      message("\nAn update is available. To update surveydown to the latest version, run: pak::pak('surveydown-dev/surveydown')")
+      message(
+        "\nAn update is available. To update surveydown to the latest version, run: pak::pak('surveydown-dev/surveydown')"
+      )
     } else {
       message("\nsurveydown is up to date.")
     }
@@ -944,20 +1014,28 @@ sd_version <- function() {
 }
 
 get_latest_version <- function(url, pattern) {
-  tryCatch({
-    content <- readLines(url)
-    version_line <- grep(pattern, content, value = TRUE)
-    if (length(version_line) > 0) {
-      version <- sub(pattern, "", version_line[1])
-      return(package_version(trimws(version)))
-    } else {
-      message("Version information not found in the file at ", url)
+  tryCatch(
+    {
+      content <- readLines(url)
+      version_line <- grep(pattern, content, value = TRUE)
+      if (length(version_line) > 0) {
+        version <- sub(pattern, "", version_line[1])
+        return(package_version(trimws(version)))
+      } else {
+        message("Version information not found in the file at ", url)
+        return(NULL)
+      }
+    },
+    error = function(e) {
+      message(
+        "Error occurred while fetching version from ",
+        url,
+        ": ",
+        e$message
+      )
       return(NULL)
     }
-  }, error = function(e) {
-    message("Error occurred while fetching version from ", url, ": ", e$message)
-    return(NULL)
-  })
+  )
 }
 
 #' Create a translations template file
@@ -1010,9 +1088,12 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   } else {
     template[[language]] <- translations[["en"]]
     message(
-      "No default messages available for '", language,
+      "No default messages available for '",
+      language,
       "'. surveydown currently only provides default translations for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
-      "Using English messages with ", language, " date picker.\n"
+      "Using English messages with ",
+      language,
+      " date picker.\n"
     )
   }
 
@@ -1037,8 +1118,11 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   yaml_content <- paste0(header, yaml::as.yaml(template))
   writeLines(yaml_content, con = file_path)
   message(
-    "Created translations template at: ", file_path,
-    "\n\nModify it to provide custom messages in '", language, "'."
+    "Created translations template at: ",
+    file_path,
+    "\n\nModify it to provide custom messages in '",
+    language,
+    "'."
   )
   invisible(NULL)
 }
@@ -1066,9 +1150,9 @@ try_db_connection <- function(params, gss_mode) {
       cli::cli_alert_warning(
         "Invalid 'gssencmode' setting. Must be set to 'auto', 'prefer', 'disable', or NULL...setting to 'auto'"
       )
-      conn_args$gssencmode <- "prefer"  # Use prefer for auto mode
+      conn_args$gssencmode <- "prefer" # Use prefer for auto mode
     } else if (gss_mode == "auto") {
-      conn_args$gssencmode <- "prefer"  # Auto mode starts with prefer
+      conn_args$gssencmode <- "prefer" # Auto mode starts with prefer
     } else {
       conn_args$gssencmode <- gss_mode
     }
@@ -1082,33 +1166,100 @@ try_db_connection <- function(params, gss_mode) {
   do.call(pool::dbPool, conn_args)
 }
 
+# Parse user agent string to extract browser information
+parse_user_agent <- function(user_agent) {
+  if (is.null(user_agent) || user_agent == "") {
+    return(list(browser = "Unknown", version = "Unknown", os = "Unknown"))
+  }
+  
+  # Browser detection patterns (order matters - more specific first)
+  browser_patterns <- list(
+    "Electron" = "Electron/([0-9]+)",
+    "Edge" = "Edge?/([0-9]+)", 
+    "Chrome" = "Chrome/([0-9]+)",
+    "Firefox" = "Firefox/([0-9]+)",
+    "Safari" = "Version/([0-9]+).*Safari",
+    "Opera" = "Opera/([0-9]+)|OPR/([0-9]+)",
+    "Internet Explorer" = "MSIE ([0-9]+)|Trident.*rv:([0-9]+)"
+  )
+  
+  # OS detection patterns (more comprehensive and matching uaparserjs format)
+  os_patterns <- list(
+    "Mac OS X" = "Mac OS X ([0-9._]+)",
+    "iOS" = "iPhone OS ([0-9._]+)|iOS ([0-9._]+)",
+    "Windows" = "Windows NT ([0-9.]+)",
+    "Android" = "Android ([0-9.]+)",
+    "Linux" = "Linux",
+    "Ubuntu" = "Ubuntu"
+  )
+  
+  # Extract browser and version
+  browser <- "Unknown"
+  version <- "Unknown"
+  for (name in names(browser_patterns)) {
+    pattern <- browser_patterns[[name]]
+    match <- regexpr(pattern, user_agent, perl = TRUE)
+    if (match > 0) {
+      browser <- name
+      version_match <- regmatches(user_agent, match)
+      # Extract the first number found in the match
+      version_num <- regmatches(version_match, regexpr("[0-9]+", version_match))
+      if (length(version_num) > 0) {
+        version <- version_num[1]
+      }
+      break
+    }
+  }
+  
+  # Extract OS
+  os <- "Unknown"
+  for (name in names(os_patterns)) {
+    if (grepl(os_patterns[[name]], user_agent, ignore.case = TRUE)) {
+      os <- name
+      break
+    }
+  }
+  
+  return(list(browser = browser, version = version, os = os))
+}
+
 # Replaces usethis::ui_yeah, inspired by internal yesno function in devtools
 yesno <- function(msg) {
-    # Define fun options for yes/no
-    yeses <- c("Yes", "Definitely", "For sure", "Yup", "Yeah", "Of course", "Absolutely")
-    nos <- c("No way", "Not yet", "I forget", "No", "Nope", "Uhhhh... Maybe?")
+  # Define fun options for yes/no
+  yeses <- c(
+    "Yes",
+    "Definitely",
+    "For sure",
+    "Yup",
+    "Yeah",
+    "Of course",
+    "Absolutely"
+  )
+  nos <- c("No way", "Not yet", "I forget", "No", "Nope", "Uhhhh... Maybe?")
 
-    # Ensure message ends with question mark
-    if (!grepl("\\?\\s*$", msg)) {
-        msg <- paste0(msg, "?")
-    }
+  # Ensure message ends with question mark
+  if (!grepl("\\?\\s*$", msg)) {
+    msg <- paste0(msg, "?")
+  }
 
-    # Display the message
-    cli::cli_inform(msg)
+  # Display the message
+  cli::cli_inform(msg)
 
-    # Create random options (1 yes, 2 no) and shuffle them
-    qs <- c(sample(yeses, 1), sample(nos, 2))
-    rand <- sample(length(qs))
+  # Create random options (1 yes, 2 no) and shuffle them
+  qs <- c(sample(yeses, 1), sample(nos, 2))
+  rand <- sample(length(qs))
 
-    # Display menu and get response
-    selection <- utils::menu(qs[rand])
+  # Display menu and get response
+  selection <- utils::menu(qs[rand])
 
-    # If nothing was selected (0), return FALSE
-    if (selection == 0) return(FALSE)
+  # If nothing was selected (0), return FALSE
+  if (selection == 0) {
+    return(FALSE)
+  }
 
-    # Find which index corresponds to the yes option
-    yes_position <- which(rand == 1)
+  # Find which index corresponds to the yes option
+  yes_position <- which(rand == 1)
 
-    # Return TRUE if the yes option was selected
-    return(selection == yes_position)
+  # Return TRUE if the yes option was selected
+  return(selection == yes_position)
 }
