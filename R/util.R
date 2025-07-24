@@ -1166,6 +1166,40 @@ try_db_connection <- function(params, gss_mode) {
   do.call(pool::dbPool, conn_args)
 }
 
+# Get client IP address from various headers (handles proxies/load balancers)
+get_client_ip <- function(request) {
+  # List of headers to check in order of preference
+  ip_headers <- c(
+    "HTTP_X_FORWARDED_FOR",
+    "HTTP_X_REAL_IP", 
+    "HTTP_CF_CONNECTING_IP",  # Cloudflare
+    "HTTP_X_CLUSTER_CLIENT_IP",
+    "HTTP_X_FORWARDED",
+    "HTTP_FORWARDED_FOR",
+    "HTTP_FORWARDED",
+    "REMOTE_ADDR"
+  )
+  
+  for (header in ip_headers) {
+    ip <- request[[header]]
+    if (!is.null(ip) && ip != "") {
+      # X-Forwarded-For can contain multiple IPs, take the first one
+      if (header == "HTTP_X_FORWARDED_FOR") {
+        ip <- trimws(strsplit(ip, ",")[[1]][1])
+      }
+      
+      # Skip localhost/private IPs unless it's the only option
+      if (!ip %in% c("127.0.0.1", "::1") && 
+          !grepl("^10\\.|^172\\.(1[6-9]|2[0-9]|3[01])\\.|^192\\.168\\.", ip)) {
+        return(ip)
+      }
+    }
+  }
+  
+  # Fallback to REMOTE_ADDR even if it's localhost
+  return(request$REMOTE_ADDR)
+}
+
 # Parse user agent string to extract browser information
 parse_user_agent <- function(user_agent) {
   if (is.null(user_agent) || user_agent == "") {

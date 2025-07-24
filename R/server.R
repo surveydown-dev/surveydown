@@ -218,8 +218,8 @@ sd_server <- function(
             session$userData$stored_values[["browser"]] <- browser_info
         }
 
-        # Capture IP address
-        ip_address <- session$request$REMOTE_ADDR
+        # Capture IP address (try multiple headers for proxy/load balancer scenarios)
+        ip_address <- get_client_ip(session$request)
         if (!is.null(ip_address)) {
             session$userData$stored_values[["ip_address"]] <- ip_address
         }
@@ -262,7 +262,6 @@ sd_server <- function(
             "\n"
         )
     })
-
 
     # 2. show_if conditions ----
 
@@ -492,7 +491,6 @@ sd_server <- function(
     shiny::isolate({
         update_data()
     })
-    
 
     # 5. Main question observers ----
 
