@@ -1209,6 +1209,11 @@ parse_user_agent <- function(user_agent) {
   # Browser detection patterns (order matters - more specific first)
   browser_patterns <- list(
     "Electron" = "Electron/([0-9]+)",
+    "Google App" = "GSA/([0-9]+)",  # Google Search App
+    "Chrome Mobile" = "CriOS/([0-9]+)",  # Chrome iOS app
+    "Firefox Mobile" = "FxiOS/([0-9]+)",  # Firefox iOS app
+    "Edge Mobile" = "EdgiOS/([0-9]+)",  # Edge iOS app
+    "Opera Mobile" = "OPiOS/([0-9]+)",  # Opera iOS app
     "Edge" = "Edge?/([0-9]+)", 
     "Chrome" = "Chrome/([0-9]+)",
     "Firefox" = "Firefox/([0-9]+)",
