@@ -2021,8 +2021,39 @@ sd_output <- function(
   ...
 ) {
   if (is.null(type)) {
-    # If only id is provided, behave like shiny::uiOutput
-    return(shiny::uiOutput(id, inline = inline, ...))
+    # Enhanced version with reactive output caching and restoration
+    output_element <- shiny::uiOutput(id, inline = inline, ...)
+    
+    # Add JavaScript to cache and restore reactive output
+    js_cache_restore <- sprintf(
+      "
+      $(document).ready(function() {
+        var id = '%s', key = 'surveydown_output_' + id;
+        
+        function save() {
+          var content = $('#' + id).html();
+          if (content && content.trim()) localStorage.setItem(key, content);
+        }
+        
+        function restore() {
+          var saved = localStorage.getItem(key);
+          var el = $('#' + id);
+          if (saved && el.length && !el.html().trim()) el.html(saved);
+        }
+        
+        setTimeout(restore, 100);
+        new MutationObserver(function() { setTimeout(save, 200); })
+          .observe(document.getElementById(id) || document.body, {childList: true, subtree: true});
+        $(window).on('beforeunload', save);
+      });
+      ",
+      id
+    )
+    
+    return(shiny::tagList(
+      output_element,
+      shiny::tags$script(htmltools::HTML(js_cache_restore))
+    ))
   }
 
   if (type == "question") {
