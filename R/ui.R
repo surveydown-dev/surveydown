@@ -2020,13 +2020,57 @@ sd_output <- function(
   wrapper = NULL,
   ...
 ) {
+  # Use localStorage for reactive output restoration (simpler approach)
+  js_localStorage_restore <- sprintf(
+    "
+    $(document).ready(function() {
+      var id = '%s', key = 'surveydown_reactive_' + id;
+      
+      function save() {
+        var content = $('#' + id).html();
+        if (content && content.trim()) {
+          try {
+            localStorage.setItem(key, content);
+          } catch(e) {
+            console.warn('Could not save to localStorage:', e);
+          }
+        }
+      }
+      
+      function restore() {
+        try {
+          var saved = localStorage.getItem(key);
+          var el = $('#' + id);
+          if (saved && el.length && !el.html().trim()) {
+            el.html(saved);
+          }
+        } catch(e) {
+          console.warn('Could not restore from localStorage:', e);
+        }
+      }
+      
+      setTimeout(restore, 100);
+      new MutationObserver(function() { setTimeout(save, 200); })
+        .observe(document.getElementById(id) || document.body, {childList: true, subtree: true});
+      $(window).on('beforeunload', save);
+    });
+    ",
+    id
+  )
+  
   if (is.null(type)) {
-    # If only id is provided, behave like shiny::uiOutput
-    return(shiny::uiOutput(id, inline = inline, ...))
+    output_element <- shiny::uiOutput(id, inline = inline, ...)
+    return(shiny::tagList(
+      output_element,
+      shiny::tags$script(htmltools::HTML(js_localStorage_restore))
+    ))
   }
 
   if (type == "question") {
-    return(make_question_container(id, shiny::uiOutput(id), width))
+    return(shiny::tagList(
+      make_question_container(id, shiny::uiOutput(id), width),
+      shiny::tags$script(htmltools::HTML(js_localStorage_restore))
+    ))
   }
 
   if (type %in% c("value", "label_option", "label_question")) {
