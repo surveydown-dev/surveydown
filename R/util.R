@@ -1171,15 +1171,15 @@ get_client_ip <- function(request) {
   # List of headers to check in order of preference
   ip_headers <- c(
     "HTTP_X_FORWARDED_FOR",
-    "HTTP_X_REAL_IP", 
-    "HTTP_CF_CONNECTING_IP",  # Cloudflare
+    "HTTP_X_REAL_IP",
+    "HTTP_CF_CONNECTING_IP", # Cloudflare
     "HTTP_X_CLUSTER_CLIENT_IP",
     "HTTP_X_FORWARDED",
     "HTTP_FORWARDED_FOR",
     "HTTP_FORWARDED",
     "REMOTE_ADDR"
   )
-  
+
   for (header in ip_headers) {
     ip <- request[[header]]
     if (!is.null(ip) && ip != "") {
@@ -1187,15 +1187,17 @@ get_client_ip <- function(request) {
       if (header == "HTTP_X_FORWARDED_FOR") {
         ip <- trimws(strsplit(ip, ",")[[1]][1])
       }
-      
+
       # Skip localhost/private IPs unless it's the only option
-      if (!ip %in% c("127.0.0.1", "::1") && 
-          !grepl("^10\\.|^172\\.(1[6-9]|2[0-9]|3[01])\\.|^192\\.168\\.", ip)) {
+      if (
+        !ip %in% c("127.0.0.1", "::1") &&
+          !grepl("^10\\.|^172\\.(1[6-9]|2[0-9]|3[01])\\.|^192\\.168\\.", ip)
+      ) {
         return(ip)
       }
     }
   }
-  
+
   # Fallback to REMOTE_ADDR even if it's localhost
   return(request$REMOTE_ADDR)
 }
@@ -1205,23 +1207,23 @@ parse_user_agent <- function(user_agent) {
   if (is.null(user_agent) || user_agent == "") {
     return(list(browser = "Unknown", version = "Unknown", os = "Unknown"))
   }
-  
+
   # Browser detection patterns (order matters - more specific first)
   browser_patterns <- list(
     "Electron" = "Electron/([0-9]+)",
-    "Chrome Mobile" = "CriOS/([0-9]+)",  # Chrome iOS app - check this first
-    "Google App" = "GSA/([0-9]+).*(?!CriOS)",  # Google Search App (but not if CriOS is present)
-    "Firefox Mobile" = "FxiOS/([0-9]+)",  # Firefox iOS app
-    "Edge Mobile" = "EdgiOS/([0-9]+)",  # Edge iOS app
-    "Opera Mobile" = "OPiOS/([0-9]+)",  # Opera iOS app
-    "Edge" = "Edge?/([0-9]+)", 
+    "Chrome Mobile" = "CriOS/([0-9]+)", # Chrome iOS app - check this first
+    "Google App" = "GSA/([0-9]+).*(?!CriOS)", # Google Search App (but not if CriOS is present)
+    "Firefox Mobile" = "FxiOS/([0-9]+)", # Firefox iOS app
+    "Edge Mobile" = "EdgiOS/([0-9]+)", # Edge iOS app
+    "Opera Mobile" = "OPiOS/([0-9]+)", # Opera iOS app
+    "Edge" = "Edge?/([0-9]+)",
     "Chrome" = "Chrome/([0-9]+)",
     "Firefox" = "Firefox/([0-9]+)",
     "Safari" = "Version/([0-9]+).*Safari",
     "Opera" = "Opera/([0-9]+)|OPR/([0-9]+)",
     "Internet Explorer" = "MSIE ([0-9]+)|Trident.*rv:([0-9]+)"
   )
-  
+
   # OS detection patterns (more comprehensive and matching uaparserjs format)
   os_patterns <- list(
     "Mac OS X" = "Mac OS X ([0-9._]+)",
@@ -1231,7 +1233,7 @@ parse_user_agent <- function(user_agent) {
     "Linux" = "Linux",
     "Ubuntu" = "Ubuntu"
   )
-  
+
   # Extract browser and version
   browser <- "Unknown"
   version <- "Unknown"
@@ -1249,7 +1251,7 @@ parse_user_agent <- function(user_agent) {
       break
     }
   }
-  
+
   # Extract OS
   os <- "Unknown"
   for (name in names(os_patterns)) {
@@ -1258,7 +1260,7 @@ parse_user_agent <- function(user_agent) {
       break
     }
   }
-  
+
   return(list(browser = browser, version = version, os = os))
 }
 
@@ -1301,4 +1303,129 @@ yesno <- function(msg) {
 
   # Return TRUE if the yes option was selected
   return(selection == yes_position)
+}
+
+#' Session-aware Sampling Function
+#'
+#' This function performs sampling that persists across page refreshes within the same
+#' user session. Unlike the base `sample()` function which generates new random values
+#' each time it's called, `sd_sample()` will return the same sampled value for a given
+#' session, ensuring consistency when users refresh survey pages.
+#'
+#' @param x A vector of one or more elements from which to choose, or a positive integer.
+#' @param size A non-negative integer giving the number of items to choose. Defaults to 1.
+#' @param replace Should sampling be with replacement? Defaults to FALSE.
+#' @param prob A vector of probability weights for obtaining the elements of the vector
+#'   being sampled. Defaults to NULL (uniform probabilities).
+#' @param id A character string specifying a unique identifier for this sampling operation.
+#'   If not provided, a default ID based on the call will be generated. Use different IDs
+#'   if you have multiple `sd_sample()` calls that should be independent.
+#' @param db Optional database connection object. If provided, uses this connection instead
+#'   of looking for one in session$userData$db. This allows the function to work before
+#'   sd_server() has been called.
+#'
+#' @details
+#' The function works by:
+#' 1. Checking if a sampled value already exists in the database for the current session
+#' 2. If found, returns the existing value to maintain consistency
+#' 3. If not found, performs new sampling and stores the result
+#' 
+#' This is particularly useful in survey applications where you want to maintain
+#' consistent randomization (e.g., same choice options, same experimental conditions)
+#' even when users refresh the page.
+#'
+#' **Important**: This function must be called within a Shiny reactive context 
+#' (i.e., inside a server function) as it needs access to session data and database
+#' connections.
+#'
+#' @return A vector of length `size` with elements drawn from `x`, consistent
+#' across page refreshes for the same session.
+#'
+#' @examples
+#' if (interactive()) {
+#'   # In a surveydown server function:
+#'   server <- function(input, output, session) {
+#'     # Sample a single respondent ID with explicit database connection
+#'     respondentID <- sd_sample(design$respID, db = db)
+#'     
+#'     # Sample multiple items with custom ID
+#'     selected_questions <- sd_sample(question_pool, size = 5, id = "question_selection", db = db)
+#'     
+#'     # Sample with probabilities (db parameter is optional if sd_server() already called)
+#'     treatment_group <- sd_sample(c("control", "treatment"), prob = c(0.3, 0.7), id = "treatment")
+#'   }
+#' }
+#'
+#' @export
+sd_sample <- function(x, size = 1, replace = FALSE, prob = NULL, id = NULL) {
+  # Check if we're in a Shiny reactive context
+  session <- shiny::getDefaultReactiveDomain()
+  if (is.null(session)) {
+    stop("sd_sample() must be called from within a Shiny reactive context (server function)")
+  }
+  
+  # Generate a default ID if none provided
+  if (is.null(id)) {
+    # Create a simple hash from the sampling parameters using base R
+    hash_input <- paste(deparse(substitute(x)), size, replace, paste(prob, collapse = ""), sep = "_")
+    # Use a simple hash based on string characters
+    hash_val <- sum(utf8ToInt(hash_input)) %% 100000
+    id <- paste0("sd_sample_", hash_val)
+  }
+  
+  # Try to get database connection from the session's userData
+  # This assumes sd_server() has been called and stored the database connection
+  db <- session$userData$db
+  
+  if (is.null(db)) {
+    warning("No database connection found. sd_sample() will behave like regular sample() without persistence.")
+    return(sample(x, size, replace, prob))
+  }
+  
+  # Get existing data from database
+  data <- sd_get_data(db)
+  existing_value <- NULL
+  
+  if (!is.null(data) && nrow(data) > 0) {
+    # Get the persistent session ID from cookies if available, otherwise use current
+    current_session_id <- session$token
+    persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+    
+    search_session_id <- if (!is.null(persistent_session_id) && nchar(persistent_session_id) > 0) {
+      persistent_session_id
+    } else {
+      current_session_id
+    }
+    
+    # Look for existing sampled value for this session and ID
+    session_row <- data[data$session_id == search_session_id, ]
+    
+    if (nrow(session_row) > 0 && id %in% names(session_row) && !is.na(session_row[[id]])) {
+      # Parse the stored value back to the original format
+      stored_val <- session_row[[id]]
+      if (!is.na(stored_val) && stored_val != "") {
+        # Handle different data types appropriately
+        if (is.numeric(x)) {
+          existing_value <- as.numeric(unlist(strsplit(as.character(stored_val), ",")))
+        } else {
+          existing_value <- unlist(strsplit(as.character(stored_val), ","))
+        }
+        
+        # Validate that the existing value is still valid
+        if (length(existing_value) == size && all(existing_value %in% x)) {
+          return(existing_value)
+        }
+      }
+    }
+  }
+  
+  # If no valid existing value found, perform new sampling
+  sampled_value <- sample(x, size, replace, prob)
+  
+  # Store the sampled value in the database
+  # Convert to string format for storage
+  stored_format <- paste(sampled_value, collapse = ",")
+  sd_store_value(stored_format, id)
+  
+  return(sampled_value)
 }

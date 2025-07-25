@@ -1,0 +1,163 @@
+session_id,respID,qID,altID,obsID,profileID,choice,time_total,time_cbc_total,screenout,cbc_practice,apple_knowledge_1,apple_knowledge_2,year_of_birth,gender,race,education,income,feedback,time_min_total,time_min_cbc,type,price,freshness
+1c7ddd532287aa39cdb62e6825169611,1,1,1,1,54,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Pink Lady,2.5,Average
+1c7ddd532287aa39cdb62e6825169611,1,1,2,1,42,1,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Gala,1.5,Average
+1c7ddd532287aa39cdb62e6825169611,1,1,3,1,79,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Pink Lady,1.5,Poor
+1c7ddd532287aa39cdb62e6825169611,1,2,1,2,29,1,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Pink Lady,3.5,Excellent
+1c7ddd532287aa39cdb62e6825169611,1,2,2,2,101,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Fuji,4,Poor
+1c7ddd532287aa39cdb62e6825169611,1,2,3,2,53,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Honeycrisp,2.5,Average
+1c7ddd532287aa39cdb62e6825169611,1,3,1,3,44,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Pink Lady,1.5,Average
+1c7ddd532287aa39cdb62e6825169611,1,3,2,3,27,1,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Gala,3.5,Excellent
+1c7ddd532287aa39cdb62e6825169611,1,3,3,3,31,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Fuji,4,Excellent
+1c7ddd532287aa39cdb62e6825169611,1,4,1,4,67,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Gala,4,Average
+1c7ddd532287aa39cdb62e6825169611,1,4,2,4,60,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Red Delicious,3,Average
+1c7ddd532287aa39cdb62e6825169611,1,4,3,4,43,1,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Honeycrisp,1.5,Average
+1c7ddd532287aa39cdb62e6825169611,1,5,1,5,99,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Pink Lady,3.5,Poor
+1c7ddd532287aa39cdb62e6825169611,1,5,2,5,76,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Fuji,1.5,Poor
+1c7ddd532287aa39cdb62e6825169611,1,5,3,5,36,1,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Fuji,1,Average
+1c7ddd532287aa39cdb62e6825169611,1,6,1,6,13,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Honeycrisp,2,Excellent
+1c7ddd532287aa39cdb62e6825169611,1,6,2,6,103,0,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Honeycrisp,4,Poor
+1c7ddd532287aa39cdb62e6825169611,1,6,3,6,14,1,72,17,red,option_2,fuji,gala,2000,female,asian,associate_degree,25k_to_29k,Not bad!,1.2,0.2833333333333333,Pink Lady,2,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,1,1,7,52,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Gala,2.5,Average
+7ff5f7789509a77ec86a866e794613ce,2,1,2,7,16,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Fuji,2.5,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,1,3,7,47,1,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Gala,2,Average
+7ff5f7789509a77ec86a866e794613ce,2,2,1,8,34,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Pink Lady,4,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,2,2,8,46,1,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Fuji,2,Average
+7ff5f7789509a77ec86a866e794613ce,2,2,3,8,95,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Red Delicious,3,Poor
+7ff5f7789509a77ec86a866e794613ce,2,3,1,9,35,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Red Delicious,4,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,3,2,9,20,1,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Red Delicious,2.5,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,3,3,9,33,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Honeycrisp,4,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,4,1,10,99,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Pink Lady,3.5,Poor
+7ff5f7789509a77ec86a866e794613ce,2,4,2,10,5,1,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Red Delicious,1,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,4,3,10,23,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Honeycrisp,3,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,5,1,11,1,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Fuji,1,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,5,2,11,40,1,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Red Delicious,1,Average
+7ff5f7789509a77ec86a866e794613ce,2,5,3,11,75,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Red Delicious,1,Poor
+7ff5f7789509a77ec86a866e794613ce,2,6,1,12,29,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Pink Lady,3.5,Excellent
+7ff5f7789509a77ec86a866e794613ce,2,6,2,12,99,0,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Pink Lady,3.5,Poor
+7ff5f7789509a77ec86a866e794613ce,2,6,3,12,37,1,63,16,red,option_1,honeycrisp,fuji,1997,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,prefer_not_to_say,Not bad.,1.05,0.26666666666666666,Gala,1,Average
+82c378e2c4b01a5f9545ae19d49f8d30,3,1,1,13,54,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Pink Lady,2.5,Average
+82c378e2c4b01a5f9545ae19d49f8d30,3,1,2,13,38,1,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Honeycrisp,1,Average
+82c378e2c4b01a5f9545ae19d49f8d30,3,1,3,13,89,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Pink Lady,2.5,Poor
+82c378e2c4b01a5f9545ae19d49f8d30,3,2,1,14,70,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Red Delicious,4,Average
+82c378e2c4b01a5f9545ae19d49f8d30,3,2,2,14,23,1,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Honeycrisp,3,Excellent
+82c378e2c4b01a5f9545ae19d49f8d30,3,2,3,14,29,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Pink Lady,3.5,Excellent
+82c378e2c4b01a5f9545ae19d49f8d30,3,3,1,15,92,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Gala,3,Poor
+82c378e2c4b01a5f9545ae19d49f8d30,3,3,2,15,49,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Pink Lady,2,Average
+82c378e2c4b01a5f9545ae19d49f8d30,3,3,3,15,15,1,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Red Delicious,2,Excellent
+82c378e2c4b01a5f9545ae19d49f8d30,3,4,1,16,82,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Gala,2,Poor
+82c378e2c4b01a5f9545ae19d49f8d30,3,4,2,16,51,1,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Fuji,2.5,Average
+82c378e2c4b01a5f9545ae19d49f8d30,3,4,3,16,87,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Gala,2.5,Poor
+82c378e2c4b01a5f9545ae19d49f8d30,3,5,1,17,103,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Honeycrisp,4,Poor
+82c378e2c4b01a5f9545ae19d49f8d30,3,5,2,17,34,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Pink Lady,4,Excellent
+82c378e2c4b01a5f9545ae19d49f8d30,3,5,3,17,46,1,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Fuji,2,Average
+82c378e2c4b01a5f9545ae19d49f8d30,3,6,1,18,29,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Pink Lady,3.5,Excellent
+82c378e2c4b01a5f9545ae19d49f8d30,3,6,2,18,2,1,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Gala,1,Excellent
+82c378e2c4b01a5f9545ae19d49f8d30,3,6,3,18,70,0,84,16,red,option_3,fuji,gala,1978,male,hispanic,associate_degree,75k_to_99k,Interesting.,1.4,0.26666666666666666,Red Delicious,4,Average
+86770d4d0226f52b86a659ffc6b3a031,4,1,1,19,17,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Gala,2.5,Excellent
+86770d4d0226f52b86a659ffc6b3a031,4,1,2,19,59,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Pink Lady,3,Average
+86770d4d0226f52b86a659ffc6b3a031,4,1,3,19,37,1,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Gala,1,Average
+86770d4d0226f52b86a659ffc6b3a031,4,2,1,20,31,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Fuji,4,Excellent
+86770d4d0226f52b86a659ffc6b3a031,4,2,2,20,54,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Pink Lady,2.5,Average
+86770d4d0226f52b86a659ffc6b3a031,4,2,3,20,50,1,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Red Delicious,2,Average
+86770d4d0226f52b86a659ffc6b3a031,4,3,1,21,80,1,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Red Delicious,1.5,Poor
+86770d4d0226f52b86a659ffc6b3a031,4,3,2,21,99,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Pink Lady,3.5,Poor
+86770d4d0226f52b86a659ffc6b3a031,4,3,3,21,76,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Fuji,1.5,Poor
+86770d4d0226f52b86a659ffc6b3a031,4,4,1,22,91,1,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Fuji,3,Poor
+86770d4d0226f52b86a659ffc6b3a031,4,4,2,22,68,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Honeycrisp,4,Average
+86770d4d0226f52b86a659ffc6b3a031,4,4,3,22,27,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Gala,3.5,Excellent
+86770d4d0226f52b86a659ffc6b3a031,4,5,1,23,76,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Fuji,1.5,Poor
+86770d4d0226f52b86a659ffc6b3a031,4,5,2,23,71,1,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Fuji,1,Poor
+86770d4d0226f52b86a659ffc6b3a031,4,5,3,23,26,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Fuji,3.5,Excellent
+86770d4d0226f52b86a659ffc6b3a031,4,6,1,24,72,1,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Gala,1,Poor
+86770d4d0226f52b86a659ffc6b3a031,4,6,2,24,67,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Gala,4,Average
+86770d4d0226f52b86a659ffc6b3a031,4,6,3,24,82,0,55,13,red,option_2,gala,honeycrisp,1997,female,hispanic,associate_degree,15k_to_19k,Just gimme the cheapest.,0.9166666666666666,0.21666666666666667,Gala,2,Poor
+94254ae6dc9702517e0de3426cc92f02,5,1,1,25,33,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Honeycrisp,4,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,1,2,25,17,1,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Gala,2.5,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,1,3,25,34,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Pink Lady,4,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,2,1,26,45,1,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Red Delicious,1.5,Average
+94254ae6dc9702517e0de3426cc92f02,5,2,2,26,34,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Pink Lady,4,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,2,3,26,64,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Pink Lady,3.5,Average
+94254ae6dc9702517e0de3426cc92f02,5,3,1,27,32,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Gala,4,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,3,2,27,84,1,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Pink Lady,2,Poor
+94254ae6dc9702517e0de3426cc92f02,5,3,3,27,101,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Fuji,4,Poor
+94254ae6dc9702517e0de3426cc92f02,5,4,1,28,92,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Gala,3,Poor
+94254ae6dc9702517e0de3426cc92f02,5,4,2,28,2,1,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Gala,1,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,4,3,28,15,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Red Delicious,2,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,5,1,29,23,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Honeycrisp,3,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,5,2,29,45,1,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Red Delicious,1.5,Average
+94254ae6dc9702517e0de3426cc92f02,5,5,3,29,26,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Fuji,3.5,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,6,1,30,44,1,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Pink Lady,1.5,Average
+94254ae6dc9702517e0de3426cc92f02,5,6,2,30,17,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Gala,2.5,Excellent
+94254ae6dc9702517e0de3426cc92f02,5,6,3,30,66,0,80,20,red,option_1,fuji,gala,2002,male,white,some_college,20k_to_24k,Great survey!,1.3333333333333333,0.3333333333333333,Fuji,4,Average
+a95b481b52d163ad7764fc2c949888ec,6,1,1,31,17,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Gala,2.5,Excellent
+a95b481b52d163ad7764fc2c949888ec,6,1,2,31,79,1,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Pink Lady,1.5,Poor
+a95b481b52d163ad7764fc2c949888ec,6,1,3,31,31,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Fuji,4,Excellent
+a95b481b52d163ad7764fc2c949888ec,6,2,1,32,101,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Fuji,4,Poor
+a95b481b52d163ad7764fc2c949888ec,6,2,2,32,39,1,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Pink Lady,1,Average
+a95b481b52d163ad7764fc2c949888ec,6,2,3,32,59,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Pink Lady,3,Average
+a95b481b52d163ad7764fc2c949888ec,6,3,1,33,85,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Red Delicious,2,Poor
+a95b481b52d163ad7764fc2c949888ec,6,3,2,33,61,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Fuji,3.5,Average
+a95b481b52d163ad7764fc2c949888ec,6,3,3,33,40,1,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Red Delicious,1,Average
+a95b481b52d163ad7764fc2c949888ec,6,4,1,34,83,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Honeycrisp,2,Poor
+a95b481b52d163ad7764fc2c949888ec,6,4,2,34,41,1,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Fuji,1.5,Average
+a95b481b52d163ad7764fc2c949888ec,6,4,3,34,20,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Red Delicious,2.5,Excellent
+a95b481b52d163ad7764fc2c949888ec,6,5,1,35,61,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Fuji,3.5,Average
+a95b481b52d163ad7764fc2c949888ec,6,5,2,35,91,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Fuji,3,Poor
+a95b481b52d163ad7764fc2c949888ec,6,5,3,35,9,1,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Pink Lady,1.5,Excellent
+a95b481b52d163ad7764fc2c949888ec,6,6,1,36,85,1,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Red Delicious,2,Poor
+a95b481b52d163ad7764fc2c949888ec,6,6,2,36,65,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Red Delicious,3.5,Average
+a95b481b52d163ad7764fc2c949888ec,6,6,3,36,32,0,64,12,red,option_2,fuji,pink_lady,1993,female,pacific_islander,doctoral_degree,100k_to_149k,I like pink lady.,1.0666666666666667,0.2,Gala,4,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,1,1,37,103,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,4,Poor
+c29eeafb22d22cbac93cc5bccaa2873e,7,1,2,37,8,1,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,1.5,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,1,3,37,47,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Gala,2,Average
+c29eeafb22d22cbac93cc5bccaa2873e,7,2,1,38,18,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,2.5,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,2,2,38,104,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Pink Lady,4,Poor
+c29eeafb22d22cbac93cc5bccaa2873e,7,2,3,38,8,1,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,1.5,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,3,1,39,49,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Pink Lady,2,Average
+c29eeafb22d22cbac93cc5bccaa2873e,7,3,2,39,2,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Gala,1,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,3,3,39,58,1,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,3,Average
+c29eeafb22d22cbac93cc5bccaa2873e,7,4,1,40,54,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Pink Lady,2.5,Average
+c29eeafb22d22cbac93cc5bccaa2873e,7,4,2,40,73,1,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,1,Poor
+c29eeafb22d22cbac93cc5bccaa2873e,7,4,3,40,30,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Red Delicious,3.5,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,5,1,41,13,1,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,2,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,5,2,41,86,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Fuji,2.5,Poor
+c29eeafb22d22cbac93cc5bccaa2873e,7,5,3,41,2,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Gala,1,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,6,1,42,28,1,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,3.5,Excellent
+c29eeafb22d22cbac93cc5bccaa2873e,7,6,2,42,78,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Honeycrisp,1.5,Poor
+c29eeafb22d22cbac93cc5bccaa2873e,7,6,3,42,101,0,66,16,red,option_3,fuji,honeycrisp,1998,male,black,master_degree,40k_to_49k,Excellent!,1.1,0.26666666666666666,Fuji,4,Poor
+c6d32f2f1ad6c328b79c5d94deeffdba,8,1,1,43,14,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Pink Lady,2,Excellent
+c6d32f2f1ad6c328b79c5d94deeffdba,8,1,2,43,92,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Gala,3,Poor
+c6d32f2f1ad6c328b79c5d94deeffdba,8,1,3,43,61,1,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Fuji,3.5,Average
+c6d32f2f1ad6c328b79c5d94deeffdba,8,2,1,44,77,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Gala,1.5,Poor
+c6d32f2f1ad6c328b79c5d94deeffdba,8,2,2,44,91,1,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Fuji,3,Poor
+c6d32f2f1ad6c328b79c5d94deeffdba,8,2,3,44,62,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Gala,3.5,Average
+c6d32f2f1ad6c328b79c5d94deeffdba,8,3,1,45,20,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Red Delicious,2.5,Excellent
+c6d32f2f1ad6c328b79c5d94deeffdba,8,3,2,45,6,1,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Fuji,1.5,Excellent
+c6d32f2f1ad6c328b79c5d94deeffdba,8,3,3,45,56,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Fuji,3,Average
+c6d32f2f1ad6c328b79c5d94deeffdba,8,4,1,46,15,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Red Delicious,2,Excellent
+c6d32f2f1ad6c328b79c5d94deeffdba,8,4,2,46,2,1,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Gala,1,Excellent
+c6d32f2f1ad6c328b79c5d94deeffdba,8,4,3,46,54,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Pink Lady,2.5,Average
+c6d32f2f1ad6c328b79c5d94deeffdba,8,5,1,47,27,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Gala,3.5,Excellent
+c6d32f2f1ad6c328b79c5d94deeffdba,8,5,2,47,49,1,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Pink Lady,2,Average
+c6d32f2f1ad6c328b79c5d94deeffdba,8,5,3,47,54,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Pink Lady,2.5,Average
+c6d32f2f1ad6c328b79c5d94deeffdba,8,6,1,48,32,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Gala,4,Excellent
+c6d32f2f1ad6c328b79c5d94deeffdba,8,6,2,48,39,1,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Pink Lady,1,Average
+c6d32f2f1ad6c328b79c5d94deeffdba,8,6,3,48,92,0,61,12,red,option_1,fuji,gala,2001,female,native_american,bachelor_degree,75k_to_99k,Not bad.,1.0166666666666666,0.2,Gala,3,Poor
+d81c575632d8b160100fe714b8d1a63b,9,1,1,49,56,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Fuji,3,Average
+d81c575632d8b160100fe714b8d1a63b,9,1,2,49,16,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Fuji,2.5,Excellent
+d81c575632d8b160100fe714b8d1a63b,9,1,3,49,23,1,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Honeycrisp,3,Excellent
+d81c575632d8b160100fe714b8d1a63b,9,2,1,50,41,1,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Fuji,1.5,Average
+d81c575632d8b160100fe714b8d1a63b,9,2,2,50,24,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Pink Lady,3,Excellent
+d81c575632d8b160100fe714b8d1a63b,9,2,3,50,100,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Red Delicious,3.5,Poor
+d81c575632d8b160100fe714b8d1a63b,9,3,1,51,80,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Red Delicious,1.5,Poor
+d81c575632d8b160100fe714b8d1a63b,9,3,2,51,70,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Red Delicious,4,Average
+d81c575632d8b160100fe714b8d1a63b,9,3,3,51,75,1,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Red Delicious,1,Poor
+d81c575632d8b160100fe714b8d1a63b,9,4,1,52,63,1,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Honeycrisp,3.5,Average
+d81c575632d8b160100fe714b8d1a63b,9,4,2,52,55,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Red Delicious,2.5,Average
+d81c575632d8b160100fe714b8d1a63b,9,4,3,52,68,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Honeycrisp,4,Average
+d81c575632d8b160100fe714b8d1a63b,9,5,1,53,66,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Fuji,4,Average
+d81c575632d8b160100fe714b8d1a63b,9,5,2,53,103,1,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Honeycrisp,4,Poor
+d81c575632d8b160100fe714b8d1a63b,9,5,3,53,6,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Fuji,1.5,Excellent
+d81c575632d8b160100fe714b8d1a63b,9,6,1,54,59,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Pink Lady,3,Average
+d81c575632d8b160100fe714b8d1a63b,9,6,2,54,49,0,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Pink Lady,2,Average
+d81c575632d8b160100fe714b8d1a63b,9,6,3,54,1,1,59,15,red,option_3,fuji,gala,1996,female,hispanic,bachelor_degree,50k_to_74k,Interesting survey.,0.9833333333333333,0.25,Fuji,1,Excellent
