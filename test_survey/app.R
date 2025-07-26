@@ -45,16 +45,19 @@ ui <- sd_ui()
 # Server setup ----------------------------------------------------------------
 
 server <- function(input, output, session) {
+  # Set database connection in session for early access
+  session$userData$db <- db
+  
   # Make a 10-digit random number completion code
-  completion_code <- sd_completion_code(10, id = "completion_code")
+  completion_code_sample <- sd_completion_code(10)
+  completion_code <- sd_store_value(completion_code_sample, "completion_code")
 
   # Read in the full survey design file
   design <- read_csv(here("data", "choice_questions.csv"))
 
   # Sample a random respondentID and store it directly as "respID"
-  # respondentID <- sd_sample(design$respID, id = "respID")
-  sampled_value <- sample(design$respID, 1)
-  respondentID <- sd_store_value(sampled_value, "respID", db)
+  respondentID_sample <- sample(design$respID, 1)
+  respondentID <- sd_store_value(respondentID_sample, "respID")
 
   # Filter for the rows for the chosen respondentID
   df <- design |>

@@ -1426,8 +1426,9 @@ sd_set_password <- function(password) {
 #' @param id (Optional) Character string. The id (name) of the value in the
 #'   data. If not provided, the name of the `value` variable will be used.
 #' @param db (Optional) Database connection object created with sd_db_connect().
-#'   If provided, enables session persistence. If not provided, will attempt
-#'   to use database connection from session (for backward compatibility).
+#'   If provided, enables session persistence. If not provided, will automatically
+#'   look for a variable named 'db' in the calling environment, or fall back to
+#'   the database connection from the session.
 #'
 #' @return The value that was stored (either the new value or existing value 
 #'   from database if session persistence applies). This allows the function 
@@ -1486,9 +1487,16 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
             )
         }
 
-        # If db parameter not provided, try to get from session (for backward compatibility)
+        # If db parameter not provided, try to auto-detect from calling environment or session
         if (is.null(db)) {
-            db <- session$userData$db
+            # First try to find 'db' variable in the calling environment
+            calling_env <- parent.frame()
+            if (exists("db", envir = calling_env)) {
+                db <- get("db", envir = calling_env)
+            } else {
+                # Fall back to session userData (for backward compatibility)
+                db <- session$userData$db
+            }
         }
 
         # Check if value already exists in database (session persistence logic)
