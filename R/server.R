@@ -2004,6 +2004,11 @@ get_initial_data <- function(
         list(session_id = session_id, time_start = time_start),
         get_stored_vals(session)
     )
+    
+    # Add deferred values from sd_sample() and sd_completion_code() when no database
+    if (!is.null(session$userData$deferred_values)) {
+        data <- c(data, session$userData$deferred_values)
+    }
 
     # Initialize question & timestamp values
     for (id in all_ids) {

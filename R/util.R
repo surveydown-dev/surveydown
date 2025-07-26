@@ -1367,12 +1367,18 @@ sd_completion_code <- function(digits = 6, id = "completion_code") {
   db <- session$userData$db
 
   if (is.null(db)) {
-    warning(
-      "No database connection found. Completion code will not persist across page refreshes."
-    )
+    # No database - generate completion code but defer storage for preview_data.csv
     digits_vector <- sample(0:9, digits, replace = TRUE)
     digits_vector[1] <- sample(1:9, 1)
-    return(paste(digits_vector, collapse = ""))
+    completion_code <- paste(digits_vector, collapse = "")
+    
+    # Store the value for later when session data becomes available
+    if (is.null(session$userData$deferred_values)) {
+      session$userData$deferred_values <- list()
+    }
+    session$userData$deferred_values[[id]] <- completion_code
+    
+    return(completion_code)
   }
 
   # Get existing data from database
@@ -1484,9 +1490,8 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
   # Check if we're in a Shiny reactive context
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
-    stop(
-      "sd_sample() must be called from within a Shiny reactive context (server function)"
-    )
+    # If not in Shiny context, fall back to regular sample()
+    return(sample(x, size, replace, prob))
   }
 
   # Generate a default ID if none provided
@@ -1509,10 +1514,19 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
   db <- session$userData$db
 
   if (is.null(db)) {
-    warning(
-      "No database connection found. sd_sample() will behave like regular sample() without persistence."
-    )
-    return(sample(x, size, replace, prob))
+    # No database - generate sample but defer storage for preview_data.csv
+    sampled_value <- sample(x, size, replace, prob)
+    
+    # Store the value for later when session data becomes available
+    if (!is.null(id)) {
+      if (is.null(session$userData$deferred_values)) {
+        session$userData$deferred_values <- list()
+      }
+      formatted_value <- paste(sampled_value, collapse = ",")
+      session$userData$deferred_values[[id]] <- formatted_value
+    }
+    
+    return(sampled_value)
   }
 
   # Get existing data from database
@@ -1628,10 +1642,8 @@ sd_use_db <- function(db) {
     )
   }
   
-  # Validate that db is not NULL
-  if (is.null(db)) {
-    warning("Database connection is NULL. Functions requiring database persistence may not work properly.")
-  }
+  # If db is NULL, silently continue (functions will fall back to non-persistent mode)
+  # No warning needed - this is a valid use case for local testing
   
   # Store the database connection in session userData
   session$userData$db <- db
