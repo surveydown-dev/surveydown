@@ -56,7 +56,7 @@ if (interactive()) {
   server <- function(input, output, session) {
     # Use database connection for the session
     sd_use_db(db)
-    
+
     # Sample a single respondent ID with clean positional syntax
     respondentID <- sd_sample(design$respID, "respID")
 

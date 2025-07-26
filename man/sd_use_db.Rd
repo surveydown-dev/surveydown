@@ -44,13 +44,13 @@ if (interactive()) {
   server <- function(input, output, session) {
     # Create database connection
     db <- sd_db_connect()
-    
+
     # Option 1: Explicitly pass the database connection
     sd_use_db(db)
-    
+
     # Option 2: Let sd_use_db() automatically find the 'db' variable
     sd_use_db()  # Automatically uses the 'db' variable above
-    
+
     # Now other functions can access the database
     completion_code <- sd_completion_code(10, id = "completion_code")
     sample_value <- sd_sample(c("A", "B", "C"), "sample_id")
