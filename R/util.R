@@ -1441,7 +1441,11 @@ sd_completion_code <- function(digits = 6, id = "completion_code") {
 #' The function works by:
 #' 1. Checking if a sampled value already exists in the database for the current session
 #' 2. If found, returns the existing value to maintain consistency
-#' 3. If not found, performs new sampling and stores the result
+#' 3. If not found, performs new sampling and returns the result (without automatic storage)
+#'
+#' **Note**: This function stores values internally using a hash-based ID for persistence
+#' across page refreshes. Use sd_store_value() to store the sampled result with your
+#' desired column name for data analysis purposes.
 #'
 #' This is particularly useful in survey applications where you want to maintain
 #' consistent randomization (e.g., same choice options, same experimental conditions)
@@ -1461,19 +1465,25 @@ sd_completion_code <- function(digits = 6, id = "completion_code") {
 #'     # Use database connection for the session
 #'     sd_use_db(db)
 #'     
-#'     # Sample a single respondent ID
+#'     # Sample a single respondent ID and store it manually
 #'     respondentID <- sd_sample(design$respID)
+#'     sd_store_value(respondentID, "respID")
 #'
-#'     # Sample multiple items with custom ID
+#'     # Sample multiple items with custom ID and store manually
 #'     selected_questions <- sd_sample(question_pool, size = 5, id = "question_selection")
+#'     sd_store_value(selected_questions, "selected_questions")
 #'
-#'     # Sample with probabilities
+#'     # Sample with probabilities and store manually
 #'     treatment_group <- sd_sample(c("control", "treatment"), prob = c(0.3, 0.7), id = "treatment")
+#'     sd_store_value(treatment_group, "treatment_group")
 #'   }
 #' }
 #'
 #' @export
 sd_sample <- function(x, size = 1, replace = FALSE, prob = NULL, id = NULL) {
+  # Always store internally for persistence (needed for consistency across refreshes)
+  store <- TRUE
+  
   # Check if we're in a Shiny reactive context
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
@@ -1557,10 +1567,12 @@ sd_sample <- function(x, size = 1, replace = FALSE, prob = NULL, id = NULL) {
   # If no valid existing value found, perform new sampling
   sampled_value <- sample(x, size, replace, prob)
 
-  # Store the sampled value in the database
-  # Convert to string format for storage
-  stored_format <- paste(sampled_value, collapse = ",")
-  sd_store_value(stored_format, id)
+  # Store the sampled value in the database (only if store = TRUE)
+  if (store) {
+    # Convert to string format for storage
+    stored_format <- paste(sampled_value, collapse = ",")
+    sd_store_value(stored_format, id)
+  }
 
   return(sampled_value)
 }

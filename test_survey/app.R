@@ -57,9 +57,8 @@ server <- function(input, output, session) {
   # Read in the full survey design file
   design <- read_csv(here("data", "choice_questions.csv"))
 
-  # Sample a random respondentID and store it in your data
-  respondentID <- sd_sample(design$respID)
-  sd_store_value(respondentID, "respID")
+  # Sample a random respondentID and store it directly as "respID"
+  respondentID <- sd_sample(design$respID, id = "respID")
 
   # Filter for the rows for the chosen respondentID
   df <- design |>
