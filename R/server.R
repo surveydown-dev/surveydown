@@ -142,6 +142,14 @@ sd_server <- function(
     output <- get("output", envir = parent_env)
     session <- get("session", envir = parent_env)
 
+    # Auto-detect db from calling environment if not provided
+    if (is.null(db)) {
+        # Only look for 'db' variable in the calling environment
+        if (exists("db", envir = parent_env)) {
+            db <- get("db", envir = parent_env)
+        }
+    }
+
     session$userData$db <- db
 
     # Normalize color spelling (handle both gray and grey)
