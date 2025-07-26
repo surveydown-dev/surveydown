@@ -1308,123 +1308,35 @@ yesno <- function(msg) {
 #' Generate a Random Completion Code
 #'
 #' This function generates a random completion code with a specified number of
-#' digits. The code is returned as a character string and persists across page
-#' refreshes within the same user session, similar to sd_sample().
+#' digits. The code is returned as a character string.
 #'
 #' @param digits An integer specifying the number of digits in the completion
 #'   code. Must be a positive integer. Default is 6.
-#' @param id A character string specifying a unique identifier for this completion
-#'   code. If not provided, a default ID will be used. Use different IDs if you
-#'   need multiple independent completion codes.
 #'
-#' @details
-#' The function works by:
-#' 1. Checking if a completion code already exists in the database for the current session
-#' 2. If found, returns the existing code to maintain consistency
-#' 3. If not found, generates a new code and stores it
-#'
-#' This ensures that users will see the same completion code even if they refresh
-#' the page or navigate back to the completion screen.
-#'
-#' **Important**: This function must be called within a Shiny reactive context
-#' (i.e., inside a server function) as it needs access to session data and database
-#' connections.
-#'
-#' @return A character string representing the completion code, consistent
-#' across page refreshes for the same session.
+#' @return A character string representing the random completion code.
 #'
 #' @examples
-#' if (interactive()) {
-#'   # In a surveydown server function:
-#'   server <- function(input, output, session) {
-#'     # Generate a completion code (will be same across refreshes)
-#'     completion_code <- sd_completion_code()
-#'     
-#'     # Generate with custom digits and ID
-#'     special_code <- sd_completion_code(digits = 8, id = "special_completion")
-#'   }
-#' }
+#' library(surveydown)
+#'
+#' sd_completion_code()  # generates a 6-digit code
+#' sd_completion_code(digits = 8)  # generates an 8-digit code
+#' sd_completion_code(digits = 4)  # generates a 4-digit code
+#' sd_completion_code(digits = 10)  # generates a 10-digit code
 #'
 #' @export
-sd_completion_code <- function(digits = 6, id = "completion_code") {
+sd_completion_code <- function(digits = 6) {
   if (!is.numeric(digits) || digits < 1 || digits != round(digits)) {
     stop("'digits' must be a positive integer")
   }
 
-  # Check if we're in a Shiny reactive context
-  session <- shiny::getDefaultReactiveDomain()
-  if (is.null(session)) {
-    # If not in Shiny context, fall back to regular generation
-    warning(
-      "sd_completion_code() called outside Shiny context. Code will not persist across refreshes."
-    )
-    digits_vector <- sample(0:9, digits, replace = TRUE)
-    digits_vector[1] <- sample(1:9, 1)
-    return(paste(digits_vector, collapse = ""))
-  }
-
-  # Try to get database connection from the session's userData
-  db <- session$userData$db
-
-  if (is.null(db)) {
-    # No database - generate completion code but defer storage for preview_data.csv
-    digits_vector <- sample(0:9, digits, replace = TRUE)
-    digits_vector[1] <- sample(1:9, 1)
-    completion_code <- paste(digits_vector, collapse = "")
-    
-    # Store the value for later when session data becomes available
-    if (is.null(session$userData$deferred_values)) {
-      session$userData$deferred_values <- list()
-    }
-    session$userData$deferred_values[[id]] <- completion_code
-    
-    return(completion_code)
-  }
-
-  # Get the persistent session ID from cookies if available, otherwise use current
-  current_session_id <- session$token
-  persistent_session_id <- shiny::isolate(session$input$stored_session_id)
-
-  search_session_id <- if (
-    !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
-  ) {
-    persistent_session_id
-  } else {
-    current_session_id
-  }
-
-  # Get existing data for this session only (much more efficient)
-  data <- get_session_data(db, search_session_id)
-  existing_code <- NULL
-
-  if (!is.null(data) && nrow(data) > 0) {
-    # Look for existing completion code for this session and ID
-    session_row <- data[1, ]  # Only one row for this session
-
-    if (
-      id %in% names(session_row) &&
-        !is.na(session_row[[id]])
-    ) {
-      stored_code <- session_row[[id]]
-      if (!is.na(stored_code) && stored_code != "") {
-        # Validate that the stored code has the correct number of digits
-        if (nchar(as.character(stored_code)) == digits && 
-            grepl("^[1-9][0-9]*$", stored_code)) {
-          return(as.character(stored_code))
-        }
-      }
-    }
-  }
-
-  # If no valid existing code found, generate a new one
+  # Generate random digits
   digits_vector <- sample(0:9, digits, replace = TRUE)
+
+  # Ensure the first digit is not 0
   digits_vector[1] <- sample(1:9, 1)
-  new_code <- paste(digits_vector, collapse = "")
 
-  # Store the completion code in the database
-  sd_store_value(new_code, id)
-
-  return(new_code)
+  # Combine into a single string
+  paste(digits_vector, collapse = "")
 }
 
 #' Session-aware Sampling Function
@@ -1469,7 +1381,7 @@ sd_completion_code <- function(digits = 6, id = "completion_code") {
 #'   server <- function(input, output, session) {
 #'     # Use database connection for the session
 #'     sd_use_db(db)
-#'     
+#'
 #'     # Sample a single respondent ID with clean positional syntax
 #'     respondentID <- sd_sample(design$respID, "respID")
 #'
@@ -1485,7 +1397,7 @@ sd_completion_code <- function(digits = 6, id = "completion_code") {
 sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
   # Always store internally for persistence (needed for consistency across refreshes)
   store <- TRUE
-  
+
   # Check if we're in a Shiny reactive context
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
@@ -1515,7 +1427,7 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
   if (is.null(db)) {
     # No database - generate sample but defer storage for preview_data.csv
     sampled_value <- sample(x, size, replace, prob)
-    
+
     # Store the value for later when session data becomes available
     if (!is.null(id)) {
       if (is.null(session$userData$deferred_values)) {
@@ -1524,7 +1436,7 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
       formatted_value <- paste(sampled_value, collapse = ",")
       session$userData$deferred_values[[id]] <- formatted_value
     }
-    
+
     return(sampled_value)
   }
 
@@ -1546,12 +1458,9 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
 
   if (!is.null(data) && nrow(data) > 0) {
     # Look for existing sampled value for this session and ID
-    session_row <- data[1, ]  # Only one row for this session
+    session_row <- data[1, ] # Only one row for this session
 
-    if (
-      id %in% names(session_row) &&
-        !is.na(session_row[[id]])
-    ) {
+    if (id %in% names(session_row) && !is.na(session_row[[id]])) {
       # Parse the stored value back to the original format
       stored_val <- session_row[[id]]
       if (!is.na(stored_val) && stored_val != "") {
@@ -1621,13 +1530,13 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
 #'   server <- function(input, output, session) {
 #'     # Create database connection
 #'     db <- sd_db_connect()
-#'     
+#'
 #'     # Option 1: Explicitly pass the database connection
 #'     sd_use_db(db)
-#'     
+#'
 #'     # Option 2: Let sd_use_db() automatically find the 'db' variable
 #'     sd_use_db()  # Automatically uses the 'db' variable above
-#'     
+#'
 #'     # Now other functions can access the database
 #'     completion_code <- sd_completion_code(10, id = "completion_code")
 #'     sample_value <- sd_sample(c("A", "B", "C"), "sample_id")
@@ -1643,7 +1552,7 @@ sd_use_db <- function(db = NULL) {
       "sd_use_db() must be called from within a Shiny reactive context (server function)"
     )
   }
-  
+
   # If db is NULL, try to find 'db' variable in the calling environment
   if (is.null(db)) {
     calling_env <- parent.frame()
@@ -1651,13 +1560,13 @@ sd_use_db <- function(db = NULL) {
       db <- get("db", envir = calling_env)
     }
   }
-  
+
   # If db is still NULL, silently continue (functions will fall back to non-persistent mode)
   # No warning needed - this is a valid use case for local testing
-  
+
   # Store the database connection in session userData
   session$userData$db <- db
-  
+
   # Return invisibly
   invisible(NULL)
 }

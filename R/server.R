@@ -1416,14 +1416,22 @@ sd_set_password <- function(password) {
 #' Store a value in the survey data
 #'
 #' This function allows storing additional values to be included in the survey
-#' data, such as respondent IDs or other metadata.
+#' data, such as respondent IDs or other metadata. When a database connection
+#' is provided, it implements session persistence - if a value already exists
+#' for the current session, storage is skipped to maintain consistency across
+#' page refreshes.
 #'
 #' @param value The value to be stored. This can be any R object that can be
 #'   coerced to a character string.
 #' @param id (Optional) Character string. The id (name) of the value in the
 #'   data. If not provided, the name of the `value` variable will be used.
+#' @param db (Optional) Database connection object created with sd_db_connect().
+#'   If provided, enables session persistence. If not provided, will attempt
+#'   to use database connection from session (for backward compatibility).
 #'
-#' @return `NULL` (invisibly)
+#' @return The value that was stored (either the new value or existing value 
+#'   from database if session persistence applies). This allows the function 
+#'   to be used in variable assignments.
 #'
 #' @examples
 #' if (interactive()) {
@@ -1441,15 +1449,18 @@ sd_set_password <- function(password) {
 #'
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
+#'     # Set up database connection
+#'     db <- sd_db_connect()
 #'
-#'     # Create a respondent ID to store
-#'     respondentID <- 42
+#'     # Generate and store values with session persistence
+#'     respondentID <- sd_store_value(sample(1:1000, 1), "respID", db)
+#'     completion_code <- sd_store_value(sample(0:9, 6, replace = TRUE), "completion_code", db)
 #'
-#'     # Store the respondentID
-#'     sd_store_value(respondentID)
-#'
-#'     # Store the respondentID as the variable "respID"
-#'     sd_store_value(respondentID, "respID")
+#'     # The function returns the stored value (new or existing from database)
+#'     # This ensures session persistence across page refreshes
+#'     
+#'     # Backward compatibility - works without db parameter too
+#'     some_value <- sd_store_value(42, "some_value")
 #'
 #'     sd_server()
 #'   }
@@ -1462,7 +1473,7 @@ sd_set_password <- function(password) {
 #' }
 #'
 #' @export
-sd_store_value <- function(value, id = NULL) {
+sd_store_value <- function(value, id = NULL, db = NULL) {
     if (is.null(id)) {
         id <- deparse(substitute(value))
     }
@@ -1475,33 +1486,112 @@ sd_store_value <- function(value, id = NULL) {
             )
         }
 
+        # If db parameter not provided, try to get from session (for backward compatibility)
+        if (is.null(db)) {
+            db <- session$userData$db
+        }
+
+        # Check if value already exists in database (session persistence logic)
+        # But only if all_data is available - otherwise we need to defer this check
+        existing_value <- NULL
+        if (!is.null(db) && !is.null(session$userData$all_data)) {
+            # Get current session ID
+            current_session_id <- session$token
+            persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+
+            search_session_id <- if (
+                !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+            ) {
+                persistent_session_id
+            } else {
+                current_session_id
+            }
+
+            # Check if this value already exists for this session
+            existing_data <- get_session_data(db, search_session_id)
+            if (!is.null(existing_data) && nrow(existing_data) > 0) {
+                if (id %in% names(existing_data) && !is.na(existing_data[[id]]) && existing_data[[id]] != "") {
+                    # Value already exists - use existing value for session persistence
+                    existing_value <- existing_data[[id]]
+                }
+            }
+        }
+
+        # Determine which value to use and store
+        final_value <- if (!is.null(existing_value)) {
+            # Use existing value for session persistence
+            existing_value
+        } else {
+            # Use new value
+            format_question_value(value)
+        }
+
         # Initialize stored_values if it doesn't exist
         if (is.null(session$userData$stored_values)) {
             session$userData$stored_values <- list()
         }
 
-        formatted_value <- format_question_value(value)
-        session$userData$stored_values[[id]] <- formatted_value
+        session$userData$stored_values[[id]] <- final_value
 
         # Make value accessible in the UI
         output <- shiny::getDefaultReactiveDomain()$output
         output[[paste0(id, "_value")]] <- shiny::renderText({
-            formatted_value
+            final_value
         })
 
         # Get access to all_data and update it if available
         # This allows the stored value to be accessible through sd_output
         if (!is.null(session$userData$all_data)) {
-            session$userData$all_data[[id]] <- formatted_value
-            # Add to changed fields to trigger database update
-            if (!is.null(session$userData$changed_fields)) {
+            session$userData$all_data[[id]] <- final_value
+            # Add to changed fields to trigger database update (only if using new value)
+            if (is.null(existing_value) && !is.null(session$userData$changed_fields)) {
                 current_fields <- session$userData$changed_fields()
                 session$userData$changed_fields(c(current_fields, id))
+            }
+        } else if (!is.null(db)) {
+            # If all_data not available yet but we have db, store for deferred processing
+            # But first check if there's an existing value in the database
+            current_session_id <- session$token
+            persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+            
+            search_session_id <- if (
+                !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+            ) {
+                persistent_session_id
+            } else {
+                current_session_id
+            }
+            
+            # Check for existing value
+            existing_data <- get_session_data(db, search_session_id)
+            
+            should_store_new_value <- TRUE
+            if (!is.null(existing_data) && nrow(existing_data) > 0) {
+                if (id %in% names(existing_data) && !is.na(existing_data[[id]]) && existing_data[[id]] != "") {
+                    # Use existing value for persistence - IMPORTANT: Update final_value here!
+                    final_value <- existing_data[[id]]
+                    should_store_new_value <- FALSE  # Don't overwrite existing value
+                }
+            }
+            
+            # Always store the final value for session initialization
+            if (is.null(session$userData$deferred_values)) {
+                session$userData$deferred_values <- list()
+            }
+            session$userData$deferred_values[[id]] <- final_value
+            
+            # Track which values should NOT be written to database (for session persistence)
+            if (!should_store_new_value) {
+                if (is.null(session$userData$deferred_skip_db)) {
+                    session$userData$deferred_skip_db <- character(0)
+                }
+                session$userData$deferred_skip_db <- c(session$userData$deferred_skip_db, id)
             }
         }
     })
 
-    invisible(NULL)
+    # Return the final value so it can be used in variable assignment
+    return(final_value)
 }
 
 #' Create a reactive value that is also stored in survey data
@@ -2005,9 +2095,49 @@ get_initial_data <- function(
         get_stored_vals(session)
     )
     
-    # Add deferred values from sd_sample() and sd_completion_code() when no database
+    # Process deferred values with session persistence check
     if (!is.null(session$userData$deferred_values)) {
-        data <- c(data, session$userData$deferred_values)
+        db <- session$userData$db
+        
+        # If we have a database connection, check for existing values
+        if (!is.null(db)) {
+            # Get current session ID for persistence check
+            current_session_id <- session$token
+            persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+            
+            search_session_id <- if (
+                !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+            ) {
+                persistent_session_id
+            } else {
+                current_session_id
+            }
+            
+            # Get existing data for this session
+            existing_data <- get_session_data(db, search_session_id)
+            
+            # Check which values should be skipped for database updates
+            skip_db_values <- session$userData$deferred_skip_db
+            if (is.null(skip_db_values)) skip_db_values <- character(0)
+            
+            # Process each deferred value
+            for (id in names(session$userData$deferred_values)) {
+                # Check if value already exists in database
+                value_exists <- if (!is.null(existing_data) && nrow(existing_data) > 0) {
+                    id %in% names(existing_data) && 
+                    !is.na(existing_data[[id]]) && 
+                    existing_data[[id]] != ""
+                } else {
+                    FALSE
+                }
+                
+                # Always add to initial data, but check if we should skip database updates
+                data[[id]] <- session$userData$deferred_values[[id]]
+            }
+        } else {
+            # No database connection - add all deferred values
+            data <- c(data, session$userData$deferred_values)
+        }
     }
 
     # Initialize question & timestamp values

@@ -4,7 +4,7 @@
 \alias{sd_store_value}
 \title{Store a value in the survey data}
 \usage{
-sd_store_value(value, id = NULL)
+sd_store_value(value, id = NULL, db = NULL)
 }
 \arguments{
 \item{value}{The value to be stored. This can be any R object that can be
@@ -12,13 +12,20 @@ coerced to a character string.}
 
 \item{id}{(Optional) Character string. The id (name) of the value in the
 data. If not provided, the name of the \code{value} variable will be used.}
+
+\item{db}{(Optional) Database connection object created with sd_db_connect().
+If provided, enables session persistence. If not provided, will attempt
+to use database connection from session (for backward compatibility).}
 }
 \value{
 \code{NULL} (invisibly)
 }
 \description{
 This function allows storing additional values to be included in the survey
-data, such as respondent IDs or other metadata.
+data, such as respondent IDs or other metadata. When a database connection
+is provided, it implements session persistence - if a value already exists
+for the current session, storage is skipped to maintain consistency across
+page refreshes.
 }
 \examples{
 if (interactive()) {
@@ -36,15 +43,19 @@ if (interactive()) {
 
   # Define a minimal server
   server <- function(input, output, session) {
+    # Set up database connection
+    db <- sd_db_connect()
 
-    # Create a respondent ID to store
-    respondentID <- 42
+    # Generate values using standard R functions
+    respondentID <- sample(1:1000, 1)
+    completion_code <- sample(0:9, 6, replace = TRUE)
 
-    # Store the respondentID
-    sd_store_value(respondentID)
+    # Store with session persistence (skips if already exists)
+    sd_store_value(respondentID, "respID", db)
+    sd_store_value(completion_code, "completion_code", db)
 
-    # Store the respondentID as the variable "respID"
-    sd_store_value(respondentID, "respID")
+    # Backward compatibility - works without db parameter too
+    sd_store_value(42, "some_value")
 
     sd_server()
   }
