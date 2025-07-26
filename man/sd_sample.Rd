@@ -50,12 +50,15 @@ connections.
 if (interactive()) {
   # In a surveydown server function:
   server <- function(input, output, session) {
-    # Sample a single respondent ID that persists across refreshes
-    respondentID <- sd_sample(design$respID)
+    # Use database connection for the session
+    sd_use_db(db)
     
+    # Sample a single respondent ID
+    respondentID <- sd_sample(design$respID)
+
     # Sample multiple items with custom ID
     selected_questions <- sd_sample(question_pool, size = 5, id = "question_selection")
-    
+
     # Sample with probabilities
     treatment_group <- sd_sample(c("control", "treatment"), prob = c(0.3, 0.7), id = "treatment")
   }

@@ -1305,6 +1305,123 @@ yesno <- function(msg) {
   return(selection == yes_position)
 }
 
+#' Generate a Random Completion Code
+#'
+#' This function generates a random completion code with a specified number of
+#' digits. The code is returned as a character string and persists across page
+#' refreshes within the same user session, similar to sd_sample().
+#'
+#' @param digits An integer specifying the number of digits in the completion
+#'   code. Must be a positive integer. Default is 6.
+#' @param id A character string specifying a unique identifier for this completion
+#'   code. If not provided, a default ID will be used. Use different IDs if you
+#'   need multiple independent completion codes.
+#'
+#' @details
+#' The function works by:
+#' 1. Checking if a completion code already exists in the database for the current session
+#' 2. If found, returns the existing code to maintain consistency
+#' 3. If not found, generates a new code and stores it
+#'
+#' This ensures that users will see the same completion code even if they refresh
+#' the page or navigate back to the completion screen.
+#'
+#' **Important**: This function must be called within a Shiny reactive context
+#' (i.e., inside a server function) as it needs access to session data and database
+#' connections.
+#'
+#' @return A character string representing the completion code, consistent
+#' across page refreshes for the same session.
+#'
+#' @examples
+#' if (interactive()) {
+#'   # In a surveydown server function:
+#'   server <- function(input, output, session) {
+#'     # Generate a completion code (will be same across refreshes)
+#'     completion_code <- sd_completion_code()
+#'     
+#'     # Generate with custom digits and ID
+#'     special_code <- sd_completion_code(digits = 8, id = "special_completion")
+#'   }
+#' }
+#'
+#' @export
+sd_completion_code <- function(digits = 6, id = "completion_code") {
+  if (!is.numeric(digits) || digits < 1 || digits != round(digits)) {
+    stop("'digits' must be a positive integer")
+  }
+
+  # Check if we're in a Shiny reactive context
+  session <- shiny::getDefaultReactiveDomain()
+  if (is.null(session)) {
+    # If not in Shiny context, fall back to regular generation
+    warning(
+      "sd_completion_code() called outside Shiny context. Code will not persist across refreshes."
+    )
+    digits_vector <- sample(0:9, digits, replace = TRUE)
+    digits_vector[1] <- sample(1:9, 1)
+    return(paste(digits_vector, collapse = ""))
+  }
+
+  # Try to get database connection from the session's userData
+  db <- session$userData$db
+
+  if (is.null(db)) {
+    warning(
+      "No database connection found. Completion code will not persist across page refreshes."
+    )
+    digits_vector <- sample(0:9, digits, replace = TRUE)
+    digits_vector[1] <- sample(1:9, 1)
+    return(paste(digits_vector, collapse = ""))
+  }
+
+  # Get existing data from database
+  data <- sd_get_data(db)
+  existing_code <- NULL
+
+  if (!is.null(data) && nrow(data) > 0) {
+    # Get the persistent session ID from cookies if available, otherwise use current
+    current_session_id <- session$token
+    persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+
+    search_session_id <- if (
+      !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+    ) {
+      persistent_session_id
+    } else {
+      current_session_id
+    }
+
+    # Look for existing completion code for this session and ID
+    session_row <- data[data$session_id == search_session_id, ]
+
+    if (
+      nrow(session_row) > 0 &&
+        id %in% names(session_row) &&
+        !is.na(session_row[[id]])
+    ) {
+      stored_code <- session_row[[id]]
+      if (!is.na(stored_code) && stored_code != "") {
+        # Validate that the stored code has the correct number of digits
+        if (nchar(as.character(stored_code)) == digits && 
+            grepl("^[1-9][0-9]*$", stored_code)) {
+          return(as.character(stored_code))
+        }
+      }
+    }
+  }
+
+  # If no valid existing code found, generate a new one
+  digits_vector <- sample(0:9, digits, replace = TRUE)
+  digits_vector[1] <- sample(1:9, 1)
+  new_code <- paste(digits_vector, collapse = "")
+
+  # Store the completion code in the database
+  sd_store_value(new_code, id)
+
+  return(new_code)
+}
+
 #' Session-aware Sampling Function
 #'
 #' This function performs sampling that persists across page refreshes within the same
@@ -1320,21 +1437,17 @@ yesno <- function(msg) {
 #' @param id A character string specifying a unique identifier for this sampling operation.
 #'   If not provided, a default ID based on the call will be generated. Use different IDs
 #'   if you have multiple `sd_sample()` calls that should be independent.
-#' @param db Optional database connection object. If provided, uses this connection instead
-#'   of looking for one in session$userData$db. This allows the function to work before
-#'   sd_server() has been called.
-#'
 #' @details
 #' The function works by:
 #' 1. Checking if a sampled value already exists in the database for the current session
 #' 2. If found, returns the existing value to maintain consistency
 #' 3. If not found, performs new sampling and stores the result
-#' 
+#'
 #' This is particularly useful in survey applications where you want to maintain
 #' consistent randomization (e.g., same choice options, same experimental conditions)
 #' even when users refresh the page.
 #'
-#' **Important**: This function must be called within a Shiny reactive context 
+#' **Important**: This function must be called within a Shiny reactive context
 #' (i.e., inside a server function) as it needs access to session data and database
 #' connections.
 #'
@@ -1345,13 +1458,16 @@ yesno <- function(msg) {
 #' if (interactive()) {
 #'   # In a surveydown server function:
 #'   server <- function(input, output, session) {
-#'     # Sample a single respondent ID with explicit database connection
-#'     respondentID <- sd_sample(design$respID, db = db)
+#'     # Use database connection for the session
+#'     sd_use_db(db)
 #'     
+#'     # Sample a single respondent ID
+#'     respondentID <- sd_sample(design$respID)
+#'
 #'     # Sample multiple items with custom ID
-#'     selected_questions <- sd_sample(question_pool, size = 5, id = "question_selection", db = db)
-#'     
-#'     # Sample with probabilities (db parameter is optional if sd_server() already called)
+#'     selected_questions <- sd_sample(question_pool, size = 5, id = "question_selection")
+#'
+#'     # Sample with probabilities
 #'     treatment_group <- sd_sample(c("control", "treatment"), prob = c(0.3, 0.7), id = "treatment")
 #'   }
 #' }
@@ -1361,56 +1477,75 @@ sd_sample <- function(x, size = 1, replace = FALSE, prob = NULL, id = NULL) {
   # Check if we're in a Shiny reactive context
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
-    stop("sd_sample() must be called from within a Shiny reactive context (server function)")
+    stop(
+      "sd_sample() must be called from within a Shiny reactive context (server function)"
+    )
   }
-  
+
   # Generate a default ID if none provided
   if (is.null(id)) {
     # Create a simple hash from the sampling parameters using base R
-    hash_input <- paste(deparse(substitute(x)), size, replace, paste(prob, collapse = ""), sep = "_")
+    hash_input <- paste(
+      deparse(substitute(x)),
+      size,
+      replace,
+      paste(prob, collapse = ""),
+      sep = "_"
+    )
     # Use a simple hash based on string characters
     hash_val <- sum(utf8ToInt(hash_input)) %% 100000
     id <- paste0("sd_sample_", hash_val)
   }
-  
+
   # Try to get database connection from the session's userData
-  # This assumes sd_server() has been called and stored the database connection
+  # This assumes sd_use_db() has been called and stored the database connection
   db <- session$userData$db
-  
+
   if (is.null(db)) {
-    warning("No database connection found. sd_sample() will behave like regular sample() without persistence.")
+    warning(
+      "No database connection found. sd_sample() will behave like regular sample() without persistence."
+    )
     return(sample(x, size, replace, prob))
   }
-  
+
   # Get existing data from database
   data <- sd_get_data(db)
   existing_value <- NULL
-  
+
   if (!is.null(data) && nrow(data) > 0) {
     # Get the persistent session ID from cookies if available, otherwise use current
     current_session_id <- session$token
     persistent_session_id <- shiny::isolate(session$input$stored_session_id)
-    
-    search_session_id <- if (!is.null(persistent_session_id) && nchar(persistent_session_id) > 0) {
+
+    search_session_id <- if (
+      !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+    ) {
       persistent_session_id
     } else {
       current_session_id
     }
-    
+
     # Look for existing sampled value for this session and ID
     session_row <- data[data$session_id == search_session_id, ]
-    
-    if (nrow(session_row) > 0 && id %in% names(session_row) && !is.na(session_row[[id]])) {
+
+    if (
+      nrow(session_row) > 0 &&
+        id %in% names(session_row) &&
+        !is.na(session_row[[id]])
+    ) {
       # Parse the stored value back to the original format
       stored_val <- session_row[[id]]
       if (!is.na(stored_val) && stored_val != "") {
         # Handle different data types appropriately
         if (is.numeric(x)) {
-          existing_value <- as.numeric(unlist(strsplit(as.character(stored_val), ",")))
+          existing_value <- as.numeric(unlist(strsplit(
+            as.character(stored_val),
+            ","
+          )))
         } else {
           existing_value <- unlist(strsplit(as.character(stored_val), ","))
         }
-        
+
         # Validate that the existing value is still valid
         if (length(existing_value) == size && all(existing_value %in% x)) {
           return(existing_value)
@@ -1418,14 +1553,80 @@ sd_sample <- function(x, size = 1, replace = FALSE, prob = NULL, id = NULL) {
       }
     }
   }
-  
+
   # If no valid existing value found, perform new sampling
   sampled_value <- sample(x, size, replace, prob)
-  
+
   # Store the sampled value in the database
   # Convert to string format for storage
   stored_format <- paste(sampled_value, collapse = ",")
   sd_store_value(stored_format, id)
-  
+
   return(sampled_value)
+}
+
+#' Use Database Connection for Session
+#'
+#' This function makes a database connection available to the current Shiny session,
+#' enabling functions like sd_sample() and sd_completion_code() to use database
+#' persistence. This is a convenience function that replaces the manual assignment
+#' of session$userData$db.
+#'
+#' @param db A database connection object, typically created with sd_db_connect().
+#'   This should be a valid database pool or connection that can be used for
+#'   storing and retrieving survey data.
+#'
+#' @details
+#' This function must be called within a Shiny server function as it requires
+#' access to the current session object. It makes the database connection available
+#' to other surveydown functions for data persistence.
+#'
+#' Using this database connection enables:
+#' - Session-persistent sampling with sd_sample()
+#' - Session-persistent completion codes with sd_completion_code()
+#' - Consistent data storage across page refreshes
+#'
+#' **Important**: This function should be called early in your server function,
+#' typically right after creating the database connection and before calling
+#' any functions that require database persistence.
+#'
+#' @return Invisible NULL. The function is called for its side effect of making
+#' the database connection available to the session.
+#'
+#' @examples
+#' if (interactive()) {
+#'   # In a surveydown server function:
+#'   server <- function(input, output, session) {
+#'     # Create database connection
+#'     db <- sd_db_connect()
+#'     
+#'     # Use this database connection for the session (replaces: session$userData$db <- db)
+#'     sd_use_db(db)
+#'     
+#'     # Now other functions can access the database
+#'     completion_code <- sd_completion_code()
+#'     sample_value <- sd_sample(c("A", "B", "C"))
+#'   }
+#' }
+#'
+#' @export
+sd_use_db <- function(db) {
+  # Check if we're in a Shiny reactive context
+  session <- shiny::getDefaultReactiveDomain()
+  if (is.null(session)) {
+    stop(
+      "sd_use_db() must be called from within a Shiny reactive context (server function)"
+    )
+  }
+  
+  # Validate that db is not NULL
+  if (is.null(db)) {
+    warning("Database connection is NULL. Functions requiring database persistence may not work properly.")
+  }
+  
+  # Store the database connection in session userData
+  session$userData$db <- db
+  
+  # Return invisibly
+  invisible(NULL)
 }

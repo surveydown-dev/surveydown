@@ -45,9 +45,9 @@ ui <- sd_ui()
 # Server setup ----------------------------------------------------------------
 
 server <- function(input, output, session) {
-  # Store database connection for sd_sample() to access
-  session$userData$db <- db
-  
+  # Use database connection for persistent functions
+  sd_use_db(db)
+
   # Make a 10-digit random number completion code
   completion_code <- sd_completion_code(10)
 

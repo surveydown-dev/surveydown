@@ -2057,7 +2057,7 @@ sd_output <- function(
     ",
     id
   )
-  
+
   if (is.null(type)) {
     output_element <- shiny::uiOutput(id, inline = inline, ...)
     return(shiny::tagList(
@@ -2097,38 +2097,4 @@ sd_output <- function(
   }
 
   stop("Invalid type. Choose 'question' or 'value'.")
-}
-
-#' Generate a Random Completion Code
-#'
-#' This function generates a random completion code with a specified number of
-#' digits. The code is returned as a character string.
-#'
-#' @param digits An integer specifying the number of digits in the completion
-#'   code. Must be a positive integer. Default is 6.
-#'
-#' @return A character string representing the random completion code.
-#'
-#' @examples
-#' library(surveydown)
-#'
-#' sd_completion_code()  # generates a 6-digit code
-#' sd_completion_code(digits = 8)  # generates an 8-digit code
-#' sd_completion_code(digits = 4)  # generates a 4-digit code
-#' sd_completion_code(digits = 10)  # generates a 10-digit code
-#'
-#' @export
-sd_completion_code <- function(digits = 6) {
-  if (!is.numeric(digits) || digits < 1 || digits != round(digits)) {
-    stop("'digits' must be a positive integer")
-  }
-
-  # Generate random digits
-  digits_vector <- sample(0:9, digits, replace = TRUE)
-
-  # Ensure the first digit is not 0
-  digits_vector[1] <- sample(1:9, 1)
-
-  # Combine into a single string
-  paste(digits_vector, collapse = "")
 }
