@@ -1381,29 +1381,28 @@ sd_completion_code <- function(digits = 6, id = "completion_code") {
     return(completion_code)
   }
 
-  # Get existing data from database
-  data <- sd_get_data(db)
+  # Get the persistent session ID from cookies if available, otherwise use current
+  current_session_id <- session$token
+  persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+
+  search_session_id <- if (
+    !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+  ) {
+    persistent_session_id
+  } else {
+    current_session_id
+  }
+
+  # Get existing data for this session only (much more efficient)
+  data <- get_session_data(db, search_session_id)
   existing_code <- NULL
 
   if (!is.null(data) && nrow(data) > 0) {
-    # Get the persistent session ID from cookies if available, otherwise use current
-    current_session_id <- session$token
-    persistent_session_id <- shiny::isolate(session$input$stored_session_id)
-
-    search_session_id <- if (
-      !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
-    ) {
-      persistent_session_id
-    } else {
-      current_session_id
-    }
-
     # Look for existing completion code for this session and ID
-    session_row <- data[data$session_id == search_session_id, ]
+    session_row <- data[1, ]  # Only one row for this session
 
     if (
-      nrow(session_row) > 0 &&
-        id %in% names(session_row) &&
+      id %in% names(session_row) &&
         !is.na(session_row[[id]])
     ) {
       stored_code <- session_row[[id]]
@@ -1529,29 +1528,28 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
     return(sampled_value)
   }
 
-  # Get existing data from database
-  data <- sd_get_data(db)
+  # Get the persistent session ID from cookies if available, otherwise use current
+  current_session_id <- session$token
+  persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+
+  search_session_id <- if (
+    !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+  ) {
+    persistent_session_id
+  } else {
+    current_session_id
+  }
+
+  # Get existing data for this session only (much more efficient)
+  data <- get_session_data(db, search_session_id)
   existing_value <- NULL
 
   if (!is.null(data) && nrow(data) > 0) {
-    # Get the persistent session ID from cookies if available, otherwise use current
-    current_session_id <- session$token
-    persistent_session_id <- shiny::isolate(session$input$stored_session_id)
-
-    search_session_id <- if (
-      !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
-    ) {
-      persistent_session_id
-    } else {
-      current_session_id
-    }
-
     # Look for existing sampled value for this session and ID
-    session_row <- data[data$session_id == search_session_id, ]
+    session_row <- data[1, ]  # Only one row for this session
 
     if (
-      nrow(session_row) > 0 &&
-        id %in% names(session_row) &&
+      id %in% names(session_row) &&
         !is.na(session_row[[id]])
     ) {
       # Parse the stored value back to the original format
