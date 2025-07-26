@@ -1596,8 +1596,9 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
 #' of session$userData$db.
 #'
 #' @param db A database connection object, typically created with sd_db_connect().
-#'   This should be a valid database pool or connection that can be used for
-#'   storing and retrieving survey data.
+#'   If not provided (NULL), the function will automatically look for a variable
+#'   named 'db' in the calling environment. This should be a valid database pool
+#'   or connection that can be used for storing and retrieving survey data.
 #'
 #' @details
 #' This function must be called within a Shiny server function as it requires
@@ -1623,17 +1624,20 @@ sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
 #'     # Create database connection
 #'     db <- sd_db_connect()
 #'     
-#'     # Use this database connection for the session (replaces: session$userData$db <- db)
+#'     # Option 1: Explicitly pass the database connection
 #'     sd_use_db(db)
 #'     
+#'     # Option 2: Let sd_use_db() automatically find the 'db' variable
+#'     sd_use_db()  # Automatically uses the 'db' variable above
+#'     
 #'     # Now other functions can access the database
-#'     completion_code <- sd_completion_code()
-#'     sample_value <- sd_sample(c("A", "B", "C"))
+#'     completion_code <- sd_completion_code(10, id = "completion_code")
+#'     sample_value <- sd_sample(c("A", "B", "C"), "sample_id")
 #'   }
 #' }
 #'
 #' @export
-sd_use_db <- function(db) {
+sd_use_db <- function(db = NULL) {
   # Check if we're in a Shiny reactive context
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
@@ -1642,7 +1646,15 @@ sd_use_db <- function(db) {
     )
   }
   
-  # If db is NULL, silently continue (functions will fall back to non-persistent mode)
+  # If db is NULL, try to find 'db' variable in the calling environment
+  if (is.null(db)) {
+    calling_env <- parent.frame()
+    if (exists("db", envir = calling_env)) {
+      db <- get("db", envir = calling_env)
+    }
+  }
+  
+  # If db is still NULL, silently continue (functions will fall back to non-persistent mode)
   # No warning needed - this is a valid use case for local testing
   
   # Store the database connection in session userData

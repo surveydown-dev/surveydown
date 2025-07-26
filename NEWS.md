@@ -1,5 +1,11 @@
 # surveydown (development version)
 
+# surveydown 0.12.9
+
+- New function: `sd_use_db()`: Function to setup database connections, serving `sd_sample()`, `sd_completion_code()`, and other future functions that require constant data capture from the database. Auto-detects `db` variable when called without arguments.
+- New function: `sd_sample()` - Session-persistent sampling that maintains values across page refreshes. When in local testing, function the same as `sample()`.
+- Enhanced: `sd_completion_code()` - Now session-persistent with database integration, compatible with local testing.
+
 # surveydown 0.12.8
 
 - New argument for `sd_server()`: `capture_metadata` automatically captures and stores browser information and IP address. Defaults to `TRUE`.

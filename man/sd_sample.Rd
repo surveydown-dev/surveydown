@@ -4,10 +4,14 @@
 \alias{sd_sample}
 \title{Session-aware Sampling Function}
 \usage{
-sd_sample(x, size = 1, replace = FALSE, prob = NULL, id = NULL)
+sd_sample(x, id = NULL, size = 1, replace = FALSE, prob = NULL)
 }
 \arguments{
 \item{x}{A vector of one or more elements from which to choose, or a positive integer.}
+
+\item{id}{A character string specifying a unique identifier for this sampling operation.
+If not provided, a default ID based on the call will be generated. Use different IDs
+if you have multiple \code{sd_sample()} calls that should be independent.}
 
 \item{size}{A non-negative integer giving the number of items to choose. Defaults to 1.}
 
@@ -15,10 +19,6 @@ sd_sample(x, size = 1, replace = FALSE, prob = NULL, id = NULL)
 
 \item{prob}{A vector of probability weights for obtaining the elements of the vector
 being sampled. Defaults to NULL (uniform probabilities).}
-
-\item{id}{A character string specifying a unique identifier for this sampling operation.
-If not provided, a default ID based on the call will be generated. Use different IDs
-if you have multiple \code{sd_sample()} calls that should be independent.}
 }
 \value{
 A vector of length \code{size} with elements drawn from \code{x}, consistent
@@ -35,8 +35,12 @@ The function works by:
 \enumerate{
 \item Checking if a sampled value already exists in the database for the current session
 \item If found, returns the existing value to maintain consistency
-\item If not found, performs new sampling and stores the result
+\item If not found, performs new sampling and returns the result (without automatic storage)
 }
+
+\strong{Note}: This function stores values internally using a hash-based ID for persistence
+across page refreshes. Use sd_store_value() to store the sampled result with your
+desired column name for data analysis purposes.
 
 This is particularly useful in survey applications where you want to maintain
 consistent randomization (e.g., same choice options, same experimental conditions)
@@ -53,14 +57,14 @@ if (interactive()) {
     # Use database connection for the session
     sd_use_db(db)
     
-    # Sample a single respondent ID
-    respondentID <- sd_sample(design$respID)
+    # Sample a single respondent ID with clean positional syntax
+    respondentID <- sd_sample(design$respID, "respID")
 
     # Sample multiple items with custom ID
-    selected_questions <- sd_sample(question_pool, size = 5, id = "question_selection")
+    selected_questions <- sd_sample(question_pool, "question_selection", size = 5)
 
     # Sample with probabilities
-    treatment_group <- sd_sample(c("control", "treatment"), prob = c(0.3, 0.7), id = "treatment")
+    treatment_group <- sd_sample(c("control", "treatment"), "treatment", prob = c(0.3, 0.7))
   }
 }
 

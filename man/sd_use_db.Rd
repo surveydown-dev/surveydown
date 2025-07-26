@@ -4,12 +4,13 @@
 \alias{sd_use_db}
 \title{Use Database Connection for Session}
 \usage{
-sd_use_db(db)
+sd_use_db(db = NULL)
 }
 \arguments{
 \item{db}{A database connection object, typically created with sd_db_connect().
-This should be a valid database pool or connection that can be used for
-storing and retrieving survey data.}
+If not provided (NULL), the function will automatically look for a variable
+named 'db' in the calling environment. This should be a valid database pool
+or connection that can be used for storing and retrieving survey data.}
 }
 \value{
 Invisible NULL. The function is called for its side effect of making
@@ -44,12 +45,15 @@ if (interactive()) {
     # Create database connection
     db <- sd_db_connect()
     
-    # Use this database connection for the session (replaces: session$userData$db <- db)
+    # Option 1: Explicitly pass the database connection
     sd_use_db(db)
     
+    # Option 2: Let sd_use_db() automatically find the 'db' variable
+    sd_use_db()  # Automatically uses the 'db' variable above
+    
     # Now other functions can access the database
-    completion_code <- sd_completion_code()
-    sample_value <- sd_sample(c("A", "B", "C"))
+    completion_code <- sd_completion_code(10, id = "completion_code")
+    sample_value <- sd_sample(c("A", "B", "C"), "sample_id")
   }
 }
 
