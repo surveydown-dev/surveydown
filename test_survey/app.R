@@ -49,10 +49,7 @@ server <- function(input, output, session) {
   sd_use_db(db)
 
   # Make a 10-digit random number completion code
-  completion_code <- sd_completion_code(10)
-
-  # Store the completion code in the survey data
-  sd_store_value(completion_code)
+  completion_code <- sd_completion_code(10, id = "completion_code")
 
   # Read in the full survey design file
   design <- read_csv(here("data", "choice_questions.csv"))

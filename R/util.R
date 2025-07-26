@@ -1430,13 +1430,13 @@ sd_completion_code <- function(digits = 6, id = "completion_code") {
 #' session, ensuring consistency when users refresh survey pages.
 #'
 #' @param x A vector of one or more elements from which to choose, or a positive integer.
+#' @param id A character string specifying a unique identifier for this sampling operation.
+#'   If not provided, a default ID based on the call will be generated. Use different IDs
+#'   if you have multiple `sd_sample()` calls that should be independent.
 #' @param size A non-negative integer giving the number of items to choose. Defaults to 1.
 #' @param replace Should sampling be with replacement? Defaults to FALSE.
 #' @param prob A vector of probability weights for obtaining the elements of the vector
 #'   being sampled. Defaults to NULL (uniform probabilities).
-#' @param id A character string specifying a unique identifier for this sampling operation.
-#'   If not provided, a default ID based on the call will be generated. Use different IDs
-#'   if you have multiple `sd_sample()` calls that should be independent.
 #' @details
 #' The function works by:
 #' 1. Checking if a sampled value already exists in the database for the current session
@@ -1465,22 +1465,19 @@ sd_completion_code <- function(digits = 6, id = "completion_code") {
 #'     # Use database connection for the session
 #'     sd_use_db(db)
 #'     
-#'     # Sample a single respondent ID and store it manually
-#'     respondentID <- sd_sample(design$respID)
-#'     sd_store_value(respondentID, "respID")
+#'     # Sample a single respondent ID with clean positional syntax
+#'     respondentID <- sd_sample(design$respID, "respID")
 #'
-#'     # Sample multiple items with custom ID and store manually
-#'     selected_questions <- sd_sample(question_pool, size = 5, id = "question_selection")
-#'     sd_store_value(selected_questions, "selected_questions")
+#'     # Sample multiple items with custom ID
+#'     selected_questions <- sd_sample(question_pool, "question_selection", size = 5)
 #'
-#'     # Sample with probabilities and store manually
-#'     treatment_group <- sd_sample(c("control", "treatment"), prob = c(0.3, 0.7), id = "treatment")
-#'     sd_store_value(treatment_group, "treatment_group")
+#'     # Sample with probabilities
+#'     treatment_group <- sd_sample(c("control", "treatment"), "treatment", prob = c(0.3, 0.7))
 #'   }
 #' }
 #'
 #' @export
-sd_sample <- function(x, size = 1, replace = FALSE, prob = NULL, id = NULL) {
+sd_sample <- function(x, id = NULL, size = 1, replace = FALSE, prob = NULL) {
   # Always store internally for persistence (needed for consistency across refreshes)
   store <- TRUE
   
