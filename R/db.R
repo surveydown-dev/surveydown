@@ -410,6 +410,15 @@ get_session_data <- function(db, session_id) {
 
     tryCatch(
         {
+            # Check if table exists first
+            table_exists <- pool::poolWithTransaction(db$db, function(conn) {
+                DBI::dbExistsTable(conn, table)
+            })
+
+            if (!table_exists) {
+                return(NULL)
+            }
+
             # Use the same pooling pattern as sd_get_data()
             result <- pool::poolWithTransaction(db$db, function(conn) {
                 query <- paste0(
