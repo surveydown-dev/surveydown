@@ -25,7 +25,9 @@
 #'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
 #'   Defaults to `"en"`.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
-#'   for storing and restoring survey progress. Defaults to `TRUE`.
+#'   for storing and restoring survey progress. If `NULL` (default), will check
+#'   for `use_cookies` setting in the survey.qmd YAML header. If not found there,
+#'   defaults to `TRUE`.
 #' @param highlight_unanswered Logical. If `TRUE`, enables highlighting
 #'   of all unanswered questions on page display. Defaults to `TRUE`.
 #' @param highlight_color Character string. Color for highlighting unanswered
@@ -103,7 +105,7 @@
 #'       auto_scroll = FALSE,
 #'       rate_survey = FALSE,
 #'       language = "en",
-#'       use_cookies = TRUE,
+#'       use_cookies = NULL, # Will read from survey.qmd YAML if NULL
 #'       highlight_unanswered = TRUE,
 #'       highlight_color = "gray",
 #'       capture_metadata = TRUE
@@ -129,7 +131,7 @@ sd_server <- function(
     auto_scroll = FALSE,
     rate_survey = FALSE,
     language = "en",
-    use_cookies = TRUE,
+    use_cookies = NULL,
     highlight_unanswered = TRUE,
     highlight_color = "gray",
     capture_metadata = TRUE
@@ -151,6 +153,26 @@ sd_server <- function(
     }
 
     session$userData$db <- db
+
+    # Extract YAML configuration if parameters are NULL ----
+    if (is.null(use_cookies)) {
+        # Check if survey.qmd exists and extract YAML metadata
+        if (file.exists("survey.qmd")) {
+            tryCatch({
+                metadata <- quarto::quarto_inspect("survey.qmd")
+                yaml_use_cookies <- get_use_cookies(metadata)
+                if (!is.null(yaml_use_cookies)) {
+                    use_cookies <- yaml_use_cookies
+                }
+            }, error = function(e) {
+                warning("Could not read YAML configuration from survey.qmd: ", e$message)
+            })
+        }
+        # Set default if still NULL
+        if (is.null(use_cookies)) {
+            use_cookies <- TRUE
+        }
+    }
 
     # Normalize color spelling (handle both gray and grey)
     if (highlight_color == "grey") {

@@ -232,6 +232,14 @@ get_footer <- function(metadata) {
   ))
 }
 
+get_use_cookies <- function(metadata) {
+  use_cookies <- metadata$formats$html$metadata$use_cookies
+  if (is.null(use_cookies)) {
+    return(NULL)
+  }
+  return(as.logical(use_cookies))
+}
+
 find_all_yaml_files <- function() {
   # Find all yml files
   all_files <- list.files(
