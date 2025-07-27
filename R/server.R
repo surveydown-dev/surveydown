@@ -1943,7 +1943,7 @@ get_initial_data <- function(
             }
 
             # Get existing data for this session
-            existing_data <- get_session_data(db, search_session_id)
+            existing_data <- get_db_data(db, search_session_id)
 
             # Check which values should be skipped for database updates
             skip_db_values <- session$userData$deferred_skip_db

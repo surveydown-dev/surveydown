@@ -1443,18 +1443,7 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
       }
 
       # Check if this value already exists for this session
-      if (!is.null(db)) {
-        # Database mode
-        existing_data <- get_session_data(db, search_session_id)
-      } else {
-        # Local CSV mode
-        all_local_data <- get_local_data()
-        existing_data <- if (!is.null(all_local_data)) {
-          all_local_data[all_local_data$session_id == search_session_id, ]
-        } else {
-          NULL
-        }
-      }
+      existing_data <- get_session_data(db, search_session_id)
 
       if (!is.null(existing_data) && nrow(existing_data) > 0) {
         if (
@@ -1517,18 +1506,7 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
       }
 
       # Check for existing value in either database or local CSV
-      if (!is.null(db)) {
-        # Database mode
-        existing_data <- get_session_data(db, search_session_id)
-      } else {
-        # Local CSV mode
-        all_local_data <- get_local_data()
-        existing_data <- if (!is.null(all_local_data)) {
-          all_local_data[all_local_data$session_id == search_session_id, ]
-        } else {
-          NULL
-        }
-      }
+      existing_data <- get_session_data(db, search_session_id)
 
       should_store_new_value <- TRUE
       if (!is.null(existing_data) && nrow(existing_data) > 0) {
@@ -1567,6 +1545,33 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
   return(final_value)
 }
 
+# Helper function to format a single question value
+format_question_value <- function(val) {
+  if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
+    return("")
+  } else if (length(val) > 1) {
+    return(paste(val, collapse = ", "))
+  } else {
+    return(as.character(val))
+  }
+}
+
+# Main function to get session data from any available source (database or local CSV)
+get_session_data <- function(db, search_session_id) {
+  if (!is.null(db)) {
+    # Database mode
+    return(get_db_data(db, search_session_id))
+  } else {
+    # Local CSV mode
+    all_local_data <- get_local_data()
+    if (!is.null(all_local_data)) {
+      return(all_local_data[all_local_data$session_id == search_session_id, ])
+    } else {
+      return(NULL)
+    }
+  }
+}
+
 # Helper function to get local CSV data
 get_local_data <- function() {
   if (file.exists("preview_data.csv")) {
@@ -1586,19 +1591,8 @@ get_local_data <- function() {
   return(NULL)
 }
 
-# Helper function to format a single question value
-format_question_value <- function(val) {
-  if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
-    return("")
-  } else if (length(val) > 1) {
-    return(paste(val, collapse = ", "))
-  } else {
-    return(as.character(val))
-  }
-}
-
-# Internal function to get data for a specific session only
-get_session_data <- function(db, session_id) {
+# Internal function to get data from database for a specific session only
+get_db_data <- function(db, session_id) {
   if (is.null(db)) {
     return(NULL)
   }
