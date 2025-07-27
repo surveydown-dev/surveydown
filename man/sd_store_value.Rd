@@ -58,7 +58,7 @@ if (interactive()) {
     # Generate and store values with automatic assignment (default behavior)
     respondentID <- sample(1:1000, 1)
     sd_store_value(respondentID, "respID", db)  # respondentID automatically updated
-    
+
     completion_code <- sample(0:9, 6, replace = TRUE)
     sd_store_value(completion_code)  # completion_code automatically updated
 

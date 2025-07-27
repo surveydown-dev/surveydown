@@ -262,14 +262,6 @@ survey_needs_updating <- function(paths) {
     return(TRUE)
   }
 
-  # Re-render if '_survey/survey.html' is out of date with 'app.R'
-  if (fs::file_exists(paths$app)) {
-    time_app <- file.info(paths$app)$mtime
-    if (time_app > time_html) {
-      return(TRUE)
-    }
-  }
-
   # Find all YAML files
   yaml_files <- find_all_yaml_files()
 
