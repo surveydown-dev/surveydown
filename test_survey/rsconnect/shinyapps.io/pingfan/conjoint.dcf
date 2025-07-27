@@ -1,0 +1,10 @@
+name: conjoint
+title:
+username: pingfan
+account: pingfan
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15123756
+bundleId: 10678943
+url: https://pingfan.shinyapps.io/conjoint/
+version: 1

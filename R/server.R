@@ -696,8 +696,8 @@ sd_server <- function(
         }
 
         # Send to client to update cookie
-        if (length(answers) > 0 && !is.null(db)) {
-            # Only update cookies in db mode
+        if (length(answers) > 0) {
+            # Update cookies in both database and local modes
             page_data <- list(
                 answers = answers,
                 last_timestamp = last_timestamp
@@ -1969,8 +1969,57 @@ get_initial_data <- function(
                 data[[id]] <- session$userData$deferred_values[[id]]
             }
         } else {
-            # No database connection - add all deferred values
-            data <- c(data, session$userData$deferred_values)
+            # Local CSV mode - check for existing values in preview_data.csv
+            current_session_id <- session$token
+            persistent_session_id <- shiny::isolate(
+                session$input$stored_session_id
+            )
+
+            search_session_id <- if (
+                !is.null(persistent_session_id) &&
+                    nchar(persistent_session_id) > 0
+            ) {
+                persistent_session_id
+            } else {
+                current_session_id
+            }
+
+            # Get existing data from local CSV
+            all_local_data <- get_local_data()
+            existing_data <- if (!is.null(all_local_data)) {
+                all_local_data[all_local_data$session_id == search_session_id, ]
+            } else {
+                NULL
+            }
+
+            # Check which values should be skipped for local updates
+            skip_db_values <- session$userData$deferred_skip_db
+            if (is.null(skip_db_values)) {
+                skip_db_values <- character(0)
+            }
+
+            # Process each deferred value
+            for (id in names(session$userData$deferred_values)) {
+                # Check if value already exists in local CSV
+                value_exists <- if (
+                    !is.null(existing_data) && nrow(existing_data) > 0
+                ) {
+                    id %in%
+                        names(existing_data) &&
+                        !is.na(existing_data[[id]]) &&
+                        existing_data[[id]] != ""
+                } else {
+                    FALSE
+                }
+
+                if (value_exists) {
+                    # Use existing value from CSV for session persistence
+                    data[[id]] <- existing_data[[id]]
+                } else {
+                    # Use new deferred value
+                    data[[id]] <- session$userData$deferred_values[[id]]
+                }
+            }
         }
     }
 
@@ -2388,10 +2437,8 @@ handle_sessions <- function(
     progress_updater,
     use_cookies = TRUE
 ) {
-    # Check 1: if db is null, don't use cookies
-    if (is.null(db)) {
-        use_cookies <- FALSE
-    }
+    # Note: Cookies can work in both database and local modes
+    # No need to disable cookies when db is NULL
 
     # Check 2: Cookies enabled?
     if (!use_cookies) {

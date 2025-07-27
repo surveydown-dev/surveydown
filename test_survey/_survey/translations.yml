@@ -1,0 +1,19 @@
+en:
+  cancel: Cancel
+  confirm_exit: Confirm Exit
+  sure_exit: Are you sure you want to exit the survey?
+  submit_exit: Submit and Exit
+  warning: Warning
+  required: Please answer all required questions before proceeding.
+  rating_title: Before you go...
+  rating_text: 'Rate your survey experience:'
+  rating_scale: from 1-poor to 5-excellent
+  next: Next
+  exit: Exit Survey
+  close_tab: Please close this tab manually to exit the survey.
+  choose_option: Choose an option...
+  click: Click here
+  redirect: Redirecting in
+  seconds: seconds
+  new_tab: Opens in a new tab
+  redirect_error: 'Error: This text won''t trigger any redirection...'

@@ -1425,10 +1425,11 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
       }
     }
 
-    # Check if value already exists in database (session persistence logic)
+    # Check if value already exists (session persistence logic)
+    # Works for both database and local CSV modes
     # But only if all_data is available - otherwise we need to defer this check
     existing_value <- NULL
-    if (!is.null(db) && !is.null(session$userData$all_data)) {
+    if (!is.null(session$userData$all_data)) {
       # Get current session ID
       current_session_id <- session$token
       persistent_session_id <- shiny::isolate(session$input$stored_session_id)
@@ -1442,7 +1443,19 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
       }
 
       # Check if this value already exists for this session
-      existing_data <- get_session_data(db, search_session_id)
+      if (!is.null(db)) {
+        # Database mode
+        existing_data <- get_session_data(db, search_session_id)
+      } else {
+        # Local CSV mode
+        all_local_data <- get_local_data()
+        existing_data <- if (!is.null(all_local_data)) {
+          all_local_data[all_local_data$session_id == search_session_id, ]
+        } else {
+          NULL
+        }
+      }
+
       if (!is.null(existing_data) && nrow(existing_data) > 0) {
         if (
           id %in%
@@ -1489,9 +1502,9 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
         current_fields <- session$userData$changed_fields()
         session$userData$changed_fields(c(current_fields, id))
       }
-    } else if (!is.null(db)) {
-      # If all_data not available yet but we have db, store for deferred processing
-      # But first check if there's an existing value in the database
+    } else {
+      # If all_data not available yet, store for deferred processing
+      # This works for both database and local CSV modes
       current_session_id <- session$token
       persistent_session_id <- shiny::isolate(session$input$stored_session_id)
 
@@ -1503,8 +1516,19 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
         current_session_id
       }
 
-      # Check for existing value
-      existing_data <- get_session_data(db, search_session_id)
+      # Check for existing value in either database or local CSV
+      if (!is.null(db)) {
+        # Database mode
+        existing_data <- get_session_data(db, search_session_id)
+      } else {
+        # Local CSV mode
+        all_local_data <- get_local_data()
+        existing_data <- if (!is.null(all_local_data)) {
+          all_local_data[all_local_data$session_id == search_session_id, ]
+        } else {
+          NULL
+        }
+      }
 
       should_store_new_value <- TRUE
       if (!is.null(existing_data) && nrow(existing_data) > 0) {
@@ -1526,7 +1550,7 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
       }
       session$userData$deferred_values[[id]] <- final_value
 
-      # Track which values should NOT be written to database (for session persistence)
+      # Track which values should NOT be written to storage (for session persistence)
       if (!should_store_new_value) {
         if (is.null(session$userData$deferred_skip_db)) {
           session$userData$deferred_skip_db <- character(0)
@@ -1541,4 +1565,81 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
 
   # Return the final value so it can be used in variable assignment
   return(final_value)
+}
+
+# Helper function to get local CSV data
+get_local_data <- function() {
+  if (file.exists("preview_data.csv")) {
+    tryCatch(
+      {
+        return(utils::read.csv(
+          "preview_data.csv",
+          stringsAsFactors = FALSE
+        ))
+      },
+      error = function(e) {
+        warning("Error reading preview_data.csv: ", e$message)
+        return(NULL)
+      }
+    )
+  }
+  return(NULL)
+}
+
+# Helper function to format a single question value
+format_question_value <- function(val) {
+  if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
+    return("")
+  } else if (length(val) > 1) {
+    return(paste(val, collapse = ", "))
+  } else {
+    return(as.character(val))
+  }
+}
+
+# Internal function to get data for a specific session only
+get_session_data <- function(db, session_id) {
+  if (is.null(db)) {
+    return(NULL)
+  }
+
+  # Get the correct table name from db object
+  table <- db$table
+  if (is.null(table)) {
+    warning("Table name not found in database object")
+    return(NULL)
+  }
+
+  tryCatch(
+    {
+      # Check if table exists first
+      table_exists <- pool::poolWithTransaction(db$db, function(conn) {
+        DBI::dbExistsTable(conn, table)
+      })
+
+      if (!table_exists) {
+        return(NULL)
+      }
+
+      # Use the same pooling pattern as sd_get_data()
+      result <- pool::poolWithTransaction(db$db, function(conn) {
+        query <- paste0(
+          "SELECT * FROM ",
+          table,
+          " WHERE session_id = $1"
+        )
+        DBI::dbGetQuery(conn, query, params = list(session_id))
+      })
+
+      if (is.null(result) || nrow(result) == 0) {
+        return(NULL)
+      }
+
+      return(result)
+    },
+    error = function(e) {
+      warning("Failed to fetch session data: ", e$message)
+      return(NULL)
+    }
+  )
 }

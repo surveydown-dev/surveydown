@@ -395,53 +395,6 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
     }
 }
 
-# Internal function to get data for a specific session only
-get_session_data <- function(db, session_id) {
-    if (is.null(db)) {
-        return(NULL)
-    }
-
-    # Get the correct table name from db object
-    table <- db$table
-    if (is.null(table)) {
-        warning("Table name not found in database object")
-        return(NULL)
-    }
-
-    tryCatch(
-        {
-            # Check if table exists first
-            table_exists <- pool::poolWithTransaction(db$db, function(conn) {
-                DBI::dbExistsTable(conn, table)
-            })
-
-            if (!table_exists) {
-                return(NULL)
-            }
-
-            # Use the same pooling pattern as sd_get_data()
-            result <- pool::poolWithTransaction(db$db, function(conn) {
-                query <- paste0(
-                    "SELECT * FROM ",
-                    table,
-                    " WHERE session_id = $1"
-                )
-                DBI::dbGetQuery(conn, query, params = list(session_id))
-            })
-
-            if (is.null(result) || nrow(result) == 0) {
-                return(NULL)
-            }
-
-            return(result)
-        },
-        error = function(e) {
-            warning("Failed to fetch session data: ", e$message)
-            return(NULL)
-        }
-    )
-}
-
 # Convert to SQL
 r_to_sql_type <- function(r_type) {
     switch(
