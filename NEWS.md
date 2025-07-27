@@ -2,7 +2,8 @@
 
 # surveydown 0.12.9
 
-- Enhanced: `sd_completion_code()` - Now session-persistent with database integration, compatible with local testing.
+- Enhanced: `sd_store_value()` - Now session-persistent with database integration, compatible with local testing. It also saves the value into the server so it matches the database.
+- Enhanced: Now cookie is working for both db mode and local csv.
 
 # surveydown 0.12.8
 

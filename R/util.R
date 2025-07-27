@@ -1355,6 +1355,11 @@ sd_completion_code <- function(digits = 6) {
 #'   If provided, enables session persistence. If not provided, will automatically
 #'   look for a variable named 'db' in the calling environment, or fall back to
 #'   the database connection from the session.
+#' @param auto_assign Logical. If `TRUE` (default), automatically assigns the
+#'   stored value back to the original variable in the calling environment.
+#'   This eliminates the need for explicit assignment when session persistence
+#'   is desired. If `FALSE`, the function only returns the value without
+#'   modifying the original variable.
 #'
 #' @return The value that was stored (either the new value or existing value
 #'   from database if session persistence applies). This allows the function
@@ -1379,15 +1384,17 @@ sd_completion_code <- function(digits = 6) {
 #'     # Set up database connection
 #'     db <- sd_db_connect()
 #'
-#'     # Generate and store values with session persistence
-#'     respondentID <- sd_store_value(sample(1:1000, 1), "respID", db)
-#'     completion_code <- sd_store_value(sample(0:9, 6, replace = TRUE), "completion_code", db)
+#'     # Generate and store values with automatic assignment (default behavior)
+#'     respondentID <- sample(1:1000, 1)
+#'     sd_store_value(respondentID, "respID", db)  # respondentID automatically updated
+#'     
+#'     completion_code <- sample(0:9, 6, replace = TRUE)
+#'     sd_store_value(completion_code)  # completion_code automatically updated
 #'
-#'     # The function returns the stored value (new or existing from database)
-#'     # This ensures session persistence across page refreshes
+#'     # Traditional assignment approach (auto_assign = FALSE)
+#'     some_value <- sd_store_value(42, "some_value", auto_assign = FALSE)
 #'
-#'     # Backward compatibility - works without db parameter too
-#'     some_value <- sd_store_value(42, "some_value")
+#'     # The function ensures session persistence across page refreshes
 #'
 #'     sd_server()
 #'   }
@@ -1400,7 +1407,7 @@ sd_completion_code <- function(digits = 6) {
 #' }
 #'
 #' @export
-sd_store_value <- function(value, id = NULL, db = NULL) {
+sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
   if (is.null(id)) {
     id <- deparse(substitute(value))
   }
@@ -1540,6 +1547,14 @@ sd_store_value <- function(value, id = NULL, db = NULL) {
       }
     }
   })
+
+  # Auto-assign to parent environment if requested
+  if (auto_assign) {
+    # Get the variable name from the first argument
+    var_name <- deparse(substitute(value))
+    # Use <<- to assign to the parent environment
+    assign(var_name, final_value, envir = parent.frame())
+  }
 
   # Return the final value so it can be used in variable assignment
   return(final_value)
