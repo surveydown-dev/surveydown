@@ -2442,11 +2442,6 @@ handle_sessions <- function(
 
     # Check 2: Cookies enabled?
     if (!use_cookies) {
-        # Delete session token if it exists and send message to clear any client-side cookies
-        if (!is.null(session$token)) {
-            session$token <- NULL
-        }
-        session$sendCustomMessage("deleteCookie", list())
         return(session_id)
     }
 
