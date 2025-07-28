@@ -7,15 +7,15 @@
 sd_server(
   db = NULL,
   required_questions = NULL,
-  all_questions_required = FALSE,
+  all_questions_required = NULL,
   start_page = NULL,
-  auto_scroll = FALSE,
-  rate_survey = FALSE,
+  auto_scroll = NULL,
+  rate_survey = NULL,
   language = "en",
   use_cookies = NULL,
-  highlight_unanswered = TRUE,
-  highlight_color = "gray",
-  capture_metadata = TRUE
+  highlight_unanswered = NULL,
+  highlight_color = NULL,
+  capture_metadata = NULL
 )
 }
 \arguments{
@@ -137,15 +137,15 @@ if (interactive()) {
     sd_server(
       db = NULL,
       required_questions = NULL,
-      all_questions_required = FALSE,
+      all_questions_required = NULL,
       start_page = NULL,
-      auto_scroll = FALSE,
-      rate_survey = FALSE,
+      auto_scroll = NULL,
+      rate_survey = NULL,
       language = "en",
       use_cookies = NULL,
-      highlight_unanswered = TRUE,
-      highlight_color = "gray",
-      capture_metadata = TRUE
+      highlight_unanswered = NULL,
+      highlight_color = NULL,
+      capture_metadata = NULL
     )
   }
 
