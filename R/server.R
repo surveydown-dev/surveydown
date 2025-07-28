@@ -167,6 +167,19 @@ sd_server <- function(
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
     skip_forward <- shiny::getDefaultReactiveDomain()$userData$skip_forward
 
+    # Track which parameters were explicitly provided (not missing)
+    explicit_params <- list(
+        use_cookies = !missing(use_cookies),
+        auto_scroll = !missing(auto_scroll),
+        rate_survey = !missing(rate_survey),
+        all_questions_required = !missing(all_questions_required),
+        start_page = !missing(start_page),
+        highlight_unanswered = !missing(highlight_unanswered),
+        highlight_color = !missing(highlight_color),
+        capture_metadata = !missing(capture_metadata),
+        required_questions = !missing(required_questions)
+    )
+
     # Apply basic defaults before run_config() (which needs valid parameters)
     if (is.null(use_cookies)) {
         use_cookies <- TRUE
@@ -205,34 +218,35 @@ sd_server <- function(
     )
 
     # Now read settings from _survey/settings.yml (created by run_config above)
-    # and override parameters with YAML values if they exist and are not NULL
+    # Priority: sd_server() parameters > YAML values > defaults
+    # Only use YAML values if sd_server() parameters were not explicitly provided
     settings <- read_settings_yaml()
     
-    if (!is.null(settings$use_cookies)) {
+    if (!explicit_params$use_cookies && !is.null(settings$use_cookies)) {
         use_cookies <- settings$use_cookies
     }
-    if (!is.null(settings$auto_scroll)) {
+    if (!explicit_params$auto_scroll && !is.null(settings$auto_scroll)) {
         auto_scroll <- settings$auto_scroll
     }
-    if (!is.null(settings$rate_survey)) {
+    if (!explicit_params$rate_survey && !is.null(settings$rate_survey)) {
         rate_survey <- settings$rate_survey
     }
-    if (!is.null(settings$all_questions_required)) {
+    if (!explicit_params$all_questions_required && !is.null(settings$all_questions_required)) {
         all_questions_required <- settings$all_questions_required
     }
-    if (!is.null(settings$start_page)) {
+    if (!explicit_params$start_page && !is.null(settings$start_page)) {
         start_page <- settings$start_page
     }
-    if (!is.null(settings$highlight_unanswered)) {
+    if (!explicit_params$highlight_unanswered && !is.null(settings$highlight_unanswered)) {
         highlight_unanswered <- settings$highlight_unanswered
     }
-    if (!is.null(settings$highlight_color)) {
+    if (!explicit_params$highlight_color && !is.null(settings$highlight_color)) {
         highlight_color <- settings$highlight_color
     }
-    if (!is.null(settings$capture_metadata)) {
+    if (!explicit_params$capture_metadata && !is.null(settings$capture_metadata)) {
         capture_metadata <- settings$capture_metadata
     }
-    if (!is.null(settings$required_questions)) {
+    if (!explicit_params$required_questions && !is.null(settings$required_questions)) {
         required_questions <- settings$required_questions
     }
 
@@ -297,6 +311,7 @@ sd_server <- function(
     
     # Handle all_questions_required and required_questions logic
     # This mirrors the logic in run_config() but uses YAML-resolved values
+    # Priority: explicit sd_server() parameters > YAML values > config defaults
     if (all_questions_required) {
         # When all_questions_required is TRUE, make all questions required except matrix questions
         matrix_question_ids <- names(which(sapply(
@@ -305,18 +320,23 @@ sd_server <- function(
             "is_matrix"
         )))
         question_required <- setdiff(question_ids, matrix_question_ids)
-    } else if (!is.null(required_questions)) {
-        # Use the YAML-resolved required_questions
+    } else if (explicit_params$required_questions && !is.null(required_questions)) {
+        # Use explicitly provided required_questions from sd_server()
+        question_required <- required_questions
+    } else if (!explicit_params$required_questions && !is.null(required_questions)) {
+        # Use YAML-resolved required_questions (when sd_server() didn't provide them)
         question_required <- required_questions
     } else {
         # Fall back to config-determined required questions
         question_required <- config$question_required
     }
     
-    # Update each page's required_questions to reflect YAML settings
-    # This is necessary because pages were created before YAML was processed
-    # Apply this logic when either all_questions_required is TRUE or specific required_questions were set
-    if (all_questions_required || (!is.null(required_questions) && length(required_questions) > 0)) {
+    # Update each page's required_questions to reflect final resolved settings
+    # This is necessary because pages were created before final parameter resolution
+    # Apply this logic when we have any required questions different from config defaults
+    if (all_questions_required || 
+        (explicit_params$required_questions && !is.null(required_questions)) ||
+        (!explicit_params$required_questions && !is.null(required_questions) && length(required_questions) > 0)) {
         for (i in seq_along(pages)) {
             page_question_ids <- pages[[i]]$questions
             # Find which questions on this page are in the global required list
