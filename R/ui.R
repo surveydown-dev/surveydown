@@ -52,6 +52,7 @@ sd_ui <- function() {
 
   # Get metadata from the 'survey.qmd' file
   metadata <- quarto::quarto_inspect("survey.qmd")
+  
   theme <- get_theme(metadata)
   default_theme <- FALSE
   if (any(theme == "default")) {
@@ -238,6 +239,70 @@ get_use_cookies <- function(metadata) {
     return(NULL)
   }
   return(as.logical(use_cookies))
+}
+
+get_auto_scroll <- function(metadata) {
+  auto_scroll <- metadata$formats$html$metadata$auto_scroll
+  if (is.null(auto_scroll)) {
+    return(NULL)
+  }
+  return(as.logical(auto_scroll))
+}
+
+get_rate_survey <- function(metadata) {
+  rate_survey <- metadata$formats$html$metadata$rate_survey
+  if (is.null(rate_survey)) {
+    return(NULL)
+  }
+  return(as.logical(rate_survey))
+}
+
+get_all_questions_required <- function(metadata) {
+  all_questions_required <- metadata$formats$html$metadata$all_questions_required
+  if (is.null(all_questions_required)) {
+    return(NULL)
+  }
+  return(as.logical(all_questions_required))
+}
+
+get_start_page <- function(metadata) {
+  start_page <- metadata$formats$html$metadata$start_page
+  if (is.null(start_page)) {
+    return(NULL)
+  }
+  return(as.character(start_page))
+}
+
+get_language <- function(metadata) {
+  language <- metadata$formats$html$metadata$language
+  if (is.null(language)) {
+    return(NULL)
+  }
+  return(as.character(language))
+}
+
+get_highlight_unanswered <- function(metadata) {
+  highlight_unanswered <- metadata$formats$html$metadata$highlight_unanswered
+  if (is.null(highlight_unanswered)) {
+    return(NULL)
+  }
+  return(as.logical(highlight_unanswered))
+}
+
+get_highlight_color <- function(metadata) {
+  highlight_color <- metadata$formats$html$metadata$highlight_color
+  if (is.null(highlight_color)) {
+    return(NULL)
+  }
+  return(as.character(highlight_color))
+}
+
+get_capture_metadata <- function(metadata) {
+  capture_metadata <- metadata$formats$html$metadata$capture_metadata
+  if (is.null(capture_metadata)) {
+    return(NULL)
+  }
+  return(as.logical(capture_metadata))
 }
 
 find_all_yaml_files <- function() {

@@ -155,29 +155,118 @@ sd_server <- function(
     session$userData$db <- db
 
     # Extract YAML configuration if parameters are NULL ----
-    if (is.null(use_cookies)) {
-        # Check if survey.qmd exists and extract YAML metadata
-        if (file.exists("survey.qmd")) {
-            tryCatch(
-                {
-                    metadata <- quarto::quarto_inspect("survey.qmd")
+    # Check if survey.qmd exists and extract YAML metadata
+    if (file.exists("survey.qmd")) {
+        tryCatch(
+            {
+                metadata <- quarto::quarto_inspect("survey.qmd")
+                
+                # Extract use_cookies
+                if (missing(use_cookies) || is.null(use_cookies)) {
                     yaml_use_cookies <- get_use_cookies(metadata)
                     if (!is.null(yaml_use_cookies)) {
                         use_cookies <- yaml_use_cookies
                     }
-                },
-                error = function(e) {
-                    warning(
-                        "Could not read YAML configuration from survey.qmd: ",
-                        e$message
-                    )
                 }
-            )
-        }
-        # Set default if still NULL
-        if (is.null(use_cookies)) {
-            use_cookies <- TRUE
-        }
+                
+                # Extract auto_scroll
+                if (missing(auto_scroll)) {
+                    yaml_auto_scroll <- get_auto_scroll(metadata)
+                    if (!is.null(yaml_auto_scroll)) {
+                        auto_scroll <- yaml_auto_scroll
+                    }
+                }
+                
+                # Extract rate_survey
+                if (missing(rate_survey)) {
+                    yaml_rate_survey <- get_rate_survey(metadata)
+                    if (!is.null(yaml_rate_survey)) {
+                        rate_survey <- yaml_rate_survey
+                    }
+                }
+                
+                # Extract all_questions_required
+                if (missing(all_questions_required)) {
+                    yaml_all_questions_required <- get_all_questions_required(metadata)
+                    if (!is.null(yaml_all_questions_required)) {
+                        all_questions_required <- yaml_all_questions_required
+                    }
+                }
+                
+                # Extract start_page
+                if (missing(start_page) || is.null(start_page)) {
+                    yaml_start_page <- get_start_page(metadata)
+                    if (!is.null(yaml_start_page)) {
+                        start_page <- yaml_start_page
+                    }
+                }
+                
+                # Extract language
+                if (missing(language)) {
+                    yaml_language <- get_language(metadata)
+                    if (!is.null(yaml_language)) {
+                        language <- yaml_language
+                    }
+                }
+                
+                # Extract highlight_unanswered
+                if (missing(highlight_unanswered)) {
+                    yaml_highlight_unanswered <- get_highlight_unanswered(metadata)
+                    if (!is.null(yaml_highlight_unanswered)) {
+                        highlight_unanswered <- yaml_highlight_unanswered
+                    }
+                }
+                
+                # Extract highlight_color
+                if (missing(highlight_color)) {
+                    yaml_highlight_color <- get_highlight_color(metadata)
+                    if (!is.null(yaml_highlight_color)) {
+                        highlight_color <- yaml_highlight_color
+                    }
+                }
+                
+                # Extract capture_metadata
+                if (missing(capture_metadata)) {
+                    yaml_capture_metadata <- get_capture_metadata(metadata)
+                    if (!is.null(yaml_capture_metadata)) {
+                        capture_metadata <- yaml_capture_metadata
+                    }
+                }
+            },
+            error = function(e) {
+                warning(
+                    "Could not read YAML configuration from survey.qmd: ",
+                    e$message
+                )
+            }
+        )
+    }
+    
+    # Set defaults for any parameters that are still NULL
+    if (is.null(use_cookies)) {
+        use_cookies <- TRUE
+    }
+    if (is.null(auto_scroll)) {
+        auto_scroll <- FALSE
+    }
+    if (is.null(rate_survey)) {
+        rate_survey <- FALSE
+    }
+    if (is.null(all_questions_required)) {
+        all_questions_required <- FALSE
+    }
+    # start_page can remain NULL - it will be set later in config
+    if (is.null(language)) {
+        language <- "en"
+    }
+    if (is.null(highlight_unanswered)) {
+        highlight_unanswered <- TRUE
+    }
+    if (is.null(highlight_color)) {
+        highlight_color <- "gray"
+    }
+    if (is.null(capture_metadata)) {
+        capture_metadata <- TRUE
     }
 
     # Normalize color spelling (handle both gray and grey)

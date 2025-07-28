@@ -1607,6 +1607,41 @@ get_settings_yml <- function() {
   if (fs::file_exists(path)) {
     return(yaml::read_yaml("_survey/settings.yml"))
   }
+  
+  # Fallback: if settings.yml doesn't exist, read directly from survey.qmd YAML header
+  if (file.exists("survey.qmd")) {
+    tryCatch({
+      metadata <- quarto::quarto_inspect("survey.qmd")
+      yaml_metadata <- metadata$formats$html$metadata
+      
+      # Extract all server configuration parameters if available
+      settings <- list()
+      server_params <- c(
+        "use_cookies",
+        "auto_scroll", 
+        "rate_survey",
+        "all_questions_required",
+        "start_page",
+        "language",
+        "highlight_unanswered",
+        "highlight_color",
+        "capture_metadata"
+      )
+      
+      for (param in server_params) {
+        if (!is.null(yaml_metadata[[param]])) {
+          settings[[param]] <- yaml_metadata[[param]]
+        }
+      }
+      
+      if (length(settings) > 0) {
+        return(settings)
+      }
+    }, error = function(e) {
+      # If quarto inspection fails, continue with NULL
+    })
+  }
+  
   return(NULL)
 }
 
