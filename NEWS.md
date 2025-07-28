@@ -4,6 +4,7 @@
 
 - Enhanced: `sd_store_value()` - Now session-persistent with database integration, compatible with local testing. It also saves the value into the server so it matches the database.
 - Enhanced: Now cookie is working for both db mode and local csv.
+- New feature: YAML-based server configuration - All `sd_server()` parameters can now be configured in the survey.qmd YAML header (e.g., `use_cookies: yes`, `auto_scroll: no`). Parameters in `sd_server()` take priority over YAML.
 
 # surveydown 0.12.8
 

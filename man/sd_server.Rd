@@ -12,7 +12,7 @@ sd_server(
   auto_scroll = FALSE,
   rate_survey = FALSE,
   language = "en",
-  use_cookies = TRUE,
+  use_cookies = NULL,
   highlight_unanswered = TRUE,
   highlight_color = "gray",
   capture_metadata = TRUE
@@ -45,7 +45,9 @@ French (\code{"fr"}), Italian (\code{"it"}), Simplified Chinese (\code{"zh-CN"})
 Defaults to \code{"en"}.}
 
 \item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management
-for storing and restoring survey progress. Defaults to \code{TRUE}.}
+for storing and restoring survey progress. If \code{NULL} (default), will check
+for \code{use_cookies} setting in the survey.qmd YAML header. If not found there,
+defaults to \code{TRUE}.}
 
 \item{highlight_unanswered}{Logical. If \code{TRUE}, enables highlighting
 of all unanswered questions on page display. Defaults to \code{TRUE}.}
@@ -140,7 +142,7 @@ if (interactive()) {
       auto_scroll = FALSE,
       rate_survey = FALSE,
       language = "en",
-      use_cookies = TRUE,
+      use_cookies = NULL,
       highlight_unanswered = TRUE,
       highlight_color = "gray",
       capture_metadata = TRUE

@@ -105,7 +105,7 @@
 #'       auto_scroll = FALSE,
 #'       rate_survey = FALSE,
 #'       language = "en",
-#'       use_cookies = NULL, # Will read from survey.qmd YAML if NULL
+#'       use_cookies = NULL,
 #'       highlight_unanswered = TRUE,
 #'       highlight_color = "gray",
 #'       capture_metadata = TRUE
@@ -203,13 +203,7 @@ sd_server <- function(
                     }
                 }
 
-                # Extract language
-                if (missing(language)) {
-                    yaml_language <- get_language(metadata)
-                    if (!is.null(yaml_language)) {
-                        language <- yaml_language
-                    }
-                }
+                # Note: language parameter excluded from YAML extraction to avoid Quarto conflicts
 
                 # Extract highlight_unanswered
                 if (missing(highlight_unanswered)) {
@@ -287,15 +281,15 @@ sd_server <- function(
     if (highlight_color == "grey") {
         highlight_color <- "gray"
     }
-    
+
     # Update settings.yml with final resolved parameters
+    # Note: language excluded to avoid Quarto conflicts
     resolved_params <- list(
         use_cookies = use_cookies,
         auto_scroll = auto_scroll,
         rate_survey = rate_survey,
         all_questions_required = all_questions_required,
         start_page = start_page,
-        language = language,
         highlight_unanswered = highlight_unanswered,
         highlight_color = highlight_color,
         capture_metadata = capture_metadata,
