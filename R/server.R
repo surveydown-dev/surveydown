@@ -100,15 +100,15 @@
 #'     sd_server(
 #'       db = NULL,
 #'       required_questions = NULL,
-#'       all_questions_required = FALSE,
+#'       all_questions_required = NULL,
 #'       start_page = NULL,
-#'       auto_scroll = FALSE,
-#'       rate_survey = FALSE,
+#'       auto_scroll = NULL,
+#'       rate_survey = NULL,
 #'       language = "en",
 #'       use_cookies = NULL,
-#'       highlight_unanswered = TRUE,
-#'       highlight_color = "gray",
-#'       capture_metadata = TRUE
+#'       highlight_unanswered = NULL,
+#'       highlight_color = NULL,
+#'       capture_metadata = NULL
 #'     )
 #'   }
 #'
@@ -126,15 +126,15 @@
 sd_server <- function(
     db = NULL,
     required_questions = NULL,
-    all_questions_required = FALSE,
+    all_questions_required = NULL,
     start_page = NULL,
-    auto_scroll = FALSE,
-    rate_survey = FALSE,
+    auto_scroll = NULL,
+    rate_survey = NULL,
     language = "en",
     use_cookies = NULL,
-    highlight_unanswered = TRUE,
-    highlight_color = "gray",
-    capture_metadata = TRUE
+    highlight_unanswered = NULL,
+    highlight_color = NULL,
+    capture_metadata = NULL
 ) {
     # 1. Initialize local variables ----
 
@@ -154,103 +154,20 @@ sd_server <- function(
 
     session$userData$db <- db
 
-    # Extract YAML configuration if parameters are NULL ----
-    # Check if survey.qmd exists and extract YAML metadata
-    if (file.exists("survey.qmd")) {
-        tryCatch(
-            {
-                metadata <- quarto::quarto_inspect("survey.qmd")
+    # Settings will be read after run_config() creates the file
 
-                # Extract use_cookies
-                if (missing(use_cookies) || is.null(use_cookies)) {
-                    yaml_use_cookies <- get_use_cookies(metadata)
-                    if (!is.null(yaml_use_cookies)) {
-                        use_cookies <- yaml_use_cookies
-                    }
-                }
+    # Defaults will be applied after reading settings from YAML file
 
-                # Extract auto_scroll
-                if (missing(auto_scroll)) {
-                    yaml_auto_scroll <- get_auto_scroll(metadata)
-                    if (!is.null(yaml_auto_scroll)) {
-                        auto_scroll <- yaml_auto_scroll
-                    }
-                }
+    # Will update settings.yml with final resolved parameters later
 
-                # Extract rate_survey
-                if (missing(rate_survey)) {
-                    yaml_rate_survey <- get_rate_survey(metadata)
-                    if (!is.null(yaml_rate_survey)) {
-                        rate_survey <- yaml_rate_survey
-                    }
-                }
+    # Tag start time
+    time_start <- get_utc_timestamp()
 
-                # Extract all_questions_required
-                if (missing(all_questions_required)) {
-                    yaml_all_questions_required <- get_all_questions_required(
-                        metadata
-                    )
-                    if (!is.null(yaml_all_questions_required)) {
-                        all_questions_required <- yaml_all_questions_required
-                    }
-                }
+    # Get any skip or show conditions
+    show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
+    skip_forward <- shiny::getDefaultReactiveDomain()$userData$skip_forward
 
-                # Extract start_page
-                if (missing(start_page) || is.null(start_page)) {
-                    yaml_start_page <- get_start_page(metadata)
-                    if (!is.null(yaml_start_page)) {
-                        start_page <- yaml_start_page
-                    }
-                }
-
-                # Note: language parameter excluded from YAML extraction to avoid Quarto conflicts
-
-                # Extract highlight_unanswered
-                if (missing(highlight_unanswered)) {
-                    yaml_highlight_unanswered <- get_highlight_unanswered(
-                        metadata
-                    )
-                    if (!is.null(yaml_highlight_unanswered)) {
-                        highlight_unanswered <- yaml_highlight_unanswered
-                    }
-                }
-
-                # Extract highlight_color
-                if (missing(highlight_color)) {
-                    yaml_highlight_color <- get_highlight_color(metadata)
-                    if (!is.null(yaml_highlight_color)) {
-                        highlight_color <- yaml_highlight_color
-                    }
-                }
-
-                # Extract capture_metadata
-                if (missing(capture_metadata)) {
-                    yaml_capture_metadata <- get_capture_metadata(metadata)
-                    if (!is.null(yaml_capture_metadata)) {
-                        capture_metadata <- yaml_capture_metadata
-                    }
-                }
-
-                # Extract required_questions
-                if (
-                    missing(required_questions) || is.null(required_questions)
-                ) {
-                    yaml_required_questions <- get_required_questions(metadata)
-                    if (!is.null(yaml_required_questions)) {
-                        required_questions <- yaml_required_questions
-                    }
-                }
-            },
-            error = function(e) {
-                warning(
-                    "Could not read YAML configuration from survey.qmd: ",
-                    e$message
-                )
-            }
-        )
-    }
-
-    # Set defaults for any parameters that are still NULL
+    # Apply basic defaults before run_config() (which needs valid parameters)
     if (is.null(use_cookies)) {
         use_cookies <- TRUE
     }
@@ -263,7 +180,75 @@ sd_server <- function(
     if (is.null(all_questions_required)) {
         all_questions_required <- FALSE
     }
-    # start_page can remain NULL - it will be set later in config
+    if (is.null(language)) {
+        language <- "en"
+    }
+    if (is.null(highlight_unanswered)) {
+        highlight_unanswered <- TRUE
+    }
+    if (is.null(highlight_color)) {
+        highlight_color <- "gray"
+    }
+    if (is.null(capture_metadata)) {
+        capture_metadata <- TRUE
+    }
+
+    # Run the configuration settings
+    config <- run_config(
+        required_questions,
+        all_questions_required,
+        start_page,
+        skip_forward,
+        show_if,
+        rate_survey,
+        language
+    )
+
+    # Now read settings from _survey/settings.yml (created by run_config above)
+    # and override parameters with YAML values if they exist and are not NULL
+    settings <- read_settings_yaml()
+    
+    if (!is.null(settings$use_cookies)) {
+        use_cookies <- settings$use_cookies
+    }
+    if (!is.null(settings$auto_scroll)) {
+        auto_scroll <- settings$auto_scroll
+    }
+    if (!is.null(settings$rate_survey)) {
+        rate_survey <- settings$rate_survey
+    }
+    if (!is.null(settings$all_questions_required)) {
+        all_questions_required <- settings$all_questions_required
+    }
+    if (!is.null(settings$start_page)) {
+        start_page <- settings$start_page
+    }
+    if (!is.null(settings$highlight_unanswered)) {
+        highlight_unanswered <- settings$highlight_unanswered
+    }
+    if (!is.null(settings$highlight_color)) {
+        highlight_color <- settings$highlight_color
+    }
+    if (!is.null(settings$capture_metadata)) {
+        capture_metadata <- settings$capture_metadata
+    }
+    if (!is.null(settings$required_questions)) {
+        required_questions <- settings$required_questions
+    }
+
+    # Apply final defaults for any parameters that are still NULL
+    if (is.null(use_cookies)) {
+        use_cookies <- TRUE
+    }
+    if (is.null(auto_scroll)) {
+        auto_scroll <- FALSE
+    }
+    if (is.null(rate_survey)) {
+        rate_survey <- FALSE
+    }
+    if (is.null(all_questions_required)) {
+        all_questions_required <- FALSE
+    }
     if (is.null(language)) {
         language <- "en"
     }
@@ -297,31 +282,85 @@ sd_server <- function(
     )
     update_settings_yaml(resolved_params)
 
-    # Tag start time
-    time_start <- get_utc_timestamp()
-
-    # Get any skip or show conditions
-    show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
-    skip_forward <- shiny::getDefaultReactiveDomain()$userData$skip_forward
-
-    # Run the configuration settings
-    config <- run_config(
-        required_questions,
-        all_questions_required,
-        start_page,
-        skip_forward,
-        show_if,
-        rate_survey,
-        language
-    )
 
     # Create local objects from config file
     pages <- config$pages
     page_ids <- config$page_ids
     question_ids <- config$question_ids
     question_structure <- config$question_structure
-    start_page <- config$start_page
-    question_required <- config$question_required
+    
+    # Don't overwrite start_page if it was resolved from YAML settings
+    # Only use config$start_page if start_page is still NULL
+    if (is.null(start_page)) {
+        start_page <- config$start_page
+    }
+    
+    # Handle all_questions_required and required_questions logic
+    # This mirrors the logic in run_config() but uses YAML-resolved values
+    if (all_questions_required) {
+        # When all_questions_required is TRUE, make all questions required except matrix questions
+        matrix_question_ids <- names(which(sapply(
+            question_structure,
+            `[[`,
+            "is_matrix"
+        )))
+        question_required <- setdiff(question_ids, matrix_question_ids)
+    } else if (!is.null(required_questions)) {
+        # Use the YAML-resolved required_questions
+        question_required <- required_questions
+    } else {
+        # Fall back to config-determined required questions
+        question_required <- config$question_required
+    }
+    
+    # Update each page's required_questions to reflect YAML settings
+    # This is necessary because pages were created before YAML was processed
+    # Apply this logic when either all_questions_required is TRUE or specific required_questions were set
+    if (all_questions_required || (!is.null(required_questions) && length(required_questions) > 0)) {
+        for (i in seq_along(pages)) {
+            page_question_ids <- pages[[i]]$questions
+            # Find which questions on this page are in the global required list
+            page_required <- intersect(page_question_ids, question_required)
+            pages[[i]]$required_questions <- page_required
+            
+            # Update asterisks in the HTML content for newly required questions
+            if (length(page_required) > 0) {
+                # Parse the page content as HTML
+                page_html <- xml2::read_html(pages[[i]]$content)
+                
+                for (q_id in page_required) {
+                    # Find the question container for this question
+                    container_selector <- paste0("[data-question-id='", q_id, "']")
+                    container <- rvest::html_element(page_html, container_selector)
+                    
+                    if (!is.na(container)) {
+                        # Check if it's a matrix question
+                        is_matrix <- length(rvest::html_elements(container, ".matrix-question")) > 0
+                        
+                        if (is_matrix) {
+                            # Show asterisks for matrix subquestions
+                            sub_asterisks <- rvest::html_elements(
+                                container,
+                                ".matrix-question td .hidden-asterisk"
+                            )
+                            for (asterisk in sub_asterisks) {
+                                xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                            }
+                        } else {
+                            # Show asterisk for regular questions
+                            asterisk <- rvest::html_element(container, ".hidden-asterisk")
+                            if (!is.na(asterisk)) {
+                                xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                            }
+                        }
+                    }
+                }
+                
+                # Update the page content with the modified HTML
+                pages[[i]]$content <- as.character(page_html)
+            }
+        }
+    }
     page_id_to_index <- stats::setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs

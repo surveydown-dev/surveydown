@@ -287,12 +287,11 @@ set_translations <- function(paths, language) {
 }
 
 create_settings_yaml <- function(paths) {
-  # Extract server configuration from survey.qmd YAML metadata and app.R sd_server() calls
+  # Extract server configuration from survey.qmd YAML metadata during UI rendering
   if (file.exists("survey.qmd")) {
     tryCatch(
       {
         metadata <- quarto::quarto_inspect("survey.qmd")
-        yaml_metadata <- metadata$formats$html$metadata
 
         # Define all sd_server parameters that can be configured via YAML
         # Note: language is excluded to avoid breaking Quarto rendering
@@ -308,9 +307,6 @@ create_settings_yaml <- function(paths) {
           "required_questions"
         )
 
-        # Try to detect sd_server() parameter overrides in app.R
-        app_overrides <- detect_sd_server_params()
-
         # Define defaults for all 9 parameters (language excluded)
         default_settings <- list(
           use_cookies = TRUE,
@@ -324,56 +320,44 @@ create_settings_yaml <- function(paths) {
           required_questions = NULL
         )
 
-        # Extract values with priority: app.R overrides > YAML > defaults
+        # Extract YAML values using helper functions (priority: YAML > defaults)
         settings <- list()
         for (param in server_params) {
-          # Priority 1: Check for app.R sd_server() override
-          if (!is.null(app_overrides[[param]])) {
-            settings[[param]] <- app_overrides[[param]]
+          # Use specific extraction functions for parameters that need special handling
+          if (param == "use_cookies") {
+            value <- get_use_cookies(metadata)
+          } else if (param == "auto_scroll") {
+            value <- get_auto_scroll(metadata)
+          } else if (param == "rate_survey") {
+            value <- get_rate_survey(metadata)
+          } else if (param == "all_questions_required") {
+            value <- get_all_questions_required(metadata)
+          } else if (param == "start_page") {
+            value <- get_start_page(metadata)
+          } else if (param == "highlight_unanswered") {
+            value <- get_highlight_unanswered(metadata)
+          } else if (param == "highlight_color") {
+            value <- get_highlight_color(metadata)
+          } else if (param == "capture_metadata") {
+            value <- get_capture_metadata(metadata)
+          } else if (param == "required_questions") {
+            value <- get_required_questions(metadata)
           } else {
-            # Priority 2: Use specific extraction functions for parameters that need special handling
-            if (param == "required_questions") {
-              value <- get_required_questions(metadata)
-            } else {
-              value <- yaml_metadata[[param]]
-            }
+            value <- NULL
+          }
 
-            if (!is.null(value)) {
-              # Convert to appropriate R type
-              if (
-                is.character(value) &&
-                  length(value) == 1 &&
-                  value %in%
-                    c(
-                      "TRUE",
-                      "FALSE",
-                      "True",
-                      "False",
-                      "true",
-                      "false",
-                      "yes",
-                      "no",
-                      "Yes",
-                      "No",
-                      "YES",
-                      "NO"
-                    )
-              ) {
-                value <- value %in%
-                  c("TRUE", "True", "true", "yes", "Yes", "YES")
-              }
-              settings[[param]] <- value
-            } else {
-              # Priority 3: Use default value
-              settings[[param]] <- default_settings[[param]]
-            }
+          if (!is.null(value)) {
+            settings[[param]] <- value
+          } else {
+            # Use default value
+            settings[[param]] <- default_settings[[param]]
           }
         }
 
         # Remove NULL values to avoid YAML issues
         settings <- settings[!sapply(settings, is.null)]
 
-        # Always write settings file with all available parameters
+        # Write settings file with YAML header values and defaults
         yaml_content <- yaml::as.yaml(settings)
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
         comment_line2 <- "# Server settings with YAML header values and defaults\n"
@@ -416,6 +400,59 @@ create_settings_yaml <- function(paths) {
     full_content <- paste0(comment_line1, comment_line2, yaml_content)
     writeLines(full_content, con = paths$target_settings)
   }
+}
+
+# Function to read settings from _survey/settings.yml file
+read_settings_yaml <- function() {
+  paths <- get_paths()
+  
+  # Define default settings to return if reading fails
+  defaults <- list(
+    use_cookies = TRUE,
+    auto_scroll = FALSE,
+    rate_survey = FALSE,
+    all_questions_required = FALSE,
+    start_page = NULL,
+    highlight_unanswered = TRUE,
+    highlight_color = "gray",
+    capture_metadata = TRUE,
+    required_questions = NULL
+  )
+  
+  # Try multiple possible locations for the settings file
+  possible_paths <- c(
+    paths$target_settings,                    # "_survey/settings.yml"
+    file.path(getwd(), paths$target_settings), # Full path from current dir
+    file.path(".", paths$target_settings),   # Explicit relative path
+    "settings.yml"                           # Fallback: just settings.yml in current dir
+  )
+  
+  settings <- NULL
+  successful_path <- NULL
+  
+  # Try to read from each path directly (without file.exists check)
+  for (path in possible_paths) {
+    tryCatch({
+      settings <- yaml::read_yaml(path)
+      successful_path <- path
+      break
+    }, error = function(e) {
+      # Continue to next path
+    })
+  }
+  
+  if (is.null(settings)) {
+    return(defaults)
+  }
+  
+  # Process required_questions if it exists (convert list to character vector)
+  if (!is.null(settings$required_questions)) {
+    if (is.list(settings$required_questions)) {
+      settings$required_questions <- unlist(settings$required_questions)
+    }
+  }
+  
+  return(settings)
 }
 
 # Function to update settings.yml with final resolved parameters from sd_server()
