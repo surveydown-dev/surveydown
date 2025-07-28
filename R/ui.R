@@ -276,7 +276,9 @@ get_all_questions_required <- function(metadata) {
   }
   # Handle both TRUE/FALSE and yes/no formats
   if (is.character(all_questions_required)) {
-    return(all_questions_required %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+    return(
+      all_questions_required %in% c("TRUE", "True", "true", "yes", "Yes", "YES")
+    )
   }
   return(as.logical(all_questions_required))
 }
@@ -304,7 +306,9 @@ get_highlight_unanswered <- function(metadata) {
   }
   # Handle both TRUE/FALSE and yes/no formats
   if (is.character(highlight_unanswered)) {
-    return(highlight_unanswered %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+    return(
+      highlight_unanswered %in% c("TRUE", "True", "true", "yes", "Yes", "YES")
+    )
   }
   return(as.logical(highlight_unanswered))
 }

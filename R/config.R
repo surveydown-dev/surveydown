@@ -307,7 +307,7 @@ create_settings_yaml <- function(paths) {
           "capture_metadata",
           "required_questions"
         )
-        
+
         # Try to detect sd_server() parameter overrides in app.R
         app_overrides <- detect_sd_server_params()
 
@@ -337,15 +337,30 @@ create_settings_yaml <- function(paths) {
             } else {
               value <- yaml_metadata[[param]]
             }
-            
+
             if (!is.null(value)) {
               # Convert to appropriate R type
               if (
                 is.character(value) &&
                   length(value) == 1 &&
-                  value %in% c("TRUE", "FALSE", "True", "False", "true", "false", "yes", "no", "Yes", "No", "YES", "NO")
+                  value %in%
+                    c(
+                      "TRUE",
+                      "FALSE",
+                      "True",
+                      "False",
+                      "true",
+                      "false",
+                      "yes",
+                      "no",
+                      "Yes",
+                      "No",
+                      "YES",
+                      "NO"
+                    )
               ) {
-                value <- value %in% c("TRUE", "True", "true", "yes", "Yes", "YES")
+                value <- value %in%
+                  c("TRUE", "True", "true", "yes", "Yes", "YES")
               }
               settings[[param]] <- value
             } else {
@@ -406,11 +421,11 @@ create_settings_yaml <- function(paths) {
 # Function to update settings.yml with final resolved parameters from sd_server()
 update_settings_yaml <- function(resolved_params) {
   paths <- get_paths()
-  
+
   # Define sd_server parameter defaults (from server.R)
   # Note: language is excluded to avoid breaking Quarto rendering
   default_params <- list(
-    use_cookies = TRUE,  # Note: this becomes TRUE when NULL is passed to sd_server
+    use_cookies = TRUE, # Note: this becomes TRUE when NULL is passed to sd_server
     auto_scroll = FALSE,
     rate_survey = FALSE,
     all_questions_required = FALSE,
@@ -420,10 +435,10 @@ update_settings_yaml <- function(resolved_params) {
     capture_metadata = TRUE,
     required_questions = NULL
   )
-  
+
   # Filter out language parameter to avoid breaking Quarto
   resolved_params$language <- NULL
-  
+
   # Merge defaults with resolved params (resolved params take priority)
   final_settings <- default_params
   for (param_name in names(resolved_params)) {
@@ -431,22 +446,27 @@ update_settings_yaml <- function(resolved_params) {
       final_settings[[param_name]] <- resolved_params[[param_name]]
     }
   }
-  
+
   # Handle special case for use_cookies (NULL becomes TRUE)
   if (is.null(final_settings$use_cookies)) {
     final_settings$use_cookies <- TRUE
   }
-  
+
   # Remove NULL values to avoid YAML issues
   final_settings <- final_settings[!sapply(final_settings, is.null)]
-  
+
   # Create YAML content
   yaml_content <- yaml::as.yaml(final_settings)
   comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
   comment_line2 <- "# Server settings with final resolved parameters\n"
   comment_line3 <- "# (includes sd_server() parameters, YAML header, and defaults)\n"
-  full_content <- paste0(comment_line1, comment_line2, comment_line3, yaml_content)
-  
+  full_content <- paste0(
+    comment_line1,
+    comment_line2,
+    comment_line3,
+    yaml_content
+  )
+
   # Write to file
   writeLines(full_content, con = paths$target_settings)
 }
@@ -456,69 +476,94 @@ detect_sd_server_params <- function() {
   if (!file.exists("app.R")) {
     return(list())
   }
-  
-  tryCatch({
-    # Read app.R content as a single string to handle multiline sd_server() calls
-    app_content <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
-    
-    # Extract the sd_server() function call content (including multiline)
-    sd_server_pattern <- "sd_server\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)"
-    sd_server_matches <- regmatches(app_content, gregexpr(sd_server_pattern, app_content))
-    
-    if (length(sd_server_matches[[1]]) == 0) {
-      return(list())
-    }
-    
-    # Get the parameters inside sd_server()
-    sd_server_text <- sd_server_matches[[1]][1]
-    
-    # Extract parameters using regex
-    overrides <- list()
-    
-    # Pattern to match parameter = value pairs
-    param_patterns <- c(
-      "use_cookies\\s*=\\s*(TRUE|FALSE|T|F)",
-      "auto_scroll\\s*=\\s*(TRUE|FALSE|T|F)",
-      "rate_survey\\s*=\\s*(TRUE|FALSE|T|F)", 
-      "all_questions_required\\s*=\\s*(TRUE|FALSE|T|F)",
-      "start_page\\s*=\\s*[\"']([^\"']+)[\"']",
-      "highlight_unanswered\\s*=\\s*(TRUE|FALSE|T|F)",
-      "highlight_color\\s*=\\s*[\"']([^\"']+)[\"']",
-      "capture_metadata\\s*=\\s*(TRUE|FALSE|T|F)",
-      "required_questions\\s*=\\s*c\\s*\\(([^)]+)\\)"
-    )
-    
-    param_names <- c(
-      "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
-      "start_page", "highlight_unanswered", "highlight_color", "capture_metadata",
-      "required_questions"
-    )
-    
-    for (i in seq_along(param_patterns)) {
-      matches <- regmatches(sd_server_text, regexec(param_patterns[i], sd_server_text, ignore.case = TRUE))
-      if (length(matches[[1]]) > 1) {
-        param_name <- param_names[i]
-        value_str <- matches[[1]][2]
-        
-        # Convert to appropriate R type
-        if (param_name %in% c("use_cookies", "auto_scroll", "rate_survey", "all_questions_required", "highlight_unanswered", "capture_metadata")) {
-          overrides[[param_name]] <- value_str %in% c("TRUE", "T")
-        } else if (param_name %in% c("start_page", "highlight_color")) {
-          overrides[[param_name]] <- value_str
-        } else if (param_name == "required_questions") {
-          # Parse c("a", "b", "c") format
-          items <- strsplit(value_str, ",")[[1]]
-          items <- trimws(gsub("[\"']", "", items))
-          overrides[[param_name]] <- items
+
+  tryCatch(
+    {
+      # Read app.R content as a single string to handle multiline sd_server() calls
+      app_content <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
+
+      # Extract the sd_server() function call content (including multiline)
+      sd_server_pattern <- "sd_server\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)"
+      sd_server_matches <- regmatches(
+        app_content,
+        gregexpr(sd_server_pattern, app_content)
+      )
+
+      if (length(sd_server_matches[[1]]) == 0) {
+        return(list())
+      }
+
+      # Get the parameters inside sd_server()
+      sd_server_text <- sd_server_matches[[1]][1]
+
+      # Extract parameters using regex
+      overrides <- list()
+
+      # Pattern to match parameter = value pairs
+      param_patterns <- c(
+        "use_cookies\\s*=\\s*(TRUE|FALSE|T|F)",
+        "auto_scroll\\s*=\\s*(TRUE|FALSE|T|F)",
+        "rate_survey\\s*=\\s*(TRUE|FALSE|T|F)",
+        "all_questions_required\\s*=\\s*(TRUE|FALSE|T|F)",
+        "start_page\\s*=\\s*[\"']([^\"']+)[\"']",
+        "highlight_unanswered\\s*=\\s*(TRUE|FALSE|T|F)",
+        "highlight_color\\s*=\\s*[\"']([^\"']+)[\"']",
+        "capture_metadata\\s*=\\s*(TRUE|FALSE|T|F)",
+        "required_questions\\s*=\\s*c\\s*\\(([^)]+)\\)"
+      )
+
+      param_names <- c(
+        "use_cookies",
+        "auto_scroll",
+        "rate_survey",
+        "all_questions_required",
+        "start_page",
+        "highlight_unanswered",
+        "highlight_color",
+        "capture_metadata",
+        "required_questions"
+      )
+
+      for (i in seq_along(param_patterns)) {
+        matches <- regmatches(
+          sd_server_text,
+          regexec(param_patterns[i], sd_server_text, ignore.case = TRUE)
+        )
+        if (length(matches[[1]]) > 1) {
+          param_name <- param_names[i]
+          value_str <- matches[[1]][2]
+
+          # Convert to appropriate R type
+          if (
+            param_name %in%
+              c(
+                "use_cookies",
+                "auto_scroll",
+                "rate_survey",
+                "all_questions_required",
+                "highlight_unanswered",
+                "capture_metadata"
+              )
+          ) {
+            overrides[[param_name]] <- value_str %in% c("TRUE", "T")
+          } else if (param_name %in% c("start_page", "highlight_color")) {
+            overrides[[param_name]] <- value_str
+          } else if (param_name == "required_questions") {
+            # Parse c("a", "b", "c") format
+            items <- strsplit(value_str, ",")[[1]]
+            items <- trimws(gsub("[\"']", "", items))
+            overrides[[param_name]] <- items
+          }
         }
       }
+
+      return(overrides)
+    },
+    error = function(e) {
+      # If parsing fails, return empty list
+      return(list())
     }
-    
-    return(overrides)
-  }, error = function(e) {
-    # If parsing fails, return empty list
-    return(list())
-  })
+  )
 }
 
 extract_html_pages <- function(
