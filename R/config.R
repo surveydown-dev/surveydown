@@ -287,7 +287,7 @@ set_translations <- function(paths, language) {
 }
 
 create_settings_yaml <- function(paths) {
-  # Extract server configuration from survey.qmd YAML metadata
+  # Extract server configuration from survey.qmd YAML metadata and app.R sd_server() calls
   if (file.exists("survey.qmd")) {
     tryCatch(
       {
@@ -295,76 +295,230 @@ create_settings_yaml <- function(paths) {
         yaml_metadata <- metadata$formats$html$metadata
 
         # Define all sd_server parameters that can be configured via YAML
+        # Note: language is excluded to avoid breaking Quarto rendering
         server_params <- c(
           "use_cookies",
           "auto_scroll",
           "rate_survey",
           "all_questions_required",
           "start_page",
-          "language",
           "highlight_unanswered",
           "highlight_color",
           "capture_metadata",
           "required_questions"
         )
+        
+        # Try to detect sd_server() parameter overrides in app.R
+        app_overrides <- detect_sd_server_params()
 
-        # Extract only the server configuration parameters
+        # Define defaults for all 9 parameters (language excluded)
+        default_settings <- list(
+          use_cookies = TRUE,
+          auto_scroll = FALSE,
+          rate_survey = FALSE,
+          all_questions_required = FALSE,
+          start_page = NULL,
+          highlight_unanswered = TRUE,
+          highlight_color = "gray",
+          capture_metadata = TRUE,
+          required_questions = NULL
+        )
+
+        # Extract values with priority: app.R overrides > YAML > defaults
         settings <- list()
         for (param in server_params) {
-          # Use specific extraction functions for parameters that need special handling
-          if (param == "required_questions") {
-            value <- get_required_questions(metadata)
+          # Priority 1: Check for app.R sd_server() override
+          if (!is.null(app_overrides[[param]])) {
+            settings[[param]] <- app_overrides[[param]]
           } else {
-            value <- yaml_metadata[[param]]
-          }
-
-          if (!is.null(value)) {
-            # Convert to appropriate R type
-            if (
-              is.character(value) &&
-                length(value) == 1 &&
-                value %in% c("TRUE", "FALSE")
-            ) {
-              value <- as.logical(value)
+            # Priority 2: Use specific extraction functions for parameters that need special handling
+            if (param == "required_questions") {
+              value <- get_required_questions(metadata)
+            } else {
+              value <- yaml_metadata[[param]]
             }
-            settings[[param]] <- value
+            
+            if (!is.null(value)) {
+              # Convert to appropriate R type
+              if (
+                is.character(value) &&
+                  length(value) == 1 &&
+                  value %in% c("TRUE", "FALSE", "True", "False", "true", "false", "yes", "no", "Yes", "No", "YES", "NO")
+              ) {
+                value <- value %in% c("TRUE", "True", "true", "yes", "Yes", "YES")
+              }
+              settings[[param]] <- value
+            } else {
+              # Priority 3: Use default value
+              settings[[param]] <- default_settings[[param]]
+            }
           }
         }
 
-        # Add comment and write to YAML file if we have any settings
-        if (length(settings) > 0) {
-          yaml_content <- yaml::as.yaml(settings)
-          comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-          comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
-          full_content <- paste0(comment_line1, comment_line2, yaml_content)
-          writeLines(full_content, con = paths$target_settings)
-        } else {
-          # Create empty file with comment if no settings found
-          comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-          comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
-          comment_line3 <- "# No server configuration found in YAML header\n"
-          full_content <- paste0(comment_line1, comment_line2, comment_line3)
-          writeLines(full_content, con = paths$target_settings)
-        }
+        # Remove NULL values to avoid YAML issues
+        settings <- settings[!sapply(settings, is.null)]
+
+        # Always write settings file with all available parameters
+        yaml_content <- yaml::as.yaml(settings)
+        comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+        comment_line2 <- "# Server settings with YAML header values and defaults\n"
+        full_content <- paste0(comment_line1, comment_line2, yaml_content)
+        writeLines(full_content, con = paths$target_settings)
       },
       error = function(e) {
         warning("Could not extract settings from survey.qmd: ", e$message)
-        # Create empty file on error
+        # Create settings file with defaults on error
+        default_settings <- list(
+          use_cookies = TRUE,
+          auto_scroll = FALSE,
+          rate_survey = FALSE,
+          all_questions_required = FALSE,
+          highlight_unanswered = TRUE,
+          highlight_color = "gray",
+          capture_metadata = TRUE
+        )
+        yaml_content <- yaml::as.yaml(default_settings)
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-        comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
-        comment_line3 <- "# Error extracting settings from YAML header\n"
-        full_content <- paste0(comment_line1, comment_line2, comment_line3)
+        comment_line2 <- "# Server settings with defaults (error reading YAML header)\n"
+        full_content <- paste0(comment_line1, comment_line2, yaml_content)
         writeLines(full_content, con = paths$target_settings)
       }
     )
   } else {
-    # Create empty file if survey.qmd doesn't exist
+    # Create settings file with defaults if survey.qmd doesn't exist
+    default_settings <- list(
+      use_cookies = TRUE,
+      auto_scroll = FALSE,
+      rate_survey = FALSE,
+      all_questions_required = FALSE,
+      highlight_unanswered = TRUE,
+      highlight_color = "gray",
+      capture_metadata = TRUE
+    )
+    yaml_content <- yaml::as.yaml(default_settings)
     comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-    comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
-    comment_line3 <- "# No survey.qmd file found\n"
-    full_content <- paste0(comment_line1, comment_line2, comment_line3)
+    comment_line2 <- "# Server settings with defaults (no survey.qmd file found)\n"
+    full_content <- paste0(comment_line1, comment_line2, yaml_content)
     writeLines(full_content, con = paths$target_settings)
   }
+}
+
+# Function to update settings.yml with final resolved parameters from sd_server()
+update_settings_yaml <- function(resolved_params) {
+  paths <- get_paths()
+  
+  # Define sd_server parameter defaults (from server.R)
+  # Note: language is excluded to avoid breaking Quarto rendering
+  default_params <- list(
+    use_cookies = TRUE,  # Note: this becomes TRUE when NULL is passed to sd_server
+    auto_scroll = FALSE,
+    rate_survey = FALSE,
+    all_questions_required = FALSE,
+    start_page = NULL,
+    highlight_unanswered = TRUE,
+    highlight_color = "gray",
+    capture_metadata = TRUE,
+    required_questions = NULL
+  )
+  
+  # Filter out language parameter to avoid breaking Quarto
+  resolved_params$language <- NULL
+  
+  # Merge defaults with resolved params (resolved params take priority)
+  final_settings <- default_params
+  for (param_name in names(resolved_params)) {
+    if (!is.null(resolved_params[[param_name]])) {
+      final_settings[[param_name]] <- resolved_params[[param_name]]
+    }
+  }
+  
+  # Handle special case for use_cookies (NULL becomes TRUE)
+  if (is.null(final_settings$use_cookies)) {
+    final_settings$use_cookies <- TRUE
+  }
+  
+  # Remove NULL values to avoid YAML issues
+  final_settings <- final_settings[!sapply(final_settings, is.null)]
+  
+  # Create YAML content
+  yaml_content <- yaml::as.yaml(final_settings)
+  comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+  comment_line2 <- "# Server settings with final resolved parameters\n"
+  comment_line3 <- "# (includes sd_server() parameters, YAML header, and defaults)\n"
+  full_content <- paste0(comment_line1, comment_line2, comment_line3, yaml_content)
+  
+  # Write to file
+  writeLines(full_content, con = paths$target_settings)
+}
+
+# Function to detect sd_server() parameter overrides in app.R
+detect_sd_server_params <- function() {
+  if (!file.exists("app.R")) {
+    return(list())
+  }
+  
+  tryCatch({
+    # Read app.R content as a single string to handle multiline sd_server() calls
+    app_content <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
+    
+    # Extract the sd_server() function call content (including multiline)
+    sd_server_pattern <- "sd_server\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)"
+    sd_server_matches <- regmatches(app_content, gregexpr(sd_server_pattern, app_content))
+    
+    if (length(sd_server_matches[[1]]) == 0) {
+      return(list())
+    }
+    
+    # Get the parameters inside sd_server()
+    sd_server_text <- sd_server_matches[[1]][1]
+    
+    # Extract parameters using regex
+    overrides <- list()
+    
+    # Pattern to match parameter = value pairs
+    param_patterns <- c(
+      "use_cookies\\s*=\\s*(TRUE|FALSE|T|F)",
+      "auto_scroll\\s*=\\s*(TRUE|FALSE|T|F)",
+      "rate_survey\\s*=\\s*(TRUE|FALSE|T|F)", 
+      "all_questions_required\\s*=\\s*(TRUE|FALSE|T|F)",
+      "start_page\\s*=\\s*[\"']([^\"']+)[\"']",
+      "highlight_unanswered\\s*=\\s*(TRUE|FALSE|T|F)",
+      "highlight_color\\s*=\\s*[\"']([^\"']+)[\"']",
+      "capture_metadata\\s*=\\s*(TRUE|FALSE|T|F)",
+      "required_questions\\s*=\\s*c\\s*\\(([^)]+)\\)"
+    )
+    
+    param_names <- c(
+      "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
+      "start_page", "highlight_unanswered", "highlight_color", "capture_metadata",
+      "required_questions"
+    )
+    
+    for (i in seq_along(param_patterns)) {
+      matches <- regmatches(sd_server_text, regexec(param_patterns[i], sd_server_text, ignore.case = TRUE))
+      if (length(matches[[1]]) > 1) {
+        param_name <- param_names[i]
+        value_str <- matches[[1]][2]
+        
+        # Convert to appropriate R type
+        if (param_name %in% c("use_cookies", "auto_scroll", "rate_survey", "all_questions_required", "highlight_unanswered", "capture_metadata")) {
+          overrides[[param_name]] <- value_str %in% c("TRUE", "T")
+        } else if (param_name %in% c("start_page", "highlight_color")) {
+          overrides[[param_name]] <- value_str
+        } else if (param_name == "required_questions") {
+          # Parse c("a", "b", "c") format
+          items <- strsplit(value_str, ",")[[1]]
+          items <- trimws(gsub("[\"']", "", items))
+          overrides[[param_name]] <- items
+        }
+      }
+    }
+    
+    return(overrides)
+  }, error = function(e) {
+    # If parsing fails, return empty list
+    return(list())
+  })
 }
 
 extract_html_pages <- function(

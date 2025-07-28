@@ -287,6 +287,21 @@ sd_server <- function(
     if (highlight_color == "grey") {
         highlight_color <- "gray"
     }
+    
+    # Update settings.yml with final resolved parameters
+    resolved_params <- list(
+        use_cookies = use_cookies,
+        auto_scroll = auto_scroll,
+        rate_survey = rate_survey,
+        all_questions_required = all_questions_required,
+        start_page = start_page,
+        language = language,
+        highlight_unanswered = highlight_unanswered,
+        highlight_color = highlight_color,
+        capture_metadata = capture_metadata,
+        required_questions = required_questions
+    )
+    update_settings_yaml(resolved_params)
 
     # Tag start time
     time_start <- get_utc_timestamp()

@@ -1617,13 +1617,13 @@ get_settings_yml <- function() {
 
         # Extract all server configuration parameters if available
         settings <- list()
+        # Note: language is excluded to avoid breaking Quarto rendering
         server_params <- c(
           "use_cookies",
           "auto_scroll",
           "rate_survey",
           "all_questions_required",
           "start_page",
-          "language",
           "highlight_unanswered",
           "highlight_color",
           "capture_metadata",

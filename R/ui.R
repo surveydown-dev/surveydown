@@ -238,6 +238,10 @@ get_use_cookies <- function(metadata) {
   if (is.null(use_cookies)) {
     return(NULL)
   }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(use_cookies)) {
+    return(use_cookies %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  }
   return(as.logical(use_cookies))
 }
 
@@ -245,6 +249,10 @@ get_auto_scroll <- function(metadata) {
   auto_scroll <- metadata$formats$html$metadata$auto_scroll
   if (is.null(auto_scroll)) {
     return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(auto_scroll)) {
+    return(auto_scroll %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
   }
   return(as.logical(auto_scroll))
 }
@@ -254,6 +262,10 @@ get_rate_survey <- function(metadata) {
   if (is.null(rate_survey)) {
     return(NULL)
   }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(rate_survey)) {
+    return(rate_survey %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  }
   return(as.logical(rate_survey))
 }
 
@@ -261,6 +273,10 @@ get_all_questions_required <- function(metadata) {
   all_questions_required <- metadata$formats$html$metadata$all_questions_required
   if (is.null(all_questions_required)) {
     return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(all_questions_required)) {
+    return(all_questions_required %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
   }
   return(as.logical(all_questions_required))
 }
@@ -286,6 +302,10 @@ get_highlight_unanswered <- function(metadata) {
   if (is.null(highlight_unanswered)) {
     return(NULL)
   }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(highlight_unanswered)) {
+    return(highlight_unanswered %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  }
   return(as.logical(highlight_unanswered))
 }
 
@@ -301,6 +321,10 @@ get_capture_metadata <- function(metadata) {
   capture_metadata <- metadata$formats$html$metadata$capture_metadata
   if (is.null(capture_metadata)) {
     return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(capture_metadata)) {
+    return(capture_metadata %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
   }
   return(as.logical(capture_metadata))
 }
