@@ -158,15 +158,21 @@ sd_server <- function(
     if (is.null(use_cookies)) {
         # Check if survey.qmd exists and extract YAML metadata
         if (file.exists("survey.qmd")) {
-            tryCatch({
-                metadata <- quarto::quarto_inspect("survey.qmd")
-                yaml_use_cookies <- get_use_cookies(metadata)
-                if (!is.null(yaml_use_cookies)) {
-                    use_cookies <- yaml_use_cookies
+            tryCatch(
+                {
+                    metadata <- quarto::quarto_inspect("survey.qmd")
+                    yaml_use_cookies <- get_use_cookies(metadata)
+                    if (!is.null(yaml_use_cookies)) {
+                        use_cookies <- yaml_use_cookies
+                    }
+                },
+                error = function(e) {
+                    warning(
+                        "Could not read YAML configuration from survey.qmd: ",
+                        e$message
+                    )
                 }
-            }, error = function(e) {
-                warning("Could not read YAML configuration from survey.qmd: ", e$message)
-            })
+            )
         }
         # Set default if still NULL
         if (is.null(use_cookies)) {
@@ -1992,32 +1998,7 @@ get_initial_data <- function(
             }
         } else {
             # Local CSV mode - check for existing values in preview_data.csv
-            current_session_id <- session$token
-            persistent_session_id <- shiny::isolate(
-                session$input$stored_session_id
-            )
-
-            # Check use_cookies setting from settings.yml
-            settings <- get_settings_yml()
-            use_cookies_setting <- if (!is.null(settings) && !is.null(settings$use_cookies)) {
-                # Convert YAML boolean values to R logical
-                if (is.character(settings$use_cookies)) {
-                    settings$use_cookies %in% c("yes", "true", "TRUE", "True")
-                } else {
-                    as.logical(settings$use_cookies)
-                }
-            } else {
-                TRUE  # Default to TRUE if no setting found
-            }
-
-            # Use persistent session ID only if use_cookies is TRUE
-            search_session_id <- if (
-                use_cookies_setting && !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
-            ) {
-                persistent_session_id
-            } else {
-                current_session_id
-            }
+            search_session_id <- get_session_id(session, NULL)
 
             # Get existing data from local CSV
             all_local_data <- get_local_data()

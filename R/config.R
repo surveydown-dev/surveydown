@@ -162,7 +162,11 @@ get_paths <- function() {
 
 survey_files_need_updating <- function(paths) {
   # Re-parse if any of the target files are missing
-  targets <- c(paths$target_pages, paths$target_questions, paths$target_settings)
+  targets <- c(
+    paths$target_pages,
+    paths$target_questions,
+    paths$target_settings
+  )
   if (any(!fs::file_exists(targets))) {
     return(TRUE)
   }
@@ -285,61 +289,63 @@ set_translations <- function(paths, language) {
 create_settings_yaml <- function(paths) {
   # Extract server configuration from survey.qmd YAML metadata
   if (file.exists("survey.qmd")) {
-    tryCatch({
-      metadata <- quarto::quarto_inspect("survey.qmd")
-      yaml_metadata <- metadata$formats$html$metadata
-      
-      # Define all sd_server parameters that can be configured via YAML
-      server_params <- c(
-        "use_cookies",
-        "auto_scroll", 
-        "rate_survey",
-        "all_questions_required",
-        "start_page",
-        "language",
-        "highlight_unanswered",
-        "highlight_color",
-        "capture_metadata"
-      )
-      
-      # Extract only the server configuration parameters
-      settings <- list()
-      for (param in server_params) {
-        if (!is.null(yaml_metadata[[param]])) {
-          # Convert to appropriate R type
-          value <- yaml_metadata[[param]]
-          if (is.character(value) && value %in% c("TRUE", "FALSE")) {
-            value <- as.logical(value)
+    tryCatch(
+      {
+        metadata <- quarto::quarto_inspect("survey.qmd")
+        yaml_metadata <- metadata$formats$html$metadata
+
+        # Define all sd_server parameters that can be configured via YAML
+        server_params <- c(
+          "use_cookies",
+          "auto_scroll",
+          "rate_survey",
+          "all_questions_required",
+          "start_page",
+          "language",
+          "highlight_unanswered",
+          "highlight_color",
+          "capture_metadata"
+        )
+
+        # Extract only the server configuration parameters
+        settings <- list()
+        for (param in server_params) {
+          if (!is.null(yaml_metadata[[param]])) {
+            # Convert to appropriate R type
+            value <- yaml_metadata[[param]]
+            if (is.character(value) && value %in% c("TRUE", "FALSE")) {
+              value <- as.logical(value)
+            }
+            settings[[param]] <- value
           }
-          settings[[param]] <- value
         }
-      }
-      
-      # Add comment and write to YAML file if we have any settings
-      if (length(settings) > 0) {
-        yaml_content <- yaml::as.yaml(settings)
+
+        # Add comment and write to YAML file if we have any settings
+        if (length(settings) > 0) {
+          yaml_content <- yaml::as.yaml(settings)
+          comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+          comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
+          full_content <- paste0(comment_line1, comment_line2, yaml_content)
+          writeLines(full_content, con = paths$target_settings)
+        } else {
+          # Create empty file with comment if no settings found
+          comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+          comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
+          comment_line3 <- "# No server configuration found in YAML header\n"
+          full_content <- paste0(comment_line1, comment_line2, comment_line3)
+          writeLines(full_content, con = paths$target_settings)
+        }
+      },
+      error = function(e) {
+        warning("Could not extract settings from survey.qmd: ", e$message)
+        # Create empty file on error
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
         comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
-        full_content <- paste0(comment_line1, comment_line2, yaml_content)
-        writeLines(full_content, con = paths$target_settings)
-      } else {
-        # Create empty file with comment if no settings found
-        comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-        comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
-        comment_line3 <- "# No server configuration found in YAML header\n"
+        comment_line3 <- "# Error extracting settings from YAML header\n"
         full_content <- paste0(comment_line1, comment_line2, comment_line3)
         writeLines(full_content, con = paths$target_settings)
       }
-      
-    }, error = function(e) {
-      warning("Could not extract settings from survey.qmd: ", e$message)
-      # Create empty file on error
-      comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-      comment_line2 <- "# Server settings extracted from survey.qmd YAML header\n"
-      comment_line3 <- "# Error extracting settings from YAML header\n"
-      full_content <- paste0(comment_line1, comment_line2, comment_line3)
-      writeLines(full_content, con = paths$target_settings)
-    })
+    )
   } else {
     # Create empty file if survey.qmd doesn't exist
     comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
