@@ -1997,9 +1997,22 @@ get_initial_data <- function(
                 session$input$stored_session_id
             )
 
+            # Check use_cookies setting from settings.yml
+            settings <- get_settings_yml()
+            use_cookies_setting <- if (!is.null(settings) && !is.null(settings$use_cookies)) {
+                # Convert YAML boolean values to R logical
+                if (is.character(settings$use_cookies)) {
+                    settings$use_cookies %in% c("yes", "true", "TRUE", "True")
+                } else {
+                    as.logical(settings$use_cookies)
+                }
+            } else {
+                TRUE  # Default to TRUE if no setting found
+            }
+
+            # Use persistent session ID only if use_cookies is TRUE
             search_session_id <- if (
-                !is.null(persistent_session_id) &&
-                    nchar(persistent_session_id) > 0
+                use_cookies_setting && !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
             ) {
                 persistent_session_id
             } else {
