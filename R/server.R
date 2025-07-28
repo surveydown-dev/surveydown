@@ -160,7 +160,7 @@ sd_server <- function(
         tryCatch(
             {
                 metadata <- quarto::quarto_inspect("survey.qmd")
-                
+
                 # Extract use_cookies
                 if (missing(use_cookies) || is.null(use_cookies)) {
                     yaml_use_cookies <- get_use_cookies(metadata)
@@ -168,7 +168,7 @@ sd_server <- function(
                         use_cookies <- yaml_use_cookies
                     }
                 }
-                
+
                 # Extract auto_scroll
                 if (missing(auto_scroll)) {
                     yaml_auto_scroll <- get_auto_scroll(metadata)
@@ -176,7 +176,7 @@ sd_server <- function(
                         auto_scroll <- yaml_auto_scroll
                     }
                 }
-                
+
                 # Extract rate_survey
                 if (missing(rate_survey)) {
                     yaml_rate_survey <- get_rate_survey(metadata)
@@ -184,15 +184,17 @@ sd_server <- function(
                         rate_survey <- yaml_rate_survey
                     }
                 }
-                
+
                 # Extract all_questions_required
                 if (missing(all_questions_required)) {
-                    yaml_all_questions_required <- get_all_questions_required(metadata)
+                    yaml_all_questions_required <- get_all_questions_required(
+                        metadata
+                    )
                     if (!is.null(yaml_all_questions_required)) {
                         all_questions_required <- yaml_all_questions_required
                     }
                 }
-                
+
                 # Extract start_page
                 if (missing(start_page) || is.null(start_page)) {
                     yaml_start_page <- get_start_page(metadata)
@@ -200,7 +202,7 @@ sd_server <- function(
                         start_page <- yaml_start_page
                     }
                 }
-                
+
                 # Extract language
                 if (missing(language)) {
                     yaml_language <- get_language(metadata)
@@ -208,15 +210,17 @@ sd_server <- function(
                         language <- yaml_language
                     }
                 }
-                
+
                 # Extract highlight_unanswered
                 if (missing(highlight_unanswered)) {
-                    yaml_highlight_unanswered <- get_highlight_unanswered(metadata)
+                    yaml_highlight_unanswered <- get_highlight_unanswered(
+                        metadata
+                    )
                     if (!is.null(yaml_highlight_unanswered)) {
                         highlight_unanswered <- yaml_highlight_unanswered
                     }
                 }
-                
+
                 # Extract highlight_color
                 if (missing(highlight_color)) {
                     yaml_highlight_color <- get_highlight_color(metadata)
@@ -224,12 +228,22 @@ sd_server <- function(
                         highlight_color <- yaml_highlight_color
                     }
                 }
-                
+
                 # Extract capture_metadata
                 if (missing(capture_metadata)) {
                     yaml_capture_metadata <- get_capture_metadata(metadata)
                     if (!is.null(yaml_capture_metadata)) {
                         capture_metadata <- yaml_capture_metadata
+                    }
+                }
+
+                # Extract required_questions
+                if (
+                    missing(required_questions) || is.null(required_questions)
+                ) {
+                    yaml_required_questions <- get_required_questions(metadata)
+                    if (!is.null(yaml_required_questions)) {
+                        required_questions <- yaml_required_questions
                     }
                 }
             },
@@ -241,7 +255,7 @@ sd_server <- function(
             }
         )
     }
-    
+
     # Set defaults for any parameters that are still NULL
     if (is.null(use_cookies)) {
         use_cookies <- TRUE

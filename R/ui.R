@@ -52,7 +52,7 @@ sd_ui <- function() {
 
   # Get metadata from the 'survey.qmd' file
   metadata <- quarto::quarto_inspect("survey.qmd")
-  
+
   theme <- get_theme(metadata)
   default_theme <- FALSE
   if (any(theme == "default")) {
@@ -303,6 +303,22 @@ get_capture_metadata <- function(metadata) {
     return(NULL)
   }
   return(as.logical(capture_metadata))
+}
+
+get_required_questions <- function(metadata) {
+  required_questions <- metadata$formats$html$metadata$required_questions
+  if (is.null(required_questions)) {
+    return(NULL)
+  }
+  # Handle both single string and list/vector of strings
+  if (is.character(required_questions)) {
+    return(required_questions)
+  } else if (is.list(required_questions)) {
+    # Convert list to character vector
+    return(unlist(required_questions))
+  } else {
+    return(as.character(required_questions))
+  }
 }
 
 find_all_yaml_files <- function() {

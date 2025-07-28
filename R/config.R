@@ -304,16 +304,27 @@ create_settings_yaml <- function(paths) {
           "language",
           "highlight_unanswered",
           "highlight_color",
-          "capture_metadata"
+          "capture_metadata",
+          "required_questions"
         )
 
         # Extract only the server configuration parameters
         settings <- list()
         for (param in server_params) {
-          if (!is.null(yaml_metadata[[param]])) {
-            # Convert to appropriate R type
+          # Use specific extraction functions for parameters that need special handling
+          if (param == "required_questions") {
+            value <- get_required_questions(metadata)
+          } else {
             value <- yaml_metadata[[param]]
-            if (is.character(value) && value %in% c("TRUE", "FALSE")) {
+          }
+
+          if (!is.null(value)) {
+            # Convert to appropriate R type
+            if (
+              is.character(value) &&
+                length(value) == 1 &&
+                value %in% c("TRUE", "FALSE")
+            ) {
               value <- as.logical(value)
             }
             settings[[param]] <- value
