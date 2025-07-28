@@ -1437,46 +1437,8 @@ sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
     # But only if all_data is available - otherwise we need to defer this check
     existing_value <- NULL
     if (!is.null(session$userData$all_data)) {
-      # Get current session ID
-      current_session_id <- session$token
-      persistent_session_id <- shiny::isolate(session$input$stored_session_id)
-
-      # Check use_cookies setting from settings.yml for local CSV mode
-      if (!is.null(db)) {
-        # Database mode: always use persistent session ID if available
-        search_session_id <- if (
-          !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
-        ) {
-          persistent_session_id
-        } else {
-          current_session_id
-        }
-      } else {
-        # Local CSV mode: check use_cookies setting
-        settings <- get_settings_yml()
-        use_cookies_setting <- if (
-          !is.null(settings) && !is.null(settings$use_cookies)
-        ) {
-          # Convert YAML boolean values to R logical
-          if (is.character(settings$use_cookies)) {
-            settings$use_cookies %in% c("yes", "true", "TRUE", "True")
-          } else {
-            as.logical(settings$use_cookies)
-          }
-        } else {
-          TRUE # Default to TRUE if no setting found
-        }
-
-        search_session_id <- if (
-          use_cookies_setting &&
-            !is.null(persistent_session_id) &&
-            nchar(persistent_session_id) > 0
-        ) {
-          persistent_session_id
-        } else {
-          current_session_id
-        }
-      }
+      # Get session ID based on use_cookies setting
+      search_session_id <- get_session_id(session, db)
 
       # Check if this value already exists for this session
       existing_data <- get_session_data(db, search_session_id)
@@ -1530,45 +1492,7 @@ sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
     } else {
       # If all_data not available yet, store for deferred processing
       # This works for both database and local CSV modes
-      current_session_id <- session$token
-      persistent_session_id <- shiny::isolate(session$input$stored_session_id)
-
-      # Check use_cookies setting from settings.yml for local CSV mode
-      if (!is.null(db)) {
-        # Database mode: always use persistent session ID if available
-        search_session_id <- if (
-          !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
-        ) {
-          persistent_session_id
-        } else {
-          current_session_id
-        }
-      } else {
-        # Local CSV mode: check use_cookies setting
-        settings <- get_settings_yml()
-        use_cookies_setting <- if (
-          !is.null(settings) && !is.null(settings$use_cookies)
-        ) {
-          # Convert YAML boolean values to R logical
-          if (is.character(settings$use_cookies)) {
-            settings$use_cookies %in% c("yes", "true", "TRUE", "True")
-          } else {
-            as.logical(settings$use_cookies)
-          }
-        } else {
-          TRUE # Default to TRUE if no setting found
-        }
-
-        search_session_id <- if (
-          use_cookies_setting &&
-            !is.null(persistent_session_id) &&
-            nchar(persistent_session_id) > 0
-        ) {
-          persistent_session_id
-        } else {
-          current_session_id
-        }
-      }
+      search_session_id <- get_session_id(session, db)
 
       # Check for existing value in either database or local CSV
       existing_data <- get_session_data(db, search_session_id)
@@ -1627,6 +1551,54 @@ format_question_value <- function(val) {
   } else {
     return(as.character(val))
   }
+}
+
+# Helper function to determine session ID based on use_cookies setting
+get_session_id <- function(session, db) {
+  current_session_id <- session$token
+  persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+
+  if (!is.null(db)) {
+    # Database mode: always use persistent session ID if available
+    search_session_id <- if (
+      !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+    ) {
+      persistent_session_id
+    } else {
+      current_session_id
+    }
+  } else {
+    # Local CSV mode: check use_cookies setting
+    settings <- get_settings_yml()
+    use_cookies_setting <- if (
+      !is.null(settings) && !is.null(settings$use_cookies)
+    ) {
+      # Convert YAML boolean values to R logical
+      if (is.character(settings$use_cookies)) {
+        settings$use_cookies %in% c("yes", "true", "TRUE", "True")
+      } else {
+        as.logical(settings$use_cookies)
+      }
+    } else {
+      TRUE # Default to TRUE if no setting found
+    }
+
+    # For local CSV mode, handle use_cookies setting changes
+    if (
+      use_cookies_setting &&
+        !is.null(persistent_session_id) &&
+        nchar(persistent_session_id) > 0
+    ) {
+      # use_cookies is TRUE and we have a persistent session ID
+      search_session_id <- persistent_session_id
+    } else {
+      # use_cookies is FALSE OR no persistent session ID available
+      # Always use current session ID to ensure fresh values
+      search_session_id <- current_session_id
+    }
+  }
+
+  return(search_session_id)
 }
 
 # Helper function to get settings.yml file
