@@ -1631,8 +1631,15 @@ get_settings_yml <- function() {
         )
 
         for (param in server_params) {
+          # Try underscore version first
           if (!is.null(yaml_metadata[[param]])) {
             settings[[param]] <- yaml_metadata[[param]]
+          } else {
+            # Try dash version
+            dash_param <- gsub("_", "-", param)
+            if (!is.null(yaml_metadata[[dash_param]])) {
+              settings[[param]] <- yaml_metadata[[dash_param]]
+            }
           }
         }
 

@@ -182,10 +182,10 @@ get_footer <- function(metadata) {
     return("")
   }
 
-  # Get footer-related fields
-  footer_left <- meta$`footer-left`
-  footer_right <- meta$`footer-right`
-  footer_center <- meta$`footer-center`
+  # Get footer-related fields with both underscore and dash support
+  footer_left <- get_yaml_value(metadata, "footer_left")
+  footer_right <- get_yaml_value(metadata, "footer_right")
+  footer_center <- get_yaml_value(metadata, "footer_center")
   plain_footer <- meta$footer
 
   # If footer-center doesn't exist but plain footer does, use plain footer
@@ -233,8 +233,23 @@ get_footer <- function(metadata) {
   ))
 }
 
+# Helper function to get YAML values supporting both underscore and dash formats
+get_yaml_value <- function(metadata, key) {
+  yaml_data <- metadata$formats$html$metadata
+  # Try underscore version first
+  if (!is.null(yaml_data[[key]])) {
+    return(yaml_data[[key]])
+  }
+  # Try dash version
+  dash_key <- gsub("_", "-", key)
+  if (!is.null(yaml_data[[dash_key]])) {
+    return(yaml_data[[dash_key]])
+  }
+  return(NULL)
+}
+
 get_use_cookies <- function(metadata) {
-  use_cookies <- metadata$formats$html$metadata$use_cookies
+  use_cookies <- get_yaml_value(metadata, "use_cookies")
   if (is.null(use_cookies)) {
     return(NULL)
   }
@@ -246,7 +261,7 @@ get_use_cookies <- function(metadata) {
 }
 
 get_auto_scroll <- function(metadata) {
-  auto_scroll <- metadata$formats$html$metadata$auto_scroll
+  auto_scroll <- get_yaml_value(metadata, "auto_scroll")
   if (is.null(auto_scroll)) {
     return(NULL)
   }
@@ -258,7 +273,7 @@ get_auto_scroll <- function(metadata) {
 }
 
 get_rate_survey <- function(metadata) {
-  rate_survey <- metadata$formats$html$metadata$rate_survey
+  rate_survey <- get_yaml_value(metadata, "rate_survey")
   if (is.null(rate_survey)) {
     return(NULL)
   }
@@ -270,7 +285,7 @@ get_rate_survey <- function(metadata) {
 }
 
 get_all_questions_required <- function(metadata) {
-  all_questions_required <- metadata$formats$html$metadata$all_questions_required
+  all_questions_required <- get_yaml_value(metadata, "all_questions_required")
   if (is.null(all_questions_required)) {
     return(NULL)
   }
@@ -284,7 +299,7 @@ get_all_questions_required <- function(metadata) {
 }
 
 get_start_page <- function(metadata) {
-  start_page <- metadata$formats$html$metadata$start_page
+  start_page <- get_yaml_value(metadata, "start_page")
   if (is.null(start_page)) {
     return(NULL)
   }
@@ -300,7 +315,7 @@ get_language <- function(metadata) {
 }
 
 get_highlight_unanswered <- function(metadata) {
-  highlight_unanswered <- metadata$formats$html$metadata$highlight_unanswered
+  highlight_unanswered <- get_yaml_value(metadata, "highlight_unanswered")
   if (is.null(highlight_unanswered)) {
     return(NULL)
   }
@@ -314,7 +329,7 @@ get_highlight_unanswered <- function(metadata) {
 }
 
 get_highlight_color <- function(metadata) {
-  highlight_color <- metadata$formats$html$metadata$highlight_color
+  highlight_color <- get_yaml_value(metadata, "highlight_color")
   if (is.null(highlight_color)) {
     return(NULL)
   }
@@ -322,7 +337,7 @@ get_highlight_color <- function(metadata) {
 }
 
 get_capture_metadata <- function(metadata) {
-  capture_metadata <- metadata$formats$html$metadata$capture_metadata
+  capture_metadata <- get_yaml_value(metadata, "capture_metadata")
   if (is.null(capture_metadata)) {
     return(NULL)
   }
@@ -334,7 +349,7 @@ get_capture_metadata <- function(metadata) {
 }
 
 get_required_questions <- function(metadata) {
-  required_questions <- metadata$formats$html$metadata$required_questions
+  required_questions <- get_yaml_value(metadata, "required_questions")
   if (is.null(required_questions)) {
     return(NULL)
   }

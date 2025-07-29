@@ -221,7 +221,7 @@ sd_server <- function(
     # Priority: sd_server() parameters > YAML values > defaults
     # Only use YAML values if sd_server() parameters were not explicitly provided
     settings <- read_settings_yaml()
-    
+
     if (!explicit_params$use_cookies && !is.null(settings$use_cookies)) {
         use_cookies <- settings$use_cookies
     }
@@ -231,22 +231,35 @@ sd_server <- function(
     if (!explicit_params$rate_survey && !is.null(settings$rate_survey)) {
         rate_survey <- settings$rate_survey
     }
-    if (!explicit_params$all_questions_required && !is.null(settings$all_questions_required)) {
+    if (
+        !explicit_params$all_questions_required &&
+            !is.null(settings$all_questions_required)
+    ) {
         all_questions_required <- settings$all_questions_required
     }
     if (!explicit_params$start_page && !is.null(settings$start_page)) {
         start_page <- settings$start_page
     }
-    if (!explicit_params$highlight_unanswered && !is.null(settings$highlight_unanswered)) {
+    if (
+        !explicit_params$highlight_unanswered &&
+            !is.null(settings$highlight_unanswered)
+    ) {
         highlight_unanswered <- settings$highlight_unanswered
     }
-    if (!explicit_params$highlight_color && !is.null(settings$highlight_color)) {
+    if (
+        !explicit_params$highlight_color && !is.null(settings$highlight_color)
+    ) {
         highlight_color <- settings$highlight_color
     }
-    if (!explicit_params$capture_metadata && !is.null(settings$capture_metadata)) {
+    if (
+        !explicit_params$capture_metadata && !is.null(settings$capture_metadata)
+    ) {
         capture_metadata <- settings$capture_metadata
     }
-    if (!explicit_params$required_questions && !is.null(settings$required_questions)) {
+    if (
+        !explicit_params$required_questions &&
+            !is.null(settings$required_questions)
+    ) {
         required_questions <- settings$required_questions
     }
 
@@ -296,19 +309,18 @@ sd_server <- function(
     )
     update_settings_yaml(resolved_params)
 
-
     # Create local objects from config file
     pages <- config$pages
     page_ids <- config$page_ids
     question_ids <- config$question_ids
     question_structure <- config$question_structure
-    
+
     # Don't overwrite start_page if it was resolved from YAML settings
     # Only use config$start_page if start_page is still NULL
     if (is.null(start_page)) {
         start_page <- config$start_page
     }
-    
+
     # Handle all_questions_required and required_questions logic
     # This mirrors the logic in run_config() but uses YAML-resolved values
     # Priority: explicit sd_server() parameters > YAML values > config defaults
@@ -320,43 +332,63 @@ sd_server <- function(
             "is_matrix"
         )))
         question_required <- setdiff(question_ids, matrix_question_ids)
-    } else if (explicit_params$required_questions && !is.null(required_questions)) {
+    } else if (
+        explicit_params$required_questions && !is.null(required_questions)
+    ) {
         # Use explicitly provided required_questions from sd_server()
         question_required <- required_questions
-    } else if (!explicit_params$required_questions && !is.null(required_questions)) {
+    } else if (
+        !explicit_params$required_questions && !is.null(required_questions)
+    ) {
         # Use YAML-resolved required_questions (when sd_server() didn't provide them)
         question_required <- required_questions
     } else {
         # Fall back to config-determined required questions
         question_required <- config$question_required
     }
-    
+
     # Update each page's required_questions to reflect final resolved settings
     # This is necessary because pages were created before final parameter resolution
     # Apply this logic when we have any required questions different from config defaults
-    if (all_questions_required || 
-        (explicit_params$required_questions && !is.null(required_questions)) ||
-        (!explicit_params$required_questions && !is.null(required_questions) && length(required_questions) > 0)) {
+    if (
+        all_questions_required ||
+            (explicit_params$required_questions &&
+                !is.null(required_questions)) ||
+            (!explicit_params$required_questions &&
+                !is.null(required_questions) &&
+                length(required_questions) > 0)
+    ) {
         for (i in seq_along(pages)) {
             page_question_ids <- pages[[i]]$questions
             # Find which questions on this page are in the global required list
             page_required <- intersect(page_question_ids, question_required)
             pages[[i]]$required_questions <- page_required
-            
+
             # Update asterisks in the HTML content for newly required questions
             if (length(page_required) > 0) {
                 # Parse the page content as HTML
                 page_html <- xml2::read_html(pages[[i]]$content)
-                
+
                 for (q_id in page_required) {
                     # Find the question container for this question
-                    container_selector <- paste0("[data-question-id='", q_id, "']")
-                    container <- rvest::html_element(page_html, container_selector)
-                    
+                    container_selector <- paste0(
+                        "[data-question-id='",
+                        q_id,
+                        "']"
+                    )
+                    container <- rvest::html_element(
+                        page_html,
+                        container_selector
+                    )
+
                     if (!is.na(container)) {
                         # Check if it's a matrix question
-                        is_matrix <- length(rvest::html_elements(container, ".matrix-question")) > 0
-                        
+                        is_matrix <- length(rvest::html_elements(
+                            container,
+                            ".matrix-question"
+                        )) >
+                            0
+
                         if (is_matrix) {
                             # Show asterisks for matrix subquestions
                             sub_asterisks <- rvest::html_elements(
@@ -364,18 +396,27 @@ sd_server <- function(
                                 ".matrix-question td .hidden-asterisk"
                             )
                             for (asterisk in sub_asterisks) {
-                                xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                                xml2::xml_attr(
+                                    asterisk,
+                                    "style"
+                                ) <- "display: inline;"
                             }
                         } else {
                             # Show asterisk for regular questions
-                            asterisk <- rvest::html_element(container, ".hidden-asterisk")
+                            asterisk <- rvest::html_element(
+                                container,
+                                ".hidden-asterisk"
+                            )
                             if (!is.na(asterisk)) {
-                                xml2::xml_attr(asterisk, "style") <- "display: inline;"
+                                xml2::xml_attr(
+                                    asterisk,
+                                    "style"
+                                ) <- "display: inline;"
                             }
                         }
                     }
                 }
-                
+
                 # Update the page content with the modified HTML
                 pages[[i]]$content <- as.character(page_html)
             }

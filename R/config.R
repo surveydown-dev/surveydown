@@ -405,7 +405,7 @@ create_settings_yaml <- function(paths) {
 # Function to read settings from _survey/settings.yml file
 read_settings_yaml <- function() {
   paths <- get_paths()
-  
+
   # Define default settings to return if reading fails
   defaults <- list(
     use_cookies = TRUE,
@@ -418,40 +418,68 @@ read_settings_yaml <- function() {
     capture_metadata = TRUE,
     required_questions = NULL
   )
-  
+
   # Try multiple possible locations for the settings file
   possible_paths <- c(
-    paths$target_settings,                    # "_survey/settings.yml"
+    paths$target_settings, # "_survey/settings.yml"
     file.path(getwd(), paths$target_settings), # Full path from current dir
-    file.path(".", paths$target_settings),   # Explicit relative path
-    "settings.yml"                           # Fallback: just settings.yml in current dir
+    file.path(".", paths$target_settings), # Explicit relative path
+    "settings.yml" # Fallback: just settings.yml in current dir
   )
-  
+
   settings <- NULL
   successful_path <- NULL
-  
+
   # Try to read from each path directly (without file.exists check)
   for (path in possible_paths) {
-    tryCatch({
-      settings <- yaml::read_yaml(path)
-      successful_path <- path
-      break
-    }, error = function(e) {
-      # Continue to next path
-    })
+    tryCatch(
+      {
+        settings <- yaml::read_yaml(path)
+        successful_path <- path
+        break
+      },
+      error = function(e) {
+        # Continue to next path
+      }
+    )
   }
-  
+
   if (is.null(settings)) {
     return(defaults)
   }
-  
+
+  # Normalize dash-separated keys to underscore format for compatibility
+  # Define the expected parameter names (underscore format)
+  expected_params <- c(
+    "use_cookies",
+    "auto_scroll",
+    "rate_survey",
+    "all_questions_required",
+    "start_page",
+    "highlight_unanswered",
+    "highlight_color",
+    "capture_metadata",
+    "required_questions"
+  )
+
+  # Check for dash versions and convert to underscore format
+  for (param in expected_params) {
+    dash_param <- gsub("_", "-", param)
+    # If dash version exists but underscore doesn't, copy it over
+    if (!is.null(settings[[dash_param]]) && is.null(settings[[param]])) {
+      settings[[param]] <- settings[[dash_param]]
+      # Remove the dash version to avoid confusion
+      settings[[dash_param]] <- NULL
+    }
+  }
+
   # Process required_questions if it exists (convert list to character vector)
   if (!is.null(settings$required_questions)) {
     if (is.list(settings$required_questions)) {
       settings$required_questions <- unlist(settings$required_questions)
     }
   }
-  
+
   return(settings)
 }
 
