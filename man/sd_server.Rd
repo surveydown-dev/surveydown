@@ -12,11 +12,11 @@ sd_server(
   auto_scroll = NULL,
   rate_survey = NULL,
   system_language = "en",
-  language = NULL,
   use_cookies = NULL,
   highlight_unanswered = NULL,
   highlight_color = NULL,
-  capture_metadata = NULL
+  capture_metadata = NULL,
+  language = NULL
 )
 }
 \arguments{
@@ -46,9 +46,6 @@ French (\code{"fr"}), Italian (\code{"it"}), Simplified Chinese (\code{"zh-CN"})
 Defaults to \code{"en"}. Note: The deprecated \code{language} parameter is still
 supported for backward compatibility.}
 
-\item{language}{Deprecated. Use \code{system_language} instead. This parameter
-is maintained for backward compatibility only.}
-
 \item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management
 for storing and restoring survey progress. If \code{NULL} (default), will check
 for \code{use_cookies} setting in the survey.qmd YAML header. If not found there,
@@ -65,6 +62,9 @@ Defaults to "gray".}
 browser information (browser name, version, and OS), IP address, and
 screen resolution.
 Defaults to \code{TRUE}.}
+
+\item{language}{Deprecated as of v0.13.0. Use \code{system_language} instead.
+This parameter. is maintained for backward compatibility only.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
