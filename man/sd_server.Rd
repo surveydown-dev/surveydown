@@ -11,7 +11,8 @@ sd_server(
   start_page = NULL,
   auto_scroll = NULL,
   rate_survey = NULL,
-  language = "en",
+  system_language = "en",
+  language = NULL,
   use_cookies = NULL,
   highlight_unanswered = NULL,
   highlight_color = NULL,
@@ -38,11 +39,15 @@ question after answering. Defaults to \code{FALSE}.}
 the survey. If \code{FALSE}, shows a simple confirmation dialog.
 Defaults to \code{FALSE}.}
 
-\item{language}{Set the language for the survey system messages. Include
+\item{system_language}{Set the language for the survey system messages. Include
 your own in a \code{translations.yml} file, or choose a built in one from
 the following list: English (\code{"en"}), German (\code{"de"}), Spanish (\code{"es"}),
 French (\code{"fr"}), Italian (\code{"it"}), Simplified Chinese (\code{"zh-CN"}).
-Defaults to \code{"en"}.}
+Defaults to \code{"en"}. Note: The deprecated \code{language} parameter is still
+supported for backward compatibility.}
+
+\item{language}{Deprecated. Use \code{system_language} instead. This parameter
+is maintained for backward compatibility only.}
 
 \item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management
 for storing and restoring survey progress. If \code{NULL} (default), will check
@@ -141,7 +146,7 @@ if (interactive()) {
       start_page = NULL,
       auto_scroll = NULL,
       rate_survey = NULL,
-      language = "en",
+      system_language = "en",
       use_cookies = NULL,
       highlight_unanswered = NULL,
       highlight_color = NULL,

@@ -25,6 +25,8 @@
 #'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
 #'   Defaults to `"en"`. Note: The deprecated `language` parameter is still
 #'   supported for backward compatibility.
+#' @param language Deprecated. Use `system_language` instead. This parameter
+#'   is maintained for backward compatibility only.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
 #'   for storing and restoring survey progress. If `NULL` (default), will check
 #'   for `use_cookies` setting in the survey.qmd YAML header. If not found there,
