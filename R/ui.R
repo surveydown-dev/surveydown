@@ -306,6 +306,14 @@ get_start_page <- function(metadata) {
   return(as.character(start_page))
 }
 
+get_system_language <- function(metadata) {
+  system_language <- get_yaml_value(metadata, "system_language")
+  if (is.null(system_language)) {
+    return(NULL)
+  }
+  return(as.character(system_language))
+}
+
 get_language <- function(metadata) {
   language <- metadata$formats$html$metadata$language
   if (is.null(language)) {

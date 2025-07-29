@@ -1624,6 +1624,7 @@ get_settings_yml <- function() {
           "rate_survey",
           "all_questions_required",
           "start_page",
+          "system_language",
           "highlight_unanswered",
           "highlight_color",
           "capture_metadata",

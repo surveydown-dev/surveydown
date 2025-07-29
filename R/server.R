@@ -19,11 +19,12 @@
 #' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
 #'   the survey. If `FALSE`, shows a simple confirmation dialog.
 #'   Defaults to `FALSE`.
-#' @param language Set the language for the survey system messages. Include
+#' @param system_language Set the language for the survey system messages. Include
 #'   your own in a `translations.yml` file, or choose a built in one from
 #'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
 #'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
-#'   Defaults to `"en"`.
+#'   Defaults to `"en"`. Note: The deprecated `language` parameter is still
+#'   supported for backward compatibility.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
 #'   for storing and restoring survey progress. If `NULL` (default), will check
 #'   for `use_cookies` setting in the survey.qmd YAML header. If not found there,
@@ -104,7 +105,7 @@
 #'       start_page = NULL,
 #'       auto_scroll = NULL,
 #'       rate_survey = NULL,
-#'       language = "en",
+#'       system_language = "en",
 #'       use_cookies = NULL,
 #'       highlight_unanswered = NULL,
 #'       highlight_color = NULL,
@@ -130,7 +131,8 @@ sd_server <- function(
     start_page = NULL,
     auto_scroll = NULL,
     rate_survey = NULL,
-    language = "en",
+    system_language = "en",
+    language = NULL,
     use_cookies = NULL,
     highlight_unanswered = NULL,
     highlight_color = NULL,
@@ -167,6 +169,12 @@ sd_server <- function(
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
     skip_forward <- shiny::getDefaultReactiveDomain()$userData$skip_forward
 
+    # Handle backward compatibility for deprecated 'language' argument
+    if ("language" %in% names(match.call())) {
+        system_language <- language
+        warning("The 'language' argument is deprecated. Use 'system_language' instead.")
+    }
+
     # Track which parameters were explicitly provided (not missing)
     explicit_params <- list(
         use_cookies = !missing(use_cookies),
@@ -174,6 +182,7 @@ sd_server <- function(
         rate_survey = !missing(rate_survey),
         all_questions_required = !missing(all_questions_required),
         start_page = !missing(start_page),
+        system_language = !missing(system_language),
         highlight_unanswered = !missing(highlight_unanswered),
         highlight_color = !missing(highlight_color),
         capture_metadata = !missing(capture_metadata),
@@ -193,8 +202,8 @@ sd_server <- function(
     if (is.null(all_questions_required)) {
         all_questions_required <- FALSE
     }
-    if (is.null(language)) {
-        language <- "en"
+    if (is.null(system_language)) {
+        system_language <- "en"
     }
     if (is.null(highlight_unanswered)) {
         highlight_unanswered <- TRUE
@@ -214,7 +223,7 @@ sd_server <- function(
         skip_forward,
         show_if,
         rate_survey,
-        language
+        system_language
     )
 
     # Now read settings from _survey/settings.yml (created by run_config above)
@@ -239,6 +248,9 @@ sd_server <- function(
     }
     if (!explicit_params$start_page && !is.null(settings$start_page)) {
         start_page <- settings$start_page
+    }
+    if (!explicit_params$system_language && !is.null(settings$system_language)) {
+        system_language <- settings$system_language
     }
     if (
         !explicit_params$highlight_unanswered &&
@@ -276,8 +288,8 @@ sd_server <- function(
     if (is.null(all_questions_required)) {
         all_questions_required <- FALSE
     }
-    if (is.null(language)) {
-        language <- "en"
+    if (is.null(system_language)) {
+        system_language <- "en"
     }
     if (is.null(highlight_unanswered)) {
         highlight_unanswered <- TRUE
@@ -294,14 +306,22 @@ sd_server <- function(
         highlight_color <- "gray"
     }
 
+    # Update translations if system_language was resolved from YAML or differs from run_config()
+    # This ensures the translation system uses the final resolved language
+    if ((!explicit_params$system_language && !is.null(settings$system_language)) ||
+        (explicit_params$system_language && system_language != "en")) {
+        paths <- get_paths()
+        set_translations(paths, system_language)
+    }
+
     # Update settings.yml with final resolved parameters
-    # Note: language excluded to avoid Quarto conflicts
     resolved_params <- list(
         use_cookies = use_cookies,
         auto_scroll = auto_scroll,
         rate_survey = rate_survey,
         all_questions_required = all_questions_required,
         start_page = start_page,
+        system_language = system_language,
         highlight_unanswered = highlight_unanswered,
         highlight_color = highlight_color,
         capture_metadata = capture_metadata,

@@ -301,19 +301,21 @@ create_settings_yaml <- function(paths) {
           "rate_survey",
           "all_questions_required",
           "start_page",
+          "system_language",
           "highlight_unanswered",
           "highlight_color",
           "capture_metadata",
           "required_questions"
         )
 
-        # Define defaults for all 9 parameters (language excluded)
+        # Define defaults for all 10 parameters
         default_settings <- list(
           use_cookies = TRUE,
           auto_scroll = FALSE,
           rate_survey = FALSE,
           all_questions_required = FALSE,
           start_page = NULL,
+          system_language = "en",
           highlight_unanswered = TRUE,
           highlight_color = "gray",
           capture_metadata = TRUE,
@@ -334,6 +336,8 @@ create_settings_yaml <- function(paths) {
             value <- get_all_questions_required(metadata)
           } else if (param == "start_page") {
             value <- get_start_page(metadata)
+          } else if (param == "system_language") {
+            value <- get_system_language(metadata)
           } else if (param == "highlight_unanswered") {
             value <- get_highlight_unanswered(metadata)
           } else if (param == "highlight_color") {
@@ -456,6 +460,7 @@ read_settings_yaml <- function() {
     "rate_survey",
     "all_questions_required",
     "start_page",
+    "system_language",
     "highlight_unanswered",
     "highlight_color",
     "capture_metadata",
@@ -495,6 +500,7 @@ update_settings_yaml <- function(resolved_params) {
     rate_survey = FALSE,
     all_questions_required = FALSE,
     start_page = NULL,
+    system_language = "en",
     highlight_unanswered = TRUE,
     highlight_color = "gray",
     capture_metadata = TRUE,
