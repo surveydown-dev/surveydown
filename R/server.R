@@ -25,8 +25,6 @@
 #'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
 #'   Defaults to `"en"`. Note: The deprecated `language` parameter is still
 #'   supported for backward compatibility.
-#' @param language Deprecated. Use `system_language` instead. This parameter
-#'   is maintained for backward compatibility only.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
 #'   for storing and restoring survey progress. If `NULL` (default), will check
 #'   for `use_cookies` setting in the survey.qmd YAML header. If not found there,
@@ -40,6 +38,8 @@
 #'   browser information (browser name, version, and OS), IP address, and
 #'   screen resolution.
 #'   Defaults to `TRUE`.
+#' @param language Deprecated as of v0.13.0. Use `system_language` instead.
+#' This parameter. is maintained for backward compatibility only.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -134,11 +134,11 @@ sd_server <- function(
     auto_scroll = NULL,
     rate_survey = NULL,
     system_language = "en",
-    language = NULL,
     use_cookies = NULL,
     highlight_unanswered = NULL,
     highlight_color = NULL,
-    capture_metadata = NULL
+    capture_metadata = NULL,
+    language = NULL
 ) {
     # 1. Initialize local variables ----
 
@@ -174,7 +174,7 @@ sd_server <- function(
     # Handle backward compatibility for deprecated 'language' argument
     if ("language" %in% names(match.call())) {
         system_language <- language
-        warning("The 'language' argument is deprecated. Use 'system_language' instead.")
+        warning("The 'language' argument is deprecated as of v0.13.0. Use 'system_language' instead.")
     }
 
     # Track which parameters were explicitly provided (not missing)
