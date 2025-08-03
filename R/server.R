@@ -158,12 +158,6 @@ sd_server <- function(
 
     session$userData$db <- db
 
-    # Settings will be read after run_config() creates the file
-
-    # Defaults will be applied after reading settings from YAML file
-
-    # Will update settings.yml with final resolved parameters later
-
     # Tag start time
     time_start <- get_utc_timestamp()
 
@@ -179,7 +173,7 @@ sd_server <- function(
         )
     }
 
-    # Track which parameters were explicitly provided (not missing)
+    # Track which parameters were explicitly provided
     explicit_params <- list(
         use_cookies = !missing(use_cookies),
         auto_scroll = !missing(auto_scroll),
@@ -212,18 +206,25 @@ sd_server <- function(
 
     # Apply YAML overrides for parameters that weren't explicitly provided
     yaml_params <- c(
-        "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
-        "start_page", "system_language", "highlight_unanswered", 
-        "highlight_color", "capture_metadata", "required_questions"
+        "use_cookies",
+        "auto_scroll",
+        "rate_survey",
+        "all_questions_required",
+        "start_page",
+        "system_language",
+        "highlight_unanswered",
+        "highlight_color",
+        "capture_metadata",
+        "required_questions"
     )
-    
+
     for (param in yaml_params) {
         if (!explicit_params[[param]] && !is.null(settings[[param]])) {
             assign(param, settings[[param]])
         }
     }
 
-    # Normalize color spelling (handle both gray and grey)
+    # Normalize color spelling
     if (highlight_color == "grey") {
         highlight_color <- "gray"
     }
