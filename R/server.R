@@ -7,13 +7,14 @@
 #' and exit survey functionality.
 #'
 #' @param db A list containing database connection information created using
-#'   `sd_database()` function. Defaults to `NULL`.
+#'   `sd_database()` function. Defaults to `NULL`. If `NULL`, will be auto-detected
+#'   from the calling environment or remain `NULL` (ignore mode).
 #' @param required_questions Vector of character strings. The IDs of questions
-#'   that must be answered. Defaults to `NULL`.
+#'   that must be answered. Defaults to `NULL` (no required questions).
 #' @param all_questions_required Logical. If `TRUE`, all questions in the
 #'   survey will be required. Defaults to `FALSE`.
 #' @param start_page Character string. The ID of the page to start on.
-#'   Defaults to `NULL`.
+#'   Defaults to `NULL` (first page).
 #' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
 #'   question after answering. Defaults to `FALSE`.
 #' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
@@ -26,9 +27,8 @@
 #'   Defaults to `"en"`. Note: The deprecated `language` parameter is still
 #'   supported for backward compatibility.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
-#'   for storing and restoring survey progress. If `NULL` (default), will check
-#'   for `use_cookies` setting in the survey.qmd YAML header. If not found there,
-#'   defaults to `TRUE`.
+#'   for storing and restoring survey progress. Defaults to `TRUE`. Can be
+#'   overridden by `use_cookies` setting in the survey.qmd YAML header.
 #' @param highlight_unanswered Logical. If `TRUE`, enables highlighting
 #'   of all unanswered questions on page display. Defaults to `TRUE`.
 #' @param highlight_color Character string. Color for highlighting unanswered
@@ -129,15 +129,15 @@
 sd_server <- function(
     db = NULL,
     required_questions = NULL,
-    all_questions_required = NULL,
+    all_questions_required = FALSE,
     start_page = NULL,
-    auto_scroll = NULL,
-    rate_survey = NULL,
+    auto_scroll = FALSE,
+    rate_survey = FALSE,
     system_language = "en",
-    use_cookies = NULL,
-    highlight_unanswered = NULL,
-    highlight_color = NULL,
-    capture_metadata = NULL,
+    use_cookies = TRUE,
+    highlight_unanswered = TRUE,
+    highlight_color = "gray",
+    capture_metadata = TRUE,
     language = NULL
 ) {
     # 1. Initialize local variables ----
@@ -181,6 +181,7 @@ sd_server <- function(
 
     # Track which parameters were explicitly provided (not missing)
     explicit_params <- list(
+        db = !missing(db),
         use_cookies = !missing(use_cookies),
         auto_scroll = !missing(auto_scroll),
         rate_survey = !missing(rate_survey),
@@ -190,34 +191,9 @@ sd_server <- function(
         highlight_unanswered = !missing(highlight_unanswered),
         highlight_color = !missing(highlight_color),
         capture_metadata = !missing(capture_metadata),
-        required_questions = !missing(required_questions)
+        required_questions = !missing(required_questions),
+        language = !missing(language)
     )
-
-    # Apply basic defaults before run_config() (which needs valid parameters)
-    if (is.null(use_cookies)) {
-        use_cookies <- TRUE
-    }
-    if (is.null(auto_scroll)) {
-        auto_scroll <- FALSE
-    }
-    if (is.null(rate_survey)) {
-        rate_survey <- FALSE
-    }
-    if (is.null(all_questions_required)) {
-        all_questions_required <- FALSE
-    }
-    if (is.null(system_language)) {
-        system_language <- "en"
-    }
-    if (is.null(highlight_unanswered)) {
-        highlight_unanswered <- TRUE
-    }
-    if (is.null(highlight_color)) {
-        highlight_color <- "gray"
-    }
-    if (is.null(capture_metadata)) {
-        capture_metadata <- TRUE
-    }
 
     # Run the configuration settings
     config <- run_config(
@@ -281,32 +257,6 @@ sd_server <- function(
         required_questions <- settings$required_questions
     }
 
-    # Apply final defaults for any parameters that are still NULL
-    if (is.null(use_cookies)) {
-        use_cookies <- TRUE
-    }
-    if (is.null(auto_scroll)) {
-        auto_scroll <- FALSE
-    }
-    if (is.null(rate_survey)) {
-        rate_survey <- FALSE
-    }
-    if (is.null(all_questions_required)) {
-        all_questions_required <- FALSE
-    }
-    if (is.null(system_language)) {
-        system_language <- "en"
-    }
-    if (is.null(highlight_unanswered)) {
-        highlight_unanswered <- TRUE
-    }
-    if (is.null(highlight_color)) {
-        highlight_color <- "gray"
-    }
-    if (is.null(capture_metadata)) {
-        capture_metadata <- TRUE
-    }
-
     # Normalize color spelling (handle both gray and grey)
     if (highlight_color == "grey") {
         highlight_color <- "gray"
@@ -354,7 +304,6 @@ sd_server <- function(
     # This mirrors the logic in run_config() but uses YAML-resolved values
     # Priority: explicit sd_server() parameters > YAML values > config defaults
     if (all_questions_required) {
-        # When all_questions_required is TRUE, make all questions required except matrix questions
         matrix_question_ids <- names(which(sapply(
             question_structure,
             `[[`,
