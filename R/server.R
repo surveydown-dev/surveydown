@@ -174,7 +174,9 @@ sd_server <- function(
     # Handle backward compatibility for deprecated 'language' argument
     if ("language" %in% names(match.call())) {
         system_language <- language
-        warning("The 'language' argument is deprecated as of v0.13.0. Use 'system_language' instead.")
+        warning(
+            "The 'language' argument is deprecated as of v0.13.0. Use 'system_language' instead."
+        )
     }
 
     # Track which parameters were explicitly provided (not missing)
@@ -251,7 +253,9 @@ sd_server <- function(
     if (!explicit_params$start_page && !is.null(settings$start_page)) {
         start_page <- settings$start_page
     }
-    if (!explicit_params$system_language && !is.null(settings$system_language)) {
+    if (
+        !explicit_params$system_language && !is.null(settings$system_language)
+    ) {
         system_language <- settings$system_language
     }
     if (
@@ -310,8 +314,11 @@ sd_server <- function(
 
     # Update translations if system_language was resolved from YAML or differs from run_config()
     # This ensures the translation system uses the final resolved language
-    if ((!explicit_params$system_language && !is.null(settings$system_language)) ||
-        (explicit_params$system_language && system_language != "en")) {
+    if (
+        (!explicit_params$system_language &&
+            !is.null(settings$system_language)) ||
+            (explicit_params$system_language && system_language != "en")
+    ) {
         paths <- get_paths()
         set_translations(paths, system_language)
     }
