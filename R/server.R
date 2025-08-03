@@ -181,7 +181,6 @@ sd_server <- function(
 
     # Track which parameters were explicitly provided (not missing)
     explicit_params <- list(
-        db = !missing(db),
         use_cookies = !missing(use_cookies),
         auto_scroll = !missing(auto_scroll),
         rate_survey = !missing(rate_survey),
