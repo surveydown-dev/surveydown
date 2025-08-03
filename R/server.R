@@ -211,50 +211,17 @@ sd_server <- function(
     # Only use YAML values if sd_server() parameters were not explicitly provided
     settings <- read_settings_yaml()
 
-    if (!explicit_params$use_cookies && !is.null(settings$use_cookies)) {
-        use_cookies <- settings$use_cookies
-    }
-    if (!explicit_params$auto_scroll && !is.null(settings$auto_scroll)) {
-        auto_scroll <- settings$auto_scroll
-    }
-    if (!explicit_params$rate_survey && !is.null(settings$rate_survey)) {
-        rate_survey <- settings$rate_survey
-    }
-    if (
-        !explicit_params$all_questions_required &&
-            !is.null(settings$all_questions_required)
-    ) {
-        all_questions_required <- settings$all_questions_required
-    }
-    if (!explicit_params$start_page && !is.null(settings$start_page)) {
-        start_page <- settings$start_page
-    }
-    if (
-        !explicit_params$system_language && !is.null(settings$system_language)
-    ) {
-        system_language <- settings$system_language
-    }
-    if (
-        !explicit_params$highlight_unanswered &&
-            !is.null(settings$highlight_unanswered)
-    ) {
-        highlight_unanswered <- settings$highlight_unanswered
-    }
-    if (
-        !explicit_params$highlight_color && !is.null(settings$highlight_color)
-    ) {
-        highlight_color <- settings$highlight_color
-    }
-    if (
-        !explicit_params$capture_metadata && !is.null(settings$capture_metadata)
-    ) {
-        capture_metadata <- settings$capture_metadata
-    }
-    if (
-        !explicit_params$required_questions &&
-            !is.null(settings$required_questions)
-    ) {
-        required_questions <- settings$required_questions
+    # Apply YAML overrides for parameters that weren't explicitly provided
+    yaml_params <- c(
+        "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
+        "start_page", "system_language", "highlight_unanswered", 
+        "highlight_color", "capture_metadata", "required_questions"
+    )
+    
+    for (param in yaml_params) {
+        if (!explicit_params[[param]] && !is.null(settings[[param]])) {
+            assign(param, settings[[param]])
+        }
     }
 
     # Normalize color spelling (handle both gray and grey)
