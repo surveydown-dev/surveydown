@@ -22,9 +22,6 @@ run_config <- function(
     # Prepare translations (check for inputs)
     set_translations(paths, language)
 
-    # Create settings YAML file from survey.qmd YAML metadata
-    create_settings_yaml(paths)
-
     # Get the html content from the rendered survey.html file
     html_content <- rvest::read_html(paths$target_html)
 

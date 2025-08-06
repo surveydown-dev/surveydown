@@ -65,6 +65,9 @@ sd_ui <- function() {
   # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
+  # Create settings YAML file from survey.qmd YAML metadata
+  create_settings_yaml(paths)
+
   # Render the 'survey.qmd' file if changes detected
   if (survey_needs_updating(paths)) {
     message("Changes detected...rendering survey files...")
@@ -2244,6 +2247,8 @@ sd_output <- function(
 #'
 #' @export
 sd_dashboard <- function(gssencmode = "auto") {
-    # v0.13.0
-  .Deprecated("This function was depreciated in v0.13.0; use the sdstudio package instead")
+  # v0.13.0
+  .Deprecated(
+    "This function was depreciated in v0.13.0; use the sdstudio package instead"
+  )
 }
