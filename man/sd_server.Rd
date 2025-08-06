@@ -7,30 +7,31 @@
 sd_server(
   db = NULL,
   required_questions = NULL,
-  all_questions_required = NULL,
+  all_questions_required = FALSE,
   start_page = NULL,
-  auto_scroll = NULL,
-  rate_survey = NULL,
+  auto_scroll = FALSE,
+  rate_survey = FALSE,
   system_language = "en",
-  use_cookies = NULL,
-  highlight_unanswered = NULL,
-  highlight_color = NULL,
-  capture_metadata = NULL,
+  use_cookies = TRUE,
+  highlight_unanswered = TRUE,
+  highlight_color = "gray",
+  capture_metadata = TRUE,
   language = NULL
 )
 }
 \arguments{
 \item{db}{A list containing database connection information created using
-\code{sd_database()} function. Defaults to \code{NULL}.}
+\code{sd_database()} function. Defaults to \code{NULL}. If \code{NULL}, will be auto-detected
+from the calling environment or remain \code{NULL} (ignore mode).}
 
 \item{required_questions}{Vector of character strings. The IDs of questions
-that must be answered. Defaults to \code{NULL}.}
+that must be answered. Defaults to \code{NULL} (no required questions).}
 
 \item{all_questions_required}{Logical. If \code{TRUE}, all questions in the
 survey will be required. Defaults to \code{FALSE}.}
 
 \item{start_page}{Character string. The ID of the page to start on.
-Defaults to \code{NULL}.}
+Defaults to \code{NULL} (first page).}
 
 \item{auto_scroll}{Logical. Whether to enable auto-scrolling to the next
 question after answering. Defaults to \code{FALSE}.}
@@ -47,9 +48,8 @@ Defaults to \code{"en"}. Note: The deprecated \code{language} parameter is still
 supported for backward compatibility.}
 
 \item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management
-for storing and restoring survey progress. If \code{NULL} (default), will check
-for \code{use_cookies} setting in the survey.qmd YAML header. If not found there,
-defaults to \code{TRUE}.}
+for storing and restoring survey progress. Defaults to \code{TRUE}. Can be
+overridden by \code{use_cookies} setting in the survey.qmd YAML header.}
 
 \item{highlight_unanswered}{Logical. If \code{TRUE}, enables highlighting
 of all unanswered questions on page display. Defaults to \code{TRUE}.}

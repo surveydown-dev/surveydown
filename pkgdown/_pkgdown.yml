@@ -54,7 +54,6 @@ reference:
   - sd_ui
 - title: Utilities
   contents:
-  - sd_dashboard
   - sd_create_survey
   - sd_create_translations
   - sd_include_folder
@@ -68,6 +67,7 @@ reference:
   - sd_version
 - title: Depreciated
   contents:
+  - sd_dashboard
   - sd_database
   - sd_set_password
   - sd_skip_if

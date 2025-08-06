@@ -6,6 +6,7 @@
 - Enhanced: Now cookie is working for both db mode and local csv.
 - New feature: YAML-based server configuration - All `sd_server()` parameters can now be configured in the survey.qmd YAML header (e.g., `use_cookies: yes`, `auto_scroll: no`). Parameters in `sd_server()` take priority over YAML.
 - Bug fix: We noticed if question options are generated from HTML, they will have empty labels saved in `questions.yml`. Now it's fixed by auto-assigning the labels from the values. This auto-assignment is already applied in general cases where option labels are empty.
+- Depreciated the `sd_dashboard()` function; functionality is now included in the [{sdstudio} package](https://github.com/surveydown-dev/sdstudio/).
 
 # surveydown 0.12.8
 

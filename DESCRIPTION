@@ -31,11 +31,9 @@ BugReports: https://github.com/surveydown-dev/surveydown/issues
 Depends:
     R (>= 4.1.0)
 Imports:
-    bslib,
     cli,
     DBI,
     dotenv,
-    DT,
     fs,
     htmltools,
     jsonlite,

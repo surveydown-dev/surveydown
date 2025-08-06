@@ -791,7 +791,7 @@ extract_question_structure_html <- function(html_content) {
         rvest::html_nodes("label>span, button, option") |>
         rvest::html_text(trim = TRUE)
       names(options) <- label_options
-      
+
       # Handle empty names by setting them to their corresponding values
       empty_name_indices <- which(names(options) == "" | is.na(names(options)))
       if (length(empty_name_indices) > 0) {

@@ -2230,3 +2230,20 @@ sd_output <- function(
 
   stop("Invalid type. Choose 'question' or 'value'.")
 }
+
+#' Depreciated Survey Dashboard
+#'
+#' This dashboard was depreciated in version v0.13.0. Now the sdstudio package
+#' fully includes the functionality that was previously included in this function.
+#' @param gssencmode Character string. The GSS encryption mode for the database
+#'   connection. Defaults to `"auto"`. Options are:
+#'   - `"auto"`: Tries `"prefer"` first, then falls back to `"disable"` if GSSAPI negotiation fails
+#'   - `"prefer"`: Uses GSSAPI encryption if available, plain connection otherwise
+#'   - `"disable"`: Disables GSSAPI encryption entirely
+#'   Set to `"disable"` if you're having connection issues on a secure connection like a VPN.
+#'
+#' @export
+sd_dashboard <- function(gssencmode = "auto") {
+    # v0.13.0
+  .Deprecated("This function was depreciated in v0.13.0; use the sdstudio package instead")
+}
