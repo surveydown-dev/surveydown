@@ -757,6 +757,12 @@ extract_question_structure_html <- function(html_content) {
     type <- question_node |>
       rvest::html_nodes(glue::glue("#{question_id}")) |>
       rvest::html_attr("class")
+    
+    # Handle case where type is empty (e.g., for reactive questions)
+    if (length(type) == 0 || is.na(type)) {
+      type <- "unknown"
+    }
+    
     is_matrix <- length(rvest::html_nodes(question_node, ".matrix-question")) >
       0
 
@@ -777,7 +783,7 @@ extract_question_structure_html <- function(html_content) {
     )
 
     # Extract options for the question ( mc, *_multiple, *_buttons, and select)
-    if (grepl("radio|checkbox|select|matrix", type)) {
+    if (length(type) > 0 && grepl("radio|checkbox|select|matrix", type)) {
       options <- question_node |>
         rvest::html_nodes(
           "input[type='radio'], input[type='checkbox'], option"

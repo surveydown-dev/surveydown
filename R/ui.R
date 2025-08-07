@@ -1450,10 +1450,11 @@ sd_question <- function(
 
   if (!is.null(shiny::getDefaultReactiveDomain())) {
     # In a reactive context, directly add to output with renderUI
+    # Use "_question" suffix to avoid input/output ID conflicts
     shiny::isolate({
       output_div <- shiny::tags$div(output)
       output <- shiny::getDefaultReactiveDomain()$output
-      output[[id]] <- shiny::renderUI({
+      output[[paste0(id, "_question")]] <- shiny::renderUI({
         output_div
       })
     })
@@ -2202,8 +2203,9 @@ sd_output <- function(
   }
 
   if (type == "question") {
+    type_id <- paste0(id, "_", type)
     return(shiny::tagList(
-      make_question_container(id, shiny::uiOutput(id), width),
+      make_question_container(id, shiny::uiOutput(type_id), width),
       shiny::tags$script(htmltools::HTML(js_localStorage_restore))
     ))
   }
