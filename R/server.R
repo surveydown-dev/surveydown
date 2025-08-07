@@ -199,7 +199,7 @@ sd_server <- function(
         system_language
     )
 
-    # Now read settings from _survey/settings.yml (created by run_config above)
+    # Now read settings from _survey/settings.yml (created in sd_ui)
     # Priority: sd_server() parameters > YAML values > defaults
     # Only use YAML values if sd_server() parameters were not explicitly provided
     settings <- read_settings_yaml()

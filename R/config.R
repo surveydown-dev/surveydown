@@ -283,12 +283,11 @@ set_translations <- function(paths, language) {
   yaml::write_yaml(translations, paths$target_transl)
 }
 
-create_settings_yaml <- function(paths) {
+create_settings_yaml <- function(paths, metadata) {
   # Extract server configuration from survey.qmd YAML metadata during UI rendering
   if (file.exists("survey.qmd")) {
     tryCatch(
       {
-        metadata <- quarto::quarto_inspect("survey.qmd")
 
         # Define all sd_server parameters that can be configured via YAML
         # Note: language is excluded to avoid breaking Quarto rendering
