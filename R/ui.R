@@ -1565,10 +1565,11 @@ sd_question_custom <- function(
   output_div <- make_question_container(id, output_contents, "100%")
 
   # In a reactive context, directly add to output with renderUI
+  # Use "_question" suffix to avoid input/output ID conflicts
   shiny::isolate({
     output_div <- shiny::tags$div(output_div)
     output <- shiny::getDefaultReactiveDomain()$output
-    output[[id]] <- shiny::renderUI({
+    output[[paste0(id, "_question")]] <- shiny::renderUI({
       output_div
     })
   })
