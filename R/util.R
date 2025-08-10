@@ -1171,15 +1171,15 @@ get_client_ip <- function(request) {
   # List of headers to check in order of preference
   ip_headers <- c(
     "HTTP_X_FORWARDED_FOR",
-    "HTTP_X_REAL_IP", 
-    "HTTP_CF_CONNECTING_IP",  # Cloudflare
+    "HTTP_X_REAL_IP",
+    "HTTP_CF_CONNECTING_IP", # Cloudflare
     "HTTP_X_CLUSTER_CLIENT_IP",
     "HTTP_X_FORWARDED",
     "HTTP_FORWARDED_FOR",
     "HTTP_FORWARDED",
     "REMOTE_ADDR"
   )
-  
+
   for (header in ip_headers) {
     ip <- request[[header]]
     if (!is.null(ip) && ip != "") {
@@ -1187,15 +1187,17 @@ get_client_ip <- function(request) {
       if (header == "HTTP_X_FORWARDED_FOR") {
         ip <- trimws(strsplit(ip, ",")[[1]][1])
       }
-      
+
       # Skip localhost/private IPs unless it's the only option
-      if (!ip %in% c("127.0.0.1", "::1") && 
-          !grepl("^10\\.|^172\\.(1[6-9]|2[0-9]|3[01])\\.|^192\\.168\\.", ip)) {
+      if (
+        !ip %in% c("127.0.0.1", "::1") &&
+          !grepl("^10\\.|^172\\.(1[6-9]|2[0-9]|3[01])\\.|^192\\.168\\.", ip)
+      ) {
         return(ip)
       }
     }
   }
-  
+
   # Fallback to REMOTE_ADDR even if it's localhost
   return(request$REMOTE_ADDR)
 }
@@ -1205,23 +1207,23 @@ parse_user_agent <- function(user_agent) {
   if (is.null(user_agent) || user_agent == "") {
     return(list(browser = "Unknown", version = "Unknown", os = "Unknown"))
   }
-  
+
   # Browser detection patterns (order matters - more specific first)
   browser_patterns <- list(
     "Electron" = "Electron/([0-9]+)",
-    "Chrome Mobile" = "CriOS/([0-9]+)",  # Chrome iOS app - check this first
-    "Google App" = "GSA/([0-9]+).*(?!CriOS)",  # Google Search App (but not if CriOS is present)
-    "Firefox Mobile" = "FxiOS/([0-9]+)",  # Firefox iOS app
-    "Edge Mobile" = "EdgiOS/([0-9]+)",  # Edge iOS app
-    "Opera Mobile" = "OPiOS/([0-9]+)",  # Opera iOS app
-    "Edge" = "Edge?/([0-9]+)", 
+    "Chrome Mobile" = "CriOS/([0-9]+)", # Chrome iOS app - check this first
+    "Google App" = "GSA/([0-9]+).*(?!CriOS)", # Google Search App (but not if CriOS is present)
+    "Firefox Mobile" = "FxiOS/([0-9]+)", # Firefox iOS app
+    "Edge Mobile" = "EdgiOS/([0-9]+)", # Edge iOS app
+    "Opera Mobile" = "OPiOS/([0-9]+)", # Opera iOS app
+    "Edge" = "Edge?/([0-9]+)",
     "Chrome" = "Chrome/([0-9]+)",
     "Firefox" = "Firefox/([0-9]+)",
     "Safari" = "Version/([0-9]+).*Safari",
     "Opera" = "Opera/([0-9]+)|OPR/([0-9]+)",
     "Internet Explorer" = "MSIE ([0-9]+)|Trident.*rv:([0-9]+)"
   )
-  
+
   # OS detection patterns (more comprehensive and matching uaparserjs format)
   os_patterns <- list(
     "Mac OS X" = "Mac OS X ([0-9._]+)",
@@ -1231,7 +1233,7 @@ parse_user_agent <- function(user_agent) {
     "Linux" = "Linux",
     "Ubuntu" = "Ubuntu"
   )
-  
+
   # Extract browser and version
   browser <- "Unknown"
   version <- "Unknown"
@@ -1249,7 +1251,7 @@ parse_user_agent <- function(user_agent) {
       break
     }
   }
-  
+
   # Extract OS
   os <- "Unknown"
   for (name in names(os_patterns)) {
@@ -1258,7 +1260,7 @@ parse_user_agent <- function(user_agent) {
       break
     }
   }
-  
+
   return(list(browser = browser, version = version, os = os))
 }
 
@@ -1301,4 +1303,438 @@ yesno <- function(msg) {
 
   # Return TRUE if the yes option was selected
   return(selection == yes_position)
+}
+
+#' Generate a Random Completion Code
+#'
+#' This function generates a random completion code with a specified number of
+#' digits. The code is returned as a character string.
+#'
+#' @param digits An integer specifying the number of digits in the completion
+#'   code. Must be a positive integer. Default is 6.
+#'
+#' @return A character string representing the random completion code.
+#'
+#' @examples
+#' library(surveydown)
+#'
+#' sd_completion_code()  # generates a 6-digit code
+#' sd_completion_code(digits = 8)  # generates an 8-digit code
+#' sd_completion_code(digits = 4)  # generates a 4-digit code
+#' sd_completion_code(digits = 10)  # generates a 10-digit code
+#'
+#' @export
+sd_completion_code <- function(digits = 6) {
+  if (!is.numeric(digits) || digits < 1 || digits != round(digits)) {
+    stop("'digits' must be a positive integer")
+  }
+
+  # Generate random digits
+  digits_vector <- sample(0:9, digits, replace = TRUE)
+
+  # Ensure the first digit is not 0
+  digits_vector[1] <- sample(1:9, 1)
+
+  # Combine into a single string
+  paste(digits_vector, collapse = "")
+}
+
+#' Store a value in the survey data
+#'
+#' This function allows storing additional values to be included in the survey
+#' data, such as respondent IDs or other metadata. When a database connection
+#' is provided, it implements session persistence - if a value already exists
+#' for the current session, storage is skipped to maintain consistency across
+#' page refreshes.
+#'
+#' @param value The value to be stored. This can be any R object that can be
+#'   coerced to a character string.
+#' @param id (Optional) Character string. The id (name) of the value in the
+#'   data. If not provided, the name of the `value` variable will be used.
+#' @param db (Optional) Database connection object created with sd_db_connect().
+#'   If provided, enables session persistence. If not provided, will automatically
+#'   look for a variable named 'db' in the calling environment, or fall back to
+#'   the database connection from the session.
+#' @param auto_assign Logical. If `TRUE` (default), automatically assigns the
+#'   stored value back to the original variable in the calling environment.
+#'   This eliminates the need for explicit assignment when session persistence
+#'   is desired. If `FALSE`, the function only returns the value without
+#'   modifying the original variable.
+#'
+#' @return The value that was stored (either the new value or existing value
+#'   from database if session persistence applies). This allows the function
+#'   to be used in variable assignments.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Get path to example survey file
+#'   survey_path <- system.file("examples", "sd_ui.qmd",
+#'                              package = "surveydown")
+#'
+#'   # Copy to a temporary directory
+#'   temp_dir <- tempdir()
+#'   file.copy(survey_path, file.path(temp_dir, "basic_survey.qmd"))
+#'   orig_dir <- getwd()
+#'   setwd(temp_dir)
+#'
+#'   # Define a minimal server
+#'   server <- function(input, output, session) {
+#'     # Set up database connection
+#'     db <- sd_db_connect()
+#'
+#'     # Generate and store values with automatic assignment (default behavior)
+#'     respondentID <- sample(1:1000, 1)
+#'     sd_store_value(respondentID, "respID", db)  # respondentID automatically updated
+#'
+#'     completion_code <- sample(0:9, 6, replace = TRUE)
+#'     sd_store_value(completion_code)  # completion_code automatically updated
+#'
+#'     # Traditional assignment approach (auto_assign = FALSE)
+#'     some_value <- sd_store_value(42, "some_value", auto_assign = FALSE)
+#'
+#'     # The function ensures session persistence across page refreshes
+#'
+#'     sd_server()
+#'   }
+#'
+#'   # Run the app
+#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Clean up
+#'   setwd(orig_dir)
+#' }
+#'
+#' @export
+sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
+  if (is.null(id)) {
+    id <- deparse(substitute(value))
+  }
+
+  shiny::isolate({
+    session <- shiny::getDefaultReactiveDomain()
+    if (is.null(session)) {
+      stop(
+        "sd_store_value must be called from within a Shiny reactive context"
+      )
+    }
+
+    # If db parameter not provided, try to auto-detect from calling environment or session
+    if (is.null(db)) {
+      # First try to find 'db' variable in the calling environment
+      calling_env <- parent.frame()
+      if (exists("db", envir = calling_env)) {
+        db <- get("db", envir = calling_env)
+      } else {
+        # Fall back to session userData (for backward compatibility)
+        db <- session$userData$db
+      }
+    }
+
+    # Check if value already exists (session persistence logic)
+    # Works for both database and local CSV modes
+    # But only if all_data is available - otherwise we need to defer this check
+    existing_value <- NULL
+    if (!is.null(session$userData$all_data)) {
+      # Get session ID based on use_cookies setting
+      search_session_id <- get_session_id(session, db)
+
+      # Check if this value already exists for this session
+      existing_data <- get_session_data(db, search_session_id)
+
+      if (!is.null(existing_data) && nrow(existing_data) > 0) {
+        if (
+          id %in%
+            names(existing_data) &&
+            !is.na(existing_data[[id]]) &&
+            existing_data[[id]] != ""
+        ) {
+          # Value already exists - use existing value for session persistence
+          existing_value <- existing_data[[id]]
+        }
+      }
+    }
+
+    # Determine which value to use and store
+    final_value <- if (!is.null(existing_value)) {
+      # Use existing value for session persistence
+      existing_value
+    } else {
+      # Use new value
+      format_question_value(value)
+    }
+
+    # Initialize stored_values if it doesn't exist
+    if (is.null(session$userData$stored_values)) {
+      session$userData$stored_values <- list()
+    }
+
+    session$userData$stored_values[[id]] <- final_value
+
+    # Make value accessible in the UI
+    output <- shiny::getDefaultReactiveDomain()$output
+    output[[paste0(id, "_value")]] <- shiny::renderText({
+      final_value
+    })
+
+    # Get access to all_data and update it if available
+    # This allows the stored value to be accessible through sd_output
+    if (!is.null(session$userData$all_data)) {
+      session$userData$all_data[[id]] <- final_value
+      # Add to changed fields to trigger database update (only if using new value)
+      if (
+        is.null(existing_value) && !is.null(session$userData$changed_fields)
+      ) {
+        current_fields <- session$userData$changed_fields()
+        session$userData$changed_fields(c(current_fields, id))
+      }
+    } else {
+      # If all_data not available yet, store for deferred processing
+      # This works for both database and local CSV modes
+      search_session_id <- get_session_id(session, db)
+
+      # Check for existing value in either database or local CSV
+      existing_data <- get_session_data(db, search_session_id)
+
+      should_store_new_value <- TRUE
+      if (!is.null(existing_data) && nrow(existing_data) > 0) {
+        if (
+          id %in%
+            names(existing_data) &&
+            !is.na(existing_data[[id]]) &&
+            existing_data[[id]] != ""
+        ) {
+          # Use existing value for persistence - IMPORTANT: Update final_value here!
+          final_value <- existing_data[[id]]
+          should_store_new_value <- FALSE # Don't overwrite existing value
+        }
+      }
+
+      # Always store the final value for session initialization
+      if (is.null(session$userData$deferred_values)) {
+        session$userData$deferred_values <- list()
+      }
+      session$userData$deferred_values[[id]] <- final_value
+
+      # Track which values should NOT be written to storage (for session persistence)
+      if (!should_store_new_value) {
+        if (is.null(session$userData$deferred_skip_db)) {
+          session$userData$deferred_skip_db <- character(0)
+        }
+        session$userData$deferred_skip_db <- c(
+          session$userData$deferred_skip_db,
+          id
+        )
+      }
+    }
+  })
+
+  # Auto-assign to parent environment if requested
+  if (auto_assign) {
+    # Get the variable name from the first argument
+    var_name <- deparse(substitute(value))
+    # Use <<- to assign to the parent environment
+    assign(var_name, final_value, envir = parent.frame())
+  }
+
+  # Return the final value so it can be used in variable assignment
+  return(final_value)
+}
+
+# Helper function to format a single question value
+format_question_value <- function(val) {
+  if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
+    return("")
+  } else if (length(val) > 1) {
+    return(paste(val, collapse = ", "))
+  } else {
+    return(as.character(val))
+  }
+}
+
+# Helper function to determine session ID based on use_cookies setting
+get_session_id <- function(session, db) {
+  current_session_id <- session$token
+  persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+
+  if (!is.null(db)) {
+    # Database mode: always use persistent session ID if available
+    search_session_id <- if (
+      !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+    ) {
+      persistent_session_id
+    } else {
+      current_session_id
+    }
+  } else {
+    # Local CSV mode: check use_cookies setting
+    settings <- get_settings_yml()
+    use_cookies_setting <- if (
+      !is.null(settings) && !is.null(settings$use_cookies)
+    ) {
+      # Convert YAML boolean values to R logical
+      if (is.character(settings$use_cookies)) {
+        settings$use_cookies %in% c("yes", "true", "TRUE", "True")
+      } else {
+        as.logical(settings$use_cookies)
+      }
+    } else {
+      TRUE # Default to TRUE if no setting found
+    }
+
+    # For local CSV mode, handle use_cookies setting changes
+    if (
+      use_cookies_setting &&
+        !is.null(persistent_session_id) &&
+        nchar(persistent_session_id) > 0
+    ) {
+      # use_cookies is TRUE and we have a persistent session ID
+      search_session_id <- persistent_session_id
+    } else {
+      # use_cookies is FALSE OR no persistent session ID available
+      # Always use current session ID to ensure fresh values
+      search_session_id <- current_session_id
+    }
+  }
+
+  return(search_session_id)
+}
+
+# Helper function to get settings.yml file
+get_settings_yml <- function() {
+  path <- file.path("_survey", "settings.yml")
+  if (fs::file_exists(path)) {
+    return(yaml::read_yaml("_survey/settings.yml"))
+  }
+
+  # Fallback: if settings.yml doesn't exist, read directly from survey.qmd YAML header
+  if (file.exists("survey.qmd")) {
+    tryCatch(
+      {
+        metadata <- quarto::quarto_inspect("survey.qmd")
+        yaml_metadata <- metadata$formats$html$metadata
+
+        # Extract all server configuration parameters if available
+        settings <- list()
+        # Note: language is excluded to avoid breaking Quarto rendering
+        server_params <- c(
+          "use_cookies",
+          "auto_scroll",
+          "rate_survey",
+          "all_questions_required",
+          "start_page",
+          "system_language",
+          "highlight_unanswered",
+          "highlight_color",
+          "capture_metadata",
+          "required_questions"
+        )
+
+        for (param in server_params) {
+          # Try underscore version first
+          if (!is.null(yaml_metadata[[param]])) {
+            settings[[param]] <- yaml_metadata[[param]]
+          } else {
+            # Try dash version
+            dash_param <- gsub("_", "-", param)
+            if (!is.null(yaml_metadata[[dash_param]])) {
+              settings[[param]] <- yaml_metadata[[dash_param]]
+            }
+          }
+        }
+
+        if (length(settings) > 0) {
+          return(settings)
+        }
+      },
+      error = function(e) {
+        # If quarto inspection fails, continue with NULL
+      }
+    )
+  }
+
+  return(NULL)
+}
+
+# Main function to get session data from any available source (database or local CSV)
+get_session_data <- function(db, search_session_id) {
+  if (!is.null(db)) {
+    # Database mode
+    return(get_db_data(db, search_session_id))
+  } else {
+    # Local CSV mode
+    all_local_data <- get_local_data()
+    if (!is.null(all_local_data)) {
+      return(all_local_data[all_local_data$session_id == search_session_id, ])
+    } else {
+      return(NULL)
+    }
+  }
+}
+
+# Helper function to get local CSV data
+get_local_data <- function() {
+  if (file.exists("preview_data.csv")) {
+    tryCatch(
+      {
+        return(utils::read.csv(
+          "preview_data.csv",
+          stringsAsFactors = FALSE
+        ))
+      },
+      error = function(e) {
+        warning("Error reading preview_data.csv: ", e$message)
+        return(NULL)
+      }
+    )
+  }
+  return(NULL)
+}
+
+# Internal function to get data from database for a specific session only
+get_db_data <- function(db, session_id) {
+  if (is.null(db)) {
+    return(NULL)
+  }
+
+  # Get the correct table name from db object
+  table <- db$table
+  if (is.null(table)) {
+    warning("Table name not found in database object")
+    return(NULL)
+  }
+
+  tryCatch(
+    {
+      # Check if table exists first
+      table_exists <- pool::poolWithTransaction(db$db, function(conn) {
+        DBI::dbExistsTable(conn, table)
+      })
+
+      if (!table_exists) {
+        return(NULL)
+      }
+
+      # Use the same pooling pattern as sd_get_data()
+      result <- pool::poolWithTransaction(db$db, function(conn) {
+        query <- paste0(
+          "SELECT * FROM ",
+          table,
+          " WHERE session_id = $1"
+        )
+        DBI::dbGetQuery(conn, query, params = list(session_id))
+      })
+
+      if (is.null(result) || nrow(result) == 0) {
+        return(NULL)
+      }
+
+      return(result)
+    },
+    error = function(e) {
+      warning("Failed to fetch session data: ", e$message)
+      return(NULL)
+    }
+  )
 }

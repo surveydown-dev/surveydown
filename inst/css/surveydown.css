@@ -106,6 +106,11 @@ p, .form-group, .control-label {
   padding-bottom: 0.25rem;
 }
 
+.radio label span,
+.checkbox label span {
+  margin-left: 0.5rem;
+}
+
 .radio-group-buttons .btn-group-container-sw,
 .checkbox-group-buttons .btn-group-container-sw {
   display: flex;
@@ -220,12 +225,6 @@ p, .form-group, .control-label {
 /* Links */
 a:hover {
   color: color-mix(in srgb, var(--theme-color) 80%, black);
-}
-
-/* Utility classes */
-p:last-child,
-.form-group:last-child {
-  margin-bottom: 0;
 }
 
 /* Media Queries */

@@ -1,5 +1,14 @@
 # surveydown (development version)
 
+# surveydown 0.13.0
+
+- Enhanced: `sd_store_value()` - Now session-persistent with database integration, compatible with local testing. It also saves the value into the server so it matches the database.
+- Enhanced: Now cookie is working for both db mode and local csv.
+- New feature: YAML-based server configuration - All `sd_server()` parameters can now be configured in the survey.qmd YAML header (e.g., `use_cookies: yes`, `auto_scroll: no`). Parameters in `sd_server()` take priority over YAML.
+- Bug fix: We noticed if question options are generated from HTML, they will have empty labels saved in `questions.yml`. Now it's fixed by auto-assigning the labels from the values. This auto-assignment is already applied in general cases where option labels are empty.
+- Depreciated the `sd_dashboard()` function; functionality is now included in the [{sdstudio} package](https://github.com/surveydown-dev/sdstudio/).
+- Bug fix: Solved the Shiny Client Error of "shared input/output ID" triggered by `sd_output()` with `type` being `"question"`. Now users can still use `sd_output()` to display reactive questions with same IDs, but the internal HTML IDs will be different by appending a `_question` in the end.
+
 # surveydown 0.12.8
 
 - New argument for `sd_server()`: `capture_metadata` automatically captures and stores browser information and IP address. Defaults to `TRUE`.

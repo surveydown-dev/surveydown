@@ -7,25 +7,28 @@
 #' and exit survey functionality.
 #'
 #' @param db A list containing database connection information created using
-#'   `sd_database()` function. Defaults to `NULL`.
+#'   `sd_database()` function. Defaults to `NULL`. If `NULL`, will be auto-detected
+#'   from the calling environment or remain `NULL` (ignore mode).
 #' @param required_questions Vector of character strings. The IDs of questions
-#'   that must be answered. Defaults to `NULL`.
+#'   that must be answered. Defaults to `NULL` (no required questions).
 #' @param all_questions_required Logical. If `TRUE`, all questions in the
 #'   survey will be required. Defaults to `FALSE`.
 #' @param start_page Character string. The ID of the page to start on.
-#'   Defaults to `NULL`.
+#'   Defaults to `NULL` (first page).
 #' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
 #'   question after answering. Defaults to `FALSE`.
 #' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
 #'   the survey. If `FALSE`, shows a simple confirmation dialog.
 #'   Defaults to `FALSE`.
-#' @param language Set the language for the survey system messages. Include
+#' @param system_language Set the language for the survey system messages. Include
 #'   your own in a `translations.yml` file, or choose a built in one from
 #'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
 #'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
-#'   Defaults to `"en"`.
+#'   Defaults to `"en"`. Note: The deprecated `language` parameter is still
+#'   supported for backward compatibility.
 #' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
-#'   for storing and restoring survey progress. Defaults to `TRUE`.
+#'   for storing and restoring survey progress. Defaults to `TRUE`. Can be
+#'   overridden by `use_cookies` setting in the survey.qmd YAML header.
 #' @param highlight_unanswered Logical. If `TRUE`, enables highlighting
 #'   of all unanswered questions on page display. Defaults to `TRUE`.
 #' @param highlight_color Character string. Color for highlighting unanswered
@@ -35,6 +38,8 @@
 #'   browser information (browser name, version, and OS), IP address, and
 #'   screen resolution.
 #'   Defaults to `TRUE`.
+#' @param language Deprecated as of v0.13.0. Use `system_language` instead.
+#' This parameter. is maintained for backward compatibility only.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -98,15 +103,15 @@
 #'     sd_server(
 #'       db = NULL,
 #'       required_questions = NULL,
-#'       all_questions_required = FALSE,
+#'       all_questions_required = NULL,
 #'       start_page = NULL,
-#'       auto_scroll = FALSE,
-#'       rate_survey = FALSE,
-#'       language = "en",
-#'       use_cookies = TRUE,
-#'       highlight_unanswered = TRUE,
-#'       highlight_color = "gray",
-#'       capture_metadata = TRUE
+#'       auto_scroll = NULL,
+#'       rate_survey = NULL,
+#'       system_language = "en",
+#'       use_cookies = NULL,
+#'       highlight_unanswered = NULL,
+#'       highlight_color = NULL,
+#'       capture_metadata = NULL
 #'     )
 #'   }
 #'
@@ -128,11 +133,12 @@ sd_server <- function(
     start_page = NULL,
     auto_scroll = FALSE,
     rate_survey = FALSE,
-    language = "en",
+    system_language = "en",
     use_cookies = TRUE,
     highlight_unanswered = TRUE,
     highlight_color = "gray",
-    capture_metadata = TRUE
+    capture_metadata = TRUE,
+    language = NULL
 ) {
     # 1. Initialize local variables ----
 
@@ -142,12 +148,15 @@ sd_server <- function(
     output <- get("output", envir = parent_env)
     session <- get("session", envir = parent_env)
 
-    session$userData$db <- db
-
-    # Normalize color spelling (handle both gray and grey)
-    if (highlight_color == "grey") {
-        highlight_color <- "gray"
+    # Auto-detect db from calling environment if not provided
+    if (is.null(db)) {
+        # Only look for 'db' variable in the calling environment
+        if (exists("db", envir = parent_env)) {
+            db <- get("db", envir = parent_env)
+        }
     }
+
+    session$userData$db <- db
 
     # Tag start time
     time_start <- get_utc_timestamp()
@@ -155,6 +164,29 @@ sd_server <- function(
     # Get any skip or show conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
     skip_forward <- shiny::getDefaultReactiveDomain()$userData$skip_forward
+
+    # Handle backward compatibility for deprecated 'language' argument
+    if ("language" %in% names(match.call())) {
+        system_language <- language
+        warning(
+            "The 'language' argument is deprecated as of v0.13.0. Use 'system_language' instead."
+        )
+    }
+
+    # Track which parameters were explicitly provided
+    explicit_params <- list(
+        use_cookies = !missing(use_cookies),
+        auto_scroll = !missing(auto_scroll),
+        rate_survey = !missing(rate_survey),
+        all_questions_required = !missing(all_questions_required),
+        start_page = !missing(start_page),
+        system_language = !missing(system_language),
+        highlight_unanswered = !missing(highlight_unanswered),
+        highlight_color = !missing(highlight_color),
+        capture_metadata = !missing(capture_metadata),
+        required_questions = !missing(required_questions),
+        language = !missing(language)
+    )
 
     # Run the configuration settings
     config <- run_config(
@@ -164,16 +196,177 @@ sd_server <- function(
         skip_forward,
         show_if,
         rate_survey,
-        language
+        system_language
     )
+
+    # Now read settings from _survey/settings.yml (created in sd_ui)
+    # Priority: sd_server() parameters > YAML values > defaults
+    # Only use YAML values if sd_server() parameters were not explicitly provided
+    settings <- read_settings_yaml()
+
+    # Apply YAML overrides for parameters that weren't explicitly provided
+    yaml_params <- c(
+        "use_cookies",
+        "auto_scroll",
+        "rate_survey",
+        "all_questions_required",
+        "start_page",
+        "system_language",
+        "highlight_unanswered",
+        "highlight_color",
+        "capture_metadata",
+        "required_questions"
+    )
+
+    for (param in yaml_params) {
+        if (!explicit_params[[param]] && !is.null(settings[[param]])) {
+            assign(param, settings[[param]])
+        }
+    }
+
+    # Normalize color spelling
+    if (highlight_color == "grey") {
+        highlight_color <- "gray"
+    }
+
+    # Update translations if system_language was resolved from YAML or differs from run_config()
+    # This ensures the translation system uses the final resolved language
+    if (
+        (!explicit_params$system_language &&
+            !is.null(settings$system_language)) ||
+            (explicit_params$system_language && system_language != "en")
+    ) {
+        paths <- get_paths()
+        set_translations(paths, system_language)
+    }
+
+    # Update settings.yml with final resolved parameters
+    resolved_params <- list(
+        use_cookies = use_cookies,
+        auto_scroll = auto_scroll,
+        rate_survey = rate_survey,
+        all_questions_required = all_questions_required,
+        start_page = start_page,
+        system_language = system_language,
+        highlight_unanswered = highlight_unanswered,
+        highlight_color = highlight_color,
+        capture_metadata = capture_metadata,
+        required_questions = required_questions
+    )
+    update_settings_yaml(resolved_params)
 
     # Create local objects from config file
     pages <- config$pages
     page_ids <- config$page_ids
     question_ids <- config$question_ids
     question_structure <- config$question_structure
-    start_page <- config$start_page
-    question_required <- config$question_required
+
+    # Don't overwrite start_page if it was resolved from YAML settings
+    # Only use config$start_page if start_page is still NULL
+    if (is.null(start_page)) {
+        start_page <- config$start_page
+    }
+
+    # Handle all_questions_required and required_questions logic
+    # This mirrors the logic in run_config() but uses YAML-resolved values
+    # Priority: explicit sd_server() parameters > YAML values > config defaults
+    if (all_questions_required) {
+        matrix_question_ids <- names(which(sapply(
+            question_structure,
+            `[[`,
+            "is_matrix"
+        )))
+        question_required <- setdiff(question_ids, matrix_question_ids)
+    } else if (
+        explicit_params$required_questions && !is.null(required_questions)
+    ) {
+        # Use explicitly provided required_questions from sd_server()
+        question_required <- required_questions
+    } else if (
+        !explicit_params$required_questions && !is.null(required_questions)
+    ) {
+        # Use YAML-resolved required_questions (when sd_server() didn't provide them)
+        question_required <- required_questions
+    } else {
+        # Fall back to config-determined required questions
+        question_required <- config$question_required
+    }
+
+    # Update each page's required_questions to reflect final resolved settings
+    # This is necessary because pages were created before final parameter resolution
+    # Apply this logic when we have any required questions different from config defaults
+    if (
+        all_questions_required ||
+            (explicit_params$required_questions &&
+                !is.null(required_questions)) ||
+            (!explicit_params$required_questions &&
+                !is.null(required_questions) &&
+                length(required_questions) > 0)
+    ) {
+        for (i in seq_along(pages)) {
+            page_question_ids <- pages[[i]]$questions
+            # Find which questions on this page are in the global required list
+            page_required <- intersect(page_question_ids, question_required)
+            pages[[i]]$required_questions <- page_required
+
+            # Update asterisks in the HTML content for newly required questions
+            if (length(page_required) > 0) {
+                # Parse the page content as HTML
+                page_html <- xml2::read_html(pages[[i]]$content)
+
+                for (q_id in page_required) {
+                    # Find the question container for this question
+                    container_selector <- paste0(
+                        "[data-question-id='",
+                        q_id,
+                        "']"
+                    )
+                    container <- rvest::html_element(
+                        page_html,
+                        container_selector
+                    )
+
+                    if (!is.na(container)) {
+                        # Check if it's a matrix question
+                        is_matrix <- length(rvest::html_elements(
+                            container,
+                            ".matrix-question"
+                        )) >
+                            0
+
+                        if (is_matrix) {
+                            # Show asterisks for matrix subquestions
+                            sub_asterisks <- rvest::html_elements(
+                                container,
+                                ".matrix-question td .hidden-asterisk"
+                            )
+                            for (asterisk in sub_asterisks) {
+                                xml2::xml_attr(
+                                    asterisk,
+                                    "style"
+                                ) <- "display: inline;"
+                            }
+                        } else {
+                            # Show asterisk for regular questions
+                            asterisk <- rvest::html_element(
+                                container,
+                                ".hidden-asterisk"
+                            )
+                            if (!is.na(asterisk)) {
+                                xml2::xml_attr(
+                                    asterisk,
+                                    "style"
+                                ) <- "display: inline;"
+                            }
+                        }
+                    }
+                }
+
+                # Update the page content with the modified HTML
+                pages[[i]]$content <- as.character(page_html)
+            }
+        }
+    }
     page_id_to_index <- stats::setNames(seq_along(page_ids), page_ids)
 
     # Pre-compute timestamp IDs
@@ -688,8 +881,8 @@ sd_server <- function(
         }
 
         # Send to client to update cookie
-        if (length(answers) > 0 && !is.null(db)) {
-            # Only update cookies in db mode
+        if (length(answers) > 0) {
+            # Update cookies in both database and local modes
             page_data <- list(
                 answers = answers,
                 last_timestamp = last_timestamp
@@ -1412,97 +1605,6 @@ sd_set_password <- function(password) {
     message("Password set successfully and .Renviron added to .gitignore.")
 }
 
-#' Store a value in the survey data
-#'
-#' This function allows storing additional values to be included in the survey
-#' data, such as respondent IDs or other metadata.
-#'
-#' @param value The value to be stored. This can be any R object that can be
-#'   coerced to a character string.
-#' @param id (Optional) Character string. The id (name) of the value in the
-#'   data. If not provided, the name of the `value` variable will be used.
-#'
-#' @return `NULL` (invisibly)
-#'
-#' @examples
-#' if (interactive()) {
-#'   library(surveydown)
-#'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_ui.qmd",
-#'                              package = "surveydown")
-#'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "basic_survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Create a respondent ID to store
-#'     respondentID <- 42
-#'
-#'     # Store the respondentID
-#'     sd_store_value(respondentID)
-#'
-#'     # Store the respondentID as the variable "respID"
-#'     sd_store_value(respondentID, "respID")
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
-#' }
-#'
-#' @export
-sd_store_value <- function(value, id = NULL) {
-    if (is.null(id)) {
-        id <- deparse(substitute(value))
-    }
-
-    shiny::isolate({
-        session <- shiny::getDefaultReactiveDomain()
-        if (is.null(session)) {
-            stop(
-                "sd_store_value must be called from within a Shiny reactive context"
-            )
-        }
-
-        # Initialize stored_values if it doesn't exist
-        if (is.null(session$userData$stored_values)) {
-            session$userData$stored_values <- list()
-        }
-
-        formatted_value <- format_question_value(value)
-        session$userData$stored_values[[id]] <- formatted_value
-
-        # Make value accessible in the UI
-        output <- shiny::getDefaultReactiveDomain()$output
-        output[[paste0(id, "_value")]] <- shiny::renderText({
-            formatted_value
-        })
-
-        # Get access to all_data and update it if available
-        # This allows the stored value to be accessible through sd_output
-        if (!is.null(session$userData$all_data)) {
-            session$userData$all_data[[id]] <- formatted_value
-            # Add to changed fields to trigger database update
-            if (!is.null(session$userData$changed_fields)) {
-                current_fields <- session$userData$changed_fields()
-                session$userData$changed_fields(c(current_fields, id))
-            }
-        }
-    })
-
-    invisible(NULL)
-}
-
 #' Create a reactive value that is also stored in survey data
 #'
 #' This function creates a reactive value similar to Shiny's reactive() function,
@@ -2004,6 +2106,96 @@ get_initial_data <- function(
         get_stored_vals(session)
     )
 
+    # Process deferred values with session persistence check
+    if (!is.null(session$userData$deferred_values)) {
+        db <- session$userData$db
+
+        # If we have a database connection, check for existing values
+        if (!is.null(db)) {
+            # Get current session ID for persistence check
+            current_session_id <- session$token
+            persistent_session_id <- shiny::isolate(
+                session$input$stored_session_id
+            )
+
+            search_session_id <- if (
+                !is.null(persistent_session_id) &&
+                    nchar(persistent_session_id) > 0
+            ) {
+                persistent_session_id
+            } else {
+                current_session_id
+            }
+
+            # Get existing data for this session
+            existing_data <- get_db_data(db, search_session_id)
+
+            # Check which values should be skipped for database updates
+            skip_db_values <- session$userData$deferred_skip_db
+            if (is.null(skip_db_values)) {
+                skip_db_values <- character(0)
+            }
+
+            # Process each deferred value
+            for (id in names(session$userData$deferred_values)) {
+                # Check if value already exists in database
+                value_exists <- if (
+                    !is.null(existing_data) && nrow(existing_data) > 0
+                ) {
+                    id %in%
+                        names(existing_data) &&
+                        !is.na(existing_data[[id]]) &&
+                        existing_data[[id]] != ""
+                } else {
+                    FALSE
+                }
+
+                # Always add to initial data, but check if we should skip database updates
+                data[[id]] <- session$userData$deferred_values[[id]]
+            }
+        } else {
+            # Local CSV mode - check for existing values in preview_data.csv
+            search_session_id <- get_session_id(session, NULL)
+
+            # Get existing data from local CSV
+            all_local_data <- get_local_data()
+            existing_data <- if (!is.null(all_local_data)) {
+                all_local_data[all_local_data$session_id == search_session_id, ]
+            } else {
+                NULL
+            }
+
+            # Check which values should be skipped for local updates
+            skip_db_values <- session$userData$deferred_skip_db
+            if (is.null(skip_db_values)) {
+                skip_db_values <- character(0)
+            }
+
+            # Process each deferred value
+            for (id in names(session$userData$deferred_values)) {
+                # Check if value already exists in local CSV
+                value_exists <- if (
+                    !is.null(existing_data) && nrow(existing_data) > 0
+                ) {
+                    id %in%
+                        names(existing_data) &&
+                        !is.na(existing_data[[id]]) &&
+                        existing_data[[id]] != ""
+                } else {
+                    FALSE
+                }
+
+                if (value_exists) {
+                    # Use existing value from CSV for session persistence
+                    data[[id]] <- existing_data[[id]]
+                } else {
+                    # Use new deferred value
+                    data[[id]] <- session$userData$deferred_values[[id]]
+                }
+            }
+        }
+    }
+
     # Initialize question & timestamp values
     for (id in all_ids) {
         data[[id]] <- ""
@@ -2418,10 +2610,8 @@ handle_sessions <- function(
     progress_updater,
     use_cookies = TRUE
 ) {
-    # Check 1: if db is null, don't use cookies
-    if (is.null(db)) {
-        use_cookies <- FALSE
-    }
+    # Note: Cookies can work in both database and local modes
+    # No need to disable cookies when db is NULL
 
     # Check 2: Cookies enabled?
     if (!use_cookies) {

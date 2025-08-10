@@ -52,7 +52,10 @@ run_config <- function(
       paths$target_questions,
       "\n",
       "  ",
-      paths$target_transl
+      paths$target_transl,
+      "\n",
+      "  ",
+      paths$target_settings
     )
   } else {
     # If no changes, import from '_survey' folder
@@ -148,14 +151,19 @@ get_paths <- function() {
     target_html = file.path(target_folder, "survey.html"),
     target_pages = file.path(target_folder, "pages.rds"),
     target_head = file.path(target_folder, "head.rds"),
-    target_questions = file.path(target_folder, "questions.yml")
+    target_questions = file.path(target_folder, "questions.yml"),
+    target_settings = file.path(target_folder, "settings.yml")
   )
   return(paths)
 }
 
 survey_files_need_updating <- function(paths) {
   # Re-parse if any of the target files are missing
-  targets <- c(paths$target_pages, paths$target_questions)
+  targets <- c(
+    paths$target_pages,
+    paths$target_questions,
+    paths$target_settings
+  )
   if (any(!fs::file_exists(targets))) {
     return(TRUE)
   }
@@ -273,6 +281,356 @@ set_translations <- function(paths, language) {
 
   # write translations file
   yaml::write_yaml(translations, paths$target_transl)
+}
+
+create_settings_yaml <- function(paths, metadata) {
+  # Extract server configuration from survey.qmd YAML metadata during UI rendering
+  if (file.exists("survey.qmd")) {
+    tryCatch(
+      {
+
+        # Define all sd_server parameters that can be configured via YAML
+        # Note: language is excluded to avoid breaking Quarto rendering
+        server_params <- c(
+          "use_cookies",
+          "auto_scroll",
+          "rate_survey",
+          "all_questions_required",
+          "start_page",
+          "system_language",
+          "highlight_unanswered",
+          "highlight_color",
+          "capture_metadata",
+          "required_questions"
+        )
+
+        # Define defaults for all 10 parameters
+        default_settings <- list(
+          use_cookies = TRUE,
+          auto_scroll = FALSE,
+          rate_survey = FALSE,
+          all_questions_required = FALSE,
+          start_page = NULL,
+          system_language = "en",
+          highlight_unanswered = TRUE,
+          highlight_color = "gray",
+          capture_metadata = TRUE,
+          required_questions = NULL
+        )
+
+        # Extract YAML values using helper functions (priority: YAML > defaults)
+        settings <- list()
+        for (param in server_params) {
+          # Use specific extraction functions for parameters that need special handling
+          if (param == "use_cookies") {
+            value <- get_use_cookies(metadata)
+          } else if (param == "auto_scroll") {
+            value <- get_auto_scroll(metadata)
+          } else if (param == "rate_survey") {
+            value <- get_rate_survey(metadata)
+          } else if (param == "all_questions_required") {
+            value <- get_all_questions_required(metadata)
+          } else if (param == "start_page") {
+            value <- get_start_page(metadata)
+          } else if (param == "system_language") {
+            value <- get_system_language(metadata)
+          } else if (param == "highlight_unanswered") {
+            value <- get_highlight_unanswered(metadata)
+          } else if (param == "highlight_color") {
+            value <- get_highlight_color(metadata)
+          } else if (param == "capture_metadata") {
+            value <- get_capture_metadata(metadata)
+          } else if (param == "required_questions") {
+            value <- get_required_questions(metadata)
+          } else {
+            value <- NULL
+          }
+
+          if (!is.null(value)) {
+            settings[[param]] <- value
+          } else {
+            # Use default value
+            settings[[param]] <- default_settings[[param]]
+          }
+        }
+
+        # Remove NULL values to avoid YAML issues
+        settings <- settings[!sapply(settings, is.null)]
+
+        # Write settings file with YAML header values and defaults
+        yaml_content <- yaml::as.yaml(settings)
+        comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+        comment_line2 <- "# Server settings with YAML header values and defaults\n"
+        full_content <- paste0(comment_line1, comment_line2, yaml_content)
+        writeLines(full_content, con = paths$target_settings)
+      },
+      error = function(e) {
+        warning("Could not extract settings from survey.qmd: ", e$message)
+        # Create settings file with defaults on error
+        default_settings <- list(
+          use_cookies = TRUE,
+          auto_scroll = FALSE,
+          rate_survey = FALSE,
+          all_questions_required = FALSE,
+          highlight_unanswered = TRUE,
+          highlight_color = "gray",
+          capture_metadata = TRUE
+        )
+        yaml_content <- yaml::as.yaml(default_settings)
+        comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+        comment_line2 <- "# Server settings with defaults (error reading YAML header)\n"
+        full_content <- paste0(comment_line1, comment_line2, yaml_content)
+        writeLines(full_content, con = paths$target_settings)
+      }
+    )
+  } else {
+    # Create settings file with defaults if survey.qmd doesn't exist
+    default_settings <- list(
+      use_cookies = TRUE,
+      auto_scroll = FALSE,
+      rate_survey = FALSE,
+      all_questions_required = FALSE,
+      highlight_unanswered = TRUE,
+      highlight_color = "gray",
+      capture_metadata = TRUE
+    )
+    yaml_content <- yaml::as.yaml(default_settings)
+    comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+    comment_line2 <- "# Server settings with defaults (no survey.qmd file found)\n"
+    full_content <- paste0(comment_line1, comment_line2, yaml_content)
+    writeLines(full_content, con = paths$target_settings)
+  }
+}
+
+# Function to read settings from _survey/settings.yml file
+read_settings_yaml <- function() {
+  paths <- get_paths()
+
+  # Define default settings to return if reading fails
+  defaults <- list(
+    use_cookies = TRUE,
+    auto_scroll = FALSE,
+    rate_survey = FALSE,
+    all_questions_required = FALSE,
+    start_page = NULL,
+    highlight_unanswered = TRUE,
+    highlight_color = "gray",
+    capture_metadata = TRUE,
+    required_questions = NULL
+  )
+
+  # Try multiple possible locations for the settings file
+  possible_paths <- c(
+    paths$target_settings, # "_survey/settings.yml"
+    file.path(getwd(), paths$target_settings), # Full path from current dir
+    file.path(".", paths$target_settings), # Explicit relative path
+    "settings.yml" # Fallback: just settings.yml in current dir
+  )
+
+  settings <- NULL
+  successful_path <- NULL
+
+  # Try to read from each path directly (without file.exists check)
+  for (path in possible_paths) {
+    tryCatch(
+      {
+        settings <- yaml::read_yaml(path)
+        successful_path <- path
+        break
+      },
+      error = function(e) {
+        # Continue to next path
+      }
+    )
+  }
+
+  if (is.null(settings)) {
+    return(defaults)
+  }
+
+  # Normalize dash-separated keys to underscore format for compatibility
+  # Define the expected parameter names (underscore format)
+  expected_params <- c(
+    "use_cookies",
+    "auto_scroll",
+    "rate_survey",
+    "all_questions_required",
+    "start_page",
+    "system_language",
+    "highlight_unanswered",
+    "highlight_color",
+    "capture_metadata",
+    "required_questions"
+  )
+
+  # Check for dash versions and convert to underscore format
+  for (param in expected_params) {
+    dash_param <- gsub("_", "-", param)
+    # If dash version exists but underscore doesn't, copy it over
+    if (!is.null(settings[[dash_param]]) && is.null(settings[[param]])) {
+      settings[[param]] <- settings[[dash_param]]
+      # Remove the dash version to avoid confusion
+      settings[[dash_param]] <- NULL
+    }
+  }
+
+  # Process required_questions if it exists (convert list to character vector)
+  if (!is.null(settings$required_questions)) {
+    if (is.list(settings$required_questions)) {
+      settings$required_questions <- unlist(settings$required_questions)
+    }
+  }
+
+  return(settings)
+}
+
+# Function to update settings.yml with final resolved parameters from sd_server()
+update_settings_yaml <- function(resolved_params) {
+  paths <- get_paths()
+
+  # Define sd_server parameter defaults (from server.R)
+  # Note: language is excluded to avoid breaking Quarto rendering
+  default_params <- list(
+    use_cookies = TRUE, # Note: this becomes TRUE when NULL is passed to sd_server
+    auto_scroll = FALSE,
+    rate_survey = FALSE,
+    all_questions_required = FALSE,
+    start_page = NULL,
+    system_language = "en",
+    highlight_unanswered = TRUE,
+    highlight_color = "gray",
+    capture_metadata = TRUE,
+    required_questions = NULL
+  )
+
+  # Filter out language parameter to avoid breaking Quarto
+  resolved_params$language <- NULL
+
+  # Merge defaults with resolved params (resolved params take priority)
+  final_settings <- default_params
+  for (param_name in names(resolved_params)) {
+    if (!is.null(resolved_params[[param_name]])) {
+      final_settings[[param_name]] <- resolved_params[[param_name]]
+    }
+  }
+
+  # Handle special case for use_cookies (NULL becomes TRUE)
+  if (is.null(final_settings$use_cookies)) {
+    final_settings$use_cookies <- TRUE
+  }
+
+  # Remove NULL values to avoid YAML issues
+  final_settings <- final_settings[!sapply(final_settings, is.null)]
+
+  # Create YAML content
+  yaml_content <- yaml::as.yaml(final_settings)
+  comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
+  comment_line2 <- "# Server settings with final resolved parameters\n"
+  comment_line3 <- "# (includes sd_server() parameters, YAML header, and defaults)\n"
+  full_content <- paste0(
+    comment_line1,
+    comment_line2,
+    comment_line3,
+    yaml_content
+  )
+
+  # Write to file
+  writeLines(full_content, con = paths$target_settings)
+}
+
+# Function to detect sd_server() parameter overrides in app.R
+detect_sd_server_params <- function() {
+  if (!file.exists("app.R")) {
+    return(list())
+  }
+
+  tryCatch(
+    {
+      # Read app.R content as a single string to handle multiline sd_server() calls
+      app_content <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
+
+      # Extract the sd_server() function call content (including multiline)
+      sd_server_pattern <- "sd_server\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)"
+      sd_server_matches <- regmatches(
+        app_content,
+        gregexpr(sd_server_pattern, app_content)
+      )
+
+      if (length(sd_server_matches[[1]]) == 0) {
+        return(list())
+      }
+
+      # Get the parameters inside sd_server()
+      sd_server_text <- sd_server_matches[[1]][1]
+
+      # Extract parameters using regex
+      overrides <- list()
+
+      # Pattern to match parameter = value pairs
+      param_patterns <- c(
+        "use_cookies\\s*=\\s*(TRUE|FALSE|T|F)",
+        "auto_scroll\\s*=\\s*(TRUE|FALSE|T|F)",
+        "rate_survey\\s*=\\s*(TRUE|FALSE|T|F)",
+        "all_questions_required\\s*=\\s*(TRUE|FALSE|T|F)",
+        "start_page\\s*=\\s*[\"']([^\"']+)[\"']",
+        "highlight_unanswered\\s*=\\s*(TRUE|FALSE|T|F)",
+        "highlight_color\\s*=\\s*[\"']([^\"']+)[\"']",
+        "capture_metadata\\s*=\\s*(TRUE|FALSE|T|F)",
+        "required_questions\\s*=\\s*c\\s*\\(([^)]+)\\)"
+      )
+
+      param_names <- c(
+        "use_cookies",
+        "auto_scroll",
+        "rate_survey",
+        "all_questions_required",
+        "start_page",
+        "highlight_unanswered",
+        "highlight_color",
+        "capture_metadata",
+        "required_questions"
+      )
+
+      for (i in seq_along(param_patterns)) {
+        matches <- regmatches(
+          sd_server_text,
+          regexec(param_patterns[i], sd_server_text, ignore.case = TRUE)
+        )
+        if (length(matches[[1]]) > 1) {
+          param_name <- param_names[i]
+          value_str <- matches[[1]][2]
+
+          # Convert to appropriate R type
+          if (
+            param_name %in%
+              c(
+                "use_cookies",
+                "auto_scroll",
+                "rate_survey",
+                "all_questions_required",
+                "highlight_unanswered",
+                "capture_metadata"
+              )
+          ) {
+            overrides[[param_name]] <- value_str %in% c("TRUE", "T")
+          } else if (param_name %in% c("start_page", "highlight_color")) {
+            overrides[[param_name]] <- value_str
+          } else if (param_name == "required_questions") {
+            # Parse c("a", "b", "c") format
+            items <- strsplit(value_str, ",")[[1]]
+            items <- trimws(gsub("[\"']", "", items))
+            overrides[[param_name]] <- items
+          }
+        }
+      }
+
+      return(overrides)
+    },
+    error = function(e) {
+      # If parsing fails, return empty list
+      return(list())
+    }
+  )
 }
 
 extract_html_pages <- function(
@@ -399,6 +757,12 @@ extract_question_structure_html <- function(html_content) {
     type <- question_node |>
       rvest::html_nodes(glue::glue("#{question_id}")) |>
       rvest::html_attr("class")
+    
+    # Handle case where type is empty (e.g., for reactive questions)
+    if (length(type) == 0 || is.na(type)) {
+      type <- "unknown"
+    }
+    
     is_matrix <- length(rvest::html_nodes(question_node, ".matrix-question")) >
       0
 
@@ -419,7 +783,7 @@ extract_question_structure_html <- function(html_content) {
     )
 
     # Extract options for the question ( mc, *_multiple, *_buttons, and select)
-    if (grepl("radio|checkbox|select|matrix", type)) {
+    if (length(type) > 0 && grepl("radio|checkbox|select|matrix", type)) {
       options <- question_node |>
         rvest::html_nodes(
           "input[type='radio'], input[type='checkbox'], option"
@@ -429,6 +793,12 @@ extract_question_structure_html <- function(html_content) {
         rvest::html_nodes("label>span, button, option") |>
         rvest::html_text(trim = TRUE)
       names(options) <- label_options
+
+      # Handle empty names by setting them to their corresponding values
+      empty_name_indices <- which(names(options) == "" | is.na(names(options)))
+      if (length(empty_name_indices) > 0) {
+        names(options)[empty_name_indices] <- options[empty_name_indices]
+      }
 
       # Write options to the question structure
       question_structure[[question_id]]$options <- as.list(options)

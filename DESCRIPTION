@@ -1,6 +1,6 @@
 Package: surveydown
 Title: Markdown-Based Programmable Surveys Using 'Quarto' and 'shiny'
-Version: 0.12.8
+Version: 0.13.0
 Authors@R: c(
     person("John Paul", "Helveston", , "john.helveston@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-2657-9191")),
@@ -31,11 +31,9 @@ BugReports: https://github.com/surveydown-dev/surveydown/issues
 Depends:
     R (>= 4.1.0)
 Imports:
-    bslib,
     cli,
     DBI,
     dotenv,
-    DT,
     fs,
     htmltools,
     jsonlite,

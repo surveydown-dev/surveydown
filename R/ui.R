@@ -52,6 +52,7 @@ sd_ui <- function() {
 
   # Get metadata from the 'survey.qmd' file
   metadata <- quarto::quarto_inspect("survey.qmd")
+
   theme <- get_theme(metadata)
   default_theme <- FALSE
   if (any(theme == "default")) {
@@ -80,6 +81,9 @@ sd_ui <- function() {
     # If no changes, just load head content from '_survey/head.rds'
     head_content <- readRDS(paths$target_head)
   }
+
+  # Create settings YAML file from survey.qmd YAML metadata
+  create_settings_yaml(paths, metadata)
 
   # Create the UI
   shiny::tagList(
@@ -181,10 +185,10 @@ get_footer <- function(metadata) {
     return("")
   }
 
-  # Get footer-related fields
-  footer_left <- meta$`footer-left`
-  footer_right <- meta$`footer-right`
-  footer_center <- meta$`footer-center`
+  # Get footer-related fields with both underscore and dash support
+  footer_left <- get_yaml_value(metadata, "footer_left")
+  footer_right <- get_yaml_value(metadata, "footer_right")
+  footer_center <- get_yaml_value(metadata, "footer_center")
   plain_footer <- meta$footer
 
   # If footer-center doesn't exist but plain footer does, use plain footer
@@ -232,6 +236,145 @@ get_footer <- function(metadata) {
   ))
 }
 
+# Helper function to get YAML values supporting both underscore and dash formats
+get_yaml_value <- function(metadata, key) {
+  yaml_data <- metadata$formats$html$metadata
+  # Try underscore version first
+  if (!is.null(yaml_data[[key]])) {
+    return(yaml_data[[key]])
+  }
+  # Try dash version
+  dash_key <- gsub("_", "-", key)
+  if (!is.null(yaml_data[[dash_key]])) {
+    return(yaml_data[[dash_key]])
+  }
+  return(NULL)
+}
+
+get_use_cookies <- function(metadata) {
+  use_cookies <- get_yaml_value(metadata, "use_cookies")
+  if (is.null(use_cookies)) {
+    return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(use_cookies)) {
+    return(use_cookies %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  }
+  return(as.logical(use_cookies))
+}
+
+get_auto_scroll <- function(metadata) {
+  auto_scroll <- get_yaml_value(metadata, "auto_scroll")
+  if (is.null(auto_scroll)) {
+    return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(auto_scroll)) {
+    return(auto_scroll %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  }
+  return(as.logical(auto_scroll))
+}
+
+get_rate_survey <- function(metadata) {
+  rate_survey <- get_yaml_value(metadata, "rate_survey")
+  if (is.null(rate_survey)) {
+    return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(rate_survey)) {
+    return(rate_survey %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  }
+  return(as.logical(rate_survey))
+}
+
+get_all_questions_required <- function(metadata) {
+  all_questions_required <- get_yaml_value(metadata, "all_questions_required")
+  if (is.null(all_questions_required)) {
+    return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(all_questions_required)) {
+    return(
+      all_questions_required %in% c("TRUE", "True", "true", "yes", "Yes", "YES")
+    )
+  }
+  return(as.logical(all_questions_required))
+}
+
+get_start_page <- function(metadata) {
+  start_page <- get_yaml_value(metadata, "start_page")
+  if (is.null(start_page)) {
+    return(NULL)
+  }
+  return(as.character(start_page))
+}
+
+get_system_language <- function(metadata) {
+  system_language <- get_yaml_value(metadata, "system_language")
+  if (is.null(system_language)) {
+    return(NULL)
+  }
+  return(as.character(system_language))
+}
+
+get_language <- function(metadata) {
+  language <- metadata$formats$html$metadata$language
+  if (is.null(language)) {
+    return(NULL)
+  }
+  return(as.character(language))
+}
+
+get_highlight_unanswered <- function(metadata) {
+  highlight_unanswered <- get_yaml_value(metadata, "highlight_unanswered")
+  if (is.null(highlight_unanswered)) {
+    return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(highlight_unanswered)) {
+    return(
+      highlight_unanswered %in% c("TRUE", "True", "true", "yes", "Yes", "YES")
+    )
+  }
+  return(as.logical(highlight_unanswered))
+}
+
+get_highlight_color <- function(metadata) {
+  highlight_color <- get_yaml_value(metadata, "highlight_color")
+  if (is.null(highlight_color)) {
+    return(NULL)
+  }
+  return(as.character(highlight_color))
+}
+
+get_capture_metadata <- function(metadata) {
+  capture_metadata <- get_yaml_value(metadata, "capture_metadata")
+  if (is.null(capture_metadata)) {
+    return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(capture_metadata)) {
+    return(capture_metadata %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  }
+  return(as.logical(capture_metadata))
+}
+
+get_required_questions <- function(metadata) {
+  required_questions <- get_yaml_value(metadata, "required_questions")
+  if (is.null(required_questions)) {
+    return(NULL)
+  }
+  # Handle both single string and list/vector of strings
+  if (is.character(required_questions)) {
+    return(required_questions)
+  } else if (is.list(required_questions)) {
+    # Convert list to character vector
+    return(unlist(required_questions))
+  } else {
+    return(as.character(required_questions))
+  }
+}
+
 find_all_yaml_files <- function() {
   # Find all yml files
   all_files <- list.files(
@@ -260,14 +403,6 @@ survey_needs_updating <- function(paths) {
 
   if (time_qmd > time_html) {
     return(TRUE)
-  }
-
-  # Re-render if '_survey/survey.html' is out of date with 'app.R'
-  if (fs::file_exists(paths$app)) {
-    time_app <- file.info(paths$app)$mtime
-    if (time_app > time_html) {
-      return(TRUE)
-    }
   }
 
   # Find all YAML files
@@ -600,7 +735,7 @@ sd_question <- function(
         var questionType = '%s';
         var hasInteracted = false;
         var params = %s;
-        
+
         // Auto-save function for untouched questions
         function autoSaveQuestion() {
           // Check if user has already interacted with this question
@@ -609,12 +744,12 @@ sd_question <- function(
             // Question was already interacted with, don't auto-save
             return;
           }
-          
+
           // Double-check by looking at actual DOM changes for sliders
           if (questionType === 'slider' || questionType === 'slider_numeric_single') {
             var currentElement = $('#' + questionId);
             var initialValue = currentElement.data('initial-value');
-            
+
             // If we stored an initial value and current value differs, user interacted
             if (initialValue !== undefined) {
               var currentValue = currentElement.val();
@@ -624,9 +759,9 @@ sd_question <- function(
               }
             }
           }
-          
+
           var valueToSave = null;
-          
+
           // Handle different question types - use stored defaults, not current DOM values
           if (questionType === 'slider') {
             // Use the original default value from params, not current DOM value
@@ -644,18 +779,18 @@ sd_question <- function(
             // For date inputs, try multiple ways to get the value
             var dateElement = $('#' + questionId);
             var inputElement = dateElement.find('input[type=\"text\"]');
-            
+
             // Try different methods to get the date value
-            valueToSave = inputElement.val() || 
-                         dateElement.val() || 
-                         dateElement.attr('data-date') || 
+            valueToSave = inputElement.val() ||
+                         dateElement.val() ||
+                         dateElement.attr('data-date') ||
                          dateElement.find('input').val() || '';
           } else if (questionType === 'daterange') {
             // For date range inputs, get both start and end dates
             var container = $('#' + questionId);
             var startDate = container.find('input').eq(0).val() || '';
             var endDate = container.find('input').eq(1).val() || '';
-            
+
             // Join with comma and space to match expected format: 2025-06-17, 2025-06-18
             if (startDate && endDate) {
               valueToSave = startDate + ', ' + endDate;
@@ -665,7 +800,7 @@ sd_question <- function(
               valueToSave = '';
             }
           }
-          
+
           // Mark as interacted and save value with timestamp trigger
           Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
           if (valueToSave !== null && valueToSave !== '') {
@@ -673,11 +808,11 @@ sd_question <- function(
           }
           // Force timestamp update by sending a separate autosave timestamp signal
           Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
-          
+
           // Clear gray highlighting since this question is now interacted
           clearQuestionHighlighting(questionId);
         }
-        
+
         // Function to clear highlighting for this specific question
         function clearQuestionHighlighting(questionId) {
           // Find question container using multiple strategies
@@ -691,7 +826,7 @@ sd_question <- function(
               questionContainer = input.closest('.question-container, .form-group, .shiny-input-container');
             }
           }
-          
+
           if (questionContainer.length > 0) {
             // Remove all highlighting classes
             questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
@@ -699,19 +834,19 @@ sd_question <- function(
             questionContainer.find('.form-control, input, select, textarea').removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
           }
         }
-        
+
         // Mark as interacted when user actually interacts
         window['markInteracted_' + questionId] = function() {
           hasInteracted = true;
         };
-        
+
         // Store initial values for sliders to detect changes and bind additional interaction events
         if (questionType === 'slider' || questionType === 'slider_numeric_single') {
           setTimeout(function() {
             var element = $('#' + questionId);
             if (element.length > 0) {
               element.data('initial-value', element.val());
-              
+
               // Additional interaction tracking for edge cases
               element.on('input change slide slidechange', function() {
                 hasInteracted = true;
@@ -731,14 +866,14 @@ sd_question <- function(
             }
           }, 100);
         }
-        
+
         // Listen for Next and Close button clicks
         $(document).on('click', '.sd-enter-button', function(e) {
           if ($(this).attr('onclick') && $(this).attr('onclick').includes('next_page')) {
             autoSaveQuestion();
           }
         });
-        
+
         $(document).on('click', '#close-survey-button', function(e) {
           autoSaveQuestion();
         });
@@ -889,24 +1024,24 @@ sd_question <- function(
             $('#%s').on('focus input change', function() {
                 Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
             });
-            
+
             // Restrict input to numeric characters (0-9) and plus/minus signs
             $('#%s').on('keypress', function(e) {
                 // Allow all key combinations with Ctrl or Cmd (for copy, paste, select all, etc.)
                 if (e.ctrlKey || e.metaKey) {
                     return true;
                 }
-                
+
                 var char = String.fromCharCode(e.which);
                 // Allow: digits (0-9), plus sign (+), minus sign (-), backspace, delete, tab, escape, enter
-                if (/[0-9+\\-]/.test(char) || 
+                if (/[0-9+\\-]/.test(char) ||
                     e.which === 8 || e.which === 46 || e.which === 9 || e.which === 27 || e.which === 13) {
                     return true;
                 }
                 e.preventDefault();
                 return false;
             });
-            
+
             // Also filter on paste events
             $('#%s').on('paste', function(e) {
                 setTimeout(function() {
@@ -994,7 +1129,7 @@ sd_question <- function(
       "
       $(document).ready(function() {
         var valueMap = %s;
-        
+
         $('#%s').on('focus mousedown change', function(e) {
           var currentLabel = $(this).val();
 
@@ -1003,7 +1138,7 @@ sd_question <- function(
             window['markInteracted_%s']();
             Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
           }
-          
+
           // Find the internal value that matches this display label
           Shiny.setInputValue('%s', valueMap[currentLabel]);
         });
@@ -1071,7 +1206,7 @@ sd_question <- function(
           window['markInteracted_%s']();
           Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
         });
-        
+
         // Handle value changes
         $('#%s').on('input change slide slidechange', function(event, ui) {
           // Force a string representation for range sliders
@@ -1315,10 +1450,11 @@ sd_question <- function(
 
   if (!is.null(shiny::getDefaultReactiveDomain())) {
     # In a reactive context, directly add to output with renderUI
+    # Use "_question" suffix to avoid input/output ID conflicts
     shiny::isolate({
       output_div <- shiny::tags$div(output)
       output <- shiny::getDefaultReactiveDomain()$output
-      output[[id]] <- shiny::renderUI({
+      output[[paste0(id, "_question")]] <- shiny::renderUI({
         output_div
       })
     })
@@ -1429,10 +1565,11 @@ sd_question_custom <- function(
   output_div <- make_question_container(id, output_contents, "100%")
 
   # In a reactive context, directly add to output with renderUI
+  # Use "_question" suffix to avoid input/output ID conflicts
   shiny::isolate({
     output_div <- shiny::tags$div(output_div)
     output <- shiny::getDefaultReactiveDomain()$output
-    output[[id]] <- shiny::renderUI({
+    output[[paste0(id, "_question")]] <- shiny::renderUI({
       output_div
     })
   })
@@ -2020,13 +2157,58 @@ sd_output <- function(
   wrapper = NULL,
   ...
 ) {
+  # Use localStorage for reactive output restoration (simpler approach)
+  js_localStorage_restore <- sprintf(
+    "
+    $(document).ready(function() {
+      var id = '%s', key = 'surveydown_reactive_' + id;
+
+      function save() {
+        var content = $('#' + id).html();
+        if (content && content.trim()) {
+          try {
+            localStorage.setItem(key, content);
+          } catch(e) {
+            console.warn('Could not save to localStorage:', e);
+          }
+        }
+      }
+
+      function restore() {
+        try {
+          var saved = localStorage.getItem(key);
+          var el = $('#' + id);
+          if (saved && el.length && !el.html().trim()) {
+            el.html(saved);
+          }
+        } catch(e) {
+          console.warn('Could not restore from localStorage:', e);
+        }
+      }
+
+      setTimeout(restore, 100);
+      new MutationObserver(function() { setTimeout(save, 200); })
+        .observe(document.getElementById(id) || document.body, {childList: true, subtree: true});
+      $(window).on('beforeunload', save);
+    });
+    ",
+    id
+  )
+
   if (is.null(type)) {
-    # If only id is provided, behave like shiny::uiOutput
-    return(shiny::uiOutput(id, inline = inline, ...))
+    output_element <- shiny::uiOutput(id, inline = inline, ...)
+    return(shiny::tagList(
+      output_element,
+      shiny::tags$script(htmltools::HTML(js_localStorage_restore))
+    ))
   }
 
   if (type == "question") {
-    return(make_question_container(id, shiny::uiOutput(id), width))
+    type_id <- paste0(id, "_", type)
+    return(shiny::tagList(
+      make_question_container(id, shiny::uiOutput(type_id), width),
+      shiny::tags$script(htmltools::HTML(js_localStorage_restore))
+    ))
   }
 
   if (type %in% c("value", "label_option", "label_question")) {
@@ -2055,36 +2237,21 @@ sd_output <- function(
   stop("Invalid type. Choose 'question' or 'value'.")
 }
 
-#' Generate a Random Completion Code
+#' Depreciated Survey Dashboard
 #'
-#' This function generates a random completion code with a specified number of
-#' digits. The code is returned as a character string.
-#'
-#' @param digits An integer specifying the number of digits in the completion
-#'   code. Must be a positive integer. Default is 6.
-#'
-#' @return A character string representing the random completion code.
-#'
-#' @examples
-#' library(surveydown)
-#'
-#' sd_completion_code()  # generates a 6-digit code
-#' sd_completion_code(digits = 8)  # generates an 8-digit code
-#' sd_completion_code(digits = 4)  # generates a 4-digit code
-#' sd_completion_code(digits = 10)  # generates a 10-digit code
+#' This dashboard was depreciated in version v0.13.0. Now the sdstudio package
+#' fully includes the functionality that was previously included in this function.
+#' @param gssencmode Character string. The GSS encryption mode for the database
+#'   connection. Defaults to `"auto"`. Options are:
+#'   - `"auto"`: Tries `"prefer"` first, then falls back to `"disable"` if GSSAPI negotiation fails
+#'   - `"prefer"`: Uses GSSAPI encryption if available, plain connection otherwise
+#'   - `"disable"`: Disables GSSAPI encryption entirely
+#'   Set to `"disable"` if you're having connection issues on a secure connection like a VPN.
 #'
 #' @export
-sd_completion_code <- function(digits = 6) {
-  if (!is.numeric(digits) || digits < 1 || digits != round(digits)) {
-    stop("'digits' must be a positive integer")
-  }
-
-  # Generate random digits
-  digits_vector <- sample(0:9, digits, replace = TRUE)
-
-  # Ensure the first digit is not 0
-  digits_vector[1] <- sample(1:9, 1)
-
-  # Combine into a single string
-  paste(digits_vector, collapse = "")
+sd_dashboard <- function(gssencmode = "auto") {
+  # v0.13.0
+  .Deprecated(
+    "This function was depreciated in v0.13.0; use the sdstudio package instead"
+  )
 }
