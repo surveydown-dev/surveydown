@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.12.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,15 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.13.0" id="surveydown-0130">surveydown 0.13.0<a class="anchor" aria-label="anchor" href="#surveydown-0130"></a></h2>
+<ul><li>Enhanced: <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code> - Now session-persistent with database integration, compatible with local testing. It also saves the value into the server so it matches the database.</li>
+<li>Enhanced: Now cookie is working for both db mode and local csv.</li>
+<li>New feature: YAML-based server configuration - All <code><a href="../reference/sd_server.html">sd_server()</a></code> parameters can now be configured in the survey.qmd YAML header (e.g., <code>use_cookies: yes</code>, <code>auto_scroll: no</code>). Parameters in <code><a href="../reference/sd_server.html">sd_server()</a></code> take priority over YAML.</li>
+<li>Bug fix: We noticed if question options are generated from HTML, they will have empty labels saved in <code>questions.yml</code>. Now it’s fixed by auto-assigning the labels from the values. This auto-assignment is already applied in general cases where option labels are empty.</li>
+<li>Depreciated the <code><a href="../reference/sd_dashboard.html">sd_dashboard()</a></code> function; functionality is now included in the <a href="https://github.com/surveydown-dev/sdstudio/" class="external-link">{sdstudio} package</a>.</li>
+<li>Bug fix: Solved the Shiny Client Error of “shared input/output ID” triggered by <code><a href="../reference/sd_output.html">sd_output()</a></code> with <code>type</code> being <code>"question"</code>. Now users can still use <code><a href="../reference/sd_output.html">sd_output()</a></code> to display reactive questions with same IDs, but the internal HTML IDs will be different by appending a <code>_question</code> in the end.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.12.8" id="surveydown-0128">surveydown 0.12.8<a class="anchor" aria-label="anchor" href="#surveydown-0128"></a></h2>
 <ul><li>New argument for <code><a href="../reference/sd_server.html">sd_server()</a></code>: <code>capture_metadata</code> automatically captures and stores browser information and IP address. Defaults to <code>TRUE</code>.</li>
