@@ -9,14 +9,14 @@
 status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project.org/package=surveydown)
 [![metacran
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
-[![GitHub stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=social)](https://github.com/surveydown-dev/surveydown)
+[![GitHub
+stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=social)](https://github.com/surveydown-dev/surveydown)
 <!-- badges: end -->
 
-> [!IMPORTANT]
-> surveydown is an early stage project under active development and may [not yet be a good fit for you](https://surveydown.org/faq.html#is-surveydown-right-for-me). If you are interested in experimenting with it, we welcome your [feedback](https://github.com/orgs/surveydown-dev/discussions)!
-
-> [!NOTE] 
+``` markdown
+> [!NOTE]
 > Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
+```
 
 ## What is surveydown?
 
@@ -132,11 +132,41 @@ project.
 See the
 [License](https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md).
 
+## Publication
+
+An associated paper in *PLOS One* about this package is available at
+<https://doi.org/10.1371/journal.pone.0331002>
+
 ## Citation
 
-If you use this package for in a publication, please cite it! You can
-get the citation by running `citation("surveydown")` in your R console:
+If you use this package in a publication, please cite the *PLOS One*
+article associated with it! You can get the citation by typing
+`citation("surveydown")` into R:
 
 ``` r
 citation("surveydown")
+#> To cite surveydown in publications use:
+#> 
+#>   Hu P, Bunea B, Helveston J (2025). "surveydown: An open-source,
+#>   markdown-based platform for programmable and reproducible surveys."
+#>   _PLOS One_, *20*(8). doi:10.1371/journal.pone.0331002
+#>   <https://doi.org/10.1371/journal.pone.0331002>.
+#> 
+#> A BibTeX entry for LaTeX users is
+#> 
+#>   @Article{,
+#>     title = {surveydown: An open-source, markdown-based platform for programmable and reproducible surveys},
+#>     author = {Pingfan Hu and Bogdan Bunea and John Paul Helveston},
+#>     journal = {PLOS One},
+#>     year = {2025},
+#>     volume = {20},
+#>     number = {8},
+#>     doi = {10.1371/journal.pone.0331002},
+#>   }
 ```
+
+## Funding
+
+This project was partially supported by a grant from the [Alfred P.
+Sloan Foundation](https://sloan.org/), Grant Number G-2023-20976 awarded
+to PI John Paul Helveston.
