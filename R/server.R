@@ -1134,6 +1134,69 @@ sd_server <- function(
         return(unanswered)
     }
 
+    # Helper function to check custom validations for the current page
+    check_validations <- function(page, input, session) {
+        # Get validation conditions from userData
+        validations <- session$userData$validations
+        if (is.null(validations) || is.null(validations$conditions) || length(validations$conditions) == 0) {
+            return(list(passed = TRUE, invalid_questions = character(0), error_text = ""))
+        }
+        
+        # Get current page questions to filter relevant validations
+        current_page_questions <- page$questions
+        if (is.null(current_page_questions) || length(current_page_questions) == 0) {
+            return(list(passed = TRUE, invalid_questions = character(0), error_text = ""))
+        }
+        
+        failed_validations <- list()
+        invalid_questions <- character(0)
+        
+        # Check each validation condition
+        for (validation in validations$conditions) {
+            # Check if this validation applies to questions on the current page
+            validation_questions <- validation$question_ids
+            if (length(intersect(validation_questions, current_page_questions)) > 0) {
+                # This validation applies to the current page
+                tryCatch({
+                    # Evaluate the condition in the calling environment
+                    calling_env <- validation$calling_env
+                    condition_result <- eval(validation$condition, envir = calling_env)
+                    
+                    # If condition is FALSE, validation failed
+                    if (!isTRUE(condition_result)) {
+                        failed_validations <- c(failed_validations, list(validation))
+                        invalid_questions <- c(invalid_questions, validation_questions)
+                    }
+                }, error = function(e) {
+                    # If condition evaluation fails, consider it a failed validation
+                    warning("Error evaluating validation condition: ", e$message)
+                    failed_validations <- c(failed_validations, list(validation))
+                    invalid_questions <- c(invalid_questions, validation_questions)
+                })
+            }
+        }
+        
+        # Format error messages
+        if (length(failed_validations) == 0) {
+            return(list(passed = TRUE, invalid_questions = character(0), error_text = ""))
+        }
+        
+        # Create error text - numbered list if multiple, single message if one
+        error_messages <- sapply(failed_validations, function(v) v$error_message)
+        if (length(error_messages) == 1) {
+            error_text <- error_messages[1]
+        } else {
+            numbered_messages <- paste(seq_along(error_messages), error_messages, sep = ". ")
+            error_text <- paste(numbered_messages, collapse = "<br>")
+        }
+        
+        return(list(
+            passed = FALSE, 
+            invalid_questions = unique(invalid_questions),
+            error_text = error_text
+        ))
+    }
+
     get_unanswered_all <- function(page) {
         page_questions <- page$questions
         if (is.null(page_questions) || length(page_questions) == 0) {
@@ -1224,7 +1287,10 @@ sd_server <- function(
                     # Save current data before validation
                     update_data()
 
-                    if (!is.null(next_page_id) && check_required(page)) {
+                    # Check custom validations first (higher priority than required questions)
+                    validation_result <- check_validations(page, input, session)
+                    
+                    if (!is.null(next_page_id) && validation_result$passed && check_required(page)) {
                         # Clear any existing highlights before navigating
                         session$sendCustomMessage(
                             "clearRequiredHighlights",
@@ -1253,28 +1319,46 @@ sd_server <- function(
                         # Save navigation data to database
                         update_data()
                     } else if (!is.null(next_page_id)) {
-                        # Get list of unanswered required questions
-                        unanswered_questions <- get_unanswered_required(page)
+                        # Check if validation failed first
+                        if (!validation_result$passed) {
+                            # Handle validation failures - show validation errors and highlight questions
+                            session$sendCustomMessage(
+                                "highlightValidationQuestions", 
+                                list(questions = validation_result$invalid_questions)
+                            )
+                            
+                            # Show validation error modal
+                            shinyWidgets::sendSweetAlert(
+                                session = session,
+                                title = translations[["warning"]],
+                                text = validation_result$error_text,
+                                type = "warning"
+                            )
+                        } else {
+                            # Validation passed, check required questions
+                            # Get list of unanswered required questions
+                            unanswered_questions <- get_unanswered_required(page)
 
-                        # Always send as character vector, even if empty
-                        # This ensures consistent JSON formatting
-                        if (length(unanswered_questions) == 0) {
-                            unanswered_questions <- character(0)
+                            # Always send as character vector, even if empty
+                            # This ensures consistent JSON formatting
+                            if (length(unanswered_questions) == 0) {
+                                unanswered_questions <- character(0)
+                            }
+
+                            # Send list to JavaScript for highlighting
+                            session$sendCustomMessage(
+                                "highlightRequiredQuestions",
+                                list(questions = unanswered_questions)
+                            )
+
+                            # Show warning alert
+                            shinyWidgets::sendSweetAlert(
+                                session = session,
+                                title = translations[["warning"]],
+                                text = translations[["required"]],
+                                type = "warning"
+                            )
                         }
-
-                        # Send list to JavaScript for highlighting
-                        session$sendCustomMessage(
-                            "highlightRequiredQuestions",
-                            list(questions = unanswered_questions)
-                        )
-
-                        # Show warning alert
-                        shinyWidgets::sendSweetAlert(
-                            session = session,
-                            title = translations[["warning"]],
-                            text = translations[["required"]],
-                            type = "warning"
-                        )
                     }
                 })
             })
@@ -1312,8 +1396,11 @@ sd_server <- function(
         # Save current data before validation
         update_data()
 
+        # Check custom validations first (higher priority than required questions)
+        validation_result <- check_validations(page, input, session)
+        
         # Check required questions before allowing exit
-        if (check_required(page)) {
+        if (validation_result$passed && check_required(page)) {
             # Clear any existing highlights before proceeding
             session$sendCustomMessage("clearRequiredHighlights", list())
 
@@ -1357,29 +1444,47 @@ sd_server <- function(
                 ))
             }
         } else {
-            # Required questions validation failed - same logic as Next button
-            # Get list of unanswered required questions
-            unanswered_questions <- get_unanswered_required(page)
+            # Check if validation failed first
+            if (!validation_result$passed) {
+                # Handle validation failures - show validation errors and highlight questions
+                session$sendCustomMessage(
+                    "highlightValidationQuestions", 
+                    list(questions = validation_result$invalid_questions)
+                )
+                
+                # Show validation error modal
+                shinyWidgets::sendSweetAlert(
+                    session = session,
+                    title = translations[["warning"]],
+                    text = validation_result$error_text,
+                    type = "warning"
+                )
+            } else {
+                # Validation passed, check required questions
+                # Required questions validation failed - same logic as Next button
+                # Get list of unanswered required questions
+                unanswered_questions <- get_unanswered_required(page)
 
-            # Always send as character vector, even if empty
-            # This ensures consistent JSON formatting
-            if (length(unanswered_questions) == 0) {
-                unanswered_questions <- character(0)
+                # Always send as character vector, even if empty
+                # This ensures consistent JSON formatting
+                if (length(unanswered_questions) == 0) {
+                    unanswered_questions <- character(0)
+                }
+
+                # Send list to JavaScript for highlighting
+                session$sendCustomMessage(
+                    "highlightRequiredQuestions",
+                    list(questions = unanswered_questions)
+                )
+
+                # Show warning alert
+                shinyWidgets::sendSweetAlert(
+                    session = session,
+                    title = translations[["warning"]],
+                    text = translations[["required"]],
+                    type = "warning"
+                )
             }
-
-            # Send list to JavaScript for highlighting
-            session$sendCustomMessage(
-                "highlightRequiredQuestions",
-                list(questions = unanswered_questions)
-            )
-
-            # Show warning alert
-            shinyWidgets::sendSweetAlert(
-                session = session,
-                title = translations[["warning"]],
-                text = translations[["required"]],
-                type = "warning"
-            )
         }
     })
 
@@ -1622,6 +1727,115 @@ sd_show_if <- function(...) {
             processed_conditions
         )
     })
+}
+
+#' Define validation conditions for survey questions
+#'
+#' @description
+#' This function is used to define custom validation conditions for survey questions.
+#' When a user attempts to navigate to the next page, these validations are checked
+#' first (before required question checks). If any validation fails, a modal dialog
+#' displays the corresponding error messages and highlights the invalid questions in red.
+#'
+#' @param ... One or more formulas defining validation conditions.
+#'   The left-hand side of each formula should be a condition that must be TRUE
+#'   for the validation to pass (e.g., \code{length(input$zip) == 5}).
+#'   The right-hand side should be the error message to display if the condition fails.
+#'
+#' @details
+#' The function performs the following:
+#' \itemize{
+#'   \item Automatically determines which page each validation belongs to based on
+#'         the input variables referenced in the conditions
+#'   \item Groups validations by page and shows them together when multiple
+#'         validations fail on the same page
+#'   \item Displays error messages as a numbered list when multiple validations
+#'         fail on the same page, or as a single message for individual failures
+#'   \item Highlights invalid question containers in red
+#'   \item Takes higher priority than required question checks - validations
+#'         are checked first before required question validation
+#' }
+#'
+#' @return This function does not return a value; it sets up validation logic
+#'   for the survey.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Define a server with custom validations
+#'   server <- function(input, output, session) {
+#'
+#'     sd_validate(
+#'       # Zip code must be exactly 5 digits
+#'       length(input$zip) == 5 ~ "Zip code must be 5 digits",
+#'       # Year of birth must be after 1900
+#'       as.numeric(input$yob) >= 1900 ~ "Year of birth must be after 1900",
+#'       # Phone number must be exactly 10 digits
+#'       length(input$phone) == 10 ~ "Phone number must be 10 digits"
+#'     )
+#'
+#'     sd_server()
+#'   }
+#' }
+#'
+#' @seealso \code{\link{sd_show_if}}, \code{\link{sd_skip_forward}}
+#'
+#' @export
+sd_validate <- function(...) {
+    conditions <- parse_conditions(...)
+    calling_env <- parent.frame()
+    
+    # Process each validation condition
+    processed_validations <- lapply(conditions, function(rule) {
+        tryCatch({
+            # Store the original condition and error message
+            rule$original_condition <- rule$condition
+            rule$calling_env <- calling_env
+            rule$error_message <- rule$target  # The RHS is the error message
+            
+            # Extract question IDs from the condition to determine page mapping
+            question_ids <- extract_question_ids_from_condition(rule$condition)
+            rule$question_ids <- question_ids
+            
+            return(rule)
+        }, error = function(e) {
+            warning("Error processing validation condition: ", e$message)
+            return(rule)
+        })
+    })
+    
+    # Store in userData
+    shiny::isolate({
+        session <- shiny::getDefaultReactiveDomain()
+        if (is.null(session)) {
+            stop("sd_validate must be called within a Shiny reactive context")
+        }
+        if (is.null(session$userData$validations)) {
+            session$userData$validations <- list()
+        }
+        session$userData$validations$conditions <- processed_validations
+    })
+}
+
+# Helper function to extract question IDs from a validation condition
+extract_question_ids_from_condition <- function(expr) {
+    ids <- character(0)
+    if (is.call(expr)) {
+        # Check for input$xxx pattern
+        if (length(expr) >= 3 && as.character(expr[[1]]) == "$" && 
+            as.character(expr[[2]]) == "input") {
+            var_name <- as.character(expr[[3]])
+            ids <- c(ids, var_name)
+        }
+        # Recursively search in all parts of the expression
+        for (i in seq_along(expr)) {
+            if (is.call(expr[[i]]) || is.symbol(expr[[i]])) {
+                ids <- c(ids, extract_question_ids_from_condition(expr[[i]]))
+            }
+        }
+    }
+    return(unique(ids))
 }
 
 #' Set password for surveydown survey

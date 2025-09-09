@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.13.2
+
+- New feature: `sd_validate()` function to validate if question results satisfy certain conditions.
+- Enhanced: Now for the judging conditions in the 3 conditional check functions (`sd_skip_forward()`, `sd_show_if()`, and `sd_validate()`), these judging questions are auto-assigned as required questions.
+
 # surveydown 0.13.1
 
 - Updated citation to include *PLOS One* publication

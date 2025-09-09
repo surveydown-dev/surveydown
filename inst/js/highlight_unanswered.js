@@ -82,6 +82,50 @@ $(document).ready(function() {
         }
     });
     
+    // Custom message handler for highlighting validation questions  
+    Shiny.addCustomMessageHandler("highlightValidationQuestions", function(data) {
+        // Clear any existing highlights first
+        clearValidationHighlights();
+        
+        // Debug logging (can be removed in production)
+        console.log("Highlighting validation questions:", data.questions);
+        
+        // Handle different data formats that R might send
+        var questions = [];
+        
+        if (data && data.questions) {
+            if (Array.isArray(data.questions)) {
+                questions = data.questions;
+            } else if (typeof data.questions === 'string') {
+                questions = [data.questions];
+            } else if (typeof data.questions === 'object') {
+                // Handle R list/vector converted to object
+                try {
+                    questions = Object.values(data.questions);
+                } catch (e) {
+                    console.error("Error converting questions object to array:", e);
+                    questions = [];
+                }
+            }
+        }
+        
+        // Ensure all elements are strings
+        questions = questions.filter(function(q) {
+            return q && typeof q === 'string' && q.length > 0;
+        });
+        
+        if (questions && questions.length > 0) {
+            // Highlight each validation failed question in red
+            for (var i = 0; i < questions.length; i++) {
+                var questionId = questions[i];
+                highlightQuestion(questionId, 'validation');
+            }
+            
+            // Scroll to the first highlighted question
+            scrollToFirstHighlighted(questions[0]);
+        }
+    });
+    
     // Custom message handler for clearing highlights
     Shiny.addCustomMessageHandler("clearRequiredHighlights", function(data) {
         clearRequiredHighlights();
@@ -90,6 +134,11 @@ $(document).ready(function() {
     // Custom message handler for clearing unanswered highlights
     Shiny.addCustomMessageHandler("clearUnansweredHighlights", function(data) {
         clearUnansweredHighlights();
+    });
+    
+    // Custom message handler for clearing validation highlights
+    Shiny.addCustomMessageHandler("clearValidationHighlights", function(data) {
+        clearValidationHighlights();
     });
     
     // Custom message handler for delayed highlighting check
@@ -108,7 +157,7 @@ $(document).ready(function() {
         // Always try to remove highlighting from question container first
         var questionContainer = $this.closest('.question-container');
         if (questionContainer.length > 0) {
-            questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
+            questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight validation-question-highlight');
         }
         
         // For radio buttons, also check if this is a matrix subquestion and handle the radio group
@@ -116,8 +165,8 @@ $(document).ready(function() {
             // This might be a matrix subquestion - remove highlighting from the radio group too
             var radioGroup = $this.closest('.shiny-input-radiogroup');
             if (radioGroup.length > 0) {
-                radioGroup.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
-                radioGroup.find('input[type="radio"]').removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
+                radioGroup.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight validation-question-highlight');
+                radioGroup.find('input[type="radio"]').removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight validation-question-highlight');
             }
         }
     });
@@ -169,7 +218,11 @@ function highlightQuestion(questionId, type, color) {
         if (type === 'required') {
             highlightClass = 'required-question-highlight';
             // Priority system: remove any existing unanswered highlighting
-            questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray');
+            questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray validation-question-highlight');
+        } else if (type === 'validation') {
+            highlightClass = 'validation-question-highlight';
+            // Priority system: remove any existing highlights
+            questionContainer.removeClass('required-question-highlight unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray');
         } else {
             // For unanswered questions, use color-specific class
             // Handle both gray and grey spellings
@@ -207,7 +260,11 @@ function highlightMatrixSubquestion(subquestionId, type, color) {
         if (type === 'required') {
             highlightClass = 'required-question-highlight';
             // Priority system: remove any existing unanswered highlighting
-            radioGroup.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray');
+            radioGroup.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray validation-question-highlight');
+        } else if (type === 'validation') {
+            highlightClass = 'validation-question-highlight';
+            // Priority system: remove any existing highlights
+            radioGroup.removeClass('required-question-highlight unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray');
         } else {
             // For unanswered questions, use color-specific class
             color = color || 'gray';
@@ -236,6 +293,11 @@ function clearRequiredHighlights() {
 function clearUnansweredHighlights() {
     $('.unanswered-question-highlight, .unanswered-question-highlight-orange, .unanswered-question-highlight-green, .unanswered-question-highlight-purple, .unanswered-question-highlight-gray')
         .removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray');
+}
+
+// Function to clear all validation question highlights
+function clearValidationHighlights() {
+    $('.validation-question-highlight').removeClass('validation-question-highlight');
 }
 
 // Function to scroll to the first highlighted question
