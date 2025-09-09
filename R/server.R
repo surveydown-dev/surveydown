@@ -2054,15 +2054,18 @@ evaluate_condition <- function(rule) {
     tryCatch(
         {
             # Use both the original calling environment and the input
-            result <- eval(
+            result <- suppressWarnings(eval(
                 rule$original_condition,
                 envir = rule$calling_env,
                 enclos = environment()
-            )
+            ))
             return(isTRUE(result))
         },
         error = function(e) {
-            warning("Error in condition evaluation: ", e$message)
+            # Suppress common initialization warnings but keep other error messages
+            if (!grepl("missing value where TRUE/FALSE needed", e$message)) {
+                warning("Error in condition evaluation: ", e$message)
+            }
             return(FALSE)
         }
     )
