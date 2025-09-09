@@ -240,7 +240,6 @@ sd_server <- function(
         set_translations(paths, system_language)
     }
 
-
     # Create local objects from config file
     pages <- config$pages
     page_ids <- config$page_ids
@@ -256,83 +255,104 @@ sd_server <- function(
     # Helper function to extract question IDs from parsed condition expressions
     extract_question_ids_from_conditions <- function(show_if, skip_forward) {
         question_ids <- character(0)
-        
-        # Helper function to recursively search for input$xxx patterns
+
+        # Helper function to search for inputs
         extract_input_refs <- function(expr, calling_env = NULL) {
             ids <- character(0)
             if (is.call(expr)) {
                 # Check for input$xxx pattern
-                if (length(expr) >= 3 && as.character(expr[[1]]) == "$" && 
-                    as.character(expr[[2]]) == "input") {
+                if (
+                    length(expr) >= 3 &&
+                        as.character(expr[[1]]) == "$" &&
+                        as.character(expr[[2]]) == "input"
+                ) {
                     var_name <- as.character(expr[[3]])
                     ids <- c(ids, var_name)
                 }
                 # Recursively search in all parts of the expression
                 for (i in seq_along(expr)) {
                     if (is.call(expr[[i]])) {
-                        ids <- c(ids, extract_input_refs(expr[[i]], calling_env))
-                    } else if (is.symbol(expr[[i]]) && as.character(expr[[i]]) == "input") {
+                        ids <- c(
+                            ids,
+                            extract_input_refs(expr[[i]], calling_env)
+                        )
+                    } else if (
+                        is.symbol(expr[[i]]) &&
+                            as.character(expr[[i]]) == "input"
+                    ) {
                         # Handle case where 'input' appears as function argument
                         # Try to dynamically access the function and parse its body
                         func_name <- as.character(expr[[1]])
-                        
-                        tryCatch({
-                            # Try to get the function from the calling environment
-                            if (!is.null(calling_env) && exists(func_name, envir = calling_env)) {
-                                func_obj <- get(func_name, envir = calling_env)
-                                if (is.function(func_obj)) {
-                                    # Parse the function body for input$xxx patterns
-                                    func_body <- body(func_obj)
-                                    ids <- c(ids, extract_input_refs(func_body, calling_env))
+
+                        tryCatch(
+                            {
+                                # Try to get the function from the calling environment
+                                if (
+                                    !is.null(calling_env) &&
+                                        exists(func_name, envir = calling_env)
+                                ) {
+                                    func_obj <- get(
+                                        func_name,
+                                        envir = calling_env
+                                    )
+                                    if (is.function(func_obj)) {
+                                        # Parse the function body for input$xxx patterns
+                                        func_body <- body(func_obj)
+                                        ids <- c(
+                                            ids,
+                                            extract_input_refs(
+                                                func_body,
+                                                calling_env
+                                            )
+                                        )
+                                    }
                                 }
+                            },
+                            error = function(e) {
+                                # If function access fails, we can't extract the dependencies
                             }
-                        }, error = function(e) {
-                            # If function access fails, we can't extract the dependencies
-                            # Could log this for debugging if needed
-                        })
+                        )
                     }
                 }
             }
             return(ids)
         }
-        
+
         # Extract from show_if conditions
         if (!is.null(show_if) && !is.null(show_if$conditions)) {
             for (condition in show_if$conditions) {
                 if (!is.null(condition$condition)) {
                     calling_env <- condition$calling_env
-                    question_ids <- c(question_ids, extract_input_refs(condition$condition, calling_env))
+                    question_ids <- c(
+                        question_ids,
+                        extract_input_refs(condition$condition, calling_env)
+                    )
                 }
             }
         }
-        
-        # Extract from skip_forward conditions  
+
+        # Extract from skip_forward conditions
         if (!is.null(skip_forward) && !is.null(skip_forward$conditions)) {
             for (condition in skip_forward$conditions) {
                 if (!is.null(condition$condition)) {
                     calling_env <- condition$calling_env
-                    question_ids <- c(question_ids, extract_input_refs(condition$condition, calling_env))
+                    question_ids <- c(
+                        question_ids,
+                        extract_input_refs(condition$condition, calling_env)
+                    )
                 }
             }
         }
-        
+
         return(unique(question_ids))
     }
 
     # Extract question IDs from conditional expressions
-    conditional_question_ids <- extract_question_ids_from_conditions(show_if, skip_forward)
-    
-    # Debug output to file to verify what's happening
-    debug_output <- paste(
-        "=== DEBUG ===",
-        paste("show_if NULL:", is.null(show_if)),
-        paste("skip_forward NULL:", is.null(skip_forward)),
-        paste("conditional_question_ids:", paste(conditional_question_ids, collapse = ", ")),
-        "=== END ===",
-        sep = "\n"
+    conditional_question_ids <- extract_question_ids_from_conditions(
+        show_if,
+        skip_forward
     )
-    writeLines(debug_output, "debug_output.txt")
-    
+
     # Handle all_questions_required and required_questions logic
     # This mirrors the logic in run_config() but uses YAML-resolved values
     # Priority: explicit sd_server() parameters > YAML values > config defaults
@@ -347,15 +367,24 @@ sd_server <- function(
         explicit_params$required_questions && !is.null(required_questions)
     ) {
         # Use explicitly provided required_questions from sd_server(), plus conditional ones
-        question_required <- unique(c(required_questions, conditional_question_ids))
+        question_required <- unique(c(
+            required_questions,
+            conditional_question_ids
+        ))
     } else if (
         !explicit_params$required_questions && !is.null(required_questions)
     ) {
         # Use YAML-resolved required_questions plus conditional ones
-        question_required <- unique(c(required_questions, conditional_question_ids))
+        question_required <- unique(c(
+            required_questions,
+            conditional_question_ids
+        ))
     } else {
         # Fall back to config-determined required questions plus conditional ones
-        question_required <- unique(c(config$question_required, conditional_question_ids))
+        question_required <- unique(c(
+            config$question_required,
+            conditional_question_ids
+        ))
     }
 
     # Update settings.yml with final resolved parameters (including conditionally-detected questions)
@@ -369,7 +398,7 @@ sd_server <- function(
         highlight_unanswered = highlight_unanswered,
         highlight_color = highlight_color,
         capture_metadata = capture_metadata,
-        required_questions = question_required  # Use enhanced required questions
+        required_questions = question_required # Use enhanced required questions
     )
     update_settings_yaml(resolved_params)
 
@@ -382,7 +411,8 @@ sd_server <- function(
                 !is.null(required_questions)) ||
             (!explicit_params$required_questions &&
                 !is.null(required_questions) &&
-                length(required_questions) > 0)
+                length(required_questions) > 0) ||
+            length(conditional_question_ids) > 0
     ) {
         for (i in seq_along(pages)) {
             page_question_ids <- pages[[i]]$questions
@@ -1450,11 +1480,7 @@ sd_skip_forward <- function(...) {
                 rule$original_condition <- rule$condition
 
                 # Extract any reactive expressions that might be called
-                # We're storing the environment for potential evaluation later
                 rule$calling_env <- calling_env
-
-                # # For debugging
-                # cat("Captured condition: ", deparse(rule$condition), "\n")
 
                 return(rule)
             },
@@ -1572,9 +1598,6 @@ sd_show_if <- function(...) {
 
                 # Store the calling environment for later evaluation
                 rule$calling_env <- calling_env
-
-                # # For debugging
-                # cat("Captured show_if condition: ", deparse(rule$condition), "\n")
 
                 return(rule)
             },
