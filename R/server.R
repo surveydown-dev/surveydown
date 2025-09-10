@@ -1181,14 +1181,9 @@ sd_server <- function(
             return(list(passed = TRUE, invalid_questions = character(0), error_text = ""))
         }
         
-        # Create error text - numbered list if multiple, single message if one
+        # Create error text - concatenate with space if multiple, single message if one
         error_messages <- sapply(failed_validations, function(v) v$error_message)
-        if (length(error_messages) == 1) {
-            error_text <- error_messages[1]
-        } else {
-            numbered_messages <- paste(seq_along(error_messages), error_messages, sep = ". ")
-            error_text <- paste(numbered_messages, collapse = "<br>")
-        }
+        error_text <- paste(error_messages, collapse = " ")
         
         return(list(
             passed = FALSE, 
