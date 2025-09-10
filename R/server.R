@@ -161,9 +161,10 @@ sd_server <- function(
     # Tag start time
     time_start <- get_utc_timestamp()
 
-    # Get any skip or show conditions
+    # Get any skip, show, or validation conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
     skip_forward <- shiny::getDefaultReactiveDomain()$userData$skip_forward
+    validations <- shiny::getDefaultReactiveDomain()$userData$validations
 
     # Handle backward compatibility for deprecated 'language' argument
     if ("language" %in% names(match.call())) {
@@ -253,7 +254,7 @@ sd_server <- function(
     }
 
     # Helper function to extract question IDs from parsed condition expressions
-    extract_question_ids_from_conditions <- function(show_if, skip_forward) {
+    extract_question_ids_from_conditions <- function(show_if, skip_forward, validations = NULL) {
         question_ids <- character(0)
 
         # Helper function to search for inputs
@@ -344,13 +345,27 @@ sd_server <- function(
             }
         }
 
+        # Extract from validation conditions
+        if (!is.null(validations) && !is.null(validations$conditions)) {
+            for (condition in validations$conditions) {
+                if (!is.null(condition$condition)) {
+                    calling_env <- condition$calling_env
+                    question_ids <- c(
+                        question_ids,
+                        extract_input_refs(condition$condition, calling_env)
+                    )
+                }
+            }
+        }
+
         return(unique(question_ids))
     }
 
     # Extract question IDs from conditional expressions
     conditional_question_ids <- extract_question_ids_from_conditions(
         show_if,
-        skip_forward
+        skip_forward,
+        validations
     )
 
     # Handle all_questions_required and required_questions logic
