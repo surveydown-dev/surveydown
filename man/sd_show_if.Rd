@@ -56,5 +56,5 @@ if (interactive()) {
 
 }
 \seealso{
-\code{sd_skip_forward()}
+\code{sd_skip_if()}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/server.R
 \name{sd_skip_if}
 \alias{sd_skip_if}
-\title{Define skip conditions for survey pages (Deprecated)}
+\title{Define skip conditions for survey pages}
 \usage{
 sd_skip_if(...)
 }
@@ -10,16 +10,53 @@ sd_skip_if(...)
 \item{...}{One or more formulas defining skip conditions.
 The left-hand side of each formula should be a condition based on input
 values, and the right-hand side should be the ID of the page to skip to if
-the condition is met.}
+the condition is met. Only forward skipping (to pages later in the sequence) is allowed.}
 }
 \value{
 A list of parsed conditions, where each element contains the
 condition and the target page ID.
 }
 \description{
-This function is deprecated. Please use \code{sd_skip_forward()} instead.
-
 This function is used to define conditions under which certain pages in the
-survey should be skipped. It now behaves like \code{sd_skip_forward()} where only forward
+survey should be skipped. It takes one or more formulas where the left-hand side
+is the condition and the right-hand side is the target page ID. Only forward
 skipping is allowed to prevent navigation loops.
+}
+\examples{
+if (interactive()) {
+  library(surveydown)
+
+  # Get path to example survey file
+  survey_path <- system.file("examples", "sd_skip_if.qmd",
+                             package = "surveydown")
+
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+
+    # Skip to specific pages based on fruit selection
+    sd_skip_if(
+      input$fav_fruit == "apple" ~ "apple_page",
+      input$fav_fruit == "orange" ~ "orange_page",
+      input$fav_fruit == "other" ~ "other_page"
+    )
+
+    sd_server()
+  }
+
+  # Run the app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
+}
+
+}
+\seealso{
+\code{sd_show_if()}
 }

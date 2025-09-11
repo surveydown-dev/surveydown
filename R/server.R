@@ -161,10 +161,10 @@ sd_server <- function(
     # Tag start time
     time_start <- get_utc_timestamp()
 
-    # Get any skip, show, or validation conditions
+    # Get any skip, show, or stop conditions
     show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
-    skip_forward <- shiny::getDefaultReactiveDomain()$userData$skip_forward
-    validations <- shiny::getDefaultReactiveDomain()$userData$validations
+    skip_if <- shiny::getDefaultReactiveDomain()$userData$skip_if
+    stop_if <- shiny::getDefaultReactiveDomain()$userData$stop_if
 
     # Handle backward compatibility for deprecated 'language' argument
     if ("language" %in% names(match.call())) {
@@ -194,7 +194,7 @@ sd_server <- function(
         required_questions,
         all_questions_required,
         start_page,
-        skip_forward,
+        skip_if,
         show_if,
         rate_survey,
         system_language
@@ -254,7 +254,11 @@ sd_server <- function(
     }
 
     # Helper function to extract question IDs from parsed condition expressions
-    extract_question_ids_from_conditions <- function(show_if, skip_forward, validations = NULL) {
+    extract_question_ids_from_conditions <- function(
+        show_if,
+        skip_if,
+        stop_if = NULL
+    ) {
         question_ids <- character(0)
 
         # Helper function to search for inputs
@@ -332,9 +336,9 @@ sd_server <- function(
             }
         }
 
-        # Extract from skip_forward conditions
-        if (!is.null(skip_forward) && !is.null(skip_forward$conditions)) {
-            for (condition in skip_forward$conditions) {
+        # Extract from skip_if conditions
+        if (!is.null(skip_if) && !is.null(skip_if$conditions)) {
+            for (condition in skip_if$conditions) {
                 if (!is.null(condition$condition)) {
                     calling_env <- condition$calling_env
                     question_ids <- c(
@@ -345,9 +349,9 @@ sd_server <- function(
             }
         }
 
-        # Extract from validation conditions
-        if (!is.null(validations) && !is.null(validations$conditions)) {
-            for (condition in validations$conditions) {
+        # Extract from stop conditions
+        if (!is.null(stop_if) && !is.null(stop_if$conditions)) {
+            for (condition in stop_if$conditions) {
                 if (!is.null(condition$condition)) {
                     calling_env <- condition$calling_env
                     question_ids <- c(
@@ -364,8 +368,8 @@ sd_server <- function(
     # Extract question IDs from conditional expressions
     conditional_question_ids <- extract_question_ids_from_conditions(
         show_if,
-        skip_forward,
-        validations
+        skip_if,
+        stop_if
     )
 
     # Handle all_questions_required and required_questions logic
@@ -1149,59 +1153,97 @@ sd_server <- function(
         return(unanswered)
     }
 
-    # Helper function to check custom validations for the current page
-    check_validations <- function(page, input, session) {
-        # Get validation conditions from userData
-        validations <- session$userData$validations
-        if (is.null(validations) || is.null(validations$conditions) || length(validations$conditions) == 0) {
-            return(list(passed = TRUE, invalid_questions = character(0), error_text = ""))
+    # Helper function to check custom stop conditions for the current page
+    check_stop_conditions <- function(page, input, session) {
+        # Get stop conditions from userData
+        stop_if <- session$userData$stop_if
+        if (
+            is.null(stop_if) ||
+                is.null(stop_if$conditions) ||
+                length(stop_if$conditions) == 0
+        ) {
+            return(list(
+                passed = TRUE,
+                invalid_questions = character(0),
+                error_text = ""
+            ))
         }
-        
-        # Get current page questions to filter relevant validations
+
+        # Get current page questions to filter relevant stop conditions
         current_page_questions <- page$questions
-        if (is.null(current_page_questions) || length(current_page_questions) == 0) {
-            return(list(passed = TRUE, invalid_questions = character(0), error_text = ""))
+        if (
+            is.null(current_page_questions) ||
+                length(current_page_questions) == 0
+        ) {
+            return(list(
+                passed = TRUE,
+                invalid_questions = character(0),
+                error_text = ""
+            ))
         }
-        
-        failed_validations <- list()
+
+        triggered_stops <- list()
         invalid_questions <- character(0)
-        
-        # Check each validation condition
-        for (validation in validations$conditions) {
-            # Check if this validation applies to questions on the current page
-            validation_questions <- validation$question_ids
-            if (length(intersect(validation_questions, current_page_questions)) > 0) {
-                # This validation applies to the current page
-                tryCatch({
-                    # Evaluate the condition in the calling environment
-                    calling_env <- validation$calling_env
-                    condition_result <- eval(validation$condition, envir = calling_env)
-                    
-                    # If condition is FALSE, validation failed
-                    if (!isTRUE(condition_result)) {
-                        failed_validations <- c(failed_validations, list(validation))
-                        invalid_questions <- c(invalid_questions, validation_questions)
+
+        # Check each stop condition
+        for (stop_condition in stop_if$conditions) {
+            # Check if this stop condition applies to questions on the current page
+            stop_questions <- stop_condition$question_ids
+            if (length(intersect(stop_questions, current_page_questions)) > 0) {
+                # This stop condition applies to the current page
+                tryCatch(
+                    {
+                        # Evaluate the condition in the calling environment
+                        calling_env <- stop_condition$calling_env
+                        condition_result <- eval(
+                            stop_condition$condition,
+                            envir = calling_env
+                        )
+
+                        # If condition is TRUE, stop condition is met (navigation should be stopped)
+                        # This is the logic for sd_stop_if()
+                        if (isTRUE(condition_result)) {
+                            triggered_stops <- c(
+                                triggered_stops,
+                                list(stop_condition)
+                            )
+                            invalid_questions <- c(
+                                invalid_questions,
+                                stop_questions
+                            )
+                        }
+                    },
+                    error = function(e) {
+                        # If condition evaluation fails, consider it a triggered stop
+                        warning("Error evaluating stop condition: ", e$message)
+                        triggered_stops <- c(
+                            triggered_stops,
+                            list(stop_condition)
+                        )
+                        invalid_questions <- c(
+                            invalid_questions,
+                            stop_questions
+                        )
                     }
-                }, error = function(e) {
-                    # If condition evaluation fails, consider it a failed validation
-                    warning("Error evaluating validation condition: ", e$message)
-                    failed_validations <- c(failed_validations, list(validation))
-                    invalid_questions <- c(invalid_questions, validation_questions)
-                })
+                )
             }
         }
-        
+
         # Format error messages
-        if (length(failed_validations) == 0) {
-            return(list(passed = TRUE, invalid_questions = character(0), error_text = ""))
+        if (length(triggered_stops) == 0) {
+            return(list(
+                passed = TRUE,
+                invalid_questions = character(0),
+                error_text = ""
+            ))
         }
-        
+
         # Create error text - concatenate with space if multiple, single message if one
-        error_messages <- sapply(failed_validations, function(v) v$error_message)
+        error_messages <- sapply(triggered_stops, function(v) v$error_message)
         error_text <- paste(error_messages, collapse = " ")
-        
+
         return(list(
-            passed = FALSE, 
+            passed = FALSE,
             invalid_questions = unique(invalid_questions),
             error_text = error_text
         ))
@@ -1264,7 +1306,7 @@ sd_server <- function(
                     )
                     next_page_id <- handle_skip_logic(
                         input,
-                        skip_forward,
+                        skip_if,
                         current_page_id_val,
                         next_page_id,
                         page_id_to_index
@@ -1272,7 +1314,7 @@ sd_server <- function(
 
                     # Handle page conditions - check if target page should be shown
                     if (!is.null(next_page_id) && length(page_conditions) > 0) {
-                        # First check if the target page (from skip_forward or default) should be shown
+                        # First check if the target page (from skip_if or default) should be shown
                         if (
                             !should_show_page(
                                 next_page_id,
@@ -1294,13 +1336,17 @@ sd_server <- function(
                         }
                     }
 
-                    # Save current data before validation
+                    # Save current data before checking stop conditions
                     update_data()
 
-                    # Check custom validations first (higher priority than required questions)
-                    validation_result <- check_validations(page, input, session)
-                    
-                    if (!is.null(next_page_id) && validation_result$passed && check_required(page)) {
+                    # Check custom stop conditions first (higher priority than required questions)
+                    stop_result <- check_stop_conditions(page, input, session)
+
+                    if (
+                        !is.null(next_page_id) &&
+                            stop_result$passed &&
+                            check_required(page)
+                    ) {
                         # Clear any existing highlights before navigating
                         session$sendCustomMessage(
                             "clearRequiredHighlights",
@@ -1329,25 +1375,27 @@ sd_server <- function(
                         # Save navigation data to database
                         update_data()
                     } else if (!is.null(next_page_id)) {
-                        # Check if validation failed first
-                        if (!validation_result$passed) {
-                            # Handle validation failures - show validation errors and highlight questions
+                        # Check if stop condition was triggered first
+                        if (!stop_result$passed) {
+                            # Handle stop condition triggers - show stop errors and highlight questions
                             session$sendCustomMessage(
-                                "highlightValidationQuestions", 
-                                list(questions = validation_result$invalid_questions)
+                                "highlightValidationQuestions",
+                                list(questions = stop_result$invalid_questions)
                             )
-                            
-                            # Show validation error modal
+
+                            # Show stop condition error modal
                             shinyWidgets::sendSweetAlert(
                                 session = session,
                                 title = translations[["warning"]],
-                                text = validation_result$error_text,
+                                text = stop_result$error_text,
                                 type = "warning"
                             )
                         } else {
-                            # Validation passed, check required questions
+                            # Stop conditions passed, check required questions
                             # Get list of unanswered required questions
-                            unanswered_questions <- get_unanswered_required(page)
+                            unanswered_questions <- get_unanswered_required(
+                                page
+                            )
 
                             # Always send as character vector, even if empty
                             # This ensures consistent JSON formatting
@@ -1400,17 +1448,17 @@ sd_server <- function(
 
     # Observer for the exit survey modal
     shiny::observeEvent(input$show_exit_modal, {
-        # Get current page for required question validation
+        # Get current page for required question and stop condition checks
         page <- get_current_page()
 
-        # Save current data before validation
+        # Save current data before checking stop conditions
         update_data()
 
-        # Check custom validations first (higher priority than required questions)
-        validation_result <- check_validations(page, input, session)
-        
+        # Check custom stop conditions first (higher priority than required questions)
+        stop_result <- check_stop_conditions(page, input, session)
+
         # Check required questions before allowing exit
-        if (validation_result$passed && check_required(page)) {
+        if (stop_result$passed && check_required(page)) {
             # Clear any existing highlights before proceeding
             session$sendCustomMessage("clearRequiredHighlights", list())
 
@@ -1454,24 +1502,24 @@ sd_server <- function(
                 ))
             }
         } else {
-            # Check if validation failed first
-            if (!validation_result$passed) {
-                # Handle validation failures - show validation errors and highlight questions
+            # Check if stop condition was triggered first
+            if (!stop_result$passed) {
+                # Handle stop condition triggers - show stop errors and highlight questions
                 session$sendCustomMessage(
-                    "highlightValidationQuestions", 
-                    list(questions = validation_result$invalid_questions)
+                    "highlightValidationQuestions",
+                    list(questions = stop_result$invalid_questions)
                 )
-                
-                # Show validation error modal
+
+                # Show stop condition error modal
                 shinyWidgets::sendSweetAlert(
                     session = session,
                     title = translations[["warning"]],
-                    text = validation_result$error_text,
+                    text = stop_result$error_text,
                     type = "warning"
                 )
             } else {
-                # Validation passed, check required questions
-                # Required questions validation failed - same logic as Next button
+                # Stop conditions passed, check required questions
+                # Required questions check failed - same logic as Next button
                 # Get list of unanswered required questions
                 unanswered_questions <- get_unanswered_required(page)
 
@@ -1531,12 +1579,38 @@ sd_server <- function(
     })
 }
 
-#' Define forward skip conditions for survey pages
+#' Define forward skip conditions for survey pages (Deprecated)
 #'
 #' @description
+#' This function is deprecated. Please use `sd_skip_if()` instead.
+#'
 #' This function is used to define conditions under which certain pages in the
 #' survey should be skipped ahead to (forward only). It takes one or more formulas
 #' where the left-hand side is the condition and the right-hand side is the target page ID.
+#'
+#' @param ... One or more formulas defining skip conditions.
+#'   The left-hand side of each formula should be a condition based on input
+#'   values, and the right-hand side should be the ID of the page to skip to if
+#'   the condition is met. Only forward skipping (to pages later in the sequence) is allowed.
+#'
+#' @return A list of parsed conditions, where each element contains the
+#' condition and the target page ID.
+#'
+#' @export
+sd_skip_forward <- function(...) {
+    # v0.13.2
+    .Deprecated("sd_skip_if()")
+
+    sd_skip_if(...)
+}
+
+#' Define skip conditions for survey pages
+#'
+#' @description
+#' This function is used to define conditions under which certain pages in the
+#' survey should be skipped. It takes one or more formulas where the left-hand side
+#' is the condition and the right-hand side is the target page ID. Only forward
+#' skipping is allowed to prevent navigation loops.
 #'
 #' @param ... One or more formulas defining skip conditions.
 #'   The left-hand side of each formula should be a condition based on input
@@ -1551,7 +1625,7 @@ sd_server <- function(
 #'   library(surveydown)
 #'
 #'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_skip_forward.qmd",
+#'   survey_path <- system.file("examples", "sd_skip_if.qmd",
 #'                              package = "surveydown")
 #'
 #'   # Copy to a temporary directory
@@ -1563,8 +1637,8 @@ sd_server <- function(
 #'   # Define a minimal server
 #'   server <- function(input, output, session) {
 #'
-#'     # Skip forward to specific pages based on fruit selection
-#'     sd_skip_forward(
+#'     # Skip to specific pages based on fruit selection
+#'     sd_skip_if(
 #'       input$fav_fruit == "apple" ~ "apple_page",
 #'       input$fav_fruit == "orange" ~ "orange_page",
 #'       input$fav_fruit == "other" ~ "other_page"
@@ -1583,7 +1657,7 @@ sd_server <- function(
 #' @seealso `sd_show_if()`
 #'
 #' @export
-sd_skip_forward <- function(...) {
+sd_skip_if <- function(...) {
     conditions <- parse_conditions(...)
     calling_env <- parent.frame()
 
@@ -1611,42 +1685,17 @@ sd_skip_forward <- function(...) {
         session <- shiny::getDefaultReactiveDomain()
         if (is.null(session)) {
             stop(
-                "sd_skip_forward must be called within a Shiny reactive context"
+                "sd_skip_if must be called within a Shiny reactive context"
             )
         }
-        if (is.null(session$userData$skip_forward)) {
-            session$userData$skip_forward <- list()
+        if (is.null(session$userData$skip_if)) {
+            session$userData$skip_if <- list()
         }
-        session$userData$skip_forward$conditions <- processed_conditions
-        session$userData$skip_forward$targets <- get_unique_targets(
+        session$userData$skip_if$conditions <- processed_conditions
+        session$userData$skip_if$targets <- get_unique_targets(
             processed_conditions
         )
     })
-}
-
-#' Define skip conditions for survey pages (Deprecated)
-#'
-#' @description
-#' This function is deprecated. Please use `sd_skip_forward()` instead.
-#'
-#' This function is used to define conditions under which certain pages in the
-#' survey should be skipped. It now behaves like `sd_skip_forward()` where only forward
-#' skipping is allowed to prevent navigation loops.
-#'
-#' @param ... One or more formulas defining skip conditions.
-#'   The left-hand side of each formula should be a condition based on input
-#'   values, and the right-hand side should be the ID of the page to skip to if
-#'   the condition is met.
-#'
-#' @return A list of parsed conditions, where each element contains the
-#' condition and the target page ID.
-#'
-#' @export
-sd_skip_if <- function(...) {
-    # v0.9.0
-    .Deprecated("sd_skip_forward()")
-
-    sd_skip_forward(...)
 }
 
 #' Define show conditions for survey questions and pages
@@ -1697,7 +1746,7 @@ sd_skip_if <- function(...) {
 #'   setwd(orig_dir)
 #' }
 #'
-#' @seealso `sd_skip_forward()`
+#' @seealso `sd_skip_if()`
 #'
 #' @export
 sd_show_if <- function(...) {
@@ -1739,102 +1788,112 @@ sd_show_if <- function(...) {
     })
 }
 
-#' Define validation conditions for survey questions
+#' Define stop conditions for survey questions
 #'
 #' @description
-#' This function is used to define custom validation conditions for survey questions.
-#' When a user attempts to navigate to the next page, these validations are checked
-#' first (before required question checks). If any validation fails, a modal dialog
-#' displays the corresponding error messages and highlights the invalid questions in red.
+#' This function is used to define custom stop conditions for survey questions.
+#' When a user attempts to navigate to the next page, these conditions are checked
+#' first (before required question checks). If any condition is TRUE (i.e., the stop
+#' condition is met), a modal dialog displays the corresponding error messages and
+#' highlights the invalid questions in red.
 #'
-#' @param ... One or more formulas defining validation conditions.
-#'   The left-hand side of each formula should be a condition that must be TRUE
-#'   for the validation to pass (e.g., \code{length(input$zip) == 5}).
-#'   The right-hand side should be the error message to display if the condition fails.
+#' @param ... One or more formulas defining stop conditions.
+#'   The left-hand side of each formula should be a condition that, when TRUE,
+#'   will stop navigation and show an error (e.g., \code{nchar(input$zip) != 5}).
+#'   The right-hand side should be the error message to display when the condition is TRUE.
 #'
 #' @details
 #' The function performs the following:
 #' \itemize{
-#'   \item Automatically determines which page each validation belongs to based on
+#'   \item Automatically determines which page each stop condition belongs to based on
 #'         the input variables referenced in the conditions
-#'   \item Groups validations by page and shows them together when multiple
-#'         validations fail on the same page
-#'   \item Displays error messages as a numbered list when multiple validations
-#'         fail on the same page, or as a single message for individual failures
+#'   \item Groups stop conditions by page and shows them together when multiple
+#'         conditions are triggered on the same page
+#'   \item Displays error messages as a numbered list when multiple stop conditions
+#'         are triggered on the same page, or as a single message for individual triggers
 #'   \item Highlights invalid question containers in red
-#'   \item Takes higher priority than required question checks - validations
-#'         are checked first before required question validation
+#'   \item Takes higher priority than required question checks - stop conditions
+#'         are checked first before required question checks
 #' }
 #'
-#' @return This function does not return a value; it sets up validation logic
+#' @return This function does not return a value; it sets up stop logic
 #'   for the survey.
 #'
 #' @examples
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Define a server with custom validations
+#'   # Define a server with custom stop conditions
 #'   server <- function(input, output, session) {
 #'
-#'     sd_validate(
-#'       # Zip code must be exactly 5 digits
-#'       length(input$zip) == 5 ~ "Zip code must be 5 digits",
-#'       # Year of birth must be after 1900
-#'       as.numeric(input$yob) >= 1900 ~ "Year of birth must be after 1900",
-#'       # Phone number must be exactly 10 digits
-#'       length(input$phone) == 10 ~ "Phone number must be 10 digits"
+#'     sd_stop_if(
+#'       # Stop if zip code is not exactly 5 digits
+#'       nchar(input$zip) != 5 ~ "Zip code must be 5 digits",
+#'       # Stop if year of birth is before 1900
+#'       as.numeric(input$yob) < 1900 ~ "Year of birth must be after 1900",
+#'       # Stop if phone number is not exactly 10 digits
+#'       nchar(input$phone) != 10 ~ "Phone number must be 10 digits"
 #'     )
 #'
 #'     sd_server()
 #'   }
 #' }
 #'
-#' @seealso \code{\link{sd_show_if}}, \code{\link{sd_skip_forward}}
+#' @seealso \code{\link{sd_show_if}}, \code{\link{sd_skip_if}}
 #'
 #' @export
-sd_validate <- function(...) {
+sd_stop_if <- function(...) {
     conditions <- parse_conditions(...)
     calling_env <- parent.frame()
-    
-    # Process each validation condition
-    processed_validations <- lapply(conditions, function(rule) {
-        tryCatch({
-            # Store the original condition and error message
-            rule$original_condition <- rule$condition
-            rule$calling_env <- calling_env
-            rule$error_message <- rule$target  # The RHS is the error message
-            
-            # Extract question IDs from the condition to determine page mapping
-            question_ids <- extract_question_ids_from_condition(rule$condition)
-            rule$question_ids <- question_ids
-            
-            return(rule)
-        }, error = function(e) {
-            warning("Error processing validation condition: ", e$message)
-            return(rule)
-        })
+
+    # Process each stop condition
+    processed_conditions <- lapply(conditions, function(rule) {
+        tryCatch(
+            {
+                # Store the original condition and error message
+                rule$original_condition <- rule$condition
+                rule$calling_env <- calling_env
+                rule$error_message <- rule$target # The RHS is the error message
+
+                # Extract question IDs from the condition to determine page mapping
+                question_ids <- extract_question_ids_from_condition(
+                    rule$condition
+                )
+                rule$question_ids <- question_ids
+
+                return(rule)
+            },
+            error = function(e) {
+                warning("Error processing stop condition: ", e$message)
+                return(rule)
+            }
+        )
     })
-    
+
     # Store in userData
     shiny::isolate({
         session <- shiny::getDefaultReactiveDomain()
         if (is.null(session)) {
-            stop("sd_validate must be called within a Shiny reactive context")
+            stop("sd_stop_if must be called within a Shiny reactive context")
         }
-        if (is.null(session$userData$validations)) {
-            session$userData$validations <- list()
+        if (is.null(session$userData$stop_if)) {
+            session$userData$stop_if <- list()
         }
-        session$userData$validations$conditions <- processed_validations
+        session$userData$stop_if$conditions <- processed_conditions
     })
 }
 
-# Helper function to extract question IDs from a validation condition
+
+# Helper function to extract question IDs from a stop condition
 extract_question_ids_from_condition <- function(expr) {
     ids <- character(0)
     if (is.call(expr)) {
         # Check for input$xxx pattern
-        if (length(expr) >= 3 && as.character(expr[[1]]) == "$" && 
-            as.character(expr[[2]]) == "input") {
+        if (
+            length(expr) >= 3 &&
+                as.character(expr[[1]]) == "$" &&
+                as.character(expr[[2]]) == "input"
+        ) {
             var_name <- as.character(expr[[3]])
             ids <- c(ids, var_name)
         }
@@ -2567,21 +2626,21 @@ get_default_next_page <- function(page, page_ids, page_id_to_index) {
 
 handle_skip_logic <- function(
     input,
-    skip_forward,
+    skip_if,
     current_page_id,
     next_page_id,
     page_id_to_index
 ) {
-    if (is.null(next_page_id) | is.null(skip_forward)) {
+    if (is.null(next_page_id) | is.null(skip_if)) {
         return(next_page_id)
     }
 
     # Get the current page index and page object
     current_page_index <- page_id_to_index[current_page_id]
 
-    # Loop through each skip forward logic condition
-    if (!is.null(skip_forward) && !is.null(skip_forward$conditions)) {
-        conditions <- skip_forward$conditions
+    # Loop through each skip logic condition
+    if (!is.null(skip_if) && !is.null(skip_if$conditions)) {
+        conditions <- skip_if$conditions
         for (i in seq_along(conditions)) {
             rule <- conditions[[i]]
 
@@ -2603,7 +2662,7 @@ handle_skip_logic <- function(
                 },
                 error = function(e) {
                     warning(sprintf(
-                        "Error in sd_skip_forward condition for target '%s': %s",
+                        "Error in sd_skip_if condition for target '%s': %s",
                         rule$target,
                         conditionMessage(e)
                     ))
@@ -2638,7 +2697,7 @@ check_answer <- function(q, input, question_structure = NULL) {
         interacted <- TRUE
     }
 
-    # Smart auto-save detection: ONLY apply if normal validation would fail
+    # Smart auto-save detection: ONLY apply if normal answer checking would fail
     # This ensures we don't interfere with normal user interaction tracking
     if (is.null(interacted) && !is.null(answer)) {
         # Get question type from question_structure if available

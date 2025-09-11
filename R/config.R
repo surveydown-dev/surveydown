@@ -2,7 +2,7 @@ run_config <- function(
   required_questions,
   all_questions_required,
   start_page,
-  skip_forward,
+  skip_if,
   show_if,
   rate_survey,
   language
@@ -101,13 +101,13 @@ run_config <- function(
     start_page <- page_ids[1]
   }
 
-  # Check skip_forward and show_if inputs
+  # Check skip_if and show_if inputs
   question_values <- unname(unlist(lapply(question_structure, `[[`, "options")))
   check_skip_show(
     question_ids,
     question_values,
     page_ids,
-    skip_forward,
+    skip_if,
     show_if
   )
 
@@ -288,7 +288,6 @@ create_settings_yaml <- function(paths, metadata) {
   if (file.exists("survey.qmd")) {
     tryCatch(
       {
-
         # Define all sd_server parameters that can be configured via YAML
         # Note: language is excluded to avoid breaking Quarto rendering
         server_params <- c(
@@ -757,12 +756,12 @@ extract_question_structure_html <- function(html_content) {
     type <- question_node |>
       rvest::html_nodes(glue::glue("#{question_id}")) |>
       rvest::html_attr("class")
-    
+
     # Handle case where type is empty (e.g., for reactive questions)
     if (length(type) == 0 || is.na(type)) {
       type <- "unknown"
     }
-    
+
     is_matrix <- length(rvest::html_nodes(question_node, ".matrix-question")) >
       0
 
@@ -1029,14 +1028,14 @@ check_skip_show <- function(
   question_ids,
   question_values,
   page_ids,
-  skip_forward,
+  skip_if,
   show_if
 ) {
-  if (!is.null(skip_forward)) {
-    invalid_skip_targets <- setdiff(skip_forward$targets, page_ids)
+  if (!is.null(skip_if)) {
+    invalid_skip_targets <- setdiff(skip_if$targets, page_ids)
     if (length(invalid_skip_targets) > 0) {
       stop(sprintf(
-        "Invalid sd_skip_forward targets: %s. These must be valid page IDs.",
+        "Invalid sd_skip_if targets: %s. These must be valid page IDs.",
         paste(invalid_skip_targets, collapse = ", ")
       ))
     }
