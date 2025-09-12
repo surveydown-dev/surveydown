@@ -5,6 +5,7 @@
 - New feature: `sd_stop_if()` function to stop the navigate button if certain conditions cannot be met.
 - Deprecated `sd_skip_forward()` function, and reuse `sd_stop_if()`.
 - Enhanced: Now for the judging conditions in the 3 condition check functions (`sd_show_if()`, `sd_skip_if()`, and `sd_stop_if()`), these judging questions are auto-assigned as required questions.
+- Updated `sd_create_survey()` to update with the latest templates.
 
 # surveydown 0.13.1
 

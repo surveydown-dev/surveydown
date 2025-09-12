@@ -211,8 +211,9 @@ tibble_to_list_of_lists <- function(tbl) {
 #'   Other options include:
 #'   \describe{
 #'     \item{default}{The default built-in template}
-#'     \item{conditional_display}{Template of conditional display of questions}
-#'     \item{conditional_navigation}{Template of conditional navigation of pages}
+#'     \item{conditional_showing}{Conditionally showing questions and pages}
+#'     \item{conditional_skipping}{Conditionally skipping to forward pages}
+#'     \item{conditional_stopping}{Conditionally stopping the navigation}
 #'     \item{conjoint_buttons}{Conjoint analysis with button interface}
 #'     \item{conjoint_tables}{Conjoint analysis with table interface}
 #'     \item{custom_leaflet_map}{Survey with interactive Leaflet maps}
@@ -265,8 +266,9 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
   # Available templates from surveydown-dev/templates
   available_templates <- c(
     "default",
-    "conditional_display",
-    "conditional_navigation",
+    "conditional_showing",
+    "conditional_skipping",
+    "conditional_stopping",
     "conjoint_buttons",
     "conjoint_tables",
     "custom_leaflet_map",
