@@ -562,3 +562,83 @@ div:where(.swal2-container) .swal2-html-container {
   border-color: #dc3545 !important;
   box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
+
+/* Numeric input spinner styling */
+.numeric-input-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.numeric-input-with-spinner {
+  padding-right: 0 !important;
+}
+
+.numeric-input-with-spinner::-webkit-outer-spin-button,
+.numeric-input-with-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numeric-input-with-spinner[type=number] {
+  -moz-appearance: textfield;
+}
+
+.native-spinner {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: calc(100% - 4px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, #f9f9f9 0%, #f0f0f0 100%);
+  overflow: hidden;
+}
+
+.native-spinner-button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  font-size: 0;
+  outline: none;
+}
+
+.native-spinner-button:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.native-spinner-button:active {
+  background: rgba(0,0,0,0.1);
+}
+
+.native-spinner-button::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+}
+
+.spinner-up::before {
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-bottom: 4px solid #666;
+}
+
+.spinner-down::before {
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid #666;
+}
+
+.native-spinner-button:not(:last-child) {
+  border-bottom: 1px solid #ccc;
+}

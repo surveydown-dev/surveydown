@@ -1015,7 +1015,7 @@ sd_question <- function(
       ...
     )
 
-    # Add interaction tracking and custom numeric validation
+    # Add interaction tracking, custom numeric validation, and native-style spinner
     output <- shiny::tagAppendChild(
       output,
       shiny::tags$script(htmltools::HTML(sprintf(
@@ -1023,6 +1023,38 @@ sd_question <- function(
         $(document).ready(function() {
             $('#%s').on('focus input change', function() {
                 Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
+            });
+
+
+            // Transform the input to look like a number input
+            var inputElement = $('#%s');
+            inputElement.attr('type', 'text'); // Keep as text for our validation
+            inputElement.addClass('numeric-input-with-spinner');
+            inputElement.wrap('<div class=\"numeric-input-container\"></div>');
+
+            // Add native-style spinner
+            inputElement.after(`
+                <div class=\"native-spinner\">
+                    <button type=\"button\" class=\"native-spinner-button spinner-up\" tabindex=\"-1\"></button>
+                    <button type=\"button\" class=\"native-spinner-button spinner-down\" tabindex=\"-1\"></button>
+                </div>
+            `);
+
+            var container = inputElement.parent();
+
+            // Spinner functionality
+            container.find('.spinner-up').on('mousedown', function(e) {
+                e.preventDefault();
+                var currentVal = parseFloat(inputElement.val()) || 0;
+                var newVal = currentVal + 1;
+                inputElement.val(newVal).trigger('input');
+            });
+
+            container.find('.spinner-down').on('mousedown', function(e) {
+                e.preventDefault();
+                var currentVal = parseFloat(inputElement.val()) || 0;
+                var newVal = currentVal - 1;
+                inputElement.val(newVal).trigger('input');
             });
 
             // Custom numeric validation
@@ -1064,6 +1096,7 @@ sd_question <- function(
             });
         });
     ",
+        id,
         id,
         id,
         id,

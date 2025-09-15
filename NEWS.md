@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.13.3
+
+- Enhanced the `numeric` question type input logic.
+
 # surveydown 0.13.2
 
 - New feature: `sd_stop_if()` function to stop the navigate button if certain conditions cannot be met.
