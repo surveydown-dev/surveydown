@@ -1008,14 +1008,14 @@ sd_question <- function(
       ...
     )
   } else if (type == "numeric") {
-    output <- shiny::numericInput(
+    output <- shiny::textInput(
       inputId = id,
       label = label,
-      value = NULL,
+      value = "",
       ...
     )
 
-    # Add interaction tracking and input filtering for numeric inputs
+    # Add interaction tracking and custom numeric validation
     output <- shiny::tagAppendChild(
       output,
       shiny::tags$script(htmltools::HTML(sprintf(
@@ -1025,37 +1025,45 @@ sd_question <- function(
                 Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
             });
 
-            // Restrict input to numeric characters (0-9) and plus/minus signs
-            $('#%s').on('keypress', function(e) {
-                // Allow all key combinations with Ctrl or Cmd (for copy, paste, select all, etc.)
-                if (e.ctrlKey || e.metaKey) {
-                    return true;
+            // Custom numeric validation
+            $('#%s').on('input', function(e) {
+                var val = $(this).val();
+                var filtered = '';
+                var hasDecimal = false;
+                var hasSign = false;
+
+                for (var i = 0; i < val.length; i++) {
+                    var char = val[i];
+
+                    // Allow +/- only at the beginning and only one
+                    if ((char === '+' || char === '-') && i === 0 && !hasSign) {
+                        filtered += char;
+                        hasSign = true;
+                    }
+                    // Allow digits
+                    else if (/[0-9]/.test(char)) {
+                        filtered += char;
+                    }
+                    // Allow decimal point only once
+                    else if (char === '.' && !hasDecimal) {
+                        filtered += char;
+                        hasDecimal = true;
+                    }
                 }
 
-                var char = String.fromCharCode(e.which);
-                // Allow: digits (0-9), plus sign (+), minus sign (-), backspace, delete, tab, escape, enter
-                if (/[0-9+\\-]/.test(char) ||
-                    e.which === 8 || e.which === 46 || e.which === 9 || e.which === 27 || e.which === 13) {
-                    return true;
+                if (val !== filtered) {
+                    $(this).val(filtered);
                 }
-                e.preventDefault();
-                return false;
             });
 
-            // Also filter on paste events
+            // Handle paste events
             $('#%s').on('paste', function(e) {
                 setTimeout(function() {
-                    var val = $('#%s').val();
-                    // Remove any characters that are not digits, plus, or minus
-                    var filtered = val.replace(/[^0-9+\\-]/g, '');
-                    if (val !== filtered) {
-                        $('#%s').val(filtered);
-                    }
+                    $('#%s').trigger('input');
                 }, 1);
             });
         });
     ",
-        id,
         id,
         id,
         id,
