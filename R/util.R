@@ -81,6 +81,186 @@ check_files_missing <- function() {
       'Missing "app.R" file - your app file must be named "app.R"'
     )
   }
+  check_page_fences()
+  check_sd_server_position()
+}
+
+check_page_fences <- function() {
+  if (!file.exists("survey.qmd")) {
+    return() # File doesn't exist, will be caught by survey_file_exists()
+  }
+
+  # Read the survey.qmd file
+  lines <- readLines("survey.qmd", warn = FALSE)
+
+  # Find page starting fences - matches both .sd_page and .sd-page
+  page_starts <- grep("^:::\\s*\\{\\.(sd_page|sd-page)\\s+id\\s*=\\s*[^}]+\\}", lines)
+
+  if (length(page_starts) == 0) {
+    return() # No pages found, nothing to validate
+  }
+
+  # For each page start, find the corresponding closing fence using proper nesting logic
+  for (i in seq_along(page_starts)) {
+    start_line <- page_starts[i]
+
+    # Extract page ID for error message
+    page_line <- lines[start_line]
+    page_id_match <- regmatches(page_line, regexpr("id\\s*=\\s*([^}\\s]+)", page_line, perl = TRUE))
+    page_id <- if (length(page_id_match) > 0) {
+      gsub("id\\s*=\\s*", "", page_id_match)
+    } else {
+      "unknown"
+    }
+
+    # Look for the next page start or end of file to define search range
+    next_page_start <- if (i < length(page_starts)) {
+      page_starts[i + 1]
+    } else {
+      length(lines) + 1
+    }
+
+    # Track div nesting level to find the correct closing fence
+    div_level <- 0
+    found_closing <- FALSE
+
+    for (line_idx in (start_line):(next_page_start - 1)) {
+      if (line_idx > length(lines)) break
+
+      current_line <- lines[line_idx]
+
+      # Count opening divs (:::)
+      if (grepl("^:::\\s*\\{", current_line)) {
+        div_level <- div_level + 1
+      }
+      # Count closing divs (:::)
+      else if (grepl("^:::\\s*$", current_line)) {
+        div_level <- div_level - 1
+        # If we're back to level 0, we found the closing fence for our page
+        if (div_level == 0) {
+          found_closing <- TRUE
+          break
+        }
+      }
+    }
+
+    if (!found_closing) {
+      stop(
+        paste0(
+          'Missing closing fence ":::" for page "', page_id, '" starting at line ', start_line,
+          ' in survey.qmd. Each page must be closed with ":::" on its own line.'
+        )
+      )
+    }
+  }
+}
+
+check_sd_server_position <- function() {
+  if (!file.exists("app.R")) {
+    return() # File doesn't exist, will be caught by app_file_exists()
+  }
+
+  # Read the app.R file
+  lines <- readLines("app.R", warn = FALSE)
+
+  # Remove leading/trailing whitespace from all lines
+  trimmed_lines <- trimws(lines)
+
+  # Find the server function definition
+  server_start <- grep("^server\\s*<-\\s*function\\s*\\(", lines)
+
+  if (length(server_start) == 0) {
+    # Try alternative syntax patterns
+    server_start <- grep("^server\\s*=\\s*function\\s*\\(", lines)
+  }
+
+  if (length(server_start) == 0) {
+    stop(
+      'Could not find server function definition in app.R. Expected format: server <- function(input, output, session) {'
+    )
+  }
+
+  if (length(server_start) > 1) {
+    warning("Multiple server function definitions found in app.R. Using the first one.")
+    server_start <- server_start[1]
+  }
+
+  # Find the closing brace of the server function
+  brace_level <- 0
+  server_end <- NULL
+  found_opening_brace <- FALSE
+
+  for (i in server_start:length(lines)) {
+    line <- lines[i]
+
+    # Count opening and closing braces
+    opening_braces <- length(gregexpr("\\{", line)[[1]]) - (length(gregexpr("\\{", line)[[1]]) == 1 && gregexpr("\\{", line)[[1]][1] == -1) * 1
+    closing_braces <- length(gregexpr("\\}", line)[[1]]) - (length(gregexpr("\\}", line)[[1]]) == 1 && gregexpr("\\}", line)[[1]][1] == -1) * 1
+
+    brace_level <- brace_level + opening_braces - closing_braces
+
+    if (opening_braces > 0) {
+      found_opening_brace <- TRUE
+    }
+
+    # When we find the closing brace that balances the server function
+    if (found_opening_brace && brace_level == 0 && i > server_start) {
+      server_end <- i
+      break
+    }
+  }
+
+  if (is.null(server_end)) {
+    stop(
+      'Could not find the closing brace for the server function in app.R. Please check your syntax.'
+    )
+  }
+
+  # Find all sd_server() calls within the server function
+  server_lines <- lines[server_start:server_end]
+  sd_server_calls <- grep("sd_server\\s*\\(", server_lines)
+
+  if (length(sd_server_calls) == 0) {
+    stop(
+      'Missing sd_server() call in the server function. Please add sd_server() as the last statement in your server function.'
+    )
+  }
+
+  if (length(sd_server_calls) > 1) {
+    stop(
+      'Multiple sd_server() calls found in the server function. Please use only one sd_server() call as the last statement.'
+    )
+  }
+
+  # Check if sd_server() is the last meaningful statement
+  sd_server_line_in_function <- sd_server_calls[1]
+  sd_server_absolute_line <- server_start + sd_server_line_in_function - 1
+
+  # Check lines after sd_server() call until server function ends
+  lines_after_sd_server <- server_lines[(sd_server_line_in_function + 1):length(server_lines)]
+
+  # Remove comments and empty lines to find meaningful statements
+  meaningful_lines <- character(0)
+  for (line in lines_after_sd_server) {
+    # Remove comments (everything after #)
+    line_without_comment <- sub("#.*$", "", line)
+    line_trimmed <- trimws(line_without_comment)
+
+    # Skip empty lines and lines that are just closing braces
+    if (nchar(line_trimmed) > 0 && !grepl("^\\}\\s*$", line_trimmed)) {
+      meaningful_lines <- c(meaningful_lines, line_trimmed)
+    }
+  }
+
+  if (length(meaningful_lines) > 0) {
+    stop(
+      paste0(
+        'sd_server() must be the last statement in the server function. ',
+        'Found ', length(meaningful_lines), ' statement(s) after sd_server() call at line ', sd_server_absolute_line, '. ',
+        'Please move sd_server() to the end of the server function.'
+      )
+    )
+  }
 }
 
 is_self_contained <- function() {

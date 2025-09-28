@@ -3,6 +3,8 @@
 # surveydown 0.13.3
 
 - Enhanced the `numeric` question type input logic.
+- Added validation to ensure page closing fences (`:::`) are properly matched in survey.qmd files.
+- Added validation to ensure `sd_server()` is called as the last statement in the server function.
 
 # surveydown 0.13.2
 
