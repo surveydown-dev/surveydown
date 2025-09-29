@@ -553,9 +553,10 @@ download_template_from_github <- function(template) {
   temp_dir <- tempfile("surveydown_template_")
   dir.create(temp_dir, recursive = TRUE)
 
-  # Download the specific template directory from GitHub
+  # Download the specific template from its individual repository
   repo_url <- paste0(
-    "https://github.com/surveydown-dev/templates/archive/refs/heads/main.zip"
+    "https://github.com/surveydown-dev/template_", template,
+    "/archive/refs/heads/main.zip"
   )
 
   temp_zip <- file.path(temp_dir, "template.zip")
@@ -567,7 +568,7 @@ download_template_from_github <- function(template) {
   utils::unzip(temp_zip, exdir = temp_dir)
 
   # Path to the extracted template folder
-  template_path <- file.path(temp_dir, "templates-main", template)
+  template_path <- file.path(temp_dir, paste0("template_", template, "-main"))
 
   if (!dir.exists(template_path)) {
     stop("Template '", template, "' not found in the repository")
