@@ -160,77 +160,74 @@ check_sd_server_position <- function() {
     return() # File doesn't exist, will be caught by app_file_exists()
   }
 
-  tryCatch({
-    # Parse the file as R code using AST
-    parsed_code <- parse("app.R", keep.source = TRUE)
+  # Simple regex-based approach: just find the last function call in server()
+  lines <- readLines("app.R", warn = FALSE)
 
-    # Find server function assignment
-    server_body <- NULL
-    for (expr in parsed_code) {
-      if (is.call(expr) && expr[[1]] == as.symbol("<-") &&
-          length(expr) >= 3 && as.character(expr[[2]]) == "server") {
+  # Find server function start
+  server_start <- grep("server\\s*<-\\s*function", lines)
+  if (length(server_start) == 0) {
+    stop('Could not find server function definition in app.R')
+  }
 
-        if (is.call(expr[[3]]) && as.character(expr[[3]][[1]]) == "function") {
-          server_body <- expr[[3]][[3]]  # Function body
-          break
-        }
+  # Find server function end by tracking braces
+  brace_count <- 0
+  server_end <- NULL
+  in_server <- FALSE
+
+  for (i in server_start[1]:length(lines)) {
+    line <- lines[i]
+
+    # Count braces
+    open_braces <- length(gregexpr("\\{", line)[[1]]) - (gregexpr("\\{", line)[[1]][1] == -1)
+    close_braces <- length(gregexpr("\\}", line)[[1]]) - (gregexpr("\\}", line)[[1]][1] == -1)
+
+    brace_count <- brace_count + open_braces - close_braces
+
+    if (open_braces > 0) in_server <- TRUE
+
+    if (in_server && brace_count == 0) {
+      server_end <- i
+      break
+    }
+  }
+
+  if (is.null(server_end)) {
+    stop('Could not find end of server function')
+  }
+
+  # Get server function lines
+  server_lines <- lines[server_start[1]:server_end]
+
+  # Find all function calls in server (ignore comments and assignments)
+  function_calls <- c()
+  for (line in server_lines) {
+    # Remove comments
+    line_clean <- sub("#.*$", "", line)
+    # Find function calls (word followed by parentheses, not assignments)
+    if (grepl("\\w+\\s*\\(", line_clean) && !grepl("<-", line_clean)) {
+      # Extract function name
+      func_match <- regmatches(line_clean, regexpr("\\w+(?=\\s*\\()", line_clean, perl = TRUE))
+      if (length(func_match) > 0) {
+        function_calls <- c(function_calls, func_match[1])
       }
     }
+  }
 
-    if (is.null(server_body)) {
-      stop(
-        'Could not find server function definition in app.R. Expected format: server <- function(input, output, session) { ... }'
-      )
-    }
+  # Check if sd_server is present and is the last function call
+  sd_server_positions <- which(function_calls == "sd_server")
 
-    # Extract statements from function body
-    statements <- if (is.call(server_body) && as.character(server_body[[1]]) == "{") {
-      as.list(server_body)[-1]  # Remove '{' symbol
-    } else {
-      list(server_body)  # Single statement
-    }
+  if (length(sd_server_positions) == 0) {
+    stop('Missing sd_server() call in server function')
+  }
 
-    if (length(statements) == 0) {
-      stop(
-        'Server function body is empty. Please add sd_server() as the last statement in your server function.'
-      )
-    }
+  if (length(sd_server_positions) > 1) {
+    stop('Multiple sd_server() calls found in server function')
+  }
 
-    # Check if expression calls sd_server
-    is_sd_server_call <- function(expr) {
-      is.call(expr) && as.character(expr[[1]]) == "sd_server"
-    }
-
-    # Find sd_server calls
-    sd_server_positions <- which(sapply(statements, is_sd_server_call))
-
-    if (length(sd_server_positions) == 0) {
-      stop(
-        'Missing sd_server() call in the server function. Please add sd_server() as the last statement in your server function.'
-      )
-    } else if (length(sd_server_positions) > 1) {
-      stop(
-        'Multiple sd_server() calls found in the server function. Please use only one sd_server() call as the last statement.'
-      )
-    } else if (sd_server_positions[1] != length(statements)) {
-      stop(
-        paste0(
-          'sd_server() must be the last statement in the server function. ',
-          'Found at position ', sd_server_positions[1], ' but should be at position ', length(statements), '. ',
-          'Please move sd_server() to the end of the server function.'
-        )
-      )
-    }
-
-  }, error = function(e) {
-    if (grepl("unexpected", e$message)) {
-      stop(
-        'Syntax error in app.R file. Please check your R syntax and ensure the file is valid.'
-      )
-    } else {
-      stop(e$message)
-    }
-  })
+  if (sd_server_positions[1] != length(function_calls)) {
+    stop(paste0('sd_server() must be the last function call in server function. ',
+                'Found "', function_calls[length(function_calls)], '" after sd_server()'))
+  }
 }
 
 is_self_contained <- function() {
