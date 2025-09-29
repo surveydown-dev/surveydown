@@ -160,107 +160,77 @@ check_sd_server_position <- function() {
     return() # File doesn't exist, will be caught by app_file_exists()
   }
 
-  # Read the app.R file
-  lines <- readLines("app.R", warn = FALSE)
+  tryCatch({
+    # Parse the file as R code using AST
+    parsed_code <- parse("app.R", keep.source = TRUE)
 
-  # Remove leading/trailing whitespace from all lines
-  trimmed_lines <- trimws(lines)
+    # Find server function assignment
+    server_body <- NULL
+    for (expr in parsed_code) {
+      if (is.call(expr) && expr[[1]] == as.symbol("<-") &&
+          length(expr) >= 3 && as.character(expr[[2]]) == "server") {
 
-  # Find the server function definition
-  server_start <- grep("^server\\s*<-\\s*function\\s*\\(", lines)
-
-  if (length(server_start) == 0) {
-    # Try alternative syntax patterns
-    server_start <- grep("^server\\s*=\\s*function\\s*\\(", lines)
-  }
-
-  if (length(server_start) == 0) {
-    stop(
-      'Could not find server function definition in app.R. Expected format: server <- function(input, output, session) {'
-    )
-  }
-
-  if (length(server_start) > 1) {
-    warning("Multiple server function definitions found in app.R. Using the first one.")
-    server_start <- server_start[1]
-  }
-
-  # Find the closing brace of the server function
-  brace_level <- 0
-  server_end <- NULL
-  found_opening_brace <- FALSE
-
-  for (i in server_start:length(lines)) {
-    line <- lines[i]
-
-    # Count opening and closing braces
-    opening_braces <- length(gregexpr("\\{", line)[[1]]) - (length(gregexpr("\\{", line)[[1]]) == 1 && gregexpr("\\{", line)[[1]][1] == -1) * 1
-    closing_braces <- length(gregexpr("\\}", line)[[1]]) - (length(gregexpr("\\}", line)[[1]]) == 1 && gregexpr("\\}", line)[[1]][1] == -1) * 1
-
-    brace_level <- brace_level + opening_braces - closing_braces
-
-    if (opening_braces > 0) {
-      found_opening_brace <- TRUE
+        if (is.call(expr[[3]]) && as.character(expr[[3]][[1]]) == "function") {
+          server_body <- expr[[3]][[3]]  # Function body
+          break
+        }
+      }
     }
 
-    # When we find the closing brace that balances the server function
-    if (found_opening_brace && brace_level == 0 && i > server_start) {
-      server_end <- i
-      break
-    }
-  }
-
-  if (is.null(server_end)) {
-    stop(
-      'Could not find the closing brace for the server function in app.R. Please check your syntax.'
-    )
-  }
-
-  # Find all sd_server() calls within the server function
-  server_lines <- lines[server_start:server_end]
-  sd_server_calls <- grep("sd_server\\s*\\(", server_lines)
-
-  if (length(sd_server_calls) == 0) {
-    stop(
-      'Missing sd_server() call in the server function. Please add sd_server() as the last statement in your server function.'
-    )
-  }
-
-  if (length(sd_server_calls) > 1) {
-    stop(
-      'Multiple sd_server() calls found in the server function. Please use only one sd_server() call as the last statement.'
-    )
-  }
-
-  # Check if sd_server() is the last meaningful statement
-  sd_server_line_in_function <- sd_server_calls[1]
-  sd_server_absolute_line <- server_start + sd_server_line_in_function - 1
-
-  # Check lines after sd_server() call until server function ends
-  lines_after_sd_server <- server_lines[(sd_server_line_in_function + 1):length(server_lines)]
-
-  # Remove comments and empty lines to find meaningful statements
-  meaningful_lines <- character(0)
-  for (line in lines_after_sd_server) {
-    # Remove comments (everything after #)
-    line_without_comment <- sub("#.*$", "", line)
-    line_trimmed <- trimws(line_without_comment)
-
-    # Skip empty lines and lines that are just closing braces
-    if (nchar(line_trimmed) > 0 && !grepl("^\\}\\s*$", line_trimmed)) {
-      meaningful_lines <- c(meaningful_lines, line_trimmed)
-    }
-  }
-
-  if (length(meaningful_lines) > 0) {
-    stop(
-      paste0(
-        'sd_server() must be the last statement in the server function. ',
-        'Found ', length(meaningful_lines), ' statement(s) after sd_server() call at line ', sd_server_absolute_line, '. ',
-        'Please move sd_server() to the end of the server function.'
+    if (is.null(server_body)) {
+      stop(
+        'Could not find server function definition in app.R. Expected format: server <- function(input, output, session) { ... }'
       )
-    )
-  }
+    }
+
+    # Extract statements from function body
+    statements <- if (is.call(server_body) && as.character(server_body[[1]]) == "{") {
+      as.list(server_body)[-1]  # Remove '{' symbol
+    } else {
+      list(server_body)  # Single statement
+    }
+
+    if (length(statements) == 0) {
+      stop(
+        'Server function body is empty. Please add sd_server() as the last statement in your server function.'
+      )
+    }
+
+    # Check if expression calls sd_server
+    is_sd_server_call <- function(expr) {
+      is.call(expr) && as.character(expr[[1]]) == "sd_server"
+    }
+
+    # Find sd_server calls
+    sd_server_positions <- which(sapply(statements, is_sd_server_call))
+
+    if (length(sd_server_positions) == 0) {
+      stop(
+        'Missing sd_server() call in the server function. Please add sd_server() as the last statement in your server function.'
+      )
+    } else if (length(sd_server_positions) > 1) {
+      stop(
+        'Multiple sd_server() calls found in the server function. Please use only one sd_server() call as the last statement.'
+      )
+    } else if (sd_server_positions[1] != length(statements)) {
+      stop(
+        paste0(
+          'sd_server() must be the last statement in the server function. ',
+          'Found at position ', sd_server_positions[1], ' but should be at position ', length(statements), '. ',
+          'Please move sd_server() to the end of the server function.'
+        )
+      )
+    }
+
+  }, error = function(e) {
+    if (grepl("unexpected", e$message)) {
+      stop(
+        'Syntax error in app.R file. Please check your R syntax and ensure the file is valid.'
+      )
+    } else {
+      stop(e$message)
+    }
+  })
 }
 
 is_self_contained <- function() {
