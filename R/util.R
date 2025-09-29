@@ -94,7 +94,10 @@ check_page_fences <- function() {
   lines <- readLines("survey.qmd", warn = FALSE)
 
   # Find page starting fences - matches both .sd_page and .sd-page
-  page_starts <- grep("^:::\\s*\\{\\.(sd_page|sd-page)\\s+id\\s*=\\s*[^}]+\\}", lines)
+  page_starts <- grep(
+    "^:::\\s*\\{\\.(sd_page|sd-page)\\s+id\\s*=\\s*[^}]+\\}",
+    lines
+  )
 
   if (length(page_starts) == 0) {
     return() # No pages found, nothing to validate
@@ -106,7 +109,10 @@ check_page_fences <- function() {
 
     # Extract page ID for error message
     page_line <- lines[start_line]
-    page_id_match <- regmatches(page_line, regexpr("id\\s*=\\s*([^}\\s]+)", page_line, perl = TRUE))
+    page_id_match <- regmatches(
+      page_line,
+      regexpr("id\\s*=\\s*([^}\\s]+)", page_line, perl = TRUE)
+    )
     page_id <- if (length(page_id_match) > 0) {
       gsub("id\\s*=\\s*", "", page_id_match)
     } else {
@@ -125,16 +131,17 @@ check_page_fences <- function() {
     found_closing <- FALSE
 
     for (line_idx in (start_line):(next_page_start - 1)) {
-      if (line_idx > length(lines)) break
+      if (line_idx > length(lines)) {
+        break
+      }
 
       current_line <- lines[line_idx]
 
       # Count opening divs (:::)
       if (grepl("^:::\\s*\\{", current_line)) {
         div_level <- div_level + 1
-      }
-      # Count closing divs (:::)
-      else if (grepl("^:::\\s*$", current_line)) {
+      } else if (grepl("^:::\\s*$", current_line)) {
+        # Count closing divs (:::)
         div_level <- div_level - 1
         # If we're back to level 0, we found the closing fence for our page
         if (div_level == 0) {
@@ -147,7 +154,10 @@ check_page_fences <- function() {
     if (!found_closing) {
       stop(
         paste0(
-          'Missing closing fence ":::" for page "', page_id, '" starting at line ', start_line,
+          'Missing closing fence ":::" for page "',
+          page_id,
+          '" starting at line ',
+          start_line,
           ' in survey.qmd. Each page must be closed with ":::" on its own line.'
         )
       )
@@ -178,12 +188,16 @@ check_sd_server_position <- function() {
     line <- lines[i]
 
     # Count braces
-    open_braces <- length(gregexpr("\\{", line)[[1]]) - (gregexpr("\\{", line)[[1]][1] == -1)
-    close_braces <- length(gregexpr("\\}", line)[[1]]) - (gregexpr("\\}", line)[[1]][1] == -1)
+    open_braces <- length(gregexpr("\\{", line)[[1]]) -
+      (gregexpr("\\{", line)[[1]][1] == -1)
+    close_braces <- length(gregexpr("\\}", line)[[1]]) -
+      (gregexpr("\\}", line)[[1]][1] == -1)
 
     brace_count <- brace_count + open_braces - close_braces
 
-    if (open_braces > 0) in_server <- TRUE
+    if (open_braces > 0) {
+      in_server <- TRUE
+    }
 
     if (in_server && brace_count == 0) {
       server_end <- i
@@ -206,7 +220,10 @@ check_sd_server_position <- function() {
     # Find function calls (word followed by parentheses, not assignments)
     if (grepl("\\w+\\s*\\(", line_clean) && !grepl("<-", line_clean)) {
       # Extract function name
-      func_match <- regmatches(line_clean, regexpr("\\w+(?=\\s*\\()", line_clean, perl = TRUE))
+      func_match <- regmatches(
+        line_clean,
+        regexpr("\\w+(?=\\s*\\()", line_clean, perl = TRUE)
+      )
       if (length(func_match) > 0) {
         function_calls <- c(function_calls, func_match[1])
       }
@@ -225,8 +242,12 @@ check_sd_server_position <- function() {
   }
 
   if (sd_server_positions[1] != length(function_calls)) {
-    stop(paste0('sd_server() must be the last function call in server function. ',
-                'Found "', function_calls[length(function_calls)], '" after sd_server()'))
+    stop(paste0(
+      'sd_server() must be the last function call in server function. ',
+      'Found "',
+      function_calls[length(function_calls)],
+      '" after sd_server()'
+    ))
   }
 }
 
