@@ -1008,14 +1008,14 @@ sd_question <- function(
       ...
     )
   } else if (type == "numeric") {
-    output <- shiny::numericInput(
+    output <- shiny::textInput(
       inputId = id,
       label = label,
-      value = NULL,
+      value = "",
       ...
     )
 
-    # Add interaction tracking and input filtering for numeric inputs
+    # Add interaction tracking, custom numeric validation, and native-style spinner
     output <- shiny::tagAppendChild(
       output,
       shiny::tags$script(htmltools::HTML(sprintf(
@@ -1025,32 +1025,73 @@ sd_question <- function(
                 Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
             });
 
-            // Restrict input to numeric characters (0-9) and plus/minus signs
-            $('#%s').on('keypress', function(e) {
-                // Allow all key combinations with Ctrl or Cmd (for copy, paste, select all, etc.)
-                if (e.ctrlKey || e.metaKey) {
-                    return true;
-                }
 
-                var char = String.fromCharCode(e.which);
-                // Allow: digits (0-9), plus sign (+), minus sign (-), backspace, delete, tab, escape, enter
-                if (/[0-9+\\-]/.test(char) ||
-                    e.which === 8 || e.which === 46 || e.which === 9 || e.which === 27 || e.which === 13) {
-                    return true;
-                }
+            // Transform the input to look like a number input
+            var inputElement = $('#%s');
+            inputElement.attr('type', 'text'); // Keep as text for our validation
+            inputElement.addClass('numeric-input-with-spinner');
+            inputElement.wrap('<div class=\"numeric-input-container\"></div>');
+
+            // Add native-style spinner
+            inputElement.after(`
+                <div class=\"native-spinner\">
+                    <button type=\"button\" class=\"native-spinner-button spinner-up\" tabindex=\"-1\"></button>
+                    <button type=\"button\" class=\"native-spinner-button spinner-down\" tabindex=\"-1\"></button>
+                </div>
+            `);
+
+            var container = inputElement.parent();
+
+            // Spinner functionality
+            container.find('.spinner-up').on('mousedown', function(e) {
                 e.preventDefault();
-                return false;
+                var currentVal = parseFloat(inputElement.val()) || 0;
+                var newVal = currentVal + 1;
+                inputElement.val(newVal).trigger('input');
             });
 
-            // Also filter on paste events
+            container.find('.spinner-down').on('mousedown', function(e) {
+                e.preventDefault();
+                var currentVal = parseFloat(inputElement.val()) || 0;
+                var newVal = currentVal - 1;
+                inputElement.val(newVal).trigger('input');
+            });
+
+            // Custom numeric validation
+            $('#%s').on('input', function(e) {
+                var val = $(this).val();
+                var filtered = '';
+                var hasDecimal = false;
+                var hasSign = false;
+
+                for (var i = 0; i < val.length; i++) {
+                    var char = val[i];
+
+                    // Allow +/- only at the beginning and only one
+                    if ((char === '+' || char === '-') && i === 0 && !hasSign) {
+                        filtered += char;
+                        hasSign = true;
+                    }
+                    // Allow digits
+                    else if (/[0-9]/.test(char)) {
+                        filtered += char;
+                    }
+                    // Allow decimal point only once
+                    else if (char === '.' && !hasDecimal) {
+                        filtered += char;
+                        hasDecimal = true;
+                    }
+                }
+
+                if (val !== filtered) {
+                    $(this).val(filtered);
+                }
+            });
+
+            // Handle paste events
             $('#%s').on('paste', function(e) {
                 setTimeout(function() {
-                    var val = $('#%s').val();
-                    // Remove any characters that are not digits, plus, or minus
-                    var filtered = val.replace(/[^0-9+\\-]/g, '');
-                    if (val !== filtered) {
-                        $('#%s').val(filtered);
-                    }
+                    $('#%s').trigger('input');
                 }, 1);
             });
         });

@@ -81,6 +81,174 @@ check_files_missing <- function() {
       'Missing "app.R" file - your app file must be named "app.R"'
     )
   }
+  check_page_fences()
+  check_sd_server_position()
+}
+
+check_page_fences <- function() {
+  if (!file.exists("survey.qmd")) {
+    return() # File doesn't exist, will be caught by survey_file_exists()
+  }
+
+  # Read the survey.qmd file
+  lines <- readLines("survey.qmd", warn = FALSE)
+
+  # Find page starting fences - matches both .sd_page and .sd-page
+  page_starts <- grep(
+    "^:::\\s*\\{\\.(sd_page|sd-page)\\s+id\\s*=\\s*[^}]+\\}",
+    lines
+  )
+
+  if (length(page_starts) == 0) {
+    return() # No pages found, nothing to validate
+  }
+
+  # For each page start, find the corresponding closing fence using proper nesting logic
+  for (i in seq_along(page_starts)) {
+    start_line <- page_starts[i]
+
+    # Extract page ID for error message
+    page_line <- lines[start_line]
+    page_id_match <- regmatches(
+      page_line,
+      regexpr("id\\s*=\\s*([^}\\s]+)", page_line, perl = TRUE)
+    )
+    page_id <- if (length(page_id_match) > 0) {
+      gsub("id\\s*=\\s*", "", page_id_match)
+    } else {
+      "unknown"
+    }
+
+    # Look for the next page start or end of file to define search range
+    next_page_start <- if (i < length(page_starts)) {
+      page_starts[i + 1]
+    } else {
+      length(lines) + 1
+    }
+
+    # Track div nesting level to find the correct closing fence
+    div_level <- 0
+    found_closing <- FALSE
+
+    for (line_idx in (start_line):(next_page_start - 1)) {
+      if (line_idx > length(lines)) {
+        break
+      }
+
+      current_line <- lines[line_idx]
+
+      # Count opening divs (:::)
+      if (grepl("^:::\\s*\\{", current_line)) {
+        div_level <- div_level + 1
+      } else if (grepl("^:::\\s*$", current_line)) {
+        # Count closing divs (:::)
+        div_level <- div_level - 1
+        # If we're back to level 0, we found the closing fence for our page
+        if (div_level == 0) {
+          found_closing <- TRUE
+          break
+        }
+      }
+    }
+
+    if (!found_closing) {
+      stop(
+        paste0(
+          'Missing closing fence ":::" for page "',
+          page_id,
+          '" starting at line ',
+          start_line,
+          ' in survey.qmd. Each page must be closed with ":::" on its own line.'
+        )
+      )
+    }
+  }
+}
+
+check_sd_server_position <- function() {
+  if (!file.exists("app.R")) {
+    return() # File doesn't exist, will be caught by app_file_exists()
+  }
+
+  # Simple regex-based approach: just find the last function call in server()
+  lines <- readLines("app.R", warn = FALSE)
+
+  # Find server function start
+  server_start <- grep("server\\s*<-\\s*function", lines)
+  if (length(server_start) == 0) {
+    stop('Could not find server function definition in app.R')
+  }
+
+  # Find server function end by tracking braces
+  brace_count <- 0
+  server_end <- NULL
+  in_server <- FALSE
+
+  for (i in server_start[1]:length(lines)) {
+    line <- lines[i]
+
+    # Count braces
+    open_braces <- length(gregexpr("\\{", line)[[1]]) -
+      (gregexpr("\\{", line)[[1]][1] == -1)
+    close_braces <- length(gregexpr("\\}", line)[[1]]) -
+      (gregexpr("\\}", line)[[1]][1] == -1)
+
+    brace_count <- brace_count + open_braces - close_braces
+
+    if (open_braces > 0) {
+      in_server <- TRUE
+    }
+
+    if (in_server && brace_count == 0) {
+      server_end <- i
+      break
+    }
+  }
+
+  if (is.null(server_end)) {
+    stop('Could not find end of server function')
+  }
+
+  # Get server function lines
+  server_lines <- lines[server_start[1]:server_end]
+
+  # Find all function calls in server (ignore comments and assignments)
+  function_calls <- c()
+  for (line in server_lines) {
+    # Remove comments
+    line_clean <- sub("#.*$", "", line)
+    # Find function calls (word followed by parentheses, not assignments)
+    if (grepl("\\w+\\s*\\(", line_clean) && !grepl("<-", line_clean)) {
+      # Extract function name
+      func_match <- regmatches(
+        line_clean,
+        regexpr("\\w+(?=\\s*\\()", line_clean, perl = TRUE)
+      )
+      if (length(func_match) > 0) {
+        function_calls <- c(function_calls, func_match[1])
+      }
+    }
+  }
+
+  # Check if sd_server is present and is the last function call
+  sd_server_positions <- which(function_calls == "sd_server")
+
+  if (length(sd_server_positions) == 0) {
+    stop('Missing sd_server() call in server function')
+  }
+
+  if (length(sd_server_positions) > 1) {
+    stop('Multiple sd_server() calls found in server function')
+  }
+
+  if (sd_server_positions[1] != length(function_calls)) {
+    stop(paste0(
+      'sd_server() must be the last function call in server function. ',
+      'Found "',
+      function_calls[length(function_calls)],
+      '" after sd_server()'
+    ))
+  }
 }
 
 is_self_contained <- function() {
@@ -320,8 +488,68 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
     recursive = TRUE
   )
 
+  # Check for existing files (excluding .Rproj)
+  existing_files <- character(0)
+  # Normalize template path for substring removal
+  template_path_normalized <- normalizePath(
+    template_path,
+    winslash = "/",
+    mustWork = FALSE
+  )
+  for (file in template_files) {
+    file_normalized <- normalizePath(file, winslash = "/", mustWork = FALSE)
+    # Remove template path prefix to get relative path
+    relative_path <- sub(
+      paste0(
+        "^",
+        gsub("([.|()\\^{}+$*?])", "\\\\\\1", template_path_normalized),
+        "/?"
+      ),
+      "",
+      file_normalized
+    )
+    target_file <- file.path(path, relative_path)
+    file_name <- basename(file)
+
+    # Skip .Rproj files in this check
+    if (!grepl("\\.Rproj$", file_name) && file.exists(target_file)) {
+      existing_files <- c(existing_files, relative_path)
+    }
+  }
+
+  # Ask once if any files will be overwritten
+  overwrite_all <- FALSE
+  if (ask && length(existing_files) > 0) {
+    file_tree <- format_file_tree(existing_files)
+
+    # Display the tree using cat() to preserve formatting
+    cat("The following files already exist:\n\n")
+    cat(file_tree, "\n\n", sep = "")
+
+    # Ask the question separately
+    overwrite_all <- yesno("Overwrite all existing files?")
+    if (!overwrite_all) {
+      stop("Operation aborted by the user.")
+    }
+  }
+
+  # Track if we're overwriting files
+  overwriting_files <- length(existing_files) > 0 && overwrite_all
+  if (overwriting_files) {
+    message("Overwriting existing files...")
+  }
+
   files_copied <- sapply(template_files, function(file) {
-    relative_path <- sub(template_path, "", file)
+    file_normalized <- normalizePath(file, winslash = "/", mustWork = FALSE)
+    relative_path <- sub(
+      paste0(
+        "^",
+        gsub("([.|()\\^{}+$*?])", "\\\\\\1", template_path_normalized),
+        "/?"
+      ),
+      "",
+      file_normalized
+    )
     target_file <- file.path(path, relative_path)
 
     dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
@@ -333,32 +561,38 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
       grepl("\\.Rproj$", file_name) &&
         length(list.files(path, pattern = "\\.Rproj$"))
     ) {
-      warning(
-        "Skipping the .Rproj file since one already exists.",
-        call. = FALSE,
-        immediate. = TRUE
-      )
+      message("Skipping the .Rproj file since one already exists.")
       return(FALSE)
     } else if (file.exists(target_file)) {
-      # For other files, prompt for confirmation if they already exist
-      overwrite <- yesno(paste0(
-        "File '",
-        file_name,
-        "' already exists. Overwrite it"
-      ))
-      if (overwrite) {
-        file.copy(from = file, to = target_file, overwrite = TRUE)
-        message(paste("Overwriting", file_name))
-        return(TRUE)
-      } else {
-        message(paste("Skipping", file_name))
-        return(FALSE)
+      # Overwrite based on the single prompt response
+      success <- file.copy(from = file, to = target_file, overwrite = TRUE)
+      if (!success) {
+        warning(
+          "Failed to overwrite ",
+          file_name,
+          call. = FALSE,
+          immediate. = TRUE
+        )
       }
+      return(success)
     } else {
-      file.copy(from = file, to = target_file, overwrite = FALSE)
-      return(TRUE)
+      success <- file.copy(from = file, to = target_file, overwrite = FALSE)
+      if (!success) {
+        warning(
+          "Failed to copy ",
+          file_name,
+          call. = FALSE,
+          immediate. = TRUE
+        )
+      }
+      return(success)
     }
   })
+
+  # Show "Done!" message after overwriting
+  if (overwriting_files) {
+    message("Done!")
+  }
 
   # Create success message that includes the template
   if (any(files_copied)) {
@@ -379,15 +613,112 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
   invisible(NULL)
 }
 
+# Helper function to format file list as tree structure
+format_file_tree <- function(files) {
+  if (length(files) == 0) {
+    return("")
+  }
+
+  # Sort files
+  files <- sort(files)
+
+  # Build a nested list tree structure using a different approach
+  tree <- new.env(parent = emptyenv())
+
+  for (file in files) {
+    parts <- strsplit(file, "/")[[1]]
+    current <- tree
+    for (i in seq_along(parts)) {
+      part <- parts[i]
+      if (!exists(part, envir = current, inherits = FALSE)) {
+        assign(part, new.env(parent = emptyenv()), envir = current)
+      }
+      if (i < length(parts)) {
+        current <- get(part, envir = current)
+      }
+    }
+  }
+
+  # Recursively format the tree
+  format_node <- function(node, prefix = "", name = NULL, is_last = TRUE) {
+    result <- character(0)
+
+    # Print current node if it has a name
+    if (!is.null(name)) {
+      connector <- if (is_last) "\u2514\u2500\u2500 " else "\u251c\u2500\u2500 "
+      # Check if this node has children
+      node_names <- sort(ls(envir = node, all.names = FALSE))
+      is_dir <- length(node_names) > 0
+      display_name <- if (is_dir) paste0(name, "/") else name
+      result <- c(result, paste0(prefix, connector, display_name))
+    }
+
+    # Print children
+    children <- ls(envir = node, all.names = FALSE)
+    if (length(children) > 0) {
+      # Sort children: directories first, then files, alphabetically within each group
+      child_info <- lapply(children, function(child_name) {
+        child_node <- get(child_name, envir = node)
+        is_dir <- length(ls(envir = child_node, all.names = FALSE)) > 0
+        list(name = child_name, is_dir = is_dir)
+      })
+
+      # Separate into directories and files, then sort each
+      dir_info <- Filter(function(x) x$is_dir, child_info)
+      file_info <- Filter(function(x) !x$is_dir, child_info)
+
+      dirs <- if (length(dir_info) > 0) {
+        sort(sapply(dir_info, `[[`, "name"))
+      } else {
+        character(0)
+      }
+
+      files <- if (length(file_info) > 0) {
+        sort(sapply(file_info, `[[`, "name"))
+      } else {
+        character(0)
+      }
+
+      children <- c(dirs, files)
+
+      n_children <- length(children)
+
+      # Update prefix for children
+      if (!is.null(name)) {
+        child_prefix <- paste0(prefix, if (is_last) "    " else "\u2502   ")
+      } else {
+        child_prefix <- prefix
+      }
+
+      for (i in seq_along(children)) {
+        child_name <- children[i]
+        child_node <- get(child_name, envir = node)
+        child_is_last <- (i == n_children)
+        result <- c(
+          result,
+          format_node(child_node, child_prefix, child_name, child_is_last)
+        )
+      }
+    }
+
+    return(result)
+  }
+
+  lines <- format_node(tree)
+  return(paste(lines, collapse = "\n"))
+}
+
 # Helper function to download and extract a template from GitHub
 download_template_from_github <- function(template) {
   # Create a temporary directory
   temp_dir <- tempfile("surveydown_template_")
   dir.create(temp_dir, recursive = TRUE)
 
-  # Download the specific template directory from GitHub
+  # Download the specific template from its individual repository
   repo_url <- paste0(
-    "https://github.com/surveydown-dev/templates/archive/refs/heads/main.zip"
+    "https://github.com/surveydown-dev/template_",
+    template,
+    "/archive/refs/heads/main.zip"
   )
 
   temp_zip <- file.path(temp_dir, "template.zip")
@@ -399,7 +730,7 @@ download_template_from_github <- function(template) {
   utils::unzip(temp_zip, exdir = temp_dir)
 
   # Path to the extracted template folder
-  template_path <- file.path(temp_dir, "templates-main", template)
+  template_path <- file.path(temp_dir, paste0("template_", template, "-main"))
 
   if (!dir.exists(template_path)) {
     stop("Template '", template, "' not found in the repository")
