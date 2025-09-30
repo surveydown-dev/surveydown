@@ -654,8 +654,33 @@ format_file_tree <- function(files) {
     }
 
     # Print children
-    children <- sort(ls(envir = node, all.names = FALSE))
+    children <- ls(envir = node, all.names = FALSE)
     if (length(children) > 0) {
+      # Sort children: directories first, then files, alphabetically within each group
+      child_info <- lapply(children, function(child_name) {
+        child_node <- get(child_name, envir = node)
+        is_dir <- length(ls(envir = child_node, all.names = FALSE)) > 0
+        list(name = child_name, is_dir = is_dir)
+      })
+
+      # Separate into directories and files, then sort each
+      dir_info <- Filter(function(x) x$is_dir, child_info)
+      file_info <- Filter(function(x) !x$is_dir, child_info)
+
+      dirs <- if (length(dir_info) > 0) {
+        sort(sapply(dir_info, `[[`, "name"))
+      } else {
+        character(0)
+      }
+
+      files <- if (length(file_info) > 0) {
+        sort(sapply(file_info, `[[`, "name"))
+      } else {
+        character(0)
+      }
+
+      children <- c(dirs, files)
+
       n_children <- length(children)
 
       # Update prefix for children
