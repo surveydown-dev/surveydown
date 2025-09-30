@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,14 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.13.3" id="surveydown-0133">surveydown 0.13.3<a class="anchor" aria-label="anchor" href="#surveydown-0133"></a></h2>
+<ul><li>Enhanced the <code>numeric</code> question type input logic.</li>
+<li>Added validation to ensure page closing fences (<code>:::</code>) are properly matched in survey.qmd files.</li>
+<li>Added validation to ensure <code><a href="../reference/sd_server.html">sd_server()</a></code> is called as the last statement in the server function.</li>
+<li>Survey templates are now split into individual repos. For details, see the <a href="https://github.com/surveydown-dev" class="external-link">surveydown-dev</a> organization site and search for “template” in Repositories.</li>
+<li>The <code><a href="../reference/sd_create_survey.html">sd_create_survey()</a></code> function now obtains survey templates from these new individual repos. The function syntax remains the same.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.13.2" id="surveydown-0132">surveydown 0.13.2<a class="anchor" aria-label="anchor" href="#surveydown-0132"></a></h2>
 <ul><li>New feature: <code><a href="../reference/sd_stop_if.html">sd_stop_if()</a></code> function to stop the navigate button if certain conditions cannot be met.</li>
