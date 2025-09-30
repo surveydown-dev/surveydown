@@ -488,8 +488,68 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
     recursive = TRUE
   )
 
+  # Check for existing files (excluding .Rproj)
+  existing_files <- character(0)
+  # Normalize template path for substring removal
+  template_path_normalized <- normalizePath(
+    template_path,
+    winslash = "/",
+    mustWork = FALSE
+  )
+  for (file in template_files) {
+    file_normalized <- normalizePath(file, winslash = "/", mustWork = FALSE)
+    # Remove template path prefix to get relative path
+    relative_path <- sub(
+      paste0(
+        "^",
+        gsub("([.|()\\^{}+$*?])", "\\\\\\1", template_path_normalized),
+        "/?"
+      ),
+      "",
+      file_normalized
+    )
+    target_file <- file.path(path, relative_path)
+    file_name <- basename(file)
+
+    # Skip .Rproj files in this check
+    if (!grepl("\\.Rproj$", file_name) && file.exists(target_file)) {
+      existing_files <- c(existing_files, relative_path)
+    }
+  }
+
+  # Ask once if any files will be overwritten
+  overwrite_all <- FALSE
+  if (ask && length(existing_files) > 0) {
+    file_tree <- format_file_tree(existing_files)
+
+    # Display the tree using cat() to preserve formatting
+    cat("The following files already exist:\n\n")
+    cat(file_tree, "\n\n", sep = "")
+
+    # Ask the question separately
+    overwrite_all <- yesno("Overwrite all existing files?")
+    if (!overwrite_all) {
+      stop("Operation aborted by the user.")
+    }
+  }
+
+  # Track if we're overwriting files
+  overwriting_files <- length(existing_files) > 0 && overwrite_all
+  if (overwriting_files) {
+    message("Overwriting existing files...")
+  }
+
   files_copied <- sapply(template_files, function(file) {
-    relative_path <- sub(template_path, "", file)
+    file_normalized <- normalizePath(file, winslash = "/", mustWork = FALSE)
+    relative_path <- sub(
+      paste0(
+        "^",
+        gsub("([.|()\\^{}+$*?])", "\\\\\\1", template_path_normalized),
+        "/?"
+      ),
+      "",
+      file_normalized
+    )
     target_file <- file.path(path, relative_path)
 
     dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
@@ -501,32 +561,38 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
       grepl("\\.Rproj$", file_name) &&
         length(list.files(path, pattern = "\\.Rproj$"))
     ) {
-      warning(
-        "Skipping the .Rproj file since one already exists.",
-        call. = FALSE,
-        immediate. = TRUE
-      )
+      message("Skipping the .Rproj file since one already exists.")
       return(FALSE)
     } else if (file.exists(target_file)) {
-      # For other files, prompt for confirmation if they already exist
-      overwrite <- yesno(paste0(
-        "File '",
-        file_name,
-        "' already exists. Overwrite it"
-      ))
-      if (overwrite) {
-        file.copy(from = file, to = target_file, overwrite = TRUE)
-        message(paste("Overwriting", file_name))
-        return(TRUE)
-      } else {
-        message(paste("Skipping", file_name))
-        return(FALSE)
+      # Overwrite based on the single prompt response
+      success <- file.copy(from = file, to = target_file, overwrite = TRUE)
+      if (!success) {
+        warning(
+          "Failed to overwrite ",
+          file_name,
+          call. = FALSE,
+          immediate. = TRUE
+        )
       }
+      return(success)
     } else {
-      file.copy(from = file, to = target_file, overwrite = FALSE)
-      return(TRUE)
+      success <- file.copy(from = file, to = target_file, overwrite = FALSE)
+      if (!success) {
+        warning(
+          "Failed to copy ",
+          file_name,
+          call. = FALSE,
+          immediate. = TRUE
+        )
+      }
+      return(success)
     }
   })
+
+  # Show "Done!" message after overwriting
+  if (overwriting_files) {
+    message("Done!")
+  }
 
   # Create success message that includes the template
   if (any(files_copied)) {
@@ -547,6 +613,76 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
   invisible(NULL)
 }
 
+# Helper function to format file list as tree structure
+format_file_tree <- function(files) {
+  if (length(files) == 0) {
+    return("")
+  }
+
+  # Sort files
+  files <- sort(files)
+
+  # Build a nested list tree structure using a different approach
+  tree <- new.env(parent = emptyenv())
+
+  for (file in files) {
+    parts <- strsplit(file, "/")[[1]]
+    current <- tree
+    for (i in seq_along(parts)) {
+      part <- parts[i]
+      if (!exists(part, envir = current, inherits = FALSE)) {
+        assign(part, new.env(parent = emptyenv()), envir = current)
+      }
+      if (i < length(parts)) {
+        current <- get(part, envir = current)
+      }
+    }
+  }
+
+  # Recursively format the tree
+  format_node <- function(node, prefix = "", name = NULL, is_last = TRUE) {
+    result <- character(0)
+
+    # Print current node if it has a name
+    if (!is.null(name)) {
+      connector <- if (is_last) "\u2514\u2500\u2500 " else "\u251c\u2500\u2500 "
+      # Check if this node has children
+      node_names <- sort(ls(envir = node, all.names = FALSE))
+      is_dir <- length(node_names) > 0
+      display_name <- if (is_dir) paste0(name, "/") else name
+      result <- c(result, paste0(prefix, connector, display_name))
+    }
+
+    # Print children
+    children <- sort(ls(envir = node, all.names = FALSE))
+    if (length(children) > 0) {
+      n_children <- length(children)
+
+      # Update prefix for children
+      if (!is.null(name)) {
+        child_prefix <- paste0(prefix, if (is_last) "    " else "\u2502   ")
+      } else {
+        child_prefix <- prefix
+      }
+
+      for (i in seq_along(children)) {
+        child_name <- children[i]
+        child_node <- get(child_name, envir = node)
+        child_is_last <- (i == n_children)
+        result <- c(
+          result,
+          format_node(child_node, child_prefix, child_name, child_is_last)
+        )
+      }
+    }
+
+    return(result)
+  }
+
+  lines <- format_node(tree)
+  return(paste(lines, collapse = "\n"))
+}
+
 # Helper function to download and extract a template from GitHub
 download_template_from_github <- function(template) {
   # Create a temporary directory
@@ -555,7 +691,8 @@ download_template_from_github <- function(template) {
 
   # Download the specific template from its individual repository
   repo_url <- paste0(
-    "https://github.com/surveydown-dev/template_", template,
+    "https://github.com/surveydown-dev/template_",
+    template,
     "/archive/refs/heads/main.zip"
   )
 
