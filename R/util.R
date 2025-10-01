@@ -1460,11 +1460,6 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   invisible(NULL)
 }
 
-# Helper function to check if error is GSSAPI-related
-is_gssapi_error <- function(error_msg) {
-  grepl("invalid response to GSSAPI negotiation", error_msg, ignore.case = TRUE)
-}
-
 # Helper function to try database connection with specific gssencmode
 try_db_connection <- function(params, gss_mode) {
   # Build connection arguments
