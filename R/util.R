@@ -7,19 +7,19 @@ markdown_to_html <- function(text) {
 }
 
 # Convert List Names from Markdown to HTML
-list_name_md_to_html <- function(list) {
-  list_names_md <- names(list)
-  list_names_html <- lapply(list_names_md, function(name) {
+choice_html <- function(option) {
+  choice_names_md <- names(option)
+  choice_names_html <- lapply(choice_names_md, function(name) {
     html_name <- markdown_to_html(name)
-    plain_name <- gsub("<[/]?p>|\\n", "", html_name)
-    return(plain_name)
+    clean_name <- gsub("<[/]?p>|\\n", "", html_name)
+    return(clean_name)
   })
-  names(list) <- unlist(list_names_html)
-  return(list)
+  names(option) <- unlist(choice_names_html)
+  return(option)
 }
 
 # Convert option list to choiceNames and choiceValues with HTML support
-option_to_choice_names_values <- function(option) {
+choice_list_html <- function(option) {
   choice_names <- lapply(names(option), function(name) {
     html_name <- markdown_to_html(name)
     # Remove paragraph tags but keep other HTML formatting
@@ -27,7 +27,7 @@ option_to_choice_names_values <- function(option) {
     return(shiny::HTML(clean_name))
   })
   choice_values <- as.list(unname(option))
-  return(list(choiceNames = choice_names, choiceValues = choice_values))
+  return(list(names = choice_names, values = choice_values))
 }
 
 #' Display Package Information on Attach
