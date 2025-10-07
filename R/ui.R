@@ -904,18 +904,22 @@ sd_question <- function(
       ...
     )
   } else if (type == "mc") {
+    choice_list <- option_to_choice_names_values(option)
     output <- shiny::radioButtons(
       inputId = id,
       label = label,
-      choices = option,
+      choiceNames = choice_list$choiceNames,
+      choiceValues = choice_list$choiceValues,
       selected = FALSE,
       ...
     )
   } else if (type == "mc_multiple") {
+    choice_list <- option_to_choice_names_values(option)
     output <- shiny::checkboxGroupInput(
       inputId = id,
       label = label,
-      choices = option,
+      choiceNames = choice_list$choiceNames,
+      choiceValues = choice_list$choiceValues,
       selected = FALSE,
       ...
     )

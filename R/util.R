@@ -18,6 +18,18 @@ list_name_md_to_html <- function(list) {
   return(list)
 }
 
+# Convert option list to choiceNames and choiceValues with HTML support
+option_to_choice_names_values <- function(option) {
+  choice_names <- lapply(names(option), function(name) {
+    html_name <- markdown_to_html(name)
+    # Remove paragraph tags but keep other HTML formatting
+    clean_name <- gsub("<[/]?p>|\\n", "", html_name)
+    return(shiny::HTML(clean_name))
+  })
+  choice_values <- as.list(unname(option))
+  return(list(choiceNames = choice_names, choiceValues = choice_values))
+}
+
 #' Display Package Information on Attach
 #'
 #' This function is called when the package is attached.
