@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 0.13.4
+
+- Bug fix: Now the `"auto"` mode of `sd_db_connect()` will correctly detect if `gssencmode` should be `"prefer"` or `"disable"`, based on the actual connection status.
+- Improvement: Now `mc` and `mc_multiple` question types in `sd_question()` will have their options HTML and markdown compatible.
+
 # surveydown 0.13.3
 
 - Enhanced the `numeric` question type input logic.

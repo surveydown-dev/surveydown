@@ -263,12 +263,10 @@ sd_db_connect <- function(
             return(list(db = pool, table = params$table))
         },
         error = function(e) {
-            error_msg <- as.character(e$message)
-
-            # Only try fallback if we're in "auto" mode and it's a GSSAPI error
-            if (is_gssapi_error(error_msg) && gssencmode == "auto") {
+            # Try fallback if we're in "auto" mode
+            if (gssencmode == "auto") {
                 message(
-                    "GSSAPI negotiation failed, retrying with gssencmode='disable'..."
+                    "Initial connection failed, retrying with gssencmode='disable'..."
                 )
 
                 tryCatch(
