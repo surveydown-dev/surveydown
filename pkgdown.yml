@@ -2,7 +2,7 @@ pandoc: 3.1.11
 pkgdown: 2.1.3
 pkgdown_sha: ~
 articles: {}
-last_built: 2025-09-30T11:04Z
+last_built: 2025-10-11T21:09Z
 urls:
   reference: https://pkg.surveydown.org/reference
   article: https://pkg.surveydown.org/articles
