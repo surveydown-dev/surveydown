@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.13.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,10 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
 </div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.14.0" id="surveydown-0140">surveydown 0.14.0<a class="anchor" aria-label="anchor" href="#surveydown-0140"></a></h2>
+<ul><li>New feature: shorthand page syntax supported. Now we recommend using <code>--- page_id</code> to start a new page, and there is no need to end the page. The previous syntax of starting a page with <code>::: {.sd_page id=page_id}</code> and ending with <code>:::</code> still works.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.13.4" id="surveydown-0134">surveydown 0.13.4<a class="anchor" aria-label="anchor" href="#surveydown-0134"></a></h2>
 <ul><li>Bug fix: Now the <code>"auto"</code> mode of <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code> will correctly detect if <code>gssencmode</code> should be <code>"prefer"</code> or <code>"disable"</code>, based on the actual connection status.</li>
@@ -127,7 +131,7 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.10.1" id="surveydown-0101">surveydown 0.10.1<a class="anchor" aria-label="anchor" href="#surveydown-0101"></a></h2><p class="text-muted">CRAN release: 2025-04-08</p>
 <ul><li>
-<code><a href="../reference/sd_create_survey.html">sd_create_survey()</a></code> now accepts two arguments. The <code>template</code> argument is by default <code>"plain_template"</code>, which creates a default plain template of surveydown. It also accepts a list of templates that we created in the <a href="https://github.com/surveydown-dev/templates/tree/main" class="external-link">templates repo</a>. The <code>path</code> argument is unchanged. It defines the relative path of the template location.</li>
+<code><a href="../reference/sd_create_survey.html">sd_create_survey()</a></code> now accepts two arguments. The <code>template</code> argument is by default <code>"plain_template"</code>, which creates a default plain template of surveydown. It also accepts a list of templates. On our <a href="https://github.com/surveydown-dev" class="external-link">surveydown-dev organization</a> page, there are 14 repos starting with <code>template_</code>, each serving as a survey template. The <code>path</code> argument is unchanged. It defines the relative path of the template location.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.10.0" id="surveydown-0100">surveydown 0.10.0<a class="anchor" aria-label="anchor" href="#surveydown-0100"></a></h2>
@@ -181,7 +185,7 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.2" id="surveydown-072">surveydown 0.7.2<a class="anchor" aria-label="anchor" href="#surveydown-072"></a></h2><p class="text-muted">CRAN release: 2024-12-13</p>
 <ul><li>Bug fix: The <code>mc_multiple</code> question type could not resume its UI if multiple options are selected. Now it’s solved.</li>
-<li>New feature: a new <code><a href="../reference/sd_question_custom.html">sd_question_custom()</a></code> function is created for custom question definition. See the <a href="https://github.com/surveydown-dev/templates/tree/main/custom_leaflet_map" class="external-link"><code>leaflet-map</code></a> and <a href="https://github.com/surveydown-dev/templates/tree/main/custom_plotly_chart" class="external-link"><code>plotly</code></a> template surveys for more details.</li>
+<li>New feature: a new <code><a href="../reference/sd_question_custom.html">sd_question_custom()</a></code> function is created for custom question definition. See the <a href="https://github.com/surveydown-dev/template_custom_leaflet_map" class="external-link"><code>leaflet-map</code></a> and <a href="https://github.com/surveydown-dev/template_custom_plotly_chart" class="external-link"><code>plotly</code></a> template surveys for more details.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.7.1" id="surveydown-071">surveydown 0.7.1<a class="anchor" aria-label="anchor" href="#surveydown-071"></a></h2>
