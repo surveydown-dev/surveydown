@@ -6,15 +6,17 @@
 <!-- badges: start -->
 
 [![CRAN
-status](https://www.r-pkg.org/badges/version/surveydown)](https://CRAN.R-project.org/package=surveydown)
+status](https://www.r-pkg.org/badges/version/surveydown)](https://cran.r-project.org/package=surveydown)
 [![metacran
 downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cran.r-project.org/package=surveydown)
 [![GitHub
 stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=social)](https://github.com/surveydown-dev/surveydown)
 <!-- badges: end -->
 
+``` markdown
 > [!NOTE]
 > Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
+```
 
 ## What is surveydown?
 
@@ -81,7 +83,7 @@ the post is now quite outdated with what ultimately became surveydown.
 
 You need both:
 
-- Install [R](https://CRAN.R-project.org/)
+- Install [R](https://cran.r-project.org/)
 - Install [Quarto](https://quarto.org/)
 
 We also recommend working with an IDE that has good support for R,

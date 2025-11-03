@@ -1,5 +1,9 @@
 # surveydown (development version)
 
+# surveydown 0.14.0
+
+- New feature: shorthand page syntax supported. Now we recommend using `--- page_id` to start a new page, and there is no need to end the page. The previous syntax of starting a page with `::: {.sd_page id=page_id}` and ending with `:::` still works.
+
 # surveydown 0.13.4
 
 - Bug fix: Now the `"auto"` mode of `sd_db_connect()` will correctly detect if `gssencmode` should be `"prefer"` or `"disable"`, based on the actual connection status.
@@ -90,7 +94,7 @@
 
 # surveydown 0.10.1
 
-- `sd_create_survey()` now accepts two arguments. The `template` argument is by default `"plain_template"`, which creates a default plain template of surveydown. It also accepts a list of templates that we created in the [templates repo](https://github.com/surveydown-dev/templates/tree/main). The `path` argument is unchanged. It defines the relative path of the template location.
+- `sd_create_survey()` now accepts two arguments. The `template` argument is by default `"plain_template"`, which creates a default plain template of surveydown. It also accepts a list of templates. On our [surveydown-dev organization](https://github.com/surveydown-dev) page, there are 14 repos starting with `template_`, each serving as a survey template. The `path` argument is unchanged. It defines the relative path of the template location.
 
 # surveydown 0.10.0
 
@@ -142,7 +146,7 @@
 # surveydown 0.7.2
 
 - Bug fix: The `mc_multiple` question type could not resume its UI if multiple options are selected. Now it's solved.
-- New feature: a new `sd_question_custom()` function is created for custom question definition. See the [`leaflet-map`](https://github.com/surveydown-dev/templates/tree/main/custom_leaflet_map) and [`plotly`](https://github.com/surveydown-dev/templates/tree/main/custom_plotly_chart) template surveys for more details.
+- New feature: a new `sd_question_custom()` function is created for custom question definition. See the [`leaflet-map`](https://github.com/surveydown-dev/template_custom_leaflet_map) and [`plotly`](https://github.com/surveydown-dev/template_custom_plotly_chart) template surveys for more details.
 
 # surveydown 0.7.1
 
