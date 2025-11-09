@@ -1,0 +1,257 @@
+## surveydown
+
+``` markdown
+> [!NOTE]
+> Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
+```
+
+## Overview
+
+[![Watch the surveydown
+video](https://img.youtube.com/vi/VwoeFKNvN5k/maxresdefault.jpg)](https://www.youtube.com/watch?v=VwoeFKNvN5k)
+
+## What is surveydown?
+
+**surveydown** is an open-source, markdown-based platform for
+programmable and reproducible Surveys using
+[R](https://www.r-project.org/), [Quarto](https://quarto.org/),
+[Shiny](https://shiny.posit.co/), and PostgreSQL databases like
+[Supabase](https://supabase.com/).
+
+![image showing the three technologies used in the surveydown platform
+along with their logos: quarto (for designing surveys), shiny (for
+rendering the survey), and supabase (for storing
+data)](reference/figures/technologies.svg)
+
+  
+
+Here’s how it works:
+
+1.  Design your survey as a [Quarto](https://quarto.org/) document using
+    markdown and R code.
+2.  Render your survey into a [shiny](https://shiny.posit.co/) app that
+    can be hosted online and sent to respondents.
+3.  Store survey responses in a PostgreSQL database - we recommend
+    [Supabase](https://supabase.com/) as a free, secure, and easy to use
+    option.
+
+The {surveydown} R package provides functions to bring this all
+together.
+
+**See the [complete documentation](https://surveydown.org) to get
+started making your own surveydown survey!**
+
+## Why surveydown?
+
+Most survey platforms (e.g., Google forms, Qualtrics, etc.) use graphic
+interfaces or spreadsheets to define survey content, making version
+control, collaboration, and reproducibility difficult or impossible. The
+surveydown package was designed to address these problems. As an
+open-source, markdown-based platform, all survey content is defined
+using **plain text** (markdown and R code) in two files:
+
+- `survey.qmd`: A Quarto document that contains the survey content
+  (pages, questions, etc).
+- `app.R`: An R script defining a shiny app that contains global
+  settings (libraries, database configuration, etc.) and server
+  configuration options (e.g., conditional skipping / display, etc.).
+
+This approach makes your survey easy to reproduce, share, and version
+control with common tools like Git. And since all survey data is stored
+in a PostgreSQL database, you have total control over where your survey
+data lives. We provide direct support for
+[Supabase](https://supabase.com/) as a free, secure, and easy to use
+option.
+
+In case you’re interested in the background behind the project, this
+[blog post](https://www.jhelvy.com/blog/2023-04-06-markdown-surveys/)
+provides something of an origin story. Note that the design discussed in
+the post is now quite outdated with what ultimately became surveydown.
+
+## Installation
+
+### Install R & Quarto
+
+You need both:
+
+- Install [R](https://cran.r-project.org/)
+- Install [Quarto](https://quarto.org/)
+
+We also recommend working with an IDE that has good support for R,
+Quarto, and Shiny.
+
+[RStudio](https://posit.co/products/open-source/rstudio/) is great, and
+we also like [VSCode](https://github.com/microsoft/vscode) and
+[Positron](https://github.com/posit-dev/positron).
+
+### Install the {surveydown} R package
+
+You can install {surveydown} from CRAN in your R console:
+
+``` r
+install.packages("surveydown")
+```
+
+or you can install the development version from
+[GitHub](https://github.com/surveydown-dev/surveydown):
+
+``` r
+# install.packages("pak")
+pak::pak('surveydown-dev/surveydown')
+```
+
+Load the package with:
+
+``` r
+library(surveydown)
+```
+
+You can also check which version you have installed:
+
+``` r
+surveydown::sd_version()
+```
+
+## Roadmap
+
+See our [todo](https://github.com/surveydown-dev/todo) repo for a
+running list of things we’re working on / have already added to the
+project.
+
+## License
+
+See the
+[License](https://github.com/surveydown-dev/surveydown/blob/master/LICENSE.md).
+
+## Publication
+
+An associated paper in *PLOS One* about this package is available at
+<https://doi.org/10.1371/journal.pone.0331002>
+
+## Citation
+
+If you use this package in a publication, please cite the *PLOS One*
+article associated with it! You can get the citation by typing
+`citation("surveydown")` into R:
+
+``` r
+citation("surveydown")
+#> To cite surveydown in publications use:
+#> 
+#>   Hu P, Bunea B, Helveston J (2025). "surveydown: An open-source,
+#>   markdown-based platform for programmable and reproducible surveys."
+#>   _PLOS One_, *20*(8). doi:10.1371/journal.pone.0331002
+#>   <https://doi.org/10.1371/journal.pone.0331002>.
+#> 
+#> A BibTeX entry for LaTeX users is
+#> 
+#>   @Article{,
+#>     title = {surveydown: An open-source, markdown-based platform for programmable and reproducible surveys},
+#>     author = {Pingfan Hu and Bogdan Bunea and John Paul Helveston},
+#>     journal = {PLOS One},
+#>     year = {2025},
+#>     volume = {20},
+#>     number = {8},
+#>     doi = {10.1371/journal.pone.0331002},
+#>   }
+```
+
+## Funding
+
+This project was partially supported by a grant from the [Alfred P.
+Sloan Foundation](https://sloan.org/), Grant Number G-2023-20976 awarded
+to PI John Paul Helveston.
+
+# Package index
+
+## Survey Data
+
+- [`sd_db_config()`](https://pkg.surveydown.org/reference/sd_db_config.md)
+  : Configure database settings
+- [`sd_db_connect()`](https://pkg.surveydown.org/reference/sd_db_connect.md)
+  : Connect to database
+- [`sd_get_data()`](https://pkg.surveydown.org/reference/sd_get_data.md)
+  : Fetch data from a database table with automatic reactivity detection
+
+## Control Logic
+
+- [`sd_show_if()`](https://pkg.surveydown.org/reference/sd_show_if.md) :
+  Define show conditions for survey questions and pages
+- [`sd_skip_if()`](https://pkg.surveydown.org/reference/sd_skip_if.md) :
+  Define skip conditions for survey pages
+- [`sd_stop_if()`](https://pkg.surveydown.org/reference/sd_stop_if.md) :
+  Define stop conditions for survey questions
+
+## Server
+
+- [`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md) :
+  Server logic for a surveydown survey
+- [`sd_store_value()`](https://pkg.surveydown.org/reference/sd_store_value.md)
+  : Store a value in the survey data
+- [`sd_copy_value()`](https://pkg.surveydown.org/reference/sd_copy_value.md)
+  : Create a copy of a value
+- [`sd_reactive()`](https://pkg.surveydown.org/reference/sd_reactive.md)
+  : Create a reactive value that is also stored in survey data
+- [`sd_get_url_pars()`](https://pkg.surveydown.org/reference/sd_get_url_pars.md)
+  : Get URL Parameters in a 'shiny' Application
+- [`sd_is_answered()`](https://pkg.surveydown.org/reference/sd_is_answered.md)
+  : Check if a question is answered
+
+## Survey UI
+
+- [`sd_question()`](https://pkg.surveydown.org/reference/sd_question.md)
+  : Create a survey question
+- [`sd_question_custom()`](https://pkg.surveydown.org/reference/sd_question_custom.md)
+  : Create a Custom Question with a Shiny Widget
+- [`sd_next()`](https://pkg.surveydown.org/reference/sd_next.md) :
+  Create a 'Next' Button for Page Navigation
+- [`sd_output()`](https://pkg.surveydown.org/reference/sd_output.md) :
+  Output Function for Displaying reactive objects and values
+- [`sd_close()`](https://pkg.surveydown.org/reference/sd_close.md) :
+  Create a 'Close' Button to Exit the Survey
+- [`sd_redirect()`](https://pkg.surveydown.org/reference/sd_redirect.md)
+  : Create a Redirect Element for 'shiny' Applications
+- [`sd_completion_code()`](https://pkg.surveydown.org/reference/sd_completion_code.md)
+  : Generate a Random Completion Code
+- [`sd_display_question()`](https://pkg.surveydown.org/reference/sd_display_question.md)
+  : Create a placeholder for a reactive survey question
+- [`sd_display_value()`](https://pkg.surveydown.org/reference/sd_display_value.md)
+  : Display the value of a survey question
+- [`sd_ui()`](https://pkg.surveydown.org/reference/sd_ui.md) : Create
+  the UI for a surveydown survey
+
+## Utilities
+
+- [`sd_create_survey()`](https://pkg.surveydown.org/reference/sd_create_survey.md)
+  : Create a new survey template
+- [`sd_create_translations()`](https://pkg.surveydown.org/reference/sd_create_translations.md)
+  : Create a translations template file
+- [`sd_include_folder()`](https://pkg.surveydown.org/reference/sd_include_folder.md)
+  : Include a folder to the 'shiny' resource path
+- [`sd_setup()`](https://pkg.surveydown.org/reference/sd_setup.md) :
+  Required Set Up Function
+- [`sd_add_page()`](https://pkg.surveydown.org/reference/sd_add_page.md)
+  : Add a Page Template to the Current Document
+- [`sd_add_question()`](https://pkg.surveydown.org/reference/sd_add_question.md)
+  : Add a Question Template to the Current Document
+- [`sd_page_gadget()`](https://pkg.surveydown.org/reference/sd_page_gadget.md)
+  : Show a Shiny gadget for entering a page ID
+- [`sd_question_gadget()`](https://pkg.surveydown.org/reference/sd_question_gadget.md)
+  : Show a Shiny gadget for selecting a question type
+
+## Version Control
+
+- [`sd_version()`](https://pkg.surveydown.org/reference/sd_version.md) :
+  Check Surveydown Version
+
+## Depreciated
+
+- [`sd_dashboard()`](https://pkg.surveydown.org/reference/sd_dashboard.md)
+  : Depreciated Survey Dashboard
+- [`sd_database()`](https://pkg.surveydown.org/reference/sd_database.md)
+  : Connect to a 'PostgreSQL' Database with Automatic Cleanup
+- [`sd_set_password()`](https://pkg.surveydown.org/reference/sd_set_password.md)
+  : Set password for surveydown survey
+- [`sd_skip_forward()`](https://pkg.surveydown.org/reference/sd_skip_forward.md)
+  : Define forward skip conditions for survey pages (Deprecated)
+

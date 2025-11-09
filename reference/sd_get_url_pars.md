@@ -1,0 +1,72 @@
+# Get URL Parameters in a 'shiny' Application
+
+This function retrieves URL parameters from the current 'shiny' session.
+It must be called from within a 'shiny' reactive context.
+
+## Usage
+
+``` r
+sd_get_url_pars(...)
+```
+
+## Arguments
+
+- ...:
+
+  Optional. Names of specific URL parameters to retrieve. If none are
+  specified, all URL parameters are returned.
+
+## Value
+
+A reactive expression that returns a list of URL parameters.
+
+## Examples
+
+``` r
+if (interactive()) {
+  library(surveydown)
+
+  # Get path to example survey file
+  survey_path <- system.file("examples", "sd_redirect.qmd",
+                             package = "surveydown")
+
+  # Copy to a temporary directory
+  temp_dir <- tempdir()
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  orig_dir <- getwd()
+  setwd(temp_dir)
+
+  # Define a minimal server
+  server <- function(input, output, session) {
+
+    # Reactive expression that generates a url with an id variable
+    # parsed from the url
+    url_redirect <- reactive({
+      params <- sd_get_url_pars()
+      id <- params["id"]
+      return(paste0("https://www.google.com?id=", id))
+    })
+
+    # Create the redirect button
+    sd_redirect(
+      id = "redirect_url_pars",
+      url = url_redirect(),
+      button = TRUE,
+      label = "Redirect"
+    )
+
+    sd_skip_if(
+      input$screening_question == "end_1" ~ "end_page_1",
+      input$screening_question == "end_1" ~ "end_page_2",
+    )
+
+    sd_server()
+  }
+
+  # Run the app
+  shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Clean up
+  setwd(orig_dir)
+}
+```
