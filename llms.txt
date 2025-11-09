@@ -1,11 +1,10 @@
 ## surveydown
 
-``` markdown
-> [!NOTE]
-> Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
-```
+> \[!NOTE\] Visit our main site at
+> [surveydown.org](https://surveydown.org) for the complete
+> documentation and more information about surveydown.
 
-## Overview
+## Intro Video
 
 [![Watch the surveydown
 video](https://img.youtube.com/vi/VwoeFKNvN5k/maxresdefault.jpg)](https://www.youtube.com/watch?v=VwoeFKNvN5k)
