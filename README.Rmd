@@ -24,10 +24,12 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://cran.r-project
 [![GitHub stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=social)](https://github.com/surveydown-dev/surveydown)
 <!-- badges: end -->
 
+```{markdown}
 > [!NOTE]
 > Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
+```
 
-## Intro Video
+## Overview
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=VwoeFKNvN5k">

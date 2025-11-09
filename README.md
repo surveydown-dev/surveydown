@@ -13,11 +13,12 @@ downloads](https://cranlogs.r-pkg.org/badges/grand-total/surveydown)](https://cr
 stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=social)](https://github.com/surveydown-dev/surveydown)
 <!-- badges: end -->
 
-> \[!NOTE\] Visit our main site at
-> [surveydown.org](https://surveydown.org) for the complete
-> documentation and more information about surveydown.
+``` markdown
+> [!NOTE]
+> Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
+```
 
-## Intro Video
+## Overview
 
 <div align="center">
 
