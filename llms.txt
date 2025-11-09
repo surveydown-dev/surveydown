@@ -4,11 +4,6 @@
 > [surveydown.org](https://surveydown.org) for the complete
 > documentation and more information about surveydown.
 
-## Intro Video
-
-[![Watch the surveydown
-video](https://img.youtube.com/vi/VwoeFKNvN5k/maxresdefault.jpg)](https://www.youtube.com/watch?v=VwoeFKNvN5k)
-
 ## What is surveydown?
 
 **surveydown** is an open-source, markdown-based platform for
