@@ -16,6 +16,16 @@ stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=socia
 > [!NOTE]
 > Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
 
+## Intro Video
+
+<div align="center">
+
+<a href="https://www.youtube.com/watch?v=VwoeFKNvN5k">
+<img src="https://img.youtube.com/vi/VwoeFKNvN5k/maxresdefault.jpg" alt="Watch the surveydown video" width="600"/>
+</a>
+
+</div>
+
 ## What is surveydown?
 
 **surveydown** is an open-source, markdown-based platform for
