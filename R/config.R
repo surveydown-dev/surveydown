@@ -283,14 +283,53 @@ set_translations <- function(paths, language) {
   yaml::write_yaml(translations, paths$target_transl)
 }
 
+# Helper function to create sectioned YAML output with organized comments
+create_sectioned_yaml <- function(settings, general_params, theme_params, survey_params) {
+  # Build YAML string with sections
+  yaml_string <- ""
+
+  # General Settings section (may be NULL if not using)
+  if (!is.null(general_params) && length(general_params) > 0) {
+    yaml_string <- paste0(yaml_string, "# General Settings (Quarto-defined)\n")
+    general_settings <- settings[general_params]
+    general_settings <- general_settings[!sapply(general_settings, is.null)]
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(general_settings))
+  }
+
+  # Theme Settings section
+  if (!is.null(theme_params) && length(theme_params) > 0) {
+    if (yaml_string != "") {
+      yaml_string <- paste0(yaml_string, "\n")
+    }
+    yaml_string <- paste0(yaml_string, "# Theme Settings\n")
+    theme_settings <- settings[theme_params]
+    theme_settings <- theme_settings[!sapply(theme_settings, is.null)]
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(theme_settings))
+  }
+
+  # Survey Settings section
+  if (!is.null(survey_params) && length(survey_params) > 0) {
+    if (yaml_string != "") {
+      yaml_string <- paste0(yaml_string, "\n")
+    }
+    yaml_string <- paste0(yaml_string, "# Survey Settings\n")
+    survey_settings <- settings[survey_params]
+    survey_settings <- survey_settings[!sapply(survey_settings, is.null)]
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(survey_settings))
+  }
+
+  return(yaml_string)
+}
+
 create_settings_yaml <- function(paths, metadata) {
   # Extract server configuration from survey.qmd YAML metadata during UI rendering
   if (file.exists("survey.qmd")) {
     tryCatch(
       {
-        # Define all sd_server parameters that can be configured via YAML
-        # Note: language is excluded to avoid breaking Quarto rendering
-        server_params <- c(
+        # Define parameter categories
+        # Note: format, echo, warning are now implicit via Lua filter
+        theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
+        survey_params <- c(
           "use_cookies",
           "auto_scroll",
           "rate_survey",
@@ -303,8 +342,18 @@ create_settings_yaml <- function(paths, metadata) {
           "required_questions"
         )
 
-        # Define defaults for all 10 parameters
+        # Combine all parameters
+        all_params <- c(theme_params, survey_params)
+
+        # Define defaults for all parameters
         default_settings <- list(
+          # Theme Settings
+          theme = "default",
+          barposition = "top",
+          barcolor = NULL,
+          footer_left = "",
+          footer_right = "",
+          # Survey Settings
           use_cookies = TRUE,
           auto_scroll = FALSE,
           rate_survey = FALSE,
@@ -319,9 +368,19 @@ create_settings_yaml <- function(paths, metadata) {
 
         # Extract YAML values using helper functions (priority: YAML > defaults)
         settings <- list()
-        for (param in server_params) {
+        for (param in all_params) {
           # Use specific extraction functions for parameters that need special handling
-          if (param == "use_cookies") {
+          if (param == "theme") {
+            value <- get_theme(metadata)
+          } else if (param == "barposition") {
+            value <- get_barposition(metadata)
+          } else if (param == "barcolor") {
+            value <- get_barcolor(metadata)
+          } else if (param == "footer_left") {
+            value <- get_footer_left(metadata)
+          } else if (param == "footer_right") {
+            value <- get_footer_right(metadata)
+          } else if (param == "use_cookies") {
             value <- get_use_cookies(metadata)
           } else if (param == "auto_scroll") {
             value <- get_auto_scroll(metadata)
@@ -353,50 +412,61 @@ create_settings_yaml <- function(paths, metadata) {
           }
         }
 
-        # Remove NULL values to avoid YAML issues
-        settings <- settings[!sapply(settings, is.null)]
-
-        # Write settings file with YAML header values and defaults
-        yaml_content <- yaml::as.yaml(settings)
+        # Write settings file with sectioned YAML (no general_params anymore)
+        yaml_content <- create_sectioned_yaml(settings, NULL, theme_params, survey_params)
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-        comment_line2 <- "# Server settings with YAML header values and defaults\n"
-        full_content <- paste0(comment_line1, comment_line2, yaml_content)
+        comment_line2 <- "# All survey configuration settings with final resolved values\n"
+        comment_line3 <- "# (includes YAML header values, function parameters, and defaults)\n"
+        comment_line4 <- "# Note: format, echo, warning are implicit via Lua filter\n\n"
+        full_content <- paste0(comment_line1, comment_line2, comment_line3, comment_line4, yaml_content)
         writeLines(full_content, con = paths$target_settings)
       },
       error = function(e) {
         warning("Could not extract settings from survey.qmd: ", e$message)
         # Create settings file with defaults on error
-        default_settings <- list(
-          use_cookies = TRUE,
-          auto_scroll = FALSE,
-          rate_survey = FALSE,
-          all_questions_required = FALSE,
-          highlight_unanswered = TRUE,
-          highlight_color = "gray",
-          capture_metadata = TRUE
+        theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
+        survey_params <- c(
+          "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
+          "start_page", "system_language", "highlight_unanswered", "highlight_color",
+          "capture_metadata", "required_questions"
         )
-        yaml_content <- yaml::as.yaml(default_settings)
+        default_settings <- list(
+          theme = "default", barposition = "top", barcolor = NULL,
+          footer_left = "", footer_right = "",
+          use_cookies = TRUE, auto_scroll = FALSE, rate_survey = FALSE,
+          all_questions_required = FALSE, start_page = NULL, system_language = "en",
+          highlight_unanswered = TRUE, highlight_color = "gray", capture_metadata = TRUE,
+          required_questions = NULL
+        )
+        yaml_content <- create_sectioned_yaml(default_settings, NULL, theme_params, survey_params)
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-        comment_line2 <- "# Server settings with defaults (error reading YAML header)\n"
-        full_content <- paste0(comment_line1, comment_line2, yaml_content)
+        comment_line2 <- "# All survey configuration settings with defaults (error reading YAML header)\n"
+        comment_line3 <- "# Note: format, echo, warning are implicit via Lua filter\n\n"
+        full_content <- paste0(comment_line1, comment_line2, comment_line3, yaml_content)
         writeLines(full_content, con = paths$target_settings)
       }
     )
   } else {
     # Create settings file with defaults if survey.qmd doesn't exist
-    default_settings <- list(
-      use_cookies = TRUE,
-      auto_scroll = FALSE,
-      rate_survey = FALSE,
-      all_questions_required = FALSE,
-      highlight_unanswered = TRUE,
-      highlight_color = "gray",
-      capture_metadata = TRUE
+    theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
+    survey_params <- c(
+      "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
+      "start_page", "system_language", "highlight_unanswered", "highlight_color",
+      "capture_metadata", "required_questions"
     )
-    yaml_content <- yaml::as.yaml(default_settings)
+    default_settings <- list(
+      theme = "default", barposition = "top", barcolor = NULL,
+      footer_left = "", footer_right = "",
+      use_cookies = TRUE, auto_scroll = FALSE, rate_survey = FALSE,
+      all_questions_required = FALSE, start_page = NULL, system_language = "en",
+      highlight_unanswered = TRUE, highlight_color = "gray", capture_metadata = TRUE,
+      required_questions = NULL
+    )
+    yaml_content <- create_sectioned_yaml(default_settings, NULL, theme_params, survey_params)
     comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-    comment_line2 <- "# Server settings with defaults (no survey.qmd file found)\n"
-    full_content <- paste0(comment_line1, comment_line2, yaml_content)
+    comment_line2 <- "# All survey configuration settings with defaults (no survey.qmd file found)\n"
+    comment_line3 <- "# Note: format, echo, warning are implicit via Lua filter\n\n"
+    full_content <- paste0(comment_line1, comment_line2, comment_line3, yaml_content)
     writeLines(full_content, con = paths$target_settings)
   }
 }
@@ -407,11 +477,19 @@ read_settings_yaml <- function() {
 
   # Define default settings to return if reading fails
   defaults <- list(
+    # Theme Settings
+    theme = "default",
+    barposition = "top",
+    barcolor = NULL,
+    footer_left = "",
+    footer_right = "",
+    # Survey Settings
     use_cookies = TRUE,
     auto_scroll = FALSE,
     rate_survey = FALSE,
     all_questions_required = FALSE,
     start_page = NULL,
+    system_language = "en",
     highlight_unanswered = TRUE,
     highlight_color = "gray",
     capture_metadata = TRUE,
@@ -450,6 +528,11 @@ read_settings_yaml <- function() {
   # Normalize dash-separated keys to underscore format for compatibility
   # Define the expected parameter names (underscore format)
   expected_params <- c(
+    "theme",
+    "barposition",
+    "barcolor",
+    "footer_left",
+    "footer_right",
     "use_cookies",
     "auto_scroll",
     "rate_survey",
@@ -487,9 +570,24 @@ read_settings_yaml <- function() {
 update_settings_yaml <- function(resolved_params) {
   paths <- get_paths()
 
-  # Define sd_server parameter defaults (from server.R)
-  # Note: language is excluded to avoid breaking Quarto rendering
+  # Define parameter categories
+  # Note: format, echo, warning are now implicit via Lua filter
+  theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
+  survey_params <- c(
+    "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
+    "start_page", "system_language", "highlight_unanswered", "highlight_color",
+    "capture_metadata", "required_questions"
+  )
+
+  # Define defaults for all parameters
   default_params <- list(
+    # Theme Settings
+    theme = "default",
+    barposition = "top",
+    barcolor = NULL,
+    footer_left = "",
+    footer_right = "",
+    # Survey Settings
     use_cookies = TRUE, # Note: this becomes TRUE when NULL is passed to sd_server
     auto_scroll = FALSE,
     rate_survey = FALSE,
@@ -518,18 +616,17 @@ update_settings_yaml <- function(resolved_params) {
     final_settings$use_cookies <- TRUE
   }
 
-  # Remove NULL values to avoid YAML issues
-  final_settings <- final_settings[!sapply(final_settings, is.null)]
-
-  # Create YAML content
-  yaml_content <- yaml::as.yaml(final_settings)
+  # Create YAML content with sections (no general_params)
+  yaml_content <- create_sectioned_yaml(final_settings, NULL, theme_params, survey_params)
   comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-  comment_line2 <- "# Server settings with final resolved parameters\n"
+  comment_line2 <- "# All survey configuration settings with final resolved values\n"
   comment_line3 <- "# (includes sd_server() parameters, YAML header, and defaults)\n"
+  comment_line4 <- "# Note: format, echo, warning are implicit via Lua filter\n\n"
   full_content <- paste0(
     comment_line1,
     comment_line2,
     comment_line3,
+    comment_line4,
     yaml_content
   )
 

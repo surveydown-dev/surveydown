@@ -154,6 +154,22 @@ get_barposition <- function(metadata) {
   return(barposition)
 }
 
+get_footer_left <- function(metadata) {
+  footer_left <- get_yaml_value(metadata, "footer_left")
+  if (is.null(footer_left)) {
+    return("")
+  }
+  return(footer_left)
+}
+
+get_footer_right <- function(metadata) {
+  footer_right <- get_yaml_value(metadata, "footer_right")
+  if (is.null(footer_right)) {
+    return("")
+  }
+  return(footer_right)
+}
+
 process_links <- function(text) {
   if (is.null(text)) {
     return("")
@@ -238,16 +254,25 @@ get_footer <- function(metadata) {
 
 # Helper function to get YAML values supporting both underscore and dash formats
 get_yaml_value <- function(metadata, key) {
+  # Safety check: ensure metadata structure exists
+  if (is.null(metadata) || is.null(metadata$formats) ||
+      is.null(metadata$formats$html) || is.null(metadata$formats$html$metadata)) {
+    return(NULL)
+  }
+
   yaml_data <- metadata$formats$html$metadata
+
   # Try underscore version first
   if (!is.null(yaml_data[[key]])) {
     return(yaml_data[[key]])
   }
+
   # Try dash version
   dash_key <- gsub("_", "-", key)
   if (!is.null(yaml_data[[dash_key]])) {
     return(yaml_data[[dash_key]])
   }
+
   return(NULL)
 }
 
@@ -430,12 +455,31 @@ render_survey_qmd <- function(paths, default_theme = TRUE) {
     overwrite = TRUE
   )
 
+  # Read YAML front matter to check for existing execute options
+  yaml_meta <- rmarkdown::yaml_front_matter(paths$qmd)
+
+  # Set implicit defaults for echo and warning if not explicitly set by user
+  render_metadata <- list(default_theme = default_theme)
+
+  # Check if execute options need to be set
+  if (is.null(yaml_meta$echo) && (is.null(yaml_meta$execute) || is.null(yaml_meta$execute$echo))) {
+    if (is.null(render_metadata$execute)) {
+      render_metadata$execute <- list()
+    }
+    render_metadata$execute$echo <- FALSE
+  }
+
+  if (is.null(yaml_meta$warning) && (is.null(yaml_meta$execute) || is.null(yaml_meta$execute$warning))) {
+    if (is.null(render_metadata$execute)) {
+      render_metadata$execute <- list()
+    }
+    render_metadata$execute$warning <- FALSE
+  }
+
   # Render the survey.qmd file
   quarto::quarto_render(
     input = paths$qmd,
-    metadata = list(
-      default_theme = default_theme
-    ),
+    metadata = render_metadata,
     pandoc_args = c(
       "--embed-resources",
       "--lua-filter=surveydown.lua"
