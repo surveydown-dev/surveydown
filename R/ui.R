@@ -1693,6 +1693,12 @@ make_question_container <- function(id, object, width) {
 #'
 #' @export
 sd_next <- function(next_page = NULL, label = NULL) {
+  # Deprecation warning
+  .Deprecated(
+    new = "sd_nav",
+    msg = "sd_next() is deprecated and will be removed in a future version. Please use sd_nav() instead, which supports both previous and next navigation."
+  )
+
   # Get translations
   translations <- get_translations()$translations
 
@@ -1720,6 +1726,117 @@ sd_next <- function(next_page = NULL, label = NULL) {
 # Generate Next Button ID
 make_next_button_id <- function(page_id) {
   return(paste0(page_id, "_next"))
+}
+
+# Generate Previous Button ID
+make_prev_button_id <- function(page_id) {
+  return(paste0(page_id, "_prev"))
+}
+
+#' Create Navigation Buttons for Survey Pages
+#'
+#' This function creates both 'Previous' and 'Next' buttons for navigating between
+#' pages in a surveydown survey. The buttons are positioned on the left (Previous)
+#' and right (Next) of the page. The Previous button allows users to return to
+#' previously visited pages, while the Next button maintains the standard forward
+#' navigation behavior.
+#'
+#' @param next_page Character string. The ID of the next page to navigate to when
+#'   the Next button is clicked. If `NULL`, the survey will navigate to the default
+#'   next page in sequence.
+#' @param prev_label Character string. The label for the 'Previous' button. Defaults
+#'   to `NULL`, which uses "← Previous" (or the translated equivalent).
+#' @param next_label Character string. The label for the 'Next' button. Defaults
+#'   to `NULL`, which uses "Next →" (or the translated equivalent).
+#' @param show_prev Logical. Whether to show the Previous button. Set to `FALSE`
+#'   for the first page where there is no previous page to navigate to. Defaults
+#'   to `TRUE`.
+#'
+#' @details The function generates two 'shiny' action buttons:
+#' \itemize{
+#'   \item \strong{Previous button:} Positioned on the left, navigates to the last
+#'     visited page. Uses page history tracking to determine the previous page.
+#'   \item \strong{Next button:} Positioned on the right, navigates forward. Can be
+#'     activated by clicking or pressing the Enter key when visible.
+#' }
+#'
+#' The buttons are styled to appear on opposite sides of the page using flexbox
+#' layout, and include arrow symbols to indicate direction.
+#'
+#' @return A 'shiny' tagList containing the navigation buttons UI elements.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Basic usage with both buttons
+#'   sd_nav()
+#'
+#'   # First page - hide Previous button
+#'   sd_nav(show_prev = FALSE)
+#'
+#'   # Custom labels
+#'   sd_nav(
+#'     prev_label = "Go Back",
+#'     next_label = "Continue"
+#'   )
+#'
+#'   # Specify next page explicitly
+#'   sd_nav(next_page = "demographics")
+#' }
+#'
+#' @seealso
+#' \code{\link{sd_next}} for the legacy single-button navigation (deprecated)
+#'
+#' @export
+sd_nav <- function(
+  next_page = NULL,
+  prev_label = NULL,
+  next_label = NULL,
+  show_prev = TRUE
+) {
+  # Get translations
+  translations <- get_translations()$translations
+
+  # Default labels with arrows
+  if (is.null(prev_label)) {
+    prev_label <- paste0("\u2190 ", translations[['previous']])  # ← Previous
+  }
+  if (is.null(next_label)) {
+    next_label <- paste0(translations[['next']], " \u2192")  # Next →
+  }
+
+  # Create navigation container
+  shiny::tagList(
+    shiny::div(
+      `data-next-page` = if (!is.null(next_page)) next_page else "",
+      style = "margin-top: 1rem; margin-bottom: 0.5rem;",
+      class = "sd-nav-container",
+
+      # Previous button (only if show_prev is TRUE)
+      if (show_prev) {
+        shiny::actionButton(
+          inputId = "page_id_prev",
+          label = prev_label,
+          class = "sd-nav-button sd-nav-prev",
+          style = "float: left;",
+          onclick = "Shiny.setInputValue('prev_page', true, {priority: 'event'});"
+        )
+      },
+
+      # Next button
+      shiny::actionButton(
+        inputId = "page_id_next",
+        label = next_label,
+        class = "sd-enter-button sd-nav-button sd-nav-next",
+        style = "float: right;",
+        onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
+      ),
+
+      # Clearfix
+      shiny::tags$div(style = "clear: both;")
+    )
+  )
 }
 
 #' Create a 'Close' Button to Exit the Survey

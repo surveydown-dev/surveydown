@@ -36,6 +36,7 @@ get_translations_default <- function() {
             "rating_text" = "Rate your survey experience:",
             "rating_scale" = "from 1-poor to 5-excellent",
             # ui.R
+            "previous" = "Previous",
             "next" = "Next",
             "exit" = "Exit Survey",
             "close_tab" = "Please close this tab manually to exit the survey.",
@@ -58,6 +59,7 @@ get_translations_default <- function() {
             "rating_text" = "Bewerten Sie Ihre Umfrageerfahrung:",
             "rating_scale" = "von 1-schlecht bis 5-ausgezeichnet",
             # ui.R
+            "previous" = "Zur\u00FCck",
             "next" = "Weiter",
             "exit" = "Umfrage beenden",
             "close_tab" = "Bitte schlie\u00DFen Sie diesen Tab manuell, um die Umfrage zu beenden.",
@@ -80,6 +82,7 @@ get_translations_default <- function() {
             "rating_text" = "Califique su experiencia en la encuesta:",
             "rating_scale" = "de 1-malo a 5-excelente",
             # ui.R
+            "previous" = "Anterior",
             "next" = "Siguiente",
             "exit" = "Salir de la Encuesta",
             "close_tab" = "Por favor, cierre esta pesta\u00F1a manualmente para salir de la encuesta.",
@@ -102,6 +105,7 @@ get_translations_default <- function() {
             "rating_text" = "\u00C9valuez votre exp\u00E9rience du sondage :",
             "rating_scale" = "de 1-mauvais \u00E0 5-excellent",
             # ui.R
+            "previous" = "Pr\u00E9c\u00E9dent",
             "next" = "Suivant",
             "exit" = "Quitter le sondage",
             "close_tab" = "Veuillez fermer cet onglet manuellement pour quitter le sondage.",
@@ -124,6 +128,7 @@ get_translations_default <- function() {
             "rating_text" = "Valuta la tua esperienza con il sondaggio:",
             "rating_scale" = "da 1-scarso a 5-eccellente",
             # ui.R
+            "previous" = "Indietro",
             "next" = "Avanti",
             "exit" = "Esci dal Sondaggio",
             "close_tab" = "Per favore, chiudi questa scheda manualmente per uscire dal sondaggio.",
@@ -146,6 +151,7 @@ get_translations_default <- function() {
             "rating_text" = "\u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a", # 请您为此次问卷打分：
             "rating_scale" = "1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f", # 1为非常不满意，5为非常满意
             # ui.R
+            "previous" = "\u4e0a\u4e00\u9875", # 上一页
             "next" = "\u4e0b\u4e00\u9875", # 下一页
             "exit" = "\u9000\u51fa\u95ee\u5377", # 退出问卷
             "close_tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002", # 请手动关闭本页面。

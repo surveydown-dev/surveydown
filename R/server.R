@@ -125,6 +125,7 @@
 #' @seealso
 #' `sd_database()`, `sd_ui()`
 #'
+#' @importFrom utils head tail
 #' @export
 sd_server <- function(
     db = NULL,
@@ -507,6 +508,31 @@ sd_server <- function(
 
     # Create current_page_id reactive value
     current_page_id <- shiny::reactiveVal(start_page)
+
+    # Page history tracking for Previous button navigation
+    page_history <- shiny::reactiveVal(c(start_page))
+
+    # Helper function to track page visits
+    track_page_visit <- function(page_id) {
+        history <- page_history()
+        # Prevent duplicate consecutive entries
+        if (length(history) == 0 || tail(history, 1) != page_id) {
+            page_history(c(history, page_id))
+        }
+    }
+
+    # Helper function to navigate back
+    go_back <- function() {
+        history <- page_history()
+        if (length(history) > 1) {
+            # Remove current page from history
+            new_history <- head(history, -1)
+            page_history(new_history)
+            # Return previous page
+            return(tail(new_history, 1))
+        }
+        return(NULL)
+    }
 
     # Progress bar
     max_progress <- shiny::reactiveVal(0)
@@ -1356,6 +1382,9 @@ sd_server <- function(
                         # Set the current page as the next page
                         current_page_id(next_page_id)
 
+                        # Track page visit for navigation history
+                        track_page_visit(next_page_id)
+
                         # Update the page time stamp
                         next_ts_id <- page_ts_ids[which(
                             page_ids == next_page_id
@@ -1420,6 +1449,54 @@ sd_server <- function(
                     }
                 })
             })
+        })
+    })
+
+    # Handle Previous button clicks
+    shiny::observe({
+        lapply(pages, function(page) {
+            # Only observe if page has a previous button
+            if (!is.null(page$prev_button_id)) {
+                shiny::observeEvent(input[[page$prev_button_id]], {
+                    shiny::isolate({
+                        # Grab the time stamp of the page turn
+                        timestamp <- get_utc_timestamp()
+
+                        # Get previous page from history
+                        prev_page_id <- go_back()
+
+                        if (!is.null(prev_page_id)) {
+                            # Clear any existing highlights before navigating
+                            session$sendCustomMessage(
+                                "clearRequiredHighlights",
+                                list()
+                            )
+
+                            # Navigate to previous page
+                            current_page_id(prev_page_id)
+
+                            # Update the page time stamp
+                            prev_ts_id <- page_ts_ids[which(
+                                page_ids == prev_page_id
+                            )]
+                            all_data[[prev_ts_id]] <- timestamp
+
+                            # Save the current page to all_data
+                            all_data[["current_page"]] <- prev_page_id
+
+                            # Update tracker of which fields changed
+                            changed_fields(c(
+                                changed_fields(),
+                                prev_ts_id,
+                                "current_page"
+                            ))
+
+                            # Save navigation data to database
+                            update_data()
+                        }
+                    })
+                })
+            }
         })
     })
 

@@ -46,10 +46,10 @@ sd_question(
 )
 ```
 
-You need to insert next buttons with `sd_next()` on each page. By default, it will go to the next page defined in the `survey.qmd` file, but you can also specify the page with the `next_page` argument set to the name of the page you want to go to next.
+You need to insert navigation buttons with `sd_nav()` on each page. By default, it will go to the next page defined in the `survey.qmd` file, but you can also specify the page with the `next_page` argument set to the name of the page you want to go to next. Use `show_prev = FALSE` on the first page to hide the Previous button.
 
 ```{r}
-sd_next(next_page = 'page2')
+sd_nav(next_page = 'page2', show_prev = FALSE)
 ```
 
 :::
@@ -67,7 +67,7 @@ sd_question(
   label = "Write a silly word here:"
 )
 
-sd_next()
+sd_nav()
 ```
 
 :::

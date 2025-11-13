@@ -725,12 +725,25 @@ extract_html_pages <- function(
         "data-next-page"
       )
     }
+
+    # Update the 'Previous' button ID (if present)
+    prev_button_id <- make_prev_button_id(page_id)
+    prev_button <- rvest::html_element(x, "#page_id_prev")
+    has_prev_button <- !is.na(prev_button)
+
+    if (has_prev_button) {
+      xml2::xml_attr(prev_button, "id") <- prev_button_id
+    } else {
+      prev_button_id <- NULL
+    }
+
     list(
       id = page_id,
       questions = question_ids,
       required_questions = required_question_ids,
       next_button_id = next_button_id,
       next_page_id = next_page_id,
+      prev_button_id = prev_button_id,
       content = as.character(x)
     )
   })

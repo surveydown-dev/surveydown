@@ -642,3 +642,38 @@ div:where(.swal2-container) .swal2-html-container {
 .native-spinner-button:not(:last-child) {
   border-bottom: 1px solid #ccc;
 }
+
+/* Navigation buttons styling */
+.sd-nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+  clear: both;
+}
+
+.sd-nav-button {
+  min-width: 100px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.sd-nav-prev {
+  margin-right: auto;
+}
+
+.sd-nav-next {
+  margin-left: auto;
+}
+
+/* Ensure navigation buttons work well on mobile */
+@media screen and (max-width: 767px) {
+  .sd-nav-button {
+    min-width: 80px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}

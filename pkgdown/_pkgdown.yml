@@ -45,7 +45,7 @@ reference:
   contents:
   - sd_question
   - sd_question_custom
-  - sd_next
+  - sd_nav
   - sd_output
   - sd_close
   - sd_redirect
@@ -72,3 +72,4 @@ reference:
   - sd_database
   - sd_set_password
   - sd_skip_forward
+  - sd_next
