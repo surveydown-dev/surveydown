@@ -338,26 +338,28 @@ create_sectioned_yaml <- function(settings, general_params, theme_params, survey
     yaml_string <- paste0(yaml_string, yaml::as.yaml(general_settings))
   }
 
-  # Theme Settings section
+  # Theme Settings section - nested under theme_settings
   if (!is.null(theme_params) && length(theme_params) > 0) {
     if (yaml_string != "") {
       yaml_string <- paste0(yaml_string, "\n")
     }
-    yaml_string <- paste0(yaml_string, "# Theme Settings\n")
     theme_settings <- settings[theme_params]
     theme_settings <- theme_settings[!sapply(theme_settings, is.null)]
-    yaml_string <- paste0(yaml_string, yaml::as.yaml(theme_settings))
+    # Nest under theme_settings key
+    theme_nested <- list(theme_settings = theme_settings)
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(theme_nested))
   }
 
-  # Survey Settings section
+  # Survey Settings section - nested under survey_settings
   if (!is.null(survey_params) && length(survey_params) > 0) {
     if (yaml_string != "") {
       yaml_string <- paste0(yaml_string, "\n")
     }
-    yaml_string <- paste0(yaml_string, "# Survey Settings\n")
     survey_settings <- settings[survey_params]
     survey_settings <- survey_settings[!sapply(survey_settings, is.null)]
-    yaml_string <- paste0(yaml_string, yaml::as.yaml(survey_settings))
+    # Nest under survey_settings key
+    survey_nested <- list(survey_settings = survey_settings)
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(survey_nested))
   }
 
   # Translations section
@@ -575,14 +577,14 @@ read_settings_yaml <- function() {
     "settings.yml" # Fallback: just settings.yml in current dir
   )
 
-  settings <- NULL
+  settings_raw <- NULL
   successful_path <- NULL
 
   # Try to read from each path directly (without file.exists check)
   for (path in possible_paths) {
     tryCatch(
       {
-        settings <- yaml::read_yaml(path)
+        settings_raw <- yaml::read_yaml(path)
         successful_path <- path
         break
       },
@@ -592,8 +594,31 @@ read_settings_yaml <- function() {
     )
   }
 
-  if (is.null(settings)) {
+  if (is.null(settings_raw)) {
     return(defaults)
+  }
+
+  # Flatten hierarchical structure: extract theme_settings and survey_settings
+  settings <- list()
+
+  # Extract theme settings if nested
+  if (!is.null(settings_raw$theme_settings)) {
+    for (key in names(settings_raw$theme_settings)) {
+      settings[[key]] <- settings_raw$theme_settings[[key]]
+    }
+  }
+
+  # Extract survey settings if nested
+  if (!is.null(settings_raw$survey_settings)) {
+    for (key in names(settings_raw$survey_settings)) {
+      settings[[key]] <- settings_raw$survey_settings[[key]]
+    }
+  }
+
+  # Also check for flat structure (backward compatibility)
+  # If theme_settings and survey_settings don't exist, use flat structure
+  if (is.null(settings_raw$theme_settings) && is.null(settings_raw$survey_settings)) {
+    settings <- settings_raw
   }
 
   # Normalize dash-separated keys to underscore format for compatibility

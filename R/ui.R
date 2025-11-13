@@ -128,8 +128,7 @@ sd_ui <- function() {
 }
 
 get_theme <- function(metadata) {
-  x <- "survey.qmd"
-  theme <- metadata$formats$html$metadata$theme
+  theme <- get_yaml_value(metadata, "theme")
   if (is.null(theme)) {
     return("default")
   }
@@ -137,7 +136,7 @@ get_theme <- function(metadata) {
 }
 
 get_barcolor <- function(metadata) {
-  barcolor <- metadata$formats$html$metadata$barcolor
+  barcolor <- get_yaml_value(metadata, "barcolor")
   if (!is.null(barcolor)) {
     if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
       stop("Invalid barcolor in YAML. Use a valid hex color.")
@@ -147,7 +146,7 @@ get_barcolor <- function(metadata) {
 }
 
 get_barposition <- function(metadata) {
-  barposition <- metadata$formats$html$metadata$barposition
+  barposition <- get_yaml_value(metadata, "barposition")
   if (is.null(barposition)) {
     return("top")
   }
@@ -274,6 +273,7 @@ get_footer <- function(metadata) {
 }
 
 # Helper function to get YAML values supporting both underscore and dash formats
+# Also supports hierarchical structure with theme_settings and survey_settings
 get_yaml_value <- function(metadata, key) {
   # Safety check: ensure metadata structure exists
   if (is.null(metadata) || is.null(metadata$formats) ||
@@ -283,7 +283,45 @@ get_yaml_value <- function(metadata, key) {
 
   yaml_data <- metadata$formats$html$metadata
 
-  # Try underscore version first
+  # Define parameter categories
+  theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_center", "footer_right")
+  survey_params <- c(
+    "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
+    "start_page", "system_language", "highlight_unanswered", "highlight_color",
+    "capture_metadata", "required_questions"
+  )
+
+  # Determine which category this key belongs to
+  category <- NULL
+  if (key %in% theme_params) {
+    category <- "theme_settings"
+  } else if (key %in% survey_params) {
+    category <- "survey_settings"
+  }
+
+  # Try hierarchical structure first (if category is known)
+  if (!is.null(category)) {
+    # Check for underscore category key
+    if (!is.null(yaml_data[[category]]) && !is.null(yaml_data[[category]][[key]])) {
+      return(yaml_data[[category]][[key]])
+    }
+    # Check for dash category key
+    dash_category <- gsub("_", "-", category)
+    if (!is.null(yaml_data[[dash_category]]) && !is.null(yaml_data[[dash_category]][[key]])) {
+      return(yaml_data[[dash_category]][[key]])
+    }
+    # Check for category with dash key
+    dash_key <- gsub("_", "-", key)
+    if (!is.null(yaml_data[[category]]) && !is.null(yaml_data[[category]][[dash_key]])) {
+      return(yaml_data[[category]][[dash_key]])
+    }
+    if (!is.null(yaml_data[[dash_category]]) && !is.null(yaml_data[[dash_category]][[dash_key]])) {
+      return(yaml_data[[dash_category]][[dash_key]])
+    }
+  }
+
+  # Fall back to flat structure for backward compatibility
+  # Try underscore version
   if (!is.null(yaml_data[[key]])) {
     return(yaml_data[[key]])
   }
