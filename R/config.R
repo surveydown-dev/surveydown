@@ -567,11 +567,12 @@ read_settings_yaml <- function() {
 }
 
 # Function to update settings.yml with final resolved parameters from sd_server()
+# This ONLY updates Survey Settings, preserving Theme Settings from the YAML header
 update_settings_yaml <- function(resolved_params) {
   paths <- get_paths()
 
   # Define parameter categories
-  # Note: format, echo, warning are now implicit via Lua filter
+  # Note: format, echo, warning are now implicit in render_survey_qmd()
   theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
   survey_params <- c(
     "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
@@ -579,15 +580,11 @@ update_settings_yaml <- function(resolved_params) {
     "capture_metadata", "required_questions"
   )
 
-  # Define defaults for all parameters
-  default_params <- list(
-    # Theme Settings
-    theme = "default",
-    barposition = "top",
-    barcolor = NULL,
-    footer_left = "",
-    footer_right = "",
-    # Survey Settings
+  # Read existing settings to preserve Theme Settings
+  existing_settings <- read_settings_yaml()
+
+  # Define defaults for survey parameters only
+  survey_defaults <- list(
     use_cookies = TRUE, # Note: this becomes TRUE when NULL is passed to sd_server
     auto_scroll = FALSE,
     rate_survey = FALSE,
@@ -603,11 +600,23 @@ update_settings_yaml <- function(resolved_params) {
   # Filter out language parameter to avoid breaking Quarto
   resolved_params$language <- NULL
 
-  # Merge defaults with resolved params (resolved params take priority)
-  final_settings <- default_params
-  for (param_name in names(resolved_params)) {
-    if (!is.null(resolved_params[[param_name]])) {
-      final_settings[[param_name]] <- resolved_params[[param_name]]
+  # Build final settings: preserve theme settings, update survey settings
+  final_settings <- list()
+
+  # Preserve theme settings from existing settings.yml (set by create_settings_yaml)
+  for (param in theme_params) {
+    if (!is.null(existing_settings[[param]])) {
+      final_settings[[param]] <- existing_settings[[param]]
+    }
+  }
+
+  # Update survey settings with resolved params
+  for (param in survey_params) {
+    if (!is.null(resolved_params[[param]])) {
+      final_settings[[param]] <- resolved_params[[param]]
+    } else {
+      # Use default if not in resolved_params
+      final_settings[[param]] <- survey_defaults[[param]]
     }
   }
 
@@ -616,12 +625,12 @@ update_settings_yaml <- function(resolved_params) {
     final_settings$use_cookies <- TRUE
   }
 
-  # Create YAML content with sections (no general_params)
+  # Create YAML content with sections
   yaml_content <- create_sectioned_yaml(final_settings, NULL, theme_params, survey_params)
   comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
   comment_line2 <- "# All survey configuration settings with final resolved values\n"
   comment_line3 <- "# (includes sd_server() parameters, YAML header, and defaults)\n"
-  comment_line4 <- "# Note: format, echo, warning are implicit via Lua filter\n\n"
+  comment_line4 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
   full_content <- paste0(
     comment_line1,
     comment_line2,
