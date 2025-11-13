@@ -15,9 +15,22 @@ get_translations <- function() {
 }
 
 get_translations_yml <- function() {
-    path <- file.path("_survey", "translations.yml")
+    # Read translations from settings.yml instead of standalone translations.yml
+    path <- file.path("_survey", "settings.yml")
     if (fs::file_exists(path)) {
-        return(yaml::read_yaml("_survey/translations.yml"))
+        tryCatch({
+            full_settings <- yaml::read_yaml(path)
+            # Look for the language key (e.g., "en", "de", etc.)
+            for (lang in c("en", "de", "es", "fr", "it", "zh-CN")) {
+                if (!is.null(full_settings[[lang]])) {
+                    result <- list()
+                    result[[lang]] <- full_settings[[lang]]
+                    return(result)
+                }
+            }
+        }, error = function(e) {
+            return(NULL)
+        })
     }
     return(NULL)
 }

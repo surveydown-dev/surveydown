@@ -19,10 +19,8 @@ run_config <- function(
   if (survey_files_need_updating(paths)) {
     message("Changes detected...re-parsing survey contents...")
 
-    # Prepare translations (check for inputs)
-    set_translations(paths, language)
-
     # Get the html content from the rendered survey.html file
+    # Note: translations are now handled in create_settings_yaml()
     html_content <- rvest::read_html(paths$target_html)
 
     # Extract all divs with class "sd-page" and save to "_survey" folder
@@ -52,10 +50,8 @@ run_config <- function(
       paths$target_questions,
       "\n",
       "  ",
-      paths$target_transl,
-      "\n",
-      "  ",
-      paths$target_settings
+      paths$target_settings,
+      " (includes translations)"
     )
   } else {
     # If no changes, import from '_survey' folder
@@ -146,13 +142,12 @@ get_paths <- function() {
     qmd = "survey.qmd",
     app = "app.R",
     root_html = "survey.html",
-    transl = "translations.yml",
-    target_transl = file.path(target_folder, "translations.yml"),
+    transl = "translations.yml", # User-provided custom translations (root folder)
     target_html = file.path(target_folder, "survey.html"),
     target_pages = file.path(target_folder, "pages.rds"),
     target_head = file.path(target_folder, "head.rds"),
     target_questions = file.path(target_folder, "questions.yml"),
-    target_settings = file.path(target_folder, "settings.yml")
+    target_settings = file.path(target_folder, "settings.yml") # Contains merged translations
   )
   return(paths)
 }
@@ -279,12 +274,15 @@ set_translations <- function(paths, language) {
     translations <- translations[1]
   }
 
-  # write translations file
-  yaml::write_yaml(translations, paths$target_transl)
+  # Return translations (will be written to settings.yml)
+  return(list(
+    language = language,
+    translations = translations
+  ))
 }
 
 # Helper function to create sectioned YAML output with organized comments
-create_sectioned_yaml <- function(settings, general_params, theme_params, survey_params) {
+create_sectioned_yaml <- function(settings, general_params, theme_params, survey_params, translations = NULL) {
   # Build YAML string with sections
   yaml_string <- ""
 
@@ -318,6 +316,15 @@ create_sectioned_yaml <- function(settings, general_params, theme_params, survey
     yaml_string <- paste0(yaml_string, yaml::as.yaml(survey_settings))
   }
 
+  # Translations section
+  if (!is.null(translations)) {
+    if (yaml_string != "") {
+      yaml_string <- paste0(yaml_string, "\n")
+    }
+    yaml_string <- paste0(yaml_string, "# Translations\n")
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(translations))
+  }
+
   return(yaml_string)
 }
 
@@ -326,6 +333,15 @@ create_settings_yaml <- function(paths, metadata) {
   if (file.exists("survey.qmd")) {
     tryCatch(
       {
+        # Get system language for translations
+        system_language <- get_system_language(metadata)
+        if (is.null(system_language)) {
+          system_language <- "en"
+        }
+
+        # Get translations for the selected language
+        transl_result <- set_translations(paths, system_language)
+
         # Define parameter categories
         # Note: format, echo, warning are now implicit via render_survey_qmd()
         theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_center", "footer_right")
@@ -415,8 +431,8 @@ create_settings_yaml <- function(paths, metadata) {
           }
         }
 
-        # Write settings file with sectioned YAML (no general_params anymore)
-        yaml_content <- create_sectioned_yaml(settings, NULL, theme_params, survey_params)
+        # Write settings file with sectioned YAML (includes translations)
+        yaml_content <- create_sectioned_yaml(settings, NULL, theme_params, survey_params, transl_result$translations)
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
         comment_line2 <- "# All survey configuration settings with final resolved values\n"
         comment_line3 <- "# (includes YAML header values, function parameters, and defaults)\n"
@@ -441,7 +457,9 @@ create_settings_yaml <- function(paths, metadata) {
           highlight_unanswered = TRUE, highlight_color = "gray", capture_metadata = TRUE,
           required_questions = NULL
         )
-        yaml_content <- create_sectioned_yaml(default_settings, NULL, theme_params, survey_params)
+        # Get default English translations
+        default_transl <- get_translations_default()
+        yaml_content <- create_sectioned_yaml(default_settings, NULL, theme_params, survey_params, default_transl["en"])
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
         comment_line2 <- "# All survey configuration settings with defaults (error reading YAML header)\n"
         comment_line3 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
@@ -465,7 +483,9 @@ create_settings_yaml <- function(paths, metadata) {
       highlight_unanswered = TRUE, highlight_color = "gray", capture_metadata = TRUE,
       required_questions = NULL
     )
-    yaml_content <- create_sectioned_yaml(default_settings, NULL, theme_params, survey_params)
+    # Get default English translations
+    default_transl <- get_translations_default()
+    yaml_content <- create_sectioned_yaml(default_settings, NULL, theme_params, survey_params, default_transl["en"])
     comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
     comment_line2 <- "# All survey configuration settings with defaults (no survey.qmd file found)\n"
     comment_line3 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
@@ -630,8 +650,31 @@ update_settings_yaml <- function(resolved_params) {
     final_settings$use_cookies <- TRUE
   }
 
-  # Create YAML content with sections
-  yaml_content <- create_sectioned_yaml(final_settings, NULL, theme_params, survey_params)
+  # Read existing translations from settings.yml to preserve them
+  existing_transl <- NULL
+  if (fs::file_exists(paths$target_settings)) {
+    tryCatch({
+      full_settings <- yaml::read_yaml(paths$target_settings)
+      # Look for the language key (e.g., "en", "de", etc.)
+      for (lang in c("en", "de", "es", "fr", "it", "zh-CN")) {
+        if (!is.null(full_settings[[lang]])) {
+          existing_transl <- list()
+          existing_transl[[lang]] <- full_settings[[lang]]
+          break
+        }
+      }
+    }, error = function(e) {
+      # If reading fails, continue without translations
+    })
+  }
+
+  # If no existing translations found, use default English
+  if (is.null(existing_transl)) {
+    existing_transl <- get_translations_default()["en"]
+  }
+
+  # Create YAML content with sections (including translations)
+  yaml_content <- create_sectioned_yaml(final_settings, NULL, theme_params, survey_params, existing_transl)
   comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
   comment_line2 <- "# All survey configuration settings with final resolved values\n"
   comment_line3 <- "# (includes sd_server() parameters, YAML header, and defaults)\n"

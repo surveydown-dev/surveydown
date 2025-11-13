@@ -600,7 +600,7 @@ sd_server <- function(
     # Check if db is NULL (either blank or specified with ignore = TRUE)
     ignore_mode <- is.null(db)
 
-    # Initialize translations list (from '_survey/translations.yml' file)
+    # Initialize translations list (from '_survey/settings.yml' file)
     translations <- get_translations()$translations
 
     # Keep-alive observer - this will be triggered every 60 seconds
