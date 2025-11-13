@@ -1385,6 +1385,10 @@ sd_server <- function(
                         # Track page visit for navigation history
                         track_page_visit(next_page_id)
 
+                        # Restore input values for the next page (in case user is revisiting)
+                        next_page <- pages[[which(page_ids == next_page_id)]]
+                        restore_page_inputs(next_page)
+
                         # Update the page time stamp
                         next_ts_id <- page_ts_ids[which(
                             page_ids == next_page_id
@@ -1452,6 +1456,97 @@ sd_server <- function(
         })
     })
 
+    # Helper function to restore input values when returning to a page
+    restore_page_inputs <- function(page) {
+        # Get all questions on this page
+        page_questions <- page$questions
+
+        if (is.null(page_questions) || length(page_questions) == 0) {
+            return()
+        }
+
+        # Loop through each question and restore its value
+        for (q_id in page_questions) {
+            # Skip if question doesn't exist in question_structure
+            if (!q_id %in% names(question_structure)) {
+                next
+            }
+
+            # Get the stored value from all_data
+            stored_value <- all_data[[q_id]]
+
+            # Skip if no value was stored
+            if (is.null(stored_value) || (length(stored_value) == 1 && stored_value == "")) {
+                next
+            }
+
+            # Get question type
+            q_type <- question_structure[[q_id]]$type
+
+            # Update the input based on question type
+            tryCatch({
+                if (q_type %in% c("mc", "mc_buttons")) {
+                    shiny::updateRadioButtons(session, q_id, selected = stored_value)
+                } else if (q_type %in% c("mc_multiple", "mc_multiple_buttons")) {
+                    # For multiple choice, stored_value might be a vector or comma-separated
+                    if (is.character(stored_value) && length(stored_value) == 1) {
+                        # If it's a single string, try splitting by comma
+                        values <- if (grepl(",", stored_value)) {
+                            strsplit(stored_value, ",\\s*")[[1]]
+                        } else {
+                            stored_value
+                        }
+                    } else {
+                        values <- stored_value
+                    }
+                    shiny::updateCheckboxGroupInput(session, q_id, selected = values)
+                } else if (q_type == "select") {
+                    shiny::updateSelectInput(session, q_id, selected = stored_value)
+                } else if (q_type == "text") {
+                    shiny::updateTextInput(session, q_id, value = stored_value)
+                } else if (q_type == "textarea") {
+                    shiny::updateTextAreaInput(session, q_id, value = stored_value)
+                } else if (q_type == "numeric") {
+                    shiny::updateNumericInput(session, q_id, value = as.numeric(stored_value))
+                } else if (q_type %in% c("slider", "slider_numeric")) {
+                    # Check if it's a range slider
+                    if (question_structure[[q_id]]$is_range) {
+                        # For range sliders, stored_value should be a vector of two values
+                        if (is.character(stored_value) && length(stored_value) == 1) {
+                            values <- as.numeric(strsplit(stored_value, ",\\s*")[[1]])
+                        } else {
+                            values <- as.numeric(stored_value)
+                        }
+                        if (length(values) == 2) {
+                            shinyWidgets::updateSliderTextInput(session, q_id, selected = values)
+                        }
+                    } else {
+                        # Single value slider
+                        if (q_type == "slider_numeric") {
+                            shinyWidgets::updateSliderTextInput(session, q_id, selected = as.numeric(stored_value))
+                        } else {
+                            shinyWidgets::updateSliderTextInput(session, q_id, selected = stored_value)
+                        }
+                    }
+                } else if (q_type == "date") {
+                    shiny::updateDateInput(session, q_id, value = stored_value)
+                } else if (q_type == "daterange") {
+                    # For date range, stored_value should be a vector of two dates
+                    if (is.character(stored_value) && length(stored_value) == 1) {
+                        dates <- strsplit(stored_value, ",\\s*")[[1]]
+                    } else {
+                        dates <- stored_value
+                    }
+                    if (length(dates) == 2) {
+                        shiny::updateDateRangeInput(session, q_id, start = dates[1], end = dates[2])
+                    }
+                }
+            }, error = function(e) {
+                # Silently skip if update fails
+            })
+        }
+    }
+
     # Handle Previous button clicks
     shiny::observe({
         lapply(pages, function(page) {
@@ -1474,6 +1569,10 @@ sd_server <- function(
 
                             # Navigate to previous page
                             current_page_id(prev_page_id)
+
+                            # Restore input values for the previous page
+                            prev_page <- pages[[which(page_ids == prev_page_id)]]
+                            restore_page_inputs(prev_page)
 
                             # Update the page time stamp
                             prev_ts_id <- page_ts_ids[which(
