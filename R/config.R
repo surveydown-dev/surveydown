@@ -281,6 +281,50 @@ set_translations <- function(paths, language) {
   ))
 }
 
+# Helper function to clean up YAML apostrophes
+# Converts: 'won''t' -> "won't" for better readability
+clean_yaml_quotes <- function(yaml_string) {
+  # Split into lines for easier processing
+  lines <- strsplit(yaml_string, "\n")[[1]]
+
+  # Process each line
+  for (i in seq_along(lines)) {
+    line <- lines[i]
+
+    # Check if line contains single-quoted string with escaped apostrophes
+    if (grepl("'[^']*''[^']*'", line)) {
+      # Find all matches
+      pattern <- "'([^']*(?:''[^']*)*)'"
+      matches <- gregexpr(pattern, line, perl = TRUE)
+
+      if (matches[[1]][1] != -1) {
+        # Extract all matched strings
+        match_text <- regmatches(line, matches)[[1]]
+
+        # Process each match
+        for (match in match_text) {
+          # Only process if it contains ''
+          if (grepl("''", match)) {
+            # Remove outer quotes
+            content <- substring(match, 2, nchar(match) - 1)
+            # Replace '' with '
+            content <- gsub("''", "'", content, fixed = TRUE)
+            # Create double-quoted version
+            replacement <- paste0('"', content, '"')
+            # Replace in line
+            line <- sub(match, replacement, line, fixed = TRUE)
+          }
+        }
+
+        lines[i] <- line
+      }
+    }
+  }
+
+  # Rejoin lines
+  return(paste(lines, collapse = "\n"))
+}
+
 # Helper function to create sectioned YAML output with organized comments
 create_sectioned_yaml <- function(settings, general_params, theme_params, survey_params, translations = NULL) {
   # Build YAML string with sections
@@ -324,6 +368,9 @@ create_sectioned_yaml <- function(settings, general_params, theme_params, survey
     yaml_string <- paste0(yaml_string, "# Translations\n")
     yaml_string <- paste0(yaml_string, yaml::as.yaml(translations))
   }
+
+  # Clean up awkward YAML apostrophe escaping (won''t -> "won't")
+  yaml_string <- clean_yaml_quotes(yaml_string)
 
   return(yaml_string)
 }
