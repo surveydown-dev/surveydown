@@ -327,8 +327,8 @@ create_settings_yaml <- function(paths, metadata) {
     tryCatch(
       {
         # Define parameter categories
-        # Note: format, echo, warning are now implicit via Lua filter
-        theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
+        # Note: format, echo, warning are now implicit via render_survey_qmd()
+        theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_center", "footer_right")
         survey_params <- c(
           "use_cookies",
           "auto_scroll",
@@ -352,6 +352,7 @@ create_settings_yaml <- function(paths, metadata) {
           barposition = "top",
           barcolor = NULL,
           footer_left = "",
+          footer_center = "",
           footer_right = "",
           # Survey Settings
           use_cookies = TRUE,
@@ -378,6 +379,8 @@ create_settings_yaml <- function(paths, metadata) {
             value <- get_barcolor(metadata)
           } else if (param == "footer_left") {
             value <- get_footer_left(metadata)
+          } else if (param == "footer_center") {
+            value <- get_footer_center(metadata)
           } else if (param == "footer_right") {
             value <- get_footer_right(metadata)
           } else if (param == "use_cookies") {
@@ -417,14 +420,14 @@ create_settings_yaml <- function(paths, metadata) {
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
         comment_line2 <- "# All survey configuration settings with final resolved values\n"
         comment_line3 <- "# (includes YAML header values, function parameters, and defaults)\n"
-        comment_line4 <- "# Note: format, echo, warning are implicit via Lua filter\n\n"
+        comment_line4 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
         full_content <- paste0(comment_line1, comment_line2, comment_line3, comment_line4, yaml_content)
         writeLines(full_content, con = paths$target_settings)
       },
       error = function(e) {
         warning("Could not extract settings from survey.qmd: ", e$message)
         # Create settings file with defaults on error
-        theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
+        theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_center", "footer_right")
         survey_params <- c(
           "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
           "start_page", "system_language", "highlight_unanswered", "highlight_color",
@@ -432,7 +435,7 @@ create_settings_yaml <- function(paths, metadata) {
         )
         default_settings <- list(
           theme = "default", barposition = "top", barcolor = NULL,
-          footer_left = "", footer_right = "",
+          footer_left = "", footer_center = "", footer_right = "",
           use_cookies = TRUE, auto_scroll = FALSE, rate_survey = FALSE,
           all_questions_required = FALSE, start_page = NULL, system_language = "en",
           highlight_unanswered = TRUE, highlight_color = "gray", capture_metadata = TRUE,
@@ -441,14 +444,14 @@ create_settings_yaml <- function(paths, metadata) {
         yaml_content <- create_sectioned_yaml(default_settings, NULL, theme_params, survey_params)
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
         comment_line2 <- "# All survey configuration settings with defaults (error reading YAML header)\n"
-        comment_line3 <- "# Note: format, echo, warning are implicit via Lua filter\n\n"
+        comment_line3 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
         full_content <- paste0(comment_line1, comment_line2, comment_line3, yaml_content)
         writeLines(full_content, con = paths$target_settings)
       }
     )
   } else {
     # Create settings file with defaults if survey.qmd doesn't exist
-    theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
+    theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_center", "footer_right")
     survey_params <- c(
       "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
       "start_page", "system_language", "highlight_unanswered", "highlight_color",
@@ -456,7 +459,7 @@ create_settings_yaml <- function(paths, metadata) {
     )
     default_settings <- list(
       theme = "default", barposition = "top", barcolor = NULL,
-      footer_left = "", footer_right = "",
+      footer_left = "", footer_center = "", footer_right = "",
       use_cookies = TRUE, auto_scroll = FALSE, rate_survey = FALSE,
       all_questions_required = FALSE, start_page = NULL, system_language = "en",
       highlight_unanswered = TRUE, highlight_color = "gray", capture_metadata = TRUE,
@@ -465,7 +468,7 @@ create_settings_yaml <- function(paths, metadata) {
     yaml_content <- create_sectioned_yaml(default_settings, NULL, theme_params, survey_params)
     comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
     comment_line2 <- "# All survey configuration settings with defaults (no survey.qmd file found)\n"
-    comment_line3 <- "# Note: format, echo, warning are implicit via Lua filter\n\n"
+    comment_line3 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
     full_content <- paste0(comment_line1, comment_line2, comment_line3, yaml_content)
     writeLines(full_content, con = paths$target_settings)
   }
@@ -482,6 +485,7 @@ read_settings_yaml <- function() {
     barposition = "top",
     barcolor = NULL,
     footer_left = "",
+    footer_center = "",
     footer_right = "",
     # Survey Settings
     use_cookies = TRUE,
@@ -532,6 +536,7 @@ read_settings_yaml <- function() {
     "barposition",
     "barcolor",
     "footer_left",
+    "footer_center",
     "footer_right",
     "use_cookies",
     "auto_scroll",
@@ -573,7 +578,7 @@ update_settings_yaml <- function(resolved_params) {
 
   # Define parameter categories
   # Note: format, echo, warning are now implicit in render_survey_qmd()
-  theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_right")
+  theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_center", "footer_right")
   survey_params <- c(
     "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
     "start_page", "system_language", "highlight_unanswered", "highlight_color",

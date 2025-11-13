@@ -162,6 +162,27 @@ get_footer_left <- function(metadata) {
   return(footer_left)
 }
 
+get_footer_center <- function(metadata) {
+  # Get the metadata safely
+  meta <- metadata$formats$html$metadata
+  if (is.null(meta)) {
+    return("")
+  }
+
+  footer_center <- get_yaml_value(metadata, "footer_center")
+  plain_footer <- meta$footer
+
+  # If footer-center doesn't exist but plain footer does, use plain footer
+  if (is.null(footer_center) && !is.null(plain_footer)) {
+    footer_center <- plain_footer
+  }
+
+  if (is.null(footer_center)) {
+    return("")
+  }
+  return(footer_center)
+}
+
 get_footer_right <- function(metadata) {
   footer_right <- get_yaml_value(metadata, "footer_right")
   if (is.null(footer_right)) {
