@@ -913,7 +913,11 @@ extract_html_pages <- function(
     )
   }
 
-  pages <- lapply(pages_elements, function(x) {
+  # Get total number of pages to identify the last page
+  total_pages <- length(pages_elements)
+
+  pages <- lapply(seq_along(pages_elements), function(page_index) {
+    x <- pages_elements[[page_index]]
     page_id <- rvest::html_attr(x, "id")
     question_containers <- rvest::html_elements(x, ".question-container")
     question_ids <- character(0)
@@ -987,6 +991,71 @@ extract_html_pages <- function(
       xml2::xml_attr(prev_button, "id") <- prev_button_id
     } else {
       prev_button_id <- NULL
+    }
+
+    # AUTO-NAVIGATION: Check if we need to auto-insert sd_nav()
+    # Only auto-insert if:
+    # 1. This is NOT the last page
+    # 2. No explicit sd_nav() or sd_close() button exists
+    is_last_page <- (page_index == total_pages)
+
+    # Check for sd_close() button (id="close-survey-button")
+    has_close_button <- !is.na(rvest::html_element(x, "#close-survey-button"))
+
+    # Check if explicit navigation already exists
+    has_explicit_nav <- !is.na(next_button) || has_close_button
+
+    # Auto-insert navigation if conditions are met
+    if (!is_last_page && !has_explicit_nav) {
+      # Get translated messages for button labels
+      # Use default English if settings.yml doesn't exist yet
+      messages <- tryCatch({
+        settings_path <- file.path("_survey", "settings.yml")
+        if (file.exists(settings_path)) {
+          settings <- yaml::read_yaml(settings_path)
+          if (!is.null(settings$system_messages)) {
+            settings$system_messages
+          } else {
+            list("previous" = "Previous", "next" = "Next")
+          }
+        } else {
+          list("previous" = "Previous", "next" = "Next")
+        }
+      }, error = function(e) {
+        list("previous" = "Previous", "next" = "Next")
+      })
+
+      prev_label <- paste0("\u2190 ", messages[['previous']])  # ← Previous
+      next_label <- paste0(messages[['next']], " \u2192")  # Next →
+
+      # Create auto-generated sd_nav() HTML
+      # This matches the exact output from sd_nav() in R/ui.R lines 1920-1949
+      # Note: We always show_prev=TRUE for auto-generated navigation
+      auto_nav_html <- sprintf('
+<div data-next-page="" style="margin-top: 1rem; margin-bottom: 0.5rem;" class="sd-nav-container">
+  <button class="btn btn-default action-button sd-nav-button sd-nav-prev" id="page_id_prev" onclick="Shiny.setInputValue(&#39;prev_page&#39;, true, {priority: &#39;event&#39;});" style="float: left;" type="button">%s</button>
+  <button class="btn btn-default action-button sd-enter-button sd-nav-button sd-nav-next" id="page_id_next" onclick="Shiny.setInputValue(&#39;next_page&#39;, this.parentElement.getAttribute(&#39;data-next-page&#39;));" style="float: right;" type="button">%s</button>
+  <div style="clear: both;"></div>
+</div>
+      ', prev_label, next_label)
+
+      # Parse the HTML and append to page
+      auto_nav_node <- xml2::read_html(auto_nav_html) |>
+        rvest::html_element("body > div")
+
+      xml2::xml_add_child(x, auto_nav_node)
+
+      # Update the button IDs to be page-specific
+      next_button_id <- make_next_button_id(page_id)
+      next_button <- rvest::html_element(x, "#page_id_next")
+      xml2::xml_attr(next_button, "id") <- next_button_id
+
+      prev_button_id <- make_prev_button_id(page_id)
+      prev_button <- rvest::html_element(x, "#page_id_prev")
+      xml2::xml_attr(prev_button, "id") <- prev_button_id
+
+      next_page_id <- ""  # Auto-nav always has empty data-next-page (sequential)
+      has_prev_button <- TRUE  # Auto-nav always includes prev button
     }
 
     list(
