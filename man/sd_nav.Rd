@@ -8,7 +8,7 @@ sd_nav(
   next_page = NULL,
   prev_label = NULL,
   next_label = NULL,
-  show_prev = TRUE
+  show_prev = NULL
 )
 }
 \arguments{

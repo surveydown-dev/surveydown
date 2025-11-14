@@ -287,7 +287,7 @@ get_yaml_value <- function(metadata, key) {
   # Define parameter categories
   theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_center", "footer_right")
   survey_params <- c(
-    "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
+    "show_previous", "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
     "start_page", "system_language", "highlight_unanswered", "highlight_color",
     "capture_metadata", "required_questions"
   )
@@ -458,6 +458,18 @@ get_required_questions <- function(metadata) {
   } else {
     return(as.character(required_questions))
   }
+}
+
+get_show_previous <- function(metadata) {
+  show_previous <- get_yaml_value(metadata, "show_previous")
+  if (is.null(show_previous)) {
+    return(NULL)
+  }
+  # Handle both TRUE/FALSE and yes/no formats
+  if (is.character(show_previous)) {
+    return(show_previous %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  }
+  return(as.logical(show_previous))
 }
 
 find_all_yaml_files <- function() {
@@ -1903,10 +1915,17 @@ sd_nav <- function(
   next_page = NULL,
   prev_label = NULL,
   next_label = NULL,
-  show_prev = TRUE
+  show_prev = NULL
 ) {
   # Get messages
   messages <- get_messages()$messages
+
+  # Get show_previous setting from settings.yml
+  # If show_prev is explicitly provided, use it; otherwise use the setting
+  if (is.null(show_prev)) {
+    settings <- read_settings_yaml()
+    show_prev <- ifelse(!is.null(settings$show_previous), settings$show_previous, FALSE)
+  }
 
   # Default labels with arrows
   if (is.null(prev_label)) {
@@ -1934,12 +1953,12 @@ sd_nav <- function(
         )
       },
 
-      # Next button
+      # Next button (centered if no previous button, otherwise float right)
       shiny::actionButton(
         inputId = "page_id_next",
         label = next_label,
         class = "sd-enter-button sd-nav-button sd-nav-next",
-        style = "float: right;",
+        style = if (show_prev) "float: right;" else "display: block; margin: auto;",
         onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
       ),
 
