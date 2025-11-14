@@ -197,7 +197,7 @@ survey_files_need_updating <- function(paths) {
   return(FALSE)
 }
 
-set_translations <- function(paths, language) {
+set_translations <- function(paths, language, metadata = NULL) {
   # Load default translations
   translations <- get_translations_default()
 
@@ -268,16 +268,39 @@ set_translations <- function(paths, language) {
     # Fallback to English if no translations found for selected language
     sd_create_translations(language)
     translations <- translations["en"]
-    names(translations) <- language
   } else {
     translations <- translations[names(translations) == language]
     translations <- translations[1]
   }
 
+  # Restructure translations to use "system_message" as key instead of language code
+  # Extract the translation values (which are in a list under the language code)
+  translation_values <- translations[[1]]
+
+  # Check for custom system_messages entries in YAML metadata (highest priority)
+  if (!is.null(metadata)) {
+    custom_messages <- get_yaml_value(metadata, "system_messages")
+    if (!is.null(custom_messages)) {
+      # Merge custom messages with default translations
+      # Custom entries override defaults
+      for (key in names(custom_messages)) {
+        translation_values[[key]] <- custom_messages[[key]]
+      }
+      message(
+        "Custom system_messages entries found in YAML header. ",
+        length(custom_messages),
+        " custom translation(s) applied."
+      )
+    }
+  }
+
+  # Create new structure with "system_messages" as the key
+  translations_restructured <- list(system_messages = translation_values)
+
   # Return translations (will be written to settings.yml)
   return(list(
     language = language,
-    translations = translations
+    translations = translations_restructured
   ))
 }
 
@@ -367,7 +390,6 @@ create_sectioned_yaml <- function(settings, general_params, theme_params, survey
     if (yaml_string != "") {
       yaml_string <- paste0(yaml_string, "\n")
     }
-    yaml_string <- paste0(yaml_string, "# Translations\n")
     yaml_string <- paste0(yaml_string, yaml::as.yaml(translations))
   }
 
@@ -388,8 +410,8 @@ create_settings_yaml <- function(paths, metadata) {
           system_language <- "en"
         }
 
-        # Get translations for the selected language
-        transl_result <- set_translations(paths, system_language)
+        # Get translations for the selected language (pass metadata for custom overrides)
+        transl_result <- set_translations(paths, system_language, metadata)
 
         # Define parameter categories
         # Note: format, echo, warning are now implicit via render_survey_qmd()
@@ -483,10 +505,8 @@ create_settings_yaml <- function(paths, metadata) {
         # Write settings file with sectioned YAML (includes translations)
         yaml_content <- create_sectioned_yaml(settings, NULL, theme_params, survey_params, transl_result$translations)
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-        comment_line2 <- "# All survey configuration settings with final resolved values\n"
-        comment_line3 <- "# (includes YAML header values, function parameters, and defaults)\n"
-        comment_line4 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
-        full_content <- paste0(comment_line1, comment_line2, comment_line3, comment_line4, yaml_content)
+        comment_line2 <- "# All survey configuration settings with final resolved values\n\n"
+        full_content <- paste0(comment_line1, comment_line2, yaml_content)
         writeLines(full_content, con = paths$target_settings)
       },
       error = function(e) {
@@ -727,12 +747,21 @@ update_settings_yaml <- function(resolved_params) {
   if (fs::file_exists(paths$target_settings)) {
     tryCatch({
       full_settings <- yaml::read_yaml(paths$target_settings)
-      # Look for the language key (e.g., "en", "de", etc.)
-      for (lang in c("en", "de", "es", "fr", "it", "zh-CN")) {
-        if (!is.null(full_settings[[lang]])) {
-          existing_transl <- list()
-          existing_transl[[lang]] <- full_settings[[lang]]
-          break
+      # Look for the system_messages key (new structure) or old keys for backward compatibility
+      if (!is.null(full_settings$system_messages)) {
+        # New structure with system_messages
+        existing_transl <- list(system_messages = full_settings$system_messages)
+      } else if (!is.null(full_settings$system_message)) {
+        # Old structure with system_message (singular) - convert to plural
+        existing_transl <- list(system_messages = full_settings$system_message)
+      } else {
+        # Older structure - look for language keys for backward compatibility
+        for (lang in c("en", "de", "es", "fr", "it", "zh-CN")) {
+          if (!is.null(full_settings[[lang]])) {
+            # Convert old structure to new structure
+            existing_transl <- list(system_messages = full_settings[[lang]])
+            break
+          }
         }
       }
     }, error = function(e) {
@@ -740,22 +769,19 @@ update_settings_yaml <- function(resolved_params) {
     })
   }
 
-  # If no existing translations found, use default English
+  # If no existing translations found, use default English with system_messages key
   if (is.null(existing_transl)) {
-    existing_transl <- get_translations_default()["en"]
+    default_transl <- get_translations_default()["en"]
+    existing_transl <- list(system_messages = default_transl[[1]])
   }
 
   # Create YAML content with sections (including translations)
   yaml_content <- create_sectioned_yaml(final_settings, NULL, theme_params, survey_params, existing_transl)
   comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-  comment_line2 <- "# All survey configuration settings with final resolved values\n"
-  comment_line3 <- "# (includes sd_server() parameters, YAML header, and defaults)\n"
-  comment_line4 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
+  comment_line2 <- "# All survey configuration settings with final resolved values\n\n"
   full_content <- paste0(
     comment_line1,
     comment_line2,
-    comment_line3,
-    comment_line4,
     yaml_content
   )
 

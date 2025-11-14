@@ -1,31 +1,64 @@
 get_translations <- function() {
-    # Initialize translations list from '_survey/translations.yml' file
-    translations <- get_translations_yml()
-    if (is.null(translations)) {
-        # '_survey/translations.yml' file missing, so just load English
+    # Initialize translations list from '_survey/settings.yml' file
+    result <- get_translations_yml()
+
+    if (is.null(result)) {
+        # '_survey/settings.yml' file missing, so just load English
         translations <- get_translations_default()
         language <- 'en'
-    } else {
-        language <- names(translations)
+        return(list(
+            translations = translations[["en"]],
+            language = language
+        ))
     }
+
     return(list(
-        translations = translations[[language]],
-        language = language
+        translations = result$translations,
+        language = result$language
     ))
 }
 
 get_translations_yml <- function() {
-    # Read translations from settings.yml instead of standalone translations.yml
+    # Read translations from settings.yml
     path <- file.path("_survey", "settings.yml")
     if (fs::file_exists(path)) {
         tryCatch({
             full_settings <- yaml::read_yaml(path)
-            # Look for the language key (e.g., "en", "de", etc.)
+
+            # New structure: Look for system_messages key (plural)
+            if (!is.null(full_settings$system_messages)) {
+                # Get the system_language from survey_settings
+                language <- full_settings$survey_settings$system_language
+                if (is.null(language)) {
+                    language <- "en"  # Default to English if not specified
+                }
+
+                return(list(
+                    translations = full_settings$system_messages,
+                    language = language
+                ))
+            }
+
+            # Backward compatibility: Look for system_message key (singular)
+            if (!is.null(full_settings$system_message)) {
+                language <- full_settings$survey_settings$system_language
+                if (is.null(language)) {
+                    language <- "en"
+                }
+
+                return(list(
+                    translations = full_settings$system_message,
+                    language = language
+                ))
+            }
+
+            # Old structure (backward compatibility): Look for language keys
             for (lang in c("en", "de", "es", "fr", "it", "zh-CN")) {
                 if (!is.null(full_settings[[lang]])) {
-                    result <- list()
-                    result[[lang]] <- full_settings[[lang]]
-                    return(result)
+                    return(list(
+                        translations = full_settings[[lang]],
+                        language = lang
+                    ))
                 }
             }
         }, error = function(e) {

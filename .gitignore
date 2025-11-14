@@ -25,7 +25,5 @@ example1.rmarkdown
 preview_data.csv
 /.quarto/
 test_survey/
-
 /.luarc.json
-
 **/*.quarto_ipynb

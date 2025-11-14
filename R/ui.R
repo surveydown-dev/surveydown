@@ -65,6 +65,10 @@ sd_ui <- function() {
   # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
+  # Create settings YAML file from survey.qmd YAML metadata BEFORE rendering
+  # This ensures custom translations are available when sd_nav() is called during rendering
+  create_settings_yaml(paths, metadata)
+
   # Render the 'survey.qmd' file if changes detected
   if (survey_needs_updating(paths)) {
     message("Changes detected...rendering survey files...")
@@ -81,9 +85,6 @@ sd_ui <- function() {
     # If no changes, just load head content from '_survey/head.rds'
     head_content <- readRDS(paths$target_head)
   }
-
-  # Create settings YAML file from survey.qmd YAML metadata
-  create_settings_yaml(paths, metadata)
 
   # Create the UI
   shiny::tagList(
