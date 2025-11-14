@@ -72,7 +72,7 @@ sd_ui <- function() {
   # Render the 'survey.qmd' file if changes detected
   if (survey_needs_updating(paths)) {
     message("Changes detected...rendering survey files...")
-    render_survey_qmd(paths, default_theme)
+    render_survey_qmd(paths, default_theme, theme)
 
     # Move rendered file
     fs::file_move(paths$root_html, paths$target_html)
@@ -506,7 +506,7 @@ survey_needs_updating <- function(paths) {
   return(FALSE)
 }
 
-render_survey_qmd <- function(paths, default_theme = TRUE) {
+render_survey_qmd <- function(paths, default_theme = TRUE, theme = NULL) {
   # Copy lua filter to local folder
   lua_file <- 'surveydown.lua'
   fs::file_copy(
@@ -520,6 +520,12 @@ render_survey_qmd <- function(paths, default_theme = TRUE) {
 
   # Set implicit defaults for echo and warning if not explicitly set by user
   render_metadata <- list(default_theme = default_theme)
+
+  # Add theme to render_metadata if provided
+  # This allows themes defined under theme-settings to be applied by Quarto
+  if (!is.null(theme) && theme != "default") {
+    render_metadata$theme <- theme
+  }
 
   # Check if execute options need to be set
   if (is.null(yaml_meta$echo) && (is.null(yaml_meta$execute) || is.null(yaml_meta$execute$echo))) {
