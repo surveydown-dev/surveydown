@@ -41,6 +41,7 @@ Imports:
     miniUI,
     pool,
     quarto,
+    rmarkdown,
     RPostgres,
     rstudioapi,
     rvest,

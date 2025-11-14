@@ -41,7 +41,7 @@ the survey. If \code{FALSE}, shows a simple confirmation dialog.
 Defaults to \code{FALSE}.}
 
 \item{system_language}{Set the language for the survey system messages. Include
-your own in a \code{translations.yml} file, or choose a built in one from
+your own in a \code{messages.yml} file, or choose a built in one from
 the following list: English (\code{"en"}), German (\code{"de"}), Spanish (\code{"es"}),
 French (\code{"fr"}), Italian (\code{"it"}), Simplified Chinese (\code{"zh-CN"}).
 Defaults to \code{"en"}. Note: The deprecated \code{language} parameter is still

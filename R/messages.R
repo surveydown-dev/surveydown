@@ -1,25 +1,25 @@
-get_translations <- function() {
-    # Initialize translations list from '_survey/settings.yml' file
-    result <- get_translations_yml()
+get_messages <- function() {
+    # Initialize messages list from '_survey/settings.yml' file
+    result <- get_messages_yml()
 
     if (is.null(result)) {
         # '_survey/settings.yml' file missing, so just load English
-        translations <- get_translations_default()
+        messages <- get_messages_default()
         language <- 'en'
         return(list(
-            translations = translations[["en"]],
+            messages = messages[["en"]],
             language = language
         ))
     }
 
     return(list(
-        translations = result$translations,
+        messages = result$messages,
         language = result$language
     ))
 }
 
-get_translations_yml <- function() {
-    # Read translations from settings.yml
+get_messages_yml <- function() {
+    # Read messages from settings.yml
     path <- file.path("_survey", "settings.yml")
     if (fs::file_exists(path)) {
         tryCatch({
@@ -34,7 +34,7 @@ get_translations_yml <- function() {
                 }
 
                 return(list(
-                    translations = full_settings$system_messages,
+                    messages = full_settings$system_messages,
                     language = language
                 ))
             }
@@ -47,7 +47,7 @@ get_translations_yml <- function() {
                 }
 
                 return(list(
-                    translations = full_settings$system_message,
+                    messages = full_settings$system_message,
                     language = language
                 ))
             }
@@ -56,7 +56,7 @@ get_translations_yml <- function() {
             for (lang in c("en", "de", "es", "fr", "it", "zh-CN")) {
                 if (!is.null(full_settings[[lang]])) {
                     return(list(
-                        translations = full_settings[[lang]],
+                        messages = full_settings[[lang]],
                         language = lang
                     ))
                 }
@@ -68,7 +68,7 @@ get_translations_yml <- function() {
     return(NULL)
 }
 
-get_translations_default <- function() {
+get_messages_default <- function() {
     return(list(
         "en" = list(
             #server.R
@@ -96,8 +96,8 @@ get_translations_default <- function() {
         "de" = list(
             #server.R
             "cancel" = "Abbrechen",
-            "confirm_exit" = "Beenden best\u00E4tigen",
-            "sure_exit" = "Sind Sie sicher, dass Sie die Umfrage beenden m\u00F6chten?",
+            "confirm_exit" = "Beenden best\u00e4tigen",
+            "sure_exit" = "Sind Sie sicher, dass Sie die Umfrage beenden m\u00f6chten?",
             "submit_exit" = "Absenden und beenden",
             "warning" = "Warnung",
             "required" = "Bitte beantworten Sie alle erforderlichen Fragen, bevor Sie fortfahren.",
@@ -105,22 +105,22 @@ get_translations_default <- function() {
             "rating_text" = "Bewerten Sie Ihre Umfrageerfahrung:",
             "rating_scale" = "von 1-schlecht bis 5-ausgezeichnet",
             # ui.R
-            "previous" = "Zur\u00FCck",
+            "previous" = "Zur\u00fcck",
             "next" = "Weiter",
             "exit" = "Umfrage beenden",
-            "close_tab" = "Bitte schlie\u00DFen Sie diesen Tab manuell, um die Umfrage zu beenden.",
-            "choose_option" = "Option ausw\u00E4hlen...",
+            "close_tab" = "Bitte schlie\u00dfen Sie diesen Tab manuell, um die Umfrage zu beenden.",
+            "choose_option" = "Option ausw\u00e4hlen...",
             "click" = "Hier klicken",
             "redirect" = "Weiterleitung in",
             "seconds" = "Sekunden",
-            "new_tab" = "\u00D6ffnet sich in einem neuen Tab",
-            "redirect_error" = "Fehler: Dieser Text wird keine Weiterleitung ausl\u00F6sen..."
+            "new_tab" = "\u00d6ffnet sich in einem neuen Tab",
+            "redirect_error" = "Fehler: Dieser Text wird keine Weiterleitung ausl\u00f6sen..."
         ),
         "es" = list(
             #server.R
             "cancel" = "Cancelar",
             "confirm_exit" = "Confirmar Salida",
-            "sure_exit" = "\u00BFEst\u00E1 seguro de que desea salir de la encuesta?",
+            "sure_exit" = "\u00bfEst\u00e1 seguro de que desea salir de la encuesta?",
             "submit_exit" = "Enviar y Salir",
             "warning" = "Advertencia",
             "required" = "Por favor, responda todas las preguntas obligatorias antes de continuar.",
@@ -131,27 +131,27 @@ get_translations_default <- function() {
             "previous" = "Anterior",
             "next" = "Siguiente",
             "exit" = "Salir de la Encuesta",
-            "close_tab" = "Por favor, cierre esta pesta\u00F1a manualmente para salir de la encuesta.",
-            "choose_option" = "Elija una opci\u00F3n...",
-            "click" = "Haga clic aqu\u00ED",
+            "close_tab" = "Por favor, cierre esta pesta\u00f1a manualmente para salir de la encuesta.",
+            "choose_option" = "Elija una opci\u00f3n...",
+            "click" = "Haga clic aqu\u00ed",
             "redirect" = "Redireccionando en",
             "seconds" = "segundos",
-            "new_tab" = "Se abre en una nueva pesta\u00F1a",
-            "redirect_error" = "Error: Este texto no activar\u00E1 ninguna redirecci\u00F3n..."
+            "new_tab" = "Se abre en una nueva pesta\u00f1a",
+            "redirect_error" = "Error: Este texto no activar\u00e1 ninguna redirecci\u00f3n..."
         ),
         "fr" = list(
             #server.R
             "cancel" = "Annuler",
             "confirm_exit" = "Confirmer la sortie",
-            "sure_exit" = "\u00CAtes-vous s\u00FBr de vouloir quitter le sondage?",
+            "sure_exit" = "\u00cates-vous s\u00fbr de vouloir quitter le sondage?",
             "submit_exit" = "Soumettre et quitter",
             "warning" = "Avertissement",
-            "required" = "Veuillez r\u00E9pondre \u00E0 toutes les questions obligatoires avant de continuer.",
+            "required" = "Veuillez r\u00e9pondre \u00e0 toutes les questions obligatoires avant de continuer.",
             "rating_title" = "Avant de partir...",
-            "rating_text" = "\u00C9valuez votre exp\u00E9rience du sondage :",
-            "rating_scale" = "de 1-mauvais \u00E0 5-excellent",
+            "rating_text" = "\u00c9valuez votre exp\u00e9rience du sondage :",
+            "rating_scale" = "de 1-mauvais \u00e0 5-excellent",
             # ui.R
-            "previous" = "Pr\u00E9c\u00E9dent",
+            "previous" = "Pr\u00e9c\u00e9dent",
             "next" = "Suivant",
             "exit" = "Quitter le sondage",
             "close_tab" = "Veuillez fermer cet onglet manuellement pour quitter le sondage.",
@@ -183,30 +183,30 @@ get_translations_default <- function() {
             "redirect" = "Reindirizzamento in",
             "seconds" = "secondi",
             "new_tab" = "Si apre in una nuova scheda",
-            "redirect_error" = "Errore: Questo testo non attiver\u00E0 alcun reindirizzamento..."
+            "redirect_error" = "Errore: Questo testo non attiver\u00e0 alcun reindirizzamento..."
         ),
         "zh-CN" = list(
             #server.R
-            "cancel" = "\u53d6\u6d88", # 取消
-            "confirm_exit" = "\u786e\u8ba4\u9000\u51fa", # 确认退出
-            "sure_exit" = "\u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f", # 您确认要退出吗？
-            "submit_exit" = "\u63d0\u4ea4\u5e76\u9000\u51fa", # 提交并退出
-            "warning" = "\u8b66\u544a", # 警告
-            "required" = "\u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002", # 请回答所有必填问题。
-            "rating_title" = "\u7a0d\u7b49\u4e00\u4e0b\u2026", # 稍等一下…
-            "rating_text" = "\u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a", # 请您为此次问卷打分：
-            "rating_scale" = "1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f", # 1为非常不满意，5为非常满意
+            "cancel" = "\u53d6\u6d88", # \u53d6\u6d88
+            "confirm_exit" = "\u786e\u8ba4\u9000\u51fa", # \u786e\u8ba4\u9000\u51fa
+            "sure_exit" = "\u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f", # \u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f
+            "submit_exit" = "\u63d0\u4ea4\u5e76\u9000\u51fa", # \u63d0\u4ea4\u5e76\u9000\u51fa
+            "warning" = "\u8b66\u544a", # \u8b66\u544a
+            "required" = "\u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002", # \u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002
+            "rating_title" = "\u7a0d\u7b49\u4e00\u4e0b\u2026", # \u7a0d\u7b49\u4e00\u4e0b\u2026
+            "rating_text" = "\u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a", # \u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a
+            "rating_scale" = "1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f", # 1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f
             # ui.R
-            "previous" = "\u4e0a\u4e00\u9875", # 上一页
-            "next" = "\u4e0b\u4e00\u9875", # 下一页
-            "exit" = "\u9000\u51fa\u95ee\u5377", # 退出问卷
-            "close_tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002", # 请手动关闭本页面。
-            "choose_option" = "\u8bf7\u9009\u62e9\u4e00\u9879\u2026", # 请选择一项…
-            "click" = "\u5355\u51fb\u6b64\u5904", # 单击此处
-            "redirect" = "\u8df3\u8f6c\u5012\u8ba1\u65f6", # 跳转倒计时
-            "seconds" = "\u79d2", # 秒
-            "new_tab" = "\u5728\u65b0\u9875\u9762\u5f00\u542f", # 在新页面开启
-            "redirect_error" = "\u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026" # 错误：此文本无法触发任何跳转…
+            "previous" = "\u4e0a\u4e00\u9875", # \u4e0a\u4e00\u9875
+            "next" = "\u4e0b\u4e00\u9875", # \u4e0b\u4e00\u9875
+            "exit" = "\u9000\u51fa\u95ee\u5377", # \u9000\u51fa\u95ee\u5377
+            "close_tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002", # \u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002
+            "choose_option" = "\u8bf7\u9009\u62e9\u4e00\u9879\u2026", # \u8bf7\u9009\u62e9\u4e00\u9879\u2026
+            "click" = "\u5355\u51fb\u6b64\u5904", # \u5355\u51fb\u6b64\u5904
+            "redirect" = "\u8df3\u8f6c\u5012\u8ba1\u65f6", # \u8df3\u8f6c\u5012\u8ba1\u65f6
+            "seconds" = "\u79d2", # \u79d2
+            "new_tab" = "\u5728\u65b0\u9875\u9762\u5f00\u542f", # \u5728\u65b0\u9875\u9762\u5f00\u542f
+            "redirect_error" = "\u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026" # \u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026
         )
     ))
 }

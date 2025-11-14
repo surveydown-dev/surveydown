@@ -66,7 +66,7 @@ sd_ui <- function() {
   paths <- get_paths()
 
   # Create settings YAML file from survey.qmd YAML metadata BEFORE rendering
-  # This ensures custom translations are available when sd_nav() is called during rendering
+  # This ensures custom messages are available when sd_nav() is called during rendering
   create_settings_yaml(paths, metadata)
 
   # Render the 'survey.qmd' file if changes detected
@@ -819,10 +819,10 @@ sd_question <- function(
 
   output <- NULL
 
-  # Load translations for selected label and date language option
-  translations <- get_translations()
-  language <- translations$language
-  translations <- translations$translations
+  # Load messages for selected label and date language option
+  messages <- get_messages()
+  language <- messages$language
+  messages <- messages$messages
 
   # Check if question if answered
   js_interaction <- sprintf(
@@ -993,7 +993,7 @@ sd_question <- function(
   label <- markdown_to_html(label)
 
   if (type == "select") {
-    label_select <- translations[['choose_option']]
+    label_select <- messages[['choose_option']]
 
     # Add blank option for visible selected option
     option <- c("", option)
@@ -1803,12 +1803,12 @@ sd_next <- function(next_page = NULL, label = NULL) {
     msg = "sd_next() is deprecated and will be removed in a future version. Please use sd_nav() instead, which supports both previous and next navigation."
   )
 
-  # Get translations
-  translations <- get_translations()$translations
+  # Get messages
+  messages <- get_messages()$messages
 
   # If no label provided, use default
   if (is.null(label)) {
-    label <- translations[['next']]
+    label <- messages[['next']]
   }
 
   button_id <- "page_id_next" # Placeholder ID
@@ -1899,15 +1899,15 @@ sd_nav <- function(
   next_label = NULL,
   show_prev = TRUE
 ) {
-  # Get translations
-  translations <- get_translations()$translations
+  # Get messages
+  messages <- get_messages()$messages
 
   # Default labels with arrows
   if (is.null(prev_label)) {
-    prev_label <- paste0("\u2190 ", translations[['previous']])  # ← Previous
+    prev_label <- paste0("\u2190 ", messages[['previous']])  # ← Previous
   }
   if (is.null(next_label)) {
-    next_label <- paste0(translations[['next']], " \u2192")  # Next →
+    next_label <- paste0(messages[['next']], " \u2192")  # Next →
   }
 
   # Create navigation container
@@ -2000,12 +2000,12 @@ sd_nav <- function(
 #'
 #' @export
 sd_close <- function(label = NULL) {
-  # Get translations
-  translations <- get_translations()$translations
+  # Get messages
+  messages <- get_messages()$messages
 
   # If no label provided, use default
   if (is.null(label)) {
-    label <- translations[['exit']]
+    label <- messages[['exit']]
   }
 
   button_id <- "close-survey-button"
@@ -2115,12 +2115,12 @@ sd_redirect <- function(
   delay = NULL,
   newtab = FALSE
 ) {
-  # Get translations
-  translations <- get_translations()$translations
+  # Get messages
+  messages <- get_messages()$messages
 
   # If no label provided, use default
   if (is.null(label)) {
-    label <- translations[['click']]
+    label <- messages[['click']]
   }
 
   if (!is.null(shiny::getDefaultReactiveDomain())) {
@@ -2171,12 +2171,12 @@ create_redirect_element <- function(
     element <- shiny::span(label)
   }
 
-  # Get translations
-  translations <- get_translations()$translations
-  text_redirect <- translations[["redirect"]]
-  text_seconds <- translations[["seconds"]]
-  text_newtab <- translations[["new_tab"]]
-  text_error <- translations[["redirect_error"]]
+  # Get messages
+  messages <- get_messages()$messages
+  text_redirect <- messages[["redirect"]]
+  text_seconds <- messages[["seconds"]]
+  text_newtab <- messages[["new_tab"]]
+  text_error <- messages[["redirect_error"]]
 
   # Add automatic redirection if delay is specified
   if (!is.null(delay) && is.numeric(delay) && delay > 0) {

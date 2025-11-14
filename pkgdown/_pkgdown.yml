@@ -56,7 +56,7 @@ reference:
 - title: Utilities
   contents:
   - sd_create_survey
-  - sd_create_translations
+  - sd_create_messages
   - sd_include_folder
   - sd_setup
   - sd_add_page

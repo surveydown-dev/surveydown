@@ -1383,9 +1383,9 @@ get_latest_version <- function(url, pattern) {
   )
 }
 
-#' Create a translations template file
+#' Create a messages template file
 #'
-#' This function creates a template translations.yml file in the project root directory
+#' This function creates a template messages.yml file in the project root directory
 #' that users can customize to modify system messages.
 #'
 #' @param language Character string specifying the language to use. See
@@ -1393,7 +1393,7 @@ get_latest_version <- function(url, pattern) {
 #'   languages. Also, if `"en"`, `"de"`, `"es"`, `"fr"`, or `"it"` is chosen,
 #'   default messages in those langauges will be used, otherwise the default
 #'   English messages will be used. Defaults to `"en"`.
-#' @param path Character string specifying the directory where the translations.yml
+#' @param path Character string specifying the directory where the messages.yml
 #'   file should be created. Defaults to the current working directory. The
 #'   file should be placed in the root project folder of your surveydown survey.
 #' @return Invisible `NULL`.
@@ -1402,17 +1402,17 @@ get_latest_version <- function(url, pattern) {
 #' @examples
 #' if (interactive()) {
 #'   # Create English template
-#'   sd_create_translations()
+#'   sd_create_messages()
 #'
 #'   # Create German template
-#'   sd_create_translations(language = "de")
+#'   sd_create_messages(language = "de")
 #'
 #'   # Create Japanese template
 #'   # Will use English messages but Japanese date picker - user can modify
 #'   # the messages as desired
-#'   sd_create_translations(language = "ja")
+#'   sd_create_messages(language = "ja")
 #' }
-sd_create_translations <- function(language = "en", path = getwd()) {
+sd_create_messages <- function(language = "en", path = getwd()) {
   # Define valid languages
   valid_languages <- get_valid_languages()
 
@@ -1423,19 +1423,19 @@ sd_create_translations <- function(language = "en", path = getwd()) {
     )
   }
 
-  # Get default translations
-  translations <- get_translations_default()
+  # Get default messages
+  messages <- get_messages_default()
 
   # If language has default messages, use them; otherwise use English
   template <- list()
-  if (language %in% names(translations)) {
-    template[[language]] <- translations[[language]]
+  if (language %in% names(messages)) {
+    template[[language]] <- messages[[language]]
   } else {
-    template[[language]] <- translations[["en"]]
+    template[[language]] <- messages[["en"]]
     message(
       "No default messages available for '",
       language,
-      "'. surveydown currently only provides default translations for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
+      "'. surveydown currently only provides default messages for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
       "Using English messages with ",
       language,
       " date picker.\n"
@@ -1443,16 +1443,16 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   }
 
   # Create the file path
-  file_path <- file.path(path, "translations.yml")
+  file_path <- file.path(path, "messages.yml")
 
   # Check if file already exists
   if (file.exists(file_path)) {
-    stop("translations.yml already exists in the specified path")
+    stop("messages.yml already exists in the specified path")
   }
 
   # Define template header
   header <- paste(
-    "# Surveydown translations template",
+    "# Surveydown messages template",
     "# Edit the values below to customize system messages",
     "# Keep the structure and keys unchanged",
     "",
@@ -1463,7 +1463,7 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   yaml_content <- paste0(header, yaml::as.yaml(template))
   writeLines(yaml_content, con = file_path)
   message(
-    "Created translations template at: ",
+    "Created messages template at: ",
     file_path,
     "\n\nModify it to provide custom messages in '",
     language,

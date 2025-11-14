@@ -21,7 +21,7 @@
 #'   the survey. If `FALSE`, shows a simple confirmation dialog.
 #'   Defaults to `FALSE`.
 #' @param system_language Set the language for the survey system messages. Include
-#'   your own in a `translations.yml` file, or choose a built in one from
+#'   your own in a `messages.yml` file, or choose a built in one from
 #'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
 #'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
 #'   Defaults to `"en"`. Note: The deprecated `language` parameter is still
@@ -231,15 +231,15 @@ sd_server <- function(
         highlight_color <- "gray"
     }
 
-    # Update translations if system_language was resolved from YAML or differs from run_config()
-    # This ensures the translation system uses the final resolved language
+    # Update messages if system_language was resolved from YAML or differs from run_config()
+    # This ensures the message system uses the final resolved language
     if (
         (!explicit_params$system_language &&
             !is.null(settings$system_language)) ||
             (explicit_params$system_language && system_language != "en")
     ) {
         paths <- get_paths()
-        set_translations(paths, system_language)
+        set_messages(paths, system_language)
     }
 
     # Create local objects from config file
@@ -600,8 +600,8 @@ sd_server <- function(
     # Check if db is NULL (either blank or specified with ignore = TRUE)
     ignore_mode <- is.null(db)
 
-    # Initialize translations list (from '_survey/settings.yml' file)
-    translations <- get_translations()$translations
+    # Initialize messages list (from '_survey/settings.yml' file)
+    messages <- get_messages()$messages
 
     # Keep-alive observer - this will be triggered every 60 seconds
     shiny::observeEvent(input$keepAlive, {
@@ -1419,7 +1419,7 @@ sd_server <- function(
                             # Show stop condition error modal
                             shinyWidgets::sendSweetAlert(
                                 session = session,
-                                title = translations[["warning"]],
+                                title = messages[["warning"]],
                                 text = stop_result$error_text,
                                 type = "warning"
                             )
@@ -1445,8 +1445,8 @@ sd_server <- function(
                             # Show warning alert
                             shinyWidgets::sendSweetAlert(
                                 session = session,
-                                title = translations[["warning"]],
-                                text = translations[["required"]],
+                                title = messages[["warning"]],
+                                text = messages[["required"]],
                                 type = "warning"
                             )
                         }
@@ -1668,12 +1668,12 @@ sd_server <- function(
             # Proceed with exit modal
             if (rate_survey) {
                 shiny::showModal(shiny::modalDialog(
-                    title = translations[["rating_title"]],
+                    title = messages[["rating_title"]],
                     sd_question(
                         type = 'mc_buttons',
                         id = 'survey_rating',
                         label = glue::glue(
-                            "{translations[['rating_text']]}:<br><small>({translations[['rating_scale']]})</small>"
+                            "{messages[['rating_text']]}:<br><small>({messages[['rating_scale']]})</small>"
                         ),
                         option = c(
                             "1" = "1",
@@ -1684,22 +1684,22 @@ sd_server <- function(
                         )
                     ),
                     footer = shiny::tagList(
-                        shiny::modalButton(translations[["cancel"]]),
+                        shiny::modalButton(messages[["cancel"]]),
                         shiny::actionButton(
                             "submit_rating",
-                            translations[["submit_exit"]]
+                            messages[["submit_exit"]]
                         )
                     )
                 ))
             } else {
                 shiny::showModal(shiny::modalDialog(
-                    title = translations[["confirm_exit"]],
-                    translations[["sure_exit"]],
+                    title = messages[["confirm_exit"]],
+                    messages[["sure_exit"]],
                     footer = shiny::tagList(
-                        shiny::modalButton(translations[["cancel"]]),
+                        shiny::modalButton(messages[["cancel"]]),
                         shiny::actionButton(
                             "confirm_exit",
-                            translations[["exit"]]
+                            messages[["exit"]]
                         )
                     )
                 ))
@@ -1716,7 +1716,7 @@ sd_server <- function(
                 # Show stop condition error modal
                 shinyWidgets::sendSweetAlert(
                     session = session,
-                    title = translations[["warning"]],
+                    title = messages[["warning"]],
                     text = stop_result$error_text,
                     type = "warning"
                 )
@@ -1741,8 +1741,8 @@ sd_server <- function(
                 # Show warning alert
                 shinyWidgets::sendSweetAlert(
                     session = session,
-                    title = translations[["warning"]],
-                    text = translations[["required"]],
+                    title = messages[["warning"]],
+                    text = messages[["required"]],
                     type = "warning"
                 )
             }
