@@ -1,5 +1,13 @@
 # surveydown (development version)
 
+# surveydown 0.15.0
+
+- Function update: `sd_nav()` replacing `sd_next()`, which contains both previous and next buttons.
+- New feature: `surveydown` now supports previous buttons. Under `survey_settings`, users can now define `show_previous` (default to `FALSE`) to enable previous button globally. In `sd_nav()`, users can define `show_prev` being `TRUE` or `FALSE` to override the global setting for that specific page.
+- Simplification: No need to define `format`, `echo`, and `warning` in YAML header of `survey.qmd` anymore. The survey can have a clean start and runs fine without the YAML header.
+- Simplification: No need to define `sd_nav()` for each page. It's auto-injected unless `sd_nav()` or `sd_close()` is explicitly defined in the page with or without parameters.
+- New `settings.yml` content structure with 3 sections: `theme_settings`, `survey_settings`, and `system_messages`. They appear with our without YAML header of `survey.qmd` and are verbose (meaning all keys and values always appear).
+
 # surveydown 0.14.0
 
 - New feature: shorthand page syntax supported. Now we recommend using `--- page_id` to start a new page, and there is no need to end the page. The previous syntax of starting a page with `::: {.sd_page id=page_id}` and ending with `:::` still works.

@@ -1873,6 +1873,8 @@ make_prev_button_id <- function(page_id) {
 #' @param show_prev Logical. Whether to show the Previous button. Set to `FALSE`
 #'   for the first page where there is no previous page to navigate to. Defaults
 #'   to `TRUE`.
+#' @param show_buttons Logical. Whether to show the navigation buttons at all. Set to
+#'   `FALSE` to hide all navigation buttons. Defaults to `TRUE`.
 #'
 #' @details The function generates two 'shiny' action buttons:
 #' \itemize{
@@ -1897,6 +1899,9 @@ make_prev_button_id <- function(page_id) {
 #'   # First page - hide Previous button
 #'   sd_nav(show_prev = FALSE)
 #'
+#'   # Hide all navigation buttons
+#'   sd_nav(show_buttons = FALSE)
+#'
 #'   # Custom labels
 #'   sd_nav(
 #'     prev_label = "Go Back",
@@ -1915,8 +1920,17 @@ sd_nav <- function(
   next_page = NULL,
   prev_label = NULL,
   next_label = NULL,
-  show_prev = NULL
+  show_prev = NULL,
+  show_buttons = TRUE
 ) {
+  # If show_buttons is FALSE, return a hidden marker so auto-navigation knows
+  # that navigation was explicitly handled (just hidden)
+  if (!show_buttons) {
+    return(shiny::tagList(
+      shiny::tags$div(id = "sd-nav-marker", style = "display: none;")
+    ))
+  }
+
   # Get messages
   messages <- get_messages()$messages
 

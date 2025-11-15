@@ -1127,8 +1127,11 @@ extract_html_pages <- function(
     # Check for sd_close() button (id="close-survey-button")
     has_close_button <- !is.na(rvest::html_element(x, "#close-survey-button"))
 
+    # Check for sd_nav(show_buttons = FALSE) marker
+    has_nav_marker <- !is.na(rvest::html_element(x, "#sd-nav-marker"))
+
     # Check if explicit navigation already exists
-    has_explicit_nav <- !is.na(next_button) || has_close_button
+    has_explicit_nav <- !is.na(next_button) || has_close_button || has_nav_marker
 
     # Auto-insert navigation if conditions are met
     if (!is_last_page && !has_explicit_nav) {

@@ -8,7 +8,8 @@ sd_nav(
   next_page = NULL,
   prev_label = NULL,
   next_label = NULL,
-  show_prev = NULL
+  show_prev = NULL,
+  show_buttons = TRUE
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ to \code{NULL}, which uses "Next →" (or the translated equivalent).}
 \item{show_prev}{Logical. Whether to show the Previous button. Set to \code{FALSE}
 for the first page where there is no previous page to navigate to. Defaults
 to \code{TRUE}.}
+
+\item{show_buttons}{Logical. Whether to show the navigation buttons at all. Set to
+\code{FALSE} to hide all navigation buttons. Defaults to \code{TRUE}.}
 }
 \value{
 A 'shiny' tagList containing the navigation buttons UI elements.
@@ -57,6 +61,9 @@ if (interactive()) {
 
   # First page - hide Previous button
   sd_nav(show_prev = FALSE)
+
+  # Hide all navigation buttons
+  sd_nav(show_buttons = FALSE)
 
   # Custom labels
   sd_nav(
