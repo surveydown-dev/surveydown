@@ -25,7 +25,7 @@ get_messages_yml <- function() {
         tryCatch({
             full_settings <- yaml::read_yaml(path)
 
-            # New structure: Look for system-messages key (kebab-case)
+            # Look for system-messages key (kebab-case only)
             if (!is.null(full_settings$`system-messages`)) {
                 # Get the system-language from survey-settings (kebab-case)
                 language <- full_settings$`survey-settings`$`system-language`
@@ -37,42 +37,6 @@ get_messages_yml <- function() {
                     messages = full_settings$`system-messages`,
                     language = language
                 ))
-            }
-
-            # Backward compatibility: Look for system_messages key (snake_case)
-            if (!is.null(full_settings$system_messages)) {
-                language <- full_settings$`survey-settings`$`system-language`
-                if (is.null(language)) {
-                    language <- "en"
-                }
-
-                return(list(
-                    messages = full_settings$system_messages,
-                    language = language
-                ))
-            }
-
-            # Backward compatibility: Look for system_message key (singular)
-            if (!is.null(full_settings$system_message)) {
-                language <- full_settings$`survey-settings`$`system-language`
-                if (is.null(language)) {
-                    language <- "en"
-                }
-
-                return(list(
-                    messages = full_settings$system_message,
-                    language = language
-                ))
-            }
-
-            # Old structure (backward compatibility): Look for language keys
-            for (lang in c("en", "de", "es", "fr", "it", "zh-CN")) {
-                if (!is.null(full_settings[[lang]])) {
-                    return(list(
-                        messages = full_settings[[lang]],
-                        language = lang
-                    ))
-                }
             }
         }, error = function(e) {
             return(NULL)
