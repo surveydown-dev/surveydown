@@ -1811,18 +1811,18 @@ make_prev_button_id <- function(page_id) {
 #' previously visited pages, while the Next button maintains the standard forward
 #' navigation behavior.
 #'
-#' @param next_page Character string. The ID of the next page to navigate to when
+#' @param page_next Character string. The ID of the next page to navigate to when
 #'   the Next button is clicked. If `NULL`, the survey will navigate to the default
 #'   next page in sequence.
-#' @param prev_label Character string. The label for the 'Previous' button. Defaults
+#' @param label_prev Character string. The label for the 'Previous' button. Defaults
 #'   to `NULL`, which uses "← Previous" (or the translated equivalent).
-#' @param next_label Character string. The label for the 'Next' button. Defaults
+#' @param label_next Character string. The label for the 'Next' button. Defaults
 #'   to `NULL`, which uses "Next →" (or the translated equivalent).
 #' @param show_prev Logical. Whether to show the Previous button. Set to `FALSE`
-#'   for the first page where there is no previous page to navigate to. Defaults
-#'   to `TRUE`.
-#' @param show_buttons Logical. Whether to show the navigation buttons at all. Set to
-#'   `FALSE` to hide all navigation buttons. Defaults to `TRUE`.
+#'   for the first page where there is no previous page to navigate to. If `NULL`
+#'   (default), uses the `show-previous` setting from YAML or `sd_server()`.
+#' @param show_next Logical. Whether to show the Next button. Set to `FALSE`
+#'   to hide the Next button. Defaults to `TRUE`.
 #'
 #' @details The function generates two 'shiny' action buttons:
 #' \itemize{
@@ -1847,17 +1847,20 @@ make_prev_button_id <- function(page_id) {
 #'   # First page - hide Previous button
 #'   sd_nav(show_prev = FALSE)
 #'
-#'   # Hide all navigation buttons
-#'   sd_nav(show_buttons = FALSE)
+#'   # Last page - hide Next button
+#'   sd_nav(show_next = FALSE)
+#'
+#'   # Hide both navigation buttons
+#'   sd_nav(show_prev = FALSE, show_next = FALSE)
 #'
 #'   # Custom labels
 #'   sd_nav(
-#'     prev_label = "Go Back",
-#'     next_label = "Continue"
+#'     label_prev = "Go Back",
+#'     label_next = "Continue"
 #'   )
 #'
 #'   # Specify next page explicitly
-#'   sd_nav(next_page = "demographics")
+#'   sd_nav(page_next = "demographics")
 #' }
 #'
 #' @seealso
@@ -1865,20 +1868,12 @@ make_prev_button_id <- function(page_id) {
 #'
 #' @export
 sd_nav <- function(
-  next_page = NULL,
-  prev_label = NULL,
-  next_label = NULL,
+  page_next = NULL,
+  label_prev = NULL,
+  label_next = NULL,
   show_prev = NULL,
-  show_buttons = TRUE
+  show_next = TRUE
 ) {
-  # If show_buttons is FALSE, return a hidden marker so auto-navigation knows
-  # that navigation was explicitly handled (just hidden)
-  if (!show_buttons) {
-    return(shiny::tagList(
-      shiny::tags$div(id = "sd-nav-marker", style = "display: none;")
-    ))
-  }
-
   # Get messages
   messages <- get_messages()$messages
 
@@ -1889,18 +1884,33 @@ sd_nav <- function(
     show_prev <- ifelse(!is.null(settings$`show-previous`), settings$`show-previous`, FALSE)
   }
 
-  # Default labels with arrows
-  if (is.null(prev_label)) {
-    prev_label <- paste0("\u2190 ", messages[['previous']])  # ← Previous
-  }
-  if (is.null(next_label)) {
-    next_label <- paste0(messages[['next']], " \u2192")  # Next →
+  # Always add a hidden marker so auto-navigation knows that navigation was explicitly handled
+  # This prevents auto-nav from adding buttons when user explicitly set show_next = FALSE
+  nav_marker <- shiny::tags$div(id = "sd-nav-marker", style = "display: none;")
+
+  # If both buttons are hidden, return only the marker
+  if (!show_prev && !show_next) {
+    return(shiny::tagList(nav_marker))
   }
 
-  # Create navigation container
+  # Default labels with arrows
+  if (is.null(label_prev)) {
+    label_prev <- paste0("\u2190 ", messages[['previous']])  # ← Previous
+  }
+  if (is.null(label_next)) {
+    label_next <- paste0(messages[['next']], " \u2192")  # Next →
+  }
+
+  # Determine button layout style
+  # Case 1: Both buttons shown → Previous left, Next right
+  # Case 2: Only next shown → Next centered
+  # Case 3: Only previous shown → Previous left
+
+  # Create navigation container with marker
   shiny::tagList(
+    nav_marker,  # Always include marker to prevent auto-navigation
     shiny::div(
-      `data-next-page` = if (!is.null(next_page)) next_page else "",
+      `data-next-page` = if (!is.null(page_next)) page_next else "",
       style = "margin-top: 1rem; margin-bottom: 0.5rem;",
       class = "sd-nav-container",
 
@@ -1908,21 +1918,30 @@ sd_nav <- function(
       if (show_prev) {
         shiny::actionButton(
           inputId = "page_id_prev",
-          label = prev_label,
+          label = label_prev,
           class = "sd-nav-button sd-nav-prev",
           style = "float: left;",
           onclick = "Shiny.setInputValue('prev_page', true, {priority: 'event'});"
         )
       },
 
-      # Next button (centered if no previous button, otherwise float right)
-      shiny::actionButton(
-        inputId = "page_id_next",
-        label = next_label,
-        class = "sd-enter-button sd-nav-button sd-nav-next",
-        style = if (show_prev) "float: right;" else "display: block; margin: auto;",
-        onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
-      ),
+      # Next button (only if show_next is TRUE)
+      if (show_next) {
+        # Centered if no previous button, otherwise float right
+        button_style <- if (show_prev) {
+          "float: right;"
+        } else {
+          "display: block; margin-left: auto; margin-right: auto;"
+        }
+
+        shiny::actionButton(
+          inputId = "page_id_next",
+          label = label_next,
+          class = "sd-enter-button sd-nav-button sd-nav-next",
+          style = button_style,
+          onclick = "Shiny.setInputValue('next_page', this.parentElement.getAttribute('data-next-page'));"
+        )
+      },
 
       # Clearfix
       shiny::tags$div(style = "clear: both;")

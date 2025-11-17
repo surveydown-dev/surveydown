@@ -9,6 +9,7 @@ sd_server(
   required_questions = NULL,
   all_questions_required = FALSE,
   start_page = NULL,
+  show_previous = FALSE,
   auto_scroll = FALSE,
   rate_survey = FALSE,
   system_language = "en",
@@ -32,6 +33,9 @@ survey will be required. Defaults to \code{FALSE}.}
 
 \item{start_page}{Character string. The ID of the page to start on.
 Defaults to \code{NULL} (first page).}
+
+\item{show_previous}{Logical. If \code{TRUE}, shows the Previous button on survey
+pages. Defaults to \code{FALSE}.}
 
 \item{auto_scroll}{Logical. Whether to enable auto-scrolling to the next
 question after answering. Defaults to \code{FALSE}.}

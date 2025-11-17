@@ -5,30 +5,30 @@
 \title{Create Navigation Buttons for Survey Pages}
 \usage{
 sd_nav(
-  next_page = NULL,
-  prev_label = NULL,
-  next_label = NULL,
+  page_next = NULL,
+  label_prev = NULL,
+  label_next = NULL,
   show_prev = NULL,
-  show_buttons = TRUE
+  show_next = TRUE
 )
 }
 \arguments{
-\item{next_page}{Character string. The ID of the next page to navigate to when
+\item{page_next}{Character string. The ID of the next page to navigate to when
 the Next button is clicked. If \code{NULL}, the survey will navigate to the default
 next page in sequence.}
 
-\item{prev_label}{Character string. The label for the 'Previous' button. Defaults
+\item{label_prev}{Character string. The label for the 'Previous' button. Defaults
 to \code{NULL}, which uses "← Previous" (or the translated equivalent).}
 
-\item{next_label}{Character string. The label for the 'Next' button. Defaults
+\item{label_next}{Character string. The label for the 'Next' button. Defaults
 to \code{NULL}, which uses "Next →" (or the translated equivalent).}
 
 \item{show_prev}{Logical. Whether to show the Previous button. Set to \code{FALSE}
-for the first page where there is no previous page to navigate to. Defaults
-to \code{TRUE}.}
+for the first page where there is no previous page to navigate to. If \code{NULL}
+(default), uses the \code{show-previous} setting from YAML or \code{sd_server()}.}
 
-\item{show_buttons}{Logical. Whether to show the navigation buttons at all. Set to
-\code{FALSE} to hide all navigation buttons. Defaults to \code{TRUE}.}
+\item{show_next}{Logical. Whether to show the Next button. Set to \code{FALSE}
+to hide the Next button. Defaults to \code{TRUE}.}
 }
 \value{
 A 'shiny' tagList containing the navigation buttons UI elements.
@@ -62,17 +62,20 @@ if (interactive()) {
   # First page - hide Previous button
   sd_nav(show_prev = FALSE)
 
-  # Hide all navigation buttons
-  sd_nav(show_buttons = FALSE)
+  # Last page - hide Next button
+  sd_nav(show_next = FALSE)
+
+  # Hide both navigation buttons
+  sd_nav(show_prev = FALSE, show_next = FALSE)
 
   # Custom labels
   sd_nav(
-    prev_label = "Go Back",
-    next_label = "Continue"
+    label_prev = "Go Back",
+    label_next = "Continue"
   )
 
   # Specify next page explicitly
-  sd_nav(next_page = "demographics")
+  sd_nav(page_next = "demographics")
 }
 
 }
