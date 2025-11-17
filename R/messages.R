@@ -25,12 +25,25 @@ get_messages_yml <- function() {
         tryCatch({
             full_settings <- yaml::read_yaml(path)
 
-            # New structure: Look for system_messages key (plural)
-            if (!is.null(full_settings$system_messages)) {
-                # Get the system_language from survey_settings
-                language <- full_settings$survey_settings$system_language
+            # New structure: Look for system-messages key (kebab-case)
+            if (!is.null(full_settings$`system-messages`)) {
+                # Get the system-language from survey-settings (kebab-case)
+                language <- full_settings$`survey-settings`$`system-language`
                 if (is.null(language)) {
                     language <- "en"  # Default to English if not specified
+                }
+
+                return(list(
+                    messages = full_settings$`system-messages`,
+                    language = language
+                ))
+            }
+
+            # Backward compatibility: Look for system_messages key (snake_case)
+            if (!is.null(full_settings$system_messages)) {
+                language <- full_settings$`survey-settings`$`system-language`
+                if (is.null(language)) {
+                    language <- "en"
                 }
 
                 return(list(
@@ -41,7 +54,7 @@ get_messages_yml <- function() {
 
             # Backward compatibility: Look for system_message key (singular)
             if (!is.null(full_settings$system_message)) {
-                language <- full_settings$survey_settings$system_language
+                language <- full_settings$`survey-settings`$`system-language`
                 if (is.null(language)) {
                     language <- "en"
                 }
@@ -73,140 +86,140 @@ get_messages_default <- function() {
         "en" = list(
             #server.R
             "cancel" = "Cancel",
-            "confirm_exit" = "Confirm Exit",
-            "sure_exit" = "Are you sure you want to exit the survey?",
-            "submit_exit" = "Submit and Exit",
+            "confirm-exit" = "Confirm Exit",
+            "sure-exit" = "Are you sure you want to exit the survey?",
+            "submit-exit" = "Submit and Exit",
             "warning" = "Warning",
             "required" = "Please answer all required questions before proceeding.",
-            "rating_title" = "Before you go...",
-            "rating_text" = "Rate your survey experience:",
-            "rating_scale" = "from 1-poor to 5-excellent",
+            "rating-title" = "Before you go...",
+            "rating-text" = "Rate your survey experience:",
+            "rating-scale" = "from 1-poor to 5-excellent",
             # ui.R
             "previous" = "Previous",
             "next" = "Next",
             "exit" = "Exit Survey",
-            "close_tab" = "Please close this tab manually to exit the survey.",
-            "choose_option" = "Choose an option...",
+            "close-tab" = "Please close this tab manually to exit the survey.",
+            "choose-option" = "Choose an option...",
             "click" = "Click here",
             "redirect" = "Redirecting in",
             "seconds" = "seconds",
-            "new_tab" = "Opens in a new tab",
-            "redirect_error" = "Error: This text won't trigger any redirection..."
+            "new-tab" = "Opens in a new tab",
+            "redirect-error" = "Error: This text won't trigger any redirection..."
         ),
         "de" = list(
             #server.R
             "cancel" = "Abbrechen",
-            "confirm_exit" = "Beenden best\u00e4tigen",
-            "sure_exit" = "Sind Sie sicher, dass Sie die Umfrage beenden m\u00f6chten?",
-            "submit_exit" = "Absenden und beenden",
+            "confirm-exit" = "Beenden best\u00e4tigen",
+            "sure-exit" = "Sind Sie sicher, dass Sie die Umfrage beenden m\u00f6chten?",
+            "submit-exit" = "Absenden und beenden",
             "warning" = "Warnung",
             "required" = "Bitte beantworten Sie alle erforderlichen Fragen, bevor Sie fortfahren.",
-            "rating_title" = "Bevor Sie gehen...",
-            "rating_text" = "Bewerten Sie Ihre Umfrageerfahrung:",
-            "rating_scale" = "von 1-schlecht bis 5-ausgezeichnet",
+            "rating-title" = "Bevor Sie gehen...",
+            "rating-text" = "Bewerten Sie Ihre Umfrageerfahrung:",
+            "rating-scale" = "von 1-schlecht bis 5-ausgezeichnet",
             # ui.R
             "previous" = "Zur\u00fcck",
             "next" = "Weiter",
             "exit" = "Umfrage beenden",
-            "close_tab" = "Bitte schlie\u00dfen Sie diesen Tab manuell, um die Umfrage zu beenden.",
-            "choose_option" = "Option ausw\u00e4hlen...",
+            "close-tab" = "Bitte schlie\u00dfen Sie diesen Tab manuell, um die Umfrage zu beenden.",
+            "choose-option" = "Option ausw\u00e4hlen...",
             "click" = "Hier klicken",
             "redirect" = "Weiterleitung in",
             "seconds" = "Sekunden",
-            "new_tab" = "\u00d6ffnet sich in einem neuen Tab",
-            "redirect_error" = "Fehler: Dieser Text wird keine Weiterleitung ausl\u00f6sen..."
+            "new-tab" = "\u00d6ffnet sich in einem neuen Tab",
+            "redirect-error" = "Fehler: Dieser Text wird keine Weiterleitung ausl\u00f6sen..."
         ),
         "es" = list(
             #server.R
             "cancel" = "Cancelar",
-            "confirm_exit" = "Confirmar Salida",
-            "sure_exit" = "\u00bfEst\u00e1 seguro de que desea salir de la encuesta?",
-            "submit_exit" = "Enviar y Salir",
+            "confirm-exit" = "Confirmar Salida",
+            "sure-exit" = "\u00bfEst\u00e1 seguro de que desea salir de la encuesta?",
+            "submit-exit" = "Enviar y Salir",
             "warning" = "Advertencia",
             "required" = "Por favor, responda todas las preguntas obligatorias antes de continuar.",
-            "rating_title" = "Antes de irse...",
-            "rating_text" = "Califique su experiencia en la encuesta:",
-            "rating_scale" = "de 1-malo a 5-excelente",
+            "rating-title" = "Antes de irse...",
+            "rating-text" = "Califique su experiencia en la encuesta:",
+            "rating-scale" = "de 1-malo a 5-excelente",
             # ui.R
             "previous" = "Anterior",
             "next" = "Siguiente",
             "exit" = "Salir de la Encuesta",
-            "close_tab" = "Por favor, cierre esta pesta\u00f1a manualmente para salir de la encuesta.",
-            "choose_option" = "Elija una opci\u00f3n...",
+            "close-tab" = "Por favor, cierre esta pesta\u00f1a manualmente para salir de la encuesta.",
+            "choose-option" = "Elija una opci\u00f3n...",
             "click" = "Haga clic aqu\u00ed",
             "redirect" = "Redireccionando en",
             "seconds" = "segundos",
-            "new_tab" = "Se abre en una nueva pesta\u00f1a",
-            "redirect_error" = "Error: Este texto no activar\u00e1 ninguna redirecci\u00f3n..."
+            "new-tab" = "Se abre en una nueva pesta\u00f1a",
+            "redirect-error" = "Error: Este texto no activar\u00e1 ninguna redirecci\u00f3n..."
         ),
         "fr" = list(
             #server.R
             "cancel" = "Annuler",
-            "confirm_exit" = "Confirmer la sortie",
-            "sure_exit" = "\u00cates-vous s\u00fbr de vouloir quitter le sondage?",
-            "submit_exit" = "Soumettre et quitter",
+            "confirm-exit" = "Confirmer la sortie",
+            "sure-exit" = "\u00cates-vous s\u00fbr de vouloir quitter le sondage?",
+            "submit-exit" = "Soumettre et quitter",
             "warning" = "Avertissement",
             "required" = "Veuillez r\u00e9pondre \u00e0 toutes les questions obligatoires avant de continuer.",
-            "rating_title" = "Avant de partir...",
-            "rating_text" = "\u00c9valuez votre exp\u00e9rience du sondage :",
-            "rating_scale" = "de 1-mauvais \u00e0 5-excellent",
+            "rating-title" = "Avant de partir...",
+            "rating-text" = "\u00c9valuez votre exp\u00e9rience du sondage :",
+            "rating-scale" = "de 1-mauvais \u00e0 5-excellent",
             # ui.R
             "previous" = "Pr\u00e9c\u00e9dent",
             "next" = "Suivant",
             "exit" = "Quitter le sondage",
-            "close_tab" = "Veuillez fermer cet onglet manuellement pour quitter le sondage.",
-            "choose_option" = "Choisissez une option...",
+            "close-tab" = "Veuillez fermer cet onglet manuellement pour quitter le sondage.",
+            "choose-option" = "Choisissez une option...",
             "click" = "Cliquez ici",
             "redirect" = "Redirection dans",
             "seconds" = "secondes",
-            "new_tab" = "S'ouvre dans un nouvel onglet",
-            "redirect_error" = "Erreur : Ce texte n'activera aucune redirection..."
+            "new-tab" = "S'ouvre dans un nouvel onglet",
+            "redirect-error" = "Erreur : Ce texte n'activera aucune redirection..."
         ),
         "it" = list(
             #server.R
             "cancel" = "Annulla",
-            "confirm_exit" = "Conferma Uscita",
-            "sure_exit" = "Sei sicuro di voler uscire dal sondaggio?",
-            "submit_exit" = "Invia ed Esci",
+            "confirm-exit" = "Conferma Uscita",
+            "sure-exit" = "Sei sicuro di voler uscire dal sondaggio?",
+            "submit-exit" = "Invia ed Esci",
             "warning" = "Avviso",
             "required" = "Per favore, rispondi a tutte le domande obbligatorie prima di procedere.",
-            "rating_title" = "Prima di andare...",
-            "rating_text" = "Valuta la tua esperienza con il sondaggio:",
-            "rating_scale" = "da 1-scarso a 5-eccellente",
+            "rating-title" = "Prima di andare...",
+            "rating-text" = "Valuta la tua esperienza con il sondaggio:",
+            "rating-scale" = "da 1-scarso a 5-eccellente",
             # ui.R
             "previous" = "Indietro",
             "next" = "Avanti",
             "exit" = "Esci dal Sondaggio",
-            "close_tab" = "Per favore, chiudi questa scheda manualmente per uscire dal sondaggio.",
-            "choose_option" = "Scegli un'opzione...",
+            "close-tab" = "Per favore, chiudi questa scheda manualmente per uscire dal sondaggio.",
+            "choose-option" = "Scegli un'opzione...",
             "click" = "Clicca qui",
             "redirect" = "Reindirizzamento in",
             "seconds" = "secondi",
-            "new_tab" = "Si apre in una nuova scheda",
-            "redirect_error" = "Errore: Questo testo non attiver\u00e0 alcun reindirizzamento..."
+            "new-tab" = "Si apre in una nuova scheda",
+            "redirect-error" = "Errore: Questo testo non attiver\u00e0 alcun reindirizzamento..."
         ),
         "zh-CN" = list(
             #server.R
             "cancel" = "\u53d6\u6d88", # \u53d6\u6d88
-            "confirm_exit" = "\u786e\u8ba4\u9000\u51fa", # \u786e\u8ba4\u9000\u51fa
-            "sure_exit" = "\u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f", # \u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f
-            "submit_exit" = "\u63d0\u4ea4\u5e76\u9000\u51fa", # \u63d0\u4ea4\u5e76\u9000\u51fa
+            "confirm-exit" = "\u786e\u8ba4\u9000\u51fa", # \u786e\u8ba4\u9000\u51fa
+            "sure-exit" = "\u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f", # \u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f
+            "submit-exit" = "\u63d0\u4ea4\u5e76\u9000\u51fa", # \u63d0\u4ea4\u5e76\u9000\u51fa
             "warning" = "\u8b66\u544a", # \u8b66\u544a
             "required" = "\u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002", # \u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002
-            "rating_title" = "\u7a0d\u7b49\u4e00\u4e0b\u2026", # \u7a0d\u7b49\u4e00\u4e0b\u2026
-            "rating_text" = "\u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a", # \u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a
-            "rating_scale" = "1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f", # 1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f
+            "rating-title" = "\u7a0d\u7b49\u4e00\u4e0b\u2026", # \u7a0d\u7b49\u4e00\u4e0b\u2026
+            "rating-text" = "\u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a", # \u8bf7\u60a8\u4e3a\u6b64\u6b21\u95ee\u5377\u6253\u5206\uff1a
+            "rating-scale" = "1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f", # 1\u4e3a\u975e\u5e38\u4e0d\u6ee1\u610f\uff0c5\u4e3a\u975e\u5e38\u6ee1\u610f
             # ui.R
             "previous" = "\u4e0a\u4e00\u9875", # \u4e0a\u4e00\u9875
             "next" = "\u4e0b\u4e00\u9875", # \u4e0b\u4e00\u9875
             "exit" = "\u9000\u51fa\u95ee\u5377", # \u9000\u51fa\u95ee\u5377
-            "close_tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002", # \u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002
-            "choose_option" = "\u8bf7\u9009\u62e9\u4e00\u9879\u2026", # \u8bf7\u9009\u62e9\u4e00\u9879\u2026
+            "close-tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002", # \u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002
+            "choose-option" = "\u8bf7\u9009\u62e9\u4e00\u9879\u2026", # \u8bf7\u9009\u62e9\u4e00\u9879\u2026
             "click" = "\u5355\u51fb\u6b64\u5904", # \u5355\u51fb\u6b64\u5904
             "redirect" = "\u8df3\u8f6c\u5012\u8ba1\u65f6", # \u8df3\u8f6c\u5012\u8ba1\u65f6
             "seconds" = "\u79d2", # \u79d2
-            "new_tab" = "\u5728\u65b0\u9875\u9762\u5f00\u542f", # \u5728\u65b0\u9875\u9762\u5f00\u542f
-            "redirect_error" = "\u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026" # \u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026
+            "new-tab" = "\u5728\u65b0\u9875\u9762\u5f00\u542f", # \u5728\u65b0\u9875\u9762\u5f00\u542f
+            "redirect-error" = "\u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026" # \u9519\u8bef\uff1a\u6b64\u6587\u672c\u65e0\u6cd5\u89e6\u53d1\u4efb\u4f55\u8df3\u8f6c\u2026
         )
     ))
 }

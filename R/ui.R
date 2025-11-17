@@ -155,7 +155,7 @@ get_barposition <- function(metadata) {
 }
 
 get_footer_left <- function(metadata) {
-  footer_left <- get_yaml_value(metadata, "footer_left")
+  footer_left <- get_yaml_value(metadata, "footer-left")
   if (is.null(footer_left)) {
     return("")
   }
@@ -169,7 +169,7 @@ get_footer_center <- function(metadata) {
     return("")
   }
 
-  footer_center <- get_yaml_value(metadata, "footer_center")
+  footer_center <- get_yaml_value(metadata, "footer-center")
   plain_footer <- meta$footer
 
   # If footer-center doesn't exist but plain footer does, use plain footer
@@ -184,7 +184,7 @@ get_footer_center <- function(metadata) {
 }
 
 get_footer_right <- function(metadata) {
-  footer_right <- get_yaml_value(metadata, "footer_right")
+  footer_right <- get_yaml_value(metadata, "footer-right")
   if (is.null(footer_right)) {
     return("")
   }
@@ -222,10 +222,10 @@ get_footer <- function(metadata) {
     return("")
   }
 
-  # Get footer-related fields with both underscore and dash support
-  footer_left <- get_yaml_value(metadata, "footer_left")
-  footer_right <- get_yaml_value(metadata, "footer_right")
-  footer_center <- get_yaml_value(metadata, "footer_center")
+  # Get footer-related fields (kebab-case only)
+  footer_left <- get_yaml_value(metadata, "footer-left")
+  footer_right <- get_yaml_value(metadata, "footer-right")
+  footer_center <- get_yaml_value(metadata, "footer-center")
   plain_footer <- meta$footer
 
   # If footer-center doesn't exist but plain footer does, use plain footer
@@ -273,8 +273,8 @@ get_footer <- function(metadata) {
   ))
 }
 
-# Helper function to get YAML values supporting both underscore and dash formats
-# Also supports hierarchical structure with theme_settings and survey_settings
+# Helper function to get YAML values (kebab-case only)
+# Supports hierarchical structure with theme-settings and survey-settings
 get_yaml_value <- function(metadata, key) {
   # Safety check: ensure metadata structure exists
   if (is.null(metadata) || is.null(metadata$formats) ||
@@ -284,110 +284,81 @@ get_yaml_value <- function(metadata, key) {
 
   yaml_data <- metadata$formats$html$metadata
 
-  # Define parameter categories
-  theme_params <- c("theme", "barposition", "barcolor", "footer_left", "footer_center", "footer_right")
+  # Define parameter categories (kebab-case only)
+  theme_params <- c("theme", "barposition", "barcolor", "footer-left", "footer-center", "footer-right")
   survey_params <- c(
-    "show_previous", "use_cookies", "auto_scroll", "rate_survey", "all_questions_required",
-    "start_page", "system_language", "highlight_unanswered", "highlight_color",
-    "capture_metadata", "required_questions"
+    "show-previous", "use-cookies", "auto-scroll", "rate-survey", "all-questions-required",
+    "start-page", "system-language", "highlight-unanswered", "highlight-color",
+    "capture-metadata", "required-questions"
   )
 
   # Determine which category this key belongs to
   category <- NULL
   if (key %in% theme_params) {
-    category <- "theme_settings"
+    category <- "theme-settings"
   } else if (key %in% survey_params) {
-    category <- "survey_settings"
+    category <- "survey-settings"
   }
 
   # Try hierarchical structure first (if category is known)
   if (!is.null(category)) {
-    # Check for underscore category key
     if (!is.null(yaml_data[[category]]) && !is.null(yaml_data[[category]][[key]])) {
       return(yaml_data[[category]][[key]])
     }
-    # Check for dash category key
-    dash_category <- gsub("_", "-", category)
-    if (!is.null(yaml_data[[dash_category]]) && !is.null(yaml_data[[dash_category]][[key]])) {
-      return(yaml_data[[dash_category]][[key]])
-    }
-    # Check for category with dash key
-    dash_key <- gsub("_", "-", key)
-    if (!is.null(yaml_data[[category]]) && !is.null(yaml_data[[category]][[dash_key]])) {
-      return(yaml_data[[category]][[dash_key]])
-    }
-    if (!is.null(yaml_data[[dash_category]]) && !is.null(yaml_data[[dash_category]][[dash_key]])) {
-      return(yaml_data[[dash_category]][[dash_key]])
-    }
   }
 
-  # Fall back to flat structure for backward compatibility
-  # Try underscore version
+  # Fall back to flat structure (also supports top-level keys like system-messages)
   if (!is.null(yaml_data[[key]])) {
     return(yaml_data[[key]])
-  }
-
-  # Try dash version
-  dash_key <- gsub("_", "-", key)
-  if (!is.null(yaml_data[[dash_key]])) {
-    return(yaml_data[[dash_key]])
   }
 
   return(NULL)
 }
 
-get_use_cookies <- function(metadata) {
-  use_cookies <- get_yaml_value(metadata, "use_cookies")
-  if (is.null(use_cookies)) {
+# Helper function to parse boolean values (case-insensitive)
+# Accepts: TRUE/True/true/T/Yes/yes/NO/no/FALSE/False/false/F (any case)
+parse_yaml_boolean <- function(value) {
+  if (is.null(value)) {
     return(NULL)
   }
-  # Handle both TRUE/FALSE and yes/no formats
-  if (is.character(use_cookies)) {
-    return(use_cookies %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
+  if (is.logical(value)) {
+    return(value)
   }
-  return(as.logical(use_cookies))
+  if (is.character(value)) {
+    # Convert to uppercase for case-insensitive comparison
+    upper_val <- toupper(value)
+    if (upper_val %in% c("TRUE", "T", "YES")) {
+      return(TRUE)
+    } else if (upper_val %in% c("FALSE", "F", "NO")) {
+      return(FALSE)
+    }
+  }
+  # Default: try to convert to logical
+  return(as.logical(value))
+}
+
+get_use_cookies <- function(metadata) {
+  use_cookies <- get_yaml_value(metadata, "use-cookies")
+  return(parse_yaml_boolean(use_cookies))
 }
 
 get_auto_scroll <- function(metadata) {
-  auto_scroll <- get_yaml_value(metadata, "auto_scroll")
-  if (is.null(auto_scroll)) {
-    return(NULL)
-  }
-  # Handle both TRUE/FALSE and yes/no formats
-  if (is.character(auto_scroll)) {
-    return(auto_scroll %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
-  }
-  return(as.logical(auto_scroll))
+  auto_scroll <- get_yaml_value(metadata, "auto-scroll")
+  return(parse_yaml_boolean(auto_scroll))
 }
 
 get_rate_survey <- function(metadata) {
-  rate_survey <- get_yaml_value(metadata, "rate_survey")
-  if (is.null(rate_survey)) {
-    return(NULL)
-  }
-  # Handle both TRUE/FALSE and yes/no formats
-  if (is.character(rate_survey)) {
-    return(rate_survey %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
-  }
-  return(as.logical(rate_survey))
+  rate_survey <- get_yaml_value(metadata, "rate-survey")
+  return(parse_yaml_boolean(rate_survey))
 }
 
 get_all_questions_required <- function(metadata) {
-  all_questions_required <- get_yaml_value(metadata, "all_questions_required")
-  if (is.null(all_questions_required)) {
-    return(NULL)
-  }
-  # Handle both TRUE/FALSE and yes/no formats
-  if (is.character(all_questions_required)) {
-    return(
-      all_questions_required %in% c("TRUE", "True", "true", "yes", "Yes", "YES")
-    )
-  }
-  return(as.logical(all_questions_required))
+  all_questions_required <- get_yaml_value(metadata, "all-questions-required")
+  return(parse_yaml_boolean(all_questions_required))
 }
 
 get_start_page <- function(metadata) {
-  start_page <- get_yaml_value(metadata, "start_page")
+  start_page <- get_yaml_value(metadata, "start-page")
   if (is.null(start_page)) {
     return(NULL)
   }
@@ -395,7 +366,7 @@ get_start_page <- function(metadata) {
 }
 
 get_system_language <- function(metadata) {
-  system_language <- get_yaml_value(metadata, "system_language")
+  system_language <- get_yaml_value(metadata, "system-language")
   if (is.null(system_language)) {
     return(NULL)
   }
@@ -411,21 +382,12 @@ get_language <- function(metadata) {
 }
 
 get_highlight_unanswered <- function(metadata) {
-  highlight_unanswered <- get_yaml_value(metadata, "highlight_unanswered")
-  if (is.null(highlight_unanswered)) {
-    return(NULL)
-  }
-  # Handle both TRUE/FALSE and yes/no formats
-  if (is.character(highlight_unanswered)) {
-    return(
-      highlight_unanswered %in% c("TRUE", "True", "true", "yes", "Yes", "YES")
-    )
-  }
-  return(as.logical(highlight_unanswered))
+  highlight_unanswered <- get_yaml_value(metadata, "highlight-unanswered")
+  return(parse_yaml_boolean(highlight_unanswered))
 }
 
 get_highlight_color <- function(metadata) {
-  highlight_color <- get_yaml_value(metadata, "highlight_color")
+  highlight_color <- get_yaml_value(metadata, "highlight-color")
   if (is.null(highlight_color)) {
     return(NULL)
   }
@@ -433,19 +395,12 @@ get_highlight_color <- function(metadata) {
 }
 
 get_capture_metadata <- function(metadata) {
-  capture_metadata <- get_yaml_value(metadata, "capture_metadata")
-  if (is.null(capture_metadata)) {
-    return(NULL)
-  }
-  # Handle both TRUE/FALSE and yes/no formats
-  if (is.character(capture_metadata)) {
-    return(capture_metadata %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
-  }
-  return(as.logical(capture_metadata))
+  capture_metadata <- get_yaml_value(metadata, "capture-metadata")
+  return(parse_yaml_boolean(capture_metadata))
 }
 
 get_required_questions <- function(metadata) {
-  required_questions <- get_yaml_value(metadata, "required_questions")
+  required_questions <- get_yaml_value(metadata, "required-questions")
   if (is.null(required_questions)) {
     return(NULL)
   }
@@ -461,15 +416,8 @@ get_required_questions <- function(metadata) {
 }
 
 get_show_previous <- function(metadata) {
-  show_previous <- get_yaml_value(metadata, "show_previous")
-  if (is.null(show_previous)) {
-    return(NULL)
-  }
-  # Handle both TRUE/FALSE and yes/no formats
-  if (is.character(show_previous)) {
-    return(show_previous %in% c("TRUE", "True", "true", "yes", "Yes", "YES"))
-  }
-  return(as.logical(show_previous))
+  show_previous <- get_yaml_value(metadata, "show-previous")
+  return(parse_yaml_boolean(show_previous))
 }
 
 find_all_yaml_files <- function() {
@@ -1011,7 +959,7 @@ sd_question <- function(
   label <- markdown_to_html(label)
 
   if (type == "select") {
-    label_select <- messages[['choose_option']]
+    label_select <- messages[['choose-option']]
 
     # Add blank option for visible selected option
     option <- c("", option)
@@ -1934,11 +1882,11 @@ sd_nav <- function(
   # Get messages
   messages <- get_messages()$messages
 
-  # Get show_previous setting from settings.yml
+  # Get show-previous setting from settings.yml (kebab-case)
   # If show_prev is explicitly provided, use it; otherwise use the setting
   if (is.null(show_prev)) {
     settings <- read_settings_yaml()
-    show_prev <- ifelse(!is.null(settings$show_previous), settings$show_previous, FALSE)
+    show_prev <- ifelse(!is.null(settings$`show-previous`), settings$`show-previous`, FALSE)
   }
 
   # Default labels with arrows
@@ -2214,8 +2162,8 @@ create_redirect_element <- function(
   messages <- get_messages()$messages
   text_redirect <- messages[["redirect"]]
   text_seconds <- messages[["seconds"]]
-  text_newtab <- messages[["new_tab"]]
-  text_error <- messages[["redirect_error"]]
+  text_newtab <- messages[["new-tab"]]
+  text_error <- messages[["redirect-error"]]
 
   # Add automatic redirection if delay is specified
   if (!is.null(delay) && is.numeric(delay) && delay > 0) {

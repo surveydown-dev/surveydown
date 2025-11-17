@@ -15,6 +15,8 @@
 #'   survey will be required. Defaults to `FALSE`.
 #' @param start_page Character string. The ID of the page to start on.
 #'   Defaults to `NULL` (first page).
+#' @param show_previous Logical. If `TRUE`, shows the Previous button on survey
+#'   pages. Defaults to `FALSE`.
 #' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
 #'   question after answering. Defaults to `FALSE`.
 #' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
@@ -132,6 +134,7 @@ sd_server <- function(
     required_questions = NULL,
     all_questions_required = FALSE,
     start_page = NULL,
+    show_previous = FALSE,
     auto_scroll = FALSE,
     rate_survey = FALSE,
     system_language = "en",
@@ -177,6 +180,7 @@ sd_server <- function(
 
     # Track which parameters were explicitly provided
     explicit_params <- list(
+        show_previous = !missing(show_previous),
         use_cookies = !missing(use_cookies),
         auto_scroll = !missing(auto_scroll),
         rate_survey = !missing(rate_survey),
@@ -207,22 +211,25 @@ sd_server <- function(
     settings <- read_settings_yaml()
 
     # Apply YAML overrides for parameters that weren't explicitly provided
-    yaml_params <- c(
-        "use_cookies",
-        "auto_scroll",
-        "rate_survey",
-        "all_questions_required",
-        "start_page",
-        "system_language",
-        "highlight_unanswered",
-        "highlight_color",
-        "capture_metadata",
-        "required_questions"
+    # Map snake_case parameter names to kebab-case settings keys
+    param_to_kebab <- list(
+        show_previous = "show-previous",
+        use_cookies = "use-cookies",
+        auto_scroll = "auto-scroll",
+        rate_survey = "rate-survey",
+        all_questions_required = "all-questions-required",
+        start_page = "start-page",
+        system_language = "system-language",
+        highlight_unanswered = "highlight-unanswered",
+        highlight_color = "highlight-color",
+        capture_metadata = "capture-metadata",
+        required_questions = "required-questions"
     )
 
-    for (param in yaml_params) {
-        if (!explicit_params[[param]] && !is.null(settings[[param]])) {
-            assign(param, settings[[param]])
+    for (param in names(param_to_kebab)) {
+        kebab_key <- param_to_kebab[[param]]
+        if (!explicit_params[[param]] && !is.null(settings[[kebab_key]])) {
+            assign(param, settings[[kebab_key]])
         }
     }
 
@@ -235,7 +242,7 @@ sd_server <- function(
     # This ensures the message system uses the final resolved language
     if (
         (!explicit_params$system_language &&
-            !is.null(settings$system_language)) ||
+            !is.null(settings$`system-language`)) ||
             (explicit_params$system_language && system_language != "en")
     ) {
         paths <- get_paths()
@@ -409,6 +416,7 @@ sd_server <- function(
 
     # Update settings.yml with final resolved parameters (including conditionally-detected questions)
     resolved_params <- list(
+        show_previous = show_previous,
         use_cookies = use_cookies,
         auto_scroll = auto_scroll,
         rate_survey = rate_survey,
@@ -1668,12 +1676,12 @@ sd_server <- function(
             # Proceed with exit modal
             if (rate_survey) {
                 shiny::showModal(shiny::modalDialog(
-                    title = messages[["rating_title"]],
+                    title = messages[["rating-title"]],
                     sd_question(
                         type = 'mc_buttons',
                         id = 'survey_rating',
                         label = glue::glue(
-                            "{messages[['rating_text']]}:<br><small>({messages[['rating_scale']]})</small>"
+                            "{messages[['rating-text']]}:<br><small>({messages[['rating-scale']]})</small>"
                         ),
                         option = c(
                             "1" = "1",
@@ -1687,14 +1695,14 @@ sd_server <- function(
                         shiny::modalButton(messages[["cancel"]]),
                         shiny::actionButton(
                             "submit_rating",
-                            messages[["submit_exit"]]
+                            messages[["submit-exit"]]
                         )
                     )
                 ))
             } else {
                 shiny::showModal(shiny::modalDialog(
-                    title = messages[["confirm_exit"]],
-                    messages[["sure_exit"]],
+                    title = messages[["confirm-exit"]],
+                    messages[["sure-exit"]],
                     footer = shiny::tagList(
                         shiny::modalButton(messages[["cancel"]]),
                         shiny::actionButton(
