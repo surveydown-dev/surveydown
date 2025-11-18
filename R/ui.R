@@ -1988,11 +1988,11 @@ sd_nav <- function(
 #'
 #' @param label_close Character string. The label of the 'Close' button. Defaults to
 #'    `NULL`, in which case the word `"Exit Survey"` will be used.
+#' @param label_prev Character string. The label for the 'Previous' button. Defaults to
+#'   `NULL`, which uses "← Previous" (or the translated equivalent).
 #' @param show_prev Logical. Whether to show the Previous button alongside the Close button.
 #'   Set to `TRUE` to allow users to go back before closing. Defaults to `FALSE`. Note: Unlike
 #'   `sd_nav()`, this parameter does NOT read from the `show-previous` YAML setting.
-#' @param label_prev Character string. The label for the 'Previous' button. Defaults to
-#'   `NULL`, which uses "← Previous" (or the translated equivalent).
 #'
 #' @return A 'shiny' tagList containing the 'Close' button UI element and
 #' associated JavaScript for the exit process.
@@ -2043,8 +2043,8 @@ sd_nav <- function(
 #' @export
 sd_close <- function(
   label_close = NULL,
-  show_prev = NULL,
-  label_prev = NULL
+  label_prev = NULL,
+  show_prev = NULL
 ) {
   # Get messages
   messages <- get_messages()$messages

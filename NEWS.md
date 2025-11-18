@@ -3,6 +3,7 @@
 # surveydown 0.15.0
 
 - Function update: `sd_nav()` replacing `sd_next()`, which contains both previous and next buttons.
+- Function update: `sd_close()` now supports addition of previous button as well.
 - New feature: `surveydown` now supports previous buttons. Under `survey_settings`, users can now define `show_previous` (default to `FALSE`) to enable previous button globally. In `sd_nav()`, users can define `show_prev` being `TRUE` or `FALSE` to override the global setting for that specific page.
 - Simplification: No need to define `format`, `echo`, and `warning` in YAML header of `survey.qmd` anymore. The survey can have a clean start and runs fine without the YAML header.
 - Simplification: No need to define `sd_nav()` for each page. It's auto-injected unless `sd_nav()` or `sd_close()` is explicitly defined in the page with or without parameters.
