@@ -277,19 +277,38 @@ get_footer <- function(metadata) {
 # Supports hierarchical structure with theme-settings and survey-settings
 get_yaml_value <- function(metadata, key) {
   # Safety check: ensure metadata structure exists
-  if (is.null(metadata) || is.null(metadata$formats) ||
-      is.null(metadata$formats$html) || is.null(metadata$formats$html$metadata)) {
+  if (
+    is.null(metadata) ||
+      is.null(metadata$formats) ||
+      is.null(metadata$formats$html) ||
+      is.null(metadata$formats$html$metadata)
+  ) {
     return(NULL)
   }
 
   yaml_data <- metadata$formats$html$metadata
 
   # Define parameter categories (kebab-case only)
-  theme_params <- c("theme", "barposition", "barcolor", "footer-left", "footer-center", "footer-right")
+  theme_params <- c(
+    "theme",
+    "barposition",
+    "barcolor",
+    "footer-left",
+    "footer-center",
+    "footer-right"
+  )
   survey_params <- c(
-    "show-previous", "use-cookies", "auto-scroll", "rate-survey", "all-questions-required",
-    "start-page", "system-language", "highlight-unanswered", "highlight-color",
-    "capture-metadata", "required-questions"
+    "show-previous",
+    "use-cookies",
+    "auto-scroll",
+    "rate-survey",
+    "all-questions-required",
+    "start-page",
+    "system-language",
+    "highlight-unanswered",
+    "highlight-color",
+    "capture-metadata",
+    "required-questions"
   )
 
   # Determine which category this key belongs to
@@ -302,7 +321,9 @@ get_yaml_value <- function(metadata, key) {
 
   # Try hierarchical structure first (if category is known)
   if (!is.null(category)) {
-    if (!is.null(yaml_data[[category]]) && !is.null(yaml_data[[category]][[key]])) {
+    if (
+      !is.null(yaml_data[[category]]) && !is.null(yaml_data[[category]][[key]])
+    ) {
       return(yaml_data[[category]][[key]])
     }
   }
@@ -488,14 +509,20 @@ render_survey_qmd <- function(paths, default_theme = TRUE, theme = NULL) {
   }
 
   # Check if execute options need to be set
-  if (is.null(yaml_meta$echo) && (is.null(yaml_meta$execute) || is.null(yaml_meta$execute$echo))) {
+  if (
+    is.null(yaml_meta$echo) &&
+      (is.null(yaml_meta$execute) || is.null(yaml_meta$execute$echo))
+  ) {
     if (is.null(render_metadata$execute)) {
       render_metadata$execute <- list()
     }
     render_metadata$execute$echo <- FALSE
   }
 
-  if (is.null(yaml_meta$warning) && (is.null(yaml_meta$execute) || is.null(yaml_meta$execute$warning))) {
+  if (
+    is.null(yaml_meta$warning) &&
+      (is.null(yaml_meta$execute) || is.null(yaml_meta$execute$warning))
+  ) {
     if (is.null(render_metadata$execute)) {
       render_metadata$execute <- list()
     }
@@ -1881,7 +1908,11 @@ sd_nav <- function(
   # If show_prev is explicitly provided, use it; otherwise use the setting
   if (is.null(show_prev)) {
     settings <- read_settings_yaml()
-    show_prev <- ifelse(!is.null(settings$`show-previous`), settings$`show-previous`, FALSE)
+    show_prev <- ifelse(
+      !is.null(settings$`show-previous`),
+      settings$`show-previous`,
+      FALSE
+    )
   }
 
   # Always add a hidden marker so auto-navigation knows that navigation was explicitly handled
@@ -1895,10 +1926,10 @@ sd_nav <- function(
 
   # Default labels with arrows
   if (is.null(label_prev)) {
-    label_prev <- paste0("\u2190 ", messages[['previous']])  # ← Previous
+    label_prev <- paste0("\u2190 ", messages[['previous']]) # ← Previous
   }
   if (is.null(label_next)) {
-    label_next <- paste0(messages[['next']], " \u2192")  # Next →
+    label_next <- paste0(messages[['next']], " \u2192") # Next →
   }
 
   # Determine button layout style
@@ -1908,7 +1939,7 @@ sd_nav <- function(
 
   # Create navigation container with marker
   shiny::tagList(
-    nav_marker,  # Always include marker to prevent auto-navigation
+    nav_marker, # Always include marker to prevent auto-navigation
     shiny::div(
       `data-next-page` = if (!is.null(page_next)) page_next else "",
       style = "margin-top: 1rem; margin-bottom: 0.5rem;",
@@ -2010,7 +2041,11 @@ sd_nav <- function(
 #' @seealso \code{\link{sd_server}}
 #'
 #' @export
-sd_close <- function(label_close = NULL, show_prev = NULL, label_prev = NULL) {
+sd_close <- function(
+  label_close = NULL,
+  show_prev = NULL,
+  label_prev = NULL
+) {
   # Get messages
   messages <- get_messages()$messages
 
@@ -2027,7 +2062,7 @@ sd_close <- function(label_close = NULL, show_prev = NULL, label_prev = NULL) {
 
   # Default label for previous button
   if (is.null(label_prev)) {
-    label_prev <- paste0("\u2190 ", messages[['previous']])  # ← Previous
+    label_prev <- paste0("\u2190 ", messages[['previous']]) # ← Previous
   }
 
   button_id <- "close-survey-button"
