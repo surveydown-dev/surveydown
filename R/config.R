@@ -368,29 +368,6 @@ clean_yaml_quotes <- function(yaml_string) {
   return(paste(lines, collapse = "\n"))
 }
 
-# Helper function to convert YAML boolean values from yes/no to TRUE/FALSE
-# YAML by default outputs logical values as "yes"/"no", but we want "TRUE"/"FALSE"
-convert_yaml_booleans <- function(yaml_string) {
-  # Split into lines for processing
-  lines <- strsplit(yaml_string, "\n")[[1]]
-
-  # Process each line
-  for (i in seq_along(lines)) {
-    line <- lines[i]
-
-    # Match lines with ": yes" or ": no" at the end (with optional spaces)
-    # This handles boolean values in YAML
-    if (grepl(":\\s+yes\\s*$", line)) {
-      lines[i] <- sub(":\\s+yes\\s*$", ": TRUE", line)
-    } else if (grepl(":\\s+no\\s*$", line)) {
-      lines[i] <- sub(":\\s+no\\s*$", ": FALSE", line)
-    }
-  }
-
-  # Rejoin lines
-  return(paste(lines, collapse = "\n"))
-}
-
 # Helper function to create sectioned YAML output with organized comments
 create_sectioned_yaml <- function(
   settings,
@@ -444,9 +421,6 @@ create_sectioned_yaml <- function(
 
   # Clean up awkward YAML apostrophe escaping (won''t -> "won't")
   yaml_string <- clean_yaml_quotes(yaml_string)
-
-  # Convert boolean values from yes/no to TRUE/FALSE
-  yaml_string <- convert_yaml_booleans(yaml_string)
 
   return(yaml_string)
 }
