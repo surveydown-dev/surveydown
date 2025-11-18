@@ -1473,13 +1473,19 @@ sd_server <- function(
             return()
         }
 
-        # Use shiny::observe with delay to ensure DOM is ready
-        # This is especially important for Electron-based environments like Positron
-        shiny::observe({
-            shiny::invalidateLater(100)  # 100ms delay
-            shiny::isolate({
-                # Loop through each question and restore its value
-                for (q_id in page_questions) {
+        # Schedule a one-time restoration after 100ms delay to ensure DOM is ready
+        # Using invalidateLater with a flag to run only once
+        shiny::isolate({
+            restoration_done <- FALSE
+
+            shiny::observe({
+                if (!restoration_done) {
+                    shiny::invalidateLater(100)
+                    shiny::isolate({
+                        restoration_done <<- TRUE  # Mark as done to prevent re-running
+
+                        # Loop through each question and restore its value
+                        for (q_id in page_questions) {
                     # Skip if question doesn't exist in question_structure
                     if (!q_id %in% names(question_structure)) {
                         next
@@ -1574,12 +1580,14 @@ sd_server <- function(
                         }
                         # Note: Custom reactive questions (sd_question_custom) are not supported
                         # Users need to implement their own restoration logic for custom questions
-                    }, error = function(e) {
-                        # Silently skip if update fails
+                        }, error = function(e) {
+                            # Silently skip if update fails
+                        })
+                    }
                     })
                 }
-            })
-        }, priority = -1)  # Lower priority to run after page rendering
+            }, priority = -1)  # Lower priority to run after page rendering
+        })
     }
 
     # Handle Previous button clicks
