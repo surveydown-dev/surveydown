@@ -1265,9 +1265,9 @@ extract_html_pages <- function(
         )
       }
 
-      # IMPORTANT: Never show Previous button on the first page
+      # IMPORTANT: Never show Previous button on the first page or on pages with sd_close()
       is_first_page <- (page_index == 1)
-      if (is_first_page) {
+      if (is_first_page || has_close_button) {
         show_prev <- FALSE
       }
 

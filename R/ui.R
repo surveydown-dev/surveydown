@@ -1955,8 +1955,13 @@ sd_nav <- function(
 #' for the survey. Depending on the server-side configuration, this may show a rating question
 #' or a simple confirmation dialog before attempting to close the current browser tab or window.
 #'
-#' @param label Character string. The label of the 'Close' button. Defaults to
+#' @param label_close Character string. The label of the 'Close' button. Defaults to
 #'    `NULL`, in which case the word `"Exit Survey"` will be used.
+#' @param show_prev Logical. Whether to show the Previous button alongside the Close button.
+#'   Set to `TRUE` to allow users to go back before closing. Defaults to `FALSE`. Note: Unlike
+#'   `sd_nav()`, this parameter does NOT read from the `show-previous` YAML setting.
+#' @param label_prev Character string. The label for the 'Previous' button. Defaults to
+#'   `NULL`, which uses "← Previous" (or the translated equivalent).
 #'
 #' @return A 'shiny' tagList containing the 'Close' button UI element and
 #' associated JavaScript for the exit process.
@@ -2005,25 +2010,54 @@ sd_nav <- function(
 #' @seealso \code{\link{sd_server}}
 #'
 #' @export
-sd_close <- function(label = NULL) {
+sd_close <- function(label_close = NULL, show_prev = NULL, label_prev = NULL) {
   # Get messages
   messages <- get_messages()$messages
 
   # If no label provided, use default
-  if (is.null(label)) {
-    label <- messages[['exit']]
+  if (is.null(label_close)) {
+    label_close <- messages[['exit']]
+  }
+
+  # For sd_close(), show_prev is ONLY controlled by the parameter, NOT by YAML settings
+  # Default to FALSE if not explicitly provided
+  if (is.null(show_prev)) {
+    show_prev <- FALSE
+  }
+
+  # Default label for previous button
+  if (is.null(label_prev)) {
+    label_prev <- paste0("\u2190 ", messages[['previous']])  # ← Previous
   }
 
   button_id <- "close-survey-button"
   shiny::tagList(
     shiny::div(
-      style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
-      shiny::actionButton(
-        inputId = button_id,
-        label = label,
-        class = "sd-enter-button",
-        style = "display: block; margin: auto;",
-        onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
+      style = "margin-top: 0.5rem; margin-bottom: 0.5rem; position: relative; min-height: 40px;",
+      class = "sd-nav-container",
+
+      # Previous button (only if show_prev is TRUE)
+      # Use absolute positioning so it doesn't affect the close button's centering
+      if (show_prev) {
+        shiny::actionButton(
+          inputId = "page_id_prev",
+          label = label_prev,
+          class = "sd-nav-button sd-nav-prev",
+          style = "position: absolute; left: 0; top: 0;",
+          onclick = "Shiny.setInputValue('prev_page', true, {priority: 'event'});"
+        )
+      },
+
+      # Close button (always perfectly centered, unaffected by previous button)
+      shiny::div(
+        style = "width: 100%; text-align: center;",
+        shiny::actionButton(
+          inputId = button_id,
+          label = label_close,
+          class = "sd-enter-button sd-nav-button",
+          style = "display: inline-block;",
+          onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
+        )
       )
     ),
     shiny::tags$script(htmltools::HTML(
