@@ -50,8 +50,7 @@ run_config <- function(
       paths$target_questions,
       "\n",
       "  ",
-      paths$target_settings,
-      " (includes messages)"
+      paths$target_settings
     )
   } else {
     # If no changes, import from '_survey' folder
