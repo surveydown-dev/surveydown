@@ -6,9 +6,9 @@
 \usage{
 sd_nav(
   page_next = NULL,
-  label_prev = NULL,
+  label_previous = NULL,
   label_next = NULL,
-  show_prev = NULL,
+  show_previous = NULL,
   show_next = TRUE
 )
 }
@@ -17,13 +17,13 @@ sd_nav(
 the Next button is clicked. If \code{NULL}, the survey will navigate to the default
 next page in sequence.}
 
-\item{label_prev}{Character string. The label for the 'Previous' button. Defaults
+\item{label_previous}{Character string. The label for the 'Previous' button. Defaults
 to \code{NULL}, which uses "← Previous" (or the translated equivalent).}
 
 \item{label_next}{Character string. The label for the 'Next' button. Defaults
 to \code{NULL}, which uses "Next →" (or the translated equivalent).}
 
-\item{show_prev}{Logical. Whether to show the Previous button. Set to \code{FALSE}
+\item{show_previous}{Logical. Whether to show the Previous button. Set to \code{FALSE}
 for the first page where there is no previous page to navigate to. If \code{NULL}
 (default), uses the \code{show-previous} setting from YAML or \code{sd_server()}.}
 
@@ -60,17 +60,17 @@ if (interactive()) {
   sd_nav()
 
   # First page - hide Previous button
-  sd_nav(show_prev = FALSE)
+  sd_nav(show_previous = FALSE)
 
   # Last page - hide Next button
   sd_nav(show_next = FALSE)
 
   # Hide both navigation buttons
-  sd_nav(show_prev = FALSE, show_next = FALSE)
+  sd_nav(show_previous = FALSE, show_next = FALSE)
 
   # Custom labels
   sd_nav(
-    label_prev = "Go Back",
+    label_previous = "Go Back",
     label_next = "Continue"
   )
 

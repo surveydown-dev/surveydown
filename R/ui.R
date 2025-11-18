@@ -1841,11 +1841,11 @@ make_prev_button_id <- function(page_id) {
 #' @param page_next Character string. The ID of the next page to navigate to when
 #'   the Next button is clicked. If `NULL`, the survey will navigate to the default
 #'   next page in sequence.
-#' @param label_prev Character string. The label for the 'Previous' button. Defaults
+#' @param label_previous Character string. The label for the 'Previous' button. Defaults
 #'   to `NULL`, which uses "← Previous" (or the translated equivalent).
 #' @param label_next Character string. The label for the 'Next' button. Defaults
 #'   to `NULL`, which uses "Next →" (or the translated equivalent).
-#' @param show_prev Logical. Whether to show the Previous button. Set to `FALSE`
+#' @param show_previous Logical. Whether to show the Previous button. Set to `FALSE`
 #'   for the first page where there is no previous page to navigate to. If `NULL`
 #'   (default), uses the `show-previous` setting from YAML or `sd_server()`.
 #' @param show_next Logical. Whether to show the Next button. Set to `FALSE`
@@ -1872,17 +1872,17 @@ make_prev_button_id <- function(page_id) {
 #'   sd_nav()
 #'
 #'   # First page - hide Previous button
-#'   sd_nav(show_prev = FALSE)
+#'   sd_nav(show_previous = FALSE)
 #'
 #'   # Last page - hide Next button
 #'   sd_nav(show_next = FALSE)
 #'
 #'   # Hide both navigation buttons
-#'   sd_nav(show_prev = FALSE, show_next = FALSE)
+#'   sd_nav(show_previous = FALSE, show_next = FALSE)
 #'
 #'   # Custom labels
 #'   sd_nav(
-#'     label_prev = "Go Back",
+#'     label_previous = "Go Back",
 #'     label_next = "Continue"
 #'   )
 #'
@@ -1896,19 +1896,19 @@ make_prev_button_id <- function(page_id) {
 #' @export
 sd_nav <- function(
   page_next = NULL,
-  label_prev = NULL,
+  label_previous = NULL,
   label_next = NULL,
-  show_prev = NULL,
+  show_previous = NULL,
   show_next = TRUE
 ) {
   # Get messages
   messages <- get_messages()$messages
 
   # Get show-previous setting from settings.yml (kebab-case)
-  # If show_prev is explicitly provided, use it; otherwise use the setting
-  if (is.null(show_prev)) {
+  # If show_previous is explicitly provided, use it; otherwise use the setting
+  if (is.null(show_previous)) {
     settings <- read_settings_yaml()
-    show_prev <- ifelse(
+    show_previous <- ifelse(
       !is.null(settings$`show-previous`),
       settings$`show-previous`,
       FALSE
@@ -1920,13 +1920,13 @@ sd_nav <- function(
   nav_marker <- shiny::tags$div(id = "sd-nav-marker", style = "display: none;")
 
   # If both buttons are hidden, return only the marker
-  if (!show_prev && !show_next) {
+  if (!show_previous && !show_next) {
     return(shiny::tagList(nav_marker))
   }
 
   # Default labels with arrows
-  if (is.null(label_prev)) {
-    label_prev <- paste0("\u2190 ", messages[['previous']]) # ← Previous
+  if (is.null(label_previous)) {
+    label_previous <- paste0("\u2190 ", messages[['previous']]) # ← Previous
   }
   if (is.null(label_next)) {
     label_next <- paste0(messages[['next']], " \u2192") # Next →
@@ -1945,11 +1945,11 @@ sd_nav <- function(
       style = "margin-top: 1rem; margin-bottom: 0.5rem;",
       class = "sd-nav-container",
 
-      # Previous button (only if show_prev is TRUE)
-      if (show_prev) {
+      # Previous button (only if show_previous is TRUE)
+      if (show_previous) {
         shiny::actionButton(
           inputId = "page_id_prev",
-          label = label_prev,
+          label = label_previous,
           class = "sd-nav-button sd-nav-prev",
           style = "float: left;",
           onclick = "Shiny.setInputValue('prev_page', true, {priority: 'event'});"
@@ -1959,7 +1959,7 @@ sd_nav <- function(
       # Next button (only if show_next is TRUE)
       if (show_next) {
         # Centered if no previous button, otherwise float right
-        button_style <- if (show_prev) {
+        button_style <- if (show_previous) {
           "float: right;"
         } else {
           "display: block; margin-left: auto; margin-right: auto;"
@@ -1988,9 +1988,9 @@ sd_nav <- function(
 #'
 #' @param label_close Character string. The label of the 'Close' button. Defaults to
 #'    `NULL`, in which case the word `"Exit Survey"` will be used.
-#' @param label_prev Character string. The label for the 'Previous' button. Defaults to
+#' @param label_previous Character string. The label for the 'Previous' button. Defaults to
 #'   `NULL`, which uses "← Previous" (or the translated equivalent).
-#' @param show_prev Logical. Whether to show the Previous button alongside the Close button.
+#' @param show_previous Logical. Whether to show the Previous button alongside the Close button.
 #'   Set to `TRUE` to allow users to go back before closing. Defaults to `FALSE`. Note: Unlike
 #'   `sd_nav()`, this parameter does NOT read from the `show-previous` YAML setting.
 #'
@@ -2043,8 +2043,8 @@ sd_nav <- function(
 #' @export
 sd_close <- function(
   label_close = NULL,
-  label_prev = NULL,
-  show_prev = NULL
+  label_previous = NULL,
+  show_previous = NULL
 ) {
   # Get messages
   messages <- get_messages()$messages
@@ -2054,15 +2054,15 @@ sd_close <- function(
     label_close <- messages[['exit']]
   }
 
-  # For sd_close(), show_prev is ONLY controlled by the parameter, NOT by YAML settings
+  # For sd_close(), show_previous is ONLY controlled by the parameter, NOT by YAML settings
   # Default to FALSE if not explicitly provided
-  if (is.null(show_prev)) {
-    show_prev <- FALSE
+  if (is.null(show_previous)) {
+    show_previous <- FALSE
   }
 
   # Default label for previous button
-  if (is.null(label_prev)) {
-    label_prev <- paste0("\u2190 ", messages[['previous']]) # ← Previous
+  if (is.null(label_previous)) {
+    label_previous <- paste0("\u2190 ", messages[['previous']]) # ← Previous
   }
 
   button_id <- "close-survey-button"
@@ -2071,12 +2071,12 @@ sd_close <- function(
       style = "margin-top: 0.5rem; margin-bottom: 0.5rem; position: relative; min-height: 40px;",
       class = "sd-nav-container",
 
-      # Previous button (only if show_prev is TRUE)
+      # Previous button (only if show_previous is TRUE)
       # Use absolute positioning so it doesn't affect the close button's centering
-      if (show_prev) {
+      if (show_previous) {
         shiny::actionButton(
           inputId = "page_id_prev",
-          label = label_prev,
+          label = label_previous,
           class = "sd-nav-button sd-nav-prev",
           style = "position: absolute; left: 0; top: 0;",
           onclick = "Shiny.setInputValue('prev_page', true, {priority: 'event'});"
