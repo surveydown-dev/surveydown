@@ -1486,8 +1486,12 @@ sd_server <- function(
 
                         # Loop through each question and restore its value
                         for (q_id in page_questions) {
-                    # Skip if question doesn't exist in question_structure
-                    if (!q_id %in% names(question_structure)) {
+                    # Check if this is a reactive question (defined in server)
+                    reactive_meta <- session$userData$reactive_question_metadata[[q_id]]
+                    is_reactive <- !is.null(reactive_meta)
+
+                    # Skip if question doesn't exist in either structure
+                    if (!is_reactive && !q_id %in% names(question_structure)) {
                         next
                     }
 
@@ -1499,8 +1503,21 @@ sd_server <- function(
                         next
                     }
 
-                    # Get question type
-                    q_type <- question_structure[[q_id]]$type
+                    # Get question type (from reactive metadata or question_structure)
+                    q_type <- if (is_reactive) {
+                        reactive_meta$type
+                    } else {
+                        question_structure[[q_id]]$type
+                    }
+
+                    # For reactive questions, also get is_range info if applicable
+                    is_range <- if (is_reactive && !is.null(reactive_meta$is_range)) {
+                        reactive_meta$is_range
+                    } else if (!is_reactive && !is.null(question_structure[[q_id]]$is_range)) {
+                        question_structure[[q_id]]$is_range
+                    } else {
+                        FALSE
+                    }
 
                     # Update the input based on question type
                     tryCatch({
@@ -1545,9 +1562,8 @@ sd_server <- function(
                         } else if (q_type == "numeric") {
                             shiny::updateNumericInput(session, q_id, value = as.numeric(stored_value))
                         } else if (q_type %in% c("slider", "slider_numeric")) {
-                            # Check if it's a range slider
-                            if (!is.null(question_structure[[q_id]]$is_range) &&
-                                question_structure[[q_id]]$is_range) {
+                            # Check if it's a range slider (using unified is_range variable)
+                            if (is_range) {
                                 # For range sliders, stored_value should be a vector of two values
                                 if (is.character(stored_value) && length(stored_value) == 1) {
                                     values <- as.numeric(strsplit(stored_value, ",\\s*")[[1]])
@@ -1578,8 +1594,8 @@ sd_server <- function(
                                 shiny::updateDateRangeInput(session, q_id, start = dates[1], end = dates[2])
                             }
                         }
-                        # Note: Custom reactive questions (sd_question_custom) are not supported
-                        # Users need to implement their own restoration logic for custom questions
+                        # Note: Reactive questions defined with sd_question() in the server are now supported
+                        # Custom reactive questions using sd_question_custom() may need their own restoration logic
                         }, error = function(e) {
                             # Silently skip if update fails
                         })

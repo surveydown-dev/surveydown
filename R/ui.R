@@ -1594,6 +1594,43 @@ sd_question <- function(
     # In a reactive context, directly add to output with renderUI
     # Use "_question" suffix to avoid input/output ID conflicts
     shiny::isolate({
+      session <- shiny::getDefaultReactiveDomain()
+
+      # Store metadata for reactive questions to enable restoration on Previous button
+      if (is.null(session$userData$reactive_question_metadata)) {
+        session$userData$reactive_question_metadata <- list()
+      }
+
+      # Store the question type and parameters needed for input restoration
+      metadata <- list(
+        type = type,
+        label = label
+      )
+
+      # Store option for choice-based questions
+      if (!is.null(option)) {
+        metadata$option <- option
+      }
+
+      # Store row for matrix questions
+      if (!is.null(row)) {
+        metadata$row <- row
+        metadata$is_matrix <- TRUE
+      } else {
+        metadata$is_matrix <- FALSE
+      }
+
+      # Store range info for sliders
+      if (type %in% c("slider_numeric", "slider")) {
+        if (is.numeric(default) && length(default) > 1) {
+          metadata$is_range <- TRUE
+        } else {
+          metadata$is_range <- FALSE
+        }
+      }
+
+      session$userData$reactive_question_metadata[[id]] <- metadata
+
       output_div <- shiny::tags$div(output)
       output <- shiny::getDefaultReactiveDomain()$output
       output[[paste0(id, "_question")]] <- shiny::renderUI({
