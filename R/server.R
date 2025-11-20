@@ -3222,10 +3222,12 @@ restore_current_page_values <- function(
     session,
     page_filter = NULL
 ) {
+    restored_question_ids <- c()
     for (col in names(restore_data)) {
-        # Skip special columns
+        # Skip special columns and timestamp columns
         if (
-            !col %in% c("session_id", "current_page", "time_start", "time_end")
+            !col %in% c("session_id", "current_page", "time_start", "time_end") &&
+            !grepl("_timestamp$", col)
         ) {
             val <- restore_data[[col]]
             if (!is.null(val) && !is.na(val) && val != "") {
@@ -3233,9 +3235,12 @@ restore_current_page_values <- function(
                     col,
                     list(value = val, priority = "event")
                 )
+                # Track restored question IDs
+                restored_question_ids <- c(restored_question_ids, col)
             }
         }
     }
+    return(restored_question_ids)
 }
 
 handle_data_restoration <- function(
@@ -3329,6 +3334,7 @@ handle_data_restoration <- function(
         }
 
         # 3. Restore question values
+        restored_question_ids <- c()
         if (
             !is.null(db) &&
                 !is.null(answer_data) &&
@@ -3342,11 +3348,21 @@ handle_data_restoration <- function(
                         col,
                         list(value = val, priority = "event")
                     )
+                    # Track restored question IDs
+                    restored_question_ids <- c(restored_question_ids, col)
                 }
             }
         } else {
             # Fall back to restore_data
-            restore_current_page_values(restore_data, session)
+            restored_question_ids <- restore_current_page_values(restore_data, session)
+        }
+
+        # Mark all restored questions as interacted and clear highlighting
+        if (length(restored_question_ids) > 0) {
+            session$sendCustomMessage(
+                "markRestoredQuestionsInteracted",
+                list(question_ids = restored_question_ids)
+            )
         }
 
         # 4. Restore page history for Previous button functionality

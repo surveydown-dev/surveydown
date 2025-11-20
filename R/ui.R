@@ -605,13 +605,15 @@ to_snake_case <- function(text) {
 #' Defaults to `TRUE`.
 #' @param option Named vector for the `"select"`, `"radio"`, `"checkbox"`,
 #' and `"slider"` question types, or numeric vector for `"slider_numeric"`
-#' question type. Can be provided in two formats:
+#' question type. Can be provided in multiple formats:
 #' \itemize{
 #'   \item Named vector: `c("Display A" = "value_a", "Display B" = "value_b")` -
 #'     Names are shown in UI, values are stored in database
-#'   \item Unnamed vector: `c("Option 1", "Option 2")` - Values are shown in UI
+#'   \item Unnamed character vector: `c("Option 1", "Option 2")` - Values are shown in UI
 #'     and automatically converted to snake_case for database storage
 #'     (e.g., "option_1", "option_2")
+#'   \item Unnamed numeric vector: `c(1, 2, 3)` - For non-slider questions, converted to
+#'     `c("1" = "1", "2" = "2", "3" = "3")`. For `slider_numeric`, kept as numeric.
 #' }
 #' @param options Alias for `option`. Either `option` or `options` can be used.
 #' If both are provided, `option` takes precedence. Supports the same formats
@@ -712,15 +714,24 @@ sd_question <- function(
     option <- options
   }
 
-  # Auto-generate snake_case values for unnamed options
+  # Define types that need numeric options (don't convert to character)
+  numeric_option_types <- c("slider_numeric")
+
+  # Auto-generate names/values for unnamed options
   if (!is.null(option) && (is.null(names(option)) || all(names(option) == ""))) {
-    # Store original values as names (display labels)
-    option_labels <- option
-    # Generate snake_case values
-    option_values <- sapply(option, to_snake_case)
-    # Create named vector: names = display labels, values = snake_case
-    option <- option_values
-    names(option) <- option_labels
+    if (is.character(option)) {
+      # For character vectors: convert to snake_case
+      option_labels <- option
+      option_values <- sapply(option, to_snake_case)
+      option <- option_values
+      names(option) <- option_labels
+    } else if (is.numeric(option) && !is.null(type) && !(type %in% numeric_option_types)) {
+      # For numeric vectors (except slider_numeric): convert to character with same name and value
+      # e.g., c(1, 2, 3) becomes c("1" = "1", "2" = "2", "3" = "3")
+      option_char <- as.character(option)
+      names(option_char) <- option_char
+      option <- option_char
+    }
   }
 
   # Define valid question types

@@ -43,13 +43,15 @@ formatted with markdown. Defaults to \code{NULL}}
 
 \item{option}{Named vector for the \code{"select"}, \code{"radio"}, \code{"checkbox"},
 and \code{"slider"} question types, or numeric vector for \code{"slider_numeric"}
-question type. Can be provided in two formats:
+question type. Can be provided in multiple formats:
 \itemize{
 \item Named vector: \code{c("Display A" = "value_a", "Display B" = "value_b")} -
 Names are shown in UI, values are stored in database
-\item Unnamed vector: \code{c("Option 1", "Option 2")} - Values are shown in UI
+\item Unnamed character vector: \code{c("Option 1", "Option 2")} - Values are shown in UI
 and automatically converted to snake_case for database storage
 (e.g., "option_1", "option_2")
+\item Unnamed numeric vector: \code{c(1, 2, 3)} - For non-slider questions, converted to
+\code{c("1" = "1", "2" = "2", "3" = "3")}. For \code{slider_numeric}, kept as numeric.
 }}
 
 \item{options}{Alias for \code{option}. Either \code{option} or \code{options} can be used.
