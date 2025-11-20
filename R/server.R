@@ -545,11 +545,17 @@ sd_server <- function(
     # Progress bar
     max_progress <- shiny::reactiveVal(0)
     last_answered_question <- shiny::reactiveVal(0)
-    update_progress_bar <- function(index) {
-        if (index > last_answered_question()) {
+    update_progress_bar <- function(index, allow_decrease = FALSE) {
+        if (allow_decrease || index > last_answered_question()) {
             last_answered_question(index)
             current_progress <- index / length(question_ids)
-            max_progress(max(max_progress(), current_progress))
+            if (allow_decrease) {
+                # Allow progress to decrease when navigating backwards
+                max_progress(current_progress)
+            } else {
+                # Normal behavior: progress never decreases
+                max_progress(max(max_progress(), current_progress))
+            }
             session$sendCustomMessage("updateProgressBar", max_progress() * 100)
         }
     }
@@ -1387,6 +1393,16 @@ sd_server <- function(
                             list()
                         )
 
+                        # Update progress bar to last question on current page (before page flip)
+                        current_page_questions <- page$questions
+                        if (length(current_page_questions) > 0) {
+                            last_question_id <- tail(current_page_questions, 1)
+                            last_question_index <- which(question_ids == last_question_id)
+                            if (length(last_question_index) > 0) {
+                                update_progress_bar(last_question_index)
+                            }
+                        }
+
                         # Set the current page as the next page
                         current_page_id(next_page_id)
 
@@ -1632,6 +1648,24 @@ sd_server <- function(
                             # Restore input values for the previous page
                             prev_page <- pages[[which(page_ids == prev_page_id)]]
                             restore_page_inputs(prev_page)
+
+                            # Update progress bar to last question on target page (after page flip)
+                            # Special case: if navigating to first page, reset progress to 0
+                            if (prev_page_id == page_ids[1]) {
+                                last_answered_question(0)
+                                max_progress(0)
+                                session$sendCustomMessage("updateProgressBar", 0)
+                            } else {
+                                # Allow decrease since we're going backwards
+                                prev_page_questions <- prev_page$questions
+                                if (length(prev_page_questions) > 0) {
+                                    last_question_id <- tail(prev_page_questions, 1)
+                                    last_question_index <- which(question_ids == last_question_id)
+                                    if (length(last_question_index) > 0) {
+                                        update_progress_bar(last_question_index, allow_decrease = TRUE)
+                                    }
+                                }
+                            }
 
                             # Update the page time stamp
                             prev_ts_id <- page_ts_ids[which(
