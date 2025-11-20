@@ -562,6 +562,7 @@ sd_server <- function(
     current_page_id <- shiny::reactiveVal(start_page)
 
     # Page history tracking for Previous button navigation
+    # Will be restored from cookies if available
     page_history <- shiny::reactiveVal(c(start_page))
 
     # Helper function to track page visits
@@ -647,7 +648,8 @@ sd_server <- function(
         question_ids,
         question_ts_ids,
         update_progress_bar,
-        use_cookies
+        use_cookies,
+        page_history
     )
     # Auto scroll
     session$sendCustomMessage(
@@ -894,6 +896,24 @@ sd_server <- function(
     session$userData$all_data <- all_data
     session$userData$changed_fields <- changed_fields
 
+    # Populate all_data with restored values from database (if session was resumed)
+    # This ensures Previous button can restore values for all previously answered questions
+    if (!is.null(session$userData$restore_data)) {
+        restore_data <- session$userData$restore_data
+        if (nrow(restore_data) > 0) {
+            # Copy all question and timestamp values from restore_data to all_data
+            for (col in names(restore_data)) {
+                val <- restore_data[[col]]
+                # Only restore non-empty values, but allow overwriting initial data
+                if (!is.null(val) && !is.na(val) && val != "") {
+                    all_data[[col]] <- val
+                }
+            }
+        }
+        # Clean up
+        session$userData$restore_data <- NULL
+    }
+
     # Update checkpoint 1 - when session starts
     shiny::isolate({
         update_data()
@@ -1060,7 +1080,7 @@ sd_server <- function(
         })
     })
 
-    # Observer to update cookies with answers
+    # Observer to update cookies with answers and page_history
     shiny::observe({
         # Get current page ID
         page_id <- current_page_id()
@@ -1097,12 +1117,35 @@ sd_server <- function(
         # Send to client to update cookie
         if (length(answers) > 0) {
             # Update cookies in both database and local modes
+            # Include page_history for Previous button functionality
             page_data <- list(
                 answers = answers,
-                last_timestamp = last_timestamp
+                last_timestamp = last_timestamp,
+                page_history = page_history()
             )
             session$sendCustomMessage(
                 "setAnswerData",
+                list(pageId = page_id, pageData = page_data)
+            )
+        }
+    })
+
+    # Observer to update page_history in cookies when navigating (even without answers)
+    # This ensures Previous button works correctly after session restoration
+    shiny::observe({
+        page_id <- current_page_id()
+        history <- page_history()
+
+        # Only update if cookies are enabled and we have a valid history
+        if (use_cookies && !is.null(history) && length(history) > 0) {
+            # Send minimal page data with just page_history
+            # This will be merged with any existing answer data for this page
+            page_data <- list(
+                answers = list(),
+                page_history = history
+            )
+            session$sendCustomMessage(
+                "updatePageHistory",
                 list(pageId = page_id, pageData = page_data)
             )
         }
@@ -3203,7 +3246,8 @@ handle_data_restoration <- function(
     start_page,
     question_ids,
     question_ts_ids,
-    progress_updater
+    progress_updater,
+    page_history = NULL
 ) {
     if (is.null(session_id)) {
         return(NULL)
@@ -3304,7 +3348,45 @@ handle_data_restoration <- function(
             # Fall back to restore_data
             restore_current_page_values(restore_data, session)
         }
+
+        # 4. Restore page history for Previous button functionality
+        if (!is.null(page_history)) {
+            # Get full cookie data (not just current page)
+            all_cookie_data <- session$input$stored_answer_data
+
+            if (!is.null(all_cookie_data) && !is.null(all_cookie_data$page_history)) {
+                # page_history is stored at top level of cookie data (not per-page)
+                # Convert from list (JSON array) to character vector
+                restored_history <- unlist(all_cookie_data$page_history)
+
+                # Validate that restored_history is a character vector
+                if (is.character(restored_history) && length(restored_history) > 0) {
+                    # Ensure the history ends with the current page
+                    current_pg <- current_page_id()
+                    if (tail(restored_history, 1) != current_pg) {
+                        restored_history <- c(restored_history, current_pg)
+                    }
+                    page_history(restored_history)
+                }
+            } else if (is.null(db)) {
+                # Local CSV mode: reconstruct minimal history from current page
+                # Note: Full history is not available in local mode without cookies
+                current_pg <- current_page_id()
+                if (!is.null(current_pg) && current_pg != start_page) {
+                    # Create minimal history: start_page -> current_page
+                    page_history(c(start_page, current_pg))
+                }
+            }
+        }
+
     })
+
+    # Store restore_data in session$userData for later use
+    # This will be used to populate all_data after it's created
+    if (!is.null(restore_data) && nrow(restore_data) > 0) {
+        session$userData$restore_data <- restore_data
+    }
+
     return(restore_data)
 }
 
@@ -3319,7 +3401,8 @@ handle_sessions <- function(
     question_ids,
     question_ts_ids,
     progress_updater,
-    use_cookies = TRUE
+    use_cookies = TRUE,
+    page_history = NULL
 ) {
     # Note: Cookies can work in both database and local modes
     # No need to disable cookies when db is NULL
@@ -3353,7 +3436,8 @@ handle_sessions <- function(
                 start_page,
                 question_ids,
                 question_ts_ids,
-                progress_updater
+                progress_updater,
+                page_history
             )
 
             if (!is.null(restore_data)) {

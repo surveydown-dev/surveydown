@@ -7,7 +7,6 @@ const surveydownCookies = {
                               ";expires=" + date.toUTCString() +
                               ";path=/;SameSite=Strict";
             document.cookie = cookieValue;
-            console.log("Session cookie set successfully:", cookieValue);
         } catch (e) {
             console.error("Error setting session cookie:", e);
         }
@@ -38,16 +37,23 @@ const surveydownCookies = {
         try {
             // Only store current page data instead of accumulating
             let currentData = {};
-            currentData[pageId] = pageData;  // pageData contains both answers and timestamps
-            
+            currentData[pageId] = {
+                answers: pageData.answers,
+                last_timestamp: pageData.last_timestamp
+            };
+
+            // Store page_history separately at top level (not per-page)
+            if (pageData.page_history) {
+                currentData.page_history = pageData.page_history;
+            }
+
             const date = new Date();
             date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
             const cookieValue = "surveydown_answers=" + JSON.stringify(currentData) +
                               ";expires=" + date.toUTCString() +
                               ";path=/;SameSite=Strict";
             document.cookie = cookieValue;
-            console.log("Answer data set for page:", pageId);
-            
+
             // Update Shiny input
             Shiny.setInputValue('stored_answer_data', currentData, {priority: 'event'});
         } catch (e) {
@@ -90,19 +96,37 @@ Shiny.addCustomMessageHandler('setAnswerData', function(message) {
     }
 });
 
+Shiny.addCustomMessageHandler('updatePageHistory', function(message) {
+    if (message.pageId && message.pageData && message.pageData.page_history) {
+        // Get existing cookie data
+        const existingData = surveydownCookies.getAnswerData() || {};
+        const existingPageData = existingData[message.pageId] || {};
+
+        // Merge: preserve existing answers but update page_history at top level
+        const mergedPageData = {
+            answers: existingPageData.answers || {},
+            last_timestamp: existingPageData.last_timestamp || null,
+            page_history: message.pageData.page_history  // Will be stored at top level
+        };
+
+        // Update cookie with merged data
+        surveydownCookies.setAnswerData(message.pageId, mergedPageData);
+    }
+});
+
 // Initialize on document ready
 $(document).ready(function() {
     function initializeSession(retryCount = 0) {
         const sessionId = surveydownCookies.get();
         const answerData = surveydownCookies.getAnswerData();
-        
+
         if (sessionId) {
             Shiny.setInputValue('stored_session_id', sessionId, {priority: 'event'});
         }
         if (answerData) {
             Shiny.setInputValue('stored_answer_data', answerData, {priority: 'event'});
         }
-        
+
         if (!sessionId && retryCount < 3) {
             setTimeout(() => initializeSession(retryCount + 1), 100);
         }
