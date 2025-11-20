@@ -9,6 +9,7 @@ sd_question(
   type = NULL,
   label = NULL,
   option = NULL,
+  options = NULL,
   cols = "80",
   direction = "horizontal",
   status = "default",
@@ -42,7 +43,18 @@ formatted with markdown. Defaults to \code{NULL}}
 
 \item{option}{Named vector for the \code{"select"}, \code{"radio"}, \code{"checkbox"},
 and \code{"slider"} question types, or numeric vector for \code{"slider_numeric"}
-question type.}
+question type. Can be provided in two formats:
+\itemize{
+\item Named vector: \code{c("Display A" = "value_a", "Display B" = "value_b")} -
+Names are shown in UI, values are stored in database
+\item Unnamed vector: \code{c("Option 1", "Option 2")} - Values are shown in UI
+and automatically converted to snake_case for database storage
+(e.g., "option_1", "option_2")
+}}
+
+\item{options}{Alias for \code{option}. Either \code{option} or \code{options} can be used.
+If both are provided, \code{option} takes precedence. Supports the same formats
+as \code{option}.}
 
 \item{cols}{Integer. Number of columns for the \code{"textarea"} question type.
 Defaults to \code{80}.}

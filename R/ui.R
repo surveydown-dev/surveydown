@@ -557,6 +557,19 @@ extract_head_content <- function(html_content) {
   return(head_content)
 }
 
+# Helper function to convert text to snake_case
+to_snake_case <- function(text) {
+  # Convert to lowercase
+  text <- tolower(text)
+  # Replace spaces, hyphens, and other non-alphanumeric characters with underscores
+  text <- gsub("[^a-z0-9]+", "_", text)
+  # Remove leading/trailing underscores
+  text <- gsub("^_+|_+$", "", text)
+  # Replace multiple consecutive underscores with single underscore
+  text <- gsub("_+", "_", text)
+  return(text)
+}
+
 #' Create a survey question
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
@@ -592,7 +605,17 @@ extract_head_content <- function(html_content) {
 #' Defaults to `TRUE`.
 #' @param option Named vector for the `"select"`, `"radio"`, `"checkbox"`,
 #' and `"slider"` question types, or numeric vector for `"slider_numeric"`
-#' question type.
+#' question type. Can be provided in two formats:
+#' \itemize{
+#'   \item Named vector: `c("Display A" = "value_a", "Display B" = "value_b")` -
+#'     Names are shown in UI, values are stored in database
+#'   \item Unnamed vector: `c("Option 1", "Option 2")` - Values are shown in UI
+#'     and automatically converted to snake_case for database storage
+#'     (e.g., "option_1", "option_2")
+#' }
+#' @param options Alias for `option`. Either `option` or `options` can be used.
+#' If both are provided, `option` takes precedence. Supports the same formats
+#' as `option`.
 #' @param placeholder Character string. Placeholder text for `"text"` and
 #' `"textarea"` question types.
 #' @param resize Character string. Resize option for textarea input.
@@ -663,6 +686,7 @@ sd_question <- function(
   type = NULL,
   label = NULL,
   option = NULL,
+  options = NULL,
   cols = "80",
   direction = "horizontal",
   status = "default",
@@ -681,6 +705,24 @@ sd_question <- function(
   yml = "questions.yml",
   ...
 ) {
+  # Handle option/options alias
+  if (!is.null(options) && !is.null(option)) {
+    warning("Both 'option' and 'options' provided. Using 'option'.")
+  } else if (is.null(option) && !is.null(options)) {
+    option <- options
+  }
+
+  # Auto-generate snake_case values for unnamed options
+  if (!is.null(option) && (is.null(names(option)) || all(names(option) == ""))) {
+    # Store original values as names (display labels)
+    option_labels <- option
+    # Generate snake_case values
+    option_values <- sapply(option, to_snake_case)
+    # Create named vector: names = display labels, values = snake_case
+    option <- option_values
+    names(option) <- option_labels
+  }
+
   # Define valid question types
   valid_types <- c(
     "select",
