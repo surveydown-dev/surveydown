@@ -261,6 +261,50 @@ sd_server <- function(
         start_page <- config$start_page
     }
 
+    # Map skip_if conditions to applicable pages (page-aware skip logic)
+    # This ensures skip conditions only trigger when leaving pages that contain the relevant questions
+    if (!is.null(skip_if) && !is.null(skip_if$conditions)) {
+        # Helper to extract input IDs from condition expressions
+        extract_input_refs_local <- function(expr, calling_env = NULL) {
+            ids <- character(0)
+            if (is.call(expr)) {
+                if (
+                    length(expr) >= 3 &&
+                        as.character(expr[[1]]) == "$" &&
+                        as.character(expr[[2]]) == "input"
+                ) {
+                    var_name <- as.character(expr[[3]])
+                    ids <- c(ids, var_name)
+                }
+                for (i in seq_along(expr)) {
+                    if (is.call(expr[[i]])) {
+                        ids <- c(ids, extract_input_refs_local(expr[[i]], calling_env))
+                    }
+                }
+            }
+            return(ids)
+        }
+
+        # Add applicable_pages to each skip condition
+        for (i in seq_along(skip_if$conditions)) {
+            condition <- skip_if$conditions[[i]]
+            # Extract input IDs referenced in this condition
+            input_ids <- extract_input_refs_local(
+                condition$condition,
+                condition$calling_env
+            )
+            # Find which pages contain these questions
+            applicable_pages <- character(0)
+            for (page in pages) {
+                if (any(input_ids %in% page$questions)) {
+                    applicable_pages <- c(applicable_pages, page$id)
+                }
+            }
+            # Store applicable pages for this condition
+            skip_if$conditions[[i]]$applicable_pages <- applicable_pages
+        }
+    }
+
     # Helper function to extract question IDs from parsed condition expressions
     extract_question_ids_from_conditions <- function(
         show_if,
@@ -2922,6 +2966,14 @@ handle_skip_logic <- function(
             target_page_index <- page_id_to_index[rule$target]
             if (target_page_index <= current_page_index) {
                 next
+            }
+
+            # Page-aware skip logic: Only check if current page has the relevant questions
+            # This prevents skip conditions from triggering on unrelated pages
+            if (!is.null(rule$applicable_pages) && length(rule$applicable_pages) > 0) {
+                if (!(current_page_id %in% rule$applicable_pages)) {
+                    next  # Skip this condition - not applicable to current page
+                }
             }
 
             # Evaluate the condition
