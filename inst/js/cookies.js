@@ -145,11 +145,49 @@ $(document).ready(function() {
 $(document).on('shiny:connected', function(event) {
     const sessionId = surveydownCookies.get();
     const answerData = surveydownCookies.getAnswerData();
-    
+
     if (sessionId) {
         Shiny.setInputValue('stored_session_id', sessionId, {priority: 'event'});
     }
     if (answerData) {
         Shiny.setInputValue('stored_answer_data', answerData, {priority: 'event'});
     }
+});
+
+// Handle restoration of button-style inputs (mc_buttons and mc_multiple_buttons)
+Shiny.addCustomMessageHandler('restoreButtonValue', function(message) {
+    if (!message.id || !message.value) return;
+
+    const questionId = message.id;
+    const value = message.value;
+    const type = message.type || 'radio';
+
+    setTimeout(function() {
+        if (type === 'radio') {
+            // For mc_buttons (radio button groups)
+            // Find the button with this value and trigger a click
+            const button = $('#' + questionId + ' input[type="radio"][value="' + value + '"]').closest('.btn');
+            if (button.length > 0) {
+                // Manually update the visual state
+                $('#' + questionId + ' .btn').removeClass('active');
+                button.addClass('active');
+                // Ensure the radio input is checked
+                $('#' + questionId + ' input[type="radio"][value="' + value + '"]').prop('checked', true);
+            }
+        } else if (type === 'checkbox') {
+            // For mc_multiple_buttons (checkbox button groups)
+            const values = Array.isArray(value) ? value : [value];
+            // Clear all selections first
+            $('#' + questionId + ' .btn').removeClass('active');
+            $('#' + questionId + ' input[type="checkbox"]').prop('checked', false);
+            // Set each selected value
+            values.forEach(function(val) {
+                const button = $('#' + questionId + ' input[type="checkbox"][value="' + val + '"]').closest('.btn');
+                if (button.length > 0) {
+                    button.addClass('active');
+                    $('#' + questionId + ' input[type="checkbox"][value="' + val + '"]').prop('checked', true);
+                }
+            });
+        }
+    }, 150); // Delay to ensure DOM is ready
 });

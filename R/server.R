@@ -926,6 +926,8 @@ sd_server <- function(
                     all_data[[col]] <- val
                 }
             }
+            # Set flag to indicate we restored from cookies (for UI restoration)
+            session$userData$did_restore_from_cookies <- TRUE
         }
         # Clean up
         session$userData$restore_data <- NULL
@@ -1429,6 +1431,10 @@ sd_server <- function(
                 # For matrix questions, check each subquestion individually
                 for (r in question_structure[[q]]$row) {
                     subq_id <- paste0(q, "_", r)
+                    # Check if this specific subquestion is in history
+                    if (subq_id %in% q_history) {
+                        next
+                    }
                     if (
                         !check_answer_for_highlighting(
                             subq_id,
@@ -1693,6 +1699,11 @@ sd_server <- function(
                                                 q_id,
                                                 selected = stored_value
                                             )
+                                            # Also send custom message to trigger JavaScript update
+                                            session$sendCustomMessage(
+                                                "restoreButtonValue",
+                                                list(id = q_id, value = stored_value, type = "radio")
+                                            )
                                         } else if (q_type == "mc_multiple") {
                                             # For multiple choice, stored_value might be a vector or comma-separated
                                             if (
@@ -1746,6 +1757,11 @@ sd_server <- function(
                                                 q_id,
                                                 selected = values
                                             )
+                                            # Also send custom message to trigger JavaScript update
+                                            session$sendCustomMessage(
+                                                "restoreButtonValue",
+                                                list(id = q_id, value = values, type = "checkbox")
+                                            )
                                         } else if (q_type == "select") {
                                             shiny::updateSelectInput(
                                                 session,
@@ -1794,30 +1810,57 @@ sd_server <- function(
                                                     )
                                                 }
                                                 if (length(values) == 2) {
-                                                    shinyWidgets::updateSliderTextInput(
-                                                        session,
-                                                        q_id,
-                                                        selected = values
-                                                    )
+                                                    if (q_type == "slider_numeric") {
+                                                        # Use updateSliderInput for numeric sliders
+                                                        shiny::updateSliderInput(
+                                                            session,
+                                                            q_id,
+                                                            value = values
+                                                        )
+                                                    } else {
+                                                        # Use updateSliderTextInput for text sliders
+                                                        shinyWidgets::updateSliderTextInput(
+                                                            session,
+                                                            q_id,
+                                                            selected = values
+                                                        )
+                                                    }
                                                 }
                                             } else {
                                                 # Single value slider
                                                 if (
                                                     q_type == "slider_numeric"
                                                 ) {
-                                                    shinyWidgets::updateSliderTextInput(
+                                                    shiny::updateSliderInput(
                                                         session,
                                                         q_id,
-                                                        selected = as.numeric(
+                                                        value = as.numeric(
                                                             stored_value
                                                         )
                                                     )
                                                 } else {
-                                                    shinyWidgets::updateSliderTextInput(
-                                                        session,
-                                                        q_id,
-                                                        selected = stored_value
-                                                    )
+                                                    # For text sliders, need to convert value to display label
+                                                    # Get the value map from session userData
+                                                    value_map <- session$userData[[paste0(q_id, "_values")]]
+                                                    if (!is.null(value_map)) {
+                                                        # Find the display label for this value
+                                                        label_idx <- which(value_map == stored_value)
+                                                        if (length(label_idx) > 0) {
+                                                            display_label <- names(value_map)[label_idx[1]]
+                                                            shinyWidgets::updateSliderTextInput(
+                                                                session,
+                                                                q_id,
+                                                                selected = display_label
+                                                            )
+                                                        }
+                                                    } else {
+                                                        # Fallback if value map not available
+                                                        shinyWidgets::updateSliderTextInput(
+                                                            session,
+                                                            q_id,
+                                                            selected = stored_value
+                                                        )
+                                                    }
                                                 }
                                             }
                                         } else if (q_type == "date") {
@@ -1862,6 +1905,39 @@ sd_server <- function(
                 priority = -1
             ) # Lower priority to run after page rendering
         })
+    }
+
+    # Restore inputs for initial page when resuming from cookies
+    # This ensures custom question types (mc_buttons, sliders, etc.) are properly restored
+    if (use_cookies) {
+        # Use a flag to ensure this only runs once
+        initial_restoration_done <- FALSE
+
+        shiny::observe({
+            # Only run once after initial page load
+            if (!initial_restoration_done) {
+                # Wait for page to be rendered
+                shiny::invalidateLater(200)
+
+                shiny::isolate({
+                    # Check if we restored from cookies using the persistent flag
+                    if (isTRUE(session$userData$did_restore_from_cookies)) {
+                        # Mark as done first to prevent re-running
+                        initial_restoration_done <<- TRUE
+
+                        # Get the current page and restore its inputs
+                        current_page <- get_current_page()
+
+                        if (!is.null(current_page)) {
+                            restore_page_inputs(current_page)
+                        }
+                    } else {
+                        # No restoration needed, mark as done
+                        initial_restoration_done <<- TRUE
+                    }
+                })
+            }
+        }, priority = -10) # Low priority to run after page rendering
     }
 
     # Handle Previous button clicks
