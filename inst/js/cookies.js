@@ -154,6 +154,49 @@ $(document).on('shiny:connected', function(event) {
     }
 });
 
+// Handle restoration of slider inputs (text sliders using sliderTextInput)
+Shiny.addCustomMessageHandler('restoreSliderValue', function(message) {
+    if (!message.id || message.selected === undefined || message.selected === null) return;
+
+    const questionId = message.id;
+    const selected = message.selected;
+
+    // Function to attempt slider update with retries
+    function attemptSliderUpdate(retryCount) {
+        // Find the slider input element
+        const sliderInput = $('#' + questionId);
+        if (sliderInput.length === 0) {
+            if (retryCount < 5) {
+                setTimeout(function() { attemptSliderUpdate(retryCount + 1); }, 100);
+            }
+            return;
+        }
+
+        // Get the ion.rangeSlider instance
+        const sliderData = sliderInput.data('ionRangeSlider');
+        if (sliderData) {
+            // Get the choices from the slider
+            const choices = sliderData.options.values || [];
+
+            // Find the index of the selected value
+            const selectedIndex = choices.indexOf(selected);
+
+            if (selectedIndex >= 0) {
+                // Update the slider position
+                sliderData.update({
+                    from: selectedIndex
+                });
+            }
+        } else if (retryCount < 5) {
+            // Slider not initialized yet, retry
+            setTimeout(function() { attemptSliderUpdate(retryCount + 1); }, 100);
+        }
+    }
+
+    // Start with initial delay then attempt update
+    setTimeout(function() { attemptSliderUpdate(0); }, 150);
+});
+
 // Handle restoration of button-style inputs (mc_buttons and mc_multiple_buttons)
 Shiny.addCustomMessageHandler('restoreButtonValue', function(message) {
     if (!message.id || !message.value) return;

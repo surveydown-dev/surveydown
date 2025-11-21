@@ -1824,6 +1824,11 @@ sd_server <- function(
                                                             q_id,
                                                             selected = values
                                                         )
+                                                        # Also send custom message to trigger JavaScript update
+                                                        session$sendCustomMessage(
+                                                            "restoreSliderValue",
+                                                            list(id = q_id, selected = values)
+                                                        )
                                                     }
                                                 }
                                             } else {
@@ -1840,8 +1845,12 @@ sd_server <- function(
                                                     )
                                                 } else {
                                                     # For text sliders, need to convert value to display label
-                                                    # Get the value map from session userData
+                                                    # Try session userData first, then fall back to question_structure
                                                     value_map <- session$userData[[paste0(q_id, "_values")]]
+                                                    if (is.null(value_map) && q_id %in% names(question_structure)) {
+                                                        # Use options from question_structure as fallback
+                                                        value_map <- question_structure[[q_id]]$options
+                                                    }
                                                     if (!is.null(value_map)) {
                                                         # Find the display label for this value
                                                         label_idx <- which(value_map == stored_value)
@@ -1852,6 +1861,11 @@ sd_server <- function(
                                                                 q_id,
                                                                 selected = display_label
                                                             )
+                                                            # Also send custom message to trigger JavaScript update
+                                                            session$sendCustomMessage(
+                                                                "restoreSliderValue",
+                                                                list(id = q_id, selected = display_label)
+                                                            )
                                                         }
                                                     } else {
                                                         # Fallback if value map not available
@@ -1859,6 +1873,11 @@ sd_server <- function(
                                                             session,
                                                             q_id,
                                                             selected = stored_value
+                                                        )
+                                                        # Also send custom message to trigger JavaScript update
+                                                        session$sendCustomMessage(
+                                                            "restoreSliderValue",
+                                                            list(id = q_id, selected = stored_value)
                                                         )
                                                     }
                                                 }

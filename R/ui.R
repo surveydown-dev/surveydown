@@ -1304,10 +1304,11 @@ sd_question <- function(
     values_json <- jsonlite::toJSON(values)
 
     # Add a data-values attribute to the input element for extraction
+    # The input element has the id directly, so we use #id not #id input
     js_add_values <- sprintf(
       '
         $(document).ready(function() {
-          $("#%s input").attr("data-values", %s);
+          $("#%s").attr("data-values", %s);
         });
       ',
       id,

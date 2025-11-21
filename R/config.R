@@ -1439,18 +1439,52 @@ extract_question_structure_html <- function(html_content) {
           strsplit(",") |>
           unlist()
 
-        # Convert labels to snake_case for values
-        options_values <- sapply(options_labels, function(label) {
-          # Convert to lowercase
-          value <- tolower(label)
-          # Replace spaces and special characters with underscore
-          value <- gsub("[^a-z0-9]", "_", value)
-          # Replace multiple underscores with a single one
-          value <- gsub("_+", "_", value)
-          # Remove leading and trailing underscores
-          value <- gsub("^_|_$", "", value)
-          return(value)
-        })
+        # Try to extract actual values from the script tag that sets data-values
+        # Pattern: $("#question_id").attr("data-values", ["val1","val2",...]);
+        scripts <- question_node |>
+          rvest::html_nodes("script") |>
+          rvest::html_text()
+
+        options_values <- NULL
+        for (script in scripts) {
+          # Look for the data-values pattern (both old "#id input" and new "#id" formats)
+          pattern <- paste0(
+            '\\$\\("#',
+            question_id,
+            '(?: input)?"\\)\\.attr\\("data-values",\\s*\\[([^\\]]+)\\]\\)'
+          )
+          match <- regmatches(script, regexpr(pattern, script, perl = TRUE))
+          if (length(match) > 0 && nchar(match) > 0) {
+            # Extract the array content
+            values_match <- regmatches(
+              match,
+              regexpr("\\[([^\\]]+)\\]", match, perl = TRUE)
+            )
+            if (length(values_match) > 0) {
+              # Parse the JSON array
+              options_values <- tryCatch(
+                jsonlite::fromJSON(values_match),
+                error = function(e) NULL
+              )
+              break
+            }
+          }
+        }
+
+        # Fallback to snake_case conversion if extraction failed
+        if (is.null(options_values) || length(options_values) != length(options_labels)) {
+          options_values <- sapply(options_labels, function(label) {
+            # Convert to lowercase
+            value <- tolower(label)
+            # Replace spaces and special characters with underscore
+            value <- gsub("[^a-z0-9]", "_", value)
+            # Replace multiple underscores with a single one
+            value <- gsub("_+", "_", value)
+            # Remove leading and trailing underscores
+            value <- gsub("^_|_$", "", value)
+            return(value)
+          })
+        }
 
         # Create named options list
         options <- options_values

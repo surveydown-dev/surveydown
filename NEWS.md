@@ -1,6 +1,4 @@
-# surveydown (development version)
-
-# surveydown 0.15.0
+# surveydown 1.0.0
 
 - Function update: `sd_nav()` replacing `sd_next()`, which contains both previous and next buttons.
 - Function update: `sd_close()` now supports addition of previous button as well.
