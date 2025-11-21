@@ -47,6 +47,11 @@ const surveydownCookies = {
                 currentData.page_history = pageData.page_history;
             }
 
+            // Store question_history separately at top level (not per-page)
+            if (pageData.question_history) {
+                currentData.question_history = pageData.question_history;
+            }
+
             const date = new Date();
             date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
             const cookieValue = "surveydown_answers=" + JSON.stringify(currentData) +
@@ -102,11 +107,12 @@ Shiny.addCustomMessageHandler('updatePageHistory', function(message) {
         const existingData = surveydownCookies.getAnswerData() || {};
         const existingPageData = existingData[message.pageId] || {};
 
-        // Merge: preserve existing answers but update page_history at top level
+        // Merge: preserve existing answers but update page_history and question_history at top level
         const mergedPageData = {
             answers: existingPageData.answers || {},
             last_timestamp: existingPageData.last_timestamp || null,
-            page_history: message.pageData.page_history  // Will be stored at top level
+            page_history: message.pageData.page_history,  // Will be stored at top level
+            question_history: message.pageData.question_history || []  // Will be stored at top level
         };
 
         // Update cookie with merged data

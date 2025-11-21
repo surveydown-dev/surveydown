@@ -278,7 +278,10 @@ sd_server <- function(
                 }
                 for (i in seq_along(expr)) {
                     if (is.call(expr[[i]])) {
-                        ids <- c(ids, extract_input_refs_local(expr[[i]], calling_env))
+                        ids <- c(
+                            ids,
+                            extract_input_refs_local(expr[[i]], calling_env)
+                        )
                     }
                 }
             }
@@ -587,6 +590,19 @@ sd_server <- function(
         return(NULL)
     }
 
+    # Question history tracking for highlighting restoration
+    # Will be restored from cookies if available
+    question_history <- shiny::reactiveVal(character(0))
+
+    # Helper function to track question interactions
+    track_question_interaction <- function(question_id) {
+        history <- question_history()
+        # Add question if not already in history
+        if (!question_id %in% history) {
+            question_history(c(history, question_id))
+        }
+    }
+
     # Progress bar
     max_progress <- shiny::reactiveVal(0)
     last_answered_question <- shiny::reactiveVal(0)
@@ -649,7 +665,8 @@ sd_server <- function(
         question_ts_ids,
         update_progress_bar,
         use_cookies,
-        page_history
+        page_history,
+        question_history
     )
     # Auto scroll
     session$sendCustomMessage(
@@ -941,6 +958,8 @@ sd_server <- function(
                         all_data[[local_ts_id]] <- timestamp
                         changed <- c(changed, local_ts_id)
                         update_progress_bar(index)
+                        # Track this question as interacted for highlighting restoration
+                        track_question_interaction(local_id)
                     }
 
                     # Update tracker of which fields changed
@@ -1011,6 +1030,8 @@ sd_server <- function(
                     # Update progress if interacted
                     if (!is.null(input[[paste0(local_id, "_interacted")]])) {
                         update_progress_bar(index)
+                        # Track this question as interacted for highlighting restoration
+                        track_question_interaction(local_id)
                     }
 
                     # Update tracker of which fields changed
@@ -1072,6 +1093,8 @@ sd_server <- function(
                         timestamp <- get_utc_timestamp()
                         all_data[[local_ts_id]] <- timestamp
                         changed_fields(c(changed_fields(), local_ts_id))
+                        # Track this question as interacted for highlighting restoration
+                        track_question_interaction(local_id)
                     }
                 },
                 ignoreNULL = TRUE,
@@ -1118,10 +1141,12 @@ sd_server <- function(
         if (length(answers) > 0) {
             # Update cookies in both database and local modes
             # Include page_history for Previous button functionality
+            # Include question_history for highlighting restoration
             page_data <- list(
                 answers = answers,
                 last_timestamp = last_timestamp,
-                page_history = page_history()
+                page_history = page_history(),
+                question_history = question_history()
             )
             session$sendCustomMessage(
                 "setAnswerData",
@@ -1130,19 +1155,21 @@ sd_server <- function(
         }
     })
 
-    # Observer to update page_history in cookies when navigating (even without answers)
-    # This ensures Previous button works correctly after session restoration
+    # Observer to update page_history and question_history in cookies when navigating (even without answers)
+    # This ensures Previous button and highlighting restoration work correctly after session restoration
     shiny::observe({
         page_id <- current_page_id()
         history <- page_history()
+        q_history <- question_history()
 
         # Only update if cookies are enabled and we have a valid history
         if (use_cookies && !is.null(history) && length(history) > 0) {
-            # Send minimal page data with just page_history
+            # Send minimal page data with just page_history and question_history
             # This will be merged with any existing answer data for this page
             page_data <- list(
                 answers = list(),
-                page_history = history
+                page_history = history,
+                question_history = q_history
             )
             session$sendCustomMessage(
                 "updatePageHistory",
@@ -1384,9 +1411,17 @@ sd_server <- function(
 
         is_visible <- question_visibility()[page_questions]
         unanswered <- character(0)
+        # Get the current question history for checking previously answered questions
+        q_history <- question_history()
 
         for (q in page_questions) {
             if (!is_visible[q]) {
+                next
+            }
+
+            # Check if question is in history (previously interacted with)
+            # If so, don't mark as unanswered even if value is missing
+            if (q %in% q_history) {
                 next
             }
 
@@ -1484,7 +1519,9 @@ sd_server <- function(
                         current_page_questions <- page$questions
                         if (length(current_page_questions) > 0) {
                             last_question_id <- tail(current_page_questions, 1)
-                            last_question_index <- which(question_ids == last_question_id)
+                            last_question_index <- which(
+                                question_ids == last_question_id
+                            )
                             if (length(last_question_index) > 0) {
                                 update_progress_bar(last_question_index)
                             }
@@ -1581,131 +1618,249 @@ sd_server <- function(
         shiny::isolate({
             restoration_done <- FALSE
 
-            shiny::observe({
-                if (!restoration_done) {
-                    shiny::invalidateLater(100)
-                    shiny::isolate({
-                        restoration_done <<- TRUE  # Mark as done to prevent re-running
+            shiny::observe(
+                {
+                    if (!restoration_done) {
+                        shiny::invalidateLater(100)
+                        shiny::isolate({
+                            restoration_done <<- TRUE # Mark as done to prevent re-running
 
-                        # Loop through each question and restore its value
-                        for (q_id in page_questions) {
-                    # Check if this is a reactive question (defined in server)
-                    reactive_meta <- session$userData$reactive_question_metadata[[q_id]]
-                    is_reactive <- !is.null(reactive_meta)
+                            # Loop through each question and restore its value
+                            for (q_id in page_questions) {
+                                # Check if this is a reactive question (defined in server)
+                                reactive_meta <- session$userData$reactive_question_metadata[[
+                                    q_id
+                                ]]
+                                is_reactive <- !is.null(reactive_meta)
 
-                    # Skip if question doesn't exist in either structure
-                    if (!is_reactive && !q_id %in% names(question_structure)) {
-                        next
-                    }
+                                # Skip if question doesn't exist in either structure
+                                if (
+                                    !is_reactive &&
+                                        !q_id %in% names(question_structure)
+                                ) {
+                                    next
+                                }
 
-                    # Get the stored value from all_data
-                    stored_value <- all_data[[q_id]]
+                                # Get the stored value from all_data
+                                stored_value <- all_data[[q_id]]
 
-                    # Skip if no value was stored
-                    if (is.null(stored_value) || (length(stored_value) == 1 && stored_value == "")) {
-                        next
-                    }
+                                # Skip if no value was stored
+                                if (
+                                    is.null(stored_value) ||
+                                        (length(stored_value) == 1 &&
+                                            stored_value == "")
+                                ) {
+                                    next
+                                }
 
-                    # Get question type (from reactive metadata or question_structure)
-                    q_type <- if (is_reactive) {
-                        reactive_meta$type
-                    } else {
-                        question_structure[[q_id]]$type
-                    }
-
-                    # For reactive questions, also get is_range info if applicable
-                    is_range <- if (is_reactive && !is.null(reactive_meta$is_range)) {
-                        reactive_meta$is_range
-                    } else if (!is_reactive && !is.null(question_structure[[q_id]]$is_range)) {
-                        question_structure[[q_id]]$is_range
-                    } else {
-                        FALSE
-                    }
-
-                    # Update the input based on question type
-                    tryCatch({
-                        if (q_type == "mc") {
-                            shiny::updateRadioButtons(session, q_id, selected = stored_value)
-                        } else if (q_type == "mc_buttons") {
-                            # Use shinyWidgets update function for button-style radio groups
-                            shinyWidgets::updateRadioGroupButtons(session, q_id, selected = stored_value)
-                        } else if (q_type == "mc_multiple") {
-                            # For multiple choice, stored_value might be a vector or comma-separated
-                            if (is.character(stored_value) && length(stored_value) == 1) {
-                                # If it's a single string, try splitting by comma
-                                values <- if (grepl(",", stored_value)) {
-                                    strsplit(stored_value, ",\\s*")[[1]]
+                                # Get question type (from reactive metadata or question_structure)
+                                q_type <- if (is_reactive) {
+                                    reactive_meta$type
                                 } else {
-                                    stored_value
+                                    question_structure[[q_id]]$type
                                 }
-                            } else {
-                                values <- stored_value
-                            }
-                            shiny::updateCheckboxGroupInput(session, q_id, selected = values)
-                        } else if (q_type == "mc_multiple_buttons") {
-                            # For multiple choice buttons, stored_value might be a vector or comma-separated
-                            if (is.character(stored_value) && length(stored_value) == 1) {
-                                # If it's a single string, try splitting by comma
-                                values <- if (grepl(",", stored_value)) {
-                                    strsplit(stored_value, ",\\s*")[[1]]
+
+                                # For reactive questions, also get is_range info if applicable
+                                is_range <- if (
+                                    is_reactive &&
+                                        !is.null(reactive_meta$is_range)
+                                ) {
+                                    reactive_meta$is_range
+                                } else if (
+                                    !is_reactive &&
+                                        !is.null(
+                                            question_structure[[q_id]]$is_range
+                                        )
+                                ) {
+                                    question_structure[[q_id]]$is_range
                                 } else {
-                                    stored_value
+                                    FALSE
                                 }
-                            } else {
-                                values <- stored_value
+
+                                # Update the input based on question type
+                                tryCatch(
+                                    {
+                                        if (q_type == "mc") {
+                                            shiny::updateRadioButtons(
+                                                session,
+                                                q_id,
+                                                selected = stored_value
+                                            )
+                                        } else if (q_type == "mc_buttons") {
+                                            # Use shinyWidgets update function for button-style radio groups
+                                            shinyWidgets::updateRadioGroupButtons(
+                                                session,
+                                                q_id,
+                                                selected = stored_value
+                                            )
+                                        } else if (q_type == "mc_multiple") {
+                                            # For multiple choice, stored_value might be a vector or comma-separated
+                                            if (
+                                                is.character(stored_value) &&
+                                                    length(stored_value) == 1
+                                            ) {
+                                                # If it's a single string, try splitting by comma
+                                                values <- if (
+                                                    grepl(",", stored_value)
+                                                ) {
+                                                    strsplit(
+                                                        stored_value,
+                                                        ",\\s*"
+                                                    )[[1]]
+                                                } else {
+                                                    stored_value
+                                                }
+                                            } else {
+                                                values <- stored_value
+                                            }
+                                            shiny::updateCheckboxGroupInput(
+                                                session,
+                                                q_id,
+                                                selected = values
+                                            )
+                                        } else if (
+                                            q_type == "mc_multiple_buttons"
+                                        ) {
+                                            # For multiple choice buttons, stored_value might be a vector or comma-separated
+                                            if (
+                                                is.character(stored_value) &&
+                                                    length(stored_value) == 1
+                                            ) {
+                                                # If it's a single string, try splitting by comma
+                                                values <- if (
+                                                    grepl(",", stored_value)
+                                                ) {
+                                                    strsplit(
+                                                        stored_value,
+                                                        ",\\s*"
+                                                    )[[1]]
+                                                } else {
+                                                    stored_value
+                                                }
+                                            } else {
+                                                values <- stored_value
+                                            }
+                                            # Use shinyWidgets update function for button-style checkbox groups
+                                            shinyWidgets::updateCheckboxGroupButtons(
+                                                session,
+                                                q_id,
+                                                selected = values
+                                            )
+                                        } else if (q_type == "select") {
+                                            shiny::updateSelectInput(
+                                                session,
+                                                q_id,
+                                                selected = stored_value
+                                            )
+                                        } else if (q_type == "text") {
+                                            shiny::updateTextInput(
+                                                session,
+                                                q_id,
+                                                value = stored_value
+                                            )
+                                        } else if (q_type == "textarea") {
+                                            shiny::updateTextAreaInput(
+                                                session,
+                                                q_id,
+                                                value = stored_value
+                                            )
+                                        } else if (q_type == "numeric") {
+                                            shiny::updateNumericInput(
+                                                session,
+                                                q_id,
+                                                value = as.numeric(stored_value)
+                                            )
+                                        } else if (
+                                            q_type %in%
+                                                c("slider", "slider_numeric")
+                                        ) {
+                                            # Check if it's a range slider (using unified is_range variable)
+                                            if (is_range) {
+                                                # For range sliders, stored_value should be a vector of two values
+                                                if (
+                                                    is.character(
+                                                        stored_value
+                                                    ) &&
+                                                        length(stored_value) ==
+                                                            1
+                                                ) {
+                                                    values <- as.numeric(strsplit(
+                                                        stored_value,
+                                                        ",\\s*"
+                                                    )[[1]])
+                                                } else {
+                                                    values <- as.numeric(
+                                                        stored_value
+                                                    )
+                                                }
+                                                if (length(values) == 2) {
+                                                    shinyWidgets::updateSliderTextInput(
+                                                        session,
+                                                        q_id,
+                                                        selected = values
+                                                    )
+                                                }
+                                            } else {
+                                                # Single value slider
+                                                if (
+                                                    q_type == "slider_numeric"
+                                                ) {
+                                                    shinyWidgets::updateSliderTextInput(
+                                                        session,
+                                                        q_id,
+                                                        selected = as.numeric(
+                                                            stored_value
+                                                        )
+                                                    )
+                                                } else {
+                                                    shinyWidgets::updateSliderTextInput(
+                                                        session,
+                                                        q_id,
+                                                        selected = stored_value
+                                                    )
+                                                }
+                                            }
+                                        } else if (q_type == "date") {
+                                            shiny::updateDateInput(
+                                                session,
+                                                q_id,
+                                                value = stored_value
+                                            )
+                                        } else if (q_type == "daterange") {
+                                            # For date range, stored_value should be a vector of two dates
+                                            if (
+                                                is.character(stored_value) &&
+                                                    length(stored_value) == 1
+                                            ) {
+                                                dates <- strsplit(
+                                                    stored_value,
+                                                    ",\\s*"
+                                                )[[1]]
+                                            } else {
+                                                dates <- stored_value
+                                            }
+                                            if (length(dates) == 2) {
+                                                shiny::updateDateRangeInput(
+                                                    session,
+                                                    q_id,
+                                                    start = dates[1],
+                                                    end = dates[2]
+                                                )
+                                            }
+                                        }
+                                        # Note: Reactive questions defined with sd_question() in the server are now supported
+                                        # Custom reactive questions using sd_question_custom() may need their own restoration logic
+                                    },
+                                    error = function(e) {
+                                        # Silently skip if update fails
+                                    }
+                                )
                             }
-                            # Use shinyWidgets update function for button-style checkbox groups
-                            shinyWidgets::updateCheckboxGroupButtons(session, q_id, selected = values)
-                        } else if (q_type == "select") {
-                            shiny::updateSelectInput(session, q_id, selected = stored_value)
-                        } else if (q_type == "text") {
-                            shiny::updateTextInput(session, q_id, value = stored_value)
-                        } else if (q_type == "textarea") {
-                            shiny::updateTextAreaInput(session, q_id, value = stored_value)
-                        } else if (q_type == "numeric") {
-                            shiny::updateNumericInput(session, q_id, value = as.numeric(stored_value))
-                        } else if (q_type %in% c("slider", "slider_numeric")) {
-                            # Check if it's a range slider (using unified is_range variable)
-                            if (is_range) {
-                                # For range sliders, stored_value should be a vector of two values
-                                if (is.character(stored_value) && length(stored_value) == 1) {
-                                    values <- as.numeric(strsplit(stored_value, ",\\s*")[[1]])
-                                } else {
-                                    values <- as.numeric(stored_value)
-                                }
-                                if (length(values) == 2) {
-                                    shinyWidgets::updateSliderTextInput(session, q_id, selected = values)
-                                }
-                            } else {
-                                # Single value slider
-                                if (q_type == "slider_numeric") {
-                                    shinyWidgets::updateSliderTextInput(session, q_id, selected = as.numeric(stored_value))
-                                } else {
-                                    shinyWidgets::updateSliderTextInput(session, q_id, selected = stored_value)
-                                }
-                            }
-                        } else if (q_type == "date") {
-                            shiny::updateDateInput(session, q_id, value = stored_value)
-                        } else if (q_type == "daterange") {
-                            # For date range, stored_value should be a vector of two dates
-                            if (is.character(stored_value) && length(stored_value) == 1) {
-                                dates <- strsplit(stored_value, ",\\s*")[[1]]
-                            } else {
-                                dates <- stored_value
-                            }
-                            if (length(dates) == 2) {
-                                shiny::updateDateRangeInput(session, q_id, start = dates[1], end = dates[2])
-                            }
-                        }
-                        # Note: Reactive questions defined with sd_question() in the server are now supported
-                        # Custom reactive questions using sd_question_custom() may need their own restoration logic
-                        }, error = function(e) {
-                            # Silently skip if update fails
                         })
                     }
-                    })
-                }
-            }, priority = -1)  # Lower priority to run after page rendering
+                },
+                priority = -1
+            ) # Lower priority to run after page rendering
         })
     }
 
@@ -1733,7 +1888,9 @@ sd_server <- function(
                             current_page_id(prev_page_id)
 
                             # Restore input values for the previous page
-                            prev_page <- pages[[which(page_ids == prev_page_id)]]
+                            prev_page <- pages[[which(
+                                page_ids == prev_page_id
+                            )]]
                             restore_page_inputs(prev_page)
 
                             # Update progress bar to last question on target page (after page flip)
@@ -1741,15 +1898,26 @@ sd_server <- function(
                             if (prev_page_id == page_ids[1]) {
                                 last_answered_question(0)
                                 max_progress(0)
-                                session$sendCustomMessage("updateProgressBar", 0)
+                                session$sendCustomMessage(
+                                    "updateProgressBar",
+                                    0
+                                )
                             } else {
                                 # Allow decrease since we're going backwards
                                 prev_page_questions <- prev_page$questions
                                 if (length(prev_page_questions) > 0) {
-                                    last_question_id <- tail(prev_page_questions, 1)
-                                    last_question_index <- which(question_ids == last_question_id)
+                                    last_question_id <- tail(
+                                        prev_page_questions,
+                                        1
+                                    )
+                                    last_question_index <- which(
+                                        question_ids == last_question_id
+                                    )
                                     if (length(last_question_index) > 0) {
-                                        update_progress_bar(last_question_index, allow_decrease = TRUE)
+                                        update_progress_bar(
+                                            last_question_index,
+                                            allow_decrease = TRUE
+                                        )
                                     }
                                 }
                             }
@@ -3013,9 +3181,12 @@ handle_skip_logic <- function(
 
             # Page-aware skip logic: Only check if current page has the relevant questions
             # This prevents skip conditions from triggering on unrelated pages
-            if (!is.null(rule$applicable_pages) && length(rule$applicable_pages) > 0) {
+            if (
+                !is.null(rule$applicable_pages) &&
+                    length(rule$applicable_pages) > 0
+            ) {
                 if (!(current_page_id %in% rule$applicable_pages)) {
-                    next  # Skip this condition - not applicable to current page
+                    next # Skip this condition - not applicable to current page
                 }
             }
 
@@ -3222,12 +3393,10 @@ restore_current_page_values <- function(
     session,
     page_filter = NULL
 ) {
-    restored_question_ids <- c()
     for (col in names(restore_data)) {
-        # Skip special columns and timestamp columns
+        # Skip special columns
         if (
-            !col %in% c("session_id", "current_page", "time_start", "time_end") &&
-            !grepl("_timestamp$", col)
+            !col %in% c("session_id", "current_page", "time_start", "time_end")
         ) {
             val <- restore_data[[col]]
             if (!is.null(val) && !is.na(val) && val != "") {
@@ -3235,12 +3404,9 @@ restore_current_page_values <- function(
                     col,
                     list(value = val, priority = "event")
                 )
-                # Track restored question IDs
-                restored_question_ids <- c(restored_question_ids, col)
             }
         }
     }
-    return(restored_question_ids)
 }
 
 handle_data_restoration <- function(
@@ -3252,7 +3418,8 @@ handle_data_restoration <- function(
     question_ids,
     question_ts_ids,
     progress_updater,
-    page_history = NULL
+    page_history = NULL,
+    question_history = NULL
 ) {
     if (is.null(session_id)) {
         return(NULL)
@@ -3334,7 +3501,6 @@ handle_data_restoration <- function(
         }
 
         # 3. Restore question values
-        restored_question_ids <- c()
         if (
             !is.null(db) &&
                 !is.null(answer_data) &&
@@ -3348,21 +3514,11 @@ handle_data_restoration <- function(
                         col,
                         list(value = val, priority = "event")
                     )
-                    # Track restored question IDs
-                    restored_question_ids <- c(restored_question_ids, col)
                 }
             }
         } else {
             # Fall back to restore_data
-            restored_question_ids <- restore_current_page_values(restore_data, session)
-        }
-
-        # Mark all restored questions as interacted and clear highlighting
-        if (length(restored_question_ids) > 0) {
-            session$sendCustomMessage(
-                "markRestoredQuestionsInteracted",
-                list(question_ids = restored_question_ids)
-            )
+            restore_current_page_values(restore_data, session)
         }
 
         # 4. Restore page history for Previous button functionality
@@ -3370,13 +3526,19 @@ handle_data_restoration <- function(
             # Get full cookie data (not just current page)
             all_cookie_data <- session$input$stored_answer_data
 
-            if (!is.null(all_cookie_data) && !is.null(all_cookie_data$page_history)) {
+            if (
+                !is.null(all_cookie_data) &&
+                    !is.null(all_cookie_data$page_history)
+            ) {
                 # page_history is stored at top level of cookie data (not per-page)
                 # Convert from list (JSON array) to character vector
                 restored_history <- unlist(all_cookie_data$page_history)
 
                 # Validate that restored_history is a character vector
-                if (is.character(restored_history) && length(restored_history) > 0) {
+                if (
+                    is.character(restored_history) &&
+                        length(restored_history) > 0
+                ) {
                     # Ensure the history ends with the current page
                     current_pg <- current_page_id()
                     if (tail(restored_history, 1) != current_pg) {
@@ -3395,6 +3557,28 @@ handle_data_restoration <- function(
             }
         }
 
+        # 5. Restore question history for highlighting restoration
+        if (!is.null(question_history)) {
+            # Get full cookie data (not just current page)
+            all_cookie_data <- session$input$stored_answer_data
+
+            if (
+                !is.null(all_cookie_data) &&
+                    !is.null(all_cookie_data$question_history)
+            ) {
+                # question_history is stored at top level of cookie data (not per-page)
+                # Convert from list (JSON array) to character vector
+                restored_q_history <- unlist(all_cookie_data$question_history)
+
+                # Validate that restored_q_history is a character vector
+                if (
+                    is.character(restored_q_history) &&
+                        length(restored_q_history) > 0
+                ) {
+                    question_history(restored_q_history)
+                }
+            }
+        }
     })
 
     # Store restore_data in session$userData for later use
@@ -3418,7 +3602,8 @@ handle_sessions <- function(
     question_ts_ids,
     progress_updater,
     use_cookies = TRUE,
-    page_history = NULL
+    page_history = NULL,
+    question_history = NULL
 ) {
     # Note: Cookies can work in both database and local modes
     # No need to disable cookies when db is NULL
@@ -3453,7 +3638,8 @@ handle_sessions <- function(
                 question_ids,
                 question_ts_ids,
                 progress_updater,
-                page_history
+                page_history,
+                question_history
             )
 
             if (!is.null(restore_data)) {

@@ -149,37 +149,6 @@ $(document).ready(function() {
         }, data.delay);
     });
 
-    // Custom message handler for marking restored questions as interacted
-    Shiny.addCustomMessageHandler("markRestoredQuestionsInteracted", function(data) {
-        console.log("Marking restored questions as interacted:", data.question_ids);
-
-        var questionIds = [];
-        if (data && data.question_ids) {
-            if (Array.isArray(data.question_ids)) {
-                questionIds = data.question_ids;
-            } else if (typeof data.question_ids === 'string') {
-                questionIds = [data.question_ids];
-            } else if (typeof data.question_ids === 'object') {
-                try {
-                    questionIds = Object.values(data.question_ids);
-                } catch (e) {
-                    console.error("Error converting question IDs:", e);
-                    questionIds = [];
-                }
-            }
-        }
-
-        // For each restored question:
-        // 1. Set the _interacted flag so server knows it's been answered
-        // 2. Clear any highlighting
-        questionIds.forEach(function(questionId) {
-            // Set interacted flag
-            Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
-            // Clear highlighting
-            clearQuestionHighlighting(questionId);
-        });
-    });
-
     // Clear highlights when user starts answering questions
     $(document).on('change input', '.question-container input, .question-container select, .question-container textarea', function() {
         var $this = $(this);
@@ -329,28 +298,6 @@ function clearUnansweredHighlights() {
 // Function to clear all validation question highlights
 function clearValidationHighlights() {
     $('.validation-question-highlight').removeClass('validation-question-highlight');
-}
-
-// Function to clear highlighting for a specific question
-function clearQuestionHighlighting(questionId) {
-    // Find question container using multiple strategies
-    var questionContainer = $('[data-question-id="' + questionId + '"]');
-    if (questionContainer.length === 0) {
-        questionContainer = $('#container-' + questionId);
-    }
-    if (questionContainer.length === 0) {
-        var input = $('#' + questionId);
-        if (input.length > 0) {
-            questionContainer = input.closest('.question-container, .form-group, .shiny-input-container');
-        }
-    }
-
-    if (questionContainer.length > 0) {
-        // Remove all highlighting classes
-        questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight validation-question-highlight');
-        // Also remove from form controls inside
-        questionContainer.find('.form-control, input, select, textarea').removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight validation-question-highlight');
-    }
 }
 
 // Function to scroll to the first highlighted question
