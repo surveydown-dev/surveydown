@@ -1375,6 +1375,51 @@ sd_question <- function(
       step = slider_step,
       ...
     )
+
+    # Add custom interaction tracking for slider_numeric
+    # Container has no oninput/onclick handlers (auto_interaction = FALSE)
+    # We use a delayed enable flag to ignore initialization events
+    js_slider_interaction <- sprintf(
+      "
+      $(document).ready(function() {
+        var sliderId = '%s';
+        var containerId = 'container-' + sliderId;
+        var trackingEnabled = false;
+
+        // Enable tracking after a short delay to skip initialization events
+        setTimeout(function() {
+          trackingEnabled = true;
+        }, 500);
+
+        // Track value changes via input event, but only after initialization
+        $('#' + containerId).on('input change', function(e) {
+          if (trackingEnabled) {
+            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
+          }
+        });
+
+        // Also handle direct interactions on slider elements
+        $(document).on('mousedown touchstart', '#' + containerId + ' .irs', function(e) {
+          if (trackingEnabled) {
+            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
+          }
+        });
+
+        // Handle keyboard interaction (arrow keys)
+        $('#' + sliderId).on('keydown', function(e) {
+          if (trackingEnabled && e.keyCode >= 37 && e.keyCode <= 40) {
+            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
+          }
+        });
+      });
+      ",
+      id
+    )
+
+    output <- shiny::tagAppendChild(
+      output,
+      shiny::tags$script(htmltools::HTML(js_slider_interaction))
+    )
   } else if (type == "date") {
     output <- shiny::dateInput(
       inputId = id,
@@ -1486,7 +1531,9 @@ sd_question <- function(
   }
 
   # Create wrapper div
-  output_div <- make_question_container(id, output, width)
+  # Disable auto-interaction for slider_numeric to prevent false triggers during init
+  auto_interaction <- !(type %in% c("slider_numeric"))
+  output_div <- make_question_container(id, output, width, auto_interaction)
 
   if (!is.null(shiny::getDefaultReactiveDomain())) {
     # In a reactive context, directly add to output with renderUI
@@ -1662,22 +1709,31 @@ sd_question_custom <- function(
 
 # date_interaction function removed - now using unified auto-save helper
 
-make_question_container <- function(id, object, width) {
-  # Check if question if answered
-  js_interaction <- sprintf(
-    "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
-    id
-  )
-  return(shiny::tags$div(
+make_question_container <- function(id, object, width, auto_interaction = TRUE) {
+  # Build the div arguments
+  div_args <- list(
     id = paste0("container-", id),
     `data-question-id` = id,
     class = "question-container",
     style = sprintf("width: %s;", width),
-    oninput = js_interaction,
-    onclick = js_interaction,
     object,
     shiny::tags$span(class = "hidden-asterisk", "*")
-  ))
+  )
+
+  # Only add oninput/onclick handlers if auto_interaction is TRUE
+  # Some question types (like slider_numeric) handle interaction tracking manually
+  # to avoid false triggers during initialization
+
+  if (auto_interaction) {
+    js_interaction <- sprintf(
+      "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
+      id
+    )
+    div_args$oninput <- js_interaction
+    div_args$onclick <- js_interaction
+  }
+
+  return(do.call(shiny::tags$div, div_args))
 }
 
 #' Create a 'Next' Button for Page Navigation
