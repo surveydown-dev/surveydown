@@ -718,14 +718,18 @@ sd_question <- function(
   numeric_option_types <- c("slider_numeric")
 
   # Auto-generate names/values for unnamed options
-  if (!is.null(option) && (is.null(names(option)) || all(names(option) == ""))) {
+  if (
+    !is.null(option) && (is.null(names(option)) || all(names(option) == ""))
+  ) {
     if (is.character(option)) {
       # For character vectors: convert to snake_case
       option_labels <- option
       option_values <- sapply(option, to_snake_case)
       option <- option_values
       names(option) <- option_labels
-    } else if (is.numeric(option) && !is.null(type) && !(type %in% numeric_option_types)) {
+    } else if (
+      is.numeric(option) && !is.null(type) && !(type %in% numeric_option_types)
+    ) {
       # For numeric vectors (except slider_numeric): convert to character with same name and value
       # e.g., c(1, 2, 3) becomes c("1" = "1", "2" = "2", "3" = "3")
       option_char <- as.character(option)
@@ -896,7 +900,7 @@ sd_question <- function(
           }
 
           // Double-check by looking at actual DOM changes for sliders
-          if (questionType === 'slider' || questionType === 'slider_numeric_single') {
+          if (questionType === 'slider') {
             var currentElement = $('#' + questionId);
             var initialValue = currentElement.data('initial-value');
 
@@ -916,15 +920,6 @@ sd_question <- function(
           if (questionType === 'slider') {
             // Use the original default value from params, not current DOM value
             valueToSave = params.defaultValue;
-          } else if (questionType === 'slider_numeric_single') {
-            valueToSave = params.defaultValue;
-          } else if (questionType === 'slider_numeric_range') {
-            valueToSave = params.defaultValue.join(', ');
-            Shiny.setInputValue(questionId + '_manual_range', valueToSave, {priority: 'event'});
-            Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
-            Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
-            clearQuestionHighlighting(questionId);
-            return;
           } else if (questionType === 'date') {
             // For date inputs, try multiple ways to get the value
             var dateElement = $('#' + questionId);
@@ -991,24 +986,13 @@ sd_question <- function(
         };
 
         // Store initial values for sliders to detect changes and bind additional interaction events
-        if (questionType === 'slider' || questionType === 'slider_numeric_single') {
+        if (questionType === 'slider') {
           setTimeout(function() {
             var element = $('#' + questionId);
             if (element.length > 0) {
               element.data('initial-value', element.val());
 
               // Additional interaction tracking for edge cases
-              element.on('input change slide slidechange', function() {
-                hasInteracted = true;
-                window['markInteracted_' + questionId] && window['markInteracted_' + questionId]();
-              });
-            }
-          }, 100);
-        } else if (questionType === 'slider_numeric_range') {
-          // For range sliders, bind additional events to detect interactions
-          setTimeout(function() {
-            var element = $('#' + questionId);
-            if (element.length > 0) {
               element.on('input change slide slidechange', function() {
                 hasInteracted = true;
                 window['markInteracted_' + questionId] && window['markInteracted_' + questionId]();
@@ -1366,171 +1350,31 @@ sd_question <- function(
       shiny::tags$script(htmltools::HTML(js_convert))
     )
   } else if (type == "slider_numeric") {
-    # Handle numeric slider - supports BOTH single and range values
-    slider_values <- option
+    # Extract min, max, and step from option
+    slider_min <- min(option)
+    slider_max <- max(option)
 
-    if (!is.null(shiny::getDefaultReactiveDomain())) {
-      session <- shiny::getDefaultReactiveDomain()
-      session$userData[[paste0(id, "_values")]] <- slider_values
+    # Calculate step from the option sequence
+    if (length(option) > 1) {
+      slider_step <- option[2] - option[1]
+    } else {
+      slider_step <- 1
     }
 
+    # Set default value if not provided (use midpoint)
     if (is.null(default)) {
-      default <- stats::median(slider_values)
+      default <- (slider_min + slider_max) / 2
     }
 
-    # Check if this is a range slider
-    is_range <- is.numeric(default) && length(default) > 1
-
-    # Create the slider
     output <- shiny::sliderInput(
       inputId = id,
       label = label,
-      min = min(slider_values),
-      max = max(slider_values),
-      value = default, # Can be single value or vector of length 2 for range
+      min = slider_min,
+      max = slider_max,
+      value = default,
+      step = slider_step,
       ...
     )
-
-    # For range sliders, add a custom observer that manually creates a string value
-    if (is_range) {
-      # Add JavaScript to force a manual string representation of the range
-      js_range_handler <- sprintf(
-        "
-      $(document).ready(function() {
-        // Track interaction on mousedown/focus
-        $('#%s').on('mousedown focus', function() {
-          window['markInteracted_%s']();
-          Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
-        });
-
-        // Handle value changes
-        $('#%s').on('input change slide slidechange', function(event, ui) {
-          // Force a string representation for range sliders
-          if (ui && ui.values) {
-            var rangeString = ui.values.join(', ');
-            Shiny.setInputValue('%s_manual_range', rangeString);
-          }
-        });
-      });
-    ",
-        id,
-        id,
-        id,
-        id,
-        id
-      )
-
-      # Add auto-save functionality
-      autosave_js <- create_autosave_js(
-        id,
-        "slider_numeric_range",
-        list(defaultValue = default)
-      )
-      js_range_handler <- paste(js_range_handler, autosave_js, sep = "\n")
-
-      output <- shiny::tagAppendChild(
-        output,
-        shiny::tags$script(htmltools::HTML(js_range_handler))
-      )
-
-      # Add an observer in the server to capture this string value
-      if (!is.null(shiny::getDefaultReactiveDomain())) {
-        session <- shiny::getDefaultReactiveDomain()
-
-        # Debug observer to catch auto-save calls
-        shiny::observe({
-          debug_msg <- session$input$debug_range_autosave
-          if (!is.null(debug_msg)) {
-            cat("DEBUG Auto-save triggered from JS:", debug_msg, "\n")
-          }
-        })
-
-        shiny::observe({
-          # Get the range string from our custom input
-          range_string <- session$input[[paste0(id, "_manual_range")]]
-          interaction_flag <- session$input[[paste0(id, "_interacted")]]
-
-          cat(
-            "DEBUG Range Observer - ID:",
-            id,
-            "range_string:",
-            range_string,
-            "interaction_flag:",
-            interaction_flag,
-            "\n"
-          )
-
-          if (!is.null(range_string) && range_string != "") {
-            # Store this directly using the main id
-            sd_store_value(range_string, id)
-            cat("DEBUG Range value stored for:", id, "\n")
-
-            # Handle timestamp the same way as main observer
-            if (!is.null(interaction_flag) && interaction_flag) {
-              # Get access to all_data and changed_fields (same as main observer)
-              all_data <- session$userData$all_data
-              changed_fields <- session$userData$changed_fields
-
-              cat(
-                "DEBUG Checking userData - all_data exists:",
-                !is.null(all_data),
-                "changed_fields exists:",
-                !is.null(changed_fields),
-                "\n"
-              )
-
-              if (!is.null(all_data) && !is.null(changed_fields)) {
-                timestamp <- get_utc_timestamp()
-                ts_id <- paste0(id, "_timestamp")
-                all_data[[ts_id]] <- timestamp
-                changed_fields(c(changed_fields(), ts_id))
-                cat(
-                  "DEBUG Timestamp stored for:",
-                  id,
-                  "timestamp:",
-                  timestamp,
-                  "\n"
-                )
-              } else {
-                cat("DEBUG Could not store timestamp - missing userData\n")
-              }
-            } else {
-              cat("DEBUG No interaction flag, skipping timestamp\n")
-            }
-          } else {
-            cat("DEBUG No range string to process\n")
-          }
-        })
-      }
-    } else {
-      # For single sliders, just track interaction
-      js_single_handler <- sprintf(
-        "
-      $(document).ready(function() {
-        $('#%s').on('mousedown focus', function() {
-          window['markInteracted_%s']();
-          Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
-        });
-      });
-    ",
-        id,
-        id,
-        id
-      )
-
-      # Add auto-save functionality
-      autosave_js <- create_autosave_js(
-        id,
-        "slider_numeric_single",
-        list(defaultValue = default)
-      )
-      js_single_handler <- paste(js_single_handler, autosave_js, sep = "\n")
-
-      output <- shiny::tagAppendChild(
-        output,
-        shiny::tags$script(htmltools::HTML(js_single_handler))
-      )
-    }
   } else if (type == "date") {
     output <- shiny::dateInput(
       inputId = id,
