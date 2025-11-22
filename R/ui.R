@@ -1179,6 +1179,15 @@ sd_question <- function(
           Shiny.setInputValue(sliderId, valueMap[currentLabel]);
         });
 
+        // On page load, ensure the current value is mapped (for cookie restoration)
+        // Use a short delay to ensure the slider is fully initialized
+        setTimeout(function() {
+          var currentLabel = $('#' + sliderId).val();
+          if (currentLabel && valueMap[currentLabel]) {
+            Shiny.setInputValue(sliderId, valueMap[currentLabel]);
+          }
+        }, 100);
+
         // Initialize interaction tracking (from interaction.js)
         initInteractionTracking(sliderId, 'slider');
       });
