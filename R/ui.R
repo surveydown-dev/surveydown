@@ -880,145 +880,6 @@ sd_question <- function(
     id
   )
 
-  # Auto-save helper function for untouched questions
-  create_autosave_js <- function(question_id, question_type, params = list()) {
-    sprintf(
-      "
-      $(document).ready(function() {
-        var questionId = '%s';
-        var questionType = '%s';
-        var hasInteracted = false;
-        var params = %s;
-
-        // Auto-save function for untouched questions
-        function autoSaveQuestion() {
-          // Check if user has already interacted with this question
-          var interactedInput = Shiny.shinyapp.$inputValues[questionId + '_interacted'];
-          if (interactedInput || hasInteracted) {
-            // Question was already interacted with, don't auto-save
-            return;
-          }
-
-          // Double-check by looking at actual DOM changes for sliders
-          if (questionType === 'slider') {
-            var currentElement = $('#' + questionId);
-            var initialValue = currentElement.data('initial-value');
-
-            // If we stored an initial value and current value differs, user interacted
-            if (initialValue !== undefined) {
-              var currentValue = currentElement.val();
-              if (currentValue != initialValue) {
-                hasInteracted = true;
-                return; // Don't auto-save, user made changes
-              }
-            }
-          }
-
-          var valueToSave = null;
-
-          // Handle different question types - use stored defaults, not current DOM values
-          if (questionType === 'slider') {
-            // Use the original default value from params, not current DOM value
-            valueToSave = params.defaultValue;
-          } else if (questionType === 'date') {
-            // For date inputs, try multiple ways to get the value
-            var dateElement = $('#' + questionId);
-            var inputElement = dateElement.find('input[type=\"text\"]');
-
-            // Try different methods to get the date value
-            valueToSave = inputElement.val() ||
-                         dateElement.val() ||
-                         dateElement.attr('data-date') ||
-                         dateElement.find('input').val() || '';
-          } else if (questionType === 'daterange') {
-            // For date range inputs, get both start and end dates
-            var container = $('#' + questionId);
-            var startDate = container.find('input').eq(0).val() || '';
-            var endDate = container.find('input').eq(1).val() || '';
-
-            // Join with comma and space to match expected format: 2025-06-17, 2025-06-18
-            if (startDate && endDate) {
-              valueToSave = startDate + ', ' + endDate;
-            } else if (startDate || endDate) {
-              valueToSave = (startDate || '') + ', ' + (endDate || '');
-            } else {
-              valueToSave = '';
-            }
-          }
-
-          // Mark as interacted and save value with timestamp trigger
-          Shiny.setInputValue(questionId + '_interacted', true, {priority: 'event'});
-          if (valueToSave !== null && valueToSave !== '') {
-            Shiny.setInputValue(questionId, valueToSave, {priority: 'event'});
-          }
-          // Force timestamp update by sending a separate autosave timestamp signal
-          Shiny.setInputValue(questionId + '_autosave_timestamp', Date.now(), {priority: 'event'});
-
-          // Clear gray highlighting since this question is now interacted
-          clearQuestionHighlighting(questionId);
-        }
-
-        // Function to clear highlighting for this specific question
-        function clearQuestionHighlighting(questionId) {
-          // Find question container using multiple strategies
-          var questionContainer = $('[data-question-id=\\\"' + questionId + '\\\"]');
-          if (questionContainer.length === 0) {
-            questionContainer = $('#container-' + questionId);
-          }
-          if (questionContainer.length === 0) {
-            var input = $('#' + questionId);
-            if (input.length > 0) {
-              questionContainer = input.closest('.question-container, .form-group, .shiny-input-container');
-            }
-          }
-
-          if (questionContainer.length > 0) {
-            // Remove all highlighting classes
-            questionContainer.removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
-            // Also remove from form controls inside
-            questionContainer.find('.form-control, input, select, textarea').removeClass('unanswered-question-highlight unanswered-question-highlight-orange unanswered-question-highlight-green unanswered-question-highlight-purple unanswered-question-highlight-gray required-question-highlight');
-          }
-        }
-
-        // Mark as interacted when user actually interacts
-        window['markInteracted_' + questionId] = function() {
-          hasInteracted = true;
-        };
-
-        // Store initial values for sliders to detect changes and bind additional interaction events
-        if (questionType === 'slider') {
-          setTimeout(function() {
-            var element = $('#' + questionId);
-            if (element.length > 0) {
-              element.data('initial-value', element.val());
-
-              // Additional interaction tracking for edge cases
-              element.on('input change slide slidechange', function() {
-                hasInteracted = true;
-                window['markInteracted_' + questionId] && window['markInteracted_' + questionId]();
-              });
-            }
-          }, 100);
-        }
-
-        // Listen for Next and Close button clicks
-        $(document).on('click', '.sd-enter-button', function(e) {
-          if ($(this).attr('onclick') && $(this).attr('onclick').includes('next_page')) {
-            autoSaveQuestion();
-          }
-        });
-
-        $(document).on('click', '#close-survey-button', function(e) {
-          autoSaveQuestion();
-        });
-      });
-    ",
-      question_id,
-      question_type,
-      jsonlite::toJSON(params)
-    )
-  }
-
   # Create label with hidden asterisk
   label <- markdown_to_html(label)
 
@@ -1305,45 +1166,52 @@ sd_question <- function(
     )
 
     # JavaScript to map the display label back to the stored value and track interaction
+    # Uses delayed enable flag to ignore initialization/restoration events
     js_convert <- sprintf(
       "
       $(document).ready(function() {
+        var sliderId = '%s';
+        var containerId = 'container-' + sliderId;
         var valueMap = %s;
+        var trackingEnabled = false;
 
-        $('#%s').on('focus mousedown change', function(e) {
+        // Enable tracking after a short delay to skip initialization events
+        setTimeout(function() {
+          trackingEnabled = true;
+        }, 500);
+
+        // Track value changes and map display label to internal value
+        $('#' + sliderId).on('change', function(e) {
           var currentLabel = $(this).val();
-
-          // Track interaction on focus or mousedown (user initiated)
-          if (e.type === 'focus' || e.type === 'mousedown') {
-            window['markInteracted_%s']();
-            Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
-          }
-
           // Find the internal value that matches this display label
-          Shiny.setInputValue('%s', valueMap[currentLabel]);
+          Shiny.setInputValue(sliderId, valueMap[currentLabel]);
+        });
+
+        // Track interactions via input/change events on container
+        $('#' + containerId).on('input change', function(e) {
+          if (trackingEnabled) {
+            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
+          }
+        });
+
+        // Also handle direct interactions on slider elements
+        $(document).on('mousedown touchstart', '#' + containerId + ' .irs', function(e) {
+          if (trackingEnabled) {
+            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
+          }
+        });
+
+        // Handle keyboard interaction (arrow keys)
+        $('#' + sliderId).on('keydown', function(e) {
+          if (trackingEnabled && e.keyCode >= 37 && e.keyCode <= 40) {
+            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
+          }
         });
       });
     ",
-      jsonlite::toJSON(as.list(value_map)),
       id,
-      id,
-      id,
-      id
+      jsonlite::toJSON(as.list(value_map))
     )
-
-    # Add auto-save functionality
-    # Convert selected_label to its corresponding value for auto-save
-    default_value <- value_map[[selected_label]]
-    autosave_js <- create_autosave_js(
-      id,
-      "slider",
-      list(
-        valueMap = as.list(value_map),
-        defaultValue = default_value,
-        defaultLabel = selected_label
-      )
-    )
-    js_convert <- paste(js_convert, autosave_js, sep = "\n")
 
     output <- shiny::tagAppendChild(
       output,
@@ -1437,26 +1305,41 @@ sd_question <- function(
       ...
     )
 
-    # Add interaction tracking
+    # Add custom interaction tracking for date
+    # Uses delayed enable flag to ignore initialization/restoration events
     js_date_interaction <- sprintf(
-      "setTimeout(function() {
-              $('#%s').on('change', function() {
-                  window['markInteracted_%s']();
-                  Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
-              });
-           }, 1000);", # 1000 ms delay
-      id,
-      id,
+      "
+      $(document).ready(function() {
+        var dateId = '%s';
+        var containerId = 'container-' + dateId;
+        var trackingEnabled = false;
+
+        // Enable tracking after a short delay to skip initialization events
+        setTimeout(function() {
+          trackingEnabled = true;
+        }, 500);
+
+        // Track interactions via input/change events on container
+        $('#' + containerId).on('input change', function(e) {
+          if (trackingEnabled) {
+            Shiny.setInputValue(dateId + '_interacted', true, {priority: 'event'});
+          }
+        });
+
+        // Also track clicks on the date picker
+        $(document).on('mousedown touchstart', '#' + containerId + ' .datepicker, #' + containerId + ' input', function(e) {
+          if (trackingEnabled) {
+            Shiny.setInputValue(dateId + '_interacted', true, {priority: 'event'});
+          }
+        });
+      });
+      ",
       id
     )
 
-    # Add auto-save functionality
-    autosave_js <- create_autosave_js(id, "date", list())
-    combined_js <- paste(js_date_interaction, autosave_js, sep = "\n")
-
     output <- shiny::tagAppendChild(
       output,
-      shiny::tags$script(htmltools::HTML(combined_js))
+      shiny::tags$script(htmltools::HTML(js_date_interaction))
     )
   } else if (type == "daterange") {
     output <- shiny::dateRangeInput(
@@ -1475,26 +1358,41 @@ sd_question <- function(
       ...
     )
 
-    # Add interaction tracking
+    # Add custom interaction tracking for daterange
+    # Uses delayed enable flag to ignore initialization/restoration events
     js_daterange_interaction <- sprintf(
-      "setTimeout(function() {
-              $('#%s').on('change', function() {
-                  window['markInteracted_%s']();
-                  Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
-              });
-           }, 1000);", # 1000 ms delay
-      id,
-      id,
+      "
+      $(document).ready(function() {
+        var daterangeId = '%s';
+        var containerId = 'container-' + daterangeId;
+        var trackingEnabled = false;
+
+        // Enable tracking after a short delay to skip initialization events
+        setTimeout(function() {
+          trackingEnabled = true;
+        }, 500);
+
+        // Track interactions via input/change events on container
+        $('#' + containerId).on('input change', function(e) {
+          if (trackingEnabled) {
+            Shiny.setInputValue(daterangeId + '_interacted', true, {priority: 'event'});
+          }
+        });
+
+        // Also track clicks on the date picker inputs
+        $(document).on('mousedown touchstart', '#' + containerId + ' .datepicker, #' + containerId + ' input', function(e) {
+          if (trackingEnabled) {
+            Shiny.setInputValue(daterangeId + '_interacted', true, {priority: 'event'});
+          }
+        });
+      });
+      ",
       id
     )
 
-    # Add auto-save functionality
-    autosave_js <- create_autosave_js(id, "daterange", list())
-    combined_js <- paste(js_daterange_interaction, autosave_js, sep = "\n")
-
     output <- shiny::tagAppendChild(
       output,
-      shiny::tags$script(htmltools::HTML(combined_js))
+      shiny::tags$script(htmltools::HTML(js_daterange_interaction))
     )
   } else if (type == "matrix") {
     header <- shiny::tags$tr(
@@ -1531,8 +1429,10 @@ sd_question <- function(
   }
 
   # Create wrapper div
-  # Disable auto-interaction for slider_numeric to prevent false triggers during init
-  auto_interaction <- !(type %in% c("slider_numeric"))
+  # Disable auto-interaction for types with default values to prevent false triggers
+  # These types always have values even when not interacted, so we track manually
+  auto_interaction <- !(type %in%
+    c("slider", "slider_numeric", "date", "daterange"))
   output_div <- make_question_container(id, output, width, auto_interaction)
 
   if (!is.null(shiny::getDefaultReactiveDomain())) {
@@ -1709,7 +1609,12 @@ sd_question_custom <- function(
 
 # date_interaction function removed - now using unified auto-save helper
 
-make_question_container <- function(id, object, width, auto_interaction = TRUE) {
+make_question_container <- function(
+  id,
+  object,
+  width,
+  auto_interaction = TRUE
+) {
   # Build the div arguments
   div_args <- list(
     id = paste0("container-", id),
