@@ -1165,48 +1165,22 @@ sd_question <- function(
       shiny::tags$script(htmltools::HTML(js_add_values))
     )
 
-    # JavaScript to map the display label back to the stored value and track interaction
-    # Uses delayed enable flag to ignore initialization/restoration events
-    js_convert <- sprintf(
+    # JavaScript to map the display label back to the stored value
+    # (slider uses display labels but stores internal values)
+    js_value_mapping <- sprintf(
       "
       $(document).ready(function() {
         var sliderId = '%s';
-        var containerId = 'container-' + sliderId;
         var valueMap = %s;
-        var trackingEnabled = false;
-
-        // Enable tracking after a short delay to skip initialization events
-        setTimeout(function() {
-          trackingEnabled = true;
-        }, 500);
 
         // Track value changes and map display label to internal value
         $('#' + sliderId).on('change', function(e) {
           var currentLabel = $(this).val();
-          // Find the internal value that matches this display label
           Shiny.setInputValue(sliderId, valueMap[currentLabel]);
         });
 
-        // Track interactions via input/change events on container
-        $('#' + containerId).on('input change', function(e) {
-          if (trackingEnabled) {
-            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
-          }
-        });
-
-        // Also handle direct interactions on slider elements
-        $(document).on('mousedown touchstart', '#' + containerId + ' .irs', function(e) {
-          if (trackingEnabled) {
-            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
-          }
-        });
-
-        // Handle keyboard interaction (arrow keys)
-        $('#' + sliderId).on('keydown', function(e) {
-          if (trackingEnabled && e.keyCode >= 37 && e.keyCode <= 40) {
-            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
-          }
-        });
+        // Initialize interaction tracking (from interaction.js)
+        initInteractionTracking(sliderId, 'slider');
       });
     ",
       id,
@@ -1215,7 +1189,7 @@ sd_question <- function(
 
     output <- shiny::tagAppendChild(
       output,
-      shiny::tags$script(htmltools::HTML(js_convert))
+      shiny::tags$script(htmltools::HTML(js_value_mapping))
     )
   } else if (type == "slider_numeric") {
     # Extract min, max, and step from option
@@ -1244,49 +1218,15 @@ sd_question <- function(
       ...
     )
 
-    # Add custom interaction tracking for slider_numeric
-    # Container has no oninput/onclick handlers (auto_interaction = FALSE)
-    # We use a delayed enable flag to ignore initialization events
-    js_slider_interaction <- sprintf(
-      "
-      $(document).ready(function() {
-        var sliderId = '%s';
-        var containerId = 'container-' + sliderId;
-        var trackingEnabled = false;
-
-        // Enable tracking after a short delay to skip initialization events
-        setTimeout(function() {
-          trackingEnabled = true;
-        }, 500);
-
-        // Track value changes via input event, but only after initialization
-        $('#' + containerId).on('input change', function(e) {
-          if (trackingEnabled) {
-            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
-          }
-        });
-
-        // Also handle direct interactions on slider elements
-        $(document).on('mousedown touchstart', '#' + containerId + ' .irs', function(e) {
-          if (trackingEnabled) {
-            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
-          }
-        });
-
-        // Handle keyboard interaction (arrow keys)
-        $('#' + sliderId).on('keydown', function(e) {
-          if (trackingEnabled && e.keyCode >= 37 && e.keyCode <= 40) {
-            Shiny.setInputValue(sliderId + '_interacted', true, {priority: 'event'});
-          }
-        });
-      });
-      ",
+    # Initialize interaction tracking (from interaction.js)
+    js_init <- sprintf(
+      "$(document).ready(function() { initInteractionTracking('%s', 'slider_numeric'); });",
       id
     )
 
     output <- shiny::tagAppendChild(
       output,
-      shiny::tags$script(htmltools::HTML(js_slider_interaction))
+      shiny::tags$script(htmltools::HTML(js_init))
     )
   } else if (type == "date") {
     output <- shiny::dateInput(
@@ -1305,41 +1245,15 @@ sd_question <- function(
       ...
     )
 
-    # Add custom interaction tracking for date
-    # Uses delayed enable flag to ignore initialization/restoration events
-    js_date_interaction <- sprintf(
-      "
-      $(document).ready(function() {
-        var dateId = '%s';
-        var containerId = 'container-' + dateId;
-        var trackingEnabled = false;
-
-        // Enable tracking after a short delay to skip initialization events
-        setTimeout(function() {
-          trackingEnabled = true;
-        }, 500);
-
-        // Track interactions via input/change events on container
-        $('#' + containerId).on('input change', function(e) {
-          if (trackingEnabled) {
-            Shiny.setInputValue(dateId + '_interacted', true, {priority: 'event'});
-          }
-        });
-
-        // Also track clicks on the date picker
-        $(document).on('mousedown touchstart', '#' + containerId + ' .datepicker, #' + containerId + ' input', function(e) {
-          if (trackingEnabled) {
-            Shiny.setInputValue(dateId + '_interacted', true, {priority: 'event'});
-          }
-        });
-      });
-      ",
+    # Initialize interaction tracking (from interaction.js)
+    js_init <- sprintf(
+      "$(document).ready(function() { initInteractionTracking('%s', 'date'); });",
       id
     )
 
     output <- shiny::tagAppendChild(
       output,
-      shiny::tags$script(htmltools::HTML(js_date_interaction))
+      shiny::tags$script(htmltools::HTML(js_init))
     )
   } else if (type == "daterange") {
     output <- shiny::dateRangeInput(
@@ -1358,41 +1272,15 @@ sd_question <- function(
       ...
     )
 
-    # Add custom interaction tracking for daterange
-    # Uses delayed enable flag to ignore initialization/restoration events
-    js_daterange_interaction <- sprintf(
-      "
-      $(document).ready(function() {
-        var daterangeId = '%s';
-        var containerId = 'container-' + daterangeId;
-        var trackingEnabled = false;
-
-        // Enable tracking after a short delay to skip initialization events
-        setTimeout(function() {
-          trackingEnabled = true;
-        }, 500);
-
-        // Track interactions via input/change events on container
-        $('#' + containerId).on('input change', function(e) {
-          if (trackingEnabled) {
-            Shiny.setInputValue(daterangeId + '_interacted', true, {priority: 'event'});
-          }
-        });
-
-        // Also track clicks on the date picker inputs
-        $(document).on('mousedown touchstart', '#' + containerId + ' .datepicker, #' + containerId + ' input', function(e) {
-          if (trackingEnabled) {
-            Shiny.setInputValue(daterangeId + '_interacted', true, {priority: 'event'});
-          }
-        });
-      });
-      ",
+    # Initialize interaction tracking (from interaction.js)
+    js_init <- sprintf(
+      "$(document).ready(function() { initInteractionTracking('%s', 'daterange'); });",
       id
     )
 
     output <- shiny::tagAppendChild(
       output,
-      shiny::tags$script(htmltools::HTML(js_daterange_interaction))
+      shiny::tags$script(htmltools::HTML(js_init))
     )
   } else if (type == "matrix") {
     header <- shiny::tags$tr(

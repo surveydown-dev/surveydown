@@ -22,6 +22,7 @@ function Meta(meta)
         "countdown.js",
         "enter_key.js",
         "highlight_unanswered.js",
+        "interaction.js",
         "keep_alive.js",
         "update_progress.js"
     }
