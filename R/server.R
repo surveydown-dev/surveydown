@@ -1988,7 +1988,7 @@ sd_server <- function(
                             )]]
                             restore_page_inputs(prev_page)
 
-                            # Update progress bar to last question on target page (after page flip)
+                            # Update progress bar to last INTERACTED question on target page
                             # Special case: if navigating to first page, reset progress to 0
                             if (prev_page_id == page_ids[1]) {
                                 last_answered_question(0)
@@ -1998,13 +1998,16 @@ sd_server <- function(
                                     0
                                 )
                             } else {
-                                # Allow decrease since we're going backwards
+                                # Get questions on the target page that were interacted with
                                 prev_page_questions <- prev_page$questions
-                                if (length(prev_page_questions) > 0) {
-                                    last_question_id <- tail(
-                                        prev_page_questions,
-                                        1
-                                    )
+                                interacted <- question_history()
+                                interacted_on_page <- prev_page_questions[
+                                    prev_page_questions %in% interacted
+                                ]
+
+                                if (length(interacted_on_page) > 0) {
+                                    # Use the last interacted question on the page
+                                    last_question_id <- tail(interacted_on_page, 1)
                                     last_question_index <- which(
                                         question_ids == last_question_id
                                     )
@@ -2012,6 +2015,31 @@ sd_server <- function(
                                         update_progress_bar(
                                             last_question_index,
                                             allow_decrease = TRUE
+                                        )
+                                    }
+                                } else if (length(prev_page_questions) > 0) {
+                                    # No interacted questions on page - find last interacted
+                                    # question before this page
+                                    first_question_id <- prev_page_questions[1]
+                                    first_question_index <- which(
+                                        question_ids == first_question_id
+                                    )
+                                    if (
+                                        length(first_question_index) > 0 &&
+                                        first_question_index > 1
+                                    ) {
+                                        # Set progress to question before this page
+                                        update_progress_bar(
+                                            first_question_index - 1,
+                                            allow_decrease = TRUE
+                                        )
+                                    } else {
+                                        # First page with questions but none interacted
+                                        last_answered_question(0)
+                                        max_progress(0)
+                                        session$sendCustomMessage(
+                                            "updateProgressBar",
+                                            0
                                         )
                                     }
                                 }
