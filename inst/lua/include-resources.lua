@@ -18,14 +18,13 @@ function Meta(meta)
     -- Define standard resources
     local js_files = {
         "auto_scroll.js",
-        "init_clipboard.js",
+        "clipboard.js",
         "cookies.js",
         "countdown.js",
-        "enter_key.js",
-        "highlight_unanswered.js",
+        "highlighting.js",
         "interaction.js",
         "keep_alive.js",
-        "update_progress.js"
+        "progressbar.js"
     }
 
     local css_files = {
