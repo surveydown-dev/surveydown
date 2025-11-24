@@ -1730,6 +1730,8 @@ make_next_button_id <- function(page_id) {
 #'
 #' @param label Character string. The label of the 'Close' button. Defaults to
 #'    `NULL`, in which case the word `"Exit Survey"` will be used.
+#' @param show_restart Logical. If `TRUE`, shows both "Exit Survey" and "Restart Survey" 
+#'    buttons. Defaults to `TRUE`.
 #'
 #' @return A 'shiny' tagList containing the 'Close' button UI element and
 #' associated JavaScript for the exit process.
@@ -1773,12 +1775,17 @@ make_next_button_id <- function(page_id) {
 #'
 #'   # Clean up
 #'   setwd(orig_dir)
+#'   
+#'   # Examples:
+#'   # sd_close()                        # Shows both "Exit Survey" and "Restart Survey" buttons
+#'   # sd_close(show_restart = FALSE)    # Shows only "Exit Survey" button  
+#'   # sd_close("Finish", show_restart = FALSE)  # Custom label, no restart button
 #' }
 #'
 #' @seealso \code{\link{sd_server}}
 #'
 #' @export
-sd_close <- function(label = NULL) {
+sd_close <- function(label = NULL, show_restart = TRUE) {
   # Get translations
   translations <- get_translations()$translations
 
@@ -1788,7 +1795,27 @@ sd_close <- function(label = NULL) {
   }
 
   button_id <- "close-survey-button"
-  shiny::tagList(
+  restart_button_id <- "restart-survey-button"
+  
+  buttons <- if (show_restart) {
+    shiny::div(
+      style = "margin-top: 0.5rem; margin-bottom: 0.5rem; text-align: center;",
+      shiny::actionButton(
+        inputId = button_id,
+        label = label,
+        class = "sd-enter-button",
+        style = "margin: 0 10px;",
+        onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
+      ),
+      shiny::actionButton(
+        inputId = restart_button_id,
+        label = "Restart Survey",
+        class = "sd-enter-button",
+        style = "margin: 0 10px;",
+        onclick = "Shiny.setInputValue('restart_survey', true, {priority: 'event'});"
+      )
+    )
+  } else {
     shiny::div(
       style = "margin-top: 0.5rem; margin-bottom: 0.5rem;",
       shiny::actionButton(
@@ -1798,7 +1825,11 @@ sd_close <- function(label = NULL) {
         style = "display: block; margin: auto;",
         onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
       )
-    ),
+    )
+  }
+  
+  shiny::tagList(
+    buttons,
     shiny::tags$script(htmltools::HTML(
       "
       Shiny.addCustomMessageHandler('closeWindow', function(message) {

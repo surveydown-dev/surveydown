@@ -1558,6 +1558,8 @@ sd_server <- function(
         })
         # Close the modal and the window
         shiny::removeModal()
+        # Clear cookies before closing to allow survey retaking
+        session$sendCustomMessage("clearCookies", list())
         session$sendCustomMessage("closeWindow", list())
     })
 
@@ -1568,7 +1570,18 @@ sd_server <- function(
         })
         # Close the modal and the window
         shiny::removeModal()
+        # Clear cookies before closing to allow survey retaking
+        session$sendCustomMessage("clearCookies", list())
         session$sendCustomMessage("closeWindow", list())
+    })
+
+    # Observer for restart survey
+    shiny::observeEvent(input$restart_survey, {
+        # Clear cookies and restart
+        session$sendCustomMessage("forceRestart", list())
+        
+        # Reload the page to start fresh
+        session$reload()
     })
 
     # Update checkpoint 5 - when session ends

@@ -75,6 +75,30 @@ const surveydownCookies = {
             console.error("Error getting answer data:", e);
             return null;
         }
+    },
+
+    clear: function() {
+        try {
+            // Clear session cookie
+            document.cookie = "surveydown_session=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;SameSite=Strict";
+            
+            // Clear answer data cookie
+            document.cookie = "surveydown_answers=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;SameSite=Strict";
+            
+            console.log("Surveydown cookies cleared successfully");
+        } catch (e) {
+            console.error("Error clearing cookies:", e);
+        }
+    },
+
+    forceRestart: function() {
+        try {
+            // Clear cookies and force restart
+            this.clear();
+            console.log("Forcing survey restart by clearing cookies");
+        } catch (e) {
+            console.error("Error forcing restart:", e);
+        }
     }
 };
 
@@ -88,6 +112,14 @@ Shiny.addCustomMessageHandler('setAnswerData', function(message) {
     if (message.pageId && message.pageData) {
         surveydownCookies.setAnswerData(message.pageId, message.pageData);
     }
+});
+
+Shiny.addCustomMessageHandler('clearCookies', function(message) {
+    surveydownCookies.clear();
+});
+
+Shiny.addCustomMessageHandler('forceRestart', function(message) {
+    surveydownCookies.forceRestart();
 });
 
 // Initialize on document ready
