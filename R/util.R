@@ -1383,9 +1383,9 @@ get_latest_version <- function(url, pattern) {
   )
 }
 
-#' Create a translations template file
+#' Create a messages template file
 #'
-#' This function creates a template translations.yml file in the project root directory
+#' This function creates a template messages.yml file in the project root directory
 #' that users can customize to modify system messages.
 #'
 #' @param language Character string specifying the language to use. See
@@ -1393,7 +1393,7 @@ get_latest_version <- function(url, pattern) {
 #'   languages. Also, if `"en"`, `"de"`, `"es"`, `"fr"`, or `"it"` is chosen,
 #'   default messages in those langauges will be used, otherwise the default
 #'   English messages will be used. Defaults to `"en"`.
-#' @param path Character string specifying the directory where the translations.yml
+#' @param path Character string specifying the directory where the messages.yml
 #'   file should be created. Defaults to the current working directory. The
 #'   file should be placed in the root project folder of your surveydown survey.
 #' @return Invisible `NULL`.
@@ -1402,17 +1402,17 @@ get_latest_version <- function(url, pattern) {
 #' @examples
 #' if (interactive()) {
 #'   # Create English template
-#'   sd_create_translations()
+#'   sd_create_messages()
 #'
 #'   # Create German template
-#'   sd_create_translations(language = "de")
+#'   sd_create_messages(language = "de")
 #'
 #'   # Create Japanese template
 #'   # Will use English messages but Japanese date picker - user can modify
 #'   # the messages as desired
-#'   sd_create_translations(language = "ja")
+#'   sd_create_messages(language = "ja")
 #' }
-sd_create_translations <- function(language = "en", path = getwd()) {
+sd_create_messages <- function(language = "en", path = getwd()) {
   # Define valid languages
   valid_languages <- get_valid_languages()
 
@@ -1423,19 +1423,19 @@ sd_create_translations <- function(language = "en", path = getwd()) {
     )
   }
 
-  # Get default translations
-  translations <- get_translations_default()
+  # Get default messages
+  messages <- get_messages_default()
 
   # If language has default messages, use them; otherwise use English
   template <- list()
-  if (language %in% names(translations)) {
-    template[[language]] <- translations[[language]]
+  if (language %in% names(messages)) {
+    template[[language]] <- messages[[language]]
   } else {
-    template[[language]] <- translations[["en"]]
+    template[[language]] <- messages[["en"]]
     message(
       "No default messages available for '",
       language,
-      "'. surveydown currently only provides default translations for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
+      "'. surveydown currently only provides default messages for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
       "Using English messages with ",
       language,
       " date picker.\n"
@@ -1443,16 +1443,16 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   }
 
   # Create the file path
-  file_path <- file.path(path, "translations.yml")
+  file_path <- file.path(path, "messages.yml")
 
   # Check if file already exists
   if (file.exists(file_path)) {
-    stop("translations.yml already exists in the specified path")
+    stop("messages.yml already exists in the specified path")
   }
 
   # Define template header
   header <- paste(
-    "# Surveydown translations template",
+    "# Surveydown messages template",
     "# Edit the values below to customize system messages",
     "# Keep the structure and keys unchanged",
     "",
@@ -1463,7 +1463,7 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   yaml_content <- paste0(header, yaml::as.yaml(template))
   writeLines(yaml_content, con = file_path)
   message(
-    "Created translations template at: ",
+    "Created messages template at: ",
     file_path,
     "\n\nModify it to provide custom messages in '",
     language,
@@ -1893,7 +1893,7 @@ format_question_value <- function(val) {
   }
 }
 
-# Helper function to determine session ID based on use_cookies setting
+# Helper function to determine session ID based on use-cookies setting (kebab-case)
 get_session_id <- function(session, db) {
   current_session_id <- session$token
   persistent_session_id <- shiny::isolate(session$input$stored_session_id)
@@ -1908,31 +1908,31 @@ get_session_id <- function(session, db) {
       current_session_id
     }
   } else {
-    # Local CSV mode: check use_cookies setting
+    # Local CSV mode: check use-cookies setting (kebab-case)
     settings <- get_settings_yml()
     use_cookies_setting <- if (
-      !is.null(settings) && !is.null(settings$use_cookies)
+      !is.null(settings) && !is.null(settings$`use-cookies`)
     ) {
       # Convert YAML boolean values to R logical
-      if (is.character(settings$use_cookies)) {
-        settings$use_cookies %in% c("yes", "true", "TRUE", "True")
+      if (is.character(settings$`use-cookies`)) {
+        settings$`use-cookies` %in% c("yes", "true", "TRUE", "True")
       } else {
-        as.logical(settings$use_cookies)
+        as.logical(settings$`use-cookies`)
       }
     } else {
       TRUE # Default to TRUE if no setting found
     }
 
-    # For local CSV mode, handle use_cookies setting changes
+    # For local CSV mode, handle use-cookies setting changes
     if (
       use_cookies_setting &&
         !is.null(persistent_session_id) &&
         nchar(persistent_session_id) > 0
     ) {
-      # use_cookies is TRUE and we have a persistent session ID
+      # use-cookies is TRUE and we have a persistent session ID
       search_session_id <- persistent_session_id
     } else {
-      # use_cookies is FALSE OR no persistent session ID available
+      # use-cookies is FALSE OR no persistent session ID available
       # Always use current session ID to ensure fresh values
       search_session_id <- current_session_id
     }
@@ -1941,7 +1941,7 @@ get_session_id <- function(session, db) {
   return(search_session_id)
 }
 
-# Helper function to get settings.yml file
+# Helper function to get settings.yml file (kebab-case only)
 get_settings_yml <- function() {
   path <- file.path("_survey", "settings.yml")
   if (fs::file_exists(path)) {
@@ -1955,32 +1955,26 @@ get_settings_yml <- function() {
         metadata <- quarto::quarto_inspect("survey.qmd")
         yaml_metadata <- metadata$formats$html$metadata
 
-        # Extract all server configuration parameters if available
+        # Extract all server configuration parameters if available (kebab-case only)
         settings <- list()
         # Note: language is excluded to avoid breaking Quarto rendering
         server_params <- c(
-          "use_cookies",
-          "auto_scroll",
-          "rate_survey",
-          "all_questions_required",
-          "start_page",
-          "system_language",
-          "highlight_unanswered",
-          "highlight_color",
-          "capture_metadata",
-          "required_questions"
+          "use-cookies",
+          "auto-scroll",
+          "rate-survey",
+          "all-questions-required",
+          "start-page",
+          "system-language",
+          "highlight-unanswered",
+          "highlight-color",
+          "capture-metadata",
+          "required-questions"
         )
 
         for (param in server_params) {
-          # Try underscore version first
+          # Only check kebab-case version
           if (!is.null(yaml_metadata[[param]])) {
             settings[[param]] <- yaml_metadata[[param]]
-          } else {
-            # Try dash version
-            dash_param <- gsub("_", "-", param)
-            if (!is.null(yaml_metadata[[dash_param]])) {
-              settings[[param]] <- yaml_metadata[[dash_param]]
-            }
           }
         }
 

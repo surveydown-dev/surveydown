@@ -45,7 +45,7 @@ reference:
   contents:
   - sd_question
   - sd_question_custom
-  - sd_next
+  - sd_nav
   - sd_output
   - sd_close
   - sd_redirect
@@ -56,7 +56,7 @@ reference:
 - title: Utilities
   contents:
   - sd_create_survey
-  - sd_create_translations
+  - sd_create_messages
   - sd_include_folder
   - sd_setup
   - sd_add_page
@@ -72,3 +72,4 @@ reference:
   - sd_database
   - sd_set_password
   - sd_skip_forward
+  - sd_next

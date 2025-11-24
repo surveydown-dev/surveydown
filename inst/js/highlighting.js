@@ -148,7 +148,7 @@ $(document).ready(function() {
             Shiny.setInputValue("delayed_highlight_trigger", Date.now(), {priority: "event"});
         }, data.delay);
     });
-    
+
     // Clear highlights when user starts answering questions
     $(document).on('change input', '.question-container input, .question-container select, .question-container textarea', function() {
         var $this = $(this);

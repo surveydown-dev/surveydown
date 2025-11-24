@@ -19,10 +19,8 @@ run_config <- function(
   if (survey_files_need_updating(paths)) {
     message("Changes detected...re-parsing survey contents...")
 
-    # Prepare translations (check for inputs)
-    set_translations(paths, language)
-
     # Get the html content from the rendered survey.html file
+    # Note: messages are now handled in create_settings_yaml()
     html_content <- rvest::read_html(paths$target_html)
 
     # Extract all divs with class "sd-page" and save to "_survey" folder
@@ -50,9 +48,6 @@ run_config <- function(
       "\n",
       "  ",
       paths$target_questions,
-      "\n",
-      "  ",
-      paths$target_transl,
       "\n",
       "  ",
       paths$target_settings
@@ -146,13 +141,12 @@ get_paths <- function() {
     qmd = "survey.qmd",
     app = "app.R",
     root_html = "survey.html",
-    transl = "translations.yml",
-    target_transl = file.path(target_folder, "translations.yml"),
+    msg = "messages.yml", # User-provided custom messages (root folder)
     target_html = file.path(target_folder, "survey.html"),
     target_pages = file.path(target_folder, "pages.rds"),
     target_head = file.path(target_folder, "head.rds"),
     target_questions = file.path(target_folder, "questions.yml"),
-    target_settings = file.path(target_folder, "settings.yml")
+    target_settings = file.path(target_folder, "settings.yml") # Contains merged messages
   )
   return(paths)
 }
@@ -191,10 +185,10 @@ survey_files_need_updating <- function(paths) {
     }
   }
 
-  # Re-parse if the user provided a 'translations.yml' file which is out of date
-  if (fs::file_exists(paths$transl)) {
-    time_transl <- file.info(paths$transl)$mtime
-    if (time_transl > time_pages) {
+  # Re-parse if the user provided a 'messages.yml' file which is out of date
+  if (fs::file_exists(paths$msg)) {
+    time_msg <- file.info(paths$msg)$mtime
+    if (time_msg > time_pages) {
       return(TRUE)
     }
   }
@@ -202,9 +196,9 @@ survey_files_need_updating <- function(paths) {
   return(FALSE)
 }
 
-set_translations <- function(paths, language) {
-  # Load default translations
-  translations <- get_translations_default()
+set_messages <- function(paths, language, metadata = NULL) {
+  # Load default messages
+  messages <- get_messages_default()
 
   # Check for valid language input (see https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput)
   valid_languages <- get_valid_languages()
@@ -220,67 +214,214 @@ set_translations <- function(paths, language) {
     language <- "en"
   }
 
-  # Include user provided translations if translations.yml file is in root
-  if (fs::file_exists(paths$transl)) {
-    # Read translations file and select translations for selected language
+  # Include user provided messages if messages.yml file is in root
+  if (fs::file_exists(paths$msg)) {
+    # Read messages file and select messages for selected language
     tryCatch(
       {
-        user_transl <- yaml::read_yaml(paths$transl)
-        user_transl <- user_transl[unique(names(user_transl))]
-        user_transl <- user_transl[names(user_transl) == language]
+        user_msg <- yaml::read_yaml(paths$msg)
+        user_msg <- user_msg[unique(names(user_msg))]
+        user_msg <- user_msg[names(user_msg) == language]
 
-        # Check for valid set of translations for selected language
-        if (length(user_transl) == 1) {
+        # Check for valid set of messages for selected language
+        if (length(user_msg) == 1) {
           message(
-            "User provided translations for language '",
+            "User provided messages for language '",
             language,
             "' from '",
-            paths$transl,
+            paths$msg,
             "' file loaded."
           )
 
-          # Add missing texts from default translations (if not available, use English)
-          if (language %in% names(translations)) {
-            predef_transl <- translations[[language]]
+          # Add missing texts from default messages (if not available, use English)
+          if (language %in% names(messages)) {
+            predef_msg <- messages[[language]]
           } else {
-            predef_transl <- translations[["en"]]
+            predef_msg <- messages[["en"]]
           }
-          user_transl[[1]] <- c(
-            user_transl[[1]],
-            predef_transl[!(names(predef_transl) %in% names(user_transl[[1]]))]
+          user_msg[[1]] <- c(
+            user_msg[[1]],
+            predef_msg[!(names(predef_msg) %in% names(user_msg[[1]]))]
           )
         } else {
-          user_transl <- NULL
+          user_msg <- NULL
         }
       },
       error = function(e) {
         message(
           "Error reading '",
-          paths$transl,
+          paths$msg,
           "' file. Please review and revise the file. Error details: ",
           e$message
         )
-        user_transl <- NULL
+        user_msg <- NULL
       }
     )
 
-    # Combine user provided translations with predefined translations
-    translations <- c(user_transl, translations) # user provided take precedence
+    # Combine user provided messages with predefined messages
+    messages <- c(user_msg, messages) # user provided take precedence
   }
 
-  # Choose translations by chosen language
-  if (!language %in% names(translations)) {
-    # Fallback to English if no translations found for selected language
-    sd_create_translations(language)
-    translations <- translations["en"]
-    names(translations) <- language
+  # Choose messages by chosen language
+  if (!language %in% names(messages)) {
+    # Fallback to English if no messages found for selected language
+    sd_create_messages(language)
+    messages <- messages["en"]
   } else {
-    translations <- translations[names(translations) == language]
-    translations <- translations[1]
+    messages <- messages[names(messages) == language]
+    messages <- messages[1]
   }
 
-  # write translations file
-  yaml::write_yaml(translations, paths$target_transl)
+  # Restructure messages to use "system_message" as key instead of language code
+  # Extract the message values (which are in a list under the language code)
+  message_values <- messages[[1]]
+
+  # Check for custom system-messages entries in YAML metadata (highest priority)
+  if (!is.null(metadata)) {
+    custom_messages <- get_yaml_value(metadata, "system-messages")
+    if (!is.null(custom_messages)) {
+      # Define valid kebab-case message keys
+      valid_message_keys <- c(
+        "cancel", "confirm-exit", "sure-exit", "submit-exit", "warning",
+        "required", "rating-title", "rating-text", "rating-scale",
+        "previous", "next", "exit", "close-tab", "choose-option",
+        "click", "redirect", "seconds", "new-tab", "redirect-error"
+      )
+
+      # Merge custom messages with default messages (only valid kebab-case keys)
+      # Custom entries override defaults
+      valid_count <- 0
+      for (key in names(custom_messages)) {
+        if (key %in% valid_message_keys) {
+          message_values[[key]] <- custom_messages[[key]]
+          valid_count <- valid_count + 1
+        } else {
+          warning(
+            "Invalid message key '", key, "' ignored. ",
+            "Only kebab-case keys are supported. ",
+            "Did you mean '", gsub("_", "-", key), "'?"
+          )
+        }
+      }
+      if (valid_count > 0) {
+        message(
+          "Custom system-messages entries found in YAML header. ",
+          valid_count,
+          " custom message(s) applied."
+        )
+      }
+    }
+  }
+
+  # Create new structure with "system-messages" as the key (kebab-case)
+  messages_restructured <- list(`system-messages` = message_values)
+
+  # Return messages (will be written to settings.yml)
+  return(list(
+    language = language,
+    messages = messages_restructured
+  ))
+}
+
+# Helper function to clean up YAML apostrophes
+# Converts: 'won''t' -> "won't" for better readability
+clean_yaml_quotes <- function(yaml_string) {
+  # Split into lines for easier processing
+  lines <- strsplit(yaml_string, "\n")[[1]]
+
+  # Process each line
+  for (i in seq_along(lines)) {
+    line <- lines[i]
+
+    # Check if line contains single-quoted string with escaped apostrophes
+    if (grepl("'[^']*''[^']*'", line)) {
+      # Find all matches
+      pattern <- "'([^']*(?:''[^']*)*)'"
+      matches <- gregexpr(pattern, line, perl = TRUE)
+
+      if (matches[[1]][1] != -1) {
+        # Extract all matched strings
+        match_text <- regmatches(line, matches)[[1]]
+
+        # Process each match
+        for (match in match_text) {
+          # Only process if it contains ''
+          if (grepl("''", match)) {
+            # Remove outer quotes
+            content <- substring(match, 2, nchar(match) - 1)
+            # Replace '' with '
+            content <- gsub("''", "'", content, fixed = TRUE)
+            # Create double-quoted version
+            replacement <- paste0('"', content, '"')
+            # Replace in line
+            line <- sub(match, replacement, line, fixed = TRUE)
+          }
+        }
+
+        lines[i] <- line
+      }
+    }
+  }
+
+  # Rejoin lines
+  return(paste(lines, collapse = "\n"))
+}
+
+# Helper function to create sectioned YAML output with organized comments
+create_sectioned_yaml <- function(
+  settings,
+  general_params,
+  theme_params,
+  survey_params,
+  messages = NULL
+) {
+  # Build YAML string with sections
+  yaml_string <- ""
+
+  # General Settings section (may be NULL if not using)
+  if (!is.null(general_params) && length(general_params) > 0) {
+    yaml_string <- paste0(yaml_string, "# General Settings (Quarto-defined)\n")
+    general_settings <- settings[general_params]
+    general_settings <- general_settings[!sapply(general_settings, is.null)]
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(general_settings))
+  }
+
+  # Theme Settings section - nested under theme-settings (kebab-case)
+  if (!is.null(theme_params) && length(theme_params) > 0) {
+    if (yaml_string != "") {
+      yaml_string <- paste0(yaml_string, "\n")
+    }
+    theme_settings <- settings[theme_params]
+    theme_settings <- theme_settings[!sapply(theme_settings, is.null)]
+    # Nest under theme-settings key (kebab-case)
+    theme_nested <- list(`theme-settings` = theme_settings)
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(theme_nested))
+  }
+
+  # Survey Settings section - nested under survey-settings (kebab-case)
+  if (!is.null(survey_params) && length(survey_params) > 0) {
+    if (yaml_string != "") {
+      yaml_string <- paste0(yaml_string, "\n")
+    }
+    survey_settings <- settings[survey_params]
+    survey_settings <- survey_settings[!sapply(survey_settings, is.null)]
+    # Nest under survey-settings key (kebab-case)
+    survey_nested <- list(`survey-settings` = survey_settings)
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(survey_nested))
+  }
+
+  # System Messages section
+  if (!is.null(messages)) {
+    if (yaml_string != "") {
+      yaml_string <- paste0(yaml_string, "\n")
+    }
+    yaml_string <- paste0(yaml_string, yaml::as.yaml(messages))
+  }
+
+  # Clean up awkward YAML apostrophe escaping (won''t -> "won't")
+  yaml_string <- clean_yaml_quotes(yaml_string)
+
+  return(yaml_string)
 }
 
 create_settings_yaml <- function(paths, metadata) {
@@ -288,59 +429,112 @@ create_settings_yaml <- function(paths, metadata) {
   if (file.exists("survey.qmd")) {
     tryCatch(
       {
-        # Define all sd_server parameters that can be configured via YAML
-        # Note: language is excluded to avoid breaking Quarto rendering
-        server_params <- c(
-          "use_cookies",
-          "auto_scroll",
-          "rate_survey",
-          "all_questions_required",
-          "start_page",
-          "system_language",
-          "highlight_unanswered",
-          "highlight_color",
-          "capture_metadata",
-          "required_questions"
+        # Detect sd_server() parameters from app.R FIRST
+        # This ensures sd_server() overrides take precedence over YAML values
+        sd_server_overrides <- detect_sd_server_params()
+
+        # Get system language for messages
+        # Priority: sd_server() > YAML header > default
+        system_language <- get_system_language(metadata)
+        if (is.null(system_language)) {
+          system_language <- "en"
+        }
+        # Override with sd_server() if specified
+        if (!is.null(sd_server_overrides$system_language)) {
+          system_language <- sd_server_overrides$system_language
+        }
+
+        # Get messages for the selected language (pass metadata for custom overrides)
+        msg_result <- set_messages(paths, system_language, metadata)
+
+        # Define parameter categories (kebab-case only)
+        # Note: format, echo, warning are now implicit via render_survey_qmd()
+        theme_params <- c(
+          "theme",
+          "barposition",
+          "barcolor",
+          "footer-left",
+          "footer-center",
+          "footer-right"
+        )
+        survey_params <- c(
+          "show-previous",
+          "use-cookies",
+          "auto-scroll",
+          "rate-survey",
+          "all-questions-required",
+          "start-page",
+          "system-language",
+          "highlight-unanswered",
+          "highlight-color",
+          "capture-metadata",
+          "required-questions"
         )
 
-        # Define defaults for all 10 parameters
+        # Combine all parameters
+        all_params <- c(theme_params, survey_params)
+
+        # Define defaults for all parameters (kebab-case keys)
         default_settings <- list(
-          use_cookies = TRUE,
-          auto_scroll = FALSE,
-          rate_survey = FALSE,
-          all_questions_required = FALSE,
-          start_page = NULL,
-          system_language = "en",
-          highlight_unanswered = TRUE,
-          highlight_color = "gray",
-          capture_metadata = TRUE,
-          required_questions = NULL
+          # Theme Settings
+          theme = "default",
+          barposition = "top",
+          barcolor = NULL,
+          `footer-left` = "",
+          `footer-center` = "",
+          `footer-right` = "",
+          # Survey Settings
+          `show-previous` = FALSE,
+          `use-cookies` = TRUE,
+          `auto-scroll` = FALSE,
+          `rate-survey` = FALSE,
+          `all-questions-required` = FALSE,
+          `start-page` = NULL,
+          `system-language` = "en",
+          `highlight-unanswered` = TRUE,
+          `highlight-color` = "gray",
+          `capture-metadata` = TRUE,
+          `required-questions` = NULL
         )
 
         # Extract YAML values using helper functions (priority: YAML > defaults)
         settings <- list()
-        for (param in server_params) {
+        for (param in all_params) {
           # Use specific extraction functions for parameters that need special handling
-          if (param == "use_cookies") {
+          if (param == "theme") {
+            value <- get_theme(metadata)
+          } else if (param == "barposition") {
+            value <- get_barposition(metadata)
+          } else if (param == "barcolor") {
+            value <- get_barcolor(metadata)
+          } else if (param == "footer-left") {
+            value <- get_footer_left(metadata)
+          } else if (param == "footer-center") {
+            value <- get_footer_center(metadata)
+          } else if (param == "footer-right") {
+            value <- get_footer_right(metadata)
+          } else if (param == "use-cookies") {
             value <- get_use_cookies(metadata)
-          } else if (param == "auto_scroll") {
+          } else if (param == "auto-scroll") {
             value <- get_auto_scroll(metadata)
-          } else if (param == "rate_survey") {
+          } else if (param == "rate-survey") {
             value <- get_rate_survey(metadata)
-          } else if (param == "all_questions_required") {
+          } else if (param == "all-questions-required") {
             value <- get_all_questions_required(metadata)
-          } else if (param == "start_page") {
+          } else if (param == "start-page") {
             value <- get_start_page(metadata)
-          } else if (param == "system_language") {
+          } else if (param == "system-language") {
             value <- get_system_language(metadata)
-          } else if (param == "highlight_unanswered") {
+          } else if (param == "highlight-unanswered") {
             value <- get_highlight_unanswered(metadata)
-          } else if (param == "highlight_color") {
+          } else if (param == "highlight-color") {
             value <- get_highlight_color(metadata)
-          } else if (param == "capture_metadata") {
+          } else if (param == "capture-metadata") {
             value <- get_capture_metadata(metadata)
-          } else if (param == "required_questions") {
+          } else if (param == "required-questions") {
             value <- get_required_questions(metadata)
+          } else if (param == "show-previous") {
+            value <- get_show_previous(metadata)
           } else {
             value <- NULL
           }
@@ -353,69 +547,226 @@ create_settings_yaml <- function(paths, metadata) {
           }
         }
 
-        # Remove NULL values to avoid YAML issues
-        settings <- settings[!sapply(settings, is.null)]
+        # Warn about invalid snake_case keys in YAML (theme-settings, survey-settings)
+        yaml_data <- metadata$formats$html$metadata
+        if (!is.null(yaml_data)) {
+          # Check for snake_case keys in theme-settings
+          if (!is.null(yaml_data$`theme-settings`)) {
+            for (key in names(yaml_data$`theme-settings`)) {
+              if (grepl("_", key)) {
+                warning(
+                  "Invalid key '", key, "' in theme-settings ignored. ",
+                  "Only kebab-case keys are supported. ",
+                  "Did you mean '", gsub("_", "-", key), "'?"
+                )
+              }
+            }
+          }
+          # Check for snake_case keys in survey-settings
+          if (!is.null(yaml_data$`survey-settings`)) {
+            for (key in names(yaml_data$`survey-settings`)) {
+              if (grepl("_", key)) {
+                warning(
+                  "Invalid key '", key, "' in survey-settings ignored. ",
+                  "Only kebab-case keys are supported. ",
+                  "Did you mean '", gsub("_", "-", key), "'?"
+                )
+              }
+            }
+          }
+        }
 
-        # Write settings file with YAML header values and defaults
-        yaml_content <- yaml::as.yaml(settings)
+        # Apply sd_server() parameters detected earlier
+        # This prevents timing issues where settings.yml shows defaults before sd_server() updates it
+        if (length(sd_server_overrides) > 0) {
+          # Map snake_case sd_server() params to kebab-case settings keys
+          param_to_kebab <- list(
+            show_previous = "show-previous",
+            use_cookies = "use-cookies",
+            auto_scroll = "auto-scroll",
+            rate_survey = "rate-survey",
+            all_questions_required = "all-questions-required",
+            start_page = "start-page",
+            system_language = "system-language",
+            highlight_unanswered = "highlight-unanswered",
+            highlight_color = "highlight-color",
+            capture_metadata = "capture-metadata",
+            required_questions = "required-questions"
+          )
+
+          for (param in names(sd_server_overrides)) {
+            kebab_key <- param_to_kebab[[param]]
+            if (!is.null(kebab_key)) {
+              settings[[kebab_key]] <- sd_server_overrides[[param]]
+            }
+          }
+        }
+
+        # Write settings file with sectioned YAML (includes messages)
+        yaml_content <- create_sectioned_yaml(
+          settings,
+          NULL,
+          theme_params,
+          survey_params,
+          msg_result$messages
+        )
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-        comment_line2 <- "# Server settings with YAML header values and defaults\n"
+        comment_line2 <- "# All survey configuration settings with final resolved values\n\n"
         full_content <- paste0(comment_line1, comment_line2, yaml_content)
         writeLines(full_content, con = paths$target_settings)
       },
       error = function(e) {
         warning("Could not extract settings from survey.qmd: ", e$message)
-        # Create settings file with defaults on error
-        default_settings <- list(
-          use_cookies = TRUE,
-          auto_scroll = FALSE,
-          rate_survey = FALSE,
-          all_questions_required = FALSE,
-          highlight_unanswered = TRUE,
-          highlight_color = "gray",
-          capture_metadata = TRUE
+        # Create settings file with defaults on error (kebab-case only)
+        theme_params <- c(
+          "theme",
+          "barposition",
+          "barcolor",
+          "footer-left",
+          "footer-center",
+          "footer-right"
         )
-        yaml_content <- yaml::as.yaml(default_settings)
+        survey_params <- c(
+          "show-previous",
+          "use-cookies",
+          "auto-scroll",
+          "rate-survey",
+          "all-questions-required",
+          "start-page",
+          "system-language",
+          "highlight-unanswered",
+          "highlight-color",
+          "capture-metadata",
+          "required-questions"
+        )
+        default_settings <- list(
+          theme = "default",
+          barposition = "top",
+          barcolor = NULL,
+          `footer-left` = "",
+          `footer-center` = "",
+          `footer-right` = "",
+          `show-previous` = FALSE,
+          `use-cookies` = TRUE,
+          `auto-scroll` = FALSE,
+          `rate-survey` = FALSE,
+          `all-questions-required` = FALSE,
+          `start-page` = NULL,
+          `system-language` = "en",
+          `highlight-unanswered` = TRUE,
+          `highlight-color` = "gray",
+          `capture-metadata` = TRUE,
+          `required-questions` = NULL
+        )
+        # Get default English messages
+        default_msg <- get_messages_default()
+        yaml_content <- create_sectioned_yaml(
+          default_settings,
+          NULL,
+          theme_params,
+          survey_params,
+          default_msg["en"]
+        )
         comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-        comment_line2 <- "# Server settings with defaults (error reading YAML header)\n"
-        full_content <- paste0(comment_line1, comment_line2, yaml_content)
+        comment_line2 <- "# All survey configuration settings with defaults (error reading YAML header)\n"
+        comment_line3 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
+        full_content <- paste0(
+          comment_line1,
+          comment_line2,
+          comment_line3,
+          yaml_content
+        )
         writeLines(full_content, con = paths$target_settings)
       }
     )
   } else {
-    # Create settings file with defaults if survey.qmd doesn't exist
-    default_settings <- list(
-      use_cookies = TRUE,
-      auto_scroll = FALSE,
-      rate_survey = FALSE,
-      all_questions_required = FALSE,
-      highlight_unanswered = TRUE,
-      highlight_color = "gray",
-      capture_metadata = TRUE
+    # Create settings file with defaults if survey.qmd doesn't exist (kebab-case only)
+    theme_params <- c(
+      "theme",
+      "barposition",
+      "barcolor",
+      "footer-left",
+      "footer-center",
+      "footer-right"
     )
-    yaml_content <- yaml::as.yaml(default_settings)
+    survey_params <- c(
+      "show-previous",
+      "use-cookies",
+      "auto-scroll",
+      "rate-survey",
+      "all-questions-required",
+      "start-page",
+      "system-language",
+      "highlight-unanswered",
+      "highlight-color",
+      "capture-metadata",
+      "required-questions"
+    )
+    default_settings <- list(
+      theme = "default",
+      barposition = "top",
+      barcolor = NULL,
+      `footer-left` = "",
+      `footer-center` = "",
+      `footer-right` = "",
+      `show-previous` = FALSE,
+      `use-cookies` = TRUE,
+      `auto-scroll` = FALSE,
+      `rate-survey` = FALSE,
+      `all-questions-required` = FALSE,
+      `start-page` = NULL,
+      `system-language` = "en",
+      `highlight-unanswered` = TRUE,
+      `highlight-color` = "gray",
+      `capture-metadata` = TRUE,
+      `required-questions` = NULL
+    )
+    # Get default English messages
+    default_msg <- get_messages_default()
+    yaml_content <- create_sectioned_yaml(
+      default_settings,
+      NULL,
+      theme_params,
+      survey_params,
+      default_msg["en"]
+    )
     comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-    comment_line2 <- "# Server settings with defaults (no survey.qmd file found)\n"
-    full_content <- paste0(comment_line1, comment_line2, yaml_content)
+    comment_line2 <- "# All survey configuration settings with defaults (no survey.qmd file found)\n"
+    comment_line3 <- "# Note: format, echo, warning are implicit in render_survey_qmd()\n\n"
+    full_content <- paste0(
+      comment_line1,
+      comment_line2,
+      comment_line3,
+      yaml_content
+    )
     writeLines(full_content, con = paths$target_settings)
   }
 }
 
-# Function to read settings from _survey/settings.yml file
+# Function to read settings from _survey/settings.yml file (kebab-case only)
 read_settings_yaml <- function() {
   paths <- get_paths()
 
-  # Define default settings to return if reading fails
+  # Define default settings to return if reading fails (kebab-case)
   defaults <- list(
-    use_cookies = TRUE,
-    auto_scroll = FALSE,
-    rate_survey = FALSE,
-    all_questions_required = FALSE,
-    start_page = NULL,
-    highlight_unanswered = TRUE,
-    highlight_color = "gray",
-    capture_metadata = TRUE,
-    required_questions = NULL
+    # Theme Settings
+    theme = "default",
+    barposition = "top",
+    barcolor = NULL,
+    `footer-left` = "",
+    `footer-center` = "",
+    `footer-right` = "",
+    # Survey Settings
+    `use-cookies` = TRUE,
+    `auto-scroll` = FALSE,
+    `rate-survey` = FALSE,
+    `all-questions-required` = FALSE,
+    `start-page` = NULL,
+    `system-language` = "en",
+    `highlight-unanswered` = TRUE,
+    `highlight-color` = "gray",
+    `capture-metadata` = TRUE,
+    `required-questions` = NULL
   )
 
   # Try multiple possible locations for the settings file
@@ -426,14 +777,14 @@ read_settings_yaml <- function() {
     "settings.yml" # Fallback: just settings.yml in current dir
   )
 
-  settings <- NULL
+  settings_raw <- NULL
   successful_path <- NULL
 
   # Try to read from each path directly (without file.exists check)
   for (path in possible_paths) {
     tryCatch(
       {
-        settings <- yaml::read_yaml(path)
+        settings_raw <- yaml::read_yaml(path)
         successful_path <- path
         break
       },
@@ -443,40 +794,40 @@ read_settings_yaml <- function() {
     )
   }
 
-  if (is.null(settings)) {
+  if (is.null(settings_raw)) {
     return(defaults)
   }
 
-  # Normalize dash-separated keys to underscore format for compatibility
-  # Define the expected parameter names (underscore format)
-  expected_params <- c(
-    "use_cookies",
-    "auto_scroll",
-    "rate_survey",
-    "all_questions_required",
-    "start_page",
-    "system_language",
-    "highlight_unanswered",
-    "highlight_color",
-    "capture_metadata",
-    "required_questions"
-  )
+  # Flatten hierarchical structure: extract theme-settings and survey-settings (kebab-case)
+  settings <- list()
 
-  # Check for dash versions and convert to underscore format
-  for (param in expected_params) {
-    dash_param <- gsub("_", "-", param)
-    # If dash version exists but underscore doesn't, copy it over
-    if (!is.null(settings[[dash_param]]) && is.null(settings[[param]])) {
-      settings[[param]] <- settings[[dash_param]]
-      # Remove the dash version to avoid confusion
-      settings[[dash_param]] <- NULL
+  # Extract theme settings if nested (kebab-case section name)
+  if (!is.null(settings_raw$`theme-settings`)) {
+    for (key in names(settings_raw$`theme-settings`)) {
+      settings[[key]] <- settings_raw$`theme-settings`[[key]]
     }
   }
 
-  # Process required_questions if it exists (convert list to character vector)
-  if (!is.null(settings$required_questions)) {
-    if (is.list(settings$required_questions)) {
-      settings$required_questions <- unlist(settings$required_questions)
+  # Extract survey settings if nested (kebab-case section name)
+  if (!is.null(settings_raw$`survey-settings`)) {
+    for (key in names(settings_raw$`survey-settings`)) {
+      settings[[key]] <- settings_raw$`survey-settings`[[key]]
+    }
+  }
+
+  # Also check for flat structure (backward compatibility)
+  # If theme-settings and survey-settings don't exist, use flat structure
+  if (
+    is.null(settings_raw$`theme-settings`) &&
+      is.null(settings_raw$`survey-settings`)
+  ) {
+    settings <- settings_raw
+  }
+
+  # Process required-questions if it exists (convert list to character vector)
+  if (!is.null(settings$`required-questions`)) {
+    if (is.list(settings$`required-questions`)) {
+      settings$`required-questions` <- unlist(settings$`required-questions`)
     }
   }
 
@@ -484,52 +835,150 @@ read_settings_yaml <- function() {
 }
 
 # Function to update settings.yml with final resolved parameters from sd_server()
+# This ONLY updates Survey Settings, preserving Theme Settings from the YAML header
 update_settings_yaml <- function(resolved_params) {
   paths <- get_paths()
 
-  # Define sd_server parameter defaults (from server.R)
-  # Note: language is excluded to avoid breaking Quarto rendering
-  default_params <- list(
-    use_cookies = TRUE, # Note: this becomes TRUE when NULL is passed to sd_server
-    auto_scroll = FALSE,
-    rate_survey = FALSE,
-    all_questions_required = FALSE,
-    start_page = NULL,
-    system_language = "en",
-    highlight_unanswered = TRUE,
-    highlight_color = "gray",
-    capture_metadata = TRUE,
-    required_questions = NULL
+  # Define parameter categories (kebab-case only)
+  # Note: format, echo, warning are now implicit in render_survey_qmd()
+  theme_params <- c(
+    "theme",
+    "barposition",
+    "barcolor",
+    "footer-left",
+    "footer-center",
+    "footer-right"
+  )
+  survey_params <- c(
+    "show-previous",
+    "use-cookies",
+    "auto-scroll",
+    "rate-survey",
+    "all-questions-required",
+    "start-page",
+    "system-language",
+    "highlight-unanswered",
+    "highlight-color",
+    "capture-metadata",
+    "required-questions"
+  )
+
+  # Read existing settings to preserve Theme Settings
+  existing_settings <- read_settings_yaml()
+
+  # Define defaults for survey parameters only (kebab-case)
+  survey_defaults <- list(
+    `show-previous` = FALSE,
+    `use-cookies` = TRUE, # Note: this becomes TRUE when NULL is passed to sd_server
+    `auto-scroll` = FALSE,
+    `rate-survey` = FALSE,
+    `all-questions-required` = FALSE,
+    `start-page` = NULL,
+    `system-language` = "en",
+    `highlight-unanswered` = TRUE,
+    `highlight-color` = "gray",
+    `capture-metadata` = TRUE,
+    `required-questions` = NULL
   )
 
   # Filter out language parameter to avoid breaking Quarto
   resolved_params$language <- NULL
 
-  # Merge defaults with resolved params (resolved params take priority)
-  final_settings <- default_params
-  for (param_name in names(resolved_params)) {
-    if (!is.null(resolved_params[[param_name]])) {
-      final_settings[[param_name]] <- resolved_params[[param_name]]
+  # Build final settings: preserve theme settings, update survey settings
+  final_settings <- list()
+
+  # Preserve theme settings from existing settings.yml (set by create_settings_yaml)
+  for (param in theme_params) {
+    if (!is.null(existing_settings[[param]])) {
+      final_settings[[param]] <- existing_settings[[param]]
     }
   }
 
-  # Handle special case for use_cookies (NULL becomes TRUE)
-  if (is.null(final_settings$use_cookies)) {
-    final_settings$use_cookies <- TRUE
+  # Update survey settings with resolved params
+  # Map snake_case from resolved_params to kebab-case for storage
+  param_mapping <- list(
+    `show-previous` = "show_previous",
+    `use-cookies` = "use_cookies",
+    `auto-scroll` = "auto_scroll",
+    `rate-survey` = "rate_survey",
+    `all-questions-required` = "all_questions_required",
+    `start-page` = "start_page",
+    `system-language` = "system_language",
+    `highlight-unanswered` = "highlight_unanswered",
+    `highlight-color` = "highlight_color",
+    `capture-metadata` = "capture_metadata",
+    `required-questions` = "required_questions"
+  )
+
+  for (param in survey_params) {
+    # Get the snake_case version of the parameter name for resolved_params lookup
+    snake_param <- param_mapping[[param]]
+
+    if (!is.null(snake_param) && !is.null(resolved_params[[snake_param]])) {
+      final_settings[[param]] <- resolved_params[[snake_param]]
+    } else {
+      # Use default if not in resolved_params
+      final_settings[[param]] <- survey_defaults[[param]]
+    }
   }
 
-  # Remove NULL values to avoid YAML issues
-  final_settings <- final_settings[!sapply(final_settings, is.null)]
+  # Handle special case for use-cookies (NULL becomes TRUE)
+  if (is.null(final_settings$`use-cookies`)) {
+    final_settings$`use-cookies` <- TRUE
+  }
 
-  # Create YAML content
-  yaml_content <- yaml::as.yaml(final_settings)
+  # Read existing messages from settings.yml to preserve them
+  existing_msg <- NULL
+  if (fs::file_exists(paths$target_settings)) {
+    tryCatch(
+      {
+        full_settings <- yaml::read_yaml(paths$target_settings)
+        # Look for the system-messages key (kebab-case) or old keys for backward compatibility
+        if (!is.null(full_settings$`system-messages`)) {
+          # New structure with system-messages (kebab-case)
+          existing_msg <- list(`system-messages` = full_settings$`system-messages`)
+        } else if (!is.null(full_settings$system_messages)) {
+          # Old structure with system_messages (snake_case) - convert to kebab
+          existing_msg <- list(`system-messages` = full_settings$system_messages)
+        } else if (!is.null(full_settings$system_message)) {
+          # Old structure with system_message (singular) - convert to kebab
+          existing_msg <- list(`system-messages` = full_settings$system_message)
+        } else {
+          # Older structure - look for language keys for backward compatibility
+          for (lang in c("en", "de", "es", "fr", "it", "zh-CN")) {
+            if (!is.null(full_settings[[lang]])) {
+              # Convert old structure to new structure
+              existing_msg <- list(`system-messages` = full_settings[[lang]])
+              break
+            }
+          }
+        }
+      },
+      error = function(e) {
+        # If reading fails, continue without messages
+      }
+    )
+  }
+
+  # If no existing messages found, use default English with system-messages key
+  if (is.null(existing_msg)) {
+    default_msg <- get_messages_default()["en"]
+    existing_msg <- list(`system-messages` = default_msg[[1]])
+  }
+
+  # Create YAML content with sections (including messages)
+  yaml_content <- create_sectioned_yaml(
+    final_settings,
+    NULL,
+    theme_params,
+    survey_params,
+    existing_msg
+  )
   comment_line1 <- "# ! JUST READ - don't change the content of this file\n"
-  comment_line2 <- "# Server settings with final resolved parameters\n"
-  comment_line3 <- "# (includes sd_server() parameters, YAML header, and defaults)\n"
+  comment_line2 <- "# All survey configuration settings with final resolved values\n\n"
   full_content <- paste0(
     comment_line1,
     comment_line2,
-    comment_line3,
     yaml_content
   )
 
@@ -567,11 +1016,13 @@ detect_sd_server_params <- function() {
 
       # Pattern to match parameter = value pairs
       param_patterns <- c(
+        "show_previous\\s*=\\s*(TRUE|FALSE|T|F)",
         "use_cookies\\s*=\\s*(TRUE|FALSE|T|F)",
         "auto_scroll\\s*=\\s*(TRUE|FALSE|T|F)",
         "rate_survey\\s*=\\s*(TRUE|FALSE|T|F)",
         "all_questions_required\\s*=\\s*(TRUE|FALSE|T|F)",
         "start_page\\s*=\\s*[\"']([^\"']+)[\"']",
+        "system_language\\s*=\\s*[\"']([^\"']+)[\"']",
         "highlight_unanswered\\s*=\\s*(TRUE|FALSE|T|F)",
         "highlight_color\\s*=\\s*[\"']([^\"']+)[\"']",
         "capture_metadata\\s*=\\s*(TRUE|FALSE|T|F)",
@@ -579,11 +1030,13 @@ detect_sd_server_params <- function() {
       )
 
       param_names <- c(
+        "show_previous",
         "use_cookies",
         "auto_scroll",
         "rate_survey",
         "all_questions_required",
         "start_page",
+        "system_language",
         "highlight_unanswered",
         "highlight_color",
         "capture_metadata",
@@ -603,6 +1056,7 @@ detect_sd_server_params <- function() {
           if (
             param_name %in%
               c(
+                "show_previous",
                 "use_cookies",
                 "auto_scroll",
                 "rate_survey",
@@ -612,7 +1066,7 @@ detect_sd_server_params <- function() {
               )
           ) {
             overrides[[param_name]] <- value_str %in% c("TRUE", "T")
-          } else if (param_name %in% c("start_page", "highlight_color")) {
+          } else if (param_name %in% c("start_page", "system_language", "highlight_color")) {
             overrides[[param_name]] <- value_str
           } else if (param_name == "required_questions") {
             # Parse c("a", "b", "c") format
@@ -661,7 +1115,11 @@ extract_html_pages <- function(
     )
   }
 
-  pages <- lapply(pages_elements, function(x) {
+  # Get total number of pages to identify the last page
+  total_pages <- length(pages_elements)
+
+  pages <- lapply(seq_along(pages_elements), function(page_index) {
+    x <- pages_elements[[page_index]]
     page_id <- rvest::html_attr(x, "id")
     question_containers <- rvest::html_elements(x, ".question-container")
     question_ids <- character(0)
@@ -725,12 +1183,130 @@ extract_html_pages <- function(
         "data-next-page"
       )
     }
+
+    # Update the 'Previous' button ID (if present)
+    prev_button_id <- make_prev_button_id(page_id)
+    prev_button <- rvest::html_element(x, "#page_id_prev")
+    has_prev_button <- !is.na(prev_button)
+
+    if (has_prev_button) {
+      xml2::xml_attr(prev_button, "id") <- prev_button_id
+    } else {
+      prev_button_id <- NULL
+    }
+
+    # AUTO-NAVIGATION: Check if we need to auto-insert sd_nav()
+    # Only auto-insert if:
+    # 1. This is NOT the last page
+    # 2. No explicit sd_nav() or sd_close() button exists
+    is_last_page <- (page_index == total_pages)
+
+    # Check for sd_close() button (id="close-survey-button")
+    has_close_button <- !is.na(rvest::html_element(x, "#close-survey-button"))
+
+    # Check for sd_nav(show_buttons = FALSE) marker
+    has_nav_marker <- !is.na(rvest::html_element(x, "#sd-nav-marker"))
+
+    # Check if explicit navigation already exists
+    has_explicit_nav <- !is.na(next_button) || has_close_button || has_nav_marker
+
+    # Auto-insert navigation if conditions are met
+    if (!is_last_page && !has_explicit_nav) {
+      # Get settings including show_previous and translated messages
+      settings_path <- file.path("_survey", "settings.yml")
+      show_prev <- FALSE # Default
+      messages <- list("previous" = "Previous", "next" = "Next") # Default
+
+      if (file.exists(settings_path)) {
+        tryCatch(
+          {
+            settings_yaml <- yaml::read_yaml(settings_path)
+
+            # Get show-previous setting from survey-settings (kebab-case)
+            if (!is.null(settings_yaml$`survey-settings`$`show-previous`)) {
+              show_prev <- settings_yaml$`survey-settings`$`show-previous`
+            }
+
+            # Get translated messages
+            if (!is.null(settings_yaml$system_messages)) {
+              messages <- settings_yaml$system_messages
+            }
+          },
+          error = function(e) {
+            # Use defaults on error
+          }
+        )
+      }
+
+      # IMPORTANT: Never show Previous button on the first page or on pages with sd_close()
+      is_first_page <- (page_index == 1)
+      if (is_first_page || has_close_button) {
+        show_prev <- FALSE
+      }
+
+      prev_label <- paste0("\u2190 ", messages[['previous']]) # ← Previous
+      next_label <- paste0(messages[['next']], " \u2192") # Next →
+
+      # Create auto-generated sd_nav() HTML
+      # This matches the exact output from sd_nav() in R/ui.R
+      # Include Previous button only if show_previous setting is TRUE AND not first page
+      if (show_prev) {
+        auto_nav_html <- sprintf(
+          '
+<div data-next-page="" style="margin-top: 1rem; margin-bottom: 0.5rem;" class="sd-nav-container">
+  <button class="btn btn-default action-button sd-nav-button sd-nav-prev" id="page_id_prev" onclick="Shiny.setInputValue(&#39;prev_page&#39;, true, {priority: &#39;event&#39;});" style="float: left;" type="button">%s</button>
+  <button class="btn btn-default action-button sd-enter-button sd-nav-button sd-nav-next" id="page_id_next" onclick="Shiny.setInputValue(&#39;next_page&#39;, this.parentElement.getAttribute(&#39;data-next-page&#39;));" style="float: right;" type="button">%s</button>
+  <div style="clear: both;"></div>
+</div>
+        ',
+          prev_label,
+          next_label
+        )
+      } else {
+        # Only Next button (centered when no Previous button)
+        auto_nav_html <- sprintf(
+          '
+<div data-next-page="" style="margin-top: 1rem; margin-bottom: 0.5rem;" class="sd-nav-container">
+  <button class="btn btn-default action-button sd-enter-button sd-nav-button sd-nav-next" id="page_id_next" onclick="Shiny.setInputValue(&#39;next_page&#39;, this.parentElement.getAttribute(&#39;data-next-page&#39;));" style="display: block; margin: auto;" type="button">%s</button>
+  <div style="clear: both;"></div>
+</div>
+        ',
+          next_label
+        )
+      }
+
+      # Parse the HTML and append to page
+      auto_nav_node <- xml2::read_html(auto_nav_html) |>
+        rvest::html_element("body > div")
+
+      xml2::xml_add_child(x, auto_nav_node)
+
+      # Update the Next button ID (always present)
+      next_button_id <- make_next_button_id(page_id)
+      next_button <- rvest::html_element(x, "#page_id_next")
+      xml2::xml_attr(next_button, "id") <- next_button_id
+
+      # Update the Previous button ID (only if show_prev is TRUE)
+      if (show_prev) {
+        prev_button_id <- make_prev_button_id(page_id)
+        prev_button <- rvest::html_element(x, "#page_id_prev")
+        xml2::xml_attr(prev_button, "id") <- prev_button_id
+        has_prev_button <- TRUE
+      } else {
+        prev_button_id <- NULL
+        has_prev_button <- FALSE
+      }
+
+      next_page_id <- "" # Auto-nav always has empty data-next-page (sequential)
+    }
+
     list(
       id = page_id,
       questions = question_ids,
       required_questions = required_question_ids,
       next_button_id = next_button_id,
       next_page_id = next_page_id,
+      prev_button_id = prev_button_id,
       content = as.character(x)
     )
   })
@@ -863,18 +1439,52 @@ extract_question_structure_html <- function(html_content) {
           strsplit(",") |>
           unlist()
 
-        # Convert labels to snake_case for values
-        options_values <- sapply(options_labels, function(label) {
-          # Convert to lowercase
-          value <- tolower(label)
-          # Replace spaces and special characters with underscore
-          value <- gsub("[^a-z0-9]", "_", value)
-          # Replace multiple underscores with a single one
-          value <- gsub("_+", "_", value)
-          # Remove leading and trailing underscores
-          value <- gsub("^_|_$", "", value)
-          return(value)
-        })
+        # Try to extract actual values from the script tag that sets data-values
+        # Pattern: $("#question_id").attr("data-values", ["val1","val2",...]);
+        scripts <- question_node |>
+          rvest::html_nodes("script") |>
+          rvest::html_text()
+
+        options_values <- NULL
+        for (script in scripts) {
+          # Look for the data-values pattern (both old "#id input" and new "#id" formats)
+          pattern <- paste0(
+            '\\$\\("#',
+            question_id,
+            '(?: input)?"\\)\\.attr\\("data-values",\\s*\\[([^\\]]+)\\]\\)'
+          )
+          match <- regmatches(script, regexpr(pattern, script, perl = TRUE))
+          if (length(match) > 0 && nchar(match) > 0) {
+            # Extract the array content
+            values_match <- regmatches(
+              match,
+              regexpr("\\[([^\\]]+)\\]", match, perl = TRUE)
+            )
+            if (length(values_match) > 0) {
+              # Parse the JSON array
+              options_values <- tryCatch(
+                jsonlite::fromJSON(values_match),
+                error = function(e) NULL
+              )
+              break
+            }
+          }
+        }
+
+        # Fallback to snake_case conversion if extraction failed
+        if (is.null(options_values) || length(options_values) != length(options_labels)) {
+          options_values <- sapply(options_labels, function(label) {
+            # Convert to lowercase
+            value <- tolower(label)
+            # Replace spaces and special characters with underscore
+            value <- gsub("[^a-z0-9]", "_", value)
+            # Replace multiple underscores with a single one
+            value <- gsub("_+", "_", value)
+            # Remove leading and trailing underscores
+            value <- gsub("^_|_$", "", value)
+            return(value)
+          })
+        }
 
         # Create named options list
         options <- options_values

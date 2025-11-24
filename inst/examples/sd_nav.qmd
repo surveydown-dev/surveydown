@@ -1,0 +1,79 @@
+---
+format: html
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+```
+
+::: {.sd_page id=page1}
+
+# Navigation Example with sd_nav()
+
+This is the first page of the survey. Notice the navigation button only shows "Next" because we set `show_prev = FALSE`.
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'name',
+  label = 'What is your name?'
+)
+
+sd_nav(show_prev = FALSE)
+```
+
+:::
+
+::: {.sd_page id=page2}
+
+This is the second page. Now both "Previous" and "Next" buttons are shown.
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'color',
+  label = "What's your favorite color?",
+  option = c(
+    'Red'    = 'red',
+    'Blue'   = 'blue',
+    'Green'  = 'green'
+  )
+)
+
+sd_nav()
+```
+
+:::
+
+::: {.sd_page id=page3}
+
+This is the third page. You can customize button labels if needed.
+
+```{r}
+sd_question(
+  type  = 'text',
+  id    = 'feedback',
+  label = 'Any feedback?'
+)
+
+sd_nav(
+  prev_label = "Go Back",
+  next_label = "Continue"
+)
+```
+
+:::
+
+::: {.sd_page id=end}
+
+## Survey Complete!
+
+You've reached the end of the survey. Notice how you can navigate back to any previous page using the "Previous" button.
+
+```{r}
+sd_close()
+```
+
+:::
