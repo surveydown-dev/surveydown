@@ -2,133 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Overview
 
-**surveydown** is an R package that creates markdown-based programmable surveys using Quarto, Shiny, and PostgreSQL. It enables researchers to define surveys in plain text (survey.qmd) and deploy them as interactive Shiny applications with data stored in PostgreSQL databases.
+**surveydown** is an R package for creating markdown-based programmable surveys using Quarto, Shiny, and PostgreSQL databases. The package enables researchers to define surveys in plain text (`.qmd` and `.R` files), making them version-controllable, reproducible, and collaborative.
 
-## Core Architecture
-
-### Dual-File Survey Structure
-
-Every surveydown survey consists of two required files:
-- `survey.qmd`: Quarto document containing survey content (pages, questions, conditional logic)
-- `app.R`: Shiny application with database configuration and server logic
-
-### Build Process and the `_survey/` Folder
-
-The package follows a **parse-once, use-many** pattern:
-
-1. **Parse Phase** (triggered by `sd_ui()` and `run_config()`):
-   - `survey.qmd` is rendered to HTML via Quarto
-   - HTML is parsed to extract pages, questions, and structure
-   - Results are saved to `_survey/` folder as:
-     - `survey.html`: Rendered HTML content
-     - `head.rds`: Extracted head content (CSS, JS dependencies)
-     - `pages.rds`: Page structure with IDs, questions, and navigation
-     - `questions.yml`: Question metadata (types, options, labels)
-     - `settings.yml`: Server configuration (auto-generated, do not edit)
-     - `translations.yml`: UI text translations
-
-2. **Cache Invalidation**:
-   - Files are re-parsed only when `survey.qmd`, `app.R`, or translation YAML files are modified
-   - The `survey_files_need_updating()` and `survey_needs_updating()` functions check timestamps
-   - This prevents unnecessary re-rendering during development
-
-3. **Runtime**:
-   - Shiny loads pre-parsed content from `_survey/` folder
-   - This makes survey loading fast and separates content from logic
-
-### Key Components
-
-- **UI System** (`R/ui.R`):
-  - `sd_ui()` creates the Shiny UI
-  - Reads theme, progress bar, and footer settings from survey.qmd YAML
-  - Manages Quarto rendering and HTML extraction
-  - Handles resource path setup for CSS/JS
-
-- **Server Logic** (`R/server.R`):
-  - `sd_server()` is the main server function
-  - Implements conditional display via `sd_show_if()`
-  - Implements skip logic via `sd_skip_if()`
-  - Tracks progress and manages page navigation
-  - Handles database writes and session management
-  - Supports cookie-based session restoration
-
-- **Configuration** (`R/config.R`):
-  - `run_config()` parses survey.qmd and extracts structure
-  - `extract_html_pages()` processes page divs with `.sd-page` or `.sd_page` class
-  - `extract_question_structure_html()` builds question metadata
-  - Settings YAML management with precedence: `sd_server()` args > YAML header > defaults
-  - `detect_sd_server_params()` parses app.R to detect overrides
-
-- **Database Interface** (`R/db.R`):
-  - PostgreSQL integration with connection pooling
-  - `sd_database()` configures connection in app.R
-  - `sd_db_config()` manages credentials in `.env` file
-  - `sd_db_connect()` establishes connection (supports `ignore = TRUE` for local testing)
-  - Built-in Supabase support
-
-- **Utilities** (`R/util.R`):
-  - File existence checks (`check_files_missing()`)
-  - Markdown-to-HTML conversion for question labels/options
-  - Resource path management in `.onAttach()`
-  - Validation functions for IDs and required questions
-
-- **Translation** (`R/translation.R`):
-  - Multi-language support for UI text
-  - Default translations: English, German, Spanish, French, Italian, Chinese
-  - Users can override via `translations.yml` file
-  - Language selection via `system_language` parameter
-
-### Survey Flow
-
-1. User defines survey content in `survey.qmd` with markdown and R code chunks
-2. User defines server configuration in `app.R` (database, skip logic, etc.)
-3. On app launch:
-   - `sd_ui()` checks for changes and renders/parses survey.qmd if needed
-   - Content is cached in `_survey/` folder
-   - Shiny UI is generated with theme and progress bar
-4. During session:
-   - `sd_server()` manages page navigation and conditional logic
-   - Responses are stored in PostgreSQL database or local CSV
-   - Progress bar updates based on answered questions
-5. On completion:
-   - Optional rating question via `rate_survey = TRUE`
-   - Session data is finalized and written to database
-
-### Question System
-
-Questions are defined in survey.qmd using shiny input functions with markdown support:
-
-- Multiple choice: `mc`, `mc_buttons`, `mc_multiple`, `mc_multiple_buttons`
-- Text inputs: `text`, `textarea`, `numeric`
-- Selections: `select`, `slider`, `slider_numeric`
-- Date inputs: `date`, `daterange`
-- Matrix questions: Multiple questions in table format
-- Custom questions: `sd_question_custom()` for reactive outputs (e.g., leaflet maps)
-
-The question structure is extracted from HTML and stored in `questions.yml` with:
-- `type`: Question type
-- `label`: Question text (may be empty for reactive questions)
-- `options`: Named list of choices (for select/mc questions)
-- `is_matrix`: Boolean indicator
-
-### Configuration Precedence
-
-Settings can be defined in multiple places with this precedence (highest to lowest):
-
-1. **`sd_server()` function parameters** in app.R (highest priority)
-2. **YAML header** in survey.qmd (e.g., `use-cookies: false`)
-3. **Default values** hardcoded in the package
-
-The `settings.yml` file in `_survey/` reflects the final resolved configuration.
+The core workflow:
+1. Users design surveys in `survey.qmd` (Quarto markdown with R code chunks)
+2. Users configure app behavior in `app.R` (Shiny app with database settings)
+3. Package renders the survey to a Shiny app that stores responses in PostgreSQL (Supabase recommended)
 
 ## Development Commands
 
 ### Package Development
 
 ```r
-# Load package for development (run from package root)
+# Load package during development
 devtools::load_all()
 
 # Generate documentation from roxygen comments
@@ -137,115 +25,179 @@ devtools::document()
 # Install package locally
 devtools::install(force = TRUE)
 
-# Run package checks (CRAN compliance)
+# Run R CMD check
 devtools::check()
+```
 
-# Build pkgdown documentation site
+### Documentation
+
+```r
+# Build pkgdown site
 pkgdown::build_site()
-
-# Complete build workflow (see build.R)
-source("build.R")
 ```
 
 ### Testing
 
-```r
-# Run tests (currently minimal - test_check is commented out)
-library(testthat)
-library(surveydown)
-# test_check("surveydown")  # Tests need development
-```
+Survey functionality is typically tested manually using the `test_survey/` directory, which contains a full survey example with `app.R` and `survey.qmd` files. To test changes:
 
-### Example Survey Development
+1. Make changes to package source files in `R/`
+2. Run `devtools::load_all()` to reload the package
+3. Navigate to `test_survey/` and run the survey app
+4. Verify changes work as expected
 
-```r
-# From test_survey/ directory
-setwd("test_survey")
-shiny::runApp()
+## Architecture
 
-# Or from package root
-shiny::runApp("test_survey")
-```
+### Core Components
 
-The `test_survey/` folder contains a working example with a custom leaflet map question.
+The package has a clear separation of concerns across several R files:
 
-### Database Setup for Testing
+- **`R/ui.R`**: Contains `sd_ui()` - the main UI function that:
+  - Renders the `survey.qmd` file using Quarto
+  - Extracts and processes HTML content
+  - Creates the Shiny UI with CSS/JS dependencies
+  - Manages theme settings, progress bar, and footer configuration
 
-```r
-# Configure database credentials (creates/updates .env file)
-sd_db_config()
+- **`R/server.R`**: Contains `sd_server()` - the main server function that:
+  - Handles page navigation and skip logic
+  - Manages question state (answered/required)
+  - Updates progress bar based on completion
+  - Stores responses to database or local CSV
+  - Implements conditional display logic via `sd_show_if()`
+  - Handles exit survey functionality
 
-# Test with local CSV storage (no database)
-db <- sd_db_connect(ignore = TRUE)
+- **`R/config.R`**: Contains `run_config()` - the configuration processor that:
+  - Parses the rendered `survey.html` file
+  - Extracts pages and questions into structured data
+  - Validates IDs and required questions
+  - Manages the `_survey/` folder cache system
+  - Creates `settings.yml` with theme-settings, survey-settings, and system-messages
 
-# Connect to actual PostgreSQL database
-db <- sd_db_connect(
-  host = "your-host",
-  dbname = "your-db",
-  port = "5432",
-  user = "your-user",
-  password = "your-password",
-  table = "responses"
-)
-```
+- **`R/db.R`**: Database functions including:
+  - `sd_db_config()`: Interactive database configuration setup
+  - `sd_db_connect()`: PostgreSQL connection management (Supabase support)
+  - `sd_database()`: Database object creation
+  - Functions for storing and retrieving survey responses
 
-## Important Architecture Patterns
+- **`R/util.R`**: Utility functions for:
+  - Question type implementations (`sd_question()`)
+  - Page navigation (`sd_nav()`, `sd_close()`)
+  - Conditional logic helpers
+  - Markdown to HTML conversion
+  - Resource path management
 
-### ID System
+- **`R/messages.R`**: Multi-language system message support
 
-- **Page IDs**: Defined in `:::  {.sd-page id=page_name}` divs
-- **Question IDs**: First parameter to shiny input functions
-- **Reserved IDs**: `session_id`, `time_start`, `time_end`, `exit_survey_rating`, `current_page`, `browser`, `ip_address`
-- All IDs must be unique across pages and questions
-- `check_ids()` validates at startup
+### The `_survey/` Folder
+
+When a survey runs, the package creates a `_survey/` folder that caches parsed survey content:
+
+- `survey.html`: Rendered HTML from `survey.qmd`
+- `head.rds`: Extracted HTML head content
+- `pages.rds`: Structured page data
+- `questions.yml`: Question metadata and structure
+- `settings.yml`: Complete configuration (theme-settings, survey-settings, system-messages)
+
+This caching system prevents re-rendering on every app reload. Changes to `survey.qmd` or `app.R` trigger re-parsing.
+
+### Frontend Assets
+
+- **`inst/js/`**: JavaScript modules for:
+  - `auto_scroll.js`: Auto-scroll to next question
+  - `cookies.js`: Cookie-based session management
+  - `highlighting.js`: Unanswered question highlighting
+  - `interaction.js`: UI interactions
+  - `progressbar.js`: Progress tracking
+  - `clipboard.js`: Copy functionality
+  - `countdown.js`: Countdown timers
+  - `keep_alive.js`: Session persistence
+
+- **`inst/css/`**: Stylesheet files:
+  - `surveydown.css`: Main package styles
+  - `default_theme.css`: Default theme
+
+- **`inst/template/`**: Default survey template with `survey.qmd` and `app.R`
+
+- **`inst/examples/`**: Example `.qmd` files demonstrating different features
+
+### Question Types
+
+The `sd_question()` function supports multiple question types defined in `R/util.R`:
+- `mc`: Single choice (radio buttons)
+- `mc_multiple`: Multiple choice (checkboxes)
+- `mc_buttons`: Single choice as buttons
+- `select`: Dropdown select
+- `text`: Text input
+- `textarea`: Multi-line text
+- `numeric`: Number input
+- `slider`: Slider input
+- `date`: Date picker
+- `daterange`: Date range picker
+
+Matrix questions and custom questions are also supported.
 
 ### Conditional Logic
 
-Two types of conditional behavior:
+Three main functions control survey flow (defined in `R/server.R` and implemented in `R/util.R`):
+- `sd_skip_if()`: Skip to a page based on conditions
+- `sd_show_if()`: Show/hide questions based on conditions
+- `sd_stop_if()`: Prevent navigation if conditions aren't met
 
-1. **Skip Logic** (`sd_skip_if()`): Jumps to a different page based on answer
-   - Targets must be valid page IDs
-   - Defined in server function
+### Progress Tracking
 
-2. **Show/Hide Logic** (`sd_show_if()`): Conditionally displays questions or pages
-   - Targets can be question IDs or page IDs
-   - Initially hidden elements use `display: none;` style
-   - Defined in server function
+Progress calculation is based on the last answered question index. The progress bar never decreases, even when earlier questions are answered later. This is intentional to avoid confusing respondents.
 
-### Required Questions
+## Key Design Patterns
 
-Three ways to mark questions as required:
+1. **Two-file survey structure**: Every survey consists of:
+   - `survey.qmd`: Survey content (questions, pages, text)
+   - `app.R`: App configuration (database, conditional logic, global settings)
 
-1. `all_questions_required = TRUE` in `sd_server()` (excludes matrix parent questions)
-2. `required_questions = c("q1", "q2")` in `sd_server()`
-3. `required-questions: [q1, q2]` in survey.qmd YAML header
+2. **Parse-once, cache-always**: Survey content is parsed from rendered HTML once, then cached in `_survey/` folder. Subsequent runs load from cache unless files change.
 
-Required questions show an asterisk and block page navigation until answered.
+3. **Reactive Shiny integration**: Since surveys are Shiny apps, designers can leverage Shiny's reactive programming for dynamic content.
 
-### Resource Management
+4. **Database-first with CSV fallback**: Primary mode uses PostgreSQL (Supabase), but `ignore = TRUE` mode saves to local CSV for testing.
 
-The package includes static resources in `inst/`:
-- `css/`: surveydown.css, default_theme.css
-- `js/`: auto_scroll.js, cookies.js, highlight_unanswered.js, keep_alive.js, etc.
+5. **YAML-driven configuration**: Most `sd_server()` parameters can be set in the `survey.qmd` YAML header. Function arguments override YAML settings.
 
-These are automatically added to Shiny's resource path in `.onAttach()`.
+## Common Development Patterns
 
-## Key Design Decisions
+### Adding a New Question Type
 
-1. **Files must be named exactly**: `survey.qmd` and `app.R` (enforced by `check_files_missing()`)
-2. **Mixed page classes not allowed**: Use either `.sd-page` OR `.sd_page`, not both
-3. **Matrix subquestions are auto-generated**: Don't manually create IDs like `matrix_q_row1`
-4. **Progress never decreases**: Based on last answered question index, not percentage complete
-5. **Settings YAML is read-only**: Generated by the system, manual edits will be overwritten
-6. **Translation language selection**: Uses `system_language` (not `language` which is deprecated)
+1. Add rendering logic in `sd_question()` function in `R/util.R`
+2. Handle the input in `sd_server()` reactive observers
+3. Update question structure parsing in `R/config.R` if needed
+4. Add example in `inst/examples/`
 
-## File Structure Notes
+### Modifying Server Behavior
 
-- `R/`: Core package source (6 main files: config.R, db.R, server.R, translation.R, ui.R, util.R)
-- `inst/`: Package resources (js/, css/, examples/)
-- `man/`: Generated documentation (do not edit manually)
-- `test_survey/`: Working example with custom leaflet map
-- `tests/`: Test suite (currently minimal, needs development)
-- `build.R`: Development build script for complete workflow
-- `.env`: Database credentials (git-ignored, created by `sd_db_config()`)
-- `_survey/`: Generated cache folder (git-ignored, auto-created)
+Server-side logic lives in `R/server.R`. The `sd_server()` function is called within the user's server function in `app.R`. Most functionality is implemented via Shiny observers that react to user input.
+
+### Adding JavaScript Functionality
+
+1. Create a new `.js` file in `inst/js/`
+2. Include it in the UI via `sd_ui()` in `R/ui.R`
+3. Communicate between R and JS using Shiny's session messaging
+
+### Working with Database
+
+Database functions in `R/db.R` use the `pool` package for connection pooling and `RPostgres` for PostgreSQL. The package supports both direct connection and ignore mode (local CSV).
+
+## Important Notes
+
+- **NAMESPACE is auto-generated**: Edit roxygen comments in R files, then run `devtools::document()`. Never edit NAMESPACE directly.
+
+- **Version 1.0.0 changes**: Recent major update introduced `sd_nav()` (replacing `sd_next()`), previous button support, shorthand page syntax (`--- page_id`), and auto-injection of navigation buttons.
+
+- **Testing locally**: Use `db <- sd_db_connect(ignore = TRUE)` in `app.R` to test without database connection. Responses save to `preview_data.csv`.
+
+- **Multi-language support**: System messages support English, German, Spanish, French, Italian, and Simplified Chinese via the `system_language` parameter.
+
+- **Resource paths**: The `.onAttach()` function in `R/util.R` registers resource paths for `_survey`, `images`, `css`, `js`, and `www` folders using `shiny::addResourcePath()`.
+
+## Documentation
+
+- Main documentation site: https://surveydown.org (built with pkgdown)
+- Package site: https://pkg.surveydown.org
+- PLOS One publication: https://doi.org/10.1371/journal.pone.0331002
+- Example templates: https://github.com/surveydown-dev (look for "template" repos)
