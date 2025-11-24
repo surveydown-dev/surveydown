@@ -8,15 +8,28 @@ dialog before attempting to close the current browser tab or window.
 ## Usage
 
 ``` r
-sd_close(label = NULL)
+sd_close(label_close = NULL, label_previous = NULL, show_previous = NULL)
 ```
 
 ## Arguments
 
-- label:
+- label_close:
 
   Character string. The label of the 'Close' button. Defaults to `NULL`,
   in which case the word `"Exit Survey"` will be used.
+
+- label_previous:
+
+  Character string. The label for the 'Previous' button. Defaults to
+  `NULL`, which uses "← Previous" (or the translated equivalent).
+
+- show_previous:
+
+  Logical. Whether to show the Previous button alongside the Close
+  button. Set to `TRUE` to allow users to go back before closing.
+  Defaults to `FALSE`. Note: Unlike
+  [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md), this
+  parameter does NOT read from the `show-previous` YAML setting.
 
 ## Value
 

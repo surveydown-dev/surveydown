@@ -1,6 +1,47 @@
 # Changelog
 
-## surveydown (development version)
+## surveydown 1.0.0
+
+- Function update:
+  [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md) replacing
+  [`sd_next()`](https://pkg.surveydown.org/reference/sd_next.md), which
+  contains both previous and next buttons.
+- Function update:
+  [`sd_close()`](https://pkg.surveydown.org/reference/sd_close.md) now
+  supports addition of previous button as well.
+- Function update:
+  [`sd_question()`](https://pkg.surveydown.org/reference/sd_question.md)
+  now supports either `option` or `options`. If both are provided,
+  `option` will be used. When defining `option` or `options`, users can
+  now only provide display labels, and the db values will be
+  auto-converted to snake case. For example,
+  `sd_question(options = c("Option 1", "Option 2"))` will have db values
+  of `option_1` and `option_2`.
+- New feature: `surveydown` now supports previous buttons. Under
+  `survey-settings`, users can now define `show-previous` (default to
+  `FALSE`) to enable previous button globally. In
+  [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md), users
+  can define `show_previous` being `TRUE` or `FALSE` to override the
+  global setting for that specific page.
+- Simplification: No need to define `format`, `echo`, and `warning` in
+  YAML header of `survey.qmd` anymore. The survey can have a clean start
+  and runs fine without the YAML header.
+- Simplification: No need to define
+  [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md) for each
+  page. It’s auto-injected unless
+  [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md) or
+  [`sd_close()`](https://pkg.surveydown.org/reference/sd_close.md) is
+  explicitly defined in the page with or without parameters.
+- New `settings.yml` content structure with 3 sections:
+  `theme-settings`, `survey-settings`, and `system-messages`. They
+  appear with our without YAML header of `survey.qmd` and are verbose
+  (meaning all keys and values always appear).
+- Progress bar update: Now since previous button is supported, the
+  progress bar will update accordingly when user goes back and forth
+  among pages.
+- Enter key depreciated for triggering next button: Since `surveydown`
+  now supports both previous and next buttons, we decided to disable the
+  Enter key for triggering next button to avoid confusion.
 
 ## surveydown 0.14.0
 
@@ -437,10 +478,8 @@ CRAN release: 2024-11-25
   [`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md).
   Custom language messages can be further modified by providing a
   `translations.yml` file in the root project folder.
-- Added new
-  [`sd_create_translations()`](https://pkg.surveydown.org/reference/sd_create_translations.md)
-  function to generate a template `translations.yml` file to use to edit
-  the system messages.
+- Added new `sd_create_translations()` function to generate a template
+  `translations.yml` file to use to edit the system messages.
 - Added Stefan Munnes as contributor in DESCRIPTION file (`ctb`)
 - Bug fix: The `is_matrix` metadata was not recorded for matrix
   sub-questions when exported into the `_survey/questions.yml` file,

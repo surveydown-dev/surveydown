@@ -13,6 +13,7 @@ sd_server(
   required_questions = NULL,
   all_questions_required = FALSE,
   start_page = NULL,
+  show_previous = FALSE,
   auto_scroll = FALSE,
   rate_survey = FALSE,
   system_language = "en",
@@ -48,6 +49,11 @@ sd_server(
   Character string. The ID of the page to start on. Defaults to `NULL`
   (first page).
 
+- show_previous:
+
+  Logical. If `TRUE`, shows the Previous button on survey pages.
+  Defaults to `FALSE`.
+
 - auto_scroll:
 
   Logical. Whether to enable auto-scrolling to the next question after
@@ -61,11 +67,11 @@ sd_server(
 - system_language:
 
   Set the language for the survey system messages. Include your own in a
-  `translations.yml` file, or choose a built in one from the following
-  list: English (`"en"`), German (`"de"`), Spanish (`"es"`), French
-  (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`). Defaults
-  to `"en"`. Note: The deprecated `language` parameter is still
-  supported for backward compatibility.
+  `messages.yml` file, or choose a built in one from the following list:
+  English (`"en"`), German (`"de"`), Spanish (`"es"`), French (`"fr"`),
+  Italian (`"it"`), Simplified Chinese (`"zh-CN"`). Defaults to `"en"`.
+  Note: The deprecated `language` parameter is still supported for
+  backward compatibility.
 
 - use_cookies:
 

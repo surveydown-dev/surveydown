@@ -1,12 +1,12 @@
-# Create a translations template file
+# Create a messages template file
 
-This function creates a template translations.yml file in the project
-root directory that users can customize to modify system messages.
+This function creates a template messages.yml file in the project root
+directory that users can customize to modify system messages.
 
 ## Usage
 
 ``` r
-sd_create_translations(language = "en", path = getwd())
+sd_create_messages(language = "en", path = getwd())
 ```
 
 ## Arguments
@@ -21,10 +21,9 @@ sd_create_translations(language = "en", path = getwd())
 
 - path:
 
-  Character string specifying the directory where the translations.yml
-  file should be created. Defaults to the current working directory. The
-  file should be placed in the root project folder of your surveydown
-  survey.
+  Character string specifying the directory where the messages.yml file
+  should be created. Defaults to the current working directory. The file
+  should be placed in the root project folder of your surveydown survey.
 
 ## Value
 
@@ -35,14 +34,14 @@ Invisible `NULL`.
 ``` r
 if (interactive()) {
   # Create English template
-  sd_create_translations()
+  sd_create_messages()
 
   # Create German template
-  sd_create_translations(language = "de")
+  sd_create_messages(language = "de")
 
   # Create Japanese template
   # Will use English messages but Japanese date picker - user can modify
   # the messages as desired
-  sd_create_translations(language = "ja")
+  sd_create_messages(language = "ja")
 }
 ```

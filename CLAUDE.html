@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,103 +34,213 @@
 
 <p>This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.</p>
 <div class="section level2">
-<h2 id="project-overview">Project Overview<a class="anchor" aria-label="anchor" href="#project-overview"></a></h2>
-<p><strong>surveydown</strong> is an R package that creates markdown-based programmable surveys using Quarto, Shiny, and PostgreSQL. It enables researchers to define surveys in plain text (survey.qmd) and deploy them as interactive Shiny applications with data stored in PostgreSQL databases.</p>
-</div>
-<div class="section level2">
-<h2 id="core-architecture">Core Architecture<a class="anchor" aria-label="anchor" href="#core-architecture"></a></h2>
-<p>The package follows a dual-file survey structure: - <code>survey.qmd</code>: Quarto document containing survey content (pages, questions, etc.) - <code>app.R</code>: Shiny application with global settings, database configuration, and server logic</p>
-<div class="section level3">
-<h3 id="key-components">Key Components<a class="anchor" aria-label="anchor" href="#key-components"></a></h3>
-<ul><li>
-<strong>UI System</strong> (<code>R/ui.R</code>): <code><a href="reference/sd_ui.html">sd_ui()</a></code> creates the Shiny UI, reading theme and progress bar settings from survey.qmd YAML headers</li>
-<li>
-<strong>Server Logic</strong> (<code>R/server.R</code>): <code><a href="reference/sd_server.html">sd_server()</a></code> handles conditional display, progress tracking, page navigation, and database operations</li>
-<li>
-<strong>Configuration</strong> (<code>R/config.R</code>): <code>run_config()</code> parses survey.qmd files and extracts survey structure</li>
-<li>
-<strong>Database Interface</strong> (<code>R/db.R</code>): PostgreSQL integration with support for Supabase</li>
-<li>
-<strong>Utilities</strong> (<code>R/util.R</code>): Helper functions for survey processing and validation</li>
-</ul></div>
-<div class="section level3">
-<h3 id="survey-flow">Survey Flow<a class="anchor" aria-label="anchor" href="#survey-flow"></a></h3>
-<ol style="list-style-type: decimal"><li>Survey content is defined in a Quarto document (<code>survey.qmd</code>)</li>
-<li>
-<code>run_config()</code> parses the .qmd file and extracts pages/questions into <code>_survey/</code> folder</li>
-<li>
-<code><a href="reference/sd_ui.html">sd_ui()</a></code> creates the Shiny interface with theme and progress bar settings</li>
-<li>
-<code><a href="reference/sd_server.html">sd_server()</a></code> manages user interactions, conditional logic, and data storage</li>
-</ol></div>
+<h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a></h2>
+<p><strong>surveydown</strong> is an R package for creating markdown-based programmable surveys using Quarto, Shiny, and PostgreSQL databases. The package enables researchers to define surveys in plain text (<code>.qmd</code> and <code>.R</code> files), making them version-controllable, reproducible, and collaborative.</p>
+<p>The core workflow: 1. Users design surveys in <code>survey.qmd</code> (Quarto markdown with R code chunks) 2. Users configure app behavior in <code>app.R</code> (Shiny app with database settings) 3. Package renders the survey to a Shiny app that stores responses in PostgreSQL (Supabase recommended)</p>
 </div>
 <div class="section level2">
 <h2 id="development-commands">Development Commands<a class="anchor" aria-label="anchor" href="#development-commands"></a></h2>
 <div class="section level3">
 <h3 id="package-development">Package Development<a class="anchor" aria-label="anchor" href="#package-development"></a></h3>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load package for development</span></span>
+<code class="sourceCode R"><span><span class="co"># Load package during development</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">load_all</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Generate documentation</span></span>
+<span><span class="co"># Generate documentation from roxygen comments</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">document</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Install package locally</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span>force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Run package checks</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">check</span><span class="op">(</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Build pkgdown documentation site</span></span>
+<span><span class="co"># Run R CMD check</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">check</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a></h3>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Build pkgdown site</span></span>
 <span><span class="fu">pkgdown</span><span class="fu">::</span><span class="fu"><a href="https://pkgdown.r-lib.org/reference/build_site.html" class="external-link">build_site</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Run tests (currently minimal)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://testthat.r-lib.org" class="external-link">testthat</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pkg.surveydown.org">surveydown</a></span><span class="op">)</span></span>
-<span><span class="co"># test_check("surveydown")  # Commented out in testthat.R</span></span></code></pre></div>
+<p>Survey functionality is typically tested manually using the <code>test_survey/</code> directory, which contains a full survey example with <code>app.R</code> and <code>survey.qmd</code> files. To test changes:</p>
+<ol style="list-style-type: decimal"><li>Make changes to package source files in <code>R/</code>
+</li>
+<li>Run <code>devtools::load_all()</code> to reload the package</li>
+<li>Navigate to <code>test_survey/</code> and run the survey app</li>
+<li>Verify changes work as expected</li>
+</ol></div>
+</div>
+<div class="section level2">
+<h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
+<div class="section level3">
+<h3 id="core-components">Core Components<a class="anchor" aria-label="anchor" href="#core-components"></a></h3>
+<p>The package has a clear separation of concerns across several R files:</p>
+<ul><li>
+<strong><code>R/ui.R</code></strong>: Contains <code><a href="reference/sd_ui.html">sd_ui()</a></code> - the main UI function that:
+<ul><li>Renders the <code>survey.qmd</code> file using Quarto</li>
+<li>Extracts and processes HTML content</li>
+<li>Creates the Shiny UI with CSS/JS dependencies</li>
+<li>Manages theme settings, progress bar, and footer configuration</li>
+</ul></li>
+<li>
+<strong><code>R/server.R</code></strong>: Contains <code><a href="reference/sd_server.html">sd_server()</a></code> - the main server function that:
+<ul><li>Handles page navigation and skip logic</li>
+<li>Manages question state (answered/required)</li>
+<li>Updates progress bar based on completion</li>
+<li>Stores responses to database or local CSV</li>
+<li>Implements conditional display logic via <code><a href="reference/sd_show_if.html">sd_show_if()</a></code>
+</li>
+<li>Handles exit survey functionality</li>
+</ul></li>
+<li>
+<strong><code>R/config.R</code></strong>: Contains <code>run_config()</code> - the configuration processor that:
+<ul><li>Parses the rendered <code>survey.html</code> file</li>
+<li>Extracts pages and questions into structured data</li>
+<li>Validates IDs and required questions</li>
+<li>Manages the <code>_survey/</code> folder cache system</li>
+<li>Creates <code>settings.yml</code> with theme-settings, survey-settings, and system-messages</li>
+</ul></li>
+<li>
+<strong><code>R/db.R</code></strong>: Database functions including:
+<ul><li>
+<code><a href="reference/sd_db_config.html">sd_db_config()</a></code>: Interactive database configuration setup</li>
+<li>
+<code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code>: PostgreSQL connection management (Supabase support)</li>
+<li>
+<code><a href="reference/sd_database.html">sd_database()</a></code>: Database object creation</li>
+<li>Functions for storing and retrieving survey responses</li>
+</ul></li>
+<li>
+<strong><code>R/util.R</code></strong>: Utility functions for:
+<ul><li>Question type implementations (<code><a href="reference/sd_question.html">sd_question()</a></code>)</li>
+<li>Page navigation (<code><a href="reference/sd_nav.html">sd_nav()</a></code>, <code><a href="reference/sd_close.html">sd_close()</a></code>)</li>
+<li>Conditional logic helpers</li>
+<li>Markdown to HTML conversion</li>
+<li>Resource path management</li>
+</ul></li>
+<li>
+<strong><code>R/messages.R</code></strong>: Multi-language system message support</li>
+</ul></div>
+<div class="section level3">
+<h3 id="the-_survey-folder">The <code>_survey/</code> Folder<a class="anchor" aria-label="anchor" href="#the-_survey-folder"></a></h3>
+<p>When a survey runs, the package creates a <code>_survey/</code> folder that caches parsed survey content:</p>
+<ul><li>
+<code>survey.html</code>: Rendered HTML from <code>survey.qmd</code>
+</li>
+<li>
+<code>head.rds</code>: Extracted HTML head content</li>
+<li>
+<code>pages.rds</code>: Structured page data</li>
+<li>
+<code>questions.yml</code>: Question metadata and structure</li>
+<li>
+<code>settings.yml</code>: Complete configuration (theme-settings, survey-settings, system-messages)</li>
+</ul><p>This caching system prevents re-rendering on every app reload. Changes to <code>survey.qmd</code> or <code>app.R</code> trigger re-parsing.</p>
 </div>
 <div class="section level3">
-<h3 id="example-survey">Example Survey<a class="anchor" aria-label="anchor" href="#example-survey"></a></h3>
-<p>Test the package using the example survey in <code>test_survey/app.R</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># From test_survey/ directory</span></span>
-<span><span class="fu">shiny</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/shiny/man/runApp.html" class="external-link">runApp</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level2">
-<h2 id="database-integration">Database Integration<a class="anchor" aria-label="anchor" href="#database-integration"></a></h2>
-<p>The package uses PostgreSQL databases with built-in Supabase support. Database connections are configured via: - <code><a href="reference/sd_db_config.html">sd_db_config()</a></code>: Store database credentials in .env file - <code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code>: Establish database connection - Set <code>ignore = TRUE</code> for local testing without database storage</p>
-</div>
-<div class="section level2">
-<h2 id="key-functions">Key Functions<a class="anchor" aria-label="anchor" href="#key-functions"></a></h2>
+<h3 id="frontend-assets">Frontend Assets<a class="anchor" aria-label="anchor" href="#frontend-assets"></a></h3>
 <ul><li>
-<code><a href="reference/sd_ui.html">sd_ui()</a></code>: Generate survey UI from survey.qmd</li>
+<p><strong><code>inst/js/</code></strong>: JavaScript modules for:</p>
+<ul><li>
+<code>auto_scroll.js</code>: Auto-scroll to next question</li>
 <li>
-<code><a href="reference/sd_server.html">sd_server()</a></code>: Main server logic with conditional display, progress tracking</li>
+<code>cookies.js</code>: Cookie-based session management</li>
 <li>
-<code><a href="reference/sd_skip_if.html">sd_skip_if()</a></code>: Define conditional skip logic</li>
+<code>highlighting.js</code>: Unanswered question highlighting</li>
 <li>
-<code><a href="reference/sd_database.html">sd_database()</a></code>: Database connection configuration</li>
+<code>interaction.js</code>: UI interactions</li>
 <li>
-<code>run_config()</code>: Parse and process survey content</li>
+<code>progressbar.js</code>: Progress tracking</li>
+<li>
+<code>clipboard.js</code>: Copy functionality</li>
+<li>
+<code>countdown.js</code>: Countdown timers</li>
+<li>
+<code>keep_alive.js</code>: Session persistence</li>
+</ul></li>
+<li>
+<p><strong><code>inst/css/</code></strong>: Stylesheet files:</p>
+<ul><li>
+<code>surveydown.css</code>: Main package styles</li>
+<li>
+<code>default_theme.css</code>: Default theme</li>
+</ul></li>
+<li><p><strong><code>inst/template/</code></strong>: Default survey template with <code>survey.qmd</code> and <code>app.R</code></p></li>
+<li><p><strong><code>inst/examples/</code></strong>: Example <code>.qmd</code> files demonstrating different features</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="question-types">Question Types<a class="anchor" aria-label="anchor" href="#question-types"></a></h3>
+<p>The <code><a href="reference/sd_question.html">sd_question()</a></code> function supports multiple question types defined in <code>R/util.R</code>: - <code>mc</code>: Single choice (radio buttons) - <code>mc_multiple</code>: Multiple choice (checkboxes) - <code>mc_buttons</code>: Single choice as buttons - <code>select</code>: Dropdown select - <code>text</code>: Text input - <code>textarea</code>: Multi-line text - <code>numeric</code>: Number input - <code>slider</code>: Slider input - <code>date</code>: Date picker - <code>daterange</code>: Date range picker</p>
+<p>Matrix questions and custom questions are also supported.</p>
+</div>
+<div class="section level3">
+<h3 id="conditional-logic">Conditional Logic<a class="anchor" aria-label="anchor" href="#conditional-logic"></a></h3>
+<p>Three main functions control survey flow (defined in <code>R/server.R</code> and implemented in <code>R/util.R</code>): - <code><a href="reference/sd_skip_if.html">sd_skip_if()</a></code>: Skip to a page based on conditions - <code><a href="reference/sd_show_if.html">sd_show_if()</a></code>: Show/hide questions based on conditions - <code><a href="reference/sd_stop_if.html">sd_stop_if()</a></code>: Prevent navigation if conditions aren’t met</p>
+</div>
+<div class="section level3">
+<h3 id="progress-tracking">Progress Tracking<a class="anchor" aria-label="anchor" href="#progress-tracking"></a></h3>
+<p>Progress calculation is based on the last answered question index. The progress bar never decreases, even when earlier questions are answered later. This is intentional to avoid confusing respondents.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="key-design-patterns">Key Design Patterns<a class="anchor" aria-label="anchor" href="#key-design-patterns"></a></h2>
+<ol style="list-style-type: decimal"><li>
+<p><strong>Two-file survey structure</strong>: Every survey consists of:</p>
+<ul><li>
+<code>survey.qmd</code>: Survey content (questions, pages, text)</li>
+<li>
+<code>app.R</code>: App configuration (database, conditional logic, global settings)</li>
+</ul></li>
+<li><p><strong>Parse-once, cache-always</strong>: Survey content is parsed from rendered HTML once, then cached in <code>_survey/</code> folder. Subsequent runs load from cache unless files change.</p></li>
+<li><p><strong>Reactive Shiny integration</strong>: Since surveys are Shiny apps, designers can leverage Shiny’s reactive programming for dynamic content.</p></li>
+<li><p><strong>Database-first with CSV fallback</strong>: Primary mode uses PostgreSQL (Supabase), but <code>ignore = TRUE</code> mode saves to local CSV for testing.</p></li>
+<li><p><strong>YAML-driven configuration</strong>: Most <code><a href="reference/sd_server.html">sd_server()</a></code> parameters can be set in the <code>survey.qmd</code> YAML header. Function arguments override YAML settings.</p></li>
+</ol></div>
+<div class="section level2">
+<h2 id="common-development-patterns">Common Development Patterns<a class="anchor" aria-label="anchor" href="#common-development-patterns"></a></h2>
+<div class="section level3">
+<h3 id="adding-a-new-question-type">Adding a New Question Type<a class="anchor" aria-label="anchor" href="#adding-a-new-question-type"></a></h3>
+<ol style="list-style-type: decimal"><li>Add rendering logic in <code><a href="reference/sd_question.html">sd_question()</a></code> function in <code>R/util.R</code>
+</li>
+<li>Handle the input in <code><a href="reference/sd_server.html">sd_server()</a></code> reactive observers</li>
+<li>Update question structure parsing in <code>R/config.R</code> if needed</li>
+<li>Add example in <code>inst/examples/</code>
+</li>
+</ol></div>
+<div class="section level3">
+<h3 id="modifying-server-behavior">Modifying Server Behavior<a class="anchor" aria-label="anchor" href="#modifying-server-behavior"></a></h3>
+<p>Server-side logic lives in <code>R/server.R</code>. The <code><a href="reference/sd_server.html">sd_server()</a></code> function is called within the user’s server function in <code>app.R</code>. Most functionality is implemented via Shiny observers that react to user input.</p>
+</div>
+<div class="section level3">
+<h3 id="adding-javascript-functionality">Adding JavaScript Functionality<a class="anchor" aria-label="anchor" href="#adding-javascript-functionality"></a></h3>
+<ol style="list-style-type: decimal"><li>Create a new <code>.js</code> file in <code>inst/js/</code>
+</li>
+<li>Include it in the UI via <code><a href="reference/sd_ui.html">sd_ui()</a></code> in <code>R/ui.R</code>
+</li>
+<li>Communicate between R and JS using Shiny’s session messaging</li>
+</ol></div>
+<div class="section level3">
+<h3 id="working-with-database">Working with Database<a class="anchor" aria-label="anchor" href="#working-with-database"></a></h3>
+<p>Database functions in <code>R/db.R</code> use the <code>pool</code> package for connection pooling and <code>RPostgres</code> for PostgreSQL. The package supports both direct connection and ignore mode (local CSV).</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="important-notes">Important Notes<a class="anchor" aria-label="anchor" href="#important-notes"></a></h2>
+<ul><li><p><strong>NAMESPACE is auto-generated</strong>: Edit roxygen comments in R files, then run <code>devtools::document()</code>. Never edit NAMESPACE directly.</p></li>
+<li><p><strong>Version 1.0.0 changes</strong>: Recent major update introduced <code><a href="reference/sd_nav.html">sd_nav()</a></code> (replacing <code><a href="reference/sd_next.html">sd_next()</a></code>), previous button support, shorthand page syntax (<code>--- page_id</code>), and auto-injection of navigation buttons.</p></li>
+<li><p><strong>Testing locally</strong>: Use <code>db &lt;- sd_db_connect(ignore = TRUE)</code> in <code>app.R</code> to test without database connection. Responses save to <code>preview_data.csv</code>.</p></li>
+<li><p><strong>Multi-language support</strong>: System messages support English, German, Spanish, French, Italian, and Simplified Chinese via the <code>system_language</code> parameter.</p></li>
+<li><p><strong>Resource paths</strong>: The <code>.onAttach()</code> function in <code>R/util.R</code> registers resource paths for <code>_survey</code>, <code>images</code>, <code>css</code>, <code>js</code>, and <code>www</code> folders using <code><a href="https://rdrr.io/pkg/shiny/man/resourcePaths.html" class="external-link">shiny::addResourcePath()</a></code>.</p></li>
 </ul></div>
 <div class="section level2">
-<h2 id="file-structure">File Structure<a class="anchor" aria-label="anchor" href="#file-structure"></a></h2>
-<ul><li>
-<code>R/</code>: Core package source code (ui.R, server.R, config.R, db.R, util.R, translation.R)</li>
-<li>
-<code>inst/</code>: Package resources and example files</li>
-<li>
-<code>man/</code>: Generated documentation</li>
-<li>
-<code>test_survey/</code>: Example survey application</li>
-<li>
-<code>tests/</code>: Test suite (currently minimal)</li>
-<li>
-<code>build.R</code>: Development build script</li>
+<h2 id="documentation-1">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1"></a></h2>
+<ul><li>Main documentation site: <a href="https://surveydown.org" class="external-link uri">https://surveydown.org</a> (built with pkgdown)</li>
+<li>Package site: <a href="https://pkg.surveydown.org" class="uri">https://pkg.surveydown.org</a>
+</li>
+<li>PLOS One publication: <a href="https://doi.org/10.1371/journal.pone.0331002" class="external-link uri">https://doi.org/10.1371/journal.pone.0331002</a>
+</li>
+<li>Example templates: <a href="https://github.com/surveydown-dev" class="external-link uri">https://github.com/surveydown-dev</a> (look for “template” repos)</li>
 </ul></div>
 </div>
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,8 +31,17 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-</div>
+<h2 class="pkg-version" data-toc-text="1.0.0" id="surveydown-100">surveydown 1.0.0<a class="anchor" aria-label="anchor" href="#surveydown-100"></a></h2>
+<ul><li>Function update: <code><a href="../reference/sd_nav.html">sd_nav()</a></code> replacing <code><a href="../reference/sd_next.html">sd_next()</a></code>, which contains both previous and next buttons.</li>
+<li>Function update: <code><a href="../reference/sd_close.html">sd_close()</a></code> now supports addition of previous button as well.</li>
+<li>Function update: <code><a href="../reference/sd_question.html">sd_question()</a></code> now supports either <code>option</code> or <code>options</code>. If both are provided, <code>option</code> will be used. When defining <code>option</code> or <code>options</code>, users can now only provide display labels, and the db values will be auto-converted to snake case. For example, <code>sd_question(options = c("Option 1", "Option 2"))</code> will have db values of <code>option_1</code> and <code>option_2</code>.</li>
+<li>New feature: <code>surveydown</code> now supports previous buttons. Under <code>survey-settings</code>, users can now define <code>show-previous</code> (default to <code>FALSE</code>) to enable previous button globally. In <code><a href="../reference/sd_nav.html">sd_nav()</a></code>, users can define <code>show_previous</code> being <code>TRUE</code> or <code>FALSE</code> to override the global setting for that specific page.</li>
+<li>Simplification: No need to define <code>format</code>, <code>echo</code>, and <code>warning</code> in YAML header of <code>survey.qmd</code> anymore. The survey can have a clean start and runs fine without the YAML header.</li>
+<li>Simplification: No need to define <code><a href="../reference/sd_nav.html">sd_nav()</a></code> for each page. It’s auto-injected unless <code><a href="../reference/sd_nav.html">sd_nav()</a></code> or <code><a href="../reference/sd_close.html">sd_close()</a></code> is explicitly defined in the page with or without parameters.</li>
+<li>New <code>settings.yml</code> content structure with 3 sections: <code>theme-settings</code>, <code>survey-settings</code>, and <code>system-messages</code>. They appear with our without YAML header of <code>survey.qmd</code> and are verbose (meaning all keys and values always appear).</li>
+<li>Progress bar update: Now since previous button is supported, the progress bar will update accordingly when user goes back and forth among pages.</li>
+<li>Enter key depreciated for triggering next button: Since <code>surveydown</code> now supports both previous and next buttons, we decided to disable the Enter key for triggering next button to avoid confusion.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.14.0" id="surveydown-0140">surveydown 0.14.0<a class="anchor" aria-label="anchor" href="#surveydown-0140"></a></h2><p class="text-muted">CRAN release: 2025-11-03</p>
 <ul><li>New feature: shorthand page syntax supported. Now we recommend using <code>--- page_id</code> to start a new page, and there is no need to end the page. The previous syntax of starting a page with <code>::: {.sd_page id=page_id}</code> and ending with <code>:::</code> still works.</li>
@@ -231,7 +240,7 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.2" id="surveydown-042">surveydown 0.4.2<a class="anchor" aria-label="anchor" href="#surveydown-042"></a></h2>
 <ul><li>New “translations” feature now supported (see PR <a href="https://github.com/surveydown-dev/surveydown/issues/138" class="external-link">#138</a>). This allows system messages and date formats to be specified by a language using the <code>language</code> argument in <code><a href="../reference/sd_server.html">sd_server()</a></code>. Custom language messages can be further modified by providing a <code>translations.yml</code> file in the root project folder.</li>
-<li>Added new <code><a href="../reference/sd_create_translations.html">sd_create_translations()</a></code> function to generate a template <code>translations.yml</code> file to use to edit the system messages.</li>
+<li>Added new <code>sd_create_translations()</code> function to generate a template <code>translations.yml</code> file to use to edit the system messages.</li>
 <li>Added Stefan Munnes as contributor in DESCRIPTION file (<code>ctb</code>)</li>
 <li>Bug fix: The <code>is_matrix</code> metadata was not recorded for matrix sub-questions when exported into the <code>_survey/questions.yml</code> file, which caused an error if any matrix question was required. This is now corrected when obtaining the question structure from the stored <code>_survey/questions.yml</code> file.</li>
 </ul></div>

@@ -39,8 +39,8 @@
   : Create a survey question
 - [`sd_question_custom()`](https://pkg.surveydown.org/reference/sd_question_custom.md)
   : Create a Custom Question with a Shiny Widget
-- [`sd_next()`](https://pkg.surveydown.org/reference/sd_next.md) :
-  Create a 'Next' Button for Page Navigation
+- [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md) : Create
+  Navigation Buttons for Survey Pages
 - [`sd_output()`](https://pkg.surveydown.org/reference/sd_output.md) :
   Output Function for Displaying reactive objects and values
 - [`sd_close()`](https://pkg.surveydown.org/reference/sd_close.md) :
@@ -60,8 +60,8 @@
 
 - [`sd_create_survey()`](https://pkg.surveydown.org/reference/sd_create_survey.md)
   : Create a new survey template
-- [`sd_create_translations()`](https://pkg.surveydown.org/reference/sd_create_translations.md)
-  : Create a translations template file
+- [`sd_create_messages()`](https://pkg.surveydown.org/reference/sd_create_messages.md)
+  : Create a messages template file
 - [`sd_include_folder()`](https://pkg.surveydown.org/reference/sd_include_folder.md)
   : Include a folder to the 'shiny' resource path
 - [`sd_setup()`](https://pkg.surveydown.org/reference/sd_setup.md) :
@@ -90,3 +90,5 @@
   : Set password for surveydown survey
 - [`sd_skip_forward()`](https://pkg.surveydown.org/reference/sd_skip_forward.md)
   : Define forward skip conditions for survey pages (Deprecated)
+- [`sd_next()`](https://pkg.surveydown.org/reference/sd_next.md) :
+  Create a 'Next' Button for Page Navigation

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,7 @@
 <span>  type <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  option <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  options <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  cols <span class="op">=</span> <span class="st">"80"</span>,</span>
 <span>  direction <span class="op">=</span> <span class="st">"horizontal"</span>,</span>
 <span>  status <span class="op">=</span> <span class="st">"default"</span>,</span>
@@ -86,7 +87,20 @@ formatted with markdown. Defaults to <code>NULL</code></p></dd>
 <dt id="arg-option">option<a class="anchor" aria-label="anchor" href="#arg-option"></a></dt>
 <dd><p>Named vector for the <code>"select"</code>, <code>"radio"</code>, <code>"checkbox"</code>,
 and <code>"slider"</code> question types, or numeric vector for <code>"slider_numeric"</code>
-question type.</p></dd>
+question type. Can be provided in multiple formats:</p><ul><li><p>Named vector: <code>c("Display A" = "value_a", "Display B" = "value_b")</code> -
+Names are shown in UI, values are stored in database</p></li>
+<li><p>Unnamed character vector: <code>c("Option 1", "Option 2")</code> - Values are shown in UI
+and automatically converted to snake_case for database storage
+(e.g., "option_1", "option_2")</p></li>
+<li><p>Unnamed numeric vector: <code>c(1, 2, 3)</code> - For non-slider questions, converted to
+<code>c("1" = "1", "2" = "2", "3" = "3")</code>. For <code>slider_numeric</code>, kept as numeric.</p></li>
+</ul></dd>
+
+
+<dt id="arg-options">options<a class="anchor" aria-label="anchor" href="#arg-options"></a></dt>
+<dd><p>Alias for <code>option</code>. Either <code>option</code> or <code>options</code> can be used.
+If both are provided, <code>option</code> takes precedence. Supports the same formats
+as <code>option</code>.</p></dd>
 
 
 <dt id="arg-cols">cols<a class="anchor" aria-label="anchor" href="#arg-cols"></a></dt>

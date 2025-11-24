@@ -11,6 +11,7 @@ sd_question(
   type = NULL,
   label = NULL,
   option = NULL,
+  options = NULL,
   cols = "80",
   direction = "horizontal",
   status = "default",
@@ -54,7 +55,25 @@ sd_question(
 
   Named vector for the `"select"`, `"radio"`, `"checkbox"`, and
   `"slider"` question types, or numeric vector for `"slider_numeric"`
-  question type.
+  question type. Can be provided in multiple formats:
+
+  - Named vector:
+    `c("Display A" = "value_a", "Display B" = "value_b")` - Names are
+    shown in UI, values are stored in database
+
+  - Unnamed character vector: `c("Option 1", "Option 2")` - Values are
+    shown in UI and automatically converted to snake_case for database
+    storage (e.g., "option_1", "option_2")
+
+  - Unnamed numeric vector: `c(1, 2, 3)` - For non-slider questions,
+    converted to `c("1" = "1", "2" = "2", "3" = "3")`. For
+    `slider_numeric`, kept as numeric.
+
+- options:
+
+  Alias for `option`. Either `option` or `options` can be used. If both
+  are provided, `option` takes precedence. Supports the same formats as
+  `option`.
 
 - cols:
 

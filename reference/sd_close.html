@@ -11,7 +11,7 @@ or a simple confirmation dialog before attempting to close the current browser t
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.14.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,16 +43,27 @@ or a simple confirmation dialog before attempting to close the current browser t
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_close</span><span class="op">(</span>label <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">sd_close</span><span class="op">(</span>label_close <span class="op">=</span> <span class="cn">NULL</span>, label_previous <span class="op">=</span> <span class="cn">NULL</span>, show_previous <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
+<dl><dt id="arg-label-close">label_close<a class="anchor" aria-label="anchor" href="#arg-label-close"></a></dt>
 <dd><p>Character string. The label of the 'Close' button. Defaults to
 <code>NULL</code>, in which case the word <code>"Exit Survey"</code> will be used.</p></dd>
+
+
+<dt id="arg-label-previous">label_previous<a class="anchor" aria-label="anchor" href="#arg-label-previous"></a></dt>
+<dd><p>Character string. The label for the 'Previous' button. Defaults to
+<code>NULL</code>, which uses "← Previous" (or the translated equivalent).</p></dd>
+
+
+<dt id="arg-show-previous">show_previous<a class="anchor" aria-label="anchor" href="#arg-show-previous"></a></dt>
+<dd><p>Logical. Whether to show the Previous button alongside the Close button.
+Set to <code>TRUE</code> to allow users to go back before closing. Defaults to <code>FALSE</code>. Note: Unlike
+<code><a href="sd_nav.html">sd_nav()</a></code>, this parameter does NOT read from the <code>show-previous</code> YAML setting.</p></dd>
 
 </dl></div>
     <div class="section level2">
