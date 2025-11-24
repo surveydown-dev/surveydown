@@ -1732,6 +1732,8 @@ make_next_button_id <- function(page_id) {
 #'    `NULL`, in which case the word `"Exit Survey"` will be used.
 #' @param show_restart Logical. If `TRUE`, shows both "Exit Survey" and "Restart Survey" 
 #'    buttons. Defaults to `TRUE`.
+#' @param restart_label Character string. The label of the 'Restart' button. Defaults to
+#'    `NULL`, in which case the word `"Restart Survey"` will be used.
 #'
 #' @return A 'shiny' tagList containing the 'Close' button UI element and
 #' associated JavaScript for the exit process.
@@ -1777,21 +1779,28 @@ make_next_button_id <- function(page_id) {
 #'   setwd(orig_dir)
 #'   
 #'   # Examples:
-#'   # sd_close()                        # Shows both "Exit Survey" and "Restart Survey" buttons
-#'   # sd_close(show_restart = FALSE)    # Shows only "Exit Survey" button  
-#'   # sd_close("Finish", show_restart = FALSE)  # Custom label, no restart button
+#'   # sd_close()                                    # Default: both "Exit Survey" and "Restart Survey" buttons
+#'   # sd_close(show_restart = FALSE)                # Only "Exit Survey" button  
+#'   # sd_close("Finish", show_restart = FALSE)      # Custom exit label, no restart button
+#'   # sd_close("Complete", restart_label = "Start Over")  # Custom labels for both buttons
+#'   # sd_close(restart_label = "Take Again")        # Custom restart label only
 #' }
 #'
 #' @seealso \code{\link{sd_server}}
 #'
 #' @export
-sd_close <- function(label = NULL, show_restart = TRUE) {
+sd_close <- function(label = NULL, show_restart = TRUE, restart_label = NULL) {
   # Get translations
   translations <- get_translations()$translations
 
   # If no label provided, use default
   if (is.null(label)) {
     label <- translations[['exit']]
+  }
+  
+  # If no restart label provided, use default
+  if (is.null(restart_label)) {
+    restart_label <- "Restart Survey"
   }
 
   button_id <- "close-survey-button"
@@ -1809,7 +1818,7 @@ sd_close <- function(label = NULL, show_restart = TRUE) {
       ),
       shiny::actionButton(
         inputId = restart_button_id,
-        label = "Restart Survey",
+        label = restart_label,
         class = "sd-enter-button",
         style = "margin: 0 10px;",
         onclick = "Shiny.setInputValue('restart_survey', true, {priority: 'event'});"

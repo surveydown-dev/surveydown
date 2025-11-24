@@ -4,11 +4,17 @@
 \alias{sd_close}
 \title{Create a 'Close' Button to Exit the Survey}
 \usage{
-sd_close(label = NULL)
+sd_close(label = NULL, show_restart = TRUE, restart_label = NULL)
 }
 \arguments{
 \item{label}{Character string. The label of the 'Close' button. Defaults to
 \code{NULL}, in which case the word \code{"Exit Survey"} will be used.}
+
+\item{show_restart}{Logical. If \code{TRUE}, shows both "Exit Survey" and "Restart Survey"
+buttons. Defaults to \code{TRUE}.}
+
+\item{restart_label}{Character string. The label of the 'Restart' button. Defaults to
+\code{NULL}, in which case the word \code{"Restart Survey"} will be used.}
 }
 \value{
 A 'shiny' tagList containing the 'Close' button UI element and
@@ -59,6 +65,13 @@ if (interactive()) {
 
   # Clean up
   setwd(orig_dir)
+  
+  # Examples:
+  # sd_close()                                    # Default: both "Exit Survey" and "Restart Survey" buttons
+  # sd_close(show_restart = FALSE)                # Only "Exit Survey" button  
+  # sd_close("Finish", show_restart = FALSE)      # Custom exit label, no restart button
+  # sd_close("Complete", restart_label = "Start Over")  # Custom labels for both buttons
+  # sd_close(restart_label = "Take Again")        # Custom restart label only
 }
 
 }
