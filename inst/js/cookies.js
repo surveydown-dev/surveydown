@@ -86,6 +86,34 @@ const surveydownCookies = {
             console.error("Error getting answer data:", e);
             return null;
         }
+    },
+
+    clear: function() {
+        try {
+            // Clear survey session cookie
+            document.cookie = "surveydown_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict";
+            
+            // Clear survey answers cookie  
+            document.cookie = "surveydown_answers=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict";
+            
+            console.log("Survey cookies cleared");
+        } catch (e) {
+            console.error("Error clearing survey cookies:", e);
+        }
+    },
+
+    forceRestart: function() {
+        try {
+            // Clear all survey cookies
+            this.clear();
+            
+            // Log restart action
+            console.log("Survey restart initiated");
+            
+            // Note: Page reload will be handled by the calling function
+        } catch (e) {
+            console.error("Error during force restart:", e);
+        }
     }
 };
 

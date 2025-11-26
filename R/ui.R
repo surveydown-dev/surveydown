@@ -1786,6 +1786,13 @@ sd_nav <- function(
 #' @param show_previous Logical. Whether to show the Previous button alongside the Close button.
 #'   Set to `TRUE` to allow users to go back before closing. Defaults to `FALSE`. Note: Unlike
 #'   `sd_nav()`, this parameter does NOT read from the `show-previous` YAML setting.
+#' @param show_restart Logical. Whether to show a 'Restart Survey' button alongside the
+#'   Close button. When `TRUE`, displays two side-by-side buttons. Defaults to `FALSE`.
+#' @param label_restart Character string. The label for the 'Restart Survey' button.
+#'   Defaults to `NULL`, which uses "Restart Survey" (or the translated equivalent).
+#' @param clear_cookies Logical. Whether to clear cookies on exit without showing a
+#'   restart button. Use for use cases where the restart button isn't needed but
+#'   cookies should be cleared for later resubmission. Defaults to `FALSE`.
 #'
 #' @return A 'shiny' tagList containing the 'Close' button UI element and
 #' associated JavaScript for the exit process.
@@ -1837,7 +1844,10 @@ sd_nav <- function(
 sd_close <- function(
   label_close = NULL,
   label_previous = NULL,
-  show_previous = NULL
+  show_previous = NULL,
+  show_restart = FALSE,
+  label_restart = NULL,
+  clear_cookies = FALSE
 ) {
   # Get messages
   messages <- get_messages()$messages
@@ -1858,14 +1868,21 @@ sd_close <- function(
     label_previous <- paste0("\u2190 ", messages[['previous']]) # ← Previous
   }
 
+  # Default label for restart button
+  if (is.null(label_restart)) {
+    label_restart <- messages[['restart']]
+  }
+
   button_id <- "close-survey-button"
+  restart_button_id <- "restart-survey-button"
+
   shiny::tagList(
     shiny::div(
       style = "margin-top: 0.5rem; margin-bottom: 0.5rem; position: relative; min-height: 40px;",
       class = "sd-nav-container",
 
       # Previous button (only if show_previous is TRUE)
-      # Use absolute positioning so it doesn't affect the close button's centering
+      # Use absolute positioning so it doesn't affect the main buttons' centering
       if (show_previous) {
         shiny::actionButton(
           inputId = "page_id_prev",
@@ -1876,16 +1893,42 @@ sd_close <- function(
         )
       },
 
-      # Close button (always perfectly centered, unaffected by previous button)
+      # Main buttons container (centered, unaffected by previous button)
       shiny::div(
         style = "width: 100%; text-align: center;",
-        shiny::actionButton(
-          inputId = button_id,
-          label = label_close,
-          class = "sd-enter-button sd-nav-button",
-          style = "display: inline-block;",
-          onclick = "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'});"
-        )
+
+        # If restart is enabled, show two side-by-side buttons
+        if (show_restart) {
+          shiny::tagList(
+            shiny::actionButton(
+              inputId = button_id,
+              label = label_close,
+              class = "sd-enter-button sd-nav-button",
+              style = "display: inline-block; margin-right: 10px;",
+              onclick = paste0("Shiny.setInputValue('show_exit_modal', true, {priority: 'event'}); ",
+                              "Shiny.setInputValue('clear_cookies_on_exit', ",
+                              tolower(as.character(clear_cookies)), ", {priority: 'event'});")
+            ),
+            shiny::actionButton(
+              inputId = restart_button_id,
+              label = label_restart,
+              class = "sd-enter-button sd-nav-button",
+              style = "display: inline-block; margin-left: 10px;",
+              onclick = "Shiny.setInputValue('restart_survey', true, {priority: 'event'});"
+            )
+          )
+        } else {
+          # Single close button
+          shiny::actionButton(
+            inputId = button_id,
+            label = label_close,
+            class = "sd-enter-button sd-nav-button",
+            style = "display: inline-block;",
+            onclick = paste0("Shiny.setInputValue('show_exit_modal', true, {priority: 'event'}); ",
+                            "Shiny.setInputValue('clear_cookies_on_exit', ",
+                            tolower(as.character(clear_cookies)), ", {priority: 'event'});")
+          )
+        }
       )
     ),
     shiny::tags$script(htmltools::HTML(
@@ -1895,6 +1938,21 @@ sd_close <- function(
         if (!window.closed) {
           alert('Please close this tab manually to exit the survey.');
         }
+      });
+
+      Shiny.addCustomMessageHandler('clearCookies', function(message) {
+        if (typeof surveydownCookies !== 'undefined' && surveydownCookies.clear) {
+          surveydownCookies.clear();
+        }
+      });
+
+      Shiny.addCustomMessageHandler('forceRestart', function(message) {
+        if (typeof surveydownCookies !== 'undefined' && surveydownCookies.forceRestart) {
+          surveydownCookies.forceRestart();
+        } else if (typeof surveydownCookies !== 'undefined' && surveydownCookies.clear) {
+          surveydownCookies.clear();
+        }
+        window.location.reload();
       });
     "
     ))

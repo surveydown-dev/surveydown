@@ -62,6 +62,7 @@ get_messages_default <- function() {
             "previous" = "Previous",
             "next" = "Next",
             "exit" = "Exit Survey",
+            "restart" = "Restart Survey",
             "close-tab" = "Please close this tab manually to exit the survey.",
             "choose-option" = "Choose an option...",
             "click" = "Click here",
@@ -85,6 +86,7 @@ get_messages_default <- function() {
             "previous" = "Zur\u00fcck",
             "next" = "Weiter",
             "exit" = "Umfrage beenden",
+            "restart" = "Umfrage neu starten",
             "close-tab" = "Bitte schlie\u00dfen Sie diesen Tab manuell, um die Umfrage zu beenden.",
             "choose-option" = "Option ausw\u00e4hlen...",
             "click" = "Hier klicken",
@@ -108,6 +110,7 @@ get_messages_default <- function() {
             "previous" = "Anterior",
             "next" = "Siguiente",
             "exit" = "Salir de la Encuesta",
+            "restart" = "Reiniciar Encuesta",
             "close-tab" = "Por favor, cierre esta pesta\u00f1a manualmente para salir de la encuesta.",
             "choose-option" = "Elija una opci\u00f3n...",
             "click" = "Haga clic aqu\u00ed",
@@ -131,6 +134,7 @@ get_messages_default <- function() {
             "previous" = "Pr\u00e9c\u00e9dent",
             "next" = "Suivant",
             "exit" = "Quitter le sondage",
+            "restart" = "Redémarrer le sondage",
             "close-tab" = "Veuillez fermer cet onglet manuellement pour quitter le sondage.",
             "choose-option" = "Choisissez une option...",
             "click" = "Cliquez ici",
@@ -154,6 +158,7 @@ get_messages_default <- function() {
             "previous" = "Indietro",
             "next" = "Avanti",
             "exit" = "Esci dal Sondaggio",
+            "restart" = "Riavvia Sondaggio",
             "close-tab" = "Per favore, chiudi questa scheda manualmente per uscire dal sondaggio.",
             "choose-option" = "Scegli un'opzione...",
             "click" = "Clicca qui",
@@ -177,6 +182,7 @@ get_messages_default <- function() {
             "previous" = "\u4e0a\u4e00\u9875", # \u4e0a\u4e00\u9875
             "next" = "\u4e0b\u4e00\u9875", # \u4e0b\u4e00\u9875
             "exit" = "\u9000\u51fa\u95ee\u5377", # \u9000\u51fa\u95ee\u5377
+            "restart" = "\u91cd\u65b0\u5f00\u59cb\u95ee\u5377", # \u91cd\u65b0\u5f00\u59cb\u95ee\u5377
             "close-tab" = "\u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002", # \u8bf7\u624b\u52a8\u5173\u95ed\u672c\u9875\u9762\u3002
             "choose-option" = "\u8bf7\u9009\u62e9\u4e00\u9879\u2026", # \u8bf7\u9009\u62e9\u4e00\u9879\u2026
             "click" = "\u5355\u51fb\u6b64\u5904", # \u5355\u51fb\u6b64\u5904

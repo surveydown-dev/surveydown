@@ -2195,6 +2195,9 @@ sd_server <- function(
 
     # Observer to handle the rating submission or exit confirmation
     shiny::observeEvent(input$submit_rating, {
+        # Check if cookies should be cleared on exit
+        clear_cookies_on_exit <- input$clear_cookies_on_exit
+        
         # Save the rating
         rating <- input$survey_rating
         all_data[['exit_survey_rating']] <- rating
@@ -2203,19 +2206,45 @@ sd_server <- function(
         shiny::isolate({
             update_data(time_last = TRUE)
         })
+        
+        # Clear cookies if requested
+        if (!is.null(clear_cookies_on_exit) && clear_cookies_on_exit) {
+            session$sendCustomMessage("clearCookies", list())
+        }
+        
         # Close the modal and the window
         shiny::removeModal()
         session$sendCustomMessage("closeWindow", list())
     })
 
     shiny::observeEvent(input$confirm_exit, {
+        # Check if cookies should be cleared on exit
+        clear_cookies_on_exit <- input$clear_cookies_on_exit
+        
         # Update checkpoint 4 - when exiting survey
         shiny::isolate({
             update_data(time_last = TRUE)
         })
+        
+        # Clear cookies if requested
+        if (!is.null(clear_cookies_on_exit) && clear_cookies_on_exit) {
+            session$sendCustomMessage("clearCookies", list())
+        }
+        
         # Close the modal and the window
         shiny::removeModal()
         session$sendCustomMessage("closeWindow", list())
+    })
+
+    # Observer for restart survey functionality
+    shiny::observeEvent(input$restart_survey, {
+        # Update checkpoint 4 - when restarting survey
+        shiny::isolate({
+            update_data(time_last = TRUE)
+        })
+        
+        # Send force restart message to clear cookies and reload page
+        session$sendCustomMessage("forceRestart", list())
     })
 
     # Update checkpoint 5 - when session ends
