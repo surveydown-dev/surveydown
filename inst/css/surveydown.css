@@ -322,7 +322,7 @@ a:hover {
 }
 
 .matrix-question th {
-    background-color: transparent;
+    background-color: #f9f9f9;
     font-weight: bold;
     font-size: 18px;
     position: sticky;
