@@ -55,7 +55,7 @@ sd_ui <- function() {
 
   theme <- get_theme(metadata)
   default_theme <- FALSE
-  if (any(theme == "default")) {
+  if ("default" %in% theme) {
     default_theme <- TRUE
   }
   barcolor <- get_barcolor(metadata)
@@ -504,7 +504,7 @@ render_survey_qmd <- function(paths, default_theme = TRUE, theme = NULL) {
 
   # Add theme to render_metadata if provided
   # This allows themes defined under theme-settings to be applied by Quarto
-  if (!is.null(theme) && theme != "default") {
+  if (!is.null(theme) && !all(theme == "default")) {
     render_metadata$theme <- theme
   }
 
