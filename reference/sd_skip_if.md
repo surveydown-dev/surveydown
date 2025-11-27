@@ -36,39 +36,18 @@ and the target page ID.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "sd_skip_if.qmd",
-                             package = "surveydown")
+  # Use sd_skip_if() to skip pages based on answers:
+  # server <- function(input, output, session) {
+  #   sd_skip_if(
+  #     input$age < 18 ~ "underage_page",
+  #     input$country == "USA" ~ "usa_page",
+  #     input$consent == "no" ~ "exit_page"
+  #   )
+  #   sd_server()
+  # }
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Create app.R with sd_skip_if() logic
-  writeLines(c(
-    "library(surveydown)",
-    "",
-    "ui <- sd_ui()",
-    "",
-    "server <- function(input, output, session) {",
-    "  # Skip to specific pages based on fruit selection",
-    "  sd_skip_if(",
-    "    input$fav_fruit == \"apple\" ~ \"apple_page\",",
-    "    input$fav_fruit == \"orange\" ~ \"orange_page\",",
-    "    input$fav_fruit == \"other\" ~ \"other_page\"",
-    "  )",
-    "  sd_server()",
-    "}",
-    "",
-    "shiny::shinyApp(ui = ui, server = server)"
-  ), file.path(temp_dir, "app.R"))
-
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "conditional_skipping")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 ```

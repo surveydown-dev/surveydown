@@ -37,39 +37,18 @@ provided.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "sd_show_if.qmd",
-                             package = "surveydown")
+  # Use sd_show_if() to conditionally show/hide questions:
+  # server <- function(input, output, session) {
+  #   sd_show_if(
+  #     input$has_car == "yes" ~ "car_make",
+  #     input$employed == "yes" ~ "job_title",
+  #     input$age >= 18 ~ "adult_questions_page"
+  #   )
+  #   sd_server()
+  # }
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Create app.R with sd_show_if() logic
-  writeLines(c(
-    "library(surveydown)",
-    "",
-    "ui <- sd_ui()",
-    "",
-    "server <- function(input, output, session) {",
-    "  sd_show_if(",
-    "    # If \"Other\" is chosen, show the conditional question",
-    "    input$fav_fruit == \"other\" ~ \"fav_fruit_other\",",
-    "    # If condition is met, show specific page",
-    "    input$category == \"advanced\" ~ \"advanced_page\"",
-    "  )",
-    "  sd_server()",
-    "}",
-    "",
-    "shiny::shinyApp(ui = ui, server = server)"
-  ), file.path(temp_dir, "app.R"))
-
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "conditional_showing")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 ```

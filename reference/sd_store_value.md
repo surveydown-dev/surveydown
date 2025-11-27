@@ -51,44 +51,24 @@ used in variable assignments.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "basic_survey.qmd",
-                             package = "surveydown")
+  # Use sd_store_value() to store custom values in the database:
+  # server <- function(input, output, session) {
+  #   # Store a generated value
+  #   respondentID <- sample(1:1000, 1)
+  #   sd_store_value(respondentID, "respID", db)
+  #
+  #   # Store with automatic ID detection
+  #   completion_code <- sample(0:9, 6, replace = TRUE)
+  #   sd_store_value(completion_code, db = db)
+  #
+  #   # Store without auto-assignment
+  #   stored_val <- sd_store_value(42, "my_value", db, auto_assign = FALSE)
+  #
+  #   sd_server()
+  # }
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Create app.R with sd_store_value() logic
-  writeLines(c(
-    "library(surveydown)",
-    "",
-    "ui <- sd_ui()",
-    "",
-    "server <- function(input, output, session) {",
-    "  ",
-    "  # Generate and store values with automatic assignment (default behavior)",
-    "  respondentID <- sample(1:1000, 1)",
-    "  sd_store_value(respondentID, \"respID\", db)  # respondentID automatically updated",
-    "  ",
-    "  completion_code <- sample(0:9, 6, replace = TRUE)",
-    "  sd_store_value(completion_code)  # completion_code automatically updated",
-    "  ",
-    "  # Traditional assignment approach (auto_assign = FALSE)",
-    "  some_value <- sd_store_value(42, \"some_value\", auto_assign = FALSE)",
-    "  ",
-    "  sd_server()",
-    "}",
-    "",
-    "shiny::shinyApp(ui = ui, server = server)"
-  ), file.path(temp_dir, "app.R"))
-
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "reactive_questions")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 ```

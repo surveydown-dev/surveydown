@@ -167,23 +167,27 @@ survey data.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "basic_survey.qmd",
-                             package = "surveydown")
-  app_path <- system.file("examples", "app.R",
-                          package = "surveydown")
+  # Basic sd_server() usage in app.R:
+  # library(surveydown)
+  #
+  # db <- sd_database(
+  #   host   = "db.xxxx.supabase.co",
+  #   dbname = "postgres",
+  #   port   = "5432",
+  #   user   = "postgres",
+  #   table  = "my_survey"
+  # )
+  #
+  # server <- function(input, output, session) {
+  #   sd_server(
+  #     db = db
+  #   )
+  # }
+  #
+  # shiny::shinyApp(ui = sd_ui(), server = server)
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  file.copy(app_path, file.path(temp_dir, "app.R"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "default")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 ```

@@ -40,23 +40,15 @@ for Enter key functionality.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "sd_next.qmd",
-                             package = "surveydown")
-  app_path <- system.file("examples", "app.R",
-                          package = "surveydown")
+  # Use sd_next() in survey.qmd to create navigation:
+  # --- welcome
+  #
+  # Welcome to the survey!
+  #
+  # `r sd_next(next_page = "page2", label = "Continue")`
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  file.copy(app_path, file.path(temp_dir, "app.R"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "default")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 ```

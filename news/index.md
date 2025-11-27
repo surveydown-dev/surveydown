@@ -16,6 +16,10 @@
   and hex color codes in 3 or 6 digits, e.g. `#FF5733` or `#F53`. If not
   defined, it shows `~` as the value in `settings.yml`, indicating it’s
   using the default setting which follows the theme.
+- Documentation update: Removed the `inst/examples/` directory. Now all
+  exported functions are documented with simple execution showcases,
+  plus a designated template from one of the supported
+  [templates](https://github.com/surveydown-dev).
 
 ## surveydown 1.0.0
 
