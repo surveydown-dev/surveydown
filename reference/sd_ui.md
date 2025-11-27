@@ -22,8 +22,8 @@ header:
 
 - `theme`: The theme to be applied to the survey.
 
-- `barcolor`: The color of the progress bar (should be a valid hex
-  color).
+- `barcolor`: The color of the progress bar (accepts hex colors like
+  \#FF0000 or \#F00, or CSS color names like red, blue, green).
 
 - `barposition`: The position of the progress bar (`'top'`, `'bottom'`,
   or `'none'`).

@@ -53,7 +53,7 @@ It retrieves theme and progress bar settings from the survey.qmd file.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The function reads the following settings from the survey.qmd YAML header:</p><ul><li><p><code>theme</code>: The theme to be applied to the survey.</p></li>
-<li><p><code>barcolor</code>: The color of the progress bar (should be a valid hex color).</p></li>
+<li><p><code>barcolor</code>: The color of the progress bar (accepts hex colors like #FF0000 or #F00, or CSS color names like red, blue, green).</p></li>
 <li><p><code>barposition</code>: The position of the progress bar (<code>'top'</code>, <code>'bottom'</code>, or <code>'none'</code>).</p></li>
 </ul><p>If <code>barcolor</code> is not specified or is <code>NULL</code>, the default theme color will be
 used. If <code>barposition</code> is not specified, it defaults to 'top'.</p>

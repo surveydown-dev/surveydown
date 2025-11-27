@@ -10,6 +10,13 @@
   ([\#244](https://github.com/surveydown-dev/surveydown/issues/244)):
   theme assignment with custom scss files in YAML now works properly,
   e.g. `theme: [united, custom.scss]`.
+- Progress bar update: Now users can define `barcolor` under the
+  `theme-settings` YAML section to customize the progress bar color,
+  accepting both text color names (over 140 supported by browser CSS)
+  and hex color codes in 3 or 6 digits, e.g. `#FF5733` or `#F53`.
+- User experience update: Now for `barcolor` and `start-page`, if not
+  defined, the `settings.yml` file will show `~` as the value,
+  indicating it’s using the default setting.
 
 ## surveydown 1.0.0
 
