@@ -1,5 +1,16 @@
 # Changelog
 
+## surveydown 1.0.1
+
+- Bug fix
+  ([\#243](https://github.com/surveydown-dev/surveydown/issues/243)):
+  Updated all internal templates and roxygen examples to latest UI
+  established in v1.0.0.
+- Bug fix
+  ([\#244](https://github.com/surveydown-dev/surveydown/issues/244)):
+  theme assignment with custom scss files in YAML now works properly,
+  e.g. `theme: [united, custom.scss]`.
+
 ## surveydown 1.0.0
 
 - Function update:
