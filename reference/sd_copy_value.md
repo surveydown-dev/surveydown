@@ -36,27 +36,33 @@ displaying the copied value
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
-  survey_path <- system.file("examples", "sd_ui.qmd",
+  # Get path to example files
+  survey_path <- system.file("examples", "sd_copy_value.qmd",
                              package = "surveydown")
 
   # Copy to a temporary directory
   temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "sd_copy_value.qmd"))
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
   orig_dir <- getwd()
   setwd(temp_dir)
 
-  # Define a minimal server
-  server <- function(input, output, session) {
-
-    # Make a copy of the "name" variable to call its value a second time
-    sd_copy_value(id = "name", id_copy = "name_copy")
-
-    sd_server()
-  }
+  # Create app.R with sd_copy_value() logic
+  writeLines(c(
+    "library(surveydown)",
+    "",
+    "ui <- sd_ui()",
+    "",
+    "server <- function(input, output, session) {",
+    "  # Make a copy of the \"name\" variable to call its value a second time",
+    "  sd_copy_value(id = \"name\", id_copy = \"name_copy\")",
+    "  sd_server()",
+    "}",
+    "",
+    "shiny::shinyApp(ui = ui, server = server)"
+  ), file.path(temp_dir, "app.R"))
 
   # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+  shiny::runApp()
 
   # Clean up
   setwd(orig_dir)
