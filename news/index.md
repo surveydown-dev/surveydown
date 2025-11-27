@@ -13,10 +13,9 @@
 - Progress bar update: Now users can define `barcolor` under the
   `theme-settings` YAML section to customize the progress bar color,
   accepting both text color names (over 140 supported by browser CSS)
-  and hex color codes in 3 or 6 digits, e.g. `#FF5733` or `#F53`.
-- User experience update: Now for `barcolor` and `start-page`, if not
-  defined, the `settings.yml` file will show `~` as the value,
-  indicating it’s using the default setting.
+  and hex color codes in 3 or 6 digits, e.g. `#FF5733` or `#F53`. If not
+  defined, it shows `~` as the value in `settings.yml`, indicating it’s
+  using the default setting which follows the theme.
 
 ## surveydown 1.0.0
 
