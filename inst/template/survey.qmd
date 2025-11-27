@@ -1,31 +1,27 @@
 ---
-# General Settings
-format: html
-echo: false
-warning: false
+theme-settings:
+  theme: default
+  barposition: top
+  footer-left: "Made with [surveydown](https://surveydown.org)"
+  footer-right: '[<i class="bi bi-github"></i> Source Code](https://github.com/surveydown-dev/template_default)'
 
-# Theme Settings
-theme: default
-barposition: top
-footer-left: "Made with [surveydown](https://surveydown.org)"
-footer-right: '[<i class="bi bi-github"></i> Source Code](https://github.com/surveydown-dev/template_default)'
-
-# Survey Settings
-use-cookies: false
-auto-scroll: false
-rate-survey: false
-system-language: en
-highlight-unanswered: true
-highlight-color: blue
-capture-metadata: true
-all-questions-required: false
+survey-settings:
+  show-previous: true
+  use-cookies: false
+  auto-scroll: false
+  rate-survey: false
+  all-questions-required: false
+  system-language: en
+  highlight-unanswered: true
+  highlight-color: blue
+  capture-metadata: true
 ---
 
 ```{r}
 library(surveydown)
 ```
 
-::: {.sd_page id=welcome}
+--- welcome
 
 # Default Template
 
@@ -46,15 +42,13 @@ sd_question(
 )
 ```
 
-You need to insert navigation buttons with `sd_nav()` on each page. By default, it will go to the next page defined in the `survey.qmd` file, but you can also specify the page with the `next_page` argument set to the name of the page you want to go to next. Use `show_prev = FALSE` on the first page to hide the Previous button.
+You don't need to insert navigation buttons with `sd_nav()` on each page, as the buttons will appear automatically by default. But you can add `sd_nav()` to override navigation defaults, like specifying the page to go to next with the `page_next` argument set to the name of the page you want to go to next, or `show_prev = FALSE` to hide the Previous button.
 
 ```{r}
-sd_nav(next_page = 'page2', show_prev = FALSE)
+sd_nav(page_next = 'page2', show_prev = FALSE)
 ```
 
-:::
-
-::: {.sd_page id=page2}
+--- page2
 
 This is another page in your survey.
 
@@ -66,13 +60,9 @@ sd_question(
   id    = "silly_word",
   label = "Write a silly word here:"
 )
-
-sd_nav()
 ```
 
-:::
-
-::: {.sd_page id=end}
+--- end
 
 ## End
 
@@ -81,5 +71,3 @@ This is the last page in the survey.
 ```{r}
 sd_close()
 ```
-
-:::

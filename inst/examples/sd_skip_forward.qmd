@@ -1,14 +1,8 @@
----
-format: html
-echo: false
-warning: false
----
-
 ```{r}
 library(surveydown)
 ```
 
-::: {.sd_page id=initial_page}
+--- initial_page
 
 # Fruit Selection
 
@@ -25,13 +19,9 @@ sd_question(
     'Other'  = 'other'
   )
 )
-
-sd_next()
 ```
 
-:::
-
-::: {.sd_page id=default_page}
+--- default_page
 
 # Default Next Page
 
@@ -43,13 +33,9 @@ sd_question(
   id     = 'default_text',
   label  = 'This is the default page. We did not expect to see you here!'
 )
-
-sd_next()
 ```
 
-:::
-
-::: {.sd_page id=apple_page}
+--- apple_page
 
 # Apple Page
 
@@ -62,12 +48,10 @@ sd_question(
   label  = 'Tell us something about apples:'
 )
 
-sd_next(next_page = "summary_page")
+sd_nav(page_next = "summary_page")
 ```
 
-:::
-
-::: {.sd_page id=orange_page}
+--- orange_page
 
 # Orange Page
 
@@ -80,12 +64,10 @@ sd_question(
   label  = 'Tell us something about oranges:'
 )
 
-sd_next(next_page = "summary_page")
+sd_nav(page_next = "summary_page")
 ```
 
-:::
-
-::: {.sd_page id=other_page}
+--- other_page
 
 # Other Fruit Page
 
@@ -98,12 +80,10 @@ sd_question(
   label  = 'What is your favorite fruit and why?'
 )
 
-sd_next(next_page = "summary_page")
+sd_nav(page_next = "summary_page")
 ```
 
-:::
-
-::: {.sd_page id=summary_page}
+--- summary_page
 
 # Survey Summary
 
@@ -112,5 +92,3 @@ Thank you for completing our fruit survey!
 ```{r}
 sd_close("Exit Survey")
 ```
-
-:::
