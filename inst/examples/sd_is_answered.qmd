@@ -1,14 +1,8 @@
----
-format: html
-echo: false
-warning: false
----
-
 ```{r}
 library(surveydown)
 ```
 
-::: {.sd_page id=page_id}
+--- page_id
 
 This is a sample survey
 
@@ -29,5 +23,3 @@ sd_question(
   )
 )
 ```
-
-:::

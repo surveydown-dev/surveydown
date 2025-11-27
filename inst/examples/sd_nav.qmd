@@ -1,14 +1,13 @@
 ---
-format: html
-echo: false
-warning: false
+survey-settings:
+  show-previous: true
 ---
 
 ```{r}
 library(surveydown)
 ```
 
-::: {.sd_page id=page1}
+--- page1
 
 # Navigation Example with sd_nav()
 
@@ -24,9 +23,7 @@ sd_question(
 sd_nav(show_prev = FALSE)
 ```
 
-:::
-
-::: {.sd_page id=page2}
+--- page2
 
 This is the second page. Now both "Previous" and "Next" buttons are shown.
 
@@ -41,13 +38,9 @@ sd_question(
     'Green'  = 'green'
   )
 )
-
-sd_nav()
 ```
 
-:::
-
-::: {.sd_page id=page3}
+--- page3
 
 This is the third page. You can customize button labels if needed.
 
@@ -64,9 +57,7 @@ sd_nav(
 )
 ```
 
-:::
-
-::: {.sd_page id=end}
+--- end
 
 ## Survey Complete!
 
@@ -75,5 +66,3 @@ You've reached the end of the survey. Notice how you can navigate back to any pr
 ```{r}
 sd_close()
 ```
-
-:::

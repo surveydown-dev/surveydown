@@ -1,14 +1,8 @@
----
-format: html
-echo: false
-warning: false
----
-
 ```{r}
 library(surveydown)
 ```
 
-::: {.sd_page id=page_id}
+--- page_id
 
 This is a sample survey with redirect buttons
 
@@ -22,13 +16,9 @@ sd_question(
     'Reactive redirect button based on url pars' = 'end_2'
   )
 )
-
-sd_next()
 ```
 
-:::
-
-::: {.sd_page id=end_page_1}
+--- end_page_1
 
 This it the normal ending page with a static redirect button to google.com
 
@@ -42,14 +32,10 @@ sd_redirect(
 )
 ```
 
-:::
-
-::: {.sd_page id=end_page_2}
+--- end_page_2
 
 This is a reactive redirect button that contains a customized redirect url, including url parameters and an indicator of `status=0`.
 
 ```{r}
 sd_output('redirect_url_pars')
 ```
-
-:::

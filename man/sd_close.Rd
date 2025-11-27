@@ -46,23 +46,21 @@ question or not) is controlled by the \code{rate_survey} parameter in the
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
+  # Get path to example files
   survey_path <- system.file("examples", "sd_close.qmd",
                              package = "surveydown")
+  app_path <- system.file("examples", "app.R",
+                          package = "surveydown")
 
   # Copy to a temporary directory
   temp_dir <- tempdir()
   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  file.copy(app_path, file.path(temp_dir, "app.R"))
   orig_dir <- getwd()
   setwd(temp_dir)
 
-  # Define a minimal server
-  server <- function(input, output, session) {
-    sd_server()
-  }
-
   # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+  shiny::runApp()
 
   # Clean up
   setwd(orig_dir)

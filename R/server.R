@@ -88,37 +88,21 @@
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example survey file
+#'   # Get path to example files
 #'   survey_path <- system.file("examples", "basic_survey.qmd",
 #'                              package = "surveydown")
+#'   app_path <- system.file("examples", "app.R",
+#'                           package = "surveydown")
 #'
 #'   # Copy to a temporary directory
 #'   temp_dir <- tempdir()
 #'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+#'   file.copy(app_path, file.path(temp_dir, "app.R"))
 #'   orig_dir <- getwd()
 #'   setwd(temp_dir)
 #'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # sd_server() accepts these following parameters
-#'     sd_server(
-#'       db = NULL,
-#'       required_questions = NULL,
-#'       all_questions_required = NULL,
-#'       start_page = NULL,
-#'       auto_scroll = NULL,
-#'       rate_survey = NULL,
-#'       system_language = "en",
-#'       use_cookies = NULL,
-#'       highlight_unanswered = NULL,
-#'       highlight_color = NULL,
-#'       capture_metadata = NULL
-#'     )
-#'   }
-#'
 #'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'   shiny::runApp()
 #'
 #'   # Clean up
 #'   setwd(orig_dir)
@@ -2271,31 +2255,37 @@ sd_skip_forward <- function(...) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example survey file
+#'   # Get path to example files
 #'   survey_path <- system.file("examples", "sd_skip_if.qmd",
 #'                              package = "surveydown")
-#'
+#' 
 #'   # Copy to a temporary directory
 #'   temp_dir <- tempdir()
 #'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
 #'   orig_dir <- getwd()
 #'   setwd(temp_dir)
 #'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Skip to specific pages based on fruit selection
-#'     sd_skip_if(
-#'       input$fav_fruit == "apple" ~ "apple_page",
-#'       input$fav_fruit == "orange" ~ "orange_page",
-#'       input$fav_fruit == "other" ~ "other_page"
-#'     )
-#'
-#'     sd_server()
-#'   }
+#'   # Create app.R with sd_skip_if() logic
+#'   writeLines(c(
+#'     "library(surveydown)",
+#'     "",
+#'     "ui <- sd_ui()",
+#'     "",
+#'     "server <- function(input, output, session) {",
+#'     "  # Skip to specific pages based on fruit selection",
+#'     "  sd_skip_if(",
+#'     "    input$fav_fruit == \"apple\" ~ \"apple_page\",",
+#'     "    input$fav_fruit == \"orange\" ~ \"orange_page\",",
+#'     "    input$fav_fruit == \"other\" ~ \"other_page\"",
+#'     "  )",
+#'     "  sd_server()",
+#'     "}",
+#'     "",
+#'     "shiny::shinyApp(ui = ui, server = server)"
+#'   ), file.path(temp_dir, "app.R"))
 #'
 #'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'   shiny::runApp()
 #'
 #'   # Clean up
 #'   setwd(orig_dir)
@@ -2363,7 +2353,7 @@ sd_skip_if <- function(...) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example survey file
+#'   # Get path to example files
 #'   survey_path <- system.file("examples", "sd_show_if.qmd",
 #'                              package = "surveydown")
 #'
@@ -2373,21 +2363,27 @@ sd_skip_if <- function(...) {
 #'   orig_dir <- getwd()
 #'   setwd(temp_dir)
 #'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     sd_show_if(
-#'       # If "Other" is chosen, show the conditional question
-#'       input$fav_fruit == "other" ~ "fav_fruit_other",
-#'       # If condition is met, show specific page
-#'       input$category == "advanced" ~ "advanced_page"
-#'     )
-#'
-#'     sd_server()
-#'   }
+#'   # Create app.R with sd_show_if() logic
+#'   writeLines(c(
+#'     "library(surveydown)",
+#'     "",
+#'     "ui <- sd_ui()",
+#'     "",
+#'     "server <- function(input, output, session) {",
+#'     "  sd_show_if(",
+#'     "    # If \"Other\" is chosen, show the conditional question",
+#'     "    input$fav_fruit == \"other\" ~ \"fav_fruit_other\",",
+#'     "    # If condition is met, show specific page",
+#'     "    input$category == \"advanced\" ~ \"advanced_page\"",
+#'     "  )",
+#'     "  sd_server()",
+#'     "}",
+#'     "",
+#'     "shiny::shinyApp(ui = ui, server = server)"
+#'   ), file.path(temp_dir, "app.R"))
 #'
 #'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'   shiny::runApp()
 #'
 #'   # Clean up
 #'   setwd(orig_dir)
@@ -2768,27 +2764,33 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_ui.qmd",
+#'   # Get path to example files
+#'   survey_path <- system.file("examples", "sd_copy_value.qmd",
 #'                              package = "surveydown")
 #'
 #'   # Copy to a temporary directory
 #'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "sd_copy_value.qmd"))
+#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
 #'   orig_dir <- getwd()
 #'   setwd(temp_dir)
 #'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Make a copy of the "name" variable to call its value a second time
-#'     sd_copy_value(id = "name", id_copy = "name_copy")
-#'
-#'     sd_server()
-#'   }
+#'   # Create app.R with sd_copy_value() logic
+#'   writeLines(c(
+#'     "library(surveydown)",
+#'     "",
+#'     "ui <- sd_ui()",
+#'     "",
+#'     "server <- function(input, output, session) {",
+#'     "  # Make a copy of the \"name\" variable to call its value a second time",
+#'     "  sd_copy_value(id = \"name\", id_copy = \"name_copy\")",
+#'     "  sd_server()",
+#'     "}",
+#'     "",
+#'     "shiny::shinyApp(ui = ui, server = server)"
+#'   ), file.path(temp_dir, "app.R"))
 #'
 #'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'   shiny::runApp()
 #'
 #'   # Clean up
 #'   setwd(orig_dir)
@@ -2831,7 +2833,7 @@ sd_copy_value <- function(id, id_copy) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example survey file
+#'   # Get path to example files
 #'   survey_path <- system.file("examples", "sd_is_answered.qmd",
 #'                              package = "surveydown")
 #'
@@ -2841,19 +2843,25 @@ sd_copy_value <- function(id, id_copy) {
 #'   orig_dir <- getwd()
 #'   setwd(temp_dir)
 #'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     sd_show_if(
-#'       # If "apple_text" is answered, show the conditional question
-#'       sd_is_answered("apple_text") ~ "other_fruit"
-#'     )
-#'
-#'     sd_server()
-#'   }
+#'   # Create app.R with sd_is_answered() logic
+#'   writeLines(c(
+#'     "library(surveydown)",
+#'     "",
+#'     "ui <- sd_ui()",
+#'     "",
+#'     "server <- function(input, output, session) {",
+#'     "  sd_show_if(",
+#'     "    # If \"apple_text\" is answered, show the conditional question",
+#'     "    sd_is_answered(\"apple_text\") ~ \"other_fruit\"",
+#'     "  )",
+#'     "  sd_server()",
+#'     "}",
+#'     "",
+#'     "shiny::shinyApp(ui = ui, server = server)"
+#'   ), file.path(temp_dir, "app.R"))
 #'
 #'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
+#'   shiny::runApp()
 #'
 #'   # Clean up
 #'   setwd(orig_dir)
