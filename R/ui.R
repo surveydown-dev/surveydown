@@ -10,7 +10,7 @@
 #' The function reads the following settings from the survey.qmd YAML header:
 #' \itemize{
 #'   \item `theme`: The theme to be applied to the survey.
-#'   \item `barcolor`: The color of the progress bar (should be a valid hex color).
+#'   \item `barcolor`: The color of the progress bar (accepts hex colors like #FF0000 or #F00, or CSS color names like red, blue, green).
 #'   \item `barposition`: The position of the progress bar (`'top'`, `'bottom'`, or `'none'`).
 #' }
 #'
@@ -137,8 +137,11 @@ get_theme <- function(metadata) {
 get_barcolor <- function(metadata) {
   barcolor <- get_yaml_value(metadata, "barcolor")
   if (!is.null(barcolor)) {
-    if (!grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)) {
-      stop("Invalid barcolor in YAML. Use a valid hex color.")
+    # Accept hex colors (#RGB or #RRGGBB) or CSS color names (alphabetic)
+    is_hex <- grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)
+    is_color_name <- grepl("^[a-zA-Z]+$", barcolor)
+    if (!is_hex && !is_color_name) {
+      stop("Invalid barcolor in YAML. Use a valid hex color (e.g., #FF0000 or #F00) or CSS color name (e.g., red, blue).")
     }
   }
   return(barcolor)

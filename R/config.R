@@ -381,8 +381,15 @@ create_sectioned_yaml <- function(
   # General Settings section (may be NULL if not using)
   if (!is.null(general_params) && length(general_params) > 0) {
     yaml_string <- paste0(yaml_string, "# General Settings (Quarto-defined)\n")
-    general_settings <- settings[general_params]
-    general_settings <- general_settings[!sapply(general_settings, is.null)]
+    # Build list explicitly to preserve names for NULL values
+    general_settings <- list()
+    for (param in general_params) {
+      general_settings[[param]] <- settings[[param]]
+      # Convert NULL to NA_character_ to preserve names in YAML output
+      if (is.null(general_settings[[param]])) {
+        general_settings[[param]] <- NA_character_
+      }
+    }
     yaml_string <- paste0(yaml_string, yaml::as.yaml(general_settings))
   }
 
@@ -391,8 +398,15 @@ create_sectioned_yaml <- function(
     if (yaml_string != "") {
       yaml_string <- paste0(yaml_string, "\n")
     }
-    theme_settings <- settings[theme_params]
-    theme_settings <- theme_settings[!sapply(theme_settings, is.null)]
+    # Build list explicitly to preserve names for NULL values
+    theme_settings <- list()
+    for (param in theme_params) {
+      theme_settings[[param]] <- settings[[param]]
+      # Convert NULL to NA_character_ to preserve names in YAML output
+      if (is.null(theme_settings[[param]])) {
+        theme_settings[[param]] <- NA_character_
+      }
+    }
     # Nest under theme-settings key (kebab-case)
     theme_nested <- list(`theme-settings` = theme_settings)
     yaml_string <- paste0(yaml_string, yaml::as.yaml(theme_nested))
@@ -403,8 +417,15 @@ create_sectioned_yaml <- function(
     if (yaml_string != "") {
       yaml_string <- paste0(yaml_string, "\n")
     }
-    survey_settings <- settings[survey_params]
-    survey_settings <- survey_settings[!sapply(survey_settings, is.null)]
+    # Build list explicitly to preserve names for NULL values
+    survey_settings <- list()
+    for (param in survey_params) {
+      survey_settings[[param]] <- settings[[param]]
+      # Convert NULL to NA_character_ to preserve names in YAML output
+      if (is.null(survey_settings[[param]])) {
+        survey_settings[[param]] <- NA_character_
+      }
+    }
     # Nest under survey-settings key (kebab-case)
     survey_nested <- list(`survey-settings` = survey_settings)
     yaml_string <- paste0(yaml_string, yaml::as.yaml(survey_nested))
@@ -420,6 +441,9 @@ create_sectioned_yaml <- function(
 
   # Clean up awkward YAML apostrophe escaping (won''t -> "won't")
   yaml_string <- clean_yaml_quotes(yaml_string)
+
+  # Convert .na.character to standard YAML null (~)
+  yaml_string <- gsub(": \\.na\\.character", ": ~", yaml_string)
 
   return(yaml_string)
 }

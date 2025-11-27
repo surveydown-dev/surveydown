@@ -18,7 +18,7 @@ It retrieves theme and progress bar settings from the survey.qmd file.
 The function reads the following settings from the survey.qmd YAML header:
 \itemize{
 \item \code{theme}: The theme to be applied to the survey.
-\item \code{barcolor}: The color of the progress bar (should be a valid hex color).
+\item \code{barcolor}: The color of the progress bar (accepts hex colors like #FF0000 or #F00, or CSS color names like red, blue, green).
 \item \code{barposition}: The position of the progress bar (\code{'top'}, \code{'bottom'}, or \code{'none'}).
 }
 
