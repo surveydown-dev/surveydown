@@ -21,38 +21,19 @@ For matrix questions, it checks if all sub-questions (rows) are answered.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "sd_is_answered.qmd",
-                             package = "surveydown")
+  # Use sd_is_answered() to conditionally execute code:
+  # server <- function(input, output, session) {
+  #   observe({
+  #     if (sd_is_answered(input$age)) {
+  #       message("Age question answered!")
+  #     }
+  #   })
+  #   sd_server()
+  # }
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Create app.R with sd_is_answered() logic
-  writeLines(c(
-    "library(surveydown)",
-    "",
-    "ui <- sd_ui()",
-    "",
-    "server <- function(input, output, session) {",
-    "  sd_show_if(",
-    "    # If \"apple_text\" is answered, show the conditional question",
-    "    sd_is_answered(\"apple_text\") ~ \"other_fruit\"",
-    "  )",
-    "  sd_server()",
-    "}",
-    "",
-    "shiny::shinyApp(ui = ui, server = server)"
-  ), file.path(temp_dir, "app.R"))
-
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "default")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 
 }

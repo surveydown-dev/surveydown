@@ -21,24 +21,20 @@
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "sd_ui.qmd",
-#'                              package = "surveydown")
-#'   app_path <- system.file("examples", "app.R",
-#'                           package = "surveydown")
+#'   # Basic sd_ui() usage in app.R:
+#'   # library(surveydown)
+#'   #
+#'   # ui <- sd_ui()
+#'   #
+#'   # server <- function(input, output, session) {
+#'   #   sd_server()
+#'   # }
+#'   #
+#'   # shiny::shinyApp(ui = ui, server = server)
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   file.copy(app_path, file.path(temp_dir, "app.R"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "default")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @seealso `sd_server()` for creating the server-side logic of the survey
@@ -141,7 +137,9 @@ get_barcolor <- function(metadata) {
     is_hex <- grepl("^#([0-9A-Fa-f]{3}){1,2}$", barcolor)
     is_color_name <- grepl("^[a-zA-Z]+$", barcolor)
     if (!is_hex && !is_color_name) {
-      stop("Invalid barcolor in YAML. Use a valid hex color (e.g., #FF0000 or #F00) or CSS color name (e.g., red, blue).")
+      stop(
+        "Invalid barcolor in YAML. Use a valid hex color (e.g., #FF0000 or #F00) or CSS color name (e.g., red, blue)."
+      )
     }
   }
   return(barcolor)
@@ -661,24 +659,36 @@ to_snake_case <- function(text) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "basic_survey.qmd",
-#'                              package = "surveydown")
-#'   app_path <- system.file("examples", "app.R",
-#'                           package = "surveydown")
+#'   # Use sd_question() to create questions in R chunks of survey.qmd:
+#'   # sd_question(
+#'   #   id    = "favorite_penguin_static",
+#'   #   type  = "mc",
+#'   #   label = "Which type of penguin do you like the best?",
+#'   #   option = c(
+#'   #     "Adélie"    = "adelie",
+#'   #     "Chinstrap" = "chinstrap",
+#'   #     "Gentoo"    = "gentoo"
+#'   #   )
+#'   #  )
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   file.copy(app_path, file.path(temp_dir, "app.R"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
+#'   # Use sd_question() to create reactive questions in app.R under server:
+#'   # server <- function(input, output, session) {
+#'   #   sd_question(
+#'   #     id    = "favorite_penguin_reactive",
+#'   #     type  = "mc",
+#'   #     label = "Which type of penguin do you like the best?",
+#'   #     option = c(
+#'   #       "Adélie"    = "adelie",
+#'   #       "Chinstrap" = "chinstrap",
+#'   #       "Gentoo"    = "gentoo"
+#'   #     )
+#'   #    )
+#'   #   sd_server()
+#'   # }
 #'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "default")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @export
@@ -1558,24 +1568,16 @@ make_question_container <- function(
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "sd_next.qmd",
-#'                              package = "surveydown")
-#'   app_path <- system.file("examples", "app.R",
-#'                           package = "surveydown")
+#'   # Use sd_next() in survey.qmd to create navigation:
+#'   # --- welcome
+#'   #
+#'   # Welcome to the survey!
+#'   #
+#'   # `r sd_next(next_page = "page2", label = "Continue")`
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   file.copy(app_path, file.path(temp_dir, "app.R"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "default")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @export
@@ -1806,24 +1808,16 @@ sd_nav <- function(
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "sd_close.qmd",
-#'                              package = "surveydown")
-#'   app_path <- system.file("examples", "app.R",
-#'                           package = "surveydown")
+#'   # Use sd_close() in survey.qmd on the last page:
+#'   # --- end
+#'   #
+#'   # Thank you for completing the survey!
+#'   #
+#'   # `r sd_close(label_close = "Exit Survey", show_previous = TRUE)`
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   file.copy(app_path, file.path(temp_dir, "app.R"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "default")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @seealso \code{\link{sd_server}}
@@ -1926,48 +1920,19 @@ sd_close <- function(
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_redirect.qmd",
-#'                              package = "surveydown")
+#'   # Use sd_redirect() to create redirect in R chunks of survey.qmd:
+#'   # sd_redirect(
+#'   #   id     = "redirect",
+#'   #   url    = "https://www.google.com",
+#'   #   label  = "Redirect to Google",
+#'   #   button = TRUE,
+#'   #   newtab = TRUE
+#'   # )
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Reactive expression that generates a url with an id variable
-#'     # parsed from the url
-#'     url_redirect <- reactive({
-#'       params <- sd_get_url_pars()
-#'       id <- params["id"]
-#'       return(paste0("https://www.google.com?id=", id))
-#'     })
-#'
-#'     # Create the redirect button
-#'     sd_redirect(
-#'       id = "redirect_url_pars",
-#'       url = url_redirect(),
-#'       button = TRUE,
-#'       label = "Redirect"
-#'     )
-#'
-#'     sd_skip_if(
-#'       input$screening_question == "end_1" ~ "end_page_1",
-#'       input$screening_question == "end_1" ~ "end_page_2",
-#'     )
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # sd_redirect() also supports reactive redirections.
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "external_redirect")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #' @export
 sd_redirect <- function(
@@ -2113,48 +2078,25 @@ create_redirect_element <- function(
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_redirect.qmd",
-#'                              package = "surveydown")
+#'   # Use sd_get_url_pars() to parse URL parameters:
+#'   # server <- function(input, output, session) {
+#'   #   # Get all URL parameters
+#'   #   all_params <- sd_get_url_pars()
+#'   #
+#'   #   # Get specific parameters
+#'   #   user_id <- sd_get_url_pars("user_id")
+#'   #
+#'   #   # Use in reactive expressions
+#'   #   url_redirect <- reactive({
+#'   #     params <- sd_get_url_pars()
+#'   #     paste0("https://example.com?id=", params["id"])
+#'   #   })
+#'   #   sd_server()
+#'   # }
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'
-#'     # Reactive expression that generates a url with an id variable
-#'     # parsed from the url
-#'     url_redirect <- reactive({
-#'       params <- sd_get_url_pars()
-#'       id <- params["id"]
-#'       return(paste0("https://www.google.com?id=", id))
-#'     })
-#'
-#'     # Create the redirect button
-#'     sd_redirect(
-#'       id = "redirect_url_pars",
-#'       url = url_redirect(),
-#'       button = TRUE,
-#'       label = "Redirect"
-#'     )
-#'
-#'     sd_skip_if(
-#'       input$screening_question == "end_1" ~ "end_page_1",
-#'       input$screening_question == "end_1" ~ "end_page_2",
-#'     )
-#'
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "external_redirect")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @export
@@ -2254,26 +2196,20 @@ sd_display_value <- function(id, display_type = "inline", wrapper = NULL, ...) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example survey file
-#'   survey_path <- system.file("examples", "sd_output.qmd",
-#'                              package = "surveydown")
+#'   # Use sd_output() to display reactive questions or values:
+#'   # First, define something in server of app.R:
+#'   # server <- function(input, output, session) {
+#'   #   completion_code <- sd_completion_code(10)
+#'   #   sd_store_value(completion_code)
+#'   #   sd_server()
+#'   # }
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
+#'   # Then, display in R chunks of survey.qmd:
+#'   # Your code is: `r sd_output("completion_code", type = 'value')`
 #'
-#'   # Define a minimal server
-#'   server <- function(input, output, session) {
-#'     sd_server()
-#'   }
-#'
-#'   # Run the app
-#'   shiny::shinyApp(ui = sd_ui(), server = server)
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "reactive_questions")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @export

@@ -23,36 +23,17 @@ new output. The new output can then be displayed using \code{sd_output()}.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "sd_copy_value.qmd",
-                             package = "surveydown")
+  # Use sd_copy_value() to copy an input value to display elsewhere:
+  # server <- function(input, output, session) {
+  #   sd_copy_value(id = "name", id_copy = "name_copy")
+  #   ...
+  # }
+  # Then in survey.qmd, display it in an R chunk:
+  # sd_output("name", type = "value")
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Create app.R with sd_copy_value() logic
-  writeLines(c(
-    "library(surveydown)",
-    "",
-    "ui <- sd_ui()",
-    "",
-    "server <- function(input, output, session) {",
-    "  # Make a copy of the \"name\" variable to call its value a second time",
-    "  sd_copy_value(id = \"name\", id_copy = \"name_copy\")",
-    "  sd_server()",
-    "}",
-    "",
-    "shiny::shinyApp(ui = ui, server = server)"
-  ), file.path(temp_dir, "app.R"))
-
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "default")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 
 }

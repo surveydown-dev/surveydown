@@ -144,24 +144,36 @@ row ID) and a value (used as the row label).
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "basic_survey.qmd",
-                             package = "surveydown")
-  app_path <- system.file("examples", "app.R",
-                          package = "surveydown")
+  # Use sd_question() to create questions in R chunks of survey.qmd:
+  # sd_question(
+  #   id    = "favorite_penguin_static",
+  #   type  = "mc",
+  #   label = "Which type of penguin do you like the best?",
+  #   option = c(
+  #     "Adélie"    = "adelie",
+  #     "Chinstrap" = "chinstrap",
+  #     "Gentoo"    = "gentoo"
+  #   )
+  #  )
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  file.copy(app_path, file.path(temp_dir, "app.R"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
+  # Use sd_question() to create reactive questions in app.R under server:
+  # server <- function(input, output, session) {
+  #   sd_question(
+  #     id    = "favorite_penguin_reactive",
+  #     type  = "mc",
+  #     label = "Which type of penguin do you like the best?",
+  #     option = c(
+  #       "Adélie"    = "adelie",
+  #       "Chinstrap" = "chinstrap",
+  #       "Gentoo"    = "gentoo"
+  #     )
+  #    )
+  #   sd_server()
+  # }
 
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "default")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 
 }

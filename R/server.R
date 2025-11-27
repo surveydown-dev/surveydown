@@ -88,24 +88,28 @@
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "basic_survey.qmd",
-#'                              package = "surveydown")
-#'   app_path <- system.file("examples", "app.R",
-#'                           package = "surveydown")
+#'   # Basic sd_server() usage in app.R:
+#'   # library(surveydown)
+#'   #
+#'   # db <- sd_database(
+#'   #   host   = "db.xxxx.supabase.co",
+#'   #   dbname = "postgres",
+#'   #   port   = "5432",
+#'   #   user   = "postgres",
+#'   #   table  = "my_survey"
+#'   # )
+#'   #
+#'   # server <- function(input, output, session) {
+#'   #   sd_server(
+#'   #     db = db
+#'   #   )
+#'   # }
+#'   #
+#'   # shiny::shinyApp(ui = sd_ui(), server = server)
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   file.copy(app_path, file.path(temp_dir, "app.R"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "default")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @seealso
@@ -1686,7 +1690,11 @@ sd_server <- function(
                                             # Also send custom message to trigger JavaScript update
                                             session$sendCustomMessage(
                                                 "restoreButtonValue",
-                                                list(id = q_id, value = stored_value, type = "radio")
+                                                list(
+                                                    id = q_id,
+                                                    value = stored_value,
+                                                    type = "radio"
+                                                )
                                             )
                                         } else if (q_type == "mc_multiple") {
                                             # For multiple choice, stored_value might be a vector or comma-separated
@@ -1744,7 +1752,11 @@ sd_server <- function(
                                             # Also send custom message to trigger JavaScript update
                                             session$sendCustomMessage(
                                                 "restoreButtonValue",
-                                                list(id = q_id, value = values, type = "checkbox")
+                                                list(
+                                                    id = q_id,
+                                                    value = values,
+                                                    type = "checkbox"
+                                                )
                                             )
                                         } else if (q_type == "select") {
                                             shiny::updateSelectInput(
@@ -1794,7 +1806,10 @@ sd_server <- function(
                                                     )
                                                 }
                                                 if (length(values) == 2) {
-                                                    if (q_type == "slider_numeric") {
+                                                    if (
+                                                        q_type ==
+                                                            "slider_numeric"
+                                                    ) {
                                                         # Use updateSliderInput for numeric sliders
                                                         shiny::updateSliderInput(
                                                             session,
@@ -1811,7 +1826,10 @@ sd_server <- function(
                                                         # Also send custom message to trigger JavaScript update
                                                         session$sendCustomMessage(
                                                             "restoreSliderValue",
-                                                            list(id = q_id, selected = values)
+                                                            list(
+                                                                id = q_id,
+                                                                selected = values
+                                                            )
                                                         )
                                                     }
                                                 }
@@ -1830,16 +1848,35 @@ sd_server <- function(
                                                 } else {
                                                     # For text sliders, need to convert value to display label
                                                     # Try session userData first, then fall back to question_structure
-                                                    value_map <- session$userData[[paste0(q_id, "_values")]]
-                                                    if (is.null(value_map) && q_id %in% names(question_structure)) {
+                                                    value_map <- session$userData[[paste0(
+                                                        q_id,
+                                                        "_values"
+                                                    )]]
+                                                    if (
+                                                        is.null(value_map) &&
+                                                            q_id %in%
+                                                                names(
+                                                                    question_structure
+                                                                )
+                                                    ) {
                                                         # Use options from question_structure as fallback
-                                                        value_map <- question_structure[[q_id]]$options
+                                                        value_map <- question_structure[[
+                                                            q_id
+                                                        ]]$options
                                                     }
                                                     if (!is.null(value_map)) {
                                                         # Find the display label for this value
-                                                        label_idx <- which(value_map == stored_value)
-                                                        if (length(label_idx) > 0) {
-                                                            display_label <- names(value_map)[label_idx[1]]
+                                                        label_idx <- which(
+                                                            value_map ==
+                                                                stored_value
+                                                        )
+                                                        if (
+                                                            length(label_idx) >
+                                                                0
+                                                        ) {
+                                                            display_label <- names(
+                                                                value_map
+                                                            )[label_idx[1]]
                                                             shinyWidgets::updateSliderTextInput(
                                                                 session,
                                                                 q_id,
@@ -1848,7 +1885,10 @@ sd_server <- function(
                                                             # Also send custom message to trigger JavaScript update
                                                             session$sendCustomMessage(
                                                                 "restoreSliderValue",
-                                                                list(id = q_id, selected = display_label)
+                                                                list(
+                                                                    id = q_id,
+                                                                    selected = display_label
+                                                                )
                                                             )
                                                         }
                                                     } else {
@@ -1861,7 +1901,10 @@ sd_server <- function(
                                                         # Also send custom message to trigger JavaScript update
                                                         session$sendCustomMessage(
                                                             "restoreSliderValue",
-                                                            list(id = q_id, selected = stored_value)
+                                                            list(
+                                                                id = q_id,
+                                                                selected = stored_value
+                                                            )
                                                         )
                                                     }
                                                 }
@@ -1916,31 +1959,34 @@ sd_server <- function(
         # Use a flag to ensure this only runs once
         initial_restoration_done <- FALSE
 
-        shiny::observe({
-            # Only run once after initial page load
-            if (!initial_restoration_done) {
-                # Wait for page to be rendered
-                shiny::invalidateLater(200)
+        shiny::observe(
+            {
+                # Only run once after initial page load
+                if (!initial_restoration_done) {
+                    # Wait for page to be rendered
+                    shiny::invalidateLater(200)
 
-                shiny::isolate({
-                    # Check if we restored from cookies using the persistent flag
-                    if (isTRUE(session$userData$did_restore_from_cookies)) {
-                        # Mark as done first to prevent re-running
-                        initial_restoration_done <<- TRUE
+                    shiny::isolate({
+                        # Check if we restored from cookies using the persistent flag
+                        if (isTRUE(session$userData$did_restore_from_cookies)) {
+                            # Mark as done first to prevent re-running
+                            initial_restoration_done <<- TRUE
 
-                        # Get the current page and restore its inputs
-                        current_page <- get_current_page()
+                            # Get the current page and restore its inputs
+                            current_page <- get_current_page()
 
-                        if (!is.null(current_page)) {
-                            restore_page_inputs(current_page)
+                            if (!is.null(current_page)) {
+                                restore_page_inputs(current_page)
+                            }
+                        } else {
+                            # No restoration needed, mark as done
+                            initial_restoration_done <<- TRUE
                         }
-                    } else {
-                        # No restoration needed, mark as done
-                        initial_restoration_done <<- TRUE
-                    }
-                })
-            }
-        }, priority = -10) # Low priority to run after page rendering
+                    })
+                }
+            },
+            priority = -10
+        ) # Low priority to run after page rendering
     }
 
     # Handle Previous button clicks
@@ -1991,7 +2037,10 @@ sd_server <- function(
 
                                 if (length(interacted_on_page) > 0) {
                                     # Use the last interacted question on the page
-                                    last_question_id <- tail(interacted_on_page, 1)
+                                    last_question_id <- tail(
+                                        interacted_on_page,
+                                        1
+                                    )
                                     last_question_index <- which(
                                         question_ids == last_question_id
                                     )
@@ -2010,7 +2059,7 @@ sd_server <- function(
                                     )
                                     if (
                                         length(first_question_index) > 0 &&
-                                        first_question_index > 1
+                                            first_question_index > 1
                                     ) {
                                         # Set progress to question before this page
                                         update_progress_bar(
@@ -2255,40 +2304,19 @@ sd_skip_forward <- function(...) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "sd_skip_if.qmd",
-#'                              package = "surveydown")
-#' 
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
+#'   # Use sd_skip_if() to skip pages based on answers:
+#'   # server <- function(input, output, session) {
+#'   #   sd_skip_if(
+#'   #     input$age < 18 ~ "underage_page",
+#'   #     input$country == "USA" ~ "usa_page",
+#'   #     input$consent == "no" ~ "exit_page"
+#'   #   )
+#'   #   sd_server()
+#'   # }
 #'
-#'   # Create app.R with sd_skip_if() logic
-#'   writeLines(c(
-#'     "library(surveydown)",
-#'     "",
-#'     "ui <- sd_ui()",
-#'     "",
-#'     "server <- function(input, output, session) {",
-#'     "  # Skip to specific pages based on fruit selection",
-#'     "  sd_skip_if(",
-#'     "    input$fav_fruit == \"apple\" ~ \"apple_page\",",
-#'     "    input$fav_fruit == \"orange\" ~ \"orange_page\",",
-#'     "    input$fav_fruit == \"other\" ~ \"other_page\"",
-#'     "  )",
-#'     "  sd_server()",
-#'     "}",
-#'     "",
-#'     "shiny::shinyApp(ui = ui, server = server)"
-#'   ), file.path(temp_dir, "app.R"))
-#'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "conditional_skipping")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @seealso `sd_show_if()`
@@ -2353,40 +2381,19 @@ sd_skip_if <- function(...) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "sd_show_if.qmd",
-#'                              package = "surveydown")
+#'   # Use sd_show_if() to conditionally show/hide questions:
+#'   # server <- function(input, output, session) {
+#'   #   sd_show_if(
+#'   #     input$has_car == "yes" ~ "car_make",
+#'   #     input$employed == "yes" ~ "job_title",
+#'   #     input$age >= 18 ~ "adult_questions_page"
+#'   #   )
+#'   #   sd_server()
+#'   # }
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Create app.R with sd_show_if() logic
-#'   writeLines(c(
-#'     "library(surveydown)",
-#'     "",
-#'     "ui <- sd_ui()",
-#'     "",
-#'     "server <- function(input, output, session) {",
-#'     "  sd_show_if(",
-#'     "    # If \"Other\" is chosen, show the conditional question",
-#'     "    input$fav_fruit == \"other\" ~ \"fav_fruit_other\",",
-#'     "    # If condition is met, show specific page",
-#'     "    input$category == \"advanced\" ~ \"advanced_page\"",
-#'     "  )",
-#'     "  sd_server()",
-#'     "}",
-#'     "",
-#'     "shiny::shinyApp(ui = ui, server = server)"
-#'   ), file.path(temp_dir, "app.R"))
-#'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "conditional_showing")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @seealso `sd_skip_if()`
@@ -2764,36 +2771,17 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "sd_copy_value.qmd",
-#'                              package = "surveydown")
+#'   # Use sd_copy_value() to copy an input value to display elsewhere:
+#'   # server <- function(input, output, session) {
+#'   #   sd_copy_value(id = "name", id_copy = "name_copy")
+#'   #   ...
+#'   # }
+#'   # Then in survey.qmd, display it in an R chunk:
+#'   # sd_output("name", type = "value")
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Create app.R with sd_copy_value() logic
-#'   writeLines(c(
-#'     "library(surveydown)",
-#'     "",
-#'     "ui <- sd_ui()",
-#'     "",
-#'     "server <- function(input, output, session) {",
-#'     "  # Make a copy of the \"name\" variable to call its value a second time",
-#'     "  sd_copy_value(id = \"name\", id_copy = \"name_copy\")",
-#'     "  sd_server()",
-#'     "}",
-#'     "",
-#'     "shiny::shinyApp(ui = ui, server = server)"
-#'   ), file.path(temp_dir, "app.R"))
-#'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "default")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @seealso `sd_output()` for displaying the copied value
@@ -2833,38 +2821,19 @@ sd_copy_value <- function(id, id_copy) {
 #' if (interactive()) {
 #'   library(surveydown)
 #'
-#'   # Get path to example files
-#'   survey_path <- system.file("examples", "sd_is_answered.qmd",
-#'                              package = "surveydown")
+#'   # Use sd_is_answered() to conditionally execute code:
+#'   # server <- function(input, output, session) {
+#'   #   observe({
+#'   #     if (sd_is_answered(input$age)) {
+#'   #       message("Age question answered!")
+#'   #     }
+#'   #   })
+#'   #   sd_server()
+#'   # }
 #'
-#'   # Copy to a temporary directory
-#'   temp_dir <- tempdir()
-#'   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-#'   orig_dir <- getwd()
-#'   setwd(temp_dir)
-#'
-#'   # Create app.R with sd_is_answered() logic
-#'   writeLines(c(
-#'     "library(surveydown)",
-#'     "",
-#'     "ui <- sd_ui()",
-#'     "",
-#'     "server <- function(input, output, session) {",
-#'     "  sd_show_if(",
-#'     "    # If \"apple_text\" is answered, show the conditional question",
-#'     "    sd_is_answered(\"apple_text\") ~ \"other_fruit\"",
-#'     "  )",
-#'     "  sd_server()",
-#'     "}",
-#'     "",
-#'     "shiny::shinyApp(ui = ui, server = server)"
-#'   ), file.path(temp_dir, "app.R"))
-#'
-#'   # Run the app
-#'   shiny::runApp()
-#'
-#'   # Clean up
-#'   setwd(orig_dir)
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "default")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
 #' }
 #'
 #' @export

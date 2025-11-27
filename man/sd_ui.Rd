@@ -29,24 +29,20 @@ used. If \code{barposition} is not specified, it defaults to 'top'.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example files
-  survey_path <- system.file("examples", "sd_ui.qmd",
-                             package = "surveydown")
-  app_path <- system.file("examples", "app.R",
-                          package = "surveydown")
+  # Basic sd_ui() usage in app.R:
+  # library(surveydown)
+  #
+  # ui <- sd_ui()
+  #
+  # server <- function(input, output, session) {
+  #   sd_server()
+  # }
+  #
+  # shiny::shinyApp(ui = ui, server = server)
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  file.copy(app_path, file.path(temp_dir, "app.R"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Run the app
-  shiny::runApp()
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "default")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 
 }

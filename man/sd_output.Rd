@@ -63,26 +63,20 @@ with the display style determined by the \code{display} parameter.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
-  survey_path <- system.file("examples", "sd_output.qmd",
-                             package = "surveydown")
+  # Use sd_output() to display reactive questions or values:
+  # First, define something in server of app.R:
+  # server <- function(input, output, session) {
+  #   completion_code <- sd_completion_code(10)
+  #   sd_store_value(completion_code)
+  #   sd_server()
+  # }
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
+  # Then, display in R chunks of survey.qmd:
+  # Your code is: `r sd_output("completion_code", type = 'value')`
 
-  # Define a minimal server
-  server <- function(input, output, session) {
-    sd_server()
-  }
-
-  # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "reactive_questions")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 
 }
