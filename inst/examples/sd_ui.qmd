@@ -1,7 +1,6 @@
 ---
 theme-settings:
-  theme: default
-  barcolor: '#4CAF50'
+  theme: cosmo
   barposition: top
 ---
 

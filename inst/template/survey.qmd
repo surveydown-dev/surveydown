@@ -1,20 +1,32 @@
 ---
+# The YAML header specifies several settings for the survey but is not required.
+# A full list of settings can be found under _survey/settings.yml directory.
+
+# Use this section to customize theme, progress bar, and footers
 theme-settings:
   theme: default
   barposition: top
   footer-left: "Made with [surveydown](https://surveydown.org)"
   footer-right: '[<i class="bi bi-github"></i> Source Code](https://github.com/surveydown-dev/template_default)'
 
+# Use this section to customize survey behavior and appearance
 survey-settings:
-  show-previous: true
+  show-previous: false
   use-cookies: false
   auto-scroll: false
   rate-survey: false
-  all-questions-required: false
   system-language: en
   highlight-unanswered: true
   highlight-color: blue
   capture-metadata: true
+  all-questions-required: false
+
+# Use this section to customize system messages
+system-messages:
+  warning: Warning Message
+  previous: Previous Page
+  next: Next Page
+  exit: Finish Survey
 ---
 
 ```{r}
@@ -42,10 +54,14 @@ sd_question(
 )
 ```
 
-You don't need to insert navigation buttons with `sd_nav()` on each page, as the buttons will appear automatically by default. But you can add `sd_nav()` to override navigation defaults, like specifying the page to go to next with the `page_next` argument set to the name of the page you want to go to next, or `show_prev = FALSE` to hide the Previous button.
+There are several ways to navigate between pages in a surveydown survey:
+
+1. By default, navigation buttons are auto-created by the end of each survey page.
+2. You can also call `sd_nav()` by the end of a page, which is equivalent to the auto-creation.
+3. `sd_nav()` supports parameters to customize the navigation labels and destinations. For example, on this page, we can call `sd_nav(page_next = "page2", label_next = "Go to Page 2")` to customize the next button label and destination.
 
 ```{r}
-sd_nav(page_next = 'page2', show_prev = FALSE)
+sd_nav(page_next = "page2", label_next = "Go to Page 2")
 ```
 
 --- page2
@@ -62,11 +78,15 @@ sd_question(
 )
 ```
 
+On this page, we don't call `sd_nav()` to auto-trigger the navigation button.
+
 --- end
 
 ## End
 
 This is the last page in the survey.
+
+Here we call `sd_close()` to create a finish button to end the survey. When calling `sd_close()`, the auto-navigation is disabled.
 
 ```{r}
 sd_close()
