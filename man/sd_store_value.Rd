@@ -40,38 +40,42 @@ page refreshes.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
-  survey_path <- system.file("examples", "sd_ui.qmd",
+  # Get path to example files
+  survey_path <- system.file("examples", "basic_survey.qmd",
                              package = "surveydown")
 
   # Copy to a temporary directory
   temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "basic_survey.qmd"))
+  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
   orig_dir <- getwd()
   setwd(temp_dir)
 
-  # Define a minimal server
-  server <- function(input, output, session) {
-    # Set up database connection
-    db <- sd_db_connect()
-
-    # Generate and store values with automatic assignment (default behavior)
-    respondentID <- sample(1:1000, 1)
-    sd_store_value(respondentID, "respID", db)  # respondentID automatically updated
-
-    completion_code <- sample(0:9, 6, replace = TRUE)
-    sd_store_value(completion_code)  # completion_code automatically updated
-
-    # Traditional assignment approach (auto_assign = FALSE)
-    some_value <- sd_store_value(42, "some_value", auto_assign = FALSE)
-
-    # The function ensures session persistence across page refreshes
-
-    sd_server()
-  }
+  # Create app.R with sd_store_value() logic
+  writeLines(c(
+    "library(surveydown)",
+    "",
+    "ui <- sd_ui()",
+    "",
+    "server <- function(input, output, session) {",
+    "  ",
+    "  # Generate and store values with automatic assignment (default behavior)",
+    "  respondentID <- sample(1:1000, 1)",
+    "  sd_store_value(respondentID, \"respID\", db)  # respondentID automatically updated",
+    "  ",
+    "  completion_code <- sample(0:9, 6, replace = TRUE)",
+    "  sd_store_value(completion_code)  # completion_code automatically updated",
+    "  ",
+    "  # Traditional assignment approach (auto_assign = FALSE)",
+    "  some_value <- sd_store_value(42, \"some_value\", auto_assign = FALSE)",
+    "  ",
+    "  sd_server()",
+    "}",
+    "",
+    "shiny::shinyApp(ui = ui, server = server)"
+  ), file.path(temp_dir, "app.R"))
 
   # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+  shiny::runApp()
 
   # Clean up
   setwd(orig_dir)

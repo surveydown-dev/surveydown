@@ -26,7 +26,7 @@ skipping is allowed to prevent navigation loops.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
+  # Get path to example files
   survey_path <- system.file("examples", "sd_skip_if.qmd",
                              package = "surveydown")
 
@@ -36,21 +36,27 @@ if (interactive()) {
   orig_dir <- getwd()
   setwd(temp_dir)
 
-  # Define a minimal server
-  server <- function(input, output, session) {
-
-    # Skip to specific pages based on fruit selection
-    sd_skip_if(
-      input$fav_fruit == "apple" ~ "apple_page",
-      input$fav_fruit == "orange" ~ "orange_page",
-      input$fav_fruit == "other" ~ "other_page"
-    )
-
-    sd_server()
-  }
+  # Create app.R with sd_skip_if() logic
+  writeLines(c(
+    "library(surveydown)",
+    "",
+    "ui <- sd_ui()",
+    "",
+    "server <- function(input, output, session) {",
+    "  # Skip to specific pages based on fruit selection",
+    "  sd_skip_if(",
+    "    input$fav_fruit == \"apple\" ~ \"apple_page\",",
+    "    input$fav_fruit == \"orange\" ~ \"orange_page\",",
+    "    input$fav_fruit == \"other\" ~ \"other_page\"",
+    "  )",
+    "  sd_server()",
+    "}",
+    "",
+    "shiny::shinyApp(ui = ui, server = server)"
+  ), file.path(temp_dir, "app.R"))
 
   # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+  shiny::runApp()
 
   # Clean up
   setwd(orig_dir)

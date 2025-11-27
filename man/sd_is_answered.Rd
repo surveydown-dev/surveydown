@@ -21,7 +21,7 @@ For matrix questions, it checks if all sub-questions (rows) are answered.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
+  # Get path to example files
   survey_path <- system.file("examples", "sd_is_answered.qmd",
                              package = "surveydown")
 
@@ -31,19 +31,25 @@ if (interactive()) {
   orig_dir <- getwd()
   setwd(temp_dir)
 
-  # Define a minimal server
-  server <- function(input, output, session) {
-
-    sd_show_if(
-      # If "apple_text" is answered, show the conditional question
-      sd_is_answered("apple_text") ~ "other_fruit"
-    )
-
-    sd_server()
-  }
+  # Create app.R with sd_is_answered() logic
+  writeLines(c(
+    "library(surveydown)",
+    "",
+    "ui <- sd_ui()",
+    "",
+    "server <- function(input, output, session) {",
+    "  sd_show_if(",
+    "    # If \"apple_text\" is answered, show the conditional question",
+    "    sd_is_answered(\"apple_text\") ~ \"other_fruit\"",
+    "  )",
+    "  sd_server()",
+    "}",
+    "",
+    "shiny::shinyApp(ui = ui, server = server)"
+  ), file.path(temp_dir, "app.R"))
 
   # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+  shiny::runApp()
 
   # Clean up
   setwd(orig_dir)

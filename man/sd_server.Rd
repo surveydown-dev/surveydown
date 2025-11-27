@@ -129,37 +129,21 @@ confirmation dialog. The rating, if provided, is saved with the survey data.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
+  # Get path to example files
   survey_path <- system.file("examples", "basic_survey.qmd",
                              package = "surveydown")
+  app_path <- system.file("examples", "app.R",
+                          package = "surveydown")
 
   # Copy to a temporary directory
   temp_dir <- tempdir()
   file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
+  file.copy(app_path, file.path(temp_dir, "app.R"))
   orig_dir <- getwd()
   setwd(temp_dir)
 
-  # Define a minimal server
-  server <- function(input, output, session) {
-
-    # sd_server() accepts these following parameters
-    sd_server(
-      db = NULL,
-      required_questions = NULL,
-      all_questions_required = NULL,
-      start_page = NULL,
-      auto_scroll = NULL,
-      rate_survey = NULL,
-      system_language = "en",
-      use_cookies = NULL,
-      highlight_unanswered = NULL,
-      highlight_color = NULL,
-      capture_metadata = NULL
-    )
-  }
-
   # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
+  shiny::runApp()
 
   # Clean up
   setwd(orig_dir)
