@@ -4,7 +4,14 @@
 \alias{sd_close}
 \title{Create a 'Close' Button to Exit the Survey}
 \usage{
-sd_close(label_close = NULL, label_previous = NULL, show_previous = NULL)
+sd_close(
+  label_close = NULL,
+  label_previous = NULL,
+  show_previous = NULL,
+  show_restart = FALSE,
+  label_restart = NULL,
+  clear_cookies = FALSE
+)
 }
 \arguments{
 \item{label_close}{Character string. The label of the 'Close' button. Defaults to
@@ -16,6 +23,16 @@ sd_close(label_close = NULL, label_previous = NULL, show_previous = NULL)
 \item{show_previous}{Logical. Whether to show the Previous button alongside the Close button.
 Set to \code{TRUE} to allow users to go back before closing. Defaults to \code{FALSE}. Note: Unlike
 \code{sd_nav()}, this parameter does NOT read from the \code{show-previous} YAML setting.}
+
+\item{show_restart}{Logical. Whether to show a 'Restart Survey' button alongside the
+Close button. When \code{TRUE}, displays two side-by-side buttons. Defaults to \code{FALSE}.}
+
+\item{label_restart}{Character string. The label for the 'Restart Survey' button.
+Defaults to \code{NULL}, which uses "Restart Survey" (or the translated equivalent).}
+
+\item{clear_cookies}{Logical. Whether to clear cookies on exit without showing a
+restart button. Use for use cases where the restart button isn't needed but
+cookies should be cleared for later resubmission. Defaults to \code{FALSE}.}
 }
 \value{
 A 'shiny' tagList containing the 'Close' button UI element and
