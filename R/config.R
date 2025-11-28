@@ -1353,9 +1353,25 @@ extract_question_structure_html <- function(html_content) {
   # Loop through all question nodes and extract information
   for (question_node in question_nodes) {
     question_id <- rvest::html_attr(question_node, "data-question-id")
-    type <- question_node |>
-      rvest::html_nodes(glue::glue("#{question_id}")) |>
-      rvest::html_attr("class")
+    
+    # Enhanced extraction that considers both class and tag name
+    target_element <- question_node |> rvest::html_nodes(glue::glue("#{question_id}"))
+    
+    if (length(target_element) > 0) {
+      tag_name <- rvest::html_name(target_element)
+      class_attr <- rvest::html_attr(target_element, "class")
+      
+      # For textarea elements, ensure we get the right type even if class is incomplete
+      if (tag_name == "textarea" && (is.na(class_attr) || class_attr == "form-control")) {
+        type <- "shiny-input-textarea form-control"
+      } else {
+        type <- class_attr
+      }
+    } else {
+      type <- question_node |>
+        rvest::html_nodes(glue::glue("#{question_id}")) |>
+        rvest::html_attr("class")
+    }
 
     # Handle case where type is empty (e.g., for reactive questions)
     if (length(type) == 0 || is.na(type)) {
@@ -1548,6 +1564,7 @@ extract_question_structure_html <- function(html_content) {
 # Write question structure to YAML
 write_question_structure_yaml <- function(question_structure, file_yaml) {
   # Map question types to extracted html classes
+  # Note: Order matters - more specific patterns should come first
   type_replacement <- c(
     'shiny-input-text form-control' = 'text',
     'shiny-input-textarea form-control' = 'textarea',
@@ -1565,12 +1582,21 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
 
   # Loop through question structure and clean/prepare questions
   question_structure <- lapply(question_structure, function(question) {
-    # Rename type to function option names
-    question$type <- type_replacement[names(type_replacement) == question$type]
-    if (question$is_matrix) {
-      question$type <- "matrix"
+    # Rename type to function option names using pattern matching
+    # This handles cases where HTML classes have additional classes beyond the expected ones
+    matched_type <- NULL
+    for (pattern in names(type_replacement)) {
+      if (grepl(pattern, question$type, fixed = TRUE)) {
+        matched_type <- type_replacement[[pattern]]
+        break
+      }
     }
-    if (length(question$type) == 0) {
+    
+    if (!is.null(matched_type)) {
+      question$type <- matched_type
+    } else if (question$is_matrix) {
+      question$type <- "matrix"
+    } else {
       question$type <- "unknown"
     }
 
