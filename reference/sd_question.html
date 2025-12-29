@@ -59,6 +59,8 @@
 <span>  row <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  default <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  yml <span class="op">=</span> <span class="st">"questions.yml"</span>,</span>
+<span>  matrix_question_width <span class="op">=</span> <span class="st">"50%"</span>,</span>
+<span>  matrix_option_width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -182,6 +184,16 @@ for the slider. Defaults to the median of values.</p></dd>
 <dd><p>Character string. The name of the YAML file to load question configurations from.
 Defaults to <code>"questions.yml"</code>. Custom YAML files can be specified, either in
 the root directory or subdirectories (e.g., <code>"folder/custom.yml"</code>).</p></dd>
+
+
+<dt id="arg-matrix-question-width">matrix_question_width<a class="anchor" aria-label="anchor" href="#arg-matrix-question-width"></a></dt>
+<dd><p>Character string. The width of the matrix question column.
+Defaults to <code>"50%"</code>.</p></dd>
+
+
+<dt id="arg-matrix-option-width">matrix_option_width<a class="anchor" aria-label="anchor" href="#arg-matrix-option-width"></a></dt>
+<dd><p>Character string. The width of the matrix option column.
+Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

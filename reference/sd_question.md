@@ -28,6 +28,8 @@ sd_question(
   row = NULL,
   default = NULL,
   yml = "questions.yml",
+  matrix_question_width = "50%",
+  matrix_option_width = NULL,
   ...
 )
 ```
@@ -153,6 +155,16 @@ sd_question(
   configurations from. Defaults to `"questions.yml"`. Custom YAML files
   can be specified, either in the root directory or subdirectories
   (e.g., `"folder/custom.yml"`).
+
+- matrix_question_width:
+
+  Character string. The width of the matrix question column. Defaults to
+  `"50%"`.
+
+- matrix_option_width:
+
+  Character string. The width of the matrix option column. Defaults to
+  `NULL`.
 
 - ...:
 
