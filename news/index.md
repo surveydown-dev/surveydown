@@ -2,6 +2,8 @@
 
 ## surveydown 1.0.1
 
+CRAN release: 2025-12-19
+
 - Bug fix
   ([\#243](https://github.com/surveydown-dev/surveydown/issues/243)):
   Updated all internal templates and roxygen examples to latest UI
