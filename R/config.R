@@ -1731,15 +1731,7 @@ check_ids <- function(page_ids, question_ids) {
   }
 
   # Check for restricted IDs
-  restricted_ids <- c(
-    "session_id",
-    "time_start",
-    "time_end",
-    "exit_survey_rating",
-    "current_page",
-    "browser",
-    "ip_address"
-  )
+  restricted_ids <- get_reserved_ids()
   used_restricted_ids <- intersect(restricted_ids, all_ids)
   if (length(used_restricted_ids) > 0) {
     stop(

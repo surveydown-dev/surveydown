@@ -30,6 +30,19 @@ choice_list_html <- function(option) {
   return(list(names = choice_names, values = choice_values))
 }
 
+# Get reserved column names that cannot be used for page IDs, question IDs, or stored values
+get_reserved_ids <- function() {
+  c(
+    "session_id",
+    "time_start",
+    "time_end",
+    "exit_survey_rating",
+    "current_page",
+    "browser",
+    "ip_address"
+  )
+}
+
 #' Display Package Information on Attach
 #'
 #' This function is called when the package is attached.
@@ -1691,6 +1704,8 @@ sd_completion_code <- function(digits = 6) {
 #'   coerced to a character string.
 #' @param id (Optional) Character string. The id (name) of the value in the
 #'   data. If not provided, the name of the `value` variable will be used.
+#'   Cannot be one of the reserved IDs: "session_id", "time_start", "time_end",
+#'   "exit_survey_rating", "current_page", "browser", or "ip_address".
 #' @param db (Optional) Database connection object created with sd_db_connect().
 #'   If provided, enables session persistence. If not provided, will automatically
 #'   look for a variable named 'db' in the calling environment, or fall back to
@@ -1734,6 +1749,16 @@ sd_completion_code <- function(digits = 6) {
 sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
   if (is.null(id)) {
     id <- deparse(substitute(value))
+  }
+
+  # Check for reserved column names
+  reserved_ids <- get_reserved_ids()
+  if (id %in% reserved_ids) {
+    stop(
+      "Cannot use '", id, "' as a stored value ID. ",
+      "This name is reserved by surveydown. ",
+      "Reserved IDs: ", paste(reserved_ids, collapse = ", ")
+    )
   }
 
   shiny::isolate({

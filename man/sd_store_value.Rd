@@ -11,7 +11,9 @@ sd_store_value(value, id = NULL, db = NULL, auto_assign = TRUE)
 coerced to a character string.}
 
 \item{id}{(Optional) Character string. The id (name) of the value in the
-data. If not provided, the name of the \code{value} variable will be used.}
+data. If not provided, the name of the \code{value} variable will be used.
+Cannot be one of the reserved IDs: "session_id", "time_start", "time_end",
+"exit_survey_rating", "current_page", "browser", or "ip_address".}
 
 \item{db}{(Optional) Database connection object created with sd_db_connect().
 If provided, enables session persistence. If not provided, will automatically
