@@ -1,3 +1,7 @@
+# surveydown dev version
+
+- Bug fix (PR #241): `textarea` questions were being parsed as `"unknown"` type instead of `"textarea"`, preventing proper restoration when navigating between pages.
+
 # surveydown 1.0.1
 
 - Bug fix (#243): Updated all internal templates and roxygen examples to latest UI established in v1.0.0. 
