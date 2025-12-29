@@ -1,5 +1,23 @@
 # Changelog
 
+## surveydown 1.0.2
+
+- Bug fix (PR
+  [\#241](https://github.com/surveydown-dev/surveydown/issues/241)):
+  `textarea` questions were being parsed as `"unknown"` type instead of
+  `"textarea"`, preventing proper restoration when navigating between
+  pages.
+- Feature add (PR
+  [\#240](https://github.com/surveydown-dev/surveydown/issues/240)):
+  Added `matrix_question_width` and `matrix_option_width` arguments to
+  `sd_question` to modify the width of the question and option columns
+  in the `type = "matrix"` questions.
+- Feature add (PR
+  [\#242](https://github.com/surveydown-dev/surveydown/issues/242)):
+  Added support to have a “restart” button added when using
+  [`sd_close()`](https://pkg.surveydown.org/reference/sd_close.md) so
+  respondents can submit another response with proper cookie handling.
+
 ## surveydown 1.0.1
 
 CRAN release: 2025-12-19

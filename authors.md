@@ -13,6 +13,13 @@
 
 - **Stefan Munnes**. Contributor.
 
+- **Reed Benkendorf**. Contributor.
+  [](https://orcid.org/0000-0001-9178-3087)
+
+- **Umair Durrani**. Contributor.
+
+- **Dylan Pieper**. Contributor.
+
 ## Citation
 
 Source:
