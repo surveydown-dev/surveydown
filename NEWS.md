@@ -1,5 +1,7 @@
 # surveydown dev version
 
+- Bug fix (#246): Added a helper function that provides a vector of all preserved words that cannot be used as IDs and use it to prevent preserved IDs in `sd_store_value()`.
+
 # surveydown 1.0.2
 
 - Bug fix (PR #241): `textarea` questions were being parsed as `"unknown"` type instead of `"textarea"`, preventing proper restoration when navigating between pages.
