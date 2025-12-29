@@ -22,7 +22,9 @@ sd_store_value(value, id = NULL, db = NULL, auto_assign = TRUE)
 - id:
 
   (Optional) Character string. The id (name) of the value in the data.
-  If not provided, the name of the `value` variable will be used.
+  If not provided, the name of the `value` variable will be used. Cannot
+  be one of the reserved IDs: "session_id", "time_start", "time_end",
+  "exit_survey_rating", "current_page", "browser", or "ip_address".
 
 - db:
 
