@@ -629,6 +629,10 @@ to_snake_case <- function(text) {
 #' @param yml Character string. The name of the YAML file to load question configurations from.
 #' Defaults to `"questions.yml"`. Custom YAML files can be specified, either in
 #' the root directory or subdirectories (e.g., `"folder/custom.yml"`).
+#' @param matrix_question_width Character string. The width of the matrix question column.
+#' Defaults to `"50%"`.
+#' @param matrix_option_width Character string. The width of the matrix option column.
+#' Defaults to `NULL`.
 #' @param ... Additional arguments, often specific to different input types.
 #' Examples include `pre`, `sep`, `step`, and `animate` for `"slider"` and
 #' `"slider_numeric"` question types, etc.
@@ -714,6 +718,8 @@ sd_question <- function(
   row = NULL,
   default = NULL,
   yml = "questions.yml",
+  matrix_question_width = "50%",
+  matrix_option_width = NULL,
   ...
 ) {
   # Handle option/options alias
@@ -1301,6 +1307,21 @@ sd_question <- function(
       shiny::tags$script(htmltools::HTML(js_init))
     )
   } else if (type == "matrix") {
+    # Calculate option column widths if not provided
+    if (is.null(matrix_option_width)) {
+      # Distribute remaining width equally among option columns
+      remaining_width <- 100 - as.numeric(gsub("%", "", matrix_option_width))
+      matrix_option_width <- paste0(remaining_width / length(option), "%")
+    }
+    # Create colgroup element
+    colgroup <- shiny::tags$colgroup(
+        # First column for questions
+        shiny::tags$col(style = paste0("width: ", matrix_question_width, ";")),
+        # Remaining columns for option
+        lapply(seq_along(option), function(i) {
+            shiny::tags$col(style = paste0("width: ", matrix_option_width, ";"))
+        })
+    )
     header <- shiny::tags$tr(
       shiny::tags$th(""),
       lapply(names(option), function(opt) shiny::tags$th(opt))
@@ -1328,6 +1349,7 @@ sd_question <- function(
       shiny::tags$label(class = "control-label", label),
       shiny::tags$table(
         class = "matrix-question",
+        colgroup,
         header,
         shiny::tags$tbody(rows)
       )
