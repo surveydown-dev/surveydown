@@ -8,7 +8,14 @@ dialog before attempting to close the current browser tab or window.
 ## Usage
 
 ``` r
-sd_close(label_close = NULL, label_previous = NULL, show_previous = NULL)
+sd_close(
+  label_close = NULL,
+  label_previous = NULL,
+  show_previous = NULL,
+  show_restart = FALSE,
+  label_restart = NULL,
+  clear_cookies = FALSE
+)
 ```
 
 ## Arguments
@@ -30,6 +37,23 @@ sd_close(label_close = NULL, label_previous = NULL, show_previous = NULL)
   Defaults to `FALSE`. Note: Unlike
   [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md), this
   parameter does NOT read from the `show-previous` YAML setting.
+
+- show_restart:
+
+  Logical. Whether to show a 'Restart Survey' button alongside the Close
+  button. When `TRUE`, displays two side-by-side buttons. Defaults to
+  `FALSE`.
+
+- label_restart:
+
+  Character string. The label for the 'Restart Survey' button. Defaults
+  to `NULL`, which uses "Restart Survey" (or the translated equivalent).
+
+- clear_cookies:
+
+  Logical. Whether to clear cookies on exit without showing a restart
+  button. Use for use cases where the restart button isn't needed but
+  cookies should be cleared for later resubmission. Defaults to `FALSE`.
 
 ## Value
 
