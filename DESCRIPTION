@@ -1,6 +1,6 @@
 Package: surveydown
 Title: Markdown-Based Programmable Surveys Using 'Quarto' and 'shiny'
-Version: 1.0.1
+Version: 1.0.2
 Authors@R: c(
     person("John Paul", "Helveston", , "john.helveston@gmail.com", role = c("aut", "cre", "cph"),
            comment = c(ORCID = "0000-0002-2657-9191")),
@@ -8,7 +8,10 @@ Authors@R: c(
            comment = c(ORCID = "0009-0001-4877-4844")),
     person("Bogdan", "Bunea", , "buneabt@yahoo.com", role = c("aut", "cph"),
            comment = c(ORCID = "0009-0006-2942-0588")),
-    person("Stefan", "Munnes", , "stefan.munnes@wzb.eu", role = "ctb")
+    person("Stefan", "Munnes", , "stefan.munnes@wzb.eu", role = "ctb"), 
+    person("Reed", "Benkendorf", , , role = "ctb", comment = c(ORCID = "0000-0001-9178-3087")), 
+    person("Umair", "Durrani", , "umairdurrani@outlook.com", role = "ctb"), 
+    person("Dylan", "Pieper", , "dylanpieper@gmail.com", role = "ctb")
   )
 Description: Generate programmable surveys using markdown and R code chunks. Surveys
     are composed of two files: a survey.qmd 'Quarto' file defining the

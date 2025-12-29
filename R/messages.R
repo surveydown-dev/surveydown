@@ -134,7 +134,7 @@ get_messages_default <- function() {
             "previous" = "Pr\u00e9c\u00e9dent",
             "next" = "Suivant",
             "exit" = "Quitter le sondage",
-            "restart" = "Redémarrer le sondage",
+            "restart" = "Red\u00e9marrer le sondage",
             "close-tab" = "Veuillez fermer cet onglet manuellement pour quitter le sondage.",
             "choose-option" = "Choisissez une option...",
             "click" = "Cliquez ici",
