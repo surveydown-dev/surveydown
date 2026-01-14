@@ -72,7 +72,8 @@ This parameter. is maintained for backward compatibility only.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
-the 'shiny' application.
+the 'shiny' application and creates the \code{sd_values} reactive list in the
+parent environment.
 }
 \description{
 This function defines the server-side logic for a 'shiny' application used in
@@ -83,7 +84,8 @@ and exit survey functionality.
 \details{
 The function performs the following tasks:
 \itemize{
-\item Initializes variables and reactive values.
+\item Initializes variables and reactive values, including the \code{sd_values}
+reactive list for accessing question responses.
 \item Implements conditional display logic for questions.
 \item Tracks answered questions and updates the progress bar.
 \item Handles page navigation and skip logic.
@@ -125,6 +127,35 @@ the user attempts to exit the survey. When \code{FALSE}, it will show a simple
 confirmation dialog. The rating, if provided, is saved with the survey data.
 }
 
+\section{Accessing Question Values}{
+
+The \code{sd_server()} function creates a reactive values list called \code{sd_values}
+that provides a reliable way to access question responses in your server logic.
+Unlike directly accessing \code{input$question_id}, which only works for questions
+on the current page, \code{sd_values$question_id} works for all questions by
+automatically restoring values from the database when needed.
+
+Use \code{sd_values} in conditional logic:
+\preformatted{
+  sd_skip_if(
+    sd_values$age < 18 ~ "parental_consent",
+    sd_values$employed == "yes" ~ "employment_questions"
+  )
+}
+
+Or in custom reactive expressions:
+\preformatted{
+  output$custom_text <- renderText({
+    paste("You selected:", sd_values$favorite_color)
+  })
+}
+
+The \code{sd_values} list automatically stays synchronized with question responses
+and includes restored values from previous sessions (via cookies or page
+refreshes), making it safe to use even when navigating backward or refreshing
+the page.
+}
+
 \examples{
 if (interactive()) {
   library(surveydown)
@@ -147,6 +178,22 @@ if (interactive()) {
   # }
   #
   # shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # Using sd_values for conditional logic:
+  # server <- function(input, output, session) {
+  #   # Use sd_values instead of input$ for reliable access to question responses
+  #   sd_skip_if(
+  #     sd_values$age < 18 ~ "parental_consent",
+  #     sd_values$country == "USA" ~ "usa_specific"
+  #   )
+  #
+  #   # sd_values works in custom reactive expressions too
+  #   output$summary <- renderText({
+  #     paste("Age:", sd_values$age, "Country:", sd_values$country)
+  #   })
+  #
+  #   sd_server(db = db)
+  # }
 
   # Find a working directory and start from a template:
   sd_create_survey(template = "default")

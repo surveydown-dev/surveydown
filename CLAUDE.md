@@ -156,6 +156,41 @@ Three main functions control survey flow (defined in `R/server.R` and implemente
 - `sd_show_if()`: Show/hide questions based on conditions
 - `sd_stop_if()`: Prevent navigation if conditions aren't met
 
+### Accessing Question Values: `sd_values`
+
+The `sd_server()` function creates a reactive values list called `sd_values` that provides reliable access to question responses in server logic. This is the recommended way to access question values instead of using `input$question_id` directly.
+
+**Why use `sd_values`?**
+- Works for all questions, not just those on the current page
+- Automatically includes restored values from database/cookies after page refresh
+- Handles navigation backward/forward correctly
+- More robust than direct `input$` access
+
+**Usage in conditional logic:**
+```r
+sd_skip_if(
+  sd_values$age < 18 ~ "parental_consent",
+  sd_values$employed == "yes" ~ "employment_questions"
+)
+
+sd_show_if(
+  sd_values$has_children == "yes" ~ "num_children"
+)
+```
+
+**Usage in custom reactive expressions:**
+```r
+output$custom_message <- renderText({
+  paste("Hello", sd_values$name, "from", sd_values$country)
+})
+```
+
+**Implementation details:**
+- Created in `sd_server()` around line 900-948
+- Synced with `all_data` via a high-priority observer
+- Excludes timestamp fields and reserved IDs
+- Exposed to parent environment so it's available before `sd_server()` is called
+
 ### Progress Tracking
 
 Progress calculation is based on the last answered question index. The progress bar never decreases, even when earlier questions are answered later. This is intentional to avoid confusing respondents.

@@ -46,7 +46,8 @@
 #' @details
 #' The function performs the following tasks:
 #' \itemize{
-#'   \item Initializes variables and reactive values.
+#'   \item Initializes variables and reactive values, including the `sd_values`
+#'         reactive list for accessing question responses.
 #'   \item Implements conditional display logic for questions.
 #'   \item Tracks answered questions and updates the progress bar.
 #'   \item Handles page navigation and skip logic.
@@ -80,9 +81,37 @@
 #' the user attempts to exit the survey. When `FALSE`, it will show a simple
 #' confirmation dialog. The rating, if provided, is saved with the survey data.
 #'
+#' @section Accessing Question Values:
+#' The `sd_server()` function creates a reactive values list called `sd_values`
+#' that provides a reliable way to access question responses in your server logic.
+#' Unlike directly accessing `input$question_id`, which only works for questions
+#' on the current page, `sd_values$question_id` works for all questions by
+#' automatically restoring values from the database when needed.
+#'
+#' Use `sd_values` in conditional logic:
+#' \preformatted{
+#'   sd_skip_if(
+#'     sd_values$age < 18 ~ "parental_consent",
+#'     sd_values$employed == "yes" ~ "employment_questions"
+#'   )
+#' }
+#'
+#' Or in custom reactive expressions:
+#' \preformatted{
+#'   output$custom_text <- renderText({
+#'     paste("You selected:", sd_values$favorite_color)
+#'   })
+#' }
+#'
+#' The `sd_values` list automatically stays synchronized with question responses
+#' and includes restored values from previous sessions (via cookies or page
+#' refreshes), making it safe to use even when navigating backward or refreshing
+#' the page.
+#'
 #' @return
 #' This function does not return a value; it sets up the server-side logic for
-#' the 'shiny' application.
+#' the 'shiny' application and creates the `sd_values` reactive list in the
+#' parent environment.
 #'
 #' @examples
 #' if (interactive()) {
@@ -106,6 +135,22 @@
 #'   # }
 #'   #
 #'   # shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # Using sd_values for conditional logic:
+#'   # server <- function(input, output, session) {
+#'   #   # Use sd_values instead of input$ for reliable access to question responses
+#'   #   sd_skip_if(
+#'   #     sd_values$age < 18 ~ "parental_consent",
+#'   #     sd_values$country == "USA" ~ "usa_specific"
+#'   #   )
+#'   #
+#'   #   # sd_values works in custom reactive expressions too
+#'   #   output$summary <- renderText({
+#'   #     paste("Age:", sd_values$age, "Country:", sd_values$country)
+#'   #   })
+#'   #
+#'   #   sd_server(db = db)
+#'   # }
 #'
 #'   # Find a working directory and start from a template:
 #'   sd_create_survey(template = "default")
@@ -897,9 +942,20 @@ sd_server <- function(
     # Reactive value to track which fields have changed
     changed_fields <- shiny::reactiveVal(names(initial_data))
 
+    # Create sd_values reactive list for user-facing API
+    # This provides a clean interface for accessing question values in conditional logic
+    sd_values <- shiny::reactiveValues()
+
     # Expose all_data and changed_fields to session's userData for use by sd_store_value
     session$userData$all_data <- all_data
     session$userData$changed_fields <- changed_fields
+
+    # Make sd_values available in the parent (user's server function) environment
+    # This allows users to reference sd_values in conditional logic before sd_server() is called
+    parent_env <- parent.frame()
+    if (!exists("sd_values", envir = parent_env, inherits = FALSE)) {
+        assign("sd_values", sd_values, envir = parent_env)
+    }
 
     # Populate all_data with restored values from database (if session was resumed)
     # This ensures Previous button can restore values for all previously answered questions
@@ -920,6 +976,21 @@ sd_server <- function(
         # Clean up
         session$userData$restore_data <- NULL
     }
+
+    # Set up observer to keep sd_values synced with all_data
+    # This ensures sd_values always reflects the latest data, including restored values
+    shiny::observe({
+        # Get all current names from all_data
+        all_names <- names(shiny::reactiveValuesToList(all_data))
+
+        # Update sd_values for all question fields (exclude timestamps and metadata)
+        for (name in all_names) {
+            # Exclude timestamp fields and reserved IDs
+            if (!grepl("_timestamp$", name) && !name %in% get_reserved_ids()) {
+                sd_values[[name]] <- all_data[[name]]
+            }
+        }
+    }, priority = 100)  # High priority to ensure sd_values updates before other observers
 
     # Update checkpoint 1 - when session starts
     shiny::isolate({
