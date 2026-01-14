@@ -38,6 +38,20 @@ pkgdown::build_site()
 
 ### Testing
 
+**Automated Tests:**
+
+```r
+# Run all tests
+devtools::test()
+
+# Run a specific test file
+testthat::test_file("tests/testthat/test-reserved-ids.R")
+```
+
+Tests are located in `tests/testthat/` and use the `testthat` framework. Current test coverage includes validation of reserved IDs and ID checking logic.
+
+**Manual Testing:**
+
 Survey functionality is typically tested manually using the `test_survey/` directory, which contains a full survey example with `app.R` and `survey.qmd` files. To test changes:
 
 1. Make changes to package source files in `R/`
@@ -187,7 +201,16 @@ Database functions in `R/db.R` use the `pool` package for connection pooling and
 
 - **NAMESPACE is auto-generated**: Edit roxygen comments in R files, then run `devtools::document()`. Never edit NAMESPACE directly.
 
-- **Version 1.0.0 changes**: Recent major update introduced `sd_nav()` (replacing `sd_next()`), previous button support, shorthand page syntax (`--- page_id`), and auto-injection of navigation buttons.
+- **Version 1.0+ features**: Recent major updates introduced:
+  - `sd_nav()` (replacing `sd_next()`) with previous button support
+  - Shorthand page syntax (`--- page_id`)
+  - Auto-injection of navigation buttons
+  - Reserved IDs system to prevent conflicts with internal metadata fields
+
+- **Reserved IDs**: The following IDs are reserved and cannot be used for pages, questions, or in `sd_store_value()`:
+  - `session_id`, `time_start`, `time_end`, `exit_survey_rating`, `current_page`, `browser`, `ip_address`
+  - Use `get_reserved_ids()` (internal function) to get the complete list
+  - The `check_ids()` function in `R/config.R` validates page and question IDs during survey parsing
 
 - **Testing locally**: Use `db <- sd_db_connect(ignore = TRUE)` in `app.R` to test without database connection. Responses save to `preview_data.csv`.
 
