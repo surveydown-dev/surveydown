@@ -398,22 +398,31 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #' This function provides a functional interface to access question values from
 #' the `all_data` reactive values list. It is equivalent to using `all_data$question_id`
 #' but allows programmatic access using a string variable or unquoted name.
+#' Multiple question IDs can be provided to retrieve multiple values at once.
 #'
-#' @param question_id The ID of the question whose value you want to retrieve.
-#'   Can be provided as an unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
+#' @param ... One or more question IDs to retrieve. Each can be provided as an
+#'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
 #'
-#' @return The value of the specified question from the `all_data` reactive values list.
-#'   Returns `NULL` if the question ID doesn't exist.
+#' @return If a single question ID is provided, returns the value of that question.
+#'   If multiple question IDs are provided, returns a named vector of values.
+#'   Returns `NULL` for any question ID that doesn't exist.
 #'
 #' @examples
 #' \dontrun{
 #'   library(surveydown)
 #'
 #'   server <- function(input, output, session) {
-#'     # All of these are equivalent:
+#'     # Single value access - all equivalent:
 #'     age1 <- all_data$age
 #'     age2 <- sd_values(age)        # Unquoted (recommended)
 #'     age3 <- sd_values("age")      # Quoted (also works)
+#'
+#'     # Multiple values at once:
+#'     values <- sd_values(age, name, country)
+#'     # Returns c(age = "32", name = "Pingfan", country = "USA")
+#'
+#'     # Mixed quoted/unquoted:
+#'     values <- sd_values(age, "name", country)
 #'
 #'     # Useful for programmatic access with quoted strings:
 #'     question_ids <- c("age", "name", "country")
@@ -429,16 +438,13 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #' }
 #'
 #' @export
-sd_values <- function(question_id) {
-  # Capture the expression
-  question_id_expr <- substitute(question_id)
+sd_values <- function(...) {
+  # Capture all arguments
+  args <- substitute(list(...))[-1]  # Remove 'list' from the beginning
 
-  # If it's already a string, use it directly
-  # Otherwise, convert the symbol to a string
-  if (is.character(question_id_expr)) {
-    question_id_str <- question_id_expr
-  } else {
-    question_id_str <- deparse(question_id_expr)
+  # If no arguments, stop
+  if (length(args) == 0) {
+    stop("At least one question ID must be provided")
   }
 
   calling_env <- parent.frame()
@@ -450,8 +456,50 @@ sd_values <- function(question_id) {
 
   all_data <- get("all_data", envir = calling_env, inherits = TRUE)
 
-  # Return the value
-  return(all_data[[question_id_str]])
+  # Convert each argument to a string
+  question_id_strs <- sapply(args, function(arg) {
+    if (is.character(arg)) {
+      # Already a string
+      arg
+    } else {
+      # Convert symbol to string
+      deparse(arg)
+    }
+  })
+
+  # Get all values
+  values <- lapply(question_id_strs, function(id) {
+    all_data[[id]]
+  })
+
+  # Convert list to vector and add names
+  values <- unlist(values)
+  names(values) <- question_id_strs
+
+  # If only one value, return it without the vector wrapper (for backward compatibility)
+  if (length(values) == 1) {
+    return(unname(values))
+  }
+
+  # Return named vector
+  return(values)
+}
+
+#' Access question values from survey responses (alias)
+#'
+#' This is an alias for `sd_values()`. See [sd_values()] for full documentation.
+#'
+#' @param ... One or more question IDs to retrieve. Each can be provided as an
+#'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
+#'
+#' @return If a single question ID is provided, returns the value of that question.
+#'   If multiple question IDs are provided, returns a named vector of values.
+#'
+#' @seealso [sd_values()]
+#' @export
+sd_value <- function(...) {
+  # Evaluate sd_values() in the parent environment to avoid extra frame
+  eval(substitute(sd_values(...)), parent.frame())
 }
 
 # Convert to SQL

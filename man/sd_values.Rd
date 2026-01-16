@@ -4,30 +4,39 @@
 \alias{sd_values}
 \title{Access question values from survey responses}
 \usage{
-sd_values(question_id)
+sd_values(...)
 }
 \arguments{
-\item{question_id}{The ID of the question whose value you want to retrieve.
-Can be provided as an unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
+\item{...}{One or more question IDs to retrieve. Each can be provided as an
+unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
 }
 \value{
-The value of the specified question from the \code{all_data} reactive values list.
-Returns \code{NULL} if the question ID doesn't exist.
+If a single question ID is provided, returns the value of that question.
+If multiple question IDs are provided, returns a named vector of values.
+Returns \code{NULL} for any question ID that doesn't exist.
 }
 \description{
 This function provides a functional interface to access question values from
 the \code{all_data} reactive values list. It is equivalent to using \code{all_data$question_id}
 but allows programmatic access using a string variable or unquoted name.
+Multiple question IDs can be provided to retrieve multiple values at once.
 }
 \examples{
 \dontrun{
   library(surveydown)
 
   server <- function(input, output, session) {
-    # All of these are equivalent:
+    # Single value access - all equivalent:
     age1 <- all_data$age
     age2 <- sd_values(age)        # Unquoted (recommended)
     age3 <- sd_values("age")      # Quoted (also works)
+
+    # Multiple values at once:
+    values <- sd_values(age, name, country)
+    # Returns c(age = "32", name = "Pingfan", country = "USA")
+
+    # Mixed quoted/unquoted:
+    values <- sd_values(age, "name", country)
 
     # Useful for programmatic access with quoted strings:
     question_ids <- c("age", "name", "country")
