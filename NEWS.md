@@ -1,7 +1,7 @@
 # surveydown 1.0.3
 
 - Bug fix (#246): Added a helper function that provides a vector of all preserved words that cannot be used as IDs and use it to prevent preserved IDs in `sd_store_value()`.
-- New feature (#247): `sd_values$` as a new approach of accessing question values, replacing the Shiny default `input$`. `sd_values$` is able to restore user inputs from db after refreshing the page, so when the survey session is resumed, user inputs will be resumed to the conditional logics without error.
+- New feature (#247): `sd_values()` and `sd_value()` as new approach of accessing question values, replacing the Shiny default `input$`. `sd_values()` and `sd_value()` are able to restore user inputs from db after refreshing the page, so when the survey session is resumed, user inputs will be resumed to the conditional logics without error. `sd_value()` is the alias of `sd_values()`, so they function the same.
 
 # surveydown 1.0.2
 

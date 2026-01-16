@@ -404,7 +404,7 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
 #'
 #' @return If a single question ID is provided, returns the value of that question.
-#'   If multiple question IDs are provided, returns a named vector of values.
+#'   If multiple question IDs are provided, returns an unnamed vector of values.
 #'   Returns `NULL` for any question ID that doesn't exist.
 #'
 #' @examples
@@ -419,18 +419,19 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #'
 #'     # Multiple values at once:
 #'     values <- sd_values(age, name, country)
-#'     # Returns c(age = "32", name = "Pingfan", country = "USA")
+#'     # Returns c("5", "Pinocchio", "UK")
 #'
 #'     # Mixed quoted/unquoted:
 #'     values <- sd_values(age, "name", country)
 #'
-#'     # Useful for programmatic access with quoted strings:
-#'     question_ids <- c("age", "name", "country")
-#'     values <- lapply(question_ids, sd_values)
-#'
-#'     # Can be used in conditional logic:
+#'     # Useful in conditional logic:
 #'     if (sd_values(age) < 18) {
 #'       # Do something
+#'     }
+#'
+#'     # Check multiple values at once:
+#'     if (all(sd_values(vehicle_complex, buy_vehicle) == c("no", "no"))) {
+#'       # Both are "no"
 #'     }
 #'
 #'     sd_server(db = db)
@@ -439,50 +440,49 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #'
 #' @export
 sd_values <- function(...) {
-  # Capture all arguments
-  args <- substitute(list(...))[-1]  # Remove 'list' from the beginning
+    # Capture all arguments
+    args <- substitute(list(...))[-1] # Remove 'list' from the beginning
 
-  # If no arguments, stop
-  if (length(args) == 0) {
-    stop("At least one question ID must be provided")
-  }
-
-  calling_env <- parent.frame()
-
-  # Check if all_data exists in the calling environment or parent environments
-  if (!exists("all_data", envir = calling_env, inherits = TRUE)) {
-    stop("all_data not found. Make sure sd_server() has been called.")
-  }
-
-  all_data <- get("all_data", envir = calling_env, inherits = TRUE)
-
-  # Convert each argument to a string
-  question_id_strs <- sapply(args, function(arg) {
-    if (is.character(arg)) {
-      # Already a string
-      arg
-    } else {
-      # Convert symbol to string
-      deparse(arg)
+    # If no arguments, stop
+    if (length(args) == 0) {
+        stop("At least one question ID must be provided")
     }
-  })
 
-  # Get all values
-  values <- lapply(question_id_strs, function(id) {
-    all_data[[id]]
-  })
+    calling_env <- parent.frame()
 
-  # Convert list to vector and add names
-  values <- unlist(values)
-  names(values) <- question_id_strs
+    # Check if all_data exists in the calling environment or parent environments
+    if (!exists("all_data", envir = calling_env, inherits = TRUE)) {
+        stop("all_data not found. Make sure sd_server() has been called.")
+    }
 
-  # If only one value, return it without the vector wrapper (for backward compatibility)
-  if (length(values) == 1) {
+    all_data <- get("all_data", envir = calling_env, inherits = TRUE)
+
+    # Convert each argument to a string
+    question_id_strs <- sapply(args, function(arg) {
+        if (is.character(arg)) {
+            # Already a string
+            arg
+        } else {
+            # Convert symbol to string
+            deparse(arg)
+        }
+    })
+
+    # Get all values
+    values <- lapply(question_id_strs, function(id) {
+        all_data[[id]]
+    })
+
+    # Convert list to vector
+    values <- unlist(values)
+
+    # If only one value, return it without the vector wrapper (for backward compatibility)
+    if (length(values) == 1) {
+        return(unname(values))
+    }
+
+    # Return unnamed vector for multiple values
     return(unname(values))
-  }
-
-  # Return named vector
-  return(values)
 }
 
 #' Access question values from survey responses (alias)
@@ -493,13 +493,13 @@ sd_values <- function(...) {
 #'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
 #'
 #' @return If a single question ID is provided, returns the value of that question.
-#'   If multiple question IDs are provided, returns a named vector of values.
+#'   If multiple question IDs are provided, returns an unnamed vector of values.
 #'
 #' @seealso [sd_values()]
 #' @export
 sd_value <- function(...) {
-  # Evaluate sd_values() in the parent environment to avoid extra frame
-  eval(substitute(sd_values(...)), parent.frame())
+    # Evaluate sd_values() in the parent environment to avoid extra frame
+    eval(substitute(sd_values(...)), parent.frame())
 }
 
 # Convert to SQL

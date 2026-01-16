@@ -12,7 +12,7 @@ unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
 }
 \value{
 If a single question ID is provided, returns the value of that question.
-If multiple question IDs are provided, returns a named vector of values.
+If multiple question IDs are provided, returns an unnamed vector of values.
 }
 \description{
 This is an alias for \code{sd_values()}. See \code{\link[=sd_values]{sd_values()}} for full documentation.

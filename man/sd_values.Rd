@@ -12,7 +12,7 @@ unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
 }
 \value{
 If a single question ID is provided, returns the value of that question.
-If multiple question IDs are provided, returns a named vector of values.
+If multiple question IDs are provided, returns an unnamed vector of values.
 Returns \code{NULL} for any question ID that doesn't exist.
 }
 \description{
@@ -33,18 +33,19 @@ Multiple question IDs can be provided to retrieve multiple values at once.
 
     # Multiple values at once:
     values <- sd_values(age, name, country)
-    # Returns c(age = "32", name = "Pingfan", country = "USA")
+    # Returns c("5", "Pinocchio", "UK")
 
     # Mixed quoted/unquoted:
     values <- sd_values(age, "name", country)
 
-    # Useful for programmatic access with quoted strings:
-    question_ids <- c("age", "name", "country")
-    values <- lapply(question_ids, sd_values)
-
-    # Can be used in conditional logic:
+    # Useful in conditional logic:
     if (sd_values(age) < 18) {
       # Do something
+    }
+
+    # Check multiple values at once:
+    if (all(sd_values(vehicle_complex, buy_vehicle) == c("no", "no"))) {
+      # Both are "no"
     }
 
     sd_server(db = db)
