@@ -7,7 +7,8 @@
 sd_values(question_id)
 }
 \arguments{
-\item{question_id}{Character string. The ID of the question whose value you want to retrieve.}
+\item{question_id}{The ID of the question whose value you want to retrieve.
+Can be provided as an unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
 }
 \value{
 The value of the specified question from the \code{all_data} reactive values list.
@@ -16,23 +17,24 @@ Returns \code{NULL} if the question ID doesn't exist.
 \description{
 This function provides a functional interface to access question values from
 the \code{all_data} reactive values list. It is equivalent to using \code{all_data$question_id}
-but allows programmatic access using a string variable.
+but allows programmatic access using a string variable or unquoted name.
 }
 \examples{
 \dontrun{
   library(surveydown)
 
   server <- function(input, output, session) {
-    # Direct access vs functional access (these are equivalent):
+    # All of these are equivalent:
     age1 <- all_data$age
-    age2 <- sd_values("age")
+    age2 <- sd_values(age)        # Unquoted (recommended)
+    age3 <- sd_values("age")      # Quoted (also works)
 
-    # Useful for programmatic access:
+    # Useful for programmatic access with quoted strings:
     question_ids <- c("age", "name", "country")
     values <- lapply(question_ids, sd_values)
 
     # Can be used in conditional logic:
-    if (sd_values("age") < 18) {
+    if (sd_values(age) < 18) {
       # Do something
     }
 

@@ -397,9 +397,10 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #'
 #' This function provides a functional interface to access question values from
 #' the `all_data` reactive values list. It is equivalent to using `all_data$question_id`
-#' but allows programmatic access using a string variable.
+#' but allows programmatic access using a string variable or unquoted name.
 #'
-#' @param question_id Character string. The ID of the question whose value you want to retrieve.
+#' @param question_id The ID of the question whose value you want to retrieve.
+#'   Can be provided as an unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
 #'
 #' @return The value of the specified question from the `all_data` reactive values list.
 #'   Returns `NULL` if the question ID doesn't exist.
@@ -409,16 +410,17 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #'   library(surveydown)
 #'
 #'   server <- function(input, output, session) {
-#'     # Direct access vs functional access (these are equivalent):
+#'     # All of these are equivalent:
 #'     age1 <- all_data$age
-#'     age2 <- sd_values("age")
+#'     age2 <- sd_values(age)        # Unquoted (recommended)
+#'     age3 <- sd_values("age")      # Quoted (also works)
 #'
-#'     # Useful for programmatic access:
+#'     # Useful for programmatic access with quoted strings:
 #'     question_ids <- c("age", "name", "country")
 #'     values <- lapply(question_ids, sd_values)
 #'
 #'     # Can be used in conditional logic:
-#'     if (sd_values("age") < 18) {
+#'     if (sd_values(age) < 18) {
 #'       # Do something
 #'     }
 #'
@@ -428,6 +430,17 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #'
 #' @export
 sd_values <- function(question_id) {
+  # Capture the expression
+  question_id_expr <- substitute(question_id)
+
+  # If it's already a string, use it directly
+  # Otherwise, convert the symbol to a string
+  if (is.character(question_id_expr)) {
+    question_id_str <- question_id_expr
+  } else {
+    question_id_str <- deparse(question_id_expr)
+  }
+
   calling_env <- parent.frame()
 
   # Check if all_data exists in the calling environment or parent environments
@@ -438,7 +451,7 @@ sd_values <- function(question_id) {
   all_data <- get("all_data", envir = calling_env, inherits = TRUE)
 
   # Return the value
-  return(all_data[[question_id]])
+  return(all_data[[question_id_str]])
 }
 
 # Convert to SQL
