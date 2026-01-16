@@ -393,6 +393,54 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
     }
 }
 
+#' Access question values from survey responses
+#'
+#' This function provides a functional interface to access question values from
+#' the `all_data` reactive values list. It is equivalent to using `all_data$question_id`
+#' but allows programmatic access using a string variable.
+#'
+#' @param question_id Character string. The ID of the question whose value you want to retrieve.
+#'
+#' @return The value of the specified question from the `all_data` reactive values list.
+#'   Returns `NULL` if the question ID doesn't exist.
+#'
+#' @examples
+#' \dontrun{
+#'   library(surveydown)
+#'
+#'   server <- function(input, output, session) {
+#'     # Direct access vs functional access (these are equivalent):
+#'     age1 <- all_data$age
+#'     age2 <- sd_values("age")
+#'
+#'     # Useful for programmatic access:
+#'     question_ids <- c("age", "name", "country")
+#'     values <- lapply(question_ids, sd_values)
+#'
+#'     # Can be used in conditional logic:
+#'     if (sd_values("age") < 18) {
+#'       # Do something
+#'     }
+#'
+#'     sd_server(db = db)
+#'   }
+#' }
+#'
+#' @export
+sd_values <- function(question_id) {
+  calling_env <- parent.frame()
+
+  # Check if all_data exists in the calling environment or parent environments
+  if (!exists("all_data", envir = calling_env, inherits = TRUE)) {
+    stop("all_data not found. Make sure sd_server() has been called.")
+  }
+
+  all_data <- get("all_data", envir = calling_env, inherits = TRUE)
+
+  # Return the value
+  return(all_data[[question_id]])
+}
+
 # Convert to SQL
 r_to_sql_type <- function(r_type) {
     switch(

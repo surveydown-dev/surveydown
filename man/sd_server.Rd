@@ -72,7 +72,7 @@ This parameter. is maintained for backward compatibility only.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
-the 'shiny' application and creates the \code{sd_values} reactive list in the
+the 'shiny' application and exposes the \code{all_data} reactive list in the
 parent environment.
 }
 \description{
@@ -84,7 +84,7 @@ and exit survey functionality.
 \details{
 The function performs the following tasks:
 \itemize{
-\item Initializes variables and reactive values, including the \code{sd_values}
+\item Initializes variables and reactive values, including the \code{all_data}
 reactive list for accessing question responses.
 \item Implements conditional display logic for questions.
 \item Tracks answered questions and updates the progress bar.
@@ -129,28 +129,28 @@ confirmation dialog. The rating, if provided, is saved with the survey data.
 
 \section{Accessing Question Values}{
 
-The \code{sd_server()} function creates a reactive values list called \code{sd_values}
+The \code{sd_server()} function exposes the \code{all_data} reactive values list
 that provides a reliable way to access question responses in your server logic.
 Unlike directly accessing \code{input$question_id}, which only works for questions
-on the current page, \code{sd_values$question_id} works for all questions by
+on the current page, \code{all_data$question_id} works for all questions by
 automatically restoring values from the database when needed.
 
-Use \code{sd_values} in conditional logic:
+Use \code{all_data} in conditional logic:
 \preformatted{
   sd_skip_if(
-    sd_values$age < 18 ~ "parental_consent",
-    sd_values$employed == "yes" ~ "employment_questions"
+    all_data$age < 18 ~ "parental_consent",
+    all_data$employed == "yes" ~ "employment_questions"
   )
 }
 
 Or in custom reactive expressions:
 \preformatted{
   output$custom_text <- renderText({
-    paste("You selected:", sd_values$favorite_color)
+    paste("You selected:", all_data$favorite_color)
   })
 }
 
-The \code{sd_values} list automatically stays synchronized with question responses
+The \code{all_data} list automatically stays synchronized with question responses
 and includes restored values from previous sessions (via cookies or page
 refreshes), making it safe to use even when navigating backward or refreshing
 the page.
@@ -179,17 +179,17 @@ if (interactive()) {
   #
   # shiny::shinyApp(ui = sd_ui(), server = server)
 
-  # Using sd_values for conditional logic:
+  # Using all_data for conditional logic:
   # server <- function(input, output, session) {
-  #   # Use sd_values instead of input$ for reliable access to question responses
+  #   # Use all_data instead of input$ for reliable access to question responses
   #   sd_skip_if(
-  #     sd_values$age < 18 ~ "parental_consent",
-  #     sd_values$country == "USA" ~ "usa_specific"
+  #     all_data$age < 18 ~ "parental_consent",
+  #     all_data$country == "USA" ~ "usa_specific"
   #   )
   #
-  #   # sd_values works in custom reactive expressions too
+  #   # all_data works in custom reactive expressions too
   #   output$summary <- renderText({
-  #     paste("Age:", sd_values$age, "Country:", sd_values$country)
+  #     paste("Age:", all_data$age, "Country:", all_data$country)
   #   })
   #
   #   sd_server(db = db)

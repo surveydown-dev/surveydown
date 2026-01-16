@@ -156,11 +156,11 @@ Three main functions control survey flow (defined in `R/server.R` and implemente
 - `sd_show_if()`: Show/hide questions based on conditions
 - `sd_stop_if()`: Prevent navigation if conditions aren't met
 
-### Accessing Question Values: `sd_values`
+### Accessing Question Values: `all_data`
 
-The `sd_server()` function creates a reactive values list called `sd_values` that provides reliable access to question responses in server logic. This is the recommended way to access question values instead of using `input$question_id` directly.
+The `sd_server()` function creates a reactive values list called `all_data` that provides reliable access to question responses in server logic. This is the recommended way to access question values instead of using `input$question_id` directly.
 
-**Why use `sd_values`?**
+**Why use `all_data`?**
 - Works for all questions, not just those on the current page
 - Automatically includes restored values from database/cookies after page refresh
 - Handles navigation backward/forward correctly
@@ -169,19 +169,19 @@ The `sd_server()` function creates a reactive values list called `sd_values` tha
 **Usage in conditional logic:**
 ```r
 sd_skip_if(
-  sd_values$age < 18 ~ "parental_consent",
-  sd_values$employed == "yes" ~ "employment_questions"
+  all_data$age < 18 ~ "parental_consent",
+  all_data$employed == "yes" ~ "employment_questions"
 )
 
 sd_show_if(
-  sd_values$has_children == "yes" ~ "num_children"
+  all_data$has_children == "yes" ~ "num_children"
 )
 ```
 
 **Usage in custom reactive expressions:**
 ```r
 output$custom_message <- renderText({
-  paste("Hello", sd_values$name, "from", sd_values$country)
+  paste("Hello", all_data$name, "from", all_data$country)
 })
 ```
 
