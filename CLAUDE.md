@@ -156,9 +156,13 @@ Three main functions control survey flow (defined in `R/server.R` and implemente
 - `sd_show_if()`: Show/hide questions based on conditions
 - `sd_stop_if()`: Prevent navigation if conditions aren't met
 
-### Accessing Question Values: `all_data`
+### Accessing Question Values
 
-The `sd_server()` function creates a reactive values list called `all_data` that provides reliable access to question responses in server logic. This is the recommended way to access question values instead of using `input$question_id` directly.
+There are two primary ways to access question values in server logic:
+
+#### 1. Using `all_data` (direct access)
+
+The `sd_server()` function creates a reactive values list called `all_data` that provides reliable access to question responses.
 
 **Why use `all_data`?**
 - Works for all questions, not just those on the current page
@@ -166,8 +170,12 @@ The `sd_server()` function creates a reactive values list called `all_data` that
 - Handles navigation backward/forward correctly
 - More robust than direct `input$` access
 
-**Usage in conditional logic:**
+**Usage:**
 ```r
+# Direct access with $ notation
+age_value <- all_data$age
+
+# In conditional logic
 sd_skip_if(
   all_data$age < 18 ~ "parental_consent",
   all_data$employed == "yes" ~ "employment_questions"
@@ -176,10 +184,8 @@ sd_skip_if(
 sd_show_if(
   all_data$has_children == "yes" ~ "num_children"
 )
-```
 
-**Usage in custom reactive expressions:**
-```r
+# In custom reactive expressions
 output$custom_message <- renderText({
   paste("Hello", all_data$name, "from", all_data$country)
 })
@@ -187,9 +193,49 @@ output$custom_message <- renderText({
 
 **Implementation details:**
 - Created in `sd_server()` around line 900-948
-- Synced with `all_data` via a high-priority observer
+- Synced via a high-priority observer
 - Excludes timestamp fields and reserved IDs
 - Exposed to parent environment so it's available before `sd_server()` is called
+
+#### 2. Using `sd_values()` and `sd_value()` (functional access)
+
+For functional/programmatic access to question values, use `sd_values()` (or its alias `sd_value()`). These functions are defined in `R/db.R`.
+
+**When to use `sd_values()`:**
+- When you need programmatic access using string variables
+- When retrieving multiple values at once
+- When you prefer function syntax over `$` notation
+
+**Usage:**
+```r
+# Single value - all equivalent:
+age1 <- all_data$age
+age2 <- sd_values(age)        # Unquoted (recommended)
+age3 <- sd_values("age")      # Quoted (also works)
+age4 <- sd_value(age)         # Alias for sd_values()
+
+# Multiple values at once (returns unnamed vector):
+values <- sd_values(age, name, country)
+# Returns c("5", "Pinocchio", "UK")
+
+# Mixed quoted/unquoted:
+values <- sd_values(age, "name", country)
+
+# In conditional logic:
+if (sd_values(age) < 18) {
+  # Do something
+}
+
+# Check multiple values at once:
+if (all(sd_values(vehicle_complex, buy_vehicle) == c("no", "no"))) {
+  # Both are "no"
+}
+```
+
+**Key differences:**
+- `sd_values()` with single argument returns a single value (for backward compatibility)
+- `sd_values()` with multiple arguments returns an unnamed vector
+- Both access the same `all_data` reactive values list under the hood
 
 ### Progress Tracking
 
