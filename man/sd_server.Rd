@@ -17,7 +17,9 @@ sd_server(
   highlight_unanswered = TRUE,
   highlight_color = "gray",
   capture_metadata = TRUE,
-  language = NULL
+  language = NULL,
+  options_randomized = NULL,
+  all_options_randomized = FALSE
 )
 }
 \arguments{
@@ -69,6 +71,16 @@ Defaults to \code{TRUE}.}
 
 \item{language}{Deprecated as of v0.13.0. Use \code{system_language} instead.
 This parameter. is maintained for backward compatibility only.}
+
+\item{options_randomized}{Vector of character strings. The IDs of questions
+whose options should be randomized. Only applies to multiple choice question
+types (mc, mc_buttons, mc_multiple, mc_multiple_buttons). Defaults to \code{NULL}
+(no randomized questions). Randomization occurs once per session when the
+question is first displayed and maintains the same order throughout navigation.}
+
+\item{all_options_randomized}{Logical. If \code{TRUE}, randomizes options for all
+multiple choice questions in the survey. Defaults to \code{FALSE}. Only affects
+mc, mc_buttons, mc_multiple, and mc_multiple_buttons question types.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
