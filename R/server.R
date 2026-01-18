@@ -42,14 +42,6 @@
 #'   Defaults to `TRUE`.
 #' @param language Deprecated as of v0.13.0. Use `system_language` instead.
 #' This parameter. is maintained for backward compatibility only.
-#' @param options_randomized Vector of character strings. The IDs of questions
-#'   whose options should be randomized. Only applies to multiple choice question
-#'   types (mc, mc_buttons, mc_multiple, mc_multiple_buttons). Defaults to `NULL`
-#'   (no randomized questions). Randomization occurs once per session when the
-#'   question is first displayed and maintains the same order throughout navigation.
-#' @param all_options_randomized Logical. If `TRUE`, randomizes options for all
-#'   multiple choice questions in the survey. Defaults to `FALSE`. Only affects
-#'   mc, mc_buttons, mc_multiple, and mc_multiple_buttons question types.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -183,9 +175,7 @@ sd_server <- function(
     highlight_unanswered = TRUE,
     highlight_color = "gray",
     capture_metadata = TRUE,
-    language = NULL,
-    options_randomized = NULL,
-    all_options_randomized = FALSE
+    language = NULL
 ) {
     # 1. Initialize local variables ----
 
@@ -234,9 +224,7 @@ sd_server <- function(
         highlight_color = !missing(highlight_color),
         capture_metadata = !missing(capture_metadata),
         required_questions = !missing(required_questions),
-        language = !missing(language),
-        options_randomized = !missing(options_randomized),
-        all_options_randomized = !missing(all_options_randomized)
+        language = !missing(language)
     )
 
     # Run the configuration settings
@@ -247,9 +235,7 @@ sd_server <- function(
         skip_if,
         show_if,
         rate_survey,
-        system_language,
-        options_randomized,
-        all_options_randomized
+        system_language
     )
 
     # Now read settings from _survey/settings.yml (created in sd_ui)
@@ -270,9 +256,7 @@ sd_server <- function(
         highlight_unanswered = "highlight-unanswered",
         highlight_color = "highlight-color",
         capture_metadata = "capture-metadata",
-        required_questions = "required-questions",
-        options_randomized = "options-randomized",
-        all_options_randomized = "all-options-randomized"
+        required_questions = "required-questions"
     )
 
     for (param in names(param_to_kebab)) {
@@ -303,7 +287,6 @@ sd_server <- function(
     page_ids <- config$page_ids
     question_ids <- config$question_ids
     question_structure <- config$question_structure
-    question_randomized <- config$question_randomized
 
     # Don't overwrite start_page if it was resolved from YAML settings
     # Only use config$start_page if start_page is still NULL
@@ -523,9 +506,7 @@ sd_server <- function(
         highlight_unanswered = highlight_unanswered,
         highlight_color = highlight_color,
         capture_metadata = capture_metadata,
-        required_questions = question_required, # Use enhanced required questions
-        options_randomized = options_randomized,
-        all_options_randomized = all_options_randomized
+        required_questions = question_required # Use enhanced required questions
     )
     update_settings_yaml(resolved_params)
 
@@ -969,27 +950,6 @@ sd_server <- function(
     # This allows users to reference all_data in conditional logic
     assign("all_data", all_data, envir = parent_env)
 
-    # Reactive values for randomized option orders (stored per question)
-    randomized_orders <- shiny::reactiveValues()
-
-    # Helper function to get or create randomized order for a question
-    get_randomized_order <- function(question_id) {
-        # Check if order already exists (from previous page visit)
-        if (!is.null(randomized_orders[[question_id]])) {
-            return(randomized_orders[[question_id]])
-        }
-
-        # Create new randomized order
-        q_structure <- question_structure[[question_id]]
-        if (!is.null(q_structure) && !is.null(q_structure$options)) {
-            n_options <- length(q_structure$options)
-            randomized_orders[[question_id]] <- sample(1:n_options)
-            return(randomized_orders[[question_id]])
-        }
-
-        return(NULL)
-    }
-
     # Populate all_data with restored values from database (if session was resumed)
     # This ensures Previous button can restore values for all previously answered questions
     if (!is.null(session$userData$restore_data)) {
@@ -1295,37 +1255,6 @@ sd_server <- function(
                         page_id = current_page$id
                     )
                 )
-            }
-        }
-    })
-
-    # Observer to send randomization instructions to JavaScript when page changes
-    shiny::observe({
-        current_page <- get_current_page()  # Make dependency explicit
-
-        if (length(question_randomized) > 0 && !is.null(current_page)) {
-            # Find which randomized questions are on this page
-            page_randomized <- intersect(current_page$questions, question_randomized)
-
-            if (length(page_randomized) > 0) {
-                # Get randomized orders for each question
-                randomization_data <- lapply(page_randomized, function(q_id) {
-                    list(
-                        question_id = q_id,
-                        order = get_randomized_order(q_id)
-                    )
-                })
-
-                # Send to JavaScript with delay to ensure DOM is fully rendered
-                shiny::isolate({
-                    session$sendCustomMessage(
-                        "randomizeQuestionOptions",
-                        list(
-                            questions = randomization_data,
-                            delay = 150  # Delay in milliseconds
-                        )
-                    )
-                })
             }
         }
     })

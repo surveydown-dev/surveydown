@@ -5,9 +5,7 @@ run_config <- function(
   skip_if,
   show_if,
   rate_survey,
-  language,
-  options_randomized,
-  all_options_randomized
+  language
 ) {
   # Check for sd_close() in survey.qmd if rate_survey used
   if (rate_survey) {
@@ -86,20 +84,6 @@ run_config <- function(
     question_required <- required_questions
   }
 
-  # Determine which questions need randomized options
-  # Only apply to MC types: mc, mc_buttons, mc_multiple, mc_multiple_buttons
-  mc_types <- c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons")
-  mc_question_ids <- names(which(sapply(question_structure, function(q) {
-    q$type %in% mc_types
-  })))
-
-  if (all_options_randomized) {
-    question_randomized <- mc_question_ids
-  } else {
-    # Only include specified questions that are actually MC types
-    question_randomized <- intersect(options_randomized, mc_question_ids)
-  }
-
   # Check that start_page (if used) points to an actual page
   if (!is.null(start_page) && !(start_page %in% page_ids)) {
     stop(
@@ -128,7 +112,6 @@ run_config <- function(
     page_ids = page_ids,
     question_ids = question_ids,
     question_required = question_required,
-    question_randomized = question_randomized,
     start_page = start_page,
     question_structure = question_structure
   )
@@ -509,9 +492,7 @@ create_settings_yaml <- function(paths, metadata) {
           "highlight-unanswered",
           "highlight-color",
           "capture-metadata",
-          "required-questions",
-          "options-randomized",
-          "all-options-randomized"
+          "required-questions"
         )
 
         # Combine all parameters
@@ -537,9 +518,7 @@ create_settings_yaml <- function(paths, metadata) {
           `highlight-unanswered` = TRUE,
           `highlight-color` = "gray",
           `capture-metadata` = TRUE,
-          `required-questions` = NULL,
-          `options-randomized` = NULL,
-          `all-options-randomized` = FALSE
+          `required-questions` = NULL
         )
 
         # Extract YAML values using helper functions (priority: YAML > defaults)
@@ -578,10 +557,6 @@ create_settings_yaml <- function(paths, metadata) {
             value <- get_capture_metadata(metadata)
           } else if (param == "required-questions") {
             value <- get_required_questions(metadata)
-          } else if (param == "options-randomized") {
-            value <- get_options_randomized(metadata)
-          } else if (param == "all-options-randomized") {
-            value <- get_all_options_randomized(metadata)
           } else if (param == "show-previous") {
             value <- get_show_previous(metadata)
           } else {
@@ -909,9 +884,7 @@ update_settings_yaml <- function(resolved_params) {
     "highlight-unanswered",
     "highlight-color",
     "capture-metadata",
-    "required-questions",
-    "options-randomized",
-    "all-options-randomized"
+    "required-questions"
   )
 
   # Read existing settings to preserve Theme Settings
@@ -929,9 +902,7 @@ update_settings_yaml <- function(resolved_params) {
     `highlight-unanswered` = TRUE,
     `highlight-color` = "gray",
     `capture-metadata` = TRUE,
-    `required-questions` = NULL,
-    `options-randomized` = NULL,
-    `all-options-randomized` = FALSE
+    `required-questions` = NULL
   )
 
   # Filter out language parameter to avoid breaking Quarto
@@ -960,9 +931,7 @@ update_settings_yaml <- function(resolved_params) {
     `highlight-unanswered` = "highlight_unanswered",
     `highlight-color` = "highlight_color",
     `capture-metadata` = "capture_metadata",
-    `required-questions` = "required_questions",
-    `options-randomized` = "options_randomized",
-    `all-options-randomized` = "all_options_randomized"
+    `required-questions` = "required_questions"
   )
 
   for (param in survey_params) {

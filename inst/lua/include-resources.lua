@@ -24,8 +24,7 @@ function Meta(meta)
         "highlighting.js",
         "interaction.js",
         "keep_alive.js",
-        "progressbar.js",
-        "randomization.js"
+        "progressbar.js"
     }
 
     local css_files = {
