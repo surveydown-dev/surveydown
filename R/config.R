@@ -1,3 +1,70 @@
+# MC type names that support option randomization
+MC_TYPE_NAMES <- c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons")
+
+# Check if a question is an MC-type question (supports option randomization)
+is_mc_type_question <- function(question) {
+  type <- question$type
+  if (is.null(type) || length(type) == 0) return(FALSE)
+  if (isTRUE(question$is_matrix)) return(FALSE)
+
+  # Check for simple type names or CSS class patterns
+  type %in% MC_TYPE_NAMES ||
+    grepl("radio", type, ignore.case = TRUE) ||
+    grepl("checkbox", type, ignore.case = TRUE)
+}
+
+# Get IDs of all MC-type questions from question structure
+get_mc_question_ids <- function(question_structure) {
+  names(which(sapply(question_structure, is_mc_type_question)))
+}
+
+# Load randomization settings from YAML if not provided
+load_randomization_settings <- function(options_randomized, all_options_randomized) {
+  if (!is.null(options_randomized) || all_options_randomized) {
+    return(list(
+      options_randomized = options_randomized,
+      all_options_randomized = all_options_randomized
+    ))
+  }
+
+  settings <- read_settings_yaml()
+  list(
+    options_randomized = settings$`options-randomized`,
+    all_options_randomized = isTRUE(settings$`all-options-randomized`)
+  )
+}
+
+# Determine which questions should have randomized options
+determine_randomized_questions <- function(
+  question_structure,
+  options_randomized,
+  all_options_randomized,
+  warn_non_mc = FALSE
+) {
+  mc_question_ids <- get_mc_question_ids(question_structure)
+
+  if (all_options_randomized) {
+    return(mc_question_ids)
+  }
+
+  if (is.null(options_randomized) || length(options_randomized) == 0) {
+    return(character(0))
+  }
+
+  # Warn about non-MC questions if requested
+  if (warn_non_mc) {
+    non_mc <- setdiff(options_randomized, mc_question_ids)
+    if (length(non_mc) > 0) {
+      warning(
+        "The following questions in options_randomized are not MC-type questions and will be skipped: ",
+        paste(non_mc, collapse = ", ")
+      )
+    }
+  }
+
+  intersect(options_randomized, mc_question_ids)
+}
+
 run_config <- function(
   required_questions,
   all_questions_required,
@@ -9,69 +76,31 @@ run_config <- function(
   options_randomized = NULL,
   all_options_randomized = FALSE
 ) {
-  # Check for sd_close() in survey.qmd if rate_survey used
   if (rate_survey) {
     check_sd_close()
   }
 
-  # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
-  # If changes detected, re-parse the '_survey/survey.html' file
   if (survey_files_need_updating(paths)) {
     message("Changes detected...re-parsing survey contents...")
 
-    # Get the html content from the rendered survey.html file
-    # Note: messages are now handled in create_settings_yaml()
     html_content <- rvest::read_html(paths$target_html)
-
-    # Get question structure first (needed for randomization determination)
     question_structure <- get_question_structure(paths, html_content)
 
-    # Read settings for randomization if not provided in function call
-    # This handles the case where options-randomized is set in YAML but not in sd_server()
-    if (is.null(options_randomized) && !all_options_randomized) {
-      settings <- read_settings_yaml()
-      if (!is.null(settings$`options-randomized`)) {
-        options_randomized <- settings$`options-randomized`
-      }
-      if (isTRUE(settings$`all-options-randomized`)) {
-        all_options_randomized <- TRUE
-      }
-    }
+    # Load randomization settings from YAML if not provided
+    rand_settings <- load_randomization_settings(options_randomized, all_options_randomized)
+    options_randomized <- rand_settings$options_randomized
+    all_options_randomized <- rand_settings$all_options_randomized
 
-    # Determine which questions should have randomized options
-    # Only MC-type questions can be randomized
-    # Types may be CSS classes (from fresh parse) or simple names (from cache)
-    mc_type_names <- c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons")
-    mc_question_ids <- names(which(sapply(question_structure, function(q) {
-      type <- q$type
-      if (is.null(type) || length(type) == 0) return(FALSE)
-      # Check for simple type names OR CSS class patterns
-      !q$is_matrix && (
-        type %in% mc_type_names ||
-        grepl("radio", type, ignore.case = TRUE) ||
-        grepl("checkbox", type, ignore.case = TRUE)
-      )
-    })))
+    # Determine which questions should have randomized options (warn on fresh parse)
+    question_randomized <- determine_randomized_questions(
+      question_structure,
+      options_randomized,
+      all_options_randomized,
+      warn_non_mc = TRUE
+    )
 
-    if (all_options_randomized) {
-      question_randomized <- mc_question_ids
-    } else if (!is.null(options_randomized) && length(options_randomized) > 0) {
-      # Intersect with MC question IDs, warn about non-MC questions
-      non_mc <- setdiff(options_randomized, mc_question_ids)
-      if (length(non_mc) > 0) {
-        warning(
-          "The following questions in options_randomized are not MC-type questions and will be skipped: ",
-          paste(non_mc, collapse = ", ")
-        )
-      }
-      question_randomized <- intersect(options_randomized, mc_question_ids)
-    } else {
-      question_randomized <- character(0)
-    }
-
-    # Extract all divs with class "sd-page" and save to "_survey" folder
     pages <- extract_html_pages(
       paths,
       html_content,
@@ -84,67 +113,29 @@ run_config <- function(
 
     message(
       "Survey content saved to:\n",
-      "  ",
-      paths$target_html,
-      "\n",
-      "  ",
-      paths$target_head,
-      "\n",
-      "  ",
-      paths$target_pages,
-      "\n",
-      "  ",
-      paths$target_questions,
-      "\n",
-      "  ",
-      paths$target_settings
+      "  ", paths$target_html, "\n",
+      "  ", paths$target_head, "\n",
+      "  ", paths$target_pages, "\n",
+      "  ", paths$target_questions, "\n",
+      "  ", paths$target_settings
     )
   } else {
-    # If no changes, import from '_survey' folder
-    message(
-      'No changes detected. Importing contents from "_survey" folder.'
-    )
+    message('No changes detected. Importing contents from "_survey" folder.')
 
-    # Load pages object from _survey folder
     pages <- readRDS(paths$target_pages)
-
-    # Load question structure from _survey folder
     question_structure <- load_question_structure_yaml(paths$target_questions)
 
-    # Read settings for randomization if not provided in function call
-    # This handles the case where options-randomized is set in YAML but not in sd_server()
-    if (is.null(options_randomized) && !all_options_randomized) {
-      settings <- read_settings_yaml()
-      if (!is.null(settings$`options-randomized`)) {
-        options_randomized <- settings$`options-randomized`
-      }
-      if (isTRUE(settings$`all-options-randomized`)) {
-        all_options_randomized <- TRUE
-      }
-    }
+    # Load randomization settings from YAML if not provided
+    rand_settings <- load_randomization_settings(options_randomized, all_options_randomized)
+    options_randomized <- rand_settings$options_randomized
+    all_options_randomized <- rand_settings$all_options_randomized
 
-    # Recalculate which questions should have randomized options
-    # Types in questions.yml are simple names (mc, mc_buttons, mc_multiple, mc_multiple_buttons)
-    # or CSS classes (shiny-input-radiogroup, etc.) depending on when they were saved
-    mc_type_names <- c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons")
-    mc_question_ids <- names(which(sapply(question_structure, function(q) {
-      type <- q$type
-      if (is.null(type) || length(type) == 0) return(FALSE)
-      # Check for simple type names OR CSS class patterns (for backwards compatibility)
-      !q$is_matrix && (
-        type %in% mc_type_names ||
-        grepl("radio", type, ignore.case = TRUE) ||
-        grepl("checkbox", type, ignore.case = TRUE)
-      )
-    })))
-
-    if (all_options_randomized) {
-      question_randomized <- mc_question_ids
-    } else if (!is.null(options_randomized) && length(options_randomized) > 0) {
-      question_randomized <- intersect(options_randomized, mc_question_ids)
-    } else {
-      question_randomized <- character(0)
-    }
+    # Determine which questions should have randomized options
+    question_randomized <- determine_randomized_questions(
+      question_structure,
+      options_randomized,
+      all_options_randomized
+    )
   }
 
   # Get page and question IDs

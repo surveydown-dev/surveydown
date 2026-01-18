@@ -302,8 +302,6 @@ sd_server <- function(
     question_ids <- config$question_ids
     question_structure <- config$question_structure
     question_randomized <- config$question_randomized
-    message("[DEBUG] question_randomized: ", paste(question_randomized, collapse = ", "))
-    message("[DEBUG] length(question_randomized): ", length(question_randomized))
 
     # Don't overwrite start_page if it was resolved from YAML settings
     # Only use config$start_page if start_page is still NULL
@@ -996,122 +994,107 @@ sd_server <- function(
 
     # 4b. Options randomization state ----
 
-    # Helper function to convert CSS class or simple type to sd_question type
-    # Handles both CSS classes (e.g., "shiny-input-radiogroup") and simple types (e.g., "mc_buttons")
+    # Convert CSS class or simple type to sd_question type
     css_to_question_type <- function(type_str, is_button_style = FALSE) {
         if (is.null(type_str) || length(type_str) == 0) return("mc")
         type_str <- tolower(type_str)
 
-        # First check if it's already a valid simple type
-        valid_types <- c("mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons")
-        if (type_str %in% valid_types) {
-            return(type_str)
-        }
+        # Return if already a valid MC type
+        if (type_str %in% MC_TYPE_NAMES) return(type_str)
 
-        # Otherwise, try to infer from CSS class patterns
-        if (grepl("checkbox", type_str)) {
-            if (is_button_style) {
-                return("mc_multiple_buttons")
-            } else {
-                return("mc_multiple")
-            }
+        # Infer from CSS class patterns
+        is_checkbox <- grepl("checkbox", type_str)
+        if (is_checkbox) {
+            if (is_button_style) "mc_multiple_buttons" else "mc_multiple"
         } else if (grepl("radio", type_str)) {
-            if (is_button_style) {
-                return("mc_buttons")
-            } else {
-                return("mc")
-            }
+            if (is_button_style) "mc_buttons" else "mc"
+        } else {
+            "mc"
         }
-        return("mc") # Default fallback
     }
 
-    # Create randomized questions dynamically
-    # We pre-generate the HTML outside reactive context, then send it when session is ready
-    message("[DEBUG] Entering randomization block, length: ", length(question_randomized))
-    if (length(question_randomized) > 0) {
-        message("[DEBUG] Inside randomization block")
-        # Use a regular list for storing orders during generation (not reactiveValues)
-        # This is because we're generating outside reactive context
-        temp_orders <- list()
+    # Generate randomized question HTML for a single question
+    generate_randomized_question_html <- function(q_id, q_struct, existing_order = NULL) {
+        if (is.null(q_struct) || is.null(q_struct$options)) return(NULL)
 
+        n_opts <- length(q_struct$options)
+        original_options <- unlist(q_struct$options)
+
+        # Get or create randomization order
+        if (n_opts < 2) {
+            order <- seq_len(n_opts)
+        } else if (!is.null(existing_order)) {
+            order <- existing_order
+        } else {
+            order <- sample(seq_len(n_opts))
+        }
+
+        randomized_options <- original_options[order]
+
+        # Get label (handle list format)
+        q_label <- q_struct$label
+        if (is.list(q_label)) q_label <- q_label[[1]]
+
+        # Convert type to sd_question type
+        q_type <- css_to_question_type(q_struct$type, isTRUE(q_struct$is_button_style))
+
+        # Create question HTML outside reactive context
+        question_html <- shiny::withReactiveDomain(NULL, {
+            sd_question(
+                id = q_id,
+                type = q_type,
+                label = q_label,
+                option = randomized_options
+            )
+        })
+
+        list(
+            html = as.character(question_html),
+            order = order
+        )
+    }
+
+    # Initialize randomization state
+    randomized_orders <- shiny::reactiveValues()
+    session$userData$randomized_orders <- randomized_orders
+
+    if (length(question_randomized) > 0) {
         # Restore orders from cookies if available
-        if (!is.null(session$userData$restored_randomization_orders)) {
-            restored_orders <- session$userData$restored_randomization_orders
+        restored_orders <- session$userData$restored_randomization_orders
+        session$userData$restored_randomization_orders <- NULL
+
+        temp_orders <- list()
+        if (!is.null(restored_orders)) {
             for (q_id in names(restored_orders)) {
                 order <- unlist(restored_orders[[q_id]])
                 if (is.numeric(order) && length(order) > 0) {
                     temp_orders[[q_id]] <- as.integer(order)
                 }
             }
-            session$userData$restored_randomization_orders <- NULL
         }
 
-        # Pre-generate HTML for all randomized questions OUTSIDE reactive context
+        # Pre-generate HTML for all randomized questions
         randomized_question_html <- list()
-
         for (q_id in question_randomized) {
-            q_struct <- question_structure[[q_id]]
-
-            if (!is.null(q_struct) && !is.null(q_struct$options)) {
-                # Get number of options
-                n_opts <- length(q_struct$options)
-
-                # Skip if less than 2 options (no point randomizing)
-                if (n_opts < 2) {
-                    randomized_options <- unlist(q_struct$options)
-                } else {
-                    # Get or create randomization order
-                    if (!is.null(temp_orders[[q_id]])) {
-                        order <- temp_orders[[q_id]]
-                    } else {
-                        order <- sample(1:n_opts)
-                        temp_orders[[q_id]] <- order
-                    }
-
-                    # Randomize the options
-                    original_options <- unlist(q_struct$options)
-                    randomized_options <- original_options[order]
-                }
-
-                # Get label from question structure
-                q_label <- q_struct$label
-                if (is.list(q_label)) q_label <- q_label[[1]]
-
-                # Convert type to sd_question type
-                is_button <- isTRUE(q_struct$is_button_style)
-                q_type <- css_to_question_type(q_struct$type, is_button)
-
-                # Create the question HTML outside reactive context
-                question_html <- shiny::withReactiveDomain(NULL, {
-                    sd_question(
-                        id = q_id,
-                        type = q_type,
-                        label = q_label,
-                        option = randomized_options
-                    )
-                })
-
-                # Store the HTML string
-                randomized_question_html[[q_id]] <- as.character(question_html)
+            result <- generate_randomized_question_html(
+                q_id,
+                question_structure[[q_id]],
+                temp_orders[[q_id]]
+            )
+            if (!is.null(result)) {
+                randomized_question_html[[q_id]] <- result$html
+                temp_orders[[q_id]] <- result$order
             }
         }
 
-        # Store HTML and orders for later use
+        # Store for later use
         session$userData$randomized_question_html <- randomized_question_html
         session$userData$randomization_orders_list <- temp_orders
-        message("[DEBUG] Stored randomized_question_html, length: ", length(randomized_question_html))
-        message("[DEBUG] Names: ", paste(names(randomized_question_html), collapse = ", "))
 
-        # Create reactiveValues for orders (for cookie persistence)
-        randomized_orders <- shiny::reactiveValues()
+        # Copy to reactiveValues for cookie persistence
         for (q_id in names(temp_orders)) {
             randomized_orders[[q_id]] <- temp_orders[[q_id]]
         }
-        session$userData$randomized_orders <- randomized_orders
-    } else {
-        # No randomized questions, but still create empty reactiveValues for consistency
-        randomized_orders <- shiny::reactiveValues()
-        session$userData$randomized_orders <- randomized_orders
     }
 
     # 5. Main question observers ----
@@ -1365,73 +1348,65 @@ sd_server <- function(
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
 
-    # Render main page content when current page changes
-    output$main <- shiny::renderUI({
-        current_page <- get_current_page()
-        page_content <- current_page$content
-
-        # Get randomized question HTML
-        html_list <- session$userData$randomized_question_html
-
-        # DEBUG: Add visible indicator
-        debug_info <- sprintf("html_list is NULL: %s, length: %s",
-                              is.null(html_list),
-                              if(!is.null(html_list)) length(html_list) else 0)
-
-        # Build the tag list with page content
-        content_tags <- shiny::tagList(
-            shiny::tags$div(id = "sd-debug", style = "background: yellow; padding: 5px;", debug_info),
+    # Create page content wrapper
+    create_page_content <- function(page_content) {
+        shiny::tags$div(
+            class = "content",
             shiny::tags$div(
-                class = "content",
+                class = "page-columns page-rows-contents page-layout-article",
                 shiny::tags$div(
-                    class = "page-columns page-rows-contents page-layout-article",
-                    shiny::tags$div(
-                        id = "quarto-content",
-                        role = "main",
-                        shiny::HTML(page_content)
-                    )
+                    id = "quarto-content",
+                    role = "main",
+                    shiny::HTML(page_content)
                 )
             )
         )
+    }
 
-        # If there are randomized questions, add script to replace placeholders client-side
-        if (!is.null(html_list) && length(html_list) > 0) {
-            # Create JSON object with question HTML
-            html_json <- jsonlite::toJSON(html_list, auto_unbox = TRUE)
+    # Create script to replace randomized question placeholders client-side
+    create_placeholder_replacement_script <- function(html_list) {
+        html_json <- jsonlite::toJSON(html_list, auto_unbox = TRUE)
+        shiny::tags$script(htmltools::HTML(sprintf("
+            (function() {
+                var questionHTML = %s;
+                var replacePlaceholders = function() {
+                    for (var qId in questionHTML) {
+                        var placeholder = document.getElementById(qId + '_randomized');
+                        if (placeholder) {
+                            var temp = document.createElement('div');
+                            temp.innerHTML = questionHTML[qId];
+                            while (temp.firstChild) {
+                                placeholder.parentNode.insertBefore(temp.firstChild, placeholder);
+                            }
+                            placeholder.parentNode.removeChild(placeholder);
+                        }
+                    }
+                    var container = document.getElementById('quarto-content');
+                    if (container && typeof Shiny !== 'undefined' && Shiny.bindAll) {
+                        Shiny.bindAll(container);
+                    }
+                };
+                if (document.readyState === 'complete') {
+                    replacePlaceholders();
+                } else {
+                    document.addEventListener('DOMContentLoaded', replacePlaceholders);
+                }
+            })();
+        ", html_json)))
+    }
 
+    # Render main page content when current page changes
+    output$main <- shiny::renderUI({
+        current_page <- get_current_page()
+        html_list <- session$userData$randomized_question_html
+
+        content_tags <- shiny::tagList(create_page_content(current_page$content))
+
+        # Add placeholder replacement script if there are randomized questions
+        if (length(html_list) > 0) {
             content_tags <- shiny::tagList(
                 content_tags,
-                shiny::tags$script(htmltools::HTML(sprintf("
-                    (function() {
-                        var questionHTML = %s;
-                        var replacePlaceholders = function() {
-                            for (var qId in questionHTML) {
-                                var placeholder = document.getElementById(qId + '_randomized');
-                                if (placeholder) {
-                                    // Create a temporary container to parse the HTML
-                                    var temp = document.createElement('div');
-                                    temp.innerHTML = questionHTML[qId];
-                                    // Replace placeholder with the actual content
-                                    while (temp.firstChild) {
-                                        placeholder.parentNode.insertBefore(temp.firstChild, placeholder);
-                                    }
-                                    placeholder.parentNode.removeChild(placeholder);
-                                }
-                            }
-                            // Bind Shiny inputs after replacement
-                            var container = document.getElementById('quarto-content');
-                            if (container && typeof Shiny !== 'undefined' && Shiny.bindAll) {
-                                Shiny.bindAll(container);
-                            }
-                        };
-                        // Run after DOM is ready
-                        if (document.readyState === 'complete') {
-                            replacePlaceholders();
-                        } else {
-                            document.addEventListener('DOMContentLoaded', replacePlaceholders);
-                        }
-                    })();
-                ", html_json)))
+                create_placeholder_replacement_script(html_list)
             )
         }
 
