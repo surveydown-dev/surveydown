@@ -17,6 +17,8 @@ sd_server(
   highlight_unanswered = TRUE,
   highlight_color = "gray",
   capture_metadata = TRUE,
+  options_randomized = NULL,
+  all_options_randomized = FALSE,
   language = NULL
 )
 }
@@ -66,6 +68,14 @@ Defaults to "gray".}
 browser information (browser name, version, and OS), IP address, and
 screen resolution.
 Defaults to \code{TRUE}.}
+
+\item{options_randomized}{Vector of character strings. The IDs of
+multiple-choice questions whose options should be randomized. Only applies
+to MC-type questions: \code{mc}, \code{mc_buttons}, \code{mc_multiple}, \code{mc_multiple_buttons}.
+Defaults to \code{NULL} (no randomized options).}
+
+\item{all_options_randomized}{Logical. If \code{TRUE}, all MC-type questions in
+the survey will have their options randomized. Defaults to \code{FALSE}.}
 
 \item{language}{Deprecated as of v0.13.0. Use \code{system_language} instead.
 This parameter. is maintained for backward compatibility only.}

@@ -40,6 +40,12 @@
 #'   browser information (browser name, version, and OS), IP address, and
 #'   screen resolution.
 #'   Defaults to `TRUE`.
+#' @param options_randomized Vector of character strings. The IDs of
+#'   multiple-choice questions whose options should be randomized. Only applies
+#'   to MC-type questions: `mc`, `mc_buttons`, `mc_multiple`, `mc_multiple_buttons`.
+#'   Defaults to `NULL` (no randomized options).
+#' @param all_options_randomized Logical. If `TRUE`, all MC-type questions in
+#'   the survey will have their options randomized. Defaults to `FALSE`.
 #' @param language Deprecated as of v0.13.0. Use `system_language` instead.
 #' This parameter. is maintained for backward compatibility only.
 #'
@@ -175,6 +181,8 @@ sd_server <- function(
     highlight_unanswered = TRUE,
     highlight_color = "gray",
     capture_metadata = TRUE,
+    options_randomized = NULL,
+    all_options_randomized = FALSE,
     language = NULL
 ) {
     # 1. Initialize local variables ----
@@ -224,6 +232,8 @@ sd_server <- function(
         highlight_color = !missing(highlight_color),
         capture_metadata = !missing(capture_metadata),
         required_questions = !missing(required_questions),
+        options_randomized = !missing(options_randomized),
+        all_options_randomized = !missing(all_options_randomized),
         language = !missing(language)
     )
 
@@ -235,7 +245,9 @@ sd_server <- function(
         skip_if,
         show_if,
         rate_survey,
-        system_language
+        system_language,
+        options_randomized,
+        all_options_randomized
     )
 
     # Now read settings from _survey/settings.yml (created in sd_ui)
@@ -256,7 +268,9 @@ sd_server <- function(
         highlight_unanswered = "highlight-unanswered",
         highlight_color = "highlight-color",
         capture_metadata = "capture-metadata",
-        required_questions = "required-questions"
+        required_questions = "required-questions",
+        options_randomized = "options-randomized",
+        all_options_randomized = "all-options-randomized"
     )
 
     for (param in names(param_to_kebab)) {
@@ -287,6 +301,7 @@ sd_server <- function(
     page_ids <- config$page_ids
     question_ids <- config$question_ids
     question_structure <- config$question_structure
+    question_randomized <- config$question_randomized
 
     # Don't overwrite start_page if it was resolved from YAML settings
     # Only use config$start_page if start_page is still NULL
@@ -506,7 +521,9 @@ sd_server <- function(
         highlight_unanswered = highlight_unanswered,
         highlight_color = highlight_color,
         capture_metadata = capture_metadata,
-        required_questions = question_required # Use enhanced required questions
+        required_questions = question_required, # Use enhanced required questions
+        options_randomized = options_randomized,
+        all_options_randomized = all_options_randomized
     )
     update_settings_yaml(resolved_params)
 
@@ -975,6 +992,122 @@ sd_server <- function(
         update_data()
     })
 
+    # 4b. Options randomization state ----
+
+    # Helper function to convert CSS class or simple type to sd_question type
+    # Handles both CSS classes (e.g., "shiny-input-radiogroup") and simple types (e.g., "mc_buttons")
+    css_to_question_type <- function(type_str, is_button_style = FALSE) {
+        if (is.null(type_str) || length(type_str) == 0) return("mc")
+        type_str <- tolower(type_str)
+
+        # First check if it's already a valid simple type
+        valid_types <- c("mc", "mc_multiple", "mc_buttons", "mc_multiple_buttons")
+        if (type_str %in% valid_types) {
+            return(type_str)
+        }
+
+        # Otherwise, try to infer from CSS class patterns
+        if (grepl("checkbox", type_str)) {
+            if (is_button_style) {
+                return("mc_multiple_buttons")
+            } else {
+                return("mc_multiple")
+            }
+        } else if (grepl("radio", type_str)) {
+            if (is_button_style) {
+                return("mc_buttons")
+            } else {
+                return("mc")
+            }
+        }
+        return("mc") # Default fallback
+    }
+
+    # Create randomized questions dynamically
+    # We pre-generate the HTML outside reactive context, then send it when session is ready
+    if (length(question_randomized) > 0) {
+        # Use a regular list for storing orders during generation (not reactiveValues)
+        # This is because we're generating outside reactive context
+        temp_orders <- list()
+
+        # Restore orders from cookies if available
+        if (!is.null(session$userData$restored_randomization_orders)) {
+            restored_orders <- session$userData$restored_randomization_orders
+            for (q_id in names(restored_orders)) {
+                order <- unlist(restored_orders[[q_id]])
+                if (is.numeric(order) && length(order) > 0) {
+                    temp_orders[[q_id]] <- as.integer(order)
+                }
+            }
+            session$userData$restored_randomization_orders <- NULL
+        }
+
+        # Pre-generate HTML for all randomized questions OUTSIDE reactive context
+        randomized_question_html <- list()
+
+        for (q_id in question_randomized) {
+            q_struct <- question_structure[[q_id]]
+
+            if (!is.null(q_struct) && !is.null(q_struct$options)) {
+                # Get number of options
+                n_opts <- length(q_struct$options)
+
+                # Skip if less than 2 options (no point randomizing)
+                if (n_opts < 2) {
+                    randomized_options <- unlist(q_struct$options)
+                } else {
+                    # Get or create randomization order
+                    if (!is.null(temp_orders[[q_id]])) {
+                        order <- temp_orders[[q_id]]
+                    } else {
+                        order <- sample(1:n_opts)
+                        temp_orders[[q_id]] <- order
+                    }
+
+                    # Randomize the options
+                    original_options <- unlist(q_struct$options)
+                    randomized_options <- original_options[order]
+                }
+
+                # Get label from question structure
+                q_label <- q_struct$label
+                if (is.list(q_label)) q_label <- q_label[[1]]
+
+                # Convert type to sd_question type
+                is_button <- isTRUE(q_struct$is_button_style)
+                q_type <- css_to_question_type(q_struct$type, is_button)
+
+                # Create the question HTML outside reactive context
+                question_html <- shiny::withReactiveDomain(NULL, {
+                    sd_question(
+                        id = q_id,
+                        type = q_type,
+                        label = q_label,
+                        option = randomized_options
+                    )
+                })
+
+                # Store the HTML string
+                randomized_question_html[[q_id]] <- as.character(question_html)
+            }
+        }
+
+        # Store HTML and orders for later use
+        session$userData$randomized_question_html <- randomized_question_html
+        session$userData$randomization_orders_list <- temp_orders
+
+        # Create reactiveValues for orders (for cookie persistence)
+        randomized_orders <- shiny::reactiveValues()
+        for (q_id in names(temp_orders)) {
+            randomized_orders[[q_id]] <- temp_orders[[q_id]]
+        }
+        session$userData$randomized_orders <- randomized_orders
+    } else {
+        # No randomized questions, but still create empty reactiveValues for consistency
+        randomized_orders <- shiny::reactiveValues()
+        session$userData$randomized_orders <- randomized_orders
+    }
+
     # 5. Main question observers ----
 
     lapply(seq_along(question_ids), function(index) {
@@ -1181,11 +1314,13 @@ sd_server <- function(
             # Update cookies in both database and local modes
             # Include page_history for Previous button functionality
             # Include question_history for highlighting restoration
+            # Include randomization_orders for option randomization persistence
             page_data <- list(
                 answers = answers,
                 last_timestamp = last_timestamp,
                 page_history = page_history(),
-                question_history = question_history()
+                question_history = question_history(),
+                randomization_orders = shiny::reactiveValuesToList(randomized_orders)
             )
             session$sendCustomMessage(
                 "setAnswerData",
@@ -1227,6 +1362,27 @@ sd_server <- function(
     # Render main page content when current page changes
     output$main <- shiny::renderUI({
         current_page <- get_current_page()
+        page_content <- current_page$content
+
+        # Substitute placeholder divs with randomized question HTML
+        html_list <- session$userData$randomized_question_html
+        if (!is.null(html_list) && length(html_list) > 0) {
+            for (q_id in names(html_list)) {
+                # Pattern to match the placeholder div
+                placeholder_pattern <- sprintf(
+                    '<div id="%s_question" class="shiny-html-output"></div>',
+                    q_id
+                )
+                # Replace with actual question HTML
+                page_content <- gsub(
+                    placeholder_pattern,
+                    html_list[[q_id]],
+                    page_content,
+                    fixed = TRUE
+                )
+            }
+        }
+
         shiny::tagList(
             shiny::tags$div(
                 class = "content",
@@ -1235,7 +1391,7 @@ sd_server <- function(
                     shiny::tags$div(
                         id = "quarto-content",
                         role = "main",
-                        shiny::HTML(current_page$content)
+                        shiny::HTML(page_content)
                     )
                 )
             )
@@ -3756,6 +3912,16 @@ handle_data_restoration <- function(
                     question_history(restored_q_history)
                 }
             }
+        }
+
+        # 6. Restore randomization orders for options randomization persistence
+        all_cookie_data <- session$input$stored_answer_data
+        if (
+            !is.null(all_cookie_data) &&
+                !is.null(all_cookie_data$randomization_orders)
+        ) {
+            # Store in session$userData for later restoration after randomized_orders is created
+            session$userData$restored_randomization_orders <- all_cookie_data$randomization_orders
         }
     })
 

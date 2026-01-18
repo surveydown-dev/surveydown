@@ -307,7 +307,9 @@ get_yaml_value <- function(metadata, key) {
     "highlight-unanswered",
     "highlight-color",
     "capture-metadata",
-    "required-questions"
+    "required-questions",
+    "options-randomized",
+    "all-options-randomized"
   )
 
   # Determine which category this key belongs to
@@ -433,6 +435,27 @@ get_required_questions <- function(metadata) {
   } else {
     return(as.character(required_questions))
   }
+}
+
+get_options_randomized <- function(metadata) {
+  options_randomized <- get_yaml_value(metadata, "options-randomized")
+  if (is.null(options_randomized)) {
+    return(NULL)
+  }
+  # Handle both single string and list/vector of strings
+  if (is.character(options_randomized)) {
+    return(options_randomized)
+  } else if (is.list(options_randomized)) {
+    # Convert list to character vector
+    return(unlist(options_randomized))
+  } else {
+    return(as.character(options_randomized))
+  }
+}
+
+get_all_options_randomized <- function(metadata) {
+  all_options_randomized <- get_yaml_value(metadata, "all-options-randomized")
+  return(parse_yaml_boolean(all_options_randomized))
 }
 
 get_show_previous <- function(metadata) {

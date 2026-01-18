@@ -5,7 +5,9 @@ run_config <- function(
   skip_if,
   show_if,
   rate_survey,
-  language
+  language,
+  options_randomized = NULL,
+  all_options_randomized = FALSE
 ) {
   # Check for sd_close() in survey.qmd if rate_survey used
   if (rate_survey) {
@@ -23,17 +25,58 @@ run_config <- function(
     # Note: messages are now handled in create_settings_yaml()
     html_content <- rvest::read_html(paths$target_html)
 
+    # Get question structure first (needed for randomization determination)
+    question_structure <- get_question_structure(paths, html_content)
+
+    # Read settings for randomization if not provided in function call
+    # This handles the case where options-randomized is set in YAML but not in sd_server()
+    if (is.null(options_randomized) && !all_options_randomized) {
+      settings <- read_settings_yaml()
+      if (!is.null(settings$`options-randomized`)) {
+        options_randomized <- settings$`options-randomized`
+      }
+      if (isTRUE(settings$`all-options-randomized`)) {
+        all_options_randomized <- TRUE
+      }
+    }
+
+    # Determine which questions should have randomized options
+    # Only MC-type questions can be randomized
+    # The type in question_structure is the CSS class, so we check for radio/checkbox patterns
+    mc_question_ids <- names(which(sapply(question_structure, function(q) {
+      type <- q$type
+      if (is.null(type) || length(type) == 0) return(FALSE)
+      # MC types have radio or checkbox inputs (but not matrix which is handled separately)
+      !q$is_matrix && (grepl("radio", type, ignore.case = TRUE) ||
+                       grepl("checkbox", type, ignore.case = TRUE))
+    })))
+
+    if (all_options_randomized) {
+      question_randomized <- mc_question_ids
+    } else if (!is.null(options_randomized) && length(options_randomized) > 0) {
+      # Intersect with MC question IDs, warn about non-MC questions
+      non_mc <- setdiff(options_randomized, mc_question_ids)
+      if (length(non_mc) > 0) {
+        warning(
+          "The following questions in options_randomized are not MC-type questions and will be skipped: ",
+          paste(non_mc, collapse = ", ")
+        )
+      }
+      question_randomized <- intersect(options_randomized, mc_question_ids)
+    } else {
+      question_randomized <- character(0)
+    }
+
     # Extract all divs with class "sd-page" and save to "_survey" folder
     pages <- extract_html_pages(
       paths,
       html_content,
       required_questions,
       all_questions_required,
-      show_if
+      show_if,
+      question_randomized,
+      question_structure
     )
-
-    # Get question structure
-    question_structure <- get_question_structure(paths, html_content)
 
     message(
       "Survey content saved to:\n",
@@ -63,6 +106,36 @@ run_config <- function(
 
     # Load question structure from _survey folder
     question_structure <- load_question_structure_yaml(paths$target_questions)
+
+    # Read settings for randomization if not provided in function call
+    # This handles the case where options-randomized is set in YAML but not in sd_server()
+    if (is.null(options_randomized) && !all_options_randomized) {
+      settings <- read_settings_yaml()
+      if (!is.null(settings$`options-randomized`)) {
+        options_randomized <- settings$`options-randomized`
+      }
+      if (isTRUE(settings$`all-options-randomized`)) {
+        all_options_randomized <- TRUE
+      }
+    }
+
+    # Recalculate which questions should have randomized options
+    # The type in question_structure is the CSS class, so we check for radio/checkbox patterns
+    mc_question_ids <- names(which(sapply(question_structure, function(q) {
+      type <- q$type
+      if (is.null(type) || length(type) == 0) return(FALSE)
+      # MC types have radio or checkbox inputs (but not matrix which is handled separately)
+      !q$is_matrix && (grepl("radio", type, ignore.case = TRUE) ||
+                       grepl("checkbox", type, ignore.case = TRUE))
+    })))
+
+    if (all_options_randomized) {
+      question_randomized <- mc_question_ids
+    } else if (!is.null(options_randomized) && length(options_randomized) > 0) {
+      question_randomized <- intersect(options_randomized, mc_question_ids)
+    } else {
+      question_randomized <- character(0)
+    }
   }
 
   # Get page and question IDs
@@ -113,7 +186,8 @@ run_config <- function(
     question_ids = question_ids,
     question_required = question_required,
     start_page = start_page,
-    question_structure = question_structure
+    question_structure = question_structure,
+    question_randomized = question_randomized
   )
   return(config)
 }
@@ -492,7 +566,9 @@ create_settings_yaml <- function(paths, metadata) {
           "highlight-unanswered",
           "highlight-color",
           "capture-metadata",
-          "required-questions"
+          "required-questions",
+          "options-randomized",
+          "all-options-randomized"
         )
 
         # Combine all parameters
@@ -518,7 +594,9 @@ create_settings_yaml <- function(paths, metadata) {
           `highlight-unanswered` = TRUE,
           `highlight-color` = "gray",
           `capture-metadata` = TRUE,
-          `required-questions` = NULL
+          `required-questions` = NULL,
+          `options-randomized` = NULL,
+          `all-options-randomized` = FALSE
         )
 
         # Extract YAML values using helper functions (priority: YAML > defaults)
@@ -557,6 +635,10 @@ create_settings_yaml <- function(paths, metadata) {
             value <- get_capture_metadata(metadata)
           } else if (param == "required-questions") {
             value <- get_required_questions(metadata)
+          } else if (param == "options-randomized") {
+            value <- get_options_randomized(metadata)
+          } else if (param == "all-options-randomized") {
+            value <- get_all_options_randomized(metadata)
           } else if (param == "show-previous") {
             value <- get_show_previous(metadata)
           } else {
@@ -615,7 +697,9 @@ create_settings_yaml <- function(paths, metadata) {
             highlight_unanswered = "highlight-unanswered",
             highlight_color = "highlight-color",
             capture_metadata = "capture-metadata",
-            required_questions = "required-questions"
+            required_questions = "required-questions",
+            options_randomized = "options-randomized",
+            all_options_randomized = "all-options-randomized"
           )
 
           for (param in names(sd_server_overrides)) {
@@ -661,7 +745,9 @@ create_settings_yaml <- function(paths, metadata) {
           "highlight-unanswered",
           "highlight-color",
           "capture-metadata",
-          "required-questions"
+          "required-questions",
+          "options-randomized",
+          "all-options-randomized"
         )
         default_settings <- list(
           theme = "default",
@@ -680,7 +766,9 @@ create_settings_yaml <- function(paths, metadata) {
           `highlight-unanswered` = TRUE,
           `highlight-color` = "gray",
           `capture-metadata` = TRUE,
-          `required-questions` = NULL
+          `required-questions` = NULL,
+          `options-randomized` = NULL,
+          `all-options-randomized` = FALSE
         )
         # Get default English messages
         default_msg <- get_messages_default()
@@ -724,7 +812,9 @@ create_settings_yaml <- function(paths, metadata) {
       "highlight-unanswered",
       "highlight-color",
       "capture-metadata",
-      "required-questions"
+      "required-questions",
+      "options-randomized",
+      "all-options-randomized"
     )
     default_settings <- list(
       theme = "default",
@@ -743,7 +833,9 @@ create_settings_yaml <- function(paths, metadata) {
       `highlight-unanswered` = TRUE,
       `highlight-color` = "gray",
       `capture-metadata` = TRUE,
-      `required-questions` = NULL
+      `required-questions` = NULL,
+      `options-randomized` = NULL,
+      `all-options-randomized` = FALSE
     )
     # Get default English messages
     default_msg <- get_messages_default()
@@ -790,7 +882,9 @@ read_settings_yaml <- function() {
     `highlight-unanswered` = TRUE,
     `highlight-color` = "gray",
     `capture-metadata` = TRUE,
-    `required-questions` = NULL
+    `required-questions` = NULL,
+    `options-randomized` = NULL,
+    `all-options-randomized` = FALSE
   )
 
   # Try multiple possible locations for the settings file
@@ -855,6 +949,13 @@ read_settings_yaml <- function() {
     }
   }
 
+  # Process options-randomized if it exists (convert list to character vector)
+  if (!is.null(settings$`options-randomized`)) {
+    if (is.list(settings$`options-randomized`)) {
+      settings$`options-randomized` <- unlist(settings$`options-randomized`)
+    }
+  }
+
   return(settings)
 }
 
@@ -884,7 +985,9 @@ update_settings_yaml <- function(resolved_params) {
     "highlight-unanswered",
     "highlight-color",
     "capture-metadata",
-    "required-questions"
+    "required-questions",
+    "options-randomized",
+    "all-options-randomized"
   )
 
   # Read existing settings to preserve Theme Settings
@@ -902,7 +1005,9 @@ update_settings_yaml <- function(resolved_params) {
     `highlight-unanswered` = TRUE,
     `highlight-color` = "gray",
     `capture-metadata` = TRUE,
-    `required-questions` = NULL
+    `required-questions` = NULL,
+    `options-randomized` = NULL,
+    `all-options-randomized` = FALSE
   )
 
   # Filter out language parameter to avoid breaking Quarto
@@ -931,7 +1036,9 @@ update_settings_yaml <- function(resolved_params) {
     `highlight-unanswered` = "highlight_unanswered",
     `highlight-color` = "highlight_color",
     `capture-metadata` = "capture_metadata",
-    `required-questions` = "required_questions"
+    `required-questions` = "required_questions",
+    `options-randomized` = "options_randomized",
+    `all-options-randomized` = "all_options_randomized"
   )
 
   for (param in survey_params) {
@@ -1050,7 +1157,9 @@ detect_sd_server_params <- function() {
         "highlight_unanswered\\s*=\\s*(TRUE|FALSE|T|F)",
         "highlight_color\\s*=\\s*[\"']([^\"']+)[\"']",
         "capture_metadata\\s*=\\s*(TRUE|FALSE|T|F)",
-        "required_questions\\s*=\\s*c\\s*\\(([^)]+)\\)"
+        "required_questions\\s*=\\s*c\\s*\\(([^)]+)\\)",
+        "options_randomized\\s*=\\s*c\\s*\\(([^)]+)\\)",
+        "all_options_randomized\\s*=\\s*(TRUE|FALSE|T|F)"
       )
 
       param_names <- c(
@@ -1064,7 +1173,9 @@ detect_sd_server_params <- function() {
         "highlight_unanswered",
         "highlight_color",
         "capture_metadata",
-        "required_questions"
+        "required_questions",
+        "options_randomized",
+        "all_options_randomized"
       )
 
       for (i in seq_along(param_patterns)) {
@@ -1086,13 +1197,14 @@ detect_sd_server_params <- function() {
                 "rate_survey",
                 "all_questions_required",
                 "highlight_unanswered",
-                "capture_metadata"
+                "capture_metadata",
+                "all_options_randomized"
               )
           ) {
             overrides[[param_name]] <- value_str %in% c("TRUE", "T")
           } else if (param_name %in% c("start_page", "system_language", "highlight_color")) {
             overrides[[param_name]] <- value_str
-          } else if (param_name == "required_questions") {
+          } else if (param_name %in% c("required_questions", "options_randomized")) {
             # Parse c("a", "b", "c") format
             items <- strsplit(value_str, ",")[[1]]
             items <- trimws(gsub("[\"']", "", items))
@@ -1115,7 +1227,9 @@ extract_html_pages <- function(
   html_content,
   required_questions,
   all_questions_required,
-  show_if
+  show_if,
+  question_randomized = character(0),
+  question_structure = NULL
 ) {
   # Check for both sd-page and sd_page classes
   pages_dash <- html_content |> rvest::html_elements(".sd-page")
@@ -1148,6 +1262,7 @@ extract_html_pages <- function(
     question_containers <- rvest::html_elements(x, ".question-container")
     question_ids <- character(0)
     required_question_ids <- character(0)
+    randomized_question_ids <- character(0)
 
     for (i in seq_along(question_containers)) {
       container <- question_containers[[i]]
@@ -1191,6 +1306,37 @@ extract_html_pages <- function(
           xml2::xml_attr(container, "style") <- new_style
         }
       }
+
+      # Check if this question needs option randomization
+      # If so, replace the inner content with a uiOutput placeholder
+      if (question_id %in% question_randomized) {
+        # Create the uiOutput placeholder HTML
+        # This will be rendered dynamically in the server with randomized options
+        placeholder_html <- sprintf(
+          '<div id="%s_question" class="shiny-html-output"></div>',
+          question_id
+        )
+
+        # Get all children of the container
+        children <- xml2::xml_children(container)
+
+        # Remove all children except the hidden-asterisk (if present)
+        for (child in children) {
+          child_class <- xml2::xml_attr(child, "class")
+          if (is.na(child_class) || !grepl("hidden-asterisk", child_class)) {
+            xml2::xml_remove(child)
+          }
+        }
+
+        # Add the uiOutput placeholder as the first child (before any asterisk)
+        placeholder_node <- xml2::read_html(placeholder_html) |>
+          rvest::html_element("body > div")
+        xml2::xml_add_child(container, placeholder_node, .where = 0)
+
+        # Track this as a randomized question
+        randomized_question_ids <- c(randomized_question_ids, question_id)
+      }
+
       question_containers[[i]] <- container
     }
 
@@ -1328,6 +1474,7 @@ extract_html_pages <- function(
       id = page_id,
       questions = question_ids,
       required_questions = required_question_ids,
+      randomized_questions = randomized_question_ids,
       next_button_id = next_button_id,
       next_page_id = next_page_id,
       prev_button_id = prev_button_id,
@@ -1390,10 +1537,15 @@ extract_question_structure_html <- function(html_content) {
       rvest::html_nodes("p") |>
       rvest::html_text(trim = TRUE)
 
+    # Detect if this is a button-style question (mc_buttons or mc_multiple_buttons)
+    # Button-style questions have .btn-group class in their container
+    is_button_style <- length(rvest::html_nodes(question_node, ".btn-group")) > 0
+
     # Write main information to the question structure
     question_structure[[question_id]] <- list(
       type = type,
       is_matrix = is_matrix,
+      is_button_style = is_button_style,
       label = label
     )
 
