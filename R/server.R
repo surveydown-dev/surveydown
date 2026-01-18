@@ -302,6 +302,8 @@ sd_server <- function(
     question_ids <- config$question_ids
     question_structure <- config$question_structure
     question_randomized <- config$question_randomized
+    message("[DEBUG] question_randomized: ", paste(question_randomized, collapse = ", "))
+    message("[DEBUG] length(question_randomized): ", length(question_randomized))
 
     # Don't overwrite start_page if it was resolved from YAML settings
     # Only use config$start_page if start_page is still NULL
@@ -1025,7 +1027,9 @@ sd_server <- function(
 
     # Create randomized questions dynamically
     # We pre-generate the HTML outside reactive context, then send it when session is ready
+    message("[DEBUG] Entering randomization block, length: ", length(question_randomized))
     if (length(question_randomized) > 0) {
+        message("[DEBUG] Inside randomization block")
         # Use a regular list for storing orders during generation (not reactiveValues)
         # This is because we're generating outside reactive context
         temp_orders <- list()
@@ -1095,6 +1099,8 @@ sd_server <- function(
         # Store HTML and orders for later use
         session$userData$randomized_question_html <- randomized_question_html
         session$userData$randomization_orders_list <- temp_orders
+        message("[DEBUG] Stored randomized_question_html, length: ", length(randomized_question_html))
+        message("[DEBUG] Names: ", paste(names(randomized_question_html), collapse = ", "))
 
         # Create reactiveValues for orders (for cookie persistence)
         randomized_orders <- shiny::reactiveValues()
@@ -1364,26 +1370,17 @@ sd_server <- function(
         current_page <- get_current_page()
         page_content <- current_page$content
 
-        # Substitute placeholder divs with randomized question HTML
+        # Get randomized question HTML
         html_list <- session$userData$randomized_question_html
-        if (!is.null(html_list) && length(html_list) > 0) {
-            for (q_id in names(html_list)) {
-                # Pattern to match the placeholder div
-                placeholder_pattern <- sprintf(
-                    '<div id="%s_question" class="shiny-html-output"></div>',
-                    q_id
-                )
-                # Replace with actual question HTML
-                page_content <- gsub(
-                    placeholder_pattern,
-                    html_list[[q_id]],
-                    page_content,
-                    fixed = TRUE
-                )
-            }
-        }
 
-        shiny::tagList(
+        # DEBUG: Add visible indicator
+        debug_info <- sprintf("html_list is NULL: %s, length: %s",
+                              is.null(html_list),
+                              if(!is.null(html_list)) length(html_list) else 0)
+
+        # Build the tag list with page content
+        content_tags <- shiny::tagList(
+            shiny::tags$div(id = "sd-debug", style = "background: yellow; padding: 5px;", debug_info),
             shiny::tags$div(
                 class = "content",
                 shiny::tags$div(
@@ -1396,6 +1393,49 @@ sd_server <- function(
                 )
             )
         )
+
+        # If there are randomized questions, add script to replace placeholders client-side
+        if (!is.null(html_list) && length(html_list) > 0) {
+            # Create JSON object with question HTML
+            html_json <- jsonlite::toJSON(html_list, auto_unbox = TRUE)
+
+            content_tags <- shiny::tagList(
+                content_tags,
+                shiny::tags$script(htmltools::HTML(sprintf("
+                    (function() {
+                        var questionHTML = %s;
+                        var replacePlaceholders = function() {
+                            for (var qId in questionHTML) {
+                                var placeholder = document.getElementById(qId + '_randomized');
+                                if (placeholder) {
+                                    // Create a temporary container to parse the HTML
+                                    var temp = document.createElement('div');
+                                    temp.innerHTML = questionHTML[qId];
+                                    // Replace placeholder with the actual content
+                                    while (temp.firstChild) {
+                                        placeholder.parentNode.insertBefore(temp.firstChild, placeholder);
+                                    }
+                                    placeholder.parentNode.removeChild(placeholder);
+                                }
+                            }
+                            // Bind Shiny inputs after replacement
+                            var container = document.getElementById('quarto-content');
+                            if (container && typeof Shiny !== 'undefined' && Shiny.bindAll) {
+                                Shiny.bindAll(container);
+                            }
+                        };
+                        // Run after DOM is ready
+                        if (document.readyState === 'complete') {
+                            replacePlaceholders();
+                        } else {
+                            document.addEventListener('DOMContentLoaded', replacePlaceholders);
+                        }
+                    })();
+                ", html_json)))
+            )
+        }
+
+        content_tags
     })
 
     # Observer to trigger gray highlighting for unanswered questions when page changes

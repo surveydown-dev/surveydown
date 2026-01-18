@@ -42,13 +42,17 @@ run_config <- function(
 
     # Determine which questions should have randomized options
     # Only MC-type questions can be randomized
-    # The type in question_structure is the CSS class, so we check for radio/checkbox patterns
+    # Types may be CSS classes (from fresh parse) or simple names (from cache)
+    mc_type_names <- c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons")
     mc_question_ids <- names(which(sapply(question_structure, function(q) {
       type <- q$type
       if (is.null(type) || length(type) == 0) return(FALSE)
-      # MC types have radio or checkbox inputs (but not matrix which is handled separately)
-      !q$is_matrix && (grepl("radio", type, ignore.case = TRUE) ||
-                       grepl("checkbox", type, ignore.case = TRUE))
+      # Check for simple type names OR CSS class patterns
+      !q$is_matrix && (
+        type %in% mc_type_names ||
+        grepl("radio", type, ignore.case = TRUE) ||
+        grepl("checkbox", type, ignore.case = TRUE)
+      )
     })))
 
     if (all_options_randomized) {
@@ -120,13 +124,18 @@ run_config <- function(
     }
 
     # Recalculate which questions should have randomized options
-    # The type in question_structure is the CSS class, so we check for radio/checkbox patterns
+    # Types in questions.yml are simple names (mc, mc_buttons, mc_multiple, mc_multiple_buttons)
+    # or CSS classes (shiny-input-radiogroup, etc.) depending on when they were saved
+    mc_type_names <- c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons")
     mc_question_ids <- names(which(sapply(question_structure, function(q) {
       type <- q$type
       if (is.null(type) || length(type) == 0) return(FALSE)
-      # MC types have radio or checkbox inputs (but not matrix which is handled separately)
-      !q$is_matrix && (grepl("radio", type, ignore.case = TRUE) ||
-                       grepl("checkbox", type, ignore.case = TRUE))
+      # Check for simple type names OR CSS class patterns (for backwards compatibility)
+      !q$is_matrix && (
+        type %in% mc_type_names ||
+        grepl("radio", type, ignore.case = TRUE) ||
+        grepl("checkbox", type, ignore.case = TRUE)
+      )
     })))
 
     if (all_options_randomized) {
@@ -1313,7 +1322,7 @@ extract_html_pages <- function(
         # Create the uiOutput placeholder HTML
         # This will be rendered dynamically in the server with randomized options
         placeholder_html <- sprintf(
-          '<div id="%s_question" class="shiny-html-output"></div>',
+          '<div id="%s_randomized" class="sd-randomized-placeholder"></div>',
           question_id
         )
 
