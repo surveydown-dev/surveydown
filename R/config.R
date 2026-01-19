@@ -1705,8 +1705,9 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
       question$type <- "unknown"
     }
 
-    # Remove indicator if is matrix (type is correctly set)
+    # Remove indicators (they are restored when loading from YAML based on type)
     question$is_matrix <- NULL
+    question$is_button_style <- NULL
 
     # Remove first option from select type question
     if (question$type == "select") {
@@ -1743,9 +1744,10 @@ load_question_structure_yaml <- function(file_yaml) {
   # Read question structure from YAML file
   question_structure <- yaml::read_yaml(file_yaml)
 
-  # Add matrix question indicator to all questions as FALSE (correct later)
+  # Add indicators to all questions (derived from type)
   question_structure <- lapply(question_structure, function(question) {
     question$is_matrix <- FALSE
+    question$is_button_style <- question$type %in% c("mc_buttons", "mc_multiple_buttons")
     return(question)
   })
 

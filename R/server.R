@@ -992,6 +992,33 @@ sd_server <- function(db = NULL) {
         for (q_id in names(temp_orders)) {
             shuffle_orders[[q_id]] <- temp_orders[[q_id]]
         }
+
+        # Reorder matrix subquestions in question_ids to match shuffled display order
+        # This ensures progress bar reflects the visual order, not the original order
+        if (length(matrix_shuffle_orders) > 0) {
+            for (matrix_id in names(matrix_shuffle_orders)) {
+                matrix_struct <- question_structure[[matrix_id]]
+                if (!is.null(matrix_struct$row)) {
+                    # Get subquestion IDs in original order
+                    row_values <- unname(matrix_struct$row)
+                    original_subq_ids <- paste0(matrix_id, "_", row_values)
+
+                    # Get shuffle order (0-based from JS, convert to 1-based)
+                    shuffle_order <- matrix_shuffle_orders[[matrix_id]] + 1
+
+                    # Reorder subquestion IDs according to shuffle
+                    shuffled_subq_ids <- original_subq_ids[shuffle_order]
+
+                    # Find positions of these subquestions in question_ids
+                    original_positions <- match(original_subq_ids, question_ids)
+
+                    # Replace with shuffled order
+                    if (!any(is.na(original_positions))) {
+                        question_ids[sort(original_positions)] <- shuffled_subq_ids
+                    }
+                }
+            }
+        }
     }
 
     # 5. Main question observers ----
