@@ -1676,6 +1676,15 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
     'shiny-date-range-input form-group shiny-input-container' = 'daterange'
   )
 
+  # Add index to each question (1-based, for display order tracking)
+  # Index is added first, then reordered to appear at the top of each entry
+  question_ids <- names(question_structure)
+  for (i in seq_along(question_ids)) {
+    q <- question_structure[[question_ids[i]]]
+    # Create new list with index first, then all other fields
+    question_structure[[question_ids[i]]] <- c(list(index = i), q)
+  }
+
   # Loop through question structure and clean/prepare questions
   question_structure <- lapply(question_structure, function(question) {
     # Rename type to function option names using pattern matching
@@ -1749,6 +1758,7 @@ load_question_structure_yaml <- function(file_yaml) {
     # Get matrix question and subquestion (rows option) from question list
     matrix_question <- question_structure[[matrix_question_id]]
     rows <- matrix_question$row
+    parent_index <- matrix_question$index
 
     # Loop over subquestions and add to question structure (with label and options)
     for (row_number in seq_along(rows)) {
@@ -1756,7 +1766,11 @@ load_question_structure_yaml <- function(file_yaml) {
       subquestion_structure <- list(
         type = "mc",
         label = names(rows)[row_number],
-        options = matrix_question$options
+        options = matrix_question$options,
+        # Subquestion index: parent index + row position (e.g., 5.1, 5.2, 5.3)
+        index = parent_index + (row_number - 1) / length(rows),
+        parent_index = parent_index,
+        row_index = row_number
       )
       question_structure[[subquestion_id]] <- subquestion_structure
     }
