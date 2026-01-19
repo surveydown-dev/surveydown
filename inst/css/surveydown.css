@@ -314,6 +314,14 @@ a:hover {
     vertical-align: middle;
 }
 
+/* Question labels: shrink to fit content, max 50% with wrapping */
+.matrix-question th:first-child,
+.matrix-question td:first-child {
+    width: 1%;
+    white-space: nowrap;
+    max-width: 50%;
+}
+
 .table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
   vertical-align: middle;
   padding: 4px;
