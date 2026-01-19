@@ -301,15 +301,15 @@ get_yaml_value <- function(metadata, key) {
     "use-cookies",
     "auto-scroll",
     "rate-survey",
-    "all-questions-required",
+    "all-required",
     "start-page",
     "system-language",
     "highlight-unanswered",
     "highlight-color",
     "capture-metadata",
-    "required-questions",
-    "options-randomized",
-    "all-options-randomized"
+    "required",
+    "shuffled",
+    "all-shuffled"
   )
 
   # Determine which category this key belongs to
@@ -374,9 +374,9 @@ get_rate_survey <- function(metadata) {
   return(parse_yaml_boolean(rate_survey))
 }
 
-get_all_questions_required <- function(metadata) {
-  all_questions_required <- get_yaml_value(metadata, "all-questions-required")
-  return(parse_yaml_boolean(all_questions_required))
+get_all_required <- function(metadata) {
+  all_required <- get_yaml_value(metadata, "all-required")
+  return(parse_yaml_boolean(all_required))
 }
 
 get_start_page <- function(metadata) {
@@ -422,7 +422,7 @@ get_capture_metadata <- function(metadata) {
 }
 
 get_required_questions <- function(metadata) {
-  required_questions <- get_yaml_value(metadata, "required-questions")
+  required_questions <- get_yaml_value(metadata, "required")
   if (is.null(required_questions)) {
     return(NULL)
   }
@@ -437,25 +437,25 @@ get_required_questions <- function(metadata) {
   }
 }
 
-get_options_randomized <- function(metadata) {
-  options_randomized <- get_yaml_value(metadata, "options-randomized")
-  if (is.null(options_randomized)) {
+get_shuffled <- function(metadata) {
+  shuffled <- get_yaml_value(metadata, "shuffled")
+  if (is.null(shuffled)) {
     return(NULL)
   }
   # Handle both single string and list/vector of strings
-  if (is.character(options_randomized)) {
-    return(options_randomized)
-  } else if (is.list(options_randomized)) {
+  if (is.character(shuffled)) {
+    return(shuffled)
+  } else if (is.list(shuffled)) {
     # Convert list to character vector
-    return(unlist(options_randomized))
+    return(unlist(shuffled))
   } else {
-    return(as.character(options_randomized))
+    return(as.character(shuffled))
   }
 }
 
-get_all_options_randomized <- function(metadata) {
-  all_options_randomized <- get_yaml_value(metadata, "all-options-randomized")
-  return(parse_yaml_boolean(all_options_randomized))
+get_all_shuffled <- function(metadata) {
+  all_shuffled <- get_yaml_value(metadata, "all-shuffled")
+  return(parse_yaml_boolean(all_shuffled))
 }
 
 get_show_previous <- function(metadata) {

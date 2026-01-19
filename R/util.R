@@ -1971,13 +1971,13 @@ get_settings_yml <- function() {
           "use-cookies",
           "auto-scroll",
           "rate-survey",
-          "all-questions-required",
+          "all-required",
           "start-page",
           "system-language",
           "highlight-unanswered",
           "highlight-color",
           "capture-metadata",
-          "required-questions"
+          "required"
         )
 
         for (param in server_params) {

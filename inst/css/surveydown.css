@@ -297,8 +297,6 @@ a:hover {
 }
 
 .matrix-question-container .form-group {
-    border: none;
-    padding: 0 0 1rem 0;
     margin-bottom: 0;
 }
 
@@ -327,7 +325,7 @@ a:hover {
     font-size: 18px;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1;
     box-shadow: 0 2px 3px rgba(0,0,0,0.1);
 }
 
@@ -368,6 +366,11 @@ a:hover {
 
 /* Hide radio button labels */
 .matrix-question .shiny-options-group .radio span {
+    display: none;
+}
+
+/* Hide control-label in matrix question radio groups (avoid duplicate labels when highlighted) */
+.matrix-question .shiny-input-radiogroup > .control-label {
     display: none;
 }
 

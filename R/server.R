@@ -6,48 +6,12 @@
 #' progress tracking, page navigation, database updates for survey responses,
 #' and exit survey functionality.
 #'
+#' All survey settings are configured in the `survey.qmd` YAML header under
+#' `survey-settings`. See the surveydown documentation for available options.
+#'
 #' @param db A list containing database connection information created using
 #'   `sd_database()` function. Defaults to `NULL`. If `NULL`, will be auto-detected
 #'   from the calling environment or remain `NULL` (ignore mode).
-#' @param required_questions Vector of character strings. The IDs of questions
-#'   that must be answered. Defaults to `NULL` (no required questions).
-#' @param all_questions_required Logical. If `TRUE`, all questions in the
-#'   survey will be required. Defaults to `FALSE`.
-#' @param start_page Character string. The ID of the page to start on.
-#'   Defaults to `NULL` (first page).
-#' @param show_previous Logical. If `TRUE`, shows the Previous button on survey
-#'   pages. Defaults to `FALSE`.
-#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
-#'   question after answering. Defaults to `FALSE`.
-#' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
-#'   the survey. If `FALSE`, shows a simple confirmation dialog.
-#'   Defaults to `FALSE`.
-#' @param system_language Set the language for the survey system messages. Include
-#'   your own in a `messages.yml` file, or choose a built in one from
-#'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
-#'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
-#'   Defaults to `"en"`. Note: The deprecated `language` parameter is still
-#'   supported for backward compatibility.
-#' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
-#'   for storing and restoring survey progress. Defaults to `TRUE`. Can be
-#'   overridden by `use_cookies` setting in the survey.qmd YAML header.
-#' @param highlight_unanswered Logical. If `TRUE`, enables highlighting
-#'   of all unanswered questions on page display. Defaults to `TRUE`.
-#' @param highlight_color Character string. Color for highlighting unanswered
-#'   questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
-#'   Defaults to "gray".
-#' @param capture_metadata Logical. If `TRUE`, automatically captures and stores
-#'   browser information (browser name, version, and OS), IP address, and
-#'   screen resolution.
-#'   Defaults to `TRUE`.
-#' @param options_randomized Vector of character strings. The IDs of
-#'   multiple-choice questions whose options should be randomized. Only applies
-#'   to MC-type questions: `mc`, `mc_buttons`, `mc_multiple`, `mc_multiple_buttons`.
-#'   Defaults to `NULL` (no randomized options).
-#' @param all_options_randomized Logical. If `TRUE`, all MC-type questions in
-#'   the survey will have their options randomized. Defaults to `FALSE`.
-#' @param language Deprecated as of v0.13.0. Use `system_language` instead.
-#' This parameter. is maintained for backward compatibility only.
 #'
 #' @details
 #' The function performs the following tasks:
@@ -59,10 +23,28 @@
 #'   \item Handles page navigation and skip logic.
 #'   \item Manages required questions.
 #'   \item Performs database operation.
-#'   \item Controls auto-scrolling behavior based on the `auto_scroll` argument.
+#'   \item Controls auto-scrolling behavior based on survey settings.
 #'   \item Uses sweetalert for warning messages when required questions are not
 #'         answered.
-#'   \item Handles the exit survey process based on the `rate_survey` argument.
+#'   \item Handles the exit survey process based on survey settings.
+#' }
+#'
+#' All survey behavior is configured through the `survey-settings` section
+#' in the `survey.qmd` YAML header. Available settings include:
+#' \itemize{
+#'   \item `show-previous`: Show Previous button (default: FALSE)
+#'   \item `use-cookies`: Enable cookie-based session management (default: TRUE)
+#'   \item `auto-scroll`: Auto-scroll to next question (default: FALSE)
+#'   \item `rate-survey`: Show rating question on exit (default: FALSE)
+#'   \item `all-required`: Make all questions required (default: FALSE)
+#'   \item `start-page`: ID of the page to start on (default: first page)
+#'   \item `system-language`: Language for system messages (default: "en")
+#'   \item `highlight-unanswered`: Highlight unanswered questions (default: TRUE)
+#'   \item `highlight-color`: Color for highlighting (default: "gray")
+#'   \item `capture-metadata`: Capture browser/IP info (default: TRUE)
+#'   \item `required`: Vector of required question IDs
+#'   \item `shuffled`: Vector of question IDs to shuffle (MC options or matrix rows)
+#'   \item `all-shuffled`: Shuffle all MC options and matrix rows (default: FALSE)
 #' }
 #'
 #' @section Progress Bar:
@@ -76,16 +58,6 @@
 #' If `db` is provided, the function will update the database with survey
 #' responses. If `db` is `NULL` (ignore mode), responses will be saved to a local
 #' CSV file.
-#'
-#' @section Auto-Scrolling:
-#' When `auto_scroll` is `TRUE`, the survey will automatically scroll to the
-#' next question after the current question is answered. This behavior can be
-#' disabled by setting `auto_scroll = FALSE`.
-#'
-#' @section Exit Survey:
-#' When `rate_survey = TRUE`, the function will show a rating question when
-#' the user attempts to exit the survey. When `FALSE`, it will show a simple
-#' confirmation dialog. The rating, if provided, is saved with the survey data.
 #'
 #' @section Accessing Question Values:
 #' The `sd_server()` function exposes the `all_data` reactive values list
@@ -135,25 +107,27 @@
 #'   # )
 #'   #
 #'   # server <- function(input, output, session) {
-#'   #   sd_server(
-#'   #     db = db
-#'   #   )
+#'   #   sd_server(db = db)
 #'   # }
 #'   #
 #'   # shiny::shinyApp(ui = sd_ui(), server = server)
 #'
+#'   # All settings are configured in survey.qmd YAML header:
+#'   # ---
+#'   # survey-settings:
+#'   #   show-previous: true
+#'   #   auto-scroll: true
+#'   #   required:
+#'   #     - age
+#'   #     - name
+#'   # ---
+#'
 #'   # Using all_data for conditional logic:
 #'   # server <- function(input, output, session) {
-#'   #   # Use all_data instead of input$ for reliable access to question responses
 #'   #   sd_skip_if(
 #'   #     all_data$age < 18 ~ "parental_consent",
 #'   #     all_data$country == "USA" ~ "usa_specific"
 #'   #   )
-#'   #
-#'   #   # all_data works in custom reactive expressions too
-#'   #   output$summary <- renderText({
-#'   #     paste("Age:", all_data$age, "Country:", all_data$country)
-#'   #   })
 #'   #
 #'   #   sd_server(db = db)
 #'   # }
@@ -168,23 +142,7 @@
 #'
 #' @importFrom utils head tail
 #' @export
-sd_server <- function(
-    db = NULL,
-    required_questions = NULL,
-    all_questions_required = FALSE,
-    start_page = NULL,
-    show_previous = FALSE,
-    auto_scroll = FALSE,
-    rate_survey = FALSE,
-    system_language = "en",
-    use_cookies = TRUE,
-    highlight_unanswered = TRUE,
-    highlight_color = "gray",
-    capture_metadata = TRUE,
-    options_randomized = NULL,
-    all_options_randomized = FALSE,
-    language = NULL
-) {
+sd_server <- function(db = NULL) {
     # 1. Initialize local variables ----
 
     # Get input, output, and session from the parent environment
@@ -211,100 +169,41 @@ sd_server <- function(
     skip_if <- shiny::getDefaultReactiveDomain()$userData$skip_if
     stop_if <- shiny::getDefaultReactiveDomain()$userData$stop_if
 
-    # Handle backward compatibility for deprecated 'language' argument
-    if ("language" %in% names(match.call())) {
-        system_language <- language
-        warning(
-            "The 'language' argument is deprecated as of v0.13.0. Use 'system_language' instead."
-        )
-    }
-
-    # Track which parameters were explicitly provided
-    explicit_params <- list(
-        show_previous = !missing(show_previous),
-        use_cookies = !missing(use_cookies),
-        auto_scroll = !missing(auto_scroll),
-        rate_survey = !missing(rate_survey),
-        all_questions_required = !missing(all_questions_required),
-        start_page = !missing(start_page),
-        system_language = !missing(system_language),
-        highlight_unanswered = !missing(highlight_unanswered),
-        highlight_color = !missing(highlight_color),
-        capture_metadata = !missing(capture_metadata),
-        required_questions = !missing(required_questions),
-        options_randomized = !missing(options_randomized),
-        all_options_randomized = !missing(all_options_randomized),
-        language = !missing(language)
-    )
-
-    # Run the configuration settings
-    config <- run_config(
-        required_questions,
-        all_questions_required,
-        start_page,
-        skip_if,
-        show_if,
-        rate_survey,
-        system_language,
-        options_randomized,
-        all_options_randomized
-    )
-
-    # Now read settings from _survey/settings.yml (created in sd_ui)
-    # Priority: sd_server() parameters > YAML values > defaults
-    # Only use YAML values if sd_server() parameters were not explicitly provided
+    # Read all settings from _survey/settings.yml (created in sd_ui)
+    # All configuration now comes from the YAML header only
     settings <- read_settings_yaml()
 
-    # Apply YAML overrides for parameters that weren't explicitly provided
-    # Map snake_case parameter names to kebab-case settings keys
-    param_to_kebab <- list(
-        show_previous = "show-previous",
-        use_cookies = "use-cookies",
-        auto_scroll = "auto-scroll",
-        rate_survey = "rate-survey",
-        all_questions_required = "all-questions-required",
-        start_page = "start-page",
-        system_language = "system-language",
-        highlight_unanswered = "highlight-unanswered",
-        highlight_color = "highlight-color",
-        capture_metadata = "capture-metadata",
-        required_questions = "required-questions",
-        options_randomized = "options-randomized",
-        all_options_randomized = "all-options-randomized"
-    )
-
-    for (param in names(param_to_kebab)) {
-        kebab_key <- param_to_kebab[[param]]
-        if (!explicit_params[[param]] && !is.null(settings[[kebab_key]])) {
-            assign(param, settings[[kebab_key]])
-        }
-    }
+    # Assign all values from settings
+    show_previous <- settings$`show-previous`
+    use_cookies <- settings$`use-cookies`
+    auto_scroll <- settings$`auto-scroll`
+    rate_survey <- settings$`rate-survey`
+    all_required <- settings$`all-required`
+    start_page <- settings$`start-page`
+    system_language <- settings$`system-language`
+    highlight_unanswered <- settings$`highlight-unanswered`
+    highlight_color <- settings$`highlight-color`
+    capture_metadata <- settings$`capture-metadata`
+    required_questions <- settings$`required`
+    shuffled <- settings$`shuffled`
+    all_shuffled <- settings$`all-shuffled`
 
     # Normalize color spelling
-    if (highlight_color == "grey") {
+    if (!is.null(highlight_color) && highlight_color == "grey") {
         highlight_color <- "gray"
     }
 
-    # Update messages if system_language was resolved from YAML or differs from run_config()
-    # This ensures the message system uses the final resolved language
-    if (
-        (!explicit_params$system_language &&
-            !is.null(settings$`system-language`)) ||
-            (explicit_params$system_language && system_language != "en")
-    ) {
-        paths <- get_paths()
-        set_messages(paths, system_language)
-    }
+    # Run the configuration settings
+    config <- run_config()
 
     # Create local objects from config file
     pages <- config$pages
     page_ids <- config$page_ids
     question_ids <- config$question_ids
     question_structure <- config$question_structure
-    question_randomized <- config$question_randomized
+    question_shuffled <- config$question_shuffled
 
-    # Don't overwrite start_page if it was resolved from YAML settings
-    # Only use config$start_page if start_page is still NULL
+    # Use config$start_page as fallback if start_page is NULL
     if (is.null(start_page)) {
         start_page <- config$start_page
     }
@@ -475,68 +374,25 @@ sd_server <- function(
         stop_if
     )
 
-    # Handle all_questions_required and required_questions logic
-    # This mirrors the logic in run_config() but uses YAML-resolved values
-    # Priority: explicit sd_server() parameters > YAML values > config defaults
-    if (all_questions_required) {
+    # Handle all_required and required_questions logic
+    # All settings come from YAML, plus we add conditional question IDs
+    if (isTRUE(all_required)) {
         matrix_question_ids <- names(which(sapply(
             question_structure,
             `[[`,
             "is_matrix"
         )))
         question_required <- setdiff(question_ids, matrix_question_ids)
-    } else if (
-        explicit_params$required_questions && !is.null(required_questions)
-    ) {
-        # Use explicitly provided required_questions from sd_server(), plus conditional ones
-        question_required <- unique(c(
-            required_questions,
-            conditional_question_ids
-        ))
-    } else if (
-        !explicit_params$required_questions && !is.null(required_questions)
-    ) {
-        # Use YAML-resolved required_questions plus conditional ones
-        question_required <- unique(c(
-            required_questions,
-            conditional_question_ids
-        ))
     } else {
-        # Fall back to config-determined required questions plus conditional ones
-        question_required <- unique(c(
-            config$question_required,
-            conditional_question_ids
-        ))
+        # Use required_questions from YAML plus conditional question IDs
+        question_required <- unique(c(required_questions, conditional_question_ids))
     }
-
-    # Update settings.yml with final resolved parameters (including conditionally-detected questions)
-    resolved_params <- list(
-        show_previous = show_previous,
-        use_cookies = use_cookies,
-        auto_scroll = auto_scroll,
-        rate_survey = rate_survey,
-        all_questions_required = all_questions_required,
-        start_page = start_page,
-        system_language = system_language,
-        highlight_unanswered = highlight_unanswered,
-        highlight_color = highlight_color,
-        capture_metadata = capture_metadata,
-        required_questions = question_required, # Use enhanced required questions
-        options_randomized = options_randomized,
-        all_options_randomized = all_options_randomized
-    )
-    update_settings_yaml(resolved_params)
 
     # Update each page's required_questions to reflect final resolved settings
     # This is necessary because pages were created before final parameter resolution
-    # Apply this logic when we have any required questions different from config defaults
     if (
-        all_questions_required ||
-            (explicit_params$required_questions &&
-                !is.null(required_questions)) ||
-            (!explicit_params$required_questions &&
-                !is.null(required_questions) &&
-                length(required_questions) > 0) ||
+        isTRUE(all_required) ||
+            length(question_required) > 0 ||
             length(conditional_question_ids) > 0
     ) {
         for (i in seq_along(pages)) {
@@ -1013,14 +869,14 @@ sd_server <- function(
         }
     }
 
-    # Generate randomized question HTML for a single question
-    generate_randomized_question_html <- function(q_id, q_struct, existing_order = NULL) {
+    # Generate shuffled MC question HTML (shuffle options)
+    generate_shuffled_mc_html <- function(q_id, q_struct, existing_order = NULL) {
         if (is.null(q_struct) || is.null(q_struct$options)) return(NULL)
 
         n_opts <- length(q_struct$options)
         original_options <- unlist(q_struct$options)
 
-        # Get or create randomization order
+        # Get or create shuffle order
         if (n_opts < 2) {
             order <- seq_len(n_opts)
         } else if (!is.null(existing_order)) {
@@ -1029,7 +885,7 @@ sd_server <- function(
             order <- sample(seq_len(n_opts))
         }
 
-        randomized_options <- original_options[order]
+        shuffled_options <- original_options[order]
 
         # Get label (handle list format)
         q_label <- q_struct$label
@@ -1044,7 +900,7 @@ sd_server <- function(
                 id = q_id,
                 type = q_type,
                 label = q_label,
-                option = randomized_options
+                option = shuffled_options
             )
         })
 
@@ -1054,11 +910,33 @@ sd_server <- function(
         )
     }
 
-    # Initialize randomization state
-    randomized_orders <- shiny::reactiveValues()
-    session$userData$randomized_orders <- randomized_orders
+    # Generate shuffle order for matrix question rows
+    # Returns just the order - JavaScript will reorder the DOM
+    generate_matrix_shuffle_order <- function(q_id, q_struct, existing_order = NULL) {
+        if (is.null(q_struct) || is.null(q_struct$row)) {
+            return(NULL)
+        }
 
-    if (length(question_randomized) > 0) {
+        rows <- q_struct$row
+        n_rows <- length(rows)
+
+        # Get or create shuffle order for rows
+        if (n_rows < 2) {
+            order <- seq_len(n_rows)
+        } else if (!is.null(existing_order)) {
+            order <- existing_order
+        } else {
+            order <- sample(seq_len(n_rows))
+        }
+
+        list(order = order)
+    }
+
+    # Initialize shuffle state
+    shuffle_orders <- shiny::reactiveValues()
+    session$userData$shuffle_orders <- shuffle_orders
+
+    if (length(question_shuffled) > 0) {
         # Restore orders from cookies if available
         restored_orders <- session$userData$restored_randomization_orders
         session$userData$restored_randomization_orders <- NULL
@@ -1073,27 +951,46 @@ sd_server <- function(
             }
         }
 
-        # Pre-generate HTML for all randomized questions
-        randomized_question_html <- list()
-        for (q_id in question_randomized) {
-            result <- generate_randomized_question_html(
-                q_id,
-                question_structure[[q_id]],
-                temp_orders[[q_id]]
-            )
-            if (!is.null(result)) {
-                randomized_question_html[[q_id]] <- result$html
-                temp_orders[[q_id]] <- result$order
+        # Process shuffled questions - separate MC (HTML replacement) from matrix (JS reorder)
+        shuffled_question_html <- list()
+        matrix_shuffle_orders <- list()
+
+        for (q_id in question_shuffled) {
+            q_struct <- question_structure[[q_id]]
+            if (isTRUE(q_struct$is_matrix)) {
+                # Matrix questions: just compute shuffle order for JS
+                result <- generate_matrix_shuffle_order(
+                    q_id,
+                    q_struct,
+                    temp_orders[[q_id]]
+                )
+                if (!is.null(result)) {
+                    # Convert to 0-based index for JavaScript
+                    matrix_shuffle_orders[[q_id]] <- as.integer(result$order - 1)
+                    temp_orders[[q_id]] <- result$order
+                }
+            } else {
+                # MC questions: generate replacement HTML
+                result <- generate_shuffled_mc_html(
+                    q_id,
+                    q_struct,
+                    temp_orders[[q_id]]
+                )
+                if (!is.null(result)) {
+                    shuffled_question_html[[q_id]] <- result$html
+                    temp_orders[[q_id]] <- result$order
+                }
             }
         }
 
         # Store for later use
-        session$userData$randomized_question_html <- randomized_question_html
-        session$userData$randomization_orders_list <- temp_orders
+        session$userData$shuffled_question_html <- shuffled_question_html
+        session$userData$matrix_shuffle_orders <- matrix_shuffle_orders
+        session$userData$shuffle_orders_list <- temp_orders
 
         # Copy to reactiveValues for cookie persistence
         for (q_id in names(temp_orders)) {
-            randomized_orders[[q_id]] <- temp_orders[[q_id]]
+            shuffle_orders[[q_id]] <- temp_orders[[q_id]]
         }
     }
 
@@ -1303,13 +1200,13 @@ sd_server <- function(
             # Update cookies in both database and local modes
             # Include page_history for Previous button functionality
             # Include question_history for highlighting restoration
-            # Include randomization_orders for option randomization persistence
+            # Include shuffle_orders for option/row shuffle persistence
             page_data <- list(
                 answers = answers,
                 last_timestamp = last_timestamp,
                 page_history = page_history(),
                 question_history = question_history(),
-                randomization_orders = shiny::reactiveValuesToList(randomized_orders)
+                randomization_orders = shiny::reactiveValuesToList(shuffle_orders)
             )
             session$sendCustomMessage(
                 "setAnswerData",
@@ -1363,7 +1260,7 @@ sd_server <- function(
         )
     }
 
-    # Create script to replace randomized question placeholders client-side
+    # Create script to replace shuffled question placeholders client-side
     create_placeholder_replacement_script <- function(html_list) {
         html_json <- jsonlite::toJSON(html_list, auto_unbox = TRUE)
         shiny::tags$script(htmltools::HTML(sprintf("
@@ -1371,7 +1268,7 @@ sd_server <- function(
                 var questionHTML = %s;
                 var replacePlaceholders = function() {
                     for (var qId in questionHTML) {
-                        var placeholder = document.getElementById(qId + '_randomized');
+                        var placeholder = document.getElementById(qId + '_shuffled');
                         if (placeholder) {
                             var temp = document.createElement('div');
                             temp.innerHTML = questionHTML[qId];
@@ -1395,18 +1292,85 @@ sd_server <- function(
         ", html_json)))
     }
 
+    # Create script to shuffle matrix rows client-side (preserves original styling)
+    create_matrix_shuffle_script <- function(matrix_orders) {
+        orders_json <- jsonlite::toJSON(matrix_orders, auto_unbox = TRUE)
+        shiny::tags$script(htmltools::HTML(sprintf("
+            (function() {
+                var matrixOrders = %s;
+                var shuffleMatrixRows = function() {
+                    for (var qId in matrixOrders) {
+                        var order = matrixOrders[qId];
+                        var container = document.querySelector('[data-question-id=\"' + qId + '\"]');
+                        if (!container) continue;
+
+                        // Find the table with data rows (second tbody in Quarto tables)
+                        var table = container.querySelector('.matrix-question');
+                        if (!table) continue;
+
+                        // Get all tbody elements - in Quarto tables, first has header, second has data
+                        var tbodies = table.querySelectorAll('tbody');
+                        var dataBody = null;
+
+                        // Find the tbody with actual data rows (has td elements, not just th)
+                        for (var i = 0; i < tbodies.length; i++) {
+                            var firstRow = tbodies[i].querySelector('tr');
+                            if (firstRow && firstRow.querySelector('td')) {
+                                dataBody = tbodies[i];
+                                break;
+                            }
+                        }
+
+                        if (!dataBody) continue;
+
+                        // Get all data rows
+                        var rows = Array.from(dataBody.querySelectorAll('tr'));
+                        if (rows.length < 2) continue;
+
+                        // Reorder rows according to shuffle order
+                        var reorderedRows = order.map(function(idx) {
+                            return rows[idx];
+                        });
+
+                        // Remove all rows and re-add in new order
+                        rows.forEach(function(row) {
+                            dataBody.removeChild(row);
+                        });
+                        reorderedRows.forEach(function(row) {
+                            dataBody.appendChild(row);
+                        });
+                    }
+                };
+                if (document.readyState === 'complete') {
+                    shuffleMatrixRows();
+                } else {
+                    document.addEventListener('DOMContentLoaded', shuffleMatrixRows);
+                }
+            })();
+        ", orders_json)))
+    }
+
     # Render main page content when current page changes
     output$main <- shiny::renderUI({
         current_page <- get_current_page()
-        html_list <- session$userData$randomized_question_html
+        html_list <- session$userData$shuffled_question_html
+        matrix_orders <- session$userData$matrix_shuffle_orders
 
         content_tags <- shiny::tagList(create_page_content(current_page$content))
 
-        # Add placeholder replacement script if there are randomized questions
+        # Add placeholder replacement script for MC questions
         if (length(html_list) > 0) {
             content_tags <- shiny::tagList(
                 content_tags,
                 create_placeholder_replacement_script(html_list)
+            )
+        }
+
+        # Add matrix row shuffle script
+        if (length(matrix_orders) > 0) {
+            content_tags <- shiny::tagList(
+                content_tags,
+                create_matrix_shuffle_script(matrix_orders)
             )
         }
 
@@ -3929,13 +3893,14 @@ handle_data_restoration <- function(
             }
         }
 
-        # 6. Restore randomization orders for options randomization persistence
+        # 6. Restore shuffle orders for options/row shuffle persistence
         all_cookie_data <- session$input$stored_answer_data
         if (
             !is.null(all_cookie_data) &&
                 !is.null(all_cookie_data$randomization_orders)
         ) {
-            # Store in session$userData for later restoration after randomized_orders is created
+            # Store in session$userData for later restoration after shuffle_orders is created
+            # Note: keeping cookie key as 'randomization_orders' for backward compatibility
             session$userData$restored_randomization_orders <- all_cookie_data$randomization_orders
         }
     })

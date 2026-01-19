@@ -2,6 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## IMPORTANT: Before and After Editing Code
+
+**Before editing code**, terminate the Shiny session if there is one running.
+
+**After completing improvements**, do the following:
+
+1. **Clean test artifacts**: If there is a `test_survey/` folder, delete the `_survey/` folder and `preview_data.csv` file inside it:
+   ```bash
+   rm -rf test_survey/_survey test_survey/preview_data.csv
+   ```
+
+2. **Run full build**: If there is a `build.R` script in the root folder, source it:
+   ```r
+   source("build.R")
+   ```
+
 ## Overview
 
 **surveydown** is an R package for creating markdown-based programmable surveys using Quarto, Shiny, and PostgreSQL databases. The package enables researchers to define surveys in plain text (`.qmd` and `.R` files), making them version-controllable, reproducible, and collaborative.
