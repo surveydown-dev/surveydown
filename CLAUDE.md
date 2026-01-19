@@ -129,6 +129,11 @@ When a survey runs, the package creates a `_survey/` folder that caches parsed s
 
 This caching system prevents re-rendering on every app reload. Changes to `survey.qmd` or `app.R` trigger re-parsing.
 
+The `settings.yml` structure has 3 sections:
+- `theme-settings`: Visual configuration (barcolor, etc.)
+- `survey-settings`: Behavior (`required`, `all-required`, `shuffled`, `all-shuffled`, `start-page`, `rate-survey`, `show-previous`, etc.)
+- `system-messages`: Multi-language UI text
+
 ### Frontend Assets
 
 - **`inst/js/`**: JavaScript modules for:
@@ -147,7 +152,7 @@ This caching system prevents re-rendering on every app reload. Changes to `surve
 
 - **`inst/template/`**: Default survey template with `survey.qmd` and `app.R`
 
-- **`inst/examples/`**: Example `.qmd` files demonstrating different features
+- **`inst/lua/`**: Lua filter (`include-resources.lua`) for Quarto rendering
 
 ### Question Types
 
@@ -171,6 +176,23 @@ Three main functions control survey flow (defined in `R/server.R` and implemente
 - `sd_skip_if()`: Skip to a page based on conditions
 - `sd_show_if()`: Show/hide questions based on conditions
 - `sd_stop_if()`: Prevent navigation if conditions aren't met
+
+### Option/Row Randomization (v1.0.3+)
+
+Questions can have their options or rows randomized:
+- **MC-type questions** (`mc`, `mc_buttons`, `mc_multiple`, `mc_multiple_buttons`): Options are shuffled
+- **Matrix-type questions**: Rows (sub-questions) are shuffled
+
+Configuration in `survey.qmd` YAML:
+```yaml
+survey-settings:
+  shuffled: [question_id1, question_id2]  # Specific questions to shuffle
+  all-shuffled: yes  # Or shuffle all eligible questions
+```
+
+Implementation in `R/config.R`:
+- `determine_shuffled_questions()`: Resolves which questions to shuffle
+- `get_mc_question_ids()` / `get_matrix_question_ids()`: Filter eligible questions
 
 ### Accessing Question Values
 
@@ -208,7 +230,7 @@ output$custom_message <- renderText({
 ```
 
 **Implementation details:**
-- Created in `sd_server()` around line 900-948
+- Created in `sd_server()` in `R/server.R`
 - Synced via a high-priority observer
 - Excludes timestamp fields and reserved IDs
 - Exposed to parent environment so it's available before `sd_server()` is called
@@ -278,7 +300,7 @@ Progress calculation is based on the last answered question index. The progress 
 1. Add rendering logic in `sd_question()` function in `R/util.R`
 2. Handle the input in `sd_server()` reactive observers
 3. Update question structure parsing in `R/config.R` if needed
-4. Add example in `inst/examples/`
+4. Update template in `inst/template/` if needed
 
 ### Modifying Server Behavior
 
@@ -303,6 +325,7 @@ Database functions in `R/db.R` use the `pool` package for connection pooling and
   - Shorthand page syntax (`--- page_id`)
   - Auto-injection of navigation buttons
   - Reserved IDs system to prevent conflicts with internal metadata fields
+  - **Breaking (v1.0.3)**: `sd_server()` now only accepts `db` parameter; all other settings must be in YAML header of `survey.qmd`
 
 - **Reserved IDs**: The following IDs are reserved and cannot be used for pages, questions, or in `sd_store_value()`:
   - `session_id`, `time_start`, `time_end`, `exit_survey_rating`, `current_page`, `browser`, `ip_address`

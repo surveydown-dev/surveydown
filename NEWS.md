@@ -1,8 +1,10 @@
-# surveydown 1.0.3
+# surveydown 1.1.0
 
 - Bug fix (#246): Added a helper function that provides a vector of all preserved words that cannot be used as IDs and use it to prevent preserved IDs in `sd_store_value()`.
 - New feature (#247): `sd_values()` and `sd_value()` as new approach of accessing question values, replacing the Shiny default `input$`. `sd_values()` and `sd_value()` are able to restore user inputs from db after refreshing the page, so when the survey session is resumed, user inputs will be resumed to the conditional logics without error. `sd_value()` is the alias of `sd_values()`, so they function the same.
-- New feature (#248): Randomized options supported for `mc`, `mc_buttons`, `mc_multiple`, and `mc_multiple_buttons`. In YAML of `survey.qmd`, a new `options-randomized` key is available for listing the question IDs for with randomized options.
+- New feature (#248): Option shuffling supported for `mc`, `mc_buttons`, `mc_multiple`, and `mc_multiple_buttons`. Subquestion shuffling supported for `matrix`. In YAML of `survey.qmd`, 2 new keys are available: `shuffled` and `all-shuffled`. `shuffled` is used to list the question IDs of these 5 question types to have their options/subquestions randomly shuffled. `all-shuffled` is by default `false` and can be set to `true` to apply shuffling to all questions.
+- Breaking change: The `required-questions` and `all-questions-required` YAML keys are renamed as `required` and `all-required`, respectively.
+- Therefore, for YAML keys, we have `required` and `shuffled` both accepting question IDs, and `all-required` and `all-shuffled` both accepting `true` and `false`.
 - Breaking change: All survey setting parameters are removed from `sd_server()`, which only supports `db` as its only parameter. To define survey settings, please only use the YAML header in `survey.qmd`.
 
 # surveydown 1.0.2
