@@ -1330,31 +1330,19 @@ sd_question <- function(
       shiny::tags$script(htmltools::HTML(js_init))
     )
   } else if (type == "matrix") {
-    # Build style for question column (first column)
-    # Default: auto-size based on content with max 50%
-    if (matrix_question_width == "50%") {
-      # Use auto-sizing behavior (CSS handles max-width)
-      question_col_style <- ""
-    } else {
-      # User specified a custom width
-      question_col_style <- paste0("width: ", matrix_question_width, ";")
-    }
-
     # Calculate option column widths if not provided
     if (is.null(matrix_option_width)) {
-      # Let browser auto-distribute (CSS will handle equal distribution)
-      option_col_style <- ""
-    } else {
-      option_col_style <- paste0("width: ", matrix_option_width, ";")
+      # Distribute remaining width equally among option columns
+      remaining_width <- 100 - as.numeric(gsub("%", "", matrix_option_width))
+      matrix_option_width <- paste0(remaining_width / length(option), "%")
     }
-
     # Create colgroup element
     colgroup <- shiny::tags$colgroup(
-        # First column for questions (auto-size or custom)
-        shiny::tags$col(style = question_col_style),
-        # Remaining columns for options
+        # First column for questions
+        shiny::tags$col(style = paste0("width: ", matrix_question_width, ";")),
+        # Remaining columns for option
         lapply(seq_along(option), function(i) {
-            shiny::tags$col(style = option_col_style)
+            shiny::tags$col(style = paste0("width: ", matrix_option_width, ";"))
         })
     )
     header <- shiny::tags$tr(
