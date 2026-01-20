@@ -9,13 +9,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **After completing improvements**, do the following:
 
 1. **Clean test artifacts**: If there is a `test_survey/` folder, delete the `_survey/` folder and `preview_data.csv` file inside it:
+
    ```bash
    rm -rf test_survey/_survey test_survey/preview_data.csv
    ```
 
-2. **Run full build**: If there is a `build.R` script in the root folder, source it:
+2. **Install the package**: run this R script:
    ```r
-   source("build.R")
+   devtools::install(force = TRUE)
    ```
 
 ## Overview

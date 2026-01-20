@@ -26,8 +26,7 @@ sd_question(
   row = NULL,
   default = NULL,
   yml = "questions.yml",
-  matrix_question_width = "50\%",
-  matrix_option_width = NULL,
+  matrix_question_width = NULL,
   ...
 )
 }
@@ -109,11 +108,13 @@ for the slider. Defaults to the median of values.}
 Defaults to \code{"questions.yml"}. Custom YAML files can be specified, either in
 the root directory or subdirectories (e.g., \code{"folder/custom.yml"}).}
 
-\item{matrix_question_width}{Character string. The width of the matrix question column.
-Defaults to \code{"50\%"}.}
-
-\item{matrix_option_width}{Character string. The width of the matrix option column.
-Defaults to \code{NULL}.}
+\item{matrix_question_width}{The width of the matrix question column. Accepts
+numeric (e.g., \code{40}), character without percent (e.g., \code{"40"}), or character
+with percent (e.g., \code{"40\%"}) - all are treated equivalently as percentages.
+Defaults to \code{NULL}, which auto-calculates the width based on the longest row
+label (using a heuristic of 20\% base + 0.5\% per character, bounded between
+30\% and 80\%). The remaining width is automatically distributed equally
+among the option columns.}
 
 \item{...}{Additional arguments, often specific to different input types.
 Examples include \code{pre}, \code{sep}, \code{step}, and \code{animate} for \code{"slider"} and

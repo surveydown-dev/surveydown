@@ -6,6 +6,7 @@
 - Breaking change: The `required-questions` and `all-questions-required` YAML keys are renamed as `required` and `all-required`, respectively.
 - Therefore, for YAML keys, we have `required` and `shuffled` both accepting question IDs, and `all-required` and `all-shuffled` both accepting `true` and `false`.
 - Breaking change: All survey setting parameters are removed from `sd_server()`, which only supports `db` as its only parameter. To define survey settings, please only use the YAML header in `survey.qmd`.
+- Breaking change: The `sd_question()` function no longer has the `matrix_option_width` parameter. Since the matrix question type only has a question column and an option column, we chose to only keep `matrix_question_width` to control the question column width. The option column width is defined automatically according to whatever is left. Also, now `matrix_question_width` is default to `NULL`, in which case the width is auto-defined according to the length of the longest question. Users can overwrite it by defining `matrix_question_width` to a specific value, and we support numeric, string, or string with %. For example, it's valid to define `matrix_question_width = "40%"`, `= "40"`, and `= 40`, all of which result in 40% of width.
 
 # surveydown 1.0.2
 
