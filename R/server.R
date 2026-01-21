@@ -870,7 +870,8 @@ sd_server <- function(db = NULL) {
     }
 
     # Generate shuffled MC question HTML (shuffle options)
-    generate_shuffled_mc_html <- function(q_id, q_struct, existing_order = NULL) {
+    # shuffle_indices: NULL = shuffle all, integer vector = only shuffle these positions
+    generate_shuffled_mc_html <- function(q_id, q_struct, existing_order = NULL, shuffle_indices = NULL) {
         if (is.null(q_struct) || is.null(q_struct$options)) return(NULL)
 
         n_opts <- length(q_struct$options)
@@ -882,7 +883,25 @@ sd_server <- function(db = NULL) {
         } else if (!is.null(existing_order)) {
             order <- existing_order
         } else {
-            order <- sample(seq_len(n_opts))
+            # Create shuffle order based on shuffle_indices
+            if (is.null(shuffle_indices)) {
+                # Shuffle all positions
+                order <- sample(seq_len(n_opts))
+            } else {
+                # Partial shuffle: only shuffle specified indices
+                # Validate indices are within range
+                valid_indices <- shuffle_indices[shuffle_indices >= 1 & shuffle_indices <= n_opts]
+                if (length(valid_indices) < 2) {
+                    # Not enough valid indices to shuffle
+                    order <- seq_len(n_opts)
+                } else {
+                    # Start with identity order
+                    order <- seq_len(n_opts)
+                    # Shuffle only the specified positions among themselves
+                    shuffled_positions <- sample(valid_indices)
+                    order[valid_indices] <- shuffled_positions
+                }
+            }
         }
 
         shuffled_options <- original_options[order]
@@ -912,7 +931,8 @@ sd_server <- function(db = NULL) {
 
     # Generate shuffle order for matrix question rows
     # Returns just the order - JavaScript will reorder the DOM
-    generate_matrix_shuffle_order <- function(q_id, q_struct, existing_order = NULL) {
+    # shuffle_indices: NULL = shuffle all rows, integer vector = only shuffle these row positions
+    generate_matrix_shuffle_order <- function(q_id, q_struct, existing_order = NULL, shuffle_indices = NULL) {
         if (is.null(q_struct) || is.null(q_struct$row)) {
             return(NULL)
         }
@@ -926,7 +946,25 @@ sd_server <- function(db = NULL) {
         } else if (!is.null(existing_order)) {
             order <- existing_order
         } else {
-            order <- sample(seq_len(n_rows))
+            # Create shuffle order based on shuffle_indices
+            if (is.null(shuffle_indices)) {
+                # Shuffle all rows
+                order <- sample(seq_len(n_rows))
+            } else {
+                # Partial shuffle: only shuffle specified row indices
+                # Validate indices are within range
+                valid_indices <- shuffle_indices[shuffle_indices >= 1 & shuffle_indices <= n_rows]
+                if (length(valid_indices) < 2) {
+                    # Not enough valid indices to shuffle
+                    order <- seq_len(n_rows)
+                } else {
+                    # Start with identity order
+                    order <- seq_len(n_rows)
+                    # Shuffle only the specified positions among themselves
+                    shuffled_positions <- sample(valid_indices)
+                    order[valid_indices] <- shuffled_positions
+                }
+            }
         }
 
         list(order = order)
@@ -952,17 +990,21 @@ sd_server <- function(db = NULL) {
         }
 
         # Process shuffled questions - separate MC (HTML replacement) from matrix (JS reorder)
+        # question_shuffled is a named list: names are question IDs, values are shuffle indices (or NULL for all)
         shuffled_question_html <- list()
         matrix_shuffle_orders <- list()
 
-        for (q_id in question_shuffled) {
+        for (q_id in names(question_shuffled)) {
             q_struct <- question_structure[[q_id]]
+            shuffle_indices <- question_shuffled[[q_id]]  # NULL means shuffle all
+
             if (isTRUE(q_struct$is_matrix)) {
                 # Matrix questions: just compute shuffle order for JS
                 result <- generate_matrix_shuffle_order(
                     q_id,
                     q_struct,
-                    temp_orders[[q_id]]
+                    temp_orders[[q_id]],
+                    shuffle_indices
                 )
                 if (!is.null(result)) {
                     # Convert to 0-based index for JavaScript
@@ -974,7 +1016,8 @@ sd_server <- function(db = NULL) {
                 result <- generate_shuffled_mc_html(
                     q_id,
                     q_struct,
-                    temp_orders[[q_id]]
+                    temp_orders[[q_id]],
+                    shuffle_indices
                 )
                 if (!is.null(result)) {
                     shuffled_question_html[[q_id]] <- result$html

@@ -1,6 +1,73 @@
 # MC type names that support option randomization
 MC_TYPE_NAMES <- c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons")
 
+# Parse a single index specification (e.g., "1-5" or 3)
+# Returns an integer vector of indices
+parse_single_index_spec <- function(spec) {
+  if (is.numeric(spec)) {
+    return(as.integer(spec))
+  }
+  spec <- as.character(spec)
+  # Check if it's a range like "1-5"
+  if (grepl("^\\d+-\\d+$", spec)) {
+    parts <- strsplit(spec, "-")[[1]]
+    start <- as.integer(parts[1])
+    end <- as.integer(parts[2])
+    return(seq(start, end))
+  }
+  # Otherwise try to parse as integer
+  as.integer(spec)
+}
+
+# Parse shuffle indices from YAML value
+# Input can be: NULL, integer, string "1-5", vector [1,2,4], or mixed ["1-5", 8]
+# Returns: integer vector of 1-based indices, or NULL (meaning shuffle all)
+parse_shuffle_indices <- function(value) {
+  if (is.null(value)) {
+    return(NULL)  # NULL means shuffle all
+
+  }
+
+  # Handle single values
+  if (length(value) == 1 && !is.list(value)) {
+    return(parse_single_index_spec(value))
+  }
+
+  # Handle vectors/lists
+  indices <- unlist(lapply(value, parse_single_index_spec))
+  sort(unique(indices))
+}
+
+# Parse the shuffled YAML structure into a named list
+# Input formats supported:
+#   - question_id (no indices = shuffle all)
+#   - question_id: 1-5 (range)
+#   - question_id: [1, 2, 4] (specific indices)
+#   - question_id: [1-5, 8-10] (mixed ranges)
+# Returns: named list where names are question IDs and values are index vectors or NULL
+parse_shuffled_yaml <- function(shuffled_raw) {
+  if (is.null(shuffled_raw)) {
+    return(NULL)
+  }
+
+  result <- list()
+
+  for (item in shuffled_raw) {
+    if (is.list(item) && length(item) == 1) {
+      # Format: - question_id: indices
+      q_id <- names(item)[1]
+      indices <- parse_shuffle_indices(item[[1]])
+      result[[q_id]] <- indices
+    } else if (is.character(item) && length(item) == 1) {
+      # Format: - question_id (no indices, shuffle all)
+      # Use list(NULL) to actually store NULL (direct assignment removes the element)
+      result[item] <- list(NULL)
+    }
+  }
+
+  result
+}
+
 # Check if a question is an MC-type question (supports option randomization)
 is_mc_type_question <- function(question) {
   type <- question$type
@@ -42,6 +109,9 @@ get_matrix_question_ids <- function(question_structure) {
 # Determine which questions should be shuffled
 # For MC-type questions: shuffles options
 # For Matrix-type questions: shuffles rows (sub-questions)
+# Returns: named list where names are question IDs and values are:
+#   - NULL: shuffle all options/rows
+#   - integer vector: only shuffle these 1-based indices
 determine_shuffled_questions <- function(
   question_structure,
   shuffled,
@@ -52,17 +122,33 @@ determine_shuffled_questions <- function(
   matrix_question_ids <- get_matrix_question_ids(question_structure)
   valid_question_ids <- c(mc_question_ids, matrix_question_ids)
 
+  # If all_shuffled, return named list with NULL values (shuffle all) for all valid questions
+
   if (all_shuffled) {
-    return(valid_question_ids)
+    result <- setNames(
+      replicate(length(valid_question_ids), NULL, simplify = FALSE),
+      valid_question_ids
+    )
+    return(result)
   }
 
   if (is.null(shuffled) || length(shuffled) == 0) {
-    return(character(0))
+    return(list())  # Return empty list instead of character(0)
   }
+
+  # Parse the shuffled YAML structure
+  parsed_shuffled <- parse_shuffled_yaml(shuffled)
+
+  if (is.null(parsed_shuffled) || length(parsed_shuffled) == 0) {
+    return(list())
+  }
+
+  # Get question IDs from the parsed structure
+  shuffled_ids <- names(parsed_shuffled)
 
   # Warn about invalid questions if requested
   if (warn_invalid) {
-    invalid <- setdiff(shuffled, valid_question_ids)
+    invalid <- setdiff(shuffled_ids, valid_question_ids)
     if (length(invalid) > 0) {
       warning(
         "The following questions in shuffled are not MC-type or matrix questions and will be skipped: ",
@@ -71,7 +157,11 @@ determine_shuffled_questions <- function(
     }
   }
 
-  intersect(shuffled, valid_question_ids)
+  # Filter to only valid questions
+  valid_shuffled_ids <- intersect(shuffled_ids, valid_question_ids)
+
+  # Return named list with only valid questions
+  parsed_shuffled[valid_shuffled_ids]
 }
 
 run_config <- function() {
@@ -926,12 +1016,8 @@ read_settings_yaml <- function() {
     }
   }
 
-  # Process shuffled if it exists (convert list to character vector)
-  if (!is.null(settings$`shuffled`)) {
-    if (is.list(settings$`shuffled`)) {
-      settings$`shuffled` <- unlist(settings$`shuffled`)
-    }
-  }
+  # Note: shuffled is kept as-is (not flattened) to preserve index specifications
+  # It will be parsed by parse_shuffled_yaml() in determine_shuffled_questions()
 
   return(settings)
 }
@@ -1100,7 +1186,7 @@ extract_html_pages <- function(
   required_questions,
   all_required,
   show_if,
-  question_shuffled = character(0),
+  question_shuffled = list(),
   question_structure = NULL
 ) {
   # Check for both sd-page and sd_page classes
@@ -1182,7 +1268,7 @@ extract_html_pages <- function(
       # Check if this question needs shuffling
       # For MC questions: shuffled options (replace with placeholder)
       # For matrix questions: shuffled rows via JavaScript (keep original HTML)
-      if (question_id %in% question_shuffled) {
+      if (question_id %in% names(question_shuffled)) {
         if (is_matrix) {
           # For matrix questions, just mark for JS-based row shuffling
           # Keep the original HTML intact to preserve Quarto styling

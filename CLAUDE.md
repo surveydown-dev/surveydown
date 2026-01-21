@@ -65,7 +65,9 @@ devtools::test()
 testthat::test_file("tests/testthat/test-reserved-ids.R")
 ```
 
-Tests are located in `tests/testthat/` and use the `testthat` framework. Current test coverage includes validation of reserved IDs and ID checking logic.
+Tests are located in `tests/testthat/` and use the `testthat` framework. Current test coverage includes:
+- `test-reserved-ids.R`: Validation of reserved IDs and ID checking logic
+- `test-all-data.R`: Testing for the `all_data` reactive values list functionality
 
 **Manual Testing:**
 
@@ -161,6 +163,7 @@ The `sd_question()` function supports multiple question types defined in `R/util
 - `mc`: Single choice (radio buttons)
 - `mc_multiple`: Multiple choice (checkboxes)
 - `mc_buttons`: Single choice as buttons
+- `mc_multiple_buttons`: Multiple choice as buttons
 - `select`: Dropdown select
 - `text`: Text input
 - `textarea`: Multi-line text
@@ -191,8 +194,30 @@ survey-settings:
   all-shuffled: yes  # Or shuffle all eligible questions
 ```
 
+#### Partial Shuffling (v1.1.0+)
+
+You can specify which positions to shuffle, leaving the rest in their original order:
+
+```yaml
+survey-settings:
+  shuffled:
+    - artist: 1-5              # Shuffle positions 1-5, leave 6-7 fixed
+    - fruit: [1, 2, 4, 7]      # Shuffle only these specific positions
+    - swift: [1-5, 8-10]       # Shuffle positions 1-5 and 8-10, leave 6-7 fixed
+    - michael_jackson          # No indices = shuffle all (original behavior)
+    - car_preference: [1, 3]   # For matrix: shuffle rows 1 and 3 only
+```
+
+Supported index formats:
+- Range string: `"1-5"` → positions 1, 2, 3, 4, 5
+- Integer vector: `[1, 2, 4, 7]` → those specific positions
+- Mixed: `[1-5, 8-10]` → combines both ranges
+- Omitted: shuffle all positions (backward compatible)
+
 Implementation in `R/config.R`:
-- `determine_shuffled_questions()`: Resolves which questions to shuffle
+- `parse_shuffle_indices()`: Parses index specifications (ranges, arrays)
+- `parse_shuffled_yaml()`: Converts YAML to named list with indices
+- `determine_shuffled_questions()`: Returns named list where values are indices or NULL (all)
 - `get_mc_question_ids()` / `get_matrix_question_ids()`: Filter eligible questions
 
 ### Accessing Question Values

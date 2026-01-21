@@ -442,15 +442,9 @@ get_shuffled <- function(metadata) {
   if (is.null(shuffled)) {
     return(NULL)
   }
-  # Handle both single string and list/vector of strings
-  if (is.character(shuffled)) {
-    return(shuffled)
-  } else if (is.list(shuffled)) {
-    # Convert list to character vector
-    return(unlist(shuffled))
-  } else {
-    return(as.character(shuffled))
-  }
+  # Return the raw structure - will be parsed by parse_shuffled_yaml() in config.R
+  # This preserves index specifications like "1-5" or [1, 2, 4]
+  return(shuffled)
 }
 
 get_all_shuffled <- function(metadata) {
