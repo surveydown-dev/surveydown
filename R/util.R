@@ -1,19 +1,46 @@
 # Convert Markdown to HTML
 markdown_to_html <- function(text) {
-  if (is.null(text)) { return(text) }
+  if (is.null(text)) {
+    return(text)
+  }
   return(shiny::HTML(markdown::renderMarkdown(text = text)))
 }
 
 # Convert List Names from Markdown to HTML
-list_name_md_to_html <- function(list) {
-  list_names_md <- names(list)
-  list_names_html <- lapply(list_names_md, function(name) {
+choice_html <- function(option) {
+  choice_names_md <- names(option)
+  choice_names_html <- lapply(choice_names_md, function(name) {
     html_name <- markdown_to_html(name)
-    plain_name <- gsub("<[/]?p>|\\n", "", html_name)
-    return(plain_name)
+    clean_name <- gsub("<[/]?p>|\\n", "", html_name)
+    return(clean_name)
   })
-  names(list) <- unlist(list_names_html)
-  return(list)
+  names(option) <- unlist(choice_names_html)
+  return(option)
+}
+
+# Convert option list to choiceNames and choiceValues with HTML support
+choice_list_html <- function(option) {
+  choice_names <- lapply(names(option), function(name) {
+    html_name <- markdown_to_html(name)
+    # Remove paragraph tags but keep other HTML formatting
+    clean_name <- gsub("<[/]?p>|\\n", "", html_name)
+    return(shiny::HTML(clean_name))
+  })
+  choice_values <- as.list(unname(option))
+  return(list(names = choice_names, values = choice_values))
+}
+
+# Get reserved column names that cannot be used for page IDs, question IDs, or stored values
+get_reserved_ids <- function() {
+  c(
+    "session_id",
+    "time_start",
+    "time_end",
+    "exit_survey_rating",
+    "current_page",
+    "browser",
+    "ip_address"
+  )
 }
 
 #' Display Package Information on Attach
@@ -33,13 +60,19 @@ list_name_md_to_html <- function(list) {
 
   # Add special folders to resource path
   folders <- c('_survey', 'images', 'css', 'js', 'www')
-  for (folder in folders) { include_folder(folder) }
+  for (folder in folders) {
+    include_folder(folder)
+  }
 
   # Print package data
-  desc  <- utils::packageDescription(pkgname, libname)
+  desc <- utils::packageDescription(pkgname, libname)
   packageStartupMessage(
-    "Version:  ", desc$Version, "\n",
-    "Author:   ", "John Paul Helveston, Pingfan Hu, Bogdan Bunea (George Washington University)", "\n\n",
+    "Version:  ",
+    desc$Version,
+    "\n",
+    "Author:   ",
+    "John Paul Helveston, Pingfan Hu, Bogdan Bunea (George Washington University)",
+    "\n\n",
     "Consider submitting praise at\n",
     "https://github.com/jhelvy/surveydown/issues/41.\n\n",
     "Please cite our package in your publications, see:\ncitation(\"surveydown\")\n"
@@ -48,14 +81,18 @@ list_name_md_to_html <- function(list) {
 
 survey_file_exists <- function() {
   files <- basename(list.files(full.names = TRUE))
-  if ("survey.qmd" %in% files) { return(TRUE) }
+  if ("survey.qmd" %in% files) {
+    return(TRUE)
+  }
   return(FALSE)
 }
 
 app_file_exists <- function() {
-    files <- basename(list.files(full.names = TRUE))
-    if ("app.R" %in% files) { return(TRUE) }
-    return(FALSE)
+  files <- basename(list.files(full.names = TRUE))
+  if ("app.R" %in% files) {
+    return(TRUE)
+  }
+  return(FALSE)
 }
 
 check_files_missing <- function() {
@@ -68,6 +105,174 @@ check_files_missing <- function() {
     stop(
       'Missing "app.R" file - your app file must be named "app.R"'
     )
+  }
+  check_page_fences()
+  check_sd_server_position()
+}
+
+check_page_fences <- function() {
+  if (!file.exists("survey.qmd")) {
+    return() # File doesn't exist, will be caught by survey_file_exists()
+  }
+
+  # Read the survey.qmd file
+  lines <- readLines("survey.qmd", warn = FALSE)
+
+  # Find page starting fences - matches both .sd_page and .sd-page
+  page_starts <- grep(
+    "^:::\\s*\\{\\.(sd_page|sd-page)\\s+id\\s*=\\s*[^}]+\\}",
+    lines
+  )
+
+  if (length(page_starts) == 0) {
+    return() # No pages found, nothing to validate
+  }
+
+  # For each page start, find the corresponding closing fence using proper nesting logic
+  for (i in seq_along(page_starts)) {
+    start_line <- page_starts[i]
+
+    # Extract page ID for error message
+    page_line <- lines[start_line]
+    page_id_match <- regmatches(
+      page_line,
+      regexpr("id\\s*=\\s*([^}\\s]+)", page_line, perl = TRUE)
+    )
+    page_id <- if (length(page_id_match) > 0) {
+      gsub("id\\s*=\\s*", "", page_id_match)
+    } else {
+      "unknown"
+    }
+
+    # Look for the next page start or end of file to define search range
+    next_page_start <- if (i < length(page_starts)) {
+      page_starts[i + 1]
+    } else {
+      length(lines) + 1
+    }
+
+    # Track div nesting level to find the correct closing fence
+    div_level <- 0
+    found_closing <- FALSE
+
+    for (line_idx in (start_line):(next_page_start - 1)) {
+      if (line_idx > length(lines)) {
+        break
+      }
+
+      current_line <- lines[line_idx]
+
+      # Count opening divs (:::)
+      if (grepl("^:::\\s*\\{", current_line)) {
+        div_level <- div_level + 1
+      } else if (grepl("^:::\\s*$", current_line)) {
+        # Count closing divs (:::)
+        div_level <- div_level - 1
+        # If we're back to level 0, we found the closing fence for our page
+        if (div_level == 0) {
+          found_closing <- TRUE
+          break
+        }
+      }
+    }
+
+    if (!found_closing) {
+      stop(
+        paste0(
+          'Missing closing fence ":::" for page "',
+          page_id,
+          '" starting at line ',
+          start_line,
+          ' in survey.qmd. Each page must be closed with ":::" on its own line.'
+        )
+      )
+    }
+  }
+}
+
+check_sd_server_position <- function() {
+  if (!file.exists("app.R")) {
+    return() # File doesn't exist, will be caught by app_file_exists()
+  }
+
+  # Simple regex-based approach: just find the last function call in server()
+  lines <- readLines("app.R", warn = FALSE)
+
+  # Find server function start
+  server_start <- grep("server\\s*<-\\s*function", lines)
+  if (length(server_start) == 0) {
+    stop('Could not find server function definition in app.R')
+  }
+
+  # Find server function end by tracking braces
+  brace_count <- 0
+  server_end <- NULL
+  in_server <- FALSE
+
+  for (i in server_start[1]:length(lines)) {
+    line <- lines[i]
+
+    # Count braces
+    open_braces <- length(gregexpr("\\{", line)[[1]]) -
+      (gregexpr("\\{", line)[[1]][1] == -1)
+    close_braces <- length(gregexpr("\\}", line)[[1]]) -
+      (gregexpr("\\}", line)[[1]][1] == -1)
+
+    brace_count <- brace_count + open_braces - close_braces
+
+    if (open_braces > 0) {
+      in_server <- TRUE
+    }
+
+    if (in_server && brace_count == 0) {
+      server_end <- i
+      break
+    }
+  }
+
+  if (is.null(server_end)) {
+    stop('Could not find end of server function')
+  }
+
+  # Get server function lines
+  server_lines <- lines[server_start[1]:server_end]
+
+  # Find all function calls in server (ignore comments and assignments)
+  function_calls <- c()
+  for (line in server_lines) {
+    # Remove comments
+    line_clean <- sub("#.*$", "", line)
+    # Find function calls (word followed by parentheses, not assignments)
+    if (grepl("\\w+\\s*\\(", line_clean) && !grepl("<-", line_clean)) {
+      # Extract function name
+      func_match <- regmatches(
+        line_clean,
+        regexpr("\\w+(?=\\s*\\()", line_clean, perl = TRUE)
+      )
+      if (length(func_match) > 0) {
+        function_calls <- c(function_calls, func_match[1])
+      }
+    }
+  }
+
+  # Check if sd_server is present and is the last function call
+  sd_server_positions <- which(function_calls == "sd_server")
+
+  if (length(sd_server_positions) == 0) {
+    stop('Missing sd_server() call in server function')
+  }
+
+  if (length(sd_server_positions) > 1) {
+    stop('Multiple sd_server() calls found in server function')
+  }
+
+  if (sd_server_positions[1] != length(function_calls)) {
+    stop(paste0(
+      'sd_server() must be the last function call in server function. ',
+      'Found "',
+      function_calls[length(function_calls)],
+      '" after sd_server()'
+    ))
   }
 }
 
@@ -129,12 +334,20 @@ sd_include_folder <- function(folder) {
   pre_included_folders <- names(shiny::resourcePaths())
 
   if (folder %in% pre_included_folders) {
-    message(paste("The folder", folder, "is already included by the package. No action needed."))
+    message(paste(
+      "The folder",
+      folder,
+      "is already included by the package. No action needed."
+    ))
     return(invisible(NULL))
   }
 
   if (!dir.exists(folder)) {
-    stop(paste("The folder", folder, "does not exist in the current directory."))
+    stop(paste(
+      "The folder",
+      folder,
+      "does not exist in the current directory."
+    ))
   }
 
   shiny::addResourcePath(folder, folder)
@@ -145,12 +358,14 @@ sd_include_folder <- function(folder) {
 
 # Convert Vector to JSON Array
 vector_to_json_array <- function(vec) {
-  if (length(vec) == 0) return("[]")
+  if (length(vec) == 0) {
+    return("[]")
+  }
 
   # Ensure all elements are properly quoted
   quoted_elements <- sapply(vec, function(x) {
     if (is.character(x)) {
-      sprintf('"%s"', gsub('"', '\\"', x))  # Escape any quotes within strings
+      sprintf('"%s"', gsub('"', '\\"', x)) # Escape any quotes within strings
     } else {
       as.character(x)
     }
@@ -184,15 +399,14 @@ tibble_to_list_of_lists <- function(tbl) {
 #' including the default built-in template and specialized templates from the
 #' surveydown-dev/templates repository.
 #'
-#' @param path A character string specifying the directory where the survey
-#'   template should be created. Defaults to the current working directory.
 #' @param template A character string specifying the template to use.
 #'   Default is "default" which uses the built-in package template.
 #'   Other options include:
 #'   \describe{
 #'     \item{default}{The default built-in template}
-#'     \item{conditional_display}{Template of conditional display of questions}
-#'     \item{conditional_navigation}{Template of conditional navigation of pages}
+#'     \item{conditional_showing}{Conditionally showing questions and pages}
+#'     \item{conditional_skipping}{Conditionally skipping to forward pages}
+#'     \item{conditional_stopping}{Conditionally stopping the navigation}
 #'     \item{conjoint_buttons}{Conjoint analysis with button interface}
 #'     \item{conjoint_tables}{Conjoint analysis with table interface}
 #'     \item{custom_leaflet_map}{Survey with interactive Leaflet maps}
@@ -206,6 +420,11 @@ tibble_to_list_of_lists <- function(tbl) {
 #'     \item{reactive_drilldown}{Dynamic questions with drill-down capability}
 #'     \item{reactive_questions}{Survey with reactive questions}
 #'   }
+#' @param path A character string specifying the directory where the survey
+#'   template should be created. Defaults to the current working directory.
+#' @param ask Logical. If `TRUE` (default), prompts for user confirmation
+#'   when creating the survey in the current directory. If `FALSE`, bypasses
+#'   the confirmation prompt and proceeds without asking.
 #'
 #' @details
 #' When creating a new survey template, this function will:
@@ -222,23 +441,27 @@ tibble_to_list_of_lists <- function(tbl) {
 #'
 #' @examples
 #' if (interactive()) {
-#'   # Create a survey using the default template
+#'   # Create a survey with the "question_types" template in the "my_survey" directory
+#'   sd_create_survey(template = "question_types", path = "my_survey")
+#'
+#'   # Create a survey using the default template in the "my_survey" directory
 #'   sd_create_survey(path = "my_survey")
 #'
-#'   # Create a survey with the question_types template
-#'   sd_create_survey(path = "question_demo", template = "question_types")
+#'   # Create a survey with default template in current directory
+#'   sd_create_survey("default")
 #'
-#'   # Create a conditional display survey template
-#'   sd_create_survey(path = "conditional_survey", template = "conditional_display")
+#'   # Create a survey without asking for confirmation
+#'   sd_create_survey(template = "default", path = "my_survey", ask = FALSE)
 #' }
 #'
 #' @export
-sd_create_survey <- function(path = getwd(), template = "default") {
+sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
   # Available templates from surveydown-dev/templates
   available_templates <- c(
     "default",
-    "conditional_display",
-    "conditional_navigation",
+    "conditional_showing",
+    "conditional_skipping",
+    "conditional_stopping",
     "conjoint_buttons",
     "conjoint_tables",
     "custom_leaflet_map",
@@ -255,11 +478,17 @@ sd_create_survey <- function(path = getwd(), template = "default") {
 
   # Check if template is valid
   if (!template %in% available_templates) {
-    stop("Invalid template. Available templates are: ",
-         paste(available_templates, collapse = ", "))
+    stop(
+      "Invalid template. Available templates are: ",
+      paste(available_templates, collapse = ", ")
+    )
   }
 
-  if (path == getwd() && !yesno(paste0('Use the current directory "', path, '" as the path?'))) {
+  if (
+    ask &&
+      path == getwd() &&
+      !yesno(paste0('Use the current directory "', path, '" as the path?'))
+  ) {
     stop("Operation aborted by the user.")
   }
 
@@ -278,10 +507,74 @@ sd_create_survey <- function(path = getwd(), template = "default") {
     stop("Template directory does not exist.")
   }
 
-  template_files <- list.files(template_path, full.names = TRUE, recursive = TRUE)
+  template_files <- list.files(
+    template_path,
+    full.names = TRUE,
+    recursive = TRUE
+  )
+
+  # Check for existing files (excluding .Rproj)
+  existing_files <- character(0)
+  # Normalize template path for substring removal
+  template_path_normalized <- normalizePath(
+    template_path,
+    winslash = "/",
+    mustWork = FALSE
+  )
+  for (file in template_files) {
+    file_normalized <- normalizePath(file, winslash = "/", mustWork = FALSE)
+    # Remove template path prefix to get relative path
+    relative_path <- sub(
+      paste0(
+        "^",
+        gsub("([.|()\\^{}+$*?])", "\\\\\\1", template_path_normalized),
+        "/?"
+      ),
+      "",
+      file_normalized
+    )
+    target_file <- file.path(path, relative_path)
+    file_name <- basename(file)
+
+    # Skip .Rproj files in this check
+    if (!grepl("\\.Rproj$", file_name) && file.exists(target_file)) {
+      existing_files <- c(existing_files, relative_path)
+    }
+  }
+
+  # Ask once if any files will be overwritten
+  overwrite_all <- FALSE
+  if (ask && length(existing_files) > 0) {
+    file_tree <- format_file_tree(existing_files)
+
+    # Display the tree using cat() to preserve formatting
+    cat("The following files already exist:\n\n")
+    cat(file_tree, "\n\n", sep = "")
+
+    # Ask the question separately
+    overwrite_all <- yesno("Overwrite all existing files?")
+    if (!overwrite_all) {
+      stop("Operation aborted by the user.")
+    }
+  }
+
+  # Track if we're overwriting files
+  overwriting_files <- length(existing_files) > 0 && overwrite_all
+  if (overwriting_files) {
+    message("Overwriting existing files...")
+  }
 
   files_copied <- sapply(template_files, function(file) {
-    relative_path <- sub(template_path, "", file)
+    file_normalized <- normalizePath(file, winslash = "/", mustWork = FALSE)
+    relative_path <- sub(
+      paste0(
+        "^",
+        gsub("([.|()\\^{}+$*?])", "\\\\\\1", template_path_normalized),
+        "/?"
+      ),
+      "",
+      file_normalized
+    )
     target_file <- file.path(path, relative_path)
 
     dir.create(dirname(target_file), recursive = TRUE, showWarnings = FALSE)
@@ -289,26 +582,42 @@ sd_create_survey <- function(path = getwd(), template = "default") {
     file_name <- basename(file)
 
     # Special handling for .Rproj files - skip if one already exists
-    if (grepl("\\.Rproj$", file_name) && length(list.files(path, pattern = "\\.Rproj$"))) {
-      warning("Skipping the .Rproj file since one already exists.", call. = FALSE, immediate. = TRUE)
+    if (
+      grepl("\\.Rproj$", file_name) &&
+        length(list.files(path, pattern = "\\.Rproj$"))
+    ) {
+      message("Skipping the .Rproj file since one already exists.")
       return(FALSE)
-    }
-    # For other files, prompt for confirmation if they already exist
-    else if (file.exists(target_file)) {
-      overwrite <- yesno(paste0("File '", file_name, "' already exists. Overwrite it"))
-      if (overwrite) {
-        file.copy(from = file, to = target_file, overwrite = TRUE)
-        message(paste("Overwriting", file_name))
-        return(TRUE)
-      } else {
-        message(paste("Skipping", file_name))
-        return(FALSE)
+    } else if (file.exists(target_file)) {
+      # Overwrite based on the single prompt response
+      success <- file.copy(from = file, to = target_file, overwrite = TRUE)
+      if (!success) {
+        warning(
+          "Failed to overwrite ",
+          file_name,
+          call. = FALSE,
+          immediate. = TRUE
+        )
       }
+      return(success)
     } else {
-      file.copy(from = file, to = target_file, overwrite = FALSE)
-      return(TRUE)
+      success <- file.copy(from = file, to = target_file, overwrite = FALSE)
+      if (!success) {
+        warning(
+          "Failed to copy ",
+          file_name,
+          call. = FALSE,
+          immediate. = TRUE
+        )
+      }
+      return(success)
     }
   })
+
+  # Show "Done!" message after overwriting
+  if (overwriting_files) {
+    message("Done!")
+  }
 
   # Create success message that includes the template
   if (any(files_copied)) {
@@ -329,15 +638,112 @@ sd_create_survey <- function(path = getwd(), template = "default") {
   invisible(NULL)
 }
 
+# Helper function to format file list as tree structure
+format_file_tree <- function(files) {
+  if (length(files) == 0) {
+    return("")
+  }
+
+  # Sort files
+  files <- sort(files)
+
+  # Build a nested list tree structure using a different approach
+  tree <- new.env(parent = emptyenv())
+
+  for (file in files) {
+    parts <- strsplit(file, "/")[[1]]
+    current <- tree
+    for (i in seq_along(parts)) {
+      part <- parts[i]
+      if (!exists(part, envir = current, inherits = FALSE)) {
+        assign(part, new.env(parent = emptyenv()), envir = current)
+      }
+      if (i < length(parts)) {
+        current <- get(part, envir = current)
+      }
+    }
+  }
+
+  # Recursively format the tree
+  format_node <- function(node, prefix = "", name = NULL, is_last = TRUE) {
+    result <- character(0)
+
+    # Print current node if it has a name
+    if (!is.null(name)) {
+      connector <- if (is_last) "\u2514\u2500\u2500 " else "\u251c\u2500\u2500 "
+      # Check if this node has children
+      node_names <- sort(ls(envir = node, all.names = FALSE))
+      is_dir <- length(node_names) > 0
+      display_name <- if (is_dir) paste0(name, "/") else name
+      result <- c(result, paste0(prefix, connector, display_name))
+    }
+
+    # Print children
+    children <- ls(envir = node, all.names = FALSE)
+    if (length(children) > 0) {
+      # Sort children: directories first, then files, alphabetically within each group
+      child_info <- lapply(children, function(child_name) {
+        child_node <- get(child_name, envir = node)
+        is_dir <- length(ls(envir = child_node, all.names = FALSE)) > 0
+        list(name = child_name, is_dir = is_dir)
+      })
+
+      # Separate into directories and files, then sort each
+      dir_info <- Filter(function(x) x$is_dir, child_info)
+      file_info <- Filter(function(x) !x$is_dir, child_info)
+
+      dirs <- if (length(dir_info) > 0) {
+        sort(sapply(dir_info, `[[`, "name"))
+      } else {
+        character(0)
+      }
+
+      files <- if (length(file_info) > 0) {
+        sort(sapply(file_info, `[[`, "name"))
+      } else {
+        character(0)
+      }
+
+      children <- c(dirs, files)
+
+      n_children <- length(children)
+
+      # Update prefix for children
+      if (!is.null(name)) {
+        child_prefix <- paste0(prefix, if (is_last) "    " else "\u2502   ")
+      } else {
+        child_prefix <- prefix
+      }
+
+      for (i in seq_along(children)) {
+        child_name <- children[i]
+        child_node <- get(child_name, envir = node)
+        child_is_last <- (i == n_children)
+        result <- c(
+          result,
+          format_node(child_node, child_prefix, child_name, child_is_last)
+        )
+      }
+    }
+
+    return(result)
+  }
+
+  lines <- format_node(tree)
+  return(paste(lines, collapse = "\n"))
+}
+
 # Helper function to download and extract a template from GitHub
 download_template_from_github <- function(template) {
   # Create a temporary directory
   temp_dir <- tempfile("surveydown_template_")
   dir.create(temp_dir, recursive = TRUE)
 
-  # Download the specific template directory from GitHub
+  # Download the specific template from its individual repository
   repo_url <- paste0(
-    "https://github.com/surveydown-dev/templates/archive/refs/heads/main.zip"
+    "https://github.com/surveydown-dev/template_",
+    template,
+    "/archive/refs/heads/main.zip"
   )
 
   temp_zip <- file.path(temp_dir, "template.zip")
@@ -349,7 +755,7 @@ download_template_from_github <- function(template) {
   utils::unzip(temp_zip, exdir = temp_dir)
 
   # Path to the extracted template folder
-  template_path <- file.path(temp_dir, "templates-main", template)
+  template_path <- file.path(temp_dir, paste0("template_", template, "-main"))
 
   if (!dir.exists(template_path)) {
     stop("Template '", template, "' not found in the repository")
@@ -387,25 +793,25 @@ question_templates <- function(type = "mc") {
   )
 )
 ',
-  text = 'sd_question(
+    text = 'sd_question(
   type  = "text",
   id    = "text_id",
   label = "text_label"
 )
 ',
-textarea = 'sd_question(
+    textarea = 'sd_question(
   type  = "textarea",
   id    = "textarea_id",
   label = "textarea_label"
 )
 ',
-numeric = 'sd_question(
+    numeric = 'sd_question(
   type  = "numeric",
   id    = "numeric_id",
   label = "numeric_label"
 )
 ',
-mc_buttons = 'sd_question(
+    mc_buttons = 'sd_question(
   type   = "mc_buttons",
   id     = "mc_buttons_id",
   label  = "mc_buttons_label",
@@ -415,7 +821,7 @@ mc_buttons = 'sd_question(
   )
 )
 ',
-mc_multiple = 'sd_question(
+    mc_multiple = 'sd_question(
   type  = "mc_multiple",
   id    = "mc_multiple_id",
   label = "mc_multiple_label",
@@ -425,7 +831,7 @@ mc_multiple = 'sd_question(
   )
 )
 ',
-mc_multiple_buttons = 'sd_question(
+    mc_multiple_buttons = 'sd_question(
   type  = "mc_multiple_buttons",
   id    = "mc_multiple_buttons_id",
   label = "mc_multiple_buttons_label",
@@ -435,7 +841,7 @@ mc_multiple_buttons = 'sd_question(
   )
 )
 ',
-select = 'sd_question(
+    select = 'sd_question(
   type  = "select",
   id    = "select_id",
   label = "select_label",
@@ -445,7 +851,7 @@ select = 'sd_question(
   )
 )
 ',
-slider = 'sd_question(
+    slider = 'sd_question(
   type  = "slider",
   id    = "slider_id",
   label = "slider_label",
@@ -456,14 +862,14 @@ slider = 'sd_question(
   )
 )
 ',
-slider_numeric = 'sd_question(
+    slider_numeric = 'sd_question(
   type  = "slider_numeric",
   id    = "slider_numeric_id",
   label = "slider_numeric_label",
   option = seq(0, 10, 1)
 )
 ',
-slider_numeric_2 = 'sd_question(
+    slider_numeric_2 = 'sd_question(
   type  = "slider_numeric",
   id    = "slider_numeric_id",
   label = "slider_numeric_label",
@@ -471,13 +877,13 @@ slider_numeric_2 = 'sd_question(
   default = c(3, 5)
 )
 ',
-date = 'sd_question(
+    date = 'sd_question(
   type  = "date",
   id    = "date_id",
   label = "date_label"
 )
 ',
-daterange = 'sd_question(
+    daterange = 'sd_question(
   type  = "daterange",
   id    = "daterange_id",
   label = "daterange_label"
@@ -485,7 +891,7 @@ daterange = 'sd_question(
 '
   )
 
-return(templates[[type]])
+  return(templates[[type]])
 }
 
 #' Add a Question Template to the Current Document
@@ -544,47 +950,52 @@ return(templates[[type]])
 #' }
 #'
 #' @export
-sd_add_question <- function(type = "mc", id = NULL, label = NULL, chunk = FALSE) {
-    # Get the template
-    template <- question_templates(type)
+sd_add_question <- function(
+  type = "mc",
+  id = NULL,
+  label = NULL,
+  chunk = FALSE
+) {
+  # Get the template
+  template <- question_templates(type)
 
-    # Replace the default ID with the provided ID if it's not NULL
-    if (!is.null(id) && id != "") {
-        # Replace the default ID in the template with the provided ID
-        template <- gsub(paste0(type, "_id"), id, template)
-    }
+  # Replace the default ID with the provided ID if it's not NULL
+  if (!is.null(id) && id != "") {
+    # Replace the default ID in the template with the provided ID
+    template <- gsub(paste0(type, "_id"), id, template)
+  }
 
-    # Replace the default label with the provided label if it's not NULL
-    if (!is.null(label) && label != "") {
-        # Replace the default label in the template with the provided label
-        template <- gsub(paste0(type, "_label"), label, template)
-    }
+  # Replace the default label with the provided label if it's not NULL
+  if (!is.null(label) && label != "") {
+    # Replace the default label in the template with the provided label
+    template <- gsub(paste0(type, "_label"), label, template)
+  }
 
-    if (chunk) {
-        template <- paste0("```{r}\n", template, "```\n")
-    }
+  if (chunk) {
+    template <- paste0("```{r}\n", template, "```\n")
+  }
 
-    # Get the current document context
+  # Get the current document context
+  context <- rstudioapi::getActiveDocumentContext()
+  # Get all lines of the document
+  lines <- context$contents
+  # Find the line containing the function call
+  call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+
+  if (length(call_line) > 0) {
+    # Remove the line containing the function call
+    rstudioapi::modifyRange(
+      c(call_line, 1, call_line + 1, 1),
+      ""
+    )
+    # Update the context after removal
     context <- rstudioapi::getActiveDocumentContext()
-    # Get all lines of the document
-    lines <- context$contents
-    # Find the line containing the function call
-    call_line <- which(grepl("sd_add_question\\(.*\\)", lines))
+  }
 
-    if (length(call_line) > 0) {
-        # Remove the line containing the function call
-        rstudioapi::modifyRange(
-            c(call_line, 1, call_line + 1, 1),
-            ""
-        )
-        # Update the context after removal
-        context <- rstudioapi::getActiveDocumentContext()
-    }
-
-    # Get the current cursor position
-    cursor <- context$selection[[1]]$range$start
-    # Insert the template
-    rstudioapi::insertText(location = cursor, text = template)
+  # Get the current cursor position
+  cursor <- context$selection[[1]]$range$start
+  # Insert the template
+  rstudioapi::insertText(location = cursor, text = template)
 }
 
 #' Show a Shiny gadget for selecting a question type
@@ -602,26 +1013,27 @@ sd_add_question <- function(type = "mc", id = NULL, label = NULL, chunk = FALSE)
 #' @export
 #'
 sd_question_gadget <- function(chunk = FALSE) {
-    # Get all available question types (in alphabetical order)
-    question_types <- c(
-        "Date" = "date",
-        "Date Range" = "daterange",
-        "Multiple Choice" = "mc",
-        "Multiple Choice (Multiple Selection)" = "mc_multiple",
-        "Multiple Choice Buttons" = "mc_buttons",
-        "Multiple Choice Buttons (Multiple Selection)" = "mc_multiple_buttons",
-        "Numeric Input" = "numeric",
-        "Select Dropdown" = "select",
-        "Slider" = "slider",
-        "Slider Numeric" = "slider_numeric",
-        "Slider Numeric Range" = "slider_numeric_2",
-        "Text Area" = "textarea",
-        "Text Input" = "text"
-    )
+  # Get all available question types (in alphabetical order)
+  question_types <- c(
+    "Date" = "date",
+    "Date Range" = "daterange",
+    "Multiple Choice" = "mc",
+    "Multiple Choice (Multiple Selection)" = "mc_multiple",
+    "Multiple Choice Buttons" = "mc_buttons",
+    "Multiple Choice Buttons (Multiple Selection)" = "mc_multiple_buttons",
+    "Numeric Input" = "numeric",
+    "Select Dropdown" = "select",
+    "Slider" = "slider",
+    "Slider Numeric" = "slider_numeric",
+    "Slider Numeric Range" = "slider_numeric_2",
+    "Text Area" = "textarea",
+    "Text Input" = "text"
+  )
 
-    ui <- miniUI::miniPage(
-        shiny::tags$head(
-            shiny::tags$script(shiny::HTML("
+  ui <- miniUI::miniPage(
+    shiny::tags$head(
+      shiny::tags$script(shiny::HTML(
+        "
         $(document).ready(function() {
           // Add event listener for Enter key
           $(document).keypress(function(e) {
@@ -631,86 +1043,91 @@ sd_question_gadget <- function(chunk = FALSE) {
             }
           });
         });
-      "))
-        ),
-        miniUI::gadgetTitleBar("Add Survey Question"),
-        miniUI::miniContentPanel(
-            shiny::selectInput(
-                "question_type",
-                "Question Type:",
-                choices = question_types,
-                selected = "mc"
-            ),
-            shiny::textInput(
-                "question_id",
-                "Question ID:",
-                value = "",
-                placeholder = "Enter a unique question ID without spaces"
-            ),
-            shiny::textInput(
-                "question_label",
-                "Question Label:",
-                value = "",
-                placeholder = "Enter the question text to display to respondents"
-            ),
-            shiny::checkboxInput(
-                "in_chunk",
-                "Insert in R code chunk",
-                value = FALSE
-            ),
-            shiny::actionButton("submit", "Create Question", class = "btn-primary")
-        )
+      "
+      ))
+    ),
+    miniUI::gadgetTitleBar("Add Survey Question"),
+    miniUI::miniContentPanel(
+      shiny::selectInput(
+        "question_type",
+        "Question Type:",
+        choices = question_types,
+        selected = "mc"
+      ),
+      shiny::textInput(
+        "question_id",
+        "Question ID:",
+        value = "",
+        placeholder = "Enter a unique question ID without spaces"
+      ),
+      shiny::textInput(
+        "question_label",
+        "Question Label:",
+        value = "",
+        placeholder = "Enter the question text to display to respondents"
+      ),
+      shiny::checkboxInput(
+        "in_chunk",
+        "Insert in R code chunk",
+        value = FALSE
+      ),
+      shiny::actionButton("submit", "Create Question", class = "btn-primary")
     )
+  )
 
-    server <- function(input, output, session) {
-        # When submit button is clicked
-        shiny::observeEvent(input$submit, {
-            # Get the selected question type, ID, and label
-            q_type <- input$question_type
-            q_id <- input$question_id
-            q_label <- input$question_label
-            use_chunk <- input$in_chunk
+  server <- function(input, output, session) {
+    # When submit button is clicked
+    shiny::observeEvent(input$submit, {
+      # Get the selected question type, ID, and label
+      q_type <- input$question_type
+      q_id <- input$question_id
+      q_label <- input$question_label
+      use_chunk <- input$in_chunk
 
-            # Validate the question ID (simple validation)
-            if (q_id == "") {
-                shiny::showNotification("Question ID cannot be empty", type = "error")
-                return()
-            }
+      # Validate the question ID (simple validation)
+      if (q_id == "") {
+        shiny::showNotification("Question ID cannot be empty", type = "error")
+        return()
+      }
 
-            # Close the gadget and return the values
-            shiny::stopApp(list(
-                type = q_type,
-                id = q_id,
-                label = q_label,
-                chunk = use_chunk
-            ))
-        })
+      # Close the gadget and return the values
+      shiny::stopApp(list(
+        type = q_type,
+        id = q_id,
+        label = q_label,
+        chunk = use_chunk
+      ))
+    })
 
-        # Also handle the "Done" button in the title bar
-        shiny::observeEvent(input$done, {
-            shiny::stopApp(NULL)  # Return NULL if canceled
-        })
-    }
+    # Also handle the "Done" button in the title bar
+    shiny::observeEvent(input$done, {
+      shiny::stopApp(NULL) # Return NULL if canceled
+    })
+  }
 
-    # Run the gadget with a dialog viewer
-    result <- shiny::runGadget(
-        ui,
-        server,
-        viewer = shiny::dialogViewer("Add Survey Question", width = 400, height = 480)
+  # Run the gadget with a dialog viewer
+  result <- shiny::runGadget(
+    ui,
+    server,
+    viewer = shiny::dialogViewer(
+      "Add Survey Question",
+      width = 400,
+      height = 480
     )
+  )
 
-    # If a valid result was returned, call sd_add_question
-    if (!is.null(result)) {
-        sd_add_question(
-            type = result$type,
-            id = result$id,
-            label = result$label,
-            chunk = result$chunk
-        )
-    }
+  # If a valid result was returned, call sd_add_question
+  if (!is.null(result)) {
+    sd_add_question(
+      type = result$type,
+      id = result$id,
+      label = result$label,
+      chunk = result$chunk
+    )
+  }
 
-    # Return the question type invisibly
-    invisible(if (!is.null(result)) result$type else NULL)
+  # Return the question type invisibly
+  invisible(if (!is.null(result)) result$type else NULL)
 }
 
 #' Add a Page Template to the Current Document
@@ -762,7 +1179,6 @@ sd_question_gadget <- function(chunk = FALSE) {
 #'
 #' @export
 sd_add_page <- function(page_id = "page_id") {
-
   # Different template for end page
   if (page_id == "end") {
     template <- '::: {.sd_page id=end}
@@ -778,7 +1194,8 @@ sd_close()
 
 '
   } else {
-    template <- sprintf('::: {.sd_page id=%s}
+    template <- sprintf(
+      '::: {.sd_page id=%s}
 
 Add page contents...
 
@@ -791,7 +1208,9 @@ sd_next()
 
 :::
 
-', page_id)
+',
+      page_id
+    )
   }
 
   # Get the current document context
@@ -831,7 +1250,8 @@ sd_next()
 sd_page_gadget <- function() {
   ui <- miniUI::miniPage(
     shiny::tags$head(
-      shiny::tags$script(shiny::HTML("
+      shiny::tags$script(shiny::HTML(
+        "
         $(document).ready(function() {
           // Set focus to the page_id input when the gadget loads
           $('#page_id').focus();
@@ -844,7 +1264,8 @@ sd_page_gadget <- function() {
             }
           });
         });
-      "))
+      "
+      ))
     ),
     miniUI::gadgetTitleBar("Add Survey Page"),
     miniUI::miniContentPanel(
@@ -877,7 +1298,7 @@ sd_page_gadget <- function() {
 
     # Also handle the "Done" button in the title bar
     shiny::observeEvent(input$done, {
-      shiny::stopApp(NULL)  # Return NULL if canceled
+      shiny::stopApp(NULL) # Return NULL if canceled
     })
   }
 
@@ -915,22 +1336,35 @@ sd_version <- function() {
   local_surveydown_version <- utils::packageVersion("surveydown")
 
   # Get latest online version
-  latest_surveydown_version <- get_latest_version("https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION", "Version: ")
+  latest_surveydown_version <- get_latest_version(
+    "https://raw.githubusercontent.com/surveydown-dev/surveydown/main/DESCRIPTION",
+    "Version: "
+  )
 
   # Display version information
   message("surveydown (local): ", local_surveydown_version)
-  message("surveydown (latest): ",
-          if(is.null(latest_surveydown_version)) "Unable to fetch" else latest_surveydown_version)
+  message(
+    "surveydown (latest): ",
+    if (is.null(latest_surveydown_version)) {
+      "Unable to fetch"
+    } else {
+      latest_surveydown_version
+    }
+  )
 
   # Check if update is needed
   if (is.null(latest_surveydown_version)) {
     message("\nUnable to determine if an update is available.")
-    message("Please ensure you have an active internet connection and try again later.")
+    message(
+      "Please ensure you have an active internet connection and try again later."
+    )
   } else {
     pkg_needs_update <- local_surveydown_version < latest_surveydown_version
 
     if (pkg_needs_update) {
-      message("\nAn update is available. To update surveydown to the latest version, run: pak::pak('surveydown-dev/surveydown')")
+      message(
+        "\nAn update is available. To update surveydown to the latest version, run: pak::pak('surveydown-dev/surveydown')"
+      )
     } else {
       message("\nsurveydown is up to date.")
     }
@@ -938,25 +1372,33 @@ sd_version <- function() {
 }
 
 get_latest_version <- function(url, pattern) {
-  tryCatch({
-    content <- readLines(url)
-    version_line <- grep(pattern, content, value = TRUE)
-    if (length(version_line) > 0) {
-      version <- sub(pattern, "", version_line[1])
-      return(package_version(trimws(version)))
-    } else {
-      message("Version information not found in the file at ", url)
+  tryCatch(
+    {
+      content <- readLines(url)
+      version_line <- grep(pattern, content, value = TRUE)
+      if (length(version_line) > 0) {
+        version <- sub(pattern, "", version_line[1])
+        return(package_version(trimws(version)))
+      } else {
+        message("Version information not found in the file at ", url)
+        return(NULL)
+      }
+    },
+    error = function(e) {
+      message(
+        "Error occurred while fetching version from ",
+        url,
+        ": ",
+        e$message
+      )
       return(NULL)
     }
-  }, error = function(e) {
-    message("Error occurred while fetching version from ", url, ": ", e$message)
-    return(NULL)
-  })
+  )
 }
 
-#' Create a translations template file
+#' Create a messages template file
 #'
-#' This function creates a template translations.yml file in the project root directory
+#' This function creates a template messages.yml file in the project root directory
 #' that users can customize to modify system messages.
 #'
 #' @param language Character string specifying the language to use. See
@@ -964,7 +1406,7 @@ get_latest_version <- function(url, pattern) {
 #'   languages. Also, if `"en"`, `"de"`, `"es"`, `"fr"`, or `"it"` is chosen,
 #'   default messages in those langauges will be used, otherwise the default
 #'   English messages will be used. Defaults to `"en"`.
-#' @param path Character string specifying the directory where the translations.yml
+#' @param path Character string specifying the directory where the messages.yml
 #'   file should be created. Defaults to the current working directory. The
 #'   file should be placed in the root project folder of your surveydown survey.
 #' @return Invisible `NULL`.
@@ -973,17 +1415,17 @@ get_latest_version <- function(url, pattern) {
 #' @examples
 #' if (interactive()) {
 #'   # Create English template
-#'   sd_create_translations()
+#'   sd_create_messages()
 #'
 #'   # Create German template
-#'   sd_create_translations(language = "de")
+#'   sd_create_messages(language = "de")
 #'
 #'   # Create Japanese template
 #'   # Will use English messages but Japanese date picker - user can modify
 #'   # the messages as desired
-#'   sd_create_translations(language = "ja")
+#'   sd_create_messages(language = "ja")
 #' }
-sd_create_translations <- function(language = "en", path = getwd()) {
+sd_create_messages <- function(language = "en", path = getwd()) {
   # Define valid languages
   valid_languages <- get_valid_languages()
 
@@ -994,33 +1436,36 @@ sd_create_translations <- function(language = "en", path = getwd()) {
     )
   }
 
-  # Get default translations
-  translations <- get_translations_default()
+  # Get default messages
+  messages <- get_messages_default()
 
   # If language has default messages, use them; otherwise use English
   template <- list()
-  if (language %in% names(translations)) {
-    template[[language]] <- translations[[language]]
+  if (language %in% names(messages)) {
+    template[[language]] <- messages[[language]]
   } else {
-    template[[language]] <- translations[["en"]]
+    template[[language]] <- messages[["en"]]
     message(
-      "No default messages available for '", language,
-      "'. surveydown currently only provides default translations for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
-      "Using English messages with ", language, " date picker.\n"
+      "No default messages available for '",
+      language,
+      "'. surveydown currently only provides default messages for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
+      "Using English messages with ",
+      language,
+      " date picker.\n"
     )
   }
 
   # Create the file path
-  file_path <- file.path(path, "translations.yml")
+  file_path <- file.path(path, "messages.yml")
 
   # Check if file already exists
   if (file.exists(file_path)) {
-    stop("translations.yml already exists in the specified path")
+    stop("messages.yml already exists in the specified path")
   }
 
   # Define template header
   header <- paste(
-    "# Surveydown translations template",
+    "# Surveydown messages template",
     "# Edit the values below to customize system messages",
     "# Keep the structure and keys unchanged",
     "",
@@ -1031,39 +1476,608 @@ sd_create_translations <- function(language = "en", path = getwd()) {
   yaml_content <- paste0(header, yaml::as.yaml(template))
   writeLines(yaml_content, con = file_path)
   message(
-    "Created translations template at: ", file_path,
-    "\n\nModify it to provide custom messages in '", language, "'."
+    "Created messages template at: ",
+    file_path,
+    "\n\nModify it to provide custom messages in '",
+    language,
+    "'."
   )
   invisible(NULL)
 }
 
+# Helper function to try database connection with specific gssencmode
+try_db_connection <- function(params, gss_mode) {
+  # Build connection arguments
+  conn_args <- list(
+    drv = RPostgres::Postgres(),
+    host = params$host,
+    dbname = params$dbname,
+    port = params$port,
+    user = params$user,
+    password = params$password
+  )
+
+  # Add gssencmode unless it's explicitly set to NULL
+  if (!is.null(gss_mode)) {
+    if (!gss_mode %in% c("auto", "prefer", "disable")) {
+      cli::cli_alert_warning(
+        "Invalid 'gssencmode' setting. Must be set to 'auto', 'prefer', 'disable', or NULL...setting to 'auto'"
+      )
+      conn_args$gssencmode <- "prefer" # Use prefer for auto mode
+    } else if (gss_mode == "auto") {
+      conn_args$gssencmode <- "prefer" # Auto mode starts with prefer
+    } else {
+      conn_args$gssencmode <- gss_mode
+    }
+  } else {
+    cli::cli_alert_warning(
+      "'gssencmode' is set to NULL, so the 'gssencmode' parameter will not be passed to the database connection."
+    )
+  }
+
+  # Create pool with dynamic arguments
+  do.call(pool::dbPool, conn_args)
+}
+
+# Get client IP address from various headers (handles proxies/load balancers)
+get_client_ip <- function(request) {
+  # List of headers to check in order of preference
+  ip_headers <- c(
+    "HTTP_X_FORWARDED_FOR",
+    "HTTP_X_REAL_IP",
+    "HTTP_CF_CONNECTING_IP", # Cloudflare
+    "HTTP_X_CLUSTER_CLIENT_IP",
+    "HTTP_X_FORWARDED",
+    "HTTP_FORWARDED_FOR",
+    "HTTP_FORWARDED",
+    "REMOTE_ADDR"
+  )
+
+  for (header in ip_headers) {
+    ip <- request[[header]]
+    if (!is.null(ip) && ip != "") {
+      # X-Forwarded-For can contain multiple IPs, take the first one
+      if (header == "HTTP_X_FORWARDED_FOR") {
+        ip <- trimws(strsplit(ip, ",")[[1]][1])
+      }
+
+      # Skip localhost/private IPs unless it's the only option
+      if (
+        !ip %in% c("127.0.0.1", "::1") &&
+          !grepl("^10\\.|^172\\.(1[6-9]|2[0-9]|3[01])\\.|^192\\.168\\.", ip)
+      ) {
+        return(ip)
+      }
+    }
+  }
+
+  # Fallback to REMOTE_ADDR even if it's localhost
+  return(request$REMOTE_ADDR)
+}
+
+# Parse user agent string to extract browser information
+parse_user_agent <- function(user_agent) {
+  if (is.null(user_agent) || user_agent == "") {
+    return(list(browser = "Unknown", version = "Unknown", os = "Unknown"))
+  }
+
+  # Browser detection patterns (order matters - more specific first)
+  browser_patterns <- list(
+    "Electron" = "Electron/([0-9]+)",
+    "Chrome Mobile" = "CriOS/([0-9]+)", # Chrome iOS app - check this first
+    "Google App" = "GSA/([0-9]+).*(?!CriOS)", # Google Search App (but not if CriOS is present)
+    "Firefox Mobile" = "FxiOS/([0-9]+)", # Firefox iOS app
+    "Edge Mobile" = "EdgiOS/([0-9]+)", # Edge iOS app
+    "Opera Mobile" = "OPiOS/([0-9]+)", # Opera iOS app
+    "Edge" = "Edge?/([0-9]+)",
+    "Chrome" = "Chrome/([0-9]+)",
+    "Firefox" = "Firefox/([0-9]+)",
+    "Safari" = "Version/([0-9]+).*Safari",
+    "Opera" = "Opera/([0-9]+)|OPR/([0-9]+)",
+    "Internet Explorer" = "MSIE ([0-9]+)|Trident.*rv:([0-9]+)"
+  )
+
+  # OS detection patterns (more comprehensive and matching uaparserjs format)
+  os_patterns <- list(
+    "Mac OS X" = "Mac OS X ([0-9._]+)",
+    "iOS" = "iPhone OS ([0-9._]+)|iOS ([0-9._]+)",
+    "Windows" = "Windows NT ([0-9.]+)",
+    "Android" = "Android ([0-9.]+)",
+    "Linux" = "Linux",
+    "Ubuntu" = "Ubuntu"
+  )
+
+  # Extract browser and version
+  browser <- "Unknown"
+  version <- "Unknown"
+  for (name in names(browser_patterns)) {
+    pattern <- browser_patterns[[name]]
+    match <- regexpr(pattern, user_agent, perl = TRUE)
+    if (match > 0) {
+      browser <- name
+      version_match <- regmatches(user_agent, match)
+      # Extract the first number found in the match
+      version_num <- regmatches(version_match, regexpr("[0-9]+", version_match))
+      if (length(version_num) > 0) {
+        version <- version_num[1]
+      }
+      break
+    }
+  }
+
+  # Extract OS
+  os <- "Unknown"
+  for (name in names(os_patterns)) {
+    if (grepl(os_patterns[[name]], user_agent, ignore.case = TRUE)) {
+      os <- name
+      break
+    }
+  }
+
+  return(list(browser = browser, version = version, os = os))
+}
+
 # Replaces usethis::ui_yeah, inspired by internal yesno function in devtools
 yesno <- function(msg) {
-    # Define fun options for yes/no
-    yeses <- c("Yes", "Definitely", "For sure", "Yup", "Yeah", "Of course", "Absolutely")
-    nos <- c("No way", "Not yet", "I forget", "No", "Nope", "Uhhhh... Maybe?")
+  # Define fun options for yes/no
+  yeses <- c(
+    "Yes",
+    "Definitely",
+    "For sure",
+    "Yup",
+    "Yeah",
+    "Of course",
+    "Absolutely"
+  )
+  nos <- c("No way", "Not yet", "I forget", "No", "Nope", "Uhhhh... Maybe?")
 
-    # Ensure message ends with question mark
-    if (!grepl("\\?\\s*$", msg)) {
-        msg <- paste0(msg, "?")
+  # Ensure message ends with question mark
+  if (!grepl("\\?\\s*$", msg)) {
+    msg <- paste0(msg, "?")
+  }
+
+  # Display the message
+  cli::cli_inform(msg)
+
+  # Create random options (1 yes, 2 no) and shuffle them
+  qs <- c(sample(yeses, 1), sample(nos, 2))
+  rand <- sample(length(qs))
+
+  # Display menu and get response
+  selection <- utils::menu(qs[rand])
+
+  # If nothing was selected (0), return FALSE
+  if (selection == 0) {
+    return(FALSE)
+  }
+
+  # Find which index corresponds to the yes option
+  yes_position <- which(rand == 1)
+
+  # Return TRUE if the yes option was selected
+  return(selection == yes_position)
+}
+
+#' Generate a Random Completion Code
+#'
+#' This function generates a random completion code with a specified number of
+#' digits. The code is returned as a character string.
+#'
+#' @param digits An integer specifying the number of digits in the completion
+#'   code. Must be a positive integer. Default is 6.
+#'
+#' @return A character string representing the random completion code.
+#'
+#' @examples
+#' library(surveydown)
+#'
+#' sd_completion_code()  # generates a 6-digit code
+#' sd_completion_code(digits = 8)  # generates an 8-digit code
+#' sd_completion_code(digits = 4)  # generates a 4-digit code
+#' sd_completion_code(digits = 10)  # generates a 10-digit code
+#'
+#' @export
+sd_completion_code <- function(digits = 6) {
+  if (!is.numeric(digits) || digits < 1 || digits != round(digits)) {
+    stop("'digits' must be a positive integer")
+  }
+
+  # Generate random digits
+  digits_vector <- sample(0:9, digits, replace = TRUE)
+
+  # Ensure the first digit is not 0
+  digits_vector[1] <- sample(1:9, 1)
+
+  # Combine into a single string
+  paste(digits_vector, collapse = "")
+}
+
+#' Store a value in the survey data
+#'
+#' This function allows storing additional values to be included in the survey
+#' data, such as respondent IDs or other metadata. When a database connection
+#' is provided, it implements session persistence - if a value already exists
+#' for the current session, storage is skipped to maintain consistency across
+#' page refreshes.
+#'
+#' @param value The value to be stored. This can be any R object that can be
+#'   coerced to a character string.
+#' @param id (Optional) Character string. The id (name) of the value in the
+#'   data. If not provided, the name of the `value` variable will be used.
+#'   Cannot be one of the reserved IDs: "session_id", "time_start", "time_end",
+#'   "exit_survey_rating", "current_page", "browser", or "ip_address".
+#' @param db (Optional) Database connection object created with sd_db_connect().
+#'   If provided, enables session persistence. If not provided, will automatically
+#'   look for a variable named 'db' in the calling environment, or fall back to
+#'   the database connection from the session.
+#' @param auto_assign Logical. If `TRUE` (default), automatically assigns the
+#'   stored value back to the original variable in the calling environment.
+#'   This eliminates the need for explicit assignment when session persistence
+#'   is desired. If `FALSE`, the function only returns the value without
+#'   modifying the original variable.
+#'
+#' @return The value that was stored (either the new value or existing value
+#'   from database if session persistence applies). This allows the function
+#'   to be used in variable assignments.
+#'
+#' @examples
+#' if (interactive()) {
+#'   library(surveydown)
+#'
+#'   # Use sd_store_value() to store custom values in the database:
+#'   # server <- function(input, output, session) {
+#'   #   # Store a generated value
+#'   #   respondentID <- sample(1:1000, 1)
+#'   #   sd_store_value(respondentID, "respID", db)
+#'   #
+#'   #   # Store with automatic ID detection
+#'   #   completion_code <- sample(0:9, 6, replace = TRUE)
+#'   #   sd_store_value(completion_code, db = db)
+#'   #
+#'   #   # Store without auto-assignment
+#'   #   stored_val <- sd_store_value(42, "my_value", db, auto_assign = FALSE)
+#'   #
+#'   #   sd_server()
+#'   # }
+#'
+#'   # Find a working directory and start from a template:
+#'   sd_create_survey(template = "reactive_questions")
+#'   # This creates survey.qmd and app.R - launch the survey using app.R
+#' }
+#'
+#' @export
+sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
+  if (is.null(id)) {
+    id <- deparse(substitute(value))
+  }
+
+  # Check for reserved column names
+  reserved_ids <- get_reserved_ids()
+  if (id %in% reserved_ids) {
+    stop(
+      "Cannot use '", id, "' as a stored value ID. ",
+      "This name is reserved by surveydown. ",
+      "Reserved IDs: ", paste(reserved_ids, collapse = ", ")
+    )
+  }
+
+  shiny::isolate({
+    session <- shiny::getDefaultReactiveDomain()
+    if (is.null(session)) {
+      stop(
+        "sd_store_value must be called from within a Shiny reactive context"
+      )
     }
 
-    # Display the message
-    cli::cli_inform(msg)
+    # If db parameter not provided, try to auto-detect from calling environment or session
+    if (is.null(db)) {
+      # First try to find 'db' variable in the calling environment
+      calling_env <- parent.frame()
+      if (exists("db", envir = calling_env)) {
+        db <- get("db", envir = calling_env)
+      } else {
+        # Fall back to session userData (for backward compatibility)
+        db <- session$userData$db
+      }
+    }
 
-    # Create random options (1 yes, 2 no) and shuffle them
-    qs <- c(sample(yeses, 1), sample(nos, 2))
-    rand <- sample(length(qs))
+    # Check if value already exists (session persistence logic)
+    # Works for both database and local CSV modes
+    # But only if all_data is available - otherwise we need to defer this check
+    existing_value <- NULL
+    if (!is.null(session$userData$all_data)) {
+      # Get session ID based on use_cookies setting
+      search_session_id <- get_session_id(session, db)
 
-    # Display menu and get response
-    selection <- utils::menu(qs[rand])
+      # Check if this value already exists for this session
+      existing_data <- get_session_data(db, search_session_id)
 
-    # If nothing was selected (0), return FALSE
-    if (selection == 0) return(FALSE)
+      if (!is.null(existing_data) && nrow(existing_data) > 0) {
+        if (
+          id %in%
+            names(existing_data) &&
+            !is.na(existing_data[[id]]) &&
+            existing_data[[id]] != ""
+        ) {
+          # Value already exists - use existing value for session persistence
+          existing_value <- existing_data[[id]]
+        }
+      }
+    }
 
-    # Find which index corresponds to the yes option
-    yes_position <- which(rand == 1)
+    # Determine which value to use and store
+    final_value <- if (!is.null(existing_value)) {
+      # Use existing value for session persistence
+      existing_value
+    } else {
+      # Use new value
+      format_question_value(value)
+    }
 
-    # Return TRUE if the yes option was selected
-    return(selection == yes_position)
+    # Initialize stored_values if it doesn't exist
+    if (is.null(session$userData$stored_values)) {
+      session$userData$stored_values <- list()
+    }
+
+    session$userData$stored_values[[id]] <- final_value
+
+    # Make value accessible in the UI
+    output <- shiny::getDefaultReactiveDomain()$output
+    output[[paste0(id, "_value")]] <- shiny::renderText({
+      final_value
+    })
+
+    # Get access to all_data and update it if available
+    # This allows the stored value to be accessible through sd_output
+    if (!is.null(session$userData$all_data)) {
+      session$userData$all_data[[id]] <- final_value
+      # Add to changed fields to trigger database update (only if using new value)
+      if (
+        is.null(existing_value) && !is.null(session$userData$changed_fields)
+      ) {
+        current_fields <- session$userData$changed_fields()
+        session$userData$changed_fields(c(current_fields, id))
+      }
+    } else {
+      # If all_data not available yet, store for deferred processing
+      # This works for both database and local CSV modes
+      search_session_id <- get_session_id(session, db)
+
+      # Check for existing value in either database or local CSV
+      existing_data <- get_session_data(db, search_session_id)
+
+      should_store_new_value <- TRUE
+      if (!is.null(existing_data) && nrow(existing_data) > 0) {
+        if (
+          id %in%
+            names(existing_data) &&
+            !is.na(existing_data[[id]]) &&
+            existing_data[[id]] != ""
+        ) {
+          # Use existing value for persistence - IMPORTANT: Update final_value here!
+          final_value <- existing_data[[id]]
+          should_store_new_value <- FALSE # Don't overwrite existing value
+        }
+      }
+
+      # Always store the final value for session initialization
+      if (is.null(session$userData$deferred_values)) {
+        session$userData$deferred_values <- list()
+      }
+      session$userData$deferred_values[[id]] <- final_value
+
+      # Track which values should NOT be written to storage (for session persistence)
+      if (!should_store_new_value) {
+        if (is.null(session$userData$deferred_skip_db)) {
+          session$userData$deferred_skip_db <- character(0)
+        }
+        session$userData$deferred_skip_db <- c(
+          session$userData$deferred_skip_db,
+          id
+        )
+      }
+    }
+  })
+
+  # Auto-assign to parent environment if requested
+  if (auto_assign) {
+    # Get the variable name from the first argument
+    var_name <- deparse(substitute(value))
+    # Use <<- to assign to the parent environment
+    assign(var_name, final_value, envir = parent.frame())
+  }
+
+  # Return the final value so it can be used in variable assignment
+  return(final_value)
+}
+
+# Helper function to format a single question value
+format_question_value <- function(val) {
+  if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
+    return("")
+  } else if (length(val) > 1) {
+    return(paste(val, collapse = ", "))
+  } else {
+    return(as.character(val))
+  }
+}
+
+# Helper function to determine session ID based on use-cookies setting (kebab-case)
+get_session_id <- function(session, db) {
+  current_session_id <- session$token
+  persistent_session_id <- shiny::isolate(session$input$stored_session_id)
+
+  if (!is.null(db)) {
+    # Database mode: always use persistent session ID if available
+    search_session_id <- if (
+      !is.null(persistent_session_id) && nchar(persistent_session_id) > 0
+    ) {
+      persistent_session_id
+    } else {
+      current_session_id
+    }
+  } else {
+    # Local CSV mode: check use-cookies setting (kebab-case)
+    settings <- get_settings_yml()
+    use_cookies_setting <- if (
+      !is.null(settings) && !is.null(settings$`use-cookies`)
+    ) {
+      # Convert YAML boolean values to R logical
+      if (is.character(settings$`use-cookies`)) {
+        settings$`use-cookies` %in% c("yes", "true", "TRUE", "True")
+      } else {
+        as.logical(settings$`use-cookies`)
+      }
+    } else {
+      TRUE # Default to TRUE if no setting found
+    }
+
+    # For local CSV mode, handle use-cookies setting changes
+    if (
+      use_cookies_setting &&
+        !is.null(persistent_session_id) &&
+        nchar(persistent_session_id) > 0
+    ) {
+      # use-cookies is TRUE and we have a persistent session ID
+      search_session_id <- persistent_session_id
+    } else {
+      # use-cookies is FALSE OR no persistent session ID available
+      # Always use current session ID to ensure fresh values
+      search_session_id <- current_session_id
+    }
+  }
+
+  return(search_session_id)
+}
+
+# Helper function to get settings.yml file (kebab-case only)
+get_settings_yml <- function() {
+  path <- file.path("_survey", "settings.yml")
+  if (fs::file_exists(path)) {
+    return(yaml::read_yaml("_survey/settings.yml"))
+  }
+
+  # Fallback: if settings.yml doesn't exist, read directly from survey.qmd YAML header
+  if (file.exists("survey.qmd")) {
+    tryCatch(
+      {
+        metadata <- quarto::quarto_inspect("survey.qmd")
+        yaml_metadata <- metadata$formats$html$metadata
+
+        # Extract all server configuration parameters if available (kebab-case only)
+        settings <- list()
+        # Note: language is excluded to avoid breaking Quarto rendering
+        server_params <- c(
+          "use-cookies",
+          "auto-scroll",
+          "rate-survey",
+          "all-questions-required",
+          "start-page",
+          "system-language",
+          "highlight-unanswered",
+          "highlight-color",
+          "capture-metadata",
+          "required-questions"
+        )
+
+        for (param in server_params) {
+          # Only check kebab-case version
+          if (!is.null(yaml_metadata[[param]])) {
+            settings[[param]] <- yaml_metadata[[param]]
+          }
+        }
+
+        if (length(settings) > 0) {
+          return(settings)
+        }
+      },
+      error = function(e) {
+        # If quarto inspection fails, continue with NULL
+      }
+    )
+  }
+
+  return(NULL)
+}
+
+# Main function to get session data from any available source (database or local CSV)
+get_session_data <- function(db, search_session_id) {
+  if (!is.null(db)) {
+    # Database mode
+    return(get_db_data(db, search_session_id))
+  } else {
+    # Local CSV mode
+    all_local_data <- get_local_data()
+    if (!is.null(all_local_data)) {
+      return(all_local_data[all_local_data$session_id == search_session_id, ])
+    } else {
+      return(NULL)
+    }
+  }
+}
+
+# Helper function to get local CSV data
+get_local_data <- function() {
+  if (file.exists("preview_data.csv")) {
+    tryCatch(
+      {
+        return(utils::read.csv(
+          "preview_data.csv",
+          stringsAsFactors = FALSE
+        ))
+      },
+      error = function(e) {
+        warning("Error reading preview_data.csv: ", e$message)
+        return(NULL)
+      }
+    )
+  }
+  return(NULL)
+}
+
+# Internal function to get data from database for a specific session only
+get_db_data <- function(db, session_id) {
+  if (is.null(db)) {
+    return(NULL)
+  }
+
+  # Get the correct table name from db object
+  table <- db$table
+  if (is.null(table)) {
+    warning("Table name not found in database object")
+    return(NULL)
+  }
+
+  tryCatch(
+    {
+      # Check if table exists first
+      table_exists <- pool::poolWithTransaction(db$db, function(conn) {
+        DBI::dbExistsTable(conn, table)
+      })
+
+      if (!table_exists) {
+        return(NULL)
+      }
+
+      # Use the same pooling pattern as sd_get_data()
+      result <- pool::poolWithTransaction(db$db, function(conn) {
+        query <- paste0(
+          "SELECT * FROM ",
+          table,
+          " WHERE session_id = $1"
+        )
+        DBI::dbGetQuery(conn, query, params = list(session_id))
+      })
+
+      if (is.null(result) || nrow(result) == 0) {
+        return(NULL)
+      }
+
+      return(result)
+    },
+    error = function(e) {
+      warning("Failed to fetch session data: ", e$message)
+      return(NULL)
+    }
+  )
 }

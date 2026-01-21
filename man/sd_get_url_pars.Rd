@@ -21,48 +21,25 @@ It must be called from within a 'shiny' reactive context.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
-  survey_path <- system.file("examples", "sd_redirect.qmd",
-                             package = "surveydown")
+  # Use sd_get_url_pars() to parse URL parameters:
+  # server <- function(input, output, session) {
+  #   # Get all URL parameters
+  #   all_params <- sd_get_url_pars()
+  #
+  #   # Get specific parameters
+  #   user_id <- sd_get_url_pars("user_id")
+  #
+  #   # Use in reactive expressions
+  #   url_redirect <- reactive({
+  #     params <- sd_get_url_pars()
+  #     paste0("https://example.com?id=", params["id"])
+  #   })
+  #   sd_server()
+  # }
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-
-    # Reactive expression that generates a url with an id variable
-    # parsed from the url
-    url_redirect <- reactive({
-      params <- sd_get_url_pars()
-      id <- params["id"]
-      return(paste0("https://www.google.com?id=", id))
-    })
-
-    # Create the redirect button
-    sd_redirect(
-      id = "redirect_url_pars",
-      url = url_redirect(),
-      button = TRUE,
-      label = "Redirect"
-    )
-
-    sd_skip_if(
-      input$screening_question == "end_1" ~ "end_page_1",
-      input$screening_question == "end_1" ~ "end_page_2",
-    )
-
-    sd_server()
-  }
-
-  # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "external_redirect")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 
 }

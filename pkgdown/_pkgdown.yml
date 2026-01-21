@@ -31,7 +31,8 @@ reference:
 - title: Control Logic
   contents:
   - sd_show_if
-  - sd_skip_forward
+  - sd_skip_if
+  - sd_stop_if
 - title: Server
   contents:
   - sd_server
@@ -44,7 +45,7 @@ reference:
   contents:
   - sd_question
   - sd_question_custom
-  - sd_next
+  - sd_nav
   - sd_output
   - sd_close
   - sd_redirect
@@ -54,9 +55,8 @@ reference:
   - sd_ui
 - title: Utilities
   contents:
-  - sd_dashboard
   - sd_create_survey
-  - sd_create_translations
+  - sd_create_messages
   - sd_include_folder
   - sd_setup
   - sd_add_page
@@ -68,6 +68,8 @@ reference:
   - sd_version
 - title: Depreciated
   contents:
+  - sd_dashboard
   - sd_database
   - sd_set_password
-  - sd_skip_if
+  - sd_skip_forward
+  - sd_next

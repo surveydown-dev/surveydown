@@ -1,10 +1,11 @@
 ^data-raw$
-surveydown.Rproj
+^.*\.Rproj$
 ^\.Rproj\.user$
 ^docs$
 ^notes$
 ^pkgdown$
 ^\.github$
+^\.claude$
 ^README\.Rmd$
 ^LICENSE\.md$
 ^logitr\.Rproj$
@@ -14,9 +15,12 @@ surveydown.Rproj
 ^doc$
 ^Meta$
 build.R
+CLAUDE.md
 ^cran-comments\.md$
 ^\.travis\.yml$
 ^CRAN-RELEASE$
 ^CRAN-SUBMISSION$
 ^.vscode$
 ^app.R$
+^test_survey$
+^\.luarc\.json$

@@ -18,7 +18,7 @@ It retrieves theme and progress bar settings from the survey.qmd file.
 The function reads the following settings from the survey.qmd YAML header:
 \itemize{
 \item \code{theme}: The theme to be applied to the survey.
-\item \code{barcolor}: The color of the progress bar (should be a valid hex color).
+\item \code{barcolor}: The color of the progress bar (accepts hex colors like #FF0000 or #F00, or CSS color names like red, blue, green).
 \item \code{barposition}: The position of the progress bar (\code{'top'}, \code{'bottom'}, or \code{'none'}).
 }
 
@@ -29,26 +29,20 @@ used. If \code{barposition} is not specified, it defaults to 'top'.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
-  survey_path <- system.file("examples", "sd_ui.qmd",
-                             package = "surveydown")
+  # Basic sd_ui() usage in app.R:
+  # library(surveydown)
+  #
+  # ui <- sd_ui()
+  #
+  # server <- function(input, output, session) {
+  #   sd_server()
+  # }
+  #
+  # shiny::shinyApp(ui = ui, server = server)
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-    sd_server()
-  }
-
-  # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "default")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 
 }

@@ -4,7 +4,7 @@
 \alias{sd_db_connect}
 \title{Connect to database}
 \usage{
-sd_db_connect(env_file = ".env", ignore = FALSE, gssencmode = "prefer")
+sd_db_connect(env_file = ".env", ignore = FALSE, gssencmode = "auto")
 }
 \arguments{
 \item{env_file}{Character string. Path to the env file. Defaults to ".env"}
@@ -13,10 +13,14 @@ sd_db_connect(env_file = ".env", ignore = FALSE, gssencmode = "prefer")
 instead of the database. Defaults to \code{FALSE}.}
 
 \item{gssencmode}{Character string. The GSS encryption mode for the database
-connection. Defaults to \code{"prefer"}. NOTE: If you have verified all
-connection details are correct but still cannot access the database,
-consider setting this to \code{"disable"}. This can be necessary if you're on a
-secure connection, such as a VPN.}
+connection. Defaults to \code{"auto"}. Options are:
+\itemize{
+\item \code{"auto"}: Tries \code{"prefer"} first, then falls back to \code{"disable"} if GSSAPI negotiation fails
+\item \code{"prefer"}: Uses GSSAPI encryption if available, plain connection otherwise
+\item \code{"disable"}: Disables GSSAPI encryption entirely
+NOTE: If you have verified all connection details are correct but still cannot
+access the database, try setting this to \code{"disable"}.
+}}
 }
 \value{
 A list containing the database connection pool (\code{db}) and table name (\code{table}),

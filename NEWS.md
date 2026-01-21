@@ -1,4 +1,116 @@
-# surveydown (development version)
+# surveydown dev version
+
+- Bug fix (#246): Added a helper function that provides a vector of all preserved words that cannot be used as IDs and use it to prevent preserved IDs in `sd_store_value()`.
+
+# surveydown 1.0.2
+
+- Bug fix (PR #241): `textarea` questions were being parsed as `"unknown"` type instead of `"textarea"`, preventing proper restoration when navigating between pages.
+- Feature add (PR #240): Added `matrix_question_width` and `matrix_option_width` arguments to `sd_question` to modify the width of the question and option columns in the `type = "matrix"` questions.
+- Feature add (PR #242): Added support to have a "restart" button added when using `sd_close()` so respondents can submit another response with proper cookie handling.
+
+# surveydown 1.0.1
+
+- Bug fix (#243): Updated all internal templates and roxygen examples to latest UI established in v1.0.0. 
+- Bug fix (#244): theme assignment with custom scss files in YAML now works properly, e.g. `theme: [united, custom.scss]`.
+- Progress bar update: Now users can define `barcolor` under the `theme-settings` YAML section to customize the progress bar color, accepting both text color names (over 140 supported by browser CSS) and hex color codes in 3 or 6 digits, e.g. `#FF5733` or `#F53`. If not defined, it shows `~` as the value in `settings.yml`, indicating it's using the default setting which follows the theme.
+- Documentation update: Removed the `inst/examples/` directory. Now all exported functions are documented with simple execution showcases, plus a designated template from one of the supported [templates](https://github.com/surveydown-dev).
+
+# surveydown 1.0.0
+
+- Function update: `sd_nav()` replacing `sd_next()`, which contains both previous and next buttons.
+- Function update: `sd_close()` now supports addition of previous button as well.
+- Function update: `sd_question()` now supports either `option` or `options`. If both are provided, `option` will be used. When defining `option` or `options`, users can now only provide display labels, and the db values will be auto-converted to snake case. For example, `sd_question(options = c("Option 1", "Option 2"))` will have db values of `option_1` and `option_2`.
+- New feature: `surveydown` now supports previous buttons. Under `survey-settings`, users can now define `show-previous` (default to `FALSE`) to enable previous button globally. In `sd_nav()`, users can define `show_previous` being `TRUE` or `FALSE` to override the global setting for that specific page.
+- Simplification: No need to define `format`, `echo`, and `warning` in YAML header of `survey.qmd` anymore. The survey can have a clean start and runs fine without the YAML header.
+- Simplification: No need to define `sd_nav()` for each page. It's auto-injected unless `sd_nav()` or `sd_close()` is explicitly defined in the page with or without parameters.
+- New `settings.yml` content structure with 3 sections: `theme-settings`, `survey-settings`, and `system-messages`. They appear with our without YAML header of `survey.qmd` and are verbose (meaning all keys and values always appear).
+- Progress bar update: Now since previous button is supported, the progress bar will update accordingly when user goes back and forth among pages.
+- Enter key depreciated for triggering next button: Since `surveydown` now supports both previous and next buttons, we decided to disable the Enter key for triggering next button to avoid confusion.
+
+# surveydown 0.14.0
+
+- New feature: shorthand page syntax supported. Now we recommend using `--- page_id` to start a new page, and there is no need to end the page. The previous syntax of starting a page with `::: {.sd_page id=page_id}` and ending with `:::` still works.
+
+# surveydown 0.13.4
+
+- Bug fix: Now the `"auto"` mode of `sd_db_connect()` will correctly detect if `gssencmode` should be `"prefer"` or `"disable"`, based on the actual connection status.
+- Improvement: Now `mc` and `mc_multiple` question types in `sd_question()` will have their options HTML and markdown compatible.
+
+# surveydown 0.13.3
+
+- Enhanced the `numeric` question type input logic.
+- Added validation to ensure page closing fences (`:::`) are properly matched in survey.qmd files.
+- Added validation to ensure `sd_server()` is called as the last statement in the server function.
+- Survey templates are now split into individual repos. For details, see the [surveydown-dev](https://github.com/surveydown-dev) organization site and search for "template" in Repositories.
+- The `sd_create_survey()` function now obtains survey templates from these new individual repos. The function syntax remains the same.
+
+# surveydown 0.13.2
+
+- New feature: `sd_stop_if()` function to stop the navigate button if certain conditions cannot be met.
+- Deprecated `sd_skip_forward()` function, and reuse `sd_stop_if()`.
+- Enhanced: Now for the judging conditions in the 3 condition check functions (`sd_show_if()`, `sd_skip_if()`, and `sd_stop_if()`), these judging questions are auto-assigned as required questions.
+- Updated `sd_create_survey()` to update with the latest templates.
+
+# surveydown 0.13.1
+
+- Updated citation to include *PLOS One* publication
+
+# surveydown 0.13.0
+
+- Enhanced: `sd_store_value()` - Now session-persistent with database integration, compatible with local testing. It also saves the value into the server so it matches the database.
+- Enhanced: Now cookie is working for both db mode and local csv.
+- New feature: YAML-based server configuration - All `sd_server()` parameters can now be configured in the survey.qmd YAML header (e.g., `use_cookies: yes`, `auto_scroll: no`). Parameters in `sd_server()` take priority over YAML.
+- Bug fix: We noticed if question options are generated from HTML, they will have empty labels saved in `questions.yml`. Now it's fixed by auto-assigning the labels from the values. This auto-assignment is already applied in general cases where option labels are empty.
+- Depreciated the `sd_dashboard()` function; functionality is now included in the [{sdstudio} package](https://github.com/surveydown-dev/sdstudio/).
+- Bug fix: Solved the Shiny Client Error of "shared input/output ID" triggered by `sd_output()` with `type` being `"question"`. Now users can still use `sd_output()` to display reactive questions with same IDs, but the internal HTML IDs will be different by appending a `_question` in the end.
+
+# surveydown 0.12.8
+
+- New argument for `sd_server()`: `capture_metadata` automatically captures and stores browser information and IP address. Defaults to `TRUE`.
+
+# surveydown 0.12.7
+
+- Bug fix: The `sd_redirect()` function used to trigger Shiny Client error of duplicated IDs for input and output. Now it's fixed by adding a unique ID to the button.
+- Allow for environment variables to come from system (if available), PR #212
+
+# surveydown 0.12.6
+
+- UI update: Now `"matrix"` question type has better layout.
+- Bug fix: `"text"`, `"textarea"` and `"numeric"` types could bypass the "required" question check with mouse clicking on their areas. Now it's fixed.
+
+# surveydown 0.12.5
+
+- New argument: `gssencmode` now has values of `"auto"`, `"prefer"`, and `"disable"`, with `"auto"` being default.
+- New feature: Now re-rendering will be triggered by changing of either the `survey.qmd` or `app.R` file.
+- Bug fix: `slider`, `slider_numeric`, `date`, and `daterage` questions now will be marked as answered without user interaction if the Next/Close button is pushed, and will have their default value saved.
+- Bug fix: `mc_buttons` and `mc_multiple_buttons` now can properly save data.
+
+# surveydown 0.12.4
+
+- In `sd_question()`, `"numeric"` question type will only allow numeric inputs and `+`/`-` signs.
+- Progress bar won't force to 100% if the ending page has questions. It is useful for those one-page surveys without any Next button or even finish button. In our previous versions, this case will force the bar to 100% even with unanswered questions.
+
+# surveydown 0.12.3
+
+- New argument for `sd_server()`: `highlight_unanswered` gives color shading for the unanswered questions, default to `TRUE`, can be turned off by changing to `FALSE`.
+- New argument for `sd_server()`: `highlight_color` changes the shading color, default to `"gray"` (or `"grey"` as an acceptable spelling), can be changed to `"blue"`, `"orange"`, `"green"`, or `"purple"`.
+
+# surveydown 0.12.2
+
+- `sd_create_survey()` now accepts a new `ask` argument, defaults to `TRUE`. If `ask = FALSE`, the survey creation will proceed without asking.
+
+# surveydown 0.12.1
+
+- Bug fix: In the `0.11.1` version, `sd_show_if()` works for pages as well, but it will make `sd_skip_forward()` totally ignored. Now this is fixed.
+
+# surveydown 0.12.0
+
+- Required question highlighting: Now upon clicking the "Next" button, the unanswered required questions will be highlighted.
+
+# surveydown 0.11.1
+
+- `sd_create_survey()` now accepts `template` as the first argument, and `path` as the second. This follows intuition that we firstly choose a template, and then define the location.
+- `sd_show_if()` now works for both questions and pages with the same syntax. Therefore, we also added an ID check for the uniqueness of the `page_id` and `question_id` altogether. If there is a duplicated ID, the survey will stop and show an error.
 
 # surveydown 0.11.0
 
@@ -9,7 +121,7 @@
 
 # surveydown 0.10.1
 
-- `sd_create_survey()` now accepts two arguments. The `template` argument is by default `"plain_template"`, which creates a default plain template of surveydown. It also accepts a list of templates that we created in the [templates repo](https://github.com/surveydown-dev/templates/tree/main). The `path` argument is unchanged. It defines the relative path of the template location.
+- `sd_create_survey()` now accepts two arguments. The `template` argument is by default `"plain_template"`, which creates a default plain template of surveydown. It also accepts a list of templates. On our [surveydown-dev organization](https://github.com/surveydown-dev) page, there are 14 repos starting with `template_`, each serving as a survey template. The `path` argument is unchanged. It defines the relative path of the template location.
 
 # surveydown 0.10.0
 
@@ -61,7 +173,7 @@
 # surveydown 0.7.2
 
 - Bug fix: The `mc_multiple` question type could not resume its UI if multiple options are selected. Now it's solved.
-- New feature: a new `sd_question_custom()` function is created for custom question definition. See the [`leaflet-map`](https://github.com/surveydown-dev/templates/tree/main/custom_leaflet_map) and [`plotly`](https://github.com/surveydown-dev/templates/tree/main/custom_plotly_chart) template surveys for more details.
+- New feature: a new `sd_question_custom()` function is created for custom question definition. See the [`leaflet-map`](https://github.com/surveydown-dev/template_custom_leaflet_map) and [`plotly`](https://github.com/surveydown-dev/template_custom_plotly_chart) template surveys for more details.
 
 # surveydown 0.7.1
 

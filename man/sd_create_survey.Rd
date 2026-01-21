@@ -4,19 +4,17 @@
 \alias{sd_create_survey}
 \title{Create a new survey template}
 \usage{
-sd_create_survey(path = getwd(), template = "default")
+sd_create_survey(template = "default", path = getwd(), ask = TRUE)
 }
 \arguments{
-\item{path}{A character string specifying the directory where the survey
-template should be created. Defaults to the current working directory.}
-
 \item{template}{A character string specifying the template to use.
 Default is "default" which uses the built-in package template.
 Other options include:
 \describe{
 \item{default}{The default built-in template}
-\item{conditional_display}{Template of conditional display of questions}
-\item{conditional_navigation}{Template of conditional navigation of pages}
+\item{conditional_showing}{Conditionally showing questions and pages}
+\item{conditional_skipping}{Conditionally skipping to forward pages}
+\item{conditional_stopping}{Conditionally stopping the navigation}
 \item{conjoint_buttons}{Conjoint analysis with button interface}
 \item{conjoint_tables}{Conjoint analysis with table interface}
 \item{custom_leaflet_map}{Survey with interactive Leaflet maps}
@@ -30,6 +28,13 @@ Other options include:
 \item{reactive_drilldown}{Dynamic questions with drill-down capability}
 \item{reactive_questions}{Survey with reactive questions}
 }}
+
+\item{path}{A character string specifying the directory where the survey
+template should be created. Defaults to the current working directory.}
+
+\item{ask}{Logical. If \code{TRUE} (default), prompts for user confirmation
+when creating the survey in the current directory. If \code{FALSE}, bypasses
+the confirmation prompt and proceeds without asking.}
 }
 \value{
 Invisible \code{NULL}. The function is called for its side effects.
@@ -55,14 +60,17 @@ External templates are downloaded from the surveydown-dev/templates GitHub repos
 }
 \examples{
 if (interactive()) {
-  # Create a survey using the default template
+  # Create a survey with the "question_types" template in the "my_survey" directory
+  sd_create_survey(template = "question_types", path = "my_survey")
+
+  # Create a survey using the default template in the "my_survey" directory
   sd_create_survey(path = "my_survey")
 
-  # Create a survey with the question_types template
-  sd_create_survey(path = "question_demo", template = "question_types")
+  # Create a survey with default template in current directory
+  sd_create_survey("default")
 
-  # Create a conditional display survey template
-  sd_create_survey(path = "conditional_survey", template = "conditional_display")
+  # Create a survey without asking for confirmation
+  sd_create_survey(template = "default", path = "my_survey", ask = FALSE)
 }
 
 }

@@ -1,8 +1,10 @@
-bibentry(bibtype = "Manual",
-  title = "surveydown: Markdown-Based Surveys Using Quarto And Shiny",
-  author = c(person(given = "John Paul", family = "Helveston", role = c("aut", "cre", "cph")), person(given = "Pingfan", family = "Hu", role = c("aut", "cph")), person(given = "Bogdan", family = "Bunea", role = c("aut", "cph"))),
-  year = "2024",
-  note = "R package",
-  url = "https://surveydown.org/",
+bibentry(bibtype = "Article",
+  title = "surveydown: An open-source, markdown-based platform for programmable and reproducible surveys",
+  author = c(person(given = "Pingfan", family = "Hu", role = c("aut", "cph")), person(given = "Bogdan", family = "Bunea", role = c("aut", "cph")), person(given = "John Paul", family = "Helveston", role = c("aut", "cre", "cph"))),
+  journal      = "PLOS One",
+  year         = "2025",
+  volume       = "20",
+  number       = "8",
+  doi          = "10.1371/journal.pone.0331002",
   header = "To cite surveydown in publications use:"
 )

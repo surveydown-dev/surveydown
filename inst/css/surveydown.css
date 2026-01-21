@@ -80,7 +80,7 @@ p, .form-group, .control-label {
 .question-container {
   margin-left: auto;
   margin-right: auto;
-  margin-bottom: 1rem;
+  margin-bottom: auto;
   position: relative;
 }
 
@@ -104,6 +104,11 @@ p, .form-group, .control-label {
 .radio label,
 .checkbox label {
   padding-bottom: 0.25rem;
+}
+
+.radio label span,
+.checkbox label span {
+  margin-left: 0.5rem;
 }
 
 .radio-group-buttons .btn-group-container-sw,
@@ -222,12 +227,6 @@ a:hover {
   color: color-mix(in srgb, var(--theme-color) 80%, black);
 }
 
-/* Utility classes */
-p:last-child,
-.form-group:last-child {
-  margin-bottom: 0;
-}
-
 /* Media Queries */
 @media screen and (max-width: 767px) {
   .radio-group-buttons .btn-group-container-sw,
@@ -291,13 +290,16 @@ p:last-child,
 /* Matrix question styling */
 .matrix-question-container {
     width: 100%;
+    max-height: 70vh;
     overflow-x: auto;
+    overflow-y: auto;
+    margin-bottom: 2rem;
 }
 
 .matrix-question-container .form-group {
     border: none;
-    background-color: transparent;
-    padding: 0;
+    padding: 0 0 1rem 0;
+    margin-bottom: 0;
 }
 
 .matrix-question {
@@ -320,9 +322,13 @@ p:last-child,
 }
 
 .matrix-question th {
-    background-color: transparent;
+    background-color: #f9f9f9;
     font-weight: bold;
     font-size: 18px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
 }
 
 .table {
@@ -411,4 +417,270 @@ div:where(.swal2-container) .swal2-html-container {
 .modal-body .shiny-input-container .control-label {
   text-align: center;
   width: 100%;
+}
+
+/* Required question highlighting */
+
+.required-question-highlight .form-group,
+.required-question-highlight.form-group {
+  border-color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.required-question-highlight .form-control {
+  border-color: #dc3545 !important;
+}
+
+.required-question-highlight .form-control:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Validation question highlighting (red, highest priority) */
+
+.validation-question-highlight .form-group,
+.validation-question-highlight.form-group {
+  border-color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.validation-question-highlight .form-control {
+  border-color: #dc3545 !important;
+}
+
+.validation-question-highlight .form-control:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Unanswered question highlighting (blue) */
+
+.unanswered-question-highlight .form-group,
+.unanswered-question-highlight.form-group {
+  border-color: #007bff !important;
+  background-color: rgba(0, 123, 255, 0.1) !important;
+}
+
+.unanswered-question-highlight .form-control {
+  border-color: #007bff !important;
+}
+
+.unanswered-question-highlight .form-control:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Unanswered question highlighting (orange) */
+
+.unanswered-question-highlight-orange .form-group,
+.unanswered-question-highlight-orange.form-group {
+  border-color: #fd7e14 !important;
+  background-color: rgba(253, 126, 20, 0.1) !important;
+}
+
+.unanswered-question-highlight-orange .form-control {
+  border-color: #fd7e14 !important;
+}
+
+.unanswered-question-highlight-orange .form-control:focus {
+  border-color: #fd7e14 !important;
+  box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.25) !important;
+}
+
+/* Unanswered question highlighting (green) */
+
+.unanswered-question-highlight-green .form-group,
+.unanswered-question-highlight-green.form-group {
+  border-color: #28a745 !important;
+  background-color: rgba(40, 167, 69, 0.1) !important;
+}
+
+.unanswered-question-highlight-green .form-control {
+  border-color: #28a745 !important;
+}
+
+.unanswered-question-highlight-green .form-control:focus {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+}
+
+/* Unanswered question highlighting (purple) */
+
+.unanswered-question-highlight-purple .form-group,
+.unanswered-question-highlight-purple.form-group {
+  border-color: #6f42c1 !important;
+  background-color: rgba(111, 66, 193, 0.1) !important;
+}
+
+.unanswered-question-highlight-purple .form-control {
+  border-color: #6f42c1 !important;
+}
+
+.unanswered-question-highlight-purple .form-control:focus {
+  border-color: #6f42c1 !important;
+  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25) !important;
+}
+
+/* Unanswered question highlighting (gray) */
+
+.unanswered-question-highlight-gray .form-group,
+.unanswered-question-highlight-gray.form-group {
+  border-color: #6c757d !important;
+  background-color: rgba(108, 117, 125, 0.1) !important;
+}
+
+.unanswered-question-highlight-gray .form-control {
+  border-color: #6c757d !important;
+}
+
+.unanswered-question-highlight-gray .form-control:focus {
+  border-color: #6c757d !important;
+  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+}
+
+/* Priority system: red highlighting overrides all unanswered colors */
+.required-question-highlight.unanswered-question-highlight .form-group,
+.required-question-highlight.unanswered-question-highlight.form-group,
+.required-question-highlight.unanswered-question-highlight-orange .form-group,
+.required-question-highlight.unanswered-question-highlight-orange.form-group,
+.required-question-highlight.unanswered-question-highlight-green .form-group,
+.required-question-highlight.unanswered-question-highlight-green.form-group,
+.required-question-highlight.unanswered-question-highlight-purple .form-group,
+.required-question-highlight.unanswered-question-highlight-purple.form-group,
+.required-question-highlight.unanswered-question-highlight-gray .form-group,
+.required-question-highlight.unanswered-question-highlight-gray.form-group {
+  border-color: #dc3545 !important;
+  background-color: rgba(220, 53, 69, 0.1) !important;
+}
+
+.required-question-highlight.unanswered-question-highlight .form-control,
+.required-question-highlight.unanswered-question-highlight-orange .form-control,
+.required-question-highlight.unanswered-question-highlight-green .form-control,
+.required-question-highlight.unanswered-question-highlight-purple .form-control,
+.required-question-highlight.unanswered-question-highlight-gray .form-control {
+  border-color: #dc3545 !important;
+}
+
+.required-question-highlight.unanswered-question-highlight .form-control:focus,
+.required-question-highlight.unanswered-question-highlight-orange .form-control:focus,
+.required-question-highlight.unanswered-question-highlight-green .form-control:focus,
+.required-question-highlight.unanswered-question-highlight-purple .form-control:focus,
+.required-question-highlight.unanswered-question-highlight-gray .form-control:focus {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Numeric input spinner styling */
+.numeric-input-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.numeric-input-with-spinner {
+  padding-right: 0 !important;
+}
+
+.numeric-input-with-spinner::-webkit-outer-spin-button,
+.numeric-input-with-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.numeric-input-with-spinner[type=number] {
+  -moz-appearance: textfield;
+}
+
+.native-spinner {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: calc(100% - 4px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, #f9f9f9 0%, #f0f0f0 100%);
+  overflow: hidden;
+}
+
+.native-spinner-button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  font-size: 0;
+  outline: none;
+}
+
+.native-spinner-button:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.native-spinner-button:active {
+  background: rgba(0,0,0,0.1);
+}
+
+.native-spinner-button::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+}
+
+.spinner-up::before {
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-bottom: 4px solid #666;
+}
+
+.spinner-down::before {
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid #666;
+}
+
+.native-spinner-button:not(:last-child) {
+  border-bottom: 1px solid #ccc;
+}
+
+/* Navigation buttons styling */
+.sd-nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+  clear: both;
+}
+
+.sd-nav-button {
+  min-width: 100px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.sd-nav-prev {
+  margin-right: auto;
+}
+
+.sd-nav-next {
+  margin-left: auto;
+}
+
+/* Ensure navigation buttons work well on mobile */
+@media screen and (max-width: 767px) {
+  .sd-nav-button {
+    min-width: 80px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
 }

@@ -1,5 +1,6 @@
 foo.R
 build.R
+.claude
 .Rhistory
 .DS_Store
 .Rproj.user
@@ -22,3 +23,7 @@ example_files
 example1.rmarkdown
 .env
 preview_data.csv
+/.quarto/
+test_survey/
+/.luarc.json
+**/*.quarto_ipynb

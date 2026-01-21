@@ -9,24 +9,33 @@ sd_server(
   required_questions = NULL,
   all_questions_required = FALSE,
   start_page = NULL,
+  show_previous = FALSE,
   auto_scroll = FALSE,
   rate_survey = FALSE,
-  language = "en",
-  use_cookies = TRUE
+  system_language = "en",
+  use_cookies = TRUE,
+  highlight_unanswered = TRUE,
+  highlight_color = "gray",
+  capture_metadata = TRUE,
+  language = NULL
 )
 }
 \arguments{
 \item{db}{A list containing database connection information created using
-\code{sd_database()} function. Defaults to \code{NULL}.}
+\code{sd_database()} function. Defaults to \code{NULL}. If \code{NULL}, will be auto-detected
+from the calling environment or remain \code{NULL} (ignore mode).}
 
 \item{required_questions}{Vector of character strings. The IDs of questions
-that must be answered. Defaults to \code{NULL}.}
+that must be answered. Defaults to \code{NULL} (no required questions).}
 
 \item{all_questions_required}{Logical. If \code{TRUE}, all questions in the
 survey will be required. Defaults to \code{FALSE}.}
 
 \item{start_page}{Character string. The ID of the page to start on.
-Defaults to \code{NULL}.}
+Defaults to \code{NULL} (first page).}
+
+\item{show_previous}{Logical. If \code{TRUE}, shows the Previous button on survey
+pages. Defaults to \code{FALSE}.}
 
 \item{auto_scroll}{Logical. Whether to enable auto-scrolling to the next
 question after answering. Defaults to \code{FALSE}.}
@@ -35,14 +44,31 @@ question after answering. Defaults to \code{FALSE}.}
 the survey. If \code{FALSE}, shows a simple confirmation dialog.
 Defaults to \code{FALSE}.}
 
-\item{language}{Set the language for the survey system messages. Include
-your own in a \code{translations.yml} file, or choose a built in one from
+\item{system_language}{Set the language for the survey system messages. Include
+your own in a \code{messages.yml} file, or choose a built in one from
 the following list: English (\code{"en"}), German (\code{"de"}), Spanish (\code{"es"}),
 French (\code{"fr"}), Italian (\code{"it"}), Simplified Chinese (\code{"zh-CN"}).
-Defaults to \code{"en"}.}
+Defaults to \code{"en"}. Note: The deprecated \code{language} parameter is still
+supported for backward compatibility.}
 
 \item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management
-for storing and restoring survey progress. Defaults to \code{TRUE}.}
+for storing and restoring survey progress. Defaults to \code{TRUE}. Can be
+overridden by \code{use_cookies} setting in the survey.qmd YAML header.}
+
+\item{highlight_unanswered}{Logical. If \code{TRUE}, enables highlighting
+of all unanswered questions on page display. Defaults to \code{TRUE}.}
+
+\item{highlight_color}{Character string. Color for highlighting unanswered
+questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
+Defaults to "gray".}
+
+\item{capture_metadata}{Logical. If \code{TRUE}, automatically captures and stores
+browser information (browser name, version, and OS), IP address, and
+screen resolution.
+Defaults to \code{TRUE}.}
+
+\item{language}{Deprecated as of v0.13.0. Use \code{system_language} instead.
+This parameter. is maintained for backward compatibility only.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
@@ -103,37 +129,28 @@ confirmation dialog. The rating, if provided, is saved with the survey data.
 if (interactive()) {
   library(surveydown)
 
-  # Get path to example survey file
-  survey_path <- system.file("examples", "basic_survey.qmd",
-                             package = "surveydown")
+  # Basic sd_server() usage in app.R:
+  # library(surveydown)
+  #
+  # db <- sd_database(
+  #   host   = "db.xxxx.supabase.co",
+  #   dbname = "postgres",
+  #   port   = "5432",
+  #   user   = "postgres",
+  #   table  = "my_survey"
+  # )
+  #
+  # server <- function(input, output, session) {
+  #   sd_server(
+  #     db = db
+  #   )
+  # }
+  #
+  # shiny::shinyApp(ui = sd_ui(), server = server)
 
-  # Copy to a temporary directory
-  temp_dir <- tempdir()
-  file.copy(survey_path, file.path(temp_dir, "survey.qmd"))
-  orig_dir <- getwd()
-  setwd(temp_dir)
-
-  # Define a minimal server
-  server <- function(input, output, session) {
-
-    # sd_server() accepts these following parameters
-    sd_server(
-      db = NULL,
-      required_questions = NULL,
-      all_questions_required = FALSE,
-      start_page = NULL,
-      auto_scroll = FALSE,
-      rate_survey = FALSE,
-      language = "en",
-      use_cookies = TRUE
-    )
-  }
-
-  # Run the app
-  shiny::shinyApp(ui = sd_ui(), server = server)
-
-  # Clean up
-  setwd(orig_dir)
+  # Find a working directory and start from a template:
+  sd_create_survey(template = "default")
+  # This creates survey.qmd and app.R - launch the survey using app.R
 }
 
 }
