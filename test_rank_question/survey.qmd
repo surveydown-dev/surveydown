@@ -1,0 +1,112 @@
+---
+echo: false
+warning: false
+---
+
+```{r}
+library(surveydown)
+library(sortsurvey)
+```
+
+::: {#welcome .sd-page}
+
+# Welcome to our survey!
+
+This is a simple demonstration of a surveydown survey. It has two pages with one question on each page.
+
+Here is a basic "multiple choice" question, created using `type = 'mc'` inside the `sd_question()` function:
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'penguins',
+  label = "Which type of penguin do you like the best?",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo'
+  )
+)
+
+sd_question(
+  type  = 'rank_list',
+  id    = 'penguins_drag',
+  label = "Which type of penguin do you like the best? Rank them from best to worst.",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo'
+  )
+)
+
+
+
+```
+
+# Bucket list style:
+
+```{r}
+
+# add in drag and drop question
+# horizontal method doesn't seem to work regardless of what width/height is
+# set to
+
+# DOES NOT WORK: input id is only set for bucket top class, 
+# need to set two other input IDs for rank_list objects
+
+# see function bucket_list_survey in sortsurvey https://github.com/saudiwin/sortable_survey/blob/main/R/bucket_list.R
+# and add_rank_list in sortable: https://rstudio.github.io/sortable/reference/add_rank_list.html
+
+sd_question(
+  type  = 'bucket_list',
+  id    = 'penguins_bucket',
+  label = "Which type of penguin do you like the best? Drag those penguins to the second bucket.",
+  option = c(
+    'Adélie'    = 'adelie',
+    'Chinstrap' = 'chinstrap',
+    'Gentoo'    = 'gentoo'
+  )
+    
+)
+
+
+```
+
+
+You need to insert next buttons with `sd_next()` and set the `next_page` argument to the name of the page you want to go to next.
+
+```{r}
+sd_next(next_page = 'page2')
+```
+
+:::
+
+::: {#page2 .sd-page}
+
+This is another page in your survey.
+
+{surveydown} supports many types of questions. For example, here is a simple `text` type question:
+
+```{r}
+sd_question(
+  type  = "text",
+  id    = "silly_word",
+  label = "Write a silly word here:"
+)
+
+sd_next(next_page = 'end')
+```
+
+:::
+
+::: {#end .sd-page}
+
+## End
+
+This it the last page in the survey.
+
+```{r}
+sd_close("Exit Survey")
+```
+
+:::
