@@ -56,9 +56,7 @@ reference:
 - title: Utilities
   contents:
   - sd_create_survey
-  - sd_create_messages
   - sd_include_folder
-  - sd_setup
   - sd_add_page
   - sd_add_question
   - sd_page_gadget
@@ -72,6 +70,8 @@ reference:
   contents:
   - sd_dashboard
   - sd_database
+  - sd_setup
+  - sd_create_messages
   - sd_set_password
   - sd_skip_forward
   - sd_next

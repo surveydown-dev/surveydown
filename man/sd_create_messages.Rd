@@ -21,7 +21,7 @@ file should be placed in the root project folder of your surveydown survey.}
 Invisible \code{NULL}.
 }
 \description{
-This function creates a template messages.yml file in the project root directory
+This function is depreciated. Creates a template messages.yml file in the project root directory
 that users can customize to modify system messages.
 }
 \examples{

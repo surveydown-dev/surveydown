@@ -1398,7 +1398,7 @@ get_latest_version <- function(url, pattern) {
 
 #' Create a messages template file
 #'
-#' This function creates a template messages.yml file in the project root directory
+#' This function is depreciated. Creates a template messages.yml file in the project root directory
 #' that users can customize to modify system messages.
 #'
 #' @param language Character string specifying the language to use. See
@@ -1426,63 +1426,8 @@ get_latest_version <- function(url, pattern) {
 #'   sd_create_messages(language = "ja")
 #' }
 sd_create_messages <- function(language = "en", path = getwd()) {
-  # Define valid languages
-  valid_languages <- get_valid_languages()
-
-  # Check if language is valid
-  if (is.null(language) || !(language %in% valid_languages)) {
-    stop(
-      "Invalid language selected. Check https://shiny.posit.co/r/reference/shiny/1.7.0/dateinput for supported languages."
-    )
-  }
-
-  # Get default messages
-  messages <- get_messages_default()
-
-  # If language has default messages, use them; otherwise use English
-  template <- list()
-  if (language %in% names(messages)) {
-    template[[language]] <- messages[[language]]
-  } else {
-    template[[language]] <- messages[["en"]]
-    message(
-      "No default messages available for '",
-      language,
-      "'. surveydown currently only provides default messages for the following languages: 'en', 'de', 'fr', 'it', 'es', and 'zh-CN'.\n\n",
-      "Using English messages with ",
-      language,
-      " date picker.\n"
-    )
-  }
-
-  # Create the file path
-  file_path <- file.path(path, "messages.yml")
-
-  # Check if file already exists
-  if (file.exists(file_path)) {
-    stop("messages.yml already exists in the specified path")
-  }
-
-  # Define template header
-  header <- paste(
-    "# Surveydown messages template",
-    "# Edit the values below to customize system messages",
-    "# Keep the structure and keys unchanged",
-    "",
-    sep = "\n"
-  )
-
-  # Write question to YAML (with comment in first lines)
-  yaml_content <- paste0(header, yaml::as.yaml(template))
-  writeLines(yaml_content, con = file_path)
-  message(
-    "Created messages template at: ",
-    file_path,
-    "\n\nModify it to provide custom messages in '",
-    language,
-    "'."
-  )
-  invisible(NULL)
+   # v1.1.0
+  .Deprecated("")
 }
 
 # Helper function to try database connection with specific gssencmode
