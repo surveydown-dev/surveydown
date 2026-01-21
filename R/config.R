@@ -125,7 +125,7 @@ determine_shuffled_questions <- function(
   # If all_shuffled, return named list with NULL values (shuffle all) for all valid questions
 
   if (all_shuffled) {
-    result <- setNames(
+    result <- stats::setNames(
       replicate(length(valid_question_ids), NULL, simplify = FALSE),
       valid_question_ids
     )
