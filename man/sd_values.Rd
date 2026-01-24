@@ -4,15 +4,26 @@
 \alias{sd_values}
 \title{Access question values from survey responses}
 \usage{
-sd_values(...)
+sd_values(..., type = "numeric")
 }
 \arguments{
 \item{...}{One or more question IDs to retrieve. Each can be provided as an
 unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
+
+\item{type}{Character string or unquoted symbol controlling value conversion:
+\itemize{
+\item \code{"numeric"} or \code{numeric} (default): Attempts to convert values to numeric.
+If all values can be converted, returns numeric; otherwise returns character.
+\item \code{"character"} or \code{character}: Forces values to remain as character strings.
+Useful for values like ZIP codes that may start with zero (e.g., "01234").
+}}
 }
 \value{
 If a single question ID is provided, returns the value of that question.
 If multiple question IDs are provided, returns an unnamed vector of values.
+Values that look numeric (e.g., \code{"40"} or \code{c("40", "50")}) are automatically
+converted to numeric type when \code{type = "numeric"} (the default). If any value
+in a vector is non-numeric, all values remain as character strings.
 Returns \code{NULL} for any question ID that doesn't exist.
 }
 \description{
@@ -33,12 +44,13 @@ Multiple question IDs can be provided to retrieve multiple values at once.
 
     # Multiple values at once:
     values <- sd_values(age, name, country)
-    # Returns c("5", "Pinocchio", "UK")
+    # Returns c(5, "Pinocchio", "UK") - note: returns as-is since mixed types
 
-    # Mixed quoted/unquoted:
-    values <- sd_values(age, "name", country)
+    # Numeric conversion happens automatically:
+    age <- sd_values(age)
+    # If age was "40", it's now 40 (numeric)
 
-    # Useful in conditional logic:
+    # Useful in conditional logic (no as.numeric() needed):
     if (sd_values(age) < 18) {
       # Do something
     }
@@ -47,6 +59,14 @@ Multiple question IDs can be provided to retrieve multiple values at once.
     if (all(sd_values(vehicle_complex, buy_vehicle) == c("no", "no"))) {
       # Both are "no"
     }
+
+    # For ZIP codes or other values with leading zeros, use type = "character":
+    zip <- sd_values(zip_code, type = "character")  # "01234" stays "01234"
+    zip <- sd_values(zip_code, type = character)    # Unquoted also works
+
+    # Multiple ZIP codes:
+    zips <- sd_values(zip1, zip2, type = character)
+    # Returns c("01234", "05678") with leading zeros preserved
 
     sd_server(db = db)
   }

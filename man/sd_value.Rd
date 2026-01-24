@@ -4,11 +4,14 @@
 \alias{sd_value}
 \title{Access question values from survey responses (alias)}
 \usage{
-sd_value(...)
+sd_value(..., type = "numeric")
 }
 \arguments{
 \item{...}{One or more question IDs to retrieve. Each can be provided as an
 unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
+
+\item{type}{Character string or unquoted symbol. Either \code{"numeric"}/\code{numeric} (default)
+or \code{"character"}/\code{character}. See \code{\link[=sd_values]{sd_values()}} for details.}
 }
 \value{
 If a single question ID is provided, returns the value of that question.
