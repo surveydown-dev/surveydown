@@ -393,6 +393,40 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
     }
 }
 
+# Helper function to convert value to numeric if it looks like a number
+# Handles both single values and vectors
+try_numeric <- function(x) {
+    if (is.null(x) || length(x) == 0) {
+        return(x)
+    }
+    # Handle vectors element-wise
+    result <- sapply(x, function(val) {
+        if (is.na(val) || identical(val, "")) {
+            return(val)
+        }
+        # Try to convert to numeric
+        numeric_val <- suppressWarnings(as.numeric(val))
+        if (!is.na(numeric_val)) {
+            return(numeric_val)
+        }
+        return(val)
+    }, USE.NAMES = FALSE)
+    return(result)
+}
+
+# Helper function to split comma-separated string into vector
+# Used for mc_multiple and mc_multiple_buttons question types
+split_multi <- function(x) {
+    if (is.null(x) || length(x) == 0) {
+        return(x)
+    }
+    # Only split if it's a single string containing ", "
+    if (length(x) == 1 && is.character(x) && grepl(", ", x, fixed = TRUE)) {
+        return(strsplit(x, ", ", fixed = TRUE)[[1]])
+    }
+    return(x)
+}
+
 #' Access question values from survey responses
 #'
 #' This function provides a functional interface to access question values from
@@ -402,9 +436,22 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #'
 #' @param ... One or more question IDs to retrieve. Each can be provided as an
 #'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
+#' @param type Character string specifying how to handle value types. Options are:
+#'   - `"auto"` (default): Attempts to convert values to numeric if they look like
+#'     numbers. Values that cannot be converted remain as character strings.
+#'   - `"character"`: Forces all values to remain as character strings. Useful for
+#'     fields like ZIP codes where leading zeros matter (e.g., "01234" stays "01234"
+#'     instead of becoming 1234).
+#' @param split Logical. If `TRUE`, splits comma-separated strings into vectors.
+#'   This is useful for `mc_multiple` and `mc_multiple_buttons` question types,
+#'   where multiple selections are stored as a single comma-separated string
+#'   (e.g., "apple, banana, orange"). When `split = TRUE`, this becomes
+#'   `c("apple", "banana", "orange")`. Defaults to `FALSE`.
 #'
-#' @return If a single question ID is provided, returns the value of that question.
-#'   If multiple question IDs are provided, returns an unnamed vector of values.
+#' @return If a single question ID is provided and `split = FALSE`, returns the
+#'   value of that question. If multiple question IDs are provided, returns an
+#'   unnamed vector of values. When `split = TRUE` and the value contains
+#'   comma-separated items, returns a vector of the individual items.
 #'   Returns `NULL` for any question ID that doesn't exist.
 #'
 #' @examples
@@ -419,19 +466,34 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #'
 #'     # Multiple values at once:
 #'     values <- sd_values(age, name, country)
-#'     # Returns c("5", "Pinocchio", "UK")
+#'     # Returns c(5, "Pinocchio", "UK") - age converted to numeric
 #'
 #'     # Mixed quoted/unquoted:
 #'     values <- sd_values(age, "name", country)
 #'
-#'     # Useful in conditional logic:
+#'     # Useful in conditional logic (auto-converts to numeric):
 #'     if (sd_values(age) < 18) {
 #'       # Do something
 #'     }
 #'
-#'     # Check multiple values at once:
-#'     if (all(sd_values(vehicle_complex, buy_vehicle) == c("no", "no"))) {
-#'       # Both are "no"
+#'     # For ZIP codes, use type = "character" to preserve leading zeros:
+#'     zip <- sd_values(zip_code, type = "character")
+#'     # "01234" stays as "01234", not 1234
+#'
+#'     # For mc_multiple questions, use split = TRUE to get individual selections:
+#'     fruits <- sd_values(fav_fruits, split = TRUE)
+#'     # If user selected apple, banana, orange:
+#'     # Without split: "apple, banana, orange" (length 1)
+#'     # With split: c("apple", "banana", "orange") (length 3)
+#'
+#'     # Check number of selections:
+#'     if (length(sd_values(fav_fruits, split = TRUE)) > 3) {
+#'       # User selected more than 3 fruits
+#'     }
+#'
+#'     # Check if specific option was selected:
+#'     if ("apple" %in% sd_values(fav_fruits, split = TRUE)) {
+#'       # User selected apple
 #'     }
 #'
 #'     sd_server(db = db)
@@ -439,13 +501,18 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
 #' }
 #'
 #' @export
-sd_values <- function(...) {
-    # Capture all arguments
+sd_values <- function(..., type = "auto", split = FALSE) {
+    # Capture all arguments (excluding named params)
     args <- substitute(list(...))[-1] # Remove 'list' from the beginning
 
     # If no arguments, stop
     if (length(args) == 0) {
         stop("At least one question ID must be provided")
+    }
+
+    # Validate type parameter
+    if (!type %in% c("auto", "character")) {
+        stop("type must be either 'auto' or 'character'")
     }
 
     calling_env <- parent.frame()
@@ -468,20 +535,36 @@ sd_values <- function(...) {
         }
     })
 
-    # Get all values
+    # Get all values and apply transformations
     values <- lapply(question_id_strs, function(id) {
-        all_data[[id]]
+        val <- all_data[[id]]
+
+        # Split comma-separated values if requested
+        if (split) {
+            val <- split_multi(val)
+        }
+
+        # Apply type conversion
+        if (type == "auto") {
+            try_numeric(val)
+        } else {
+            # type == "character"
+            if (is.null(val)) val else as.character(val)
+        }
     })
 
-    # Convert list to vector
-    values <- unlist(values)
-
-    # If only one value, return it without the vector wrapper (for backward compatibility)
-    if (length(values) == 1) {
-        return(unname(values))
+    # If only one question ID was provided
+    if (length(question_id_strs) == 1) {
+        result <- values[[1]]
+        # For single question, return as-is (could be vector if split = TRUE)
+        if (length(result) == 1) {
+            return(unname(result))
+        }
+        return(unname(result))
     }
 
-    # Return unnamed vector for multiple values
+    # For multiple question IDs, flatten to vector
+    values <- unlist(values)
     return(unname(values))
 }
 
@@ -491,15 +574,21 @@ sd_values <- function(...) {
 #'
 #' @param ... One or more question IDs to retrieve. Each can be provided as an
 #'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
+#' @param type Character string specifying how to handle value types.
+#'   Either `"auto"` (default) or `"character"`. See [sd_values()] for details.
+#' @param split Logical. If `TRUE`, splits comma-separated strings into vectors.
+#'   Useful for `mc_multiple` question types. See [sd_values()] for details.
 #'
 #' @return If a single question ID is provided, returns the value of that question.
 #'   If multiple question IDs are provided, returns an unnamed vector of values.
 #'
 #' @seealso [sd_values()]
 #' @export
-sd_value <- function(...) {
-    # Evaluate sd_values() in the parent environment to avoid extra frame
-    eval(substitute(sd_values(...)), parent.frame())
+sd_value <- function(..., type = "auto", split = FALSE) {
+    # Use match.call to capture actual argument values and redirect to sd_values
+    call <- match.call()
+    call[[1]] <- quote(sd_values)
+    eval(call, parent.frame())
 }
 
 # Convert to SQL

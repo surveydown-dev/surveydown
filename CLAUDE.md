@@ -301,6 +301,20 @@ if (all(sd_values(vehicle_complex, buy_vehicle) == c("no", "no"))) {
 - `sd_values()` with multiple arguments returns an unnamed vector
 - Both access the same `all_data` reactive values list under the hood
 
+#### 3. Storing Custom Values with `sd_store_value()`
+
+Use `sd_store_value()` to save computed values or URL parameters to the database:
+
+```r
+# Store a computed value
+sd_store_value(calculated_score, "score")
+
+# Store URL parameters
+sd_store_value(sd_get_url_pars()$source, "referral_source")
+```
+
+Note: Cannot use reserved IDs (see Reserved IDs section below).
+
 ### Progress Tracking
 
 Progress calculation is based on the last answered question index. The progress bar never decreases, even when earlier questions are answered later. This is intentional to avoid confusing respondents.
@@ -346,12 +360,17 @@ Database functions in `R/db.R` use the `pool` package for connection pooling and
 
 - **NAMESPACE is auto-generated**: Edit roxygen comments in R files, then run `devtools::document()`. Never edit NAMESPACE directly.
 
-- **Version 1.0+ features**: Recent major updates introduced:
+- **Breaking changes (v1.1.0)**:
+  - `sd_server()` now **only accepts `db`** as its parameter; all other settings must be in YAML header of `survey.qmd`
+  - YAML keys renamed: `required-questions` → `required`, `all-questions-required` → `all-required`
+  - `matrix_option_width` parameter removed from `sd_question()` (use `matrix_question_width` only)
+  - `sd_create_messages()` function deprecated
+
+- **Version 1.0+ features**:
   - `sd_nav()` (replacing `sd_next()`) with previous button support
   - Shorthand page syntax (`--- page_id`)
   - Auto-injection of navigation buttons
   - Reserved IDs system to prevent conflicts with internal metadata fields
-  - **Breaking (v1.0.3)**: `sd_server()` now only accepts `db` parameter; all other settings must be in YAML header of `survey.qmd`
 
 - **Reserved IDs**: The following IDs are reserved and cannot be used for pages, questions, or in `sd_store_value()`:
   - `session_id`, `time_start`, `time_end`, `exit_survey_rating`, `current_page`, `browser`, `ip_address`
