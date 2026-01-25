@@ -585,10 +585,8 @@ sd_values <- function(..., type = "auto", split = FALSE) {
 #' @seealso [sd_values()]
 #' @export
 sd_value <- function(..., type = "auto", split = FALSE) {
-    # Use match.call to capture actual argument values and redirect to sd_values
-    call <- match.call()
-    call[[1]] <- quote(sd_values)
-    eval(call, parent.frame())
+    # Evaluate sd_values() in the parent environment to avoid extra frame
+    eval(substitute(sd_values(..., type = type, split = split)), parent.frame())
 }
 
 # Convert to SQL
