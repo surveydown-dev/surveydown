@@ -437,19 +437,17 @@ split_multi <- function(x) {
 #' @param ... One or more question IDs to retrieve. Each can be provided as an
 #'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
 #' @param as_numeric Logical or NULL. Controls numeric type conversion:
-#'   - `NULL` (default): No conversion, returns values as-is.
-#'   - `TRUE`: Attempts to convert values to numeric if they look like numbers.
-#'     Values that cannot be converted remain as character strings.
-#'   - `FALSE`: Forces all values to remain as character strings. Useful for
-#'     fields like ZIP codes where leading zeros matter (e.g., "01234" stays
-#'     "01234" instead of becoming 1234).
+#'   - `NULL` (default): Auto-detect. Checks if value looks numeric and converts
+#'     if so. Non-numeric values remain as character strings.
+#'   - `TRUE`: Force convert using `as.numeric()`. Values that cannot be
+#'     converted become `NA`.
+#'   - `FALSE`: Never convert. Returns values as-is without any detection.
 #' @param as_vector Logical or NULL. Controls splitting of pipe-separated values:
-#'   - `NULL` (default): No splitting, returns values as-is.
-#'   - `TRUE`: Splits pipe-separated strings into vectors. Useful for
-#'     `mc_multiple` and `mc_multiple_buttons` question types, where multiple
-#'     selections are stored as a single pipe-separated string (e.g.,
-#'     "apple|banana|orange" becomes `c("apple", "banana", "orange")`).
-#'   - `FALSE`: No splitting, same as `NULL` (for consistency).
+#'   - `NULL` (default): Auto-detect. Checks if pipe symbol exists and splits
+#'     if found. Useful for `mc_multiple` and `mc_multiple_buttons` question
+#'     types where multiple selections are stored as "apple|banana|orange".
+#'   - `TRUE`: Force split on pipe. Always splits even if no pipe is present.
+#'   - `FALSE`: Never split. Returns values as-is without any detection.
 #'
 #' @return If a single question ID is provided and `as_vector` is not `TRUE`,
 #'   returns the value of that question. If multiple question IDs are provided,
@@ -469,33 +467,43 @@ split_multi <- function(x) {
 #'
 #'     # Multiple values at once:
 #'     values <- sd_values(age, name, country)
-#'     # Returns values as stored in all_data
+#'     # Returns values with auto-detection (numeric converted, pipes split)
 #'
 #'     # Mixed quoted/unquoted:
 #'     values <- sd_values(age, "name", country)
 #'
-#'     # Convert to numeric for comparisons:
-#'     if (sd_values(age, as_numeric = TRUE) < 18) {
-#'       # Do something
-#'     }
+#'     # Default behavior (NULL) auto-detects and converts numeric values:
+#'     age <- sd_values(age)
+#'     # If age is "25", returns 25 (numeric)
+#'     # If age is "hello", returns "hello" (character, not convertible)
 #'
-#'     # For ZIP codes, use as_numeric = FALSE to preserve leading zeros:
+#'     # Force numeric conversion (may produce NA):
+#'     val <- sd_values(some_field, as_numeric = TRUE)
+#'     # "123" becomes 123, "hello" becomes NA
+#'
+#'     # Never convert to numeric (e.g., ZIP codes with leading zeros):
 #'     zip <- sd_values(zip_code, as_numeric = FALSE)
-#'     # "01234" stays as "01234", not 1234
+#'     # "01234" stays as "01234", not converted to 1234
 #'
-#'     # For mc_multiple questions, use as_vector = TRUE to get individual selections:
-#'     fruits <- sd_values(fav_fruits, as_vector = TRUE)
-#'     # If user selected apple, banana, orange:
-#'     # Without as_vector: "apple|banana|orange" (length 1)
-#'     # With as_vector = TRUE: c("apple", "banana", "orange") (length 3)
+#'     # Default behavior (NULL) auto-detects pipe and splits:
+#'     fruits <- sd_values(fav_fruits)
+#'     # If value is "apple|banana|orange", returns c("apple", "banana", "orange")
+#'     # If value is "apple", returns "apple" (no pipe, no split)
+#'
+#'     # Force split (even if no pipe present):
+#'     vals <- sd_values(some_field, as_vector = TRUE)
+#'
+#'     # Never split (keep as single string):
+#'     raw <- sd_values(fav_fruits, as_vector = FALSE)
+#'     # "apple|banana|orange" stays as "apple|banana|orange"
 #'
 #'     # Check number of selections:
-#'     if (length(sd_values(fav_fruits, as_vector = TRUE)) > 3) {
+#'     if (length(sd_values(fav_fruits)) > 3) {
 #'       # User selected more than 3 fruits
 #'     }
 #'
 #'     # Check if specific option was selected:
-#'     if ("apple" %in% sd_values(fav_fruits, as_vector = TRUE)) {
+#'     if ("apple" %in% sd_values(fav_fruits)) {
 #'       # User selected apple
 #'     }
 #'
@@ -547,21 +555,30 @@ sd_values <- function(..., as_numeric = NULL, as_vector = NULL) {
     values <- lapply(question_id_strs, function(id) {
         val <- all_data[[id]]
 
-        # Split comma-separated values if requested (TRUE only, NULL and FALSE do nothing)
+        # Handle as_vector: splitting pipe-separated values
         if (isTRUE(as_vector)) {
+            # Force split on pipe (no detection)
+            if (!is.null(val) && length(val) == 1 && is.character(val)) {
+                val <- strsplit(val, "|", fixed = TRUE)[[1]]
+            }
+        } else if (isFALSE(as_vector)) {
+            # Never split, return as-is (no detection)
+            # Do nothing, val stays as-is
+        } else {
+            # as_vector is NULL: auto-detect, split if pipe found
             val <- split_multi(val)
         }
 
-        # Apply type conversion
+        # Handle as_numeric: type conversion
         if (isTRUE(as_numeric)) {
-            # Attempt to convert to numeric
-            try_numeric(val)
+            # Force convert to numeric (no detection, may produce NA)
+            if (is.null(val)) val else as.numeric(val)
         } else if (isFALSE(as_numeric)) {
-            # Force to character
-            if (is.null(val)) val else as.character(val)
-        } else {
-            # as_numeric is NULL: no conversion, return as-is
+            # Never convert, return as-is (no detection)
             val
+        } else {
+            # as_numeric is NULL: auto-detect, convert if looks numeric
+            try_numeric(val)
         }
     })
 

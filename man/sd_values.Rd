@@ -12,22 +12,20 @@ unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
 
 \item{as_numeric}{Logical or NULL. Controls numeric type conversion:
 \itemize{
-\item \code{NULL} (default): No conversion, returns values as-is.
-\item \code{TRUE}: Attempts to convert values to numeric if they look like numbers.
-Values that cannot be converted remain as character strings.
-\item \code{FALSE}: Forces all values to remain as character strings. Useful for
-fields like ZIP codes where leading zeros matter (e.g., "01234" stays
-"01234" instead of becoming 1234).
+\item \code{NULL} (default): Auto-detect. Checks if value looks numeric and converts
+if so. Non-numeric values remain as character strings.
+\item \code{TRUE}: Force convert using \code{as.numeric()}. Values that cannot be
+converted become \code{NA}.
+\item \code{FALSE}: Never convert. Returns values as-is without any detection.
 }}
 
 \item{as_vector}{Logical or NULL. Controls splitting of pipe-separated values:
 \itemize{
-\item \code{NULL} (default): No splitting, returns values as-is.
-\item \code{TRUE}: Splits pipe-separated strings into vectors. Useful for
-\code{mc_multiple} and \code{mc_multiple_buttons} question types, where multiple
-selections are stored as a single pipe-separated string (e.g.,
-"apple|banana|orange" becomes \code{c("apple", "banana", "orange")}).
-\item \code{FALSE}: No splitting, same as \code{NULL} (for consistency).
+\item \code{NULL} (default): Auto-detect. Checks if pipe symbol exists and splits
+if found. Useful for \code{mc_multiple} and \code{mc_multiple_buttons} question
+types where multiple selections are stored as "apple|banana|orange".
+\item \code{TRUE}: Force split on pipe. Always splits even if no pipe is present.
+\item \code{FALSE}: Never split. Returns values as-is without any detection.
 }}
 }
 \value{
@@ -55,33 +53,43 @@ Multiple question IDs can be provided to retrieve multiple values at once.
 
     # Multiple values at once:
     values <- sd_values(age, name, country)
-    # Returns values as stored in all_data
+    # Returns values with auto-detection (numeric converted, pipes split)
 
     # Mixed quoted/unquoted:
     values <- sd_values(age, "name", country)
 
-    # Convert to numeric for comparisons:
-    if (sd_values(age, as_numeric = TRUE) < 18) {
-      # Do something
-    }
+    # Default behavior (NULL) auto-detects and converts numeric values:
+    age <- sd_values(age)
+    # If age is "25", returns 25 (numeric)
+    # If age is "hello", returns "hello" (character, not convertible)
 
-    # For ZIP codes, use as_numeric = FALSE to preserve leading zeros:
+    # Force numeric conversion (may produce NA):
+    val <- sd_values(some_field, as_numeric = TRUE)
+    # "123" becomes 123, "hello" becomes NA
+
+    # Never convert to numeric (e.g., ZIP codes with leading zeros):
     zip <- sd_values(zip_code, as_numeric = FALSE)
-    # "01234" stays as "01234", not 1234
+    # "01234" stays as "01234", not converted to 1234
 
-    # For mc_multiple questions, use as_vector = TRUE to get individual selections:
-    fruits <- sd_values(fav_fruits, as_vector = TRUE)
-    # If user selected apple, banana, orange:
-    # Without as_vector: "apple|banana|orange" (length 1)
-    # With as_vector = TRUE: c("apple", "banana", "orange") (length 3)
+    # Default behavior (NULL) auto-detects pipe and splits:
+    fruits <- sd_values(fav_fruits)
+    # If value is "apple|banana|orange", returns c("apple", "banana", "orange")
+    # If value is "apple", returns "apple" (no pipe, no split)
+
+    # Force split (even if no pipe present):
+    vals <- sd_values(some_field, as_vector = TRUE)
+
+    # Never split (keep as single string):
+    raw <- sd_values(fav_fruits, as_vector = FALSE)
+    # "apple|banana|orange" stays as "apple|banana|orange"
 
     # Check number of selections:
-    if (length(sd_values(fav_fruits, as_vector = TRUE)) > 3) {
+    if (length(sd_values(fav_fruits)) > 3) {
       # User selected more than 3 fruits
     }
 
     # Check if specific option was selected:
-    if ("apple" \%in\% sd_values(fav_fruits, as_vector = TRUE)) {
+    if ("apple" \%in\% sd_values(fav_fruits)) {
       # User selected apple
     }
 
