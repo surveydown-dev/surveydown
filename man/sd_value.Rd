@@ -4,17 +4,17 @@
 \alias{sd_value}
 \title{Access question values from survey responses (alias)}
 \usage{
-sd_value(..., type = "auto", split = FALSE)
+sd_value(..., as_numeric = NULL, as_vector = NULL)
 }
 \arguments{
 \item{...}{One or more question IDs to retrieve. Each can be provided as an
 unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
 
-\item{type}{Character string specifying how to handle value types.
-Either \code{"auto"} (default) or \code{"character"}. See \code{\link[=sd_values]{sd_values()}} for details.}
+\item{as_numeric}{Logical or NULL. Controls numeric type conversion.
+See \code{\link[=sd_values]{sd_values()}} for details.}
 
-\item{split}{Logical. If \code{TRUE}, splits comma-separated strings into vectors.
-Useful for \code{mc_multiple} question types. See \code{\link[=sd_values]{sd_values()}} for details.}
+\item{as_vector}{Logical or NULL. Controls splitting of comma-separated values.
+See \code{\link[=sd_values]{sd_values()}} for details.}
 }
 \value{
 If a single question ID is provided, returns the value of that question.

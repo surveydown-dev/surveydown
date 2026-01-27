@@ -4,32 +4,37 @@
 \alias{sd_values}
 \title{Access question values from survey responses}
 \usage{
-sd_values(..., type = "auto", split = FALSE)
+sd_values(..., as_numeric = NULL, as_vector = NULL)
 }
 \arguments{
 \item{...}{One or more question IDs to retrieve. Each can be provided as an
 unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
 
-\item{type}{Character string specifying how to handle value types. Options are:
+\item{as_numeric}{Logical or NULL. Controls numeric type conversion:
 \itemize{
-\item \code{"auto"} (default): Attempts to convert values to numeric if they look like
-numbers. Values that cannot be converted remain as character strings.
-\item \code{"character"}: Forces all values to remain as character strings. Useful for
-fields like ZIP codes where leading zeros matter (e.g., "01234" stays "01234"
-instead of becoming 1234).
+\item \code{NULL} (default): No conversion, returns values as-is.
+\item \code{TRUE}: Attempts to convert values to numeric if they look like numbers.
+Values that cannot be converted remain as character strings.
+\item \code{FALSE}: Forces all values to remain as character strings. Useful for
+fields like ZIP codes where leading zeros matter (e.g., "01234" stays
+"01234" instead of becoming 1234).
 }}
 
-\item{split}{Logical. If \code{TRUE}, splits comma-separated strings into vectors.
-This is useful for \code{mc_multiple} and \code{mc_multiple_buttons} question types,
-where multiple selections are stored as a single comma-separated string
-(e.g., "apple, banana, orange"). When \code{split = TRUE}, this becomes
-\code{c("apple", "banana", "orange")}. Defaults to \code{FALSE}.}
+\item{as_vector}{Logical or NULL. Controls splitting of pipe-separated values:
+\itemize{
+\item \code{NULL} (default): No splitting, returns values as-is.
+\item \code{TRUE}: Splits pipe-separated strings into vectors. Useful for
+\code{mc_multiple} and \code{mc_multiple_buttons} question types, where multiple
+selections are stored as a single pipe-separated string (e.g.,
+"apple|banana|orange" becomes \code{c("apple", "banana", "orange")}).
+\item \code{FALSE}: No splitting, same as \code{NULL} (for consistency).
+}}
 }
 \value{
-If a single question ID is provided and \code{split = FALSE}, returns the
-value of that question. If multiple question IDs are provided, returns an
-unnamed vector of values. When \code{split = TRUE} and the value contains
-comma-separated items, returns a vector of the individual items.
+If a single question ID is provided and \code{as_vector} is not \code{TRUE},
+returns the value of that question. If multiple question IDs are provided,
+returns an unnamed vector of values. When \code{as_vector = TRUE} and the value
+contains comma-separated items, returns a vector of the individual items.
 Returns \code{NULL} for any question ID that doesn't exist.
 }
 \description{
@@ -50,33 +55,33 @@ Multiple question IDs can be provided to retrieve multiple values at once.
 
     # Multiple values at once:
     values <- sd_values(age, name, country)
-    # Returns c(5, "Pinocchio", "UK") - age converted to numeric
+    # Returns values as stored in all_data
 
     # Mixed quoted/unquoted:
     values <- sd_values(age, "name", country)
 
-    # Useful in conditional logic (auto-converts to numeric):
-    if (sd_values(age) < 18) {
+    # Convert to numeric for comparisons:
+    if (sd_values(age, as_numeric = TRUE) < 18) {
       # Do something
     }
 
-    # For ZIP codes, use type = "character" to preserve leading zeros:
-    zip <- sd_values(zip_code, type = "character")
+    # For ZIP codes, use as_numeric = FALSE to preserve leading zeros:
+    zip <- sd_values(zip_code, as_numeric = FALSE)
     # "01234" stays as "01234", not 1234
 
-    # For mc_multiple questions, use split = TRUE to get individual selections:
-    fruits <- sd_values(fav_fruits, split = TRUE)
+    # For mc_multiple questions, use as_vector = TRUE to get individual selections:
+    fruits <- sd_values(fav_fruits, as_vector = TRUE)
     # If user selected apple, banana, orange:
-    # Without split: "apple, banana, orange" (length 1)
-    # With split: c("apple", "banana", "orange") (length 3)
+    # Without as_vector: "apple|banana|orange" (length 1)
+    # With as_vector = TRUE: c("apple", "banana", "orange") (length 3)
 
     # Check number of selections:
-    if (length(sd_values(fav_fruits, split = TRUE)) > 3) {
+    if (length(sd_values(fav_fruits, as_vector = TRUE)) > 3) {
       # User selected more than 3 fruits
     }
 
     # Check if specific option was selected:
-    if ("apple" \%in\% sd_values(fav_fruits, split = TRUE)) {
+    if ("apple" \%in\% sd_values(fav_fruits, as_vector = TRUE)) {
       # User selected apple
     }
 

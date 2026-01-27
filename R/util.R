@@ -1841,7 +1841,7 @@ format_question_value <- function(val) {
   if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
     return("")
   } else if (length(val) > 1) {
-    return(paste(val, collapse = ", "))
+    return(paste(val, collapse = "|"))
   } else {
     return(as.character(val))
   }
