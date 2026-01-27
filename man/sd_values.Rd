@@ -10,29 +10,23 @@ sd_values(..., as_numeric = NULL, as_vector = NULL)
 \item{...}{One or more question IDs to retrieve. Each can be provided as an
 unquoted name (e.g., \code{age}) or a quoted string (e.g., \code{"age"}).}
 
-\item{as_numeric}{Logical or NULL. Controls numeric type conversion:
-\itemize{
-\item \code{NULL} (default): Auto-detect. Checks if value looks numeric and converts
-if so. Non-numeric values remain as character strings.
-\item \code{TRUE}: Force convert using \code{as.numeric()}. Values that cannot be
-converted become \code{NA}.
-\item \code{FALSE}: Never convert. Returns values as-is without any detection.
+\item{as_numeric}{Logical or NULL. Controls numeric type conversion:\tabular{ll}{
+   Value \tab Behavior \cr
+   \code{NULL} (default) \tab Auto-detect: checks if value looks numeric, converts if so. Non-numeric values stay as character. \cr
+   \code{TRUE} \tab Force convert: always calls \code{as.numeric()}. Non-convertible values become \code{NA}. \cr
+   \code{FALSE} \tab Never convert: returns value as-is, no detection. \cr
 }}
 
-\item{as_vector}{Logical or NULL. Controls splitting of pipe-separated values:
-\itemize{
-\item \code{NULL} (default): Auto-detect. Checks if pipe symbol exists and splits
-if found. Useful for \code{mc_multiple} and \code{mc_multiple_buttons} question
-types where multiple selections are stored as "apple|banana|orange".
-\item \code{TRUE}: Force split on pipe. Always splits even if no pipe is present.
-\item \code{FALSE}: Never split. Returns values as-is without any detection.
+\item{as_vector}{Logical or NULL. Controls splitting of pipe-separated values:\tabular{ll}{
+   Value \tab Behavior \cr
+   \code{NULL} (default) \tab Auto-detect: checks if pipe symbol exists, splits if found. \cr
+   \code{TRUE} \tab Force split: always splits on pipe. \cr
+   \code{FALSE} \tab Never split: returns value as-is, no detection. \cr
 }}
 }
 \value{
-If a single question ID is provided and \code{as_vector} is not \code{TRUE},
-returns the value of that question. If multiple question IDs are provided,
-returns an unnamed vector of values. When \code{as_vector = TRUE} and the value
-contains comma-separated items, returns a vector of the individual items.
+If a single question ID is provided, returns the value of that question.
+If multiple question IDs are provided, returns an unnamed vector of values.
 Returns \code{NULL} for any question ID that doesn't exist.
 }
 \description{
@@ -54,9 +48,6 @@ Multiple question IDs can be provided to retrieve multiple values at once.
     # Multiple values at once:
     values <- sd_values(age, name, country)
     # Returns values with auto-detection (numeric converted, pipes split)
-
-    # Mixed quoted/unquoted:
-    values <- sd_values(age, "name", country)
 
     # Default behavior (NULL) auto-detects and converts numeric values:
     age <- sd_values(age)
