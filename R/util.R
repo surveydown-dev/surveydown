@@ -1426,7 +1426,7 @@ get_latest_version <- function(url, pattern) {
 #'   sd_create_messages(language = "ja")
 #' }
 sd_create_messages <- function(language = "en", path = getwd()) {
-   # v1.1.0
+  # v1.1.0
   .Deprecated("")
 }
 
@@ -1700,9 +1700,12 @@ sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
   reserved_ids <- get_reserved_ids()
   if (id %in% reserved_ids) {
     stop(
-      "Cannot use '", id, "' as a stored value ID. ",
+      "Cannot use '",
+      id,
+      "' as a stored value ID. ",
       "This name is reserved by surveydown. ",
-      "Reserved IDs: ", paste(reserved_ids, collapse = ", ")
+      "Reserved IDs: ",
+      paste(reserved_ids, collapse = ", ")
     )
   }
 
@@ -1843,7 +1846,7 @@ format_question_value <- function(val) {
   } else if (length(val) > 1) {
     return(paste(val, collapse = "|"))
   } else {
-    return(as.character(val))
+    return(val)
   }
 }
 

@@ -208,51 +208,70 @@ sd_server <- function(db = NULL) {
         start_page <- config$start_page
     }
 
-    # Map skip_if conditions to applicable pages (page-aware skip logic)
-    # This ensures skip conditions only trigger when leaving pages that contain the relevant questions
-    if (!is.null(skip_if) && !is.null(skip_if$conditions)) {
-        # Helper to extract input IDs from condition expressions
-        extract_input_refs_local <- function(expr, calling_env = NULL) {
-            ids <- character(0)
-            if (is.call(expr)) {
-                if (
-                    length(expr) >= 3 &&
-                        as.character(expr[[1]]) == "$" &&
-                        as.character(expr[[2]]) == "input"
-                ) {
-                    var_name <- as.character(expr[[3]])
-                    ids <- c(ids, var_name)
+    # Helper to extract question IDs from condition expressions
+    # Handles input$xxx, all_data$xxx, sd_value(), and sd_values() patterns
+    extract_question_refs <- function(expr) {
+        ids <- character(0)
+        if (is.call(expr)) {
+            fn <- as.character(expr[[1]])
+            # input$xxx or all_data$xxx
+            if (length(expr) >= 3 && fn == "$") {
+                obj <- as.character(expr[[2]])
+                if (obj %in% c("input", "all_data")) {
+                    ids <- c(ids, as.character(expr[[3]]))
                 }
-                for (i in seq_along(expr)) {
-                    if (is.call(expr[[i]])) {
-                        ids <- c(
-                            ids,
-                            extract_input_refs_local(expr[[i]], calling_env)
-                        )
+            }
+            # sd_value() or sd_values()
+            if (fn %in% c("sd_value", "sd_values") && length(expr) >= 2) {
+                for (j in 2:length(expr)) {
+                    arg <- expr[[j]]
+                    if (is.character(arg)) {
+                        ids <- c(ids, arg)
+                    } else if (is.symbol(arg)) {
+                        ids <- c(ids, as.character(arg))
                     }
                 }
             }
-            return(ids)
-        }
-
-        # Add applicable_pages to each skip condition
-        for (i in seq_along(skip_if$conditions)) {
-            condition <- skip_if$conditions[[i]]
-            # Extract input IDs referenced in this condition
-            input_ids <- extract_input_refs_local(
-                condition$condition,
-                condition$calling_env
-            )
-            # Find which pages contain these questions
-            applicable_pages <- character(0)
-            for (page in pages) {
-                if (any(input_ids %in% page$questions)) {
-                    applicable_pages <- c(applicable_pages, page$id)
+            # Recurse
+            for (i in seq_along(expr)) {
+                if (is.call(expr[[i]])) {
+                    ids <- c(ids, extract_question_refs(expr[[i]]))
                 }
             }
-            # Store applicable pages for this condition
+        }
+        return(ids)
+    }
+
+    # Map skip_if conditions to applicable pages
+    if (!is.null(skip_if) && !is.null(skip_if$conditions)) {
+        for (i in seq_along(skip_if$conditions)) {
+            cond <- skip_if$conditions[[i]]
+            qids <- extract_question_refs(cond$condition)
+            applicable_pages <- character(0)
+            for (pg in pages) {
+                if (any(qids %in% pg$questions)) {
+                    applicable_pages <- c(applicable_pages, pg$id)
+                }
+            }
             skip_if$conditions[[i]]$applicable_pages <- applicable_pages
         }
+    }
+
+    # Map stop_if conditions to applicable pages
+    if (!is.null(stop_if) && !is.null(stop_if$conditions)) {
+        for (i in seq_along(stop_if$conditions)) {
+            cond <- stop_if$conditions[[i]]
+            qids <- extract_question_refs(cond$condition)
+            applicable_pages <- character(0)
+            for (pg in pages) {
+                if (any(qids %in% pg$questions)) {
+                    applicable_pages <- c(applicable_pages, pg$id)
+                }
+            }
+            stop_if$conditions[[i]]$applicable_pages <- applicable_pages
+        }
+        # Update session userData with the mapped conditions
+        session$userData$stop_if$conditions <- stop_if$conditions
     }
 
     # Helper function to extract question IDs from parsed condition expressions
@@ -385,7 +404,10 @@ sd_server <- function(db = NULL) {
         question_required <- setdiff(question_ids, matrix_question_ids)
     } else {
         # Use required_questions from YAML plus conditional question IDs
-        question_required <- unique(c(required_questions, conditional_question_ids))
+        question_required <- unique(c(
+            required_questions,
+            conditional_question_ids
+        ))
     }
 
     # Update each page's required_questions to reflect final resolved settings
@@ -852,11 +874,15 @@ sd_server <- function(db = NULL) {
 
     # Convert CSS class or simple type to sd_question type
     css_to_question_type <- function(type_str, is_button_style = FALSE) {
-        if (is.null(type_str) || length(type_str) == 0) return("mc")
+        if (is.null(type_str) || length(type_str) == 0) {
+            return("mc")
+        }
         type_str <- tolower(type_str)
 
         # Return if already a valid MC type
-        if (type_str %in% MC_TYPE_NAMES) return(type_str)
+        if (type_str %in% MC_TYPE_NAMES) {
+            return(type_str)
+        }
 
         # Infer from CSS class patterns
         is_checkbox <- grepl("checkbox", type_str)
@@ -871,8 +897,15 @@ sd_server <- function(db = NULL) {
 
     # Generate shuffled MC question HTML (shuffle options)
     # shuffle_indices: NULL = shuffle all, integer vector = only shuffle these positions
-    generate_shuffled_mc_html <- function(q_id, q_struct, existing_order = NULL, shuffle_indices = NULL) {
-        if (is.null(q_struct) || is.null(q_struct$options)) return(NULL)
+    generate_shuffled_mc_html <- function(
+        q_id,
+        q_struct,
+        existing_order = NULL,
+        shuffle_indices = NULL
+    ) {
+        if (is.null(q_struct) || is.null(q_struct$options)) {
+            return(NULL)
+        }
 
         n_opts <- length(q_struct$options)
         original_options <- unlist(q_struct$options)
@@ -890,7 +923,9 @@ sd_server <- function(db = NULL) {
             } else {
                 # Partial shuffle: only shuffle specified indices
                 # Validate indices are within range
-                valid_indices <- shuffle_indices[shuffle_indices >= 1 & shuffle_indices <= n_opts]
+                valid_indices <- shuffle_indices[
+                    shuffle_indices >= 1 & shuffle_indices <= n_opts
+                ]
                 if (length(valid_indices) < 2) {
                     # Not enough valid indices to shuffle
                     order <- seq_len(n_opts)
@@ -908,10 +943,15 @@ sd_server <- function(db = NULL) {
 
         # Get label (handle list format)
         q_label <- q_struct$label
-        if (is.list(q_label)) q_label <- q_label[[1]]
+        if (is.list(q_label)) {
+            q_label <- q_label[[1]]
+        }
 
         # Convert type to sd_question type
-        q_type <- css_to_question_type(q_struct$type, isTRUE(q_struct$is_button_style))
+        q_type <- css_to_question_type(
+            q_struct$type,
+            isTRUE(q_struct$is_button_style)
+        )
 
         # Create question HTML outside reactive context
         question_html <- shiny::withReactiveDomain(NULL, {
@@ -932,7 +972,12 @@ sd_server <- function(db = NULL) {
     # Generate shuffle order for matrix question rows
     # Returns just the order - JavaScript will reorder the DOM
     # shuffle_indices: NULL = shuffle all rows, integer vector = only shuffle these row positions
-    generate_matrix_shuffle_order <- function(q_id, q_struct, existing_order = NULL, shuffle_indices = NULL) {
+    generate_matrix_shuffle_order <- function(
+        q_id,
+        q_struct,
+        existing_order = NULL,
+        shuffle_indices = NULL
+    ) {
         if (is.null(q_struct) || is.null(q_struct$row)) {
             return(NULL)
         }
@@ -953,7 +998,9 @@ sd_server <- function(db = NULL) {
             } else {
                 # Partial shuffle: only shuffle specified row indices
                 # Validate indices are within range
-                valid_indices <- shuffle_indices[shuffle_indices >= 1 & shuffle_indices <= n_rows]
+                valid_indices <- shuffle_indices[
+                    shuffle_indices >= 1 & shuffle_indices <= n_rows
+                ]
                 if (length(valid_indices) < 2) {
                     # Not enough valid indices to shuffle
                     order <- seq_len(n_rows)
@@ -996,7 +1043,7 @@ sd_server <- function(db = NULL) {
 
         for (q_id in names(question_shuffled)) {
             q_struct <- question_structure[[q_id]]
-            shuffle_indices <- question_shuffled[[q_id]]  # NULL means shuffle all
+            shuffle_indices <- question_shuffled[[q_id]] # NULL means shuffle all
 
             if (isTRUE(q_struct$is_matrix)) {
                 # Matrix questions: just compute shuffle order for JS
@@ -1008,7 +1055,9 @@ sd_server <- function(db = NULL) {
                 )
                 if (!is.null(result)) {
                     # Convert to 0-based index for JavaScript
-                    matrix_shuffle_orders[[q_id]] <- as.integer(result$order - 1)
+                    matrix_shuffle_orders[[q_id]] <- as.integer(
+                        result$order - 1
+                    )
                     temp_orders[[q_id]] <- result$order
                 }
             } else {
@@ -1057,7 +1106,9 @@ sd_server <- function(db = NULL) {
 
                     # Replace with shuffled order
                     if (!any(is.na(original_positions))) {
-                        question_ids[sort(original_positions)] <- shuffled_subq_ids
+                        question_ids[sort(
+                            original_positions
+                        )] <- shuffled_subq_ids
                     }
                 }
             }
@@ -1276,7 +1327,9 @@ sd_server <- function(db = NULL) {
                 last_timestamp = last_timestamp,
                 page_history = page_history(),
                 question_history = question_history(),
-                randomization_orders = shiny::reactiveValuesToList(shuffle_orders)
+                randomization_orders = shiny::reactiveValuesToList(
+                    shuffle_orders
+                )
             )
             session$sendCustomMessage(
                 "setAnswerData",
@@ -1333,7 +1386,8 @@ sd_server <- function(db = NULL) {
     # Create script to replace shuffled question placeholders client-side
     create_placeholder_replacement_script <- function(html_list) {
         html_json <- jsonlite::toJSON(html_list, auto_unbox = TRUE)
-        shiny::tags$script(htmltools::HTML(sprintf("
+        shiny::tags$script(htmltools::HTML(sprintf(
+            "
             (function() {
                 var questionHTML = %s;
                 var replacePlaceholders = function() {
@@ -1359,13 +1413,16 @@ sd_server <- function(db = NULL) {
                     document.addEventListener('DOMContentLoaded', replacePlaceholders);
                 }
             })();
-        ", html_json)))
+        ",
+            html_json
+        )))
     }
 
     # Create script to shuffle matrix rows client-side (preserves original styling)
     create_matrix_shuffle_script <- function(matrix_orders) {
         orders_json <- jsonlite::toJSON(matrix_orders, auto_unbox = TRUE)
-        shiny::tags$script(htmltools::HTML(sprintf("
+        shiny::tags$script(htmltools::HTML(sprintf(
+            "
             (function() {
                 var matrixOrders = %s;
                 var shuffleMatrixRows = function() {
@@ -1417,7 +1474,9 @@ sd_server <- function(db = NULL) {
                     document.addEventListener('DOMContentLoaded', shuffleMatrixRows);
                 }
             })();
-        ", orders_json)))
+        ",
+            orders_json
+        )))
     }
 
     # Render main page content when current page changes
@@ -1426,7 +1485,9 @@ sd_server <- function(db = NULL) {
         html_list <- session$userData$shuffled_question_html
         matrix_orders <- session$userData$matrix_shuffle_orders
 
-        content_tags <- shiny::tagList(create_page_content(current_page$content))
+        content_tags <- shiny::tagList(create_page_content(
+            current_page$content
+        ))
 
         # Add placeholder replacement script for MC questions
         if (length(html_list) > 0) {
@@ -1551,7 +1612,7 @@ sd_server <- function(db = NULL) {
         return(unanswered)
     }
 
-    # Helper function to check custom stop conditions for the current page
+    # Helper function to check custom stop conditions
     check_stop_conditions <- function(page, input, session) {
         # Get stop conditions from userData
         stop_if <- session$userData$stop_if
@@ -1567,64 +1628,38 @@ sd_server <- function(db = NULL) {
             ))
         }
 
-        # Get current page questions to filter relevant stop conditions
-        current_page_questions <- page$questions
-        if (
-            is.null(current_page_questions) ||
-                length(current_page_questions) == 0
-        ) {
-            return(list(
-                passed = TRUE,
-                invalid_questions = character(0),
-                error_text = ""
-            ))
-        }
-
         triggered_stops <- list()
-        invalid_questions <- character(0)
+        current_page_id <- page$id
 
-        # Check each stop condition
         for (stop_condition in stop_if$conditions) {
-            # Check if this stop condition applies to questions on the current page
-            stop_questions <- stop_condition$question_ids
-            if (length(intersect(stop_questions, current_page_questions)) > 0) {
-                # This stop condition applies to the current page
-                tryCatch(
-                    {
-                        # Evaluate the condition in the calling environment
-                        calling_env <- stop_condition$calling_env
-                        condition_result <- eval(
-                            stop_condition$condition,
-                            envir = calling_env
-                        )
+            # Only check conditions applicable to current page
+            if (
+                !is.null(stop_condition$applicable_pages) &&
+                    length(stop_condition$applicable_pages) > 0 &&
+                    !(current_page_id %in% stop_condition$applicable_pages)
+            ) {
+                next
+            }
 
-                        # If condition is TRUE, stop condition is met (navigation should be stopped)
-                        # This is the logic for sd_stop_if()
-                        if (isTRUE(condition_result)) {
-                            triggered_stops <- c(
-                                triggered_stops,
-                                list(stop_condition)
-                            )
-                            invalid_questions <- c(
-                                invalid_questions,
-                                stop_questions
-                            )
-                        }
-                    },
-                    error = function(e) {
-                        # If condition evaluation fails, consider it a triggered stop
-                        warning("Error evaluating stop condition: ", e$message)
+            tryCatch(
+                {
+                    calling_env <- stop_condition$calling_env
+                    condition_result <- eval(
+                        stop_condition$condition,
+                        envir = calling_env
+                    )
+
+                    if (isTRUE(condition_result)) {
                         triggered_stops <- c(
                             triggered_stops,
                             list(stop_condition)
                         )
-                        invalid_questions <- c(
-                            invalid_questions,
-                            stop_questions
-                        )
                     }
-                )
-            }
+                },
+                error = function(e) {
+                    # If condition evaluation fails, skip it
+                }
+            )
         }
 
         # Format error messages
@@ -1642,7 +1677,7 @@ sd_server <- function(db = NULL) {
 
         return(list(
             passed = FALSE,
-            invalid_questions = unique(invalid_questions),
+            invalid_questions = character(0),
             error_text = error_text
         ))
     }
@@ -2484,7 +2519,7 @@ sd_server <- function(db = NULL) {
     shiny::observeEvent(input$submit_rating, {
         # Check if cookies should be cleared on exit
         clear_cookies_on_exit <- input$clear_cookies_on_exit
-        
+
         # Save the rating
         rating <- input$survey_rating
         all_data[['exit_survey_rating']] <- rating
@@ -2493,12 +2528,12 @@ sd_server <- function(db = NULL) {
         shiny::isolate({
             update_data(time_last = TRUE)
         })
-        
+
         # Clear cookies if requested
         if (!is.null(clear_cookies_on_exit) && clear_cookies_on_exit) {
             session$sendCustomMessage("clearCookies", list())
         }
-        
+
         # Close the modal and the window
         shiny::removeModal()
         session$sendCustomMessage("closeWindow", list())
@@ -2507,17 +2542,17 @@ sd_server <- function(db = NULL) {
     shiny::observeEvent(input$confirm_exit, {
         # Check if cookies should be cleared on exit
         clear_cookies_on_exit <- input$clear_cookies_on_exit
-        
+
         # Update checkpoint 4 - when exiting survey
         shiny::isolate({
             update_data(time_last = TRUE)
         })
-        
+
         # Clear cookies if requested
         if (!is.null(clear_cookies_on_exit) && clear_cookies_on_exit) {
             session$sendCustomMessage("clearCookies", list())
         }
-        
+
         # Close the modal and the window
         shiny::removeModal()
         session$sendCustomMessage("closeWindow", list())
@@ -2529,7 +2564,7 @@ sd_server <- function(db = NULL) {
         shiny::isolate({
             update_data(time_last = TRUE)
         })
-        
+
         # Send force restart message to clear cookies and reload page
         session$sendCustomMessage("forceRestart", list())
     })
@@ -2781,26 +2816,9 @@ sd_stop_if <- function(...) {
 
     # Process each stop condition
     processed_conditions <- lapply(conditions, function(rule) {
-        tryCatch(
-            {
-                # Store the original condition and error message
-                rule$original_condition <- rule$condition
-                rule$calling_env <- calling_env
-                rule$error_message <- rule$target # The RHS is the error message
-
-                # Extract question IDs from the condition to determine page mapping
-                question_ids <- extract_question_ids_from_condition(
-                    rule$condition
-                )
-                rule$question_ids <- question_ids
-
-                return(rule)
-            },
-            error = function(e) {
-                warning("Error processing stop condition: ", e$message)
-                return(rule)
-            }
-        )
+        rule$calling_env <- calling_env
+        rule$error_message <- rule$target # The RHS is the error message
+        return(rule)
     })
 
     # Store in userData
@@ -2814,30 +2832,6 @@ sd_stop_if <- function(...) {
         }
         session$userData$stop_if$conditions <- processed_conditions
     })
-}
-
-
-# Helper function to extract question IDs from a stop condition
-extract_question_ids_from_condition <- function(expr) {
-    ids <- character(0)
-    if (is.call(expr)) {
-        # Check for input$xxx pattern
-        if (
-            length(expr) >= 3 &&
-                as.character(expr[[1]]) == "$" &&
-                as.character(expr[[2]]) == "input"
-        ) {
-            var_name <- as.character(expr[[3]])
-            ids <- c(ids, var_name)
-        }
-        # Recursively search in all parts of the expression
-        for (i in seq_along(expr)) {
-            if (is.call(expr[[i]]) || is.symbol(expr[[i]])) {
-                ids <- c(ids, extract_question_ids_from_condition(expr[[i]]))
-            }
-        }
-    }
-    return(unique(ids))
 }
 
 #' Set password for surveydown survey
@@ -3502,17 +3496,6 @@ get_initial_data <- function(
     data[['time_end']] <- ""
 
     return(data)
-}
-
-# Helper function to format a single question value
-format_question_value <- function(val) {
-    if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
-        return("")
-    } else if (length(val) > 1) {
-        return(paste(val, collapse = "|"))
-    } else {
-        return(as.character(val))
-    }
 }
 
 get_default_next_page <- function(page, page_ids, page_id_to_index) {

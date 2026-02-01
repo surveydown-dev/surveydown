@@ -22,25 +22,28 @@ get_messages_yml <- function() {
     # Read messages from settings.yml
     path <- file.path("_survey", "settings.yml")
     if (fs::file_exists(path)) {
-        tryCatch({
-            full_settings <- yaml::read_yaml(path)
+        tryCatch(
+            {
+                full_settings <- yaml::read_yaml(path)
 
-            # Look for system-messages key (kebab-case only)
-            if (!is.null(full_settings$`system-messages`)) {
-                # Get the system-language from survey-settings (kebab-case)
-                language <- full_settings$`survey-settings`$`system-language`
-                if (is.null(language)) {
-                    language <- "en"  # Default to English if not specified
+                # Look for system-messages key (kebab-case only)
+                if (!is.null(full_settings$`system-messages`)) {
+                    # Get the system-language from survey-settings (kebab-case)
+                    language <- full_settings$`survey-settings`$`system-language`
+                    if (is.null(language)) {
+                        language <- "en" # Default to English if not specified
+                    }
+
+                    return(list(
+                        messages = full_settings$`system-messages`,
+                        language = language
+                    ))
                 }
-
-                return(list(
-                    messages = full_settings$`system-messages`,
-                    language = language
-                ))
+            },
+            error = function(e) {
+                return(NULL)
             }
-        }, error = function(e) {
-            return(NULL)
-        })
+        )
     }
     return(NULL)
 }

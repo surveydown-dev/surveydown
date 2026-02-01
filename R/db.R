@@ -400,17 +400,21 @@ try_numeric <- function(x) {
         return(x)
     }
     # Handle vectors element-wise
-    result <- sapply(x, function(val) {
-        if (is.na(val) || identical(val, "")) {
+    result <- sapply(
+        x,
+        function(val) {
+            if (is.na(val) || identical(val, "")) {
+                return(val)
+            }
+            # Try to convert to numeric
+            numeric_val <- suppressWarnings(as.numeric(val))
+            if (!is.na(numeric_val)) {
+                return(numeric_val)
+            }
             return(val)
-        }
-        # Try to convert to numeric
-        numeric_val <- suppressWarnings(as.numeric(val))
-        if (!is.na(numeric_val)) {
-            return(numeric_val)
-        }
-        return(val)
-    }, USE.NAMES = FALSE)
+        },
+        USE.NAMES = FALSE
+    )
     return(result)
 }
 
@@ -683,7 +687,14 @@ sd_values <- function(..., as_numeric = NULL, as_vector = NULL) {
 #' @export
 sd_value <- function(..., as_numeric = NULL, as_vector = NULL) {
     # Evaluate sd_values() in the parent environment to avoid extra frame
-    eval(substitute(sd_values(..., as_numeric = as_numeric, as_vector = as_vector)), parent.frame())
+    eval(
+        substitute(sd_values(
+            ...,
+            as_numeric = as_numeric,
+            as_vector = as_vector
+        )),
+        parent.frame()
+    )
 }
 
 # Convert to SQL

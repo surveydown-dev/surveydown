@@ -24,8 +24,7 @@ parse_single_index_spec <- function(spec) {
 # Returns: integer vector of 1-based indices, or NULL (meaning shuffle all)
 parse_shuffle_indices <- function(value) {
   if (is.null(value)) {
-    return(NULL)  # NULL means shuffle all
-
+    return(NULL) # NULL means shuffle all
   }
 
   # Handle single values
@@ -71,11 +70,16 @@ parse_shuffled_yaml <- function(shuffled_raw) {
 # Check if a question is an MC-type question (supports option randomization)
 is_mc_type_question <- function(question) {
   type <- question$type
-  if (is.null(type) || length(type) == 0) return(FALSE)
-  if (isTRUE(question$is_matrix)) return(FALSE)
+  if (is.null(type) || length(type) == 0) {
+    return(FALSE)
+  }
+  if (isTRUE(question$is_matrix)) {
+    return(FALSE)
+  }
 
   # Check for simple type names or CSS class patterns
-  type %in% MC_TYPE_NAMES ||
+  type %in%
+    MC_TYPE_NAMES ||
     grepl("radio", type, ignore.case = TRUE) ||
     grepl("checkbox", type, ignore.case = TRUE)
 }
@@ -133,7 +137,7 @@ determine_shuffled_questions <- function(
   }
 
   if (is.null(shuffled) || length(shuffled) == 0) {
-    return(list())  # Return empty list instead of character(0)
+    return(list()) # Return empty list instead of character(0)
   }
 
   # Parse the shuffled YAML structure
@@ -216,11 +220,20 @@ run_config <- function() {
 
     message(
       "Survey content saved to:\n",
-      "  ", paths$target_html, "\n",
-      "  ", paths$target_head, "\n",
-      "  ", paths$target_pages, "\n",
-      "  ", paths$target_questions, "\n",
-      "  ", paths$target_settings
+      "  ",
+      paths$target_html,
+      "\n",
+      "  ",
+      paths$target_head,
+      "\n",
+      "  ",
+      paths$target_pages,
+      "\n",
+      "  ",
+      paths$target_questions,
+      "\n",
+      "  ",
+      paths$target_settings
     )
   } else {
     message('No changes detected. Importing contents from "_survey" folder.')
@@ -459,10 +472,25 @@ set_messages <- function(paths, language, metadata = NULL) {
     if (!is.null(custom_messages)) {
       # Define valid kebab-case message keys
       valid_message_keys <- c(
-        "cancel", "confirm-exit", "sure-exit", "submit-exit", "warning",
-        "required", "rating-title", "rating-text", "rating-scale",
-        "previous", "next", "exit", "close-tab", "choose-option",
-        "click", "redirect", "seconds", "new-tab", "redirect-error"
+        "cancel",
+        "confirm-exit",
+        "sure-exit",
+        "submit-exit",
+        "warning",
+        "required",
+        "rating-title",
+        "rating-text",
+        "rating-scale",
+        "previous",
+        "next",
+        "exit",
+        "close-tab",
+        "choose-option",
+        "click",
+        "redirect",
+        "seconds",
+        "new-tab",
+        "redirect-error"
       )
 
       # Merge custom messages with default messages (only valid kebab-case keys)
@@ -474,9 +502,13 @@ set_messages <- function(paths, language, metadata = NULL) {
           valid_count <- valid_count + 1
         } else {
           warning(
-            "Invalid message key '", key, "' ignored. ",
+            "Invalid message key '",
+            key,
+            "' ignored. ",
             "Only kebab-case keys are supported. ",
-            "Did you mean '", gsub("_", "-", key), "'?"
+            "Did you mean '",
+            gsub("_", "-", key),
+            "'?"
           )
         }
       }
@@ -756,9 +788,13 @@ create_settings_yaml <- function(paths, metadata) {
             for (key in names(yaml_data$`theme-settings`)) {
               if (grepl("_", key)) {
                 warning(
-                  "Invalid key '", key, "' in theme-settings ignored. ",
+                  "Invalid key '",
+                  key,
+                  "' in theme-settings ignored. ",
                   "Only kebab-case keys are supported. ",
-                  "Did you mean '", gsub("_", "-", key), "'?"
+                  "Did you mean '",
+                  gsub("_", "-", key),
+                  "'?"
                 )
               }
             }
@@ -768,9 +804,13 @@ create_settings_yaml <- function(paths, metadata) {
             for (key in names(yaml_data$`survey-settings`)) {
               if (grepl("_", key)) {
                 warning(
-                  "Invalid key '", key, "' in survey-settings ignored. ",
+                  "Invalid key '",
+                  key,
+                  "' in survey-settings ignored. ",
                   "Only kebab-case keys are supported. ",
-                  "Did you mean '", gsub("_", "-", key), "'?"
+                  "Did you mean '",
+                  gsub("_", "-", key),
+                  "'?"
                 )
               }
             }
@@ -1130,10 +1170,14 @@ update_settings_yaml <- function(resolved_params) {
         # Look for the system-messages key (kebab-case) or old keys for backward compatibility
         if (!is.null(full_settings$`system-messages`)) {
           # New structure with system-messages (kebab-case)
-          existing_msg <- list(`system-messages` = full_settings$`system-messages`)
+          existing_msg <- list(
+            `system-messages` = full_settings$`system-messages`
+          )
         } else if (!is.null(full_settings$system_messages)) {
           # Old structure with system_messages (snake_case) - convert to kebab
-          existing_msg <- list(`system-messages` = full_settings$system_messages)
+          existing_msg <- list(
+            `system-messages` = full_settings$system_messages
+          )
         } else if (!is.null(full_settings$system_message)) {
           # Old structure with system_message (singular) - convert to kebab
           existing_msg <- list(`system-messages` = full_settings$system_message)
@@ -1343,7 +1387,9 @@ extract_html_pages <- function(
     has_nav_marker <- !is.na(rvest::html_element(x, "#sd-nav-marker"))
 
     # Check if explicit navigation already exists
-    has_explicit_nav <- !is.na(next_button) || has_close_button || has_nav_marker
+    has_explicit_nav <- !is.na(next_button) ||
+      has_close_button ||
+      has_nav_marker
 
     # Auto-insert navigation if conditions are met
     if (!is_last_page && !has_explicit_nav) {
@@ -1465,16 +1511,20 @@ extract_question_structure_html <- function(html_content) {
   # Loop through all question nodes and extract information
   for (question_node in question_nodes) {
     question_id <- rvest::html_attr(question_node, "data-question-id")
-    
+
     # Enhanced extraction that considers both class and tag name
-    target_element <- question_node |> rvest::html_nodes(glue::glue("#{question_id}"))
-    
+    target_element <- question_node |>
+      rvest::html_nodes(glue::glue("#{question_id}"))
+
     if (length(target_element) > 0) {
       tag_name <- rvest::html_name(target_element)
       class_attr <- rvest::html_attr(target_element, "class")
-      
+
       # For textarea elements, ensure we get the right type even if class is incomplete
-      if (tag_name == "textarea" && (is.na(class_attr) || class_attr == "form-control")) {
+      if (
+        tag_name == "textarea" &&
+          (is.na(class_attr) || class_attr == "form-control")
+      ) {
         type <- "shiny-input-textarea form-control"
       } else {
         type <- class_attr
@@ -1504,7 +1554,8 @@ extract_question_structure_html <- function(html_content) {
 
     # Detect if this is a button-style question (mc_buttons or mc_multiple_buttons)
     # Button-style questions have .btn-group class in their container
-    is_button_style <- length(rvest::html_nodes(question_node, ".btn-group")) > 0
+    is_button_style <- length(rvest::html_nodes(question_node, ".btn-group")) >
+      0
 
     # Write main information to the question structure
     question_structure[[question_id]] <- list(
@@ -1536,7 +1587,10 @@ extract_question_structure_html <- function(html_content) {
           if (!is.na(input_node)) {
             input_name <- rvest::html_attr(input_node, "name")
             # Extract row_id by removing the matrix_id prefix
-            if (!is.null(input_name) && grepl(paste0("^", question_id, "_"), input_name)) {
+            if (
+              !is.null(input_name) &&
+                grepl(paste0("^", question_id, "_"), input_name)
+            ) {
               row_id <- sub(paste0("^", question_id, "_"), "", input_name)
               rows[[row_label]] <- row_id
             }
@@ -1614,7 +1668,9 @@ extract_question_structure_html <- function(html_content) {
         names(options) <- label_options
 
         # Handle empty names by setting them to their corresponding values
-        empty_name_indices <- which(names(options) == "" | is.na(names(options)))
+        empty_name_indices <- which(
+          names(options) == "" | is.na(names(options))
+        )
         if (length(empty_name_indices) > 0) {
           names(options)[empty_name_indices] <- options[empty_name_indices]
         }
@@ -1717,7 +1773,10 @@ extract_question_structure_html <- function(html_content) {
         }
 
         # Fallback to snake_case conversion if extraction failed
-        if (is.null(options_values) || length(options_values) != length(options_labels)) {
+        if (
+          is.null(options_values) ||
+            length(options_values) != length(options_labels)
+        ) {
           options_values <- sapply(options_labels, function(label) {
             # Convert to lowercase
             value <- tolower(label)
@@ -1738,7 +1797,6 @@ extract_question_structure_html <- function(html_content) {
         question_structure[[question_id]]$options <- as.list(options)
       }
     }
-
   }
   return(question_structure)
 }
@@ -1782,7 +1840,7 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
         break
       }
     }
-    
+
     if (!is.null(matched_type)) {
       question$type <- matched_type
     } else if (question$is_matrix) {
@@ -1833,7 +1891,8 @@ load_question_structure_yaml <- function(file_yaml) {
   # Add indicators to all questions (derived from type)
   question_structure <- lapply(question_structure, function(question) {
     question$is_matrix <- FALSE
-    question$is_button_style <- question$type %in% c("mc_buttons", "mc_multiple_buttons")
+    question$is_button_style <- question$type %in%
+      c("mc_buttons", "mc_multiple_buttons")
     return(question)
   })
 
