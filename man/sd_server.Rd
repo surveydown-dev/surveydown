@@ -4,95 +4,59 @@
 \alias{sd_server}
 \title{Server logic for a surveydown survey}
 \usage{
-sd_server(
-  db = NULL,
-  required_questions = NULL,
-  all_questions_required = FALSE,
-  start_page = NULL,
-  show_previous = FALSE,
-  auto_scroll = FALSE,
-  rate_survey = FALSE,
-  system_language = "en",
-  use_cookies = TRUE,
-  highlight_unanswered = TRUE,
-  highlight_color = "gray",
-  capture_metadata = TRUE,
-  language = NULL
-)
+sd_server(db = NULL)
 }
 \arguments{
 \item{db}{A list containing database connection information created using
 \code{sd_database()} function. Defaults to \code{NULL}. If \code{NULL}, will be auto-detected
 from the calling environment or remain \code{NULL} (ignore mode).}
-
-\item{required_questions}{Vector of character strings. The IDs of questions
-that must be answered. Defaults to \code{NULL} (no required questions).}
-
-\item{all_questions_required}{Logical. If \code{TRUE}, all questions in the
-survey will be required. Defaults to \code{FALSE}.}
-
-\item{start_page}{Character string. The ID of the page to start on.
-Defaults to \code{NULL} (first page).}
-
-\item{show_previous}{Logical. If \code{TRUE}, shows the Previous button on survey
-pages. Defaults to \code{FALSE}.}
-
-\item{auto_scroll}{Logical. Whether to enable auto-scrolling to the next
-question after answering. Defaults to \code{FALSE}.}
-
-\item{rate_survey}{Logical. If \code{TRUE}, shows a rating question when exiting
-the survey. If \code{FALSE}, shows a simple confirmation dialog.
-Defaults to \code{FALSE}.}
-
-\item{system_language}{Set the language for the survey system messages. Include
-your own in a \code{messages.yml} file, or choose a built in one from
-the following list: English (\code{"en"}), German (\code{"de"}), Spanish (\code{"es"}),
-French (\code{"fr"}), Italian (\code{"it"}), Simplified Chinese (\code{"zh-CN"}).
-Defaults to \code{"en"}. Note: The deprecated \code{language} parameter is still
-supported for backward compatibility.}
-
-\item{use_cookies}{Logical. If \code{TRUE}, enables cookie-based session management
-for storing and restoring survey progress. Defaults to \code{TRUE}. Can be
-overridden by \code{use_cookies} setting in the survey.qmd YAML header.}
-
-\item{highlight_unanswered}{Logical. If \code{TRUE}, enables highlighting
-of all unanswered questions on page display. Defaults to \code{TRUE}.}
-
-\item{highlight_color}{Character string. Color for highlighting unanswered
-questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
-Defaults to "gray".}
-
-\item{capture_metadata}{Logical. If \code{TRUE}, automatically captures and stores
-browser information (browser name, version, and OS), IP address, and
-screen resolution.
-Defaults to \code{TRUE}.}
-
-\item{language}{Deprecated as of v0.13.0. Use \code{system_language} instead.
-This parameter. is maintained for backward compatibility only.}
 }
 \value{
 This function does not return a value; it sets up the server-side logic for
-the 'shiny' application.
+the 'shiny' application and exposes the \code{all_data} reactive list in the
+parent environment.
 }
 \description{
 This function defines the server-side logic for a 'shiny' application used in
 surveydown. It handles various operations such as conditional display,
 progress tracking, page navigation, database updates for survey responses,
 and exit survey functionality.
+
+All survey settings are configured in the \code{survey.qmd} YAML header under
+\code{survey-settings}. See the surveydown documentation for available options.
 }
 \details{
 The function performs the following tasks:
 \itemize{
-\item Initializes variables and reactive values.
+\item Initializes variables and reactive values, including the \code{all_data}
+reactive list for accessing question responses.
 \item Implements conditional display logic for questions.
 \item Tracks answered questions and updates the progress bar.
 \item Handles page navigation and skip logic.
 \item Manages required questions.
 \item Performs database operation.
-\item Controls auto-scrolling behavior based on the \code{auto_scroll} argument.
+\item Controls auto-scrolling behavior based on survey settings.
 \item Uses sweetalert for warning messages when required questions are not
 answered.
-\item Handles the exit survey process based on the \code{rate_survey} argument.
+\item Handles the exit survey process based on survey settings.
+}
+
+All survey behavior is configured through the \code{survey-settings} section
+in the \code{survey.qmd} YAML header. Available settings include:
+\itemize{
+\item \code{show-previous}: Show Previous button (default: FALSE)
+\item \code{use-cookies}: Enable cookie-based session management (default: TRUE)
+\item \code{auto-scroll}: Auto-scroll to next question (default: FALSE)
+\item \code{rate-survey}: Show rating question on exit (default: FALSE)
+\item \code{all-required}: Make all questions required (default: FALSE)
+\item \code{start-page}: ID of the page to start on (default: first page)
+\item \code{system-language}: Language for system messages (default: "en")
+\item \code{highlight-unanswered}: Highlight unanswered questions (default: TRUE)
+\item \code{highlight-color}: Color for highlighting (default: "gray")
+\item \code{capture-metadata}: Capture browser/IP info (default: TRUE)
+\item \code{required}: Vector of required question IDs
+\item \code{shuffled}: Vector of question IDs to shuffle (MC options or matrix rows)
+\item \code{all-shuffled}: Shuffle all MC options and matrix rows (default: FALSE)
 }
 }
 \section{Progress Bar}{
@@ -111,18 +75,33 @@ responses. If \code{db} is \code{NULL} (ignore mode), responses will be saved to
 CSV file.
 }
 
-\section{Auto-Scrolling}{
+\section{Accessing Question Values}{
 
-When \code{auto_scroll} is \code{TRUE}, the survey will automatically scroll to the
-next question after the current question is answered. This behavior can be
-disabled by setting \code{auto_scroll = FALSE}.
+The \code{sd_server()} function exposes the \code{all_data} reactive values list
+that provides a reliable way to access question responses in your server logic.
+Unlike directly accessing \code{input$question_id}, which only works for questions
+on the current page, \code{all_data$question_id} works for all questions by
+automatically restoring values from the database when needed.
+
+Use \code{all_data} in conditional logic:
+\preformatted{
+  sd_skip_if(
+    all_data$age < 18 ~ "parental_consent",
+    all_data$employed == "yes" ~ "employment_questions"
+  )
 }
 
-\section{Exit Survey}{
+Or in custom reactive expressions:
+\preformatted{
+  output$custom_text <- renderText({
+    paste("You selected:", all_data$favorite_color)
+  })
+}
 
-When \code{rate_survey = TRUE}, the function will show a rating question when
-the user attempts to exit the survey. When \code{FALSE}, it will show a simple
-confirmation dialog. The rating, if provided, is saved with the survey data.
+The \code{all_data} list automatically stays synchronized with question responses
+and includes restored values from previous sessions (via cookies or page
+refreshes), making it safe to use even when navigating backward or refreshing
+the page.
 }
 
 \examples{
@@ -141,12 +120,30 @@ if (interactive()) {
   # )
   #
   # server <- function(input, output, session) {
-  #   sd_server(
-  #     db = db
-  #   )
+  #   sd_server(db = db)
   # }
   #
   # shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # All settings are configured in survey.qmd YAML header:
+  # ---
+  # survey-settings:
+  #   show-previous: true
+  #   auto-scroll: true
+  #   required:
+  #     - age
+  #     - name
+  # ---
+
+  # Using all_data for conditional logic:
+  # server <- function(input, output, session) {
+  #   sd_skip_if(
+  #     all_data$age < 18 ~ "parental_consent",
+  #     all_data$country == "USA" ~ "usa_specific"
+  #   )
+  #
+  #   sd_server(db = db)
+  # }
 
   # Find a working directory and start from a template:
   sd_create_survey(template = "default")

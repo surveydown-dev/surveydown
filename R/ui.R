@@ -301,13 +301,15 @@ get_yaml_value <- function(metadata, key) {
     "use-cookies",
     "auto-scroll",
     "rate-survey",
-    "all-questions-required",
+    "all-required",
     "start-page",
     "system-language",
     "highlight-unanswered",
     "highlight-color",
     "capture-metadata",
-    "required-questions"
+    "required",
+    "shuffled",
+    "all-shuffled"
   )
 
   # Determine which category this key belongs to
@@ -372,9 +374,9 @@ get_rate_survey <- function(metadata) {
   return(parse_yaml_boolean(rate_survey))
 }
 
-get_all_questions_required <- function(metadata) {
-  all_questions_required <- get_yaml_value(metadata, "all-questions-required")
-  return(parse_yaml_boolean(all_questions_required))
+get_all_required <- function(metadata) {
+  all_required <- get_yaml_value(metadata, "all-required")
+  return(parse_yaml_boolean(all_required))
 }
 
 get_start_page <- function(metadata) {
@@ -420,7 +422,7 @@ get_capture_metadata <- function(metadata) {
 }
 
 get_required_questions <- function(metadata) {
-  required_questions <- get_yaml_value(metadata, "required-questions")
+  required_questions <- get_yaml_value(metadata, "required")
   if (is.null(required_questions)) {
     return(NULL)
   }
@@ -433,6 +435,21 @@ get_required_questions <- function(metadata) {
   } else {
     return(as.character(required_questions))
   }
+}
+
+get_shuffled <- function(metadata) {
+  shuffled <- get_yaml_value(metadata, "shuffled")
+  if (is.null(shuffled)) {
+    return(NULL)
+  }
+  # Return the raw structure - will be parsed by parse_shuffled_yaml() in config.R
+  # This preserves index specifications like "1-5" or [1, 2, 4]
+  return(shuffled)
+}
+
+get_all_shuffled <- function(metadata) {
+  all_shuffled <- get_yaml_value(metadata, "all-shuffled")
+  return(parse_yaml_boolean(all_shuffled))
 }
 
 get_show_previous <- function(metadata) {
@@ -556,19 +573,6 @@ extract_head_content <- function(html_content) {
   return(head_content)
 }
 
-# Helper function to convert text to snake_case
-to_snake_case <- function(text) {
-  # Convert to lowercase
-  text <- tolower(text)
-  # Replace spaces, hyphens, and other non-alphanumeric characters with underscores
-  text <- gsub("[^a-z0-9]+", "_", text)
-  # Remove leading/trailing underscores
-  text <- gsub("^_+|_+$", "", text)
-  # Replace multiple consecutive underscores with single underscore
-  text <- gsub("_+", "_", text)
-  return(text)
-}
-
 #' Create a survey question
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
@@ -608,9 +612,8 @@ to_snake_case <- function(text) {
 #' \itemize{
 #'   \item Named vector: `c("Display A" = "value_a", "Display B" = "value_b")` -
 #'     Names are shown in UI, values are stored in database
-#'   \item Unnamed character vector: `c("Option 1", "Option 2")` - Values are shown in UI
-#'     and automatically converted to snake_case for database storage
-#'     (e.g., "option_1", "option_2")
+#'   \item Unnamed character vector: `c("Option 1", "Option 2")` - Values are used as both
+#'     display labels and stored values (e.g., "Option 1" is shown and stored as "Option 1")
 #'   \item Unnamed numeric vector: `c(1, 2, 3)` - For non-slider questions, converted to
 #'     `c("1" = "1", "2" = "2", "3" = "3")`. For `slider_numeric`, kept as numeric.
 #' }
@@ -629,10 +632,13 @@ to_snake_case <- function(text) {
 #' @param yml Character string. The name of the YAML file to load question configurations from.
 #' Defaults to `"questions.yml"`. Custom YAML files can be specified, either in
 #' the root directory or subdirectories (e.g., `"folder/custom.yml"`).
-#' @param matrix_question_width Character string. The width of the matrix question column.
-#' Defaults to `"50%"`.
-#' @param matrix_option_width Character string. The width of the matrix option column.
-#' Defaults to `NULL`.
+#' @param matrix_question_width The width of the matrix question column. Accepts
+#' numeric (e.g., `40`), character without percent (e.g., `"40"`), or character
+#' with percent (e.g., `"40%"`) - all are treated equivalently as percentages.
+#' Defaults to `NULL`, which auto-calculates the width based on the longest row
+#' label (using a heuristic of 20% base + 0.5% per character, bounded between
+#' 30% and 80%). The remaining width is automatically distributed equally
+#' among the option columns.
 #' @param ... Additional arguments, often specific to different input types.
 #' Examples include `pre`, `sep`, `step`, and `animate` for `"slider"` and
 #' `"slider_numeric"` question types, etc.
@@ -718,8 +724,7 @@ sd_question <- function(
   row = NULL,
   default = NULL,
   yml = "questions.yml",
-  matrix_question_width = "50%",
-  matrix_option_width = NULL,
+  matrix_question_width = NULL,
   ...
 ) {
   # Handle option/options alias
@@ -737,11 +742,9 @@ sd_question <- function(
     !is.null(option) && (is.null(names(option)) || all(names(option) == ""))
   ) {
     if (is.character(option)) {
-      # For character vectors: convert to snake_case
-      option_labels <- option
-      option_values <- sapply(option, to_snake_case)
-      option <- option_values
-      names(option) <- option_labels
+      # For character vectors: use original values as both names and values
+      # e.g., c("Option 1", "Option 2") becomes c("Option 1" = "Option 1", ...)
+      names(option) <- option
     } else if (
       is.numeric(option) && !is.null(type) && !(type %in% numeric_option_types)
     ) {
@@ -1307,20 +1310,36 @@ sd_question <- function(
       shiny::tags$script(htmltools::HTML(js_init))
     )
   } else if (type == "matrix") {
-    # Calculate option column widths if not provided
-    if (is.null(matrix_option_width)) {
-      # Distribute remaining width equally among option columns
-      remaining_width <- 100 - as.numeric(gsub("%", "", matrix_option_width))
-      matrix_option_width <- paste0(remaining_width / length(option), "%")
+    # Auto-calculate question column width if not provided
+    if (is.null(matrix_question_width)) {
+      # Find the longest row label by character count
+      row_labels <- names(row)
+      max_chars <- max(nchar(row_labels))
+      # Estimate width: base 20% + 0.5% per character, bounded between 30% and 80%
+      estimated_width <- min(80, max(30, 20 + max_chars * 0.5))
+      matrix_question_width <- paste0(estimated_width, "%")
+    } else {
+      # Normalize matrix_question_width to always have "%" suffix
+      # Accepts: 40, "40", or "40%" - all become "40%"
+      if (is.numeric(matrix_question_width)) {
+        matrix_question_width <- paste0(matrix_question_width, "%")
+      } else if (!grepl("%$", matrix_question_width)) {
+        matrix_question_width <- paste0(matrix_question_width, "%")
+      }
     }
+
+    # Calculate option column widths from remaining space after question column
+    remaining_width <- 100 - as.numeric(gsub("%", "", matrix_question_width))
+    matrix_option_width <- paste0(remaining_width / length(option), "%")
+
     # Create colgroup element
     colgroup <- shiny::tags$colgroup(
-        # First column for questions
-        shiny::tags$col(style = paste0("width: ", matrix_question_width, ";")),
-        # Remaining columns for option
-        lapply(seq_along(option), function(i) {
-            shiny::tags$col(style = paste0("width: ", matrix_option_width, ";"))
-        })
+      # First column for questions
+      shiny::tags$col(style = paste0("width: ", matrix_question_width, ";")),
+      # Remaining columns for options (auto-distributed)
+      lapply(seq_along(option), function(i) {
+        shiny::tags$col(style = paste0("width: ", matrix_option_width, ";"))
+      })
     )
     header <- shiny::tags$tr(
       shiny::tags$th(""),
@@ -1916,9 +1935,12 @@ sd_close <- function(
               label = label_close,
               class = "sd-enter-button sd-nav-button",
               style = "display: inline-block; margin-right: 10px;",
-              onclick = paste0("Shiny.setInputValue('show_exit_modal', true, {priority: 'event'}); ",
-                              "Shiny.setInputValue('clear_cookies_on_exit', ",
-                              tolower(as.character(clear_cookies)), ", {priority: 'event'});")
+              onclick = paste0(
+                "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'}); ",
+                "Shiny.setInputValue('clear_cookies_on_exit', ",
+                tolower(as.character(clear_cookies)),
+                ", {priority: 'event'});"
+              )
             ),
             shiny::actionButton(
               inputId = restart_button_id,
@@ -1935,9 +1957,12 @@ sd_close <- function(
             label = label_close,
             class = "sd-enter-button sd-nav-button",
             style = "display: inline-block;",
-            onclick = paste0("Shiny.setInputValue('show_exit_modal', true, {priority: 'event'}); ",
-                            "Shiny.setInputValue('clear_cookies_on_exit', ",
-                            tolower(as.character(clear_cookies)), ", {priority: 'event'});")
+            onclick = paste0(
+              "Shiny.setInputValue('show_exit_modal', true, {priority: 'event'}); ",
+              "Shiny.setInputValue('clear_cookies_on_exit', ",
+              tolower(as.character(clear_cookies)),
+              ", {priority: 'event'});"
+            )
           )
         }
       )

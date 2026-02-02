@@ -21,6 +21,7 @@ Other options include:
 \item{custom_plotly_chart}{Survey with Plotly visualizations}
 \item{external_redirect}{Template with external site redirects}
 \item{live_polling}{Live polling template for real-time surveys}
+\item{option_shuffling}{Survey with shuffled question options}
 \item{question_types}{Showcases all available question types}
 \item{questions_yml}{Survey with questions defined in a YAML file}
 \item{random_options}{Survey with randomized question options}

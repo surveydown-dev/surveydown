@@ -24,7 +24,7 @@ status](https://www.r-pkg.org/badges/version/surveydown)](https://cran.r-project
 [![GitHub stars](https://img.shields.io/github/stars/surveydown-dev/surveydown?style=social)](https://github.com/surveydown-dev/surveydown)
 <!-- badges: end -->
 
-```{markdown}
+```{=gfm}
 > [!NOTE]
 > Visit our main site at [surveydown.org](https://surveydown.org) for the complete documentation and more information about surveydown.
 ```

@@ -1,39 +1,222 @@
-run_config <- function(
-  required_questions,
-  all_questions_required,
-  start_page,
-  skip_if,
-  show_if,
-  rate_survey,
-  language
+# MC type names that support option randomization
+MC_TYPE_NAMES <- c("mc", "mc_buttons", "mc_multiple", "mc_multiple_buttons")
+
+# Parse a single index specification (e.g., "1-5" or 3)
+# Returns an integer vector of indices
+parse_single_index_spec <- function(spec) {
+  if (is.numeric(spec)) {
+    return(as.integer(spec))
+  }
+  spec <- as.character(spec)
+  # Check if it's a range like "1-5"
+  if (grepl("^\\d+-\\d+$", spec)) {
+    parts <- strsplit(spec, "-")[[1]]
+    start <- as.integer(parts[1])
+    end <- as.integer(parts[2])
+    return(seq(start, end))
+  }
+  # Otherwise try to parse as integer
+  as.integer(spec)
+}
+
+# Parse shuffle indices from YAML value
+# Input can be: NULL, integer, string "1-5", vector [1,2,4], or mixed ["1-5", 8]
+# Returns: integer vector of 1-based indices, or NULL (meaning shuffle all)
+parse_shuffle_indices <- function(value) {
+  if (is.null(value)) {
+    return(NULL) # NULL means shuffle all
+  }
+
+  # Handle single values
+  if (length(value) == 1 && !is.list(value)) {
+    return(parse_single_index_spec(value))
+  }
+
+  # Handle vectors/lists
+  indices <- unlist(lapply(value, parse_single_index_spec))
+  sort(unique(indices))
+}
+
+# Parse the shuffled YAML structure into a named list
+# Input formats supported:
+#   - question_id (no indices = shuffle all)
+#   - question_id: 1-5 (range)
+#   - question_id: [1, 2, 4] (specific indices)
+#   - question_id: [1-5, 8-10] (mixed ranges)
+# Returns: named list where names are question IDs and values are index vectors or NULL
+parse_shuffled_yaml <- function(shuffled_raw) {
+  if (is.null(shuffled_raw)) {
+    return(NULL)
+  }
+
+  result <- list()
+
+  for (item in shuffled_raw) {
+    if (is.list(item) && length(item) == 1) {
+      # Format: - question_id: indices
+      q_id <- names(item)[1]
+      indices <- parse_shuffle_indices(item[[1]])
+      result[[q_id]] <- indices
+    } else if (is.character(item) && length(item) == 1) {
+      # Format: - question_id (no indices, shuffle all)
+      # Use list(NULL) to actually store NULL (direct assignment removes the element)
+      result[item] <- list(NULL)
+    }
+  }
+
+  result
+}
+
+# Check if a question is an MC-type question (supports option randomization)
+is_mc_type_question <- function(question) {
+  type <- question$type
+  if (is.null(type) || length(type) == 0) {
+    return(FALSE)
+  }
+  if (isTRUE(question$is_matrix)) {
+    return(FALSE)
+  }
+
+  # Check for simple type names or CSS class patterns
+  type %in%
+    MC_TYPE_NAMES ||
+    grepl("radio", type, ignore.case = TRUE) ||
+    grepl("checkbox", type, ignore.case = TRUE)
+}
+
+# Get IDs of all MC-type questions from question structure
+get_mc_question_ids <- function(question_structure) {
+  names(which(sapply(question_structure, is_mc_type_question)))
+}
+
+# Load shuffled settings from YAML if not provided
+load_shuffled_settings <- function(shuffled, all_shuffled) {
+  if (!is.null(shuffled) || all_shuffled) {
+    return(list(
+      shuffled = shuffled,
+      all_shuffled = all_shuffled
+    ))
+  }
+
+  settings <- read_settings_yaml()
+  list(
+    shuffled = settings$`shuffled`,
+    all_shuffled = isTRUE(settings$`all-shuffled`)
+  )
+}
+
+# Get IDs of all matrix-type questions from question structure
+get_matrix_question_ids <- function(question_structure) {
+  names(which(sapply(question_structure, function(q) isTRUE(q$is_matrix))))
+}
+
+# Determine which questions should be shuffled
+# For MC-type questions: shuffles options
+# For Matrix-type questions: shuffles rows (sub-questions)
+# Returns: named list where names are question IDs and values are:
+#   - NULL: shuffle all options/rows
+#   - integer vector: only shuffle these 1-based indices
+determine_shuffled_questions <- function(
+  question_structure,
+  shuffled,
+  all_shuffled,
+  warn_invalid = FALSE
 ) {
-  # Check for sd_close() in survey.qmd if rate_survey used
+  mc_question_ids <- get_mc_question_ids(question_structure)
+  matrix_question_ids <- get_matrix_question_ids(question_structure)
+  valid_question_ids <- c(mc_question_ids, matrix_question_ids)
+
+  # If all_shuffled, return named list with NULL values (shuffle all) for all valid questions
+
+  if (all_shuffled) {
+    result <- stats::setNames(
+      replicate(length(valid_question_ids), NULL, simplify = FALSE),
+      valid_question_ids
+    )
+    return(result)
+  }
+
+  if (is.null(shuffled) || length(shuffled) == 0) {
+    return(list()) # Return empty list instead of character(0)
+  }
+
+  # Parse the shuffled YAML structure
+  parsed_shuffled <- parse_shuffled_yaml(shuffled)
+
+  if (is.null(parsed_shuffled) || length(parsed_shuffled) == 0) {
+    return(list())
+  }
+
+  # Get question IDs from the parsed structure
+  shuffled_ids <- names(parsed_shuffled)
+
+  # Warn about invalid questions if requested
+  if (warn_invalid) {
+    invalid <- setdiff(shuffled_ids, valid_question_ids)
+    if (length(invalid) > 0) {
+      warning(
+        "The following questions in shuffled are not MC-type or matrix questions and will be skipped: ",
+        paste(invalid, collapse = ", ")
+      )
+    }
+  }
+
+  # Filter to only valid questions
+  valid_shuffled_ids <- intersect(shuffled_ids, valid_question_ids)
+
+  # Return named list with only valid questions
+  parsed_shuffled[valid_shuffled_ids]
+}
+
+run_config <- function() {
+  # Get skip_if and show_if from session userData (set before sd_server() is called)
+  skip_if <- shiny::getDefaultReactiveDomain()$userData$skip_if
+  show_if <- shiny::getDefaultReactiveDomain()$userData$show_if
+
+  # Read all settings from _survey/settings.yml
+  settings <- read_settings_yaml()
+  required_questions <- settings$`required`
+  all_required <- isTRUE(settings$`all-required`)
+  start_page <- settings$`start-page`
+  rate_survey <- isTRUE(settings$`rate-survey`)
+  system_language <- settings$`system-language`
+  shuffled <- settings$`shuffled`
+  all_shuffled <- isTRUE(settings$`all-shuffled`)
+
   if (rate_survey) {
     check_sd_close()
   }
 
-  # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
-  # If changes detected, re-parse the '_survey/survey.html' file
   if (survey_files_need_updating(paths)) {
     message("Changes detected...re-parsing survey contents...")
 
-    # Get the html content from the rendered survey.html file
-    # Note: messages are now handled in create_settings_yaml()
     html_content <- rvest::read_html(paths$target_html)
+    question_structure <- get_question_structure(paths, html_content)
 
-    # Extract all divs with class "sd-page" and save to "_survey" folder
+    # Load shuffled settings from YAML if not provided
+    shuffled_settings <- load_shuffled_settings(shuffled, all_shuffled)
+    shuffled <- shuffled_settings$shuffled
+    all_shuffled <- shuffled_settings$all_shuffled
+
+    # Determine which questions should be shuffled (warn on fresh parse)
+    question_shuffled <- determine_shuffled_questions(
+      question_structure,
+      shuffled,
+      all_shuffled,
+      warn_invalid = TRUE
+    )
+
     pages <- extract_html_pages(
       paths,
       html_content,
       required_questions,
-      all_questions_required,
-      show_if
+      all_required,
+      show_if,
+      question_shuffled,
+      question_structure
     )
-
-    # Get question structure
-    question_structure <- get_question_structure(paths, html_content)
 
     message(
       "Survey content saved to:\n",
@@ -53,16 +236,22 @@ run_config <- function(
       paths$target_settings
     )
   } else {
-    # If no changes, import from '_survey' folder
-    message(
-      'No changes detected. Importing contents from "_survey" folder.'
-    )
+    message('No changes detected. Importing contents from "_survey" folder.')
 
-    # Load pages object from _survey folder
     pages <- readRDS(paths$target_pages)
-
-    # Load question structure from _survey folder
     question_structure <- load_question_structure_yaml(paths$target_questions)
+
+    # Load shuffled settings from YAML if not provided
+    shuffled_settings <- load_shuffled_settings(shuffled, all_shuffled)
+    shuffled <- shuffled_settings$shuffled
+    all_shuffled <- shuffled_settings$all_shuffled
+
+    # Determine which questions should be shuffled
+    question_shuffled <- determine_shuffled_questions(
+      question_structure,
+      shuffled,
+      all_shuffled
+    )
   }
 
   # Get page and question IDs
@@ -73,7 +262,7 @@ run_config <- function(
   check_ids(page_ids, question_ids)
 
   # Determine required questions, excluding matrix question IDs
-  if (all_questions_required) {
+  if (all_required) {
     matrix_question_ids <- names(which(sapply(
       question_structure,
       `[[`,
@@ -113,7 +302,8 @@ run_config <- function(
     question_ids = question_ids,
     question_required = question_required,
     start_page = start_page,
-    question_structure = question_structure
+    question_structure = question_structure,
+    question_shuffled = question_shuffled
   )
   return(config)
 }
@@ -282,10 +472,25 @@ set_messages <- function(paths, language, metadata = NULL) {
     if (!is.null(custom_messages)) {
       # Define valid kebab-case message keys
       valid_message_keys <- c(
-        "cancel", "confirm-exit", "sure-exit", "submit-exit", "warning",
-        "required", "rating-title", "rating-text", "rating-scale",
-        "previous", "next", "exit", "close-tab", "choose-option",
-        "click", "redirect", "seconds", "new-tab", "redirect-error"
+        "cancel",
+        "confirm-exit",
+        "sure-exit",
+        "submit-exit",
+        "warning",
+        "required",
+        "rating-title",
+        "rating-text",
+        "rating-scale",
+        "previous",
+        "next",
+        "exit",
+        "close-tab",
+        "choose-option",
+        "click",
+        "redirect",
+        "seconds",
+        "new-tab",
+        "redirect-error"
       )
 
       # Merge custom messages with default messages (only valid kebab-case keys)
@@ -297,9 +502,13 @@ set_messages <- function(paths, language, metadata = NULL) {
           valid_count <- valid_count + 1
         } else {
           warning(
-            "Invalid message key '", key, "' ignored. ",
+            "Invalid message key '",
+            key,
+            "' ignored. ",
             "Only kebab-case keys are supported. ",
-            "Did you mean '", gsub("_", "-", key), "'?"
+            "Did you mean '",
+            gsub("_", "-", key),
+            "'?"
           )
         }
       }
@@ -450,22 +659,14 @@ create_sectioned_yaml <- function(
 
 create_settings_yaml <- function(paths, metadata) {
   # Extract server configuration from survey.qmd YAML metadata during UI rendering
+  # All settings come from the YAML header only - no sd_server() parameter overrides
   if (file.exists("survey.qmd")) {
     tryCatch(
       {
-        # Detect sd_server() parameters from app.R FIRST
-        # This ensures sd_server() overrides take precedence over YAML values
-        sd_server_overrides <- detect_sd_server_params()
-
-        # Get system language for messages
-        # Priority: sd_server() > YAML header > default
+        # Get system language for messages from YAML header
         system_language <- get_system_language(metadata)
         if (is.null(system_language)) {
           system_language <- "en"
-        }
-        # Override with sd_server() if specified
-        if (!is.null(sd_server_overrides$system_language)) {
-          system_language <- sd_server_overrides$system_language
         }
 
         # Get messages for the selected language (pass metadata for custom overrides)
@@ -486,13 +687,15 @@ create_settings_yaml <- function(paths, metadata) {
           "use-cookies",
           "auto-scroll",
           "rate-survey",
-          "all-questions-required",
+          "all-required",
           "start-page",
           "system-language",
           "highlight-unanswered",
           "highlight-color",
           "capture-metadata",
-          "required-questions"
+          "required",
+          "shuffled",
+          "all-shuffled"
         )
 
         # Combine all parameters
@@ -512,13 +715,15 @@ create_settings_yaml <- function(paths, metadata) {
           `use-cookies` = TRUE,
           `auto-scroll` = FALSE,
           `rate-survey` = FALSE,
-          `all-questions-required` = FALSE,
+          `all-required` = FALSE,
           `start-page` = NULL,
           `system-language` = "en",
           `highlight-unanswered` = TRUE,
           `highlight-color` = "gray",
           `capture-metadata` = TRUE,
-          `required-questions` = NULL
+          `required` = NULL,
+          `shuffled` = NULL,
+          `all-shuffled` = FALSE
         )
 
         # Extract YAML values using helper functions (priority: YAML > defaults)
@@ -543,8 +748,8 @@ create_settings_yaml <- function(paths, metadata) {
             value <- get_auto_scroll(metadata)
           } else if (param == "rate-survey") {
             value <- get_rate_survey(metadata)
-          } else if (param == "all-questions-required") {
-            value <- get_all_questions_required(metadata)
+          } else if (param == "all-required") {
+            value <- get_all_required(metadata)
           } else if (param == "start-page") {
             value <- get_start_page(metadata)
           } else if (param == "system-language") {
@@ -555,8 +760,12 @@ create_settings_yaml <- function(paths, metadata) {
             value <- get_highlight_color(metadata)
           } else if (param == "capture-metadata") {
             value <- get_capture_metadata(metadata)
-          } else if (param == "required-questions") {
+          } else if (param == "required") {
             value <- get_required_questions(metadata)
+          } else if (param == "shuffled") {
+            value <- get_shuffled(metadata)
+          } else if (param == "all-shuffled") {
+            value <- get_all_shuffled(metadata)
           } else if (param == "show-previous") {
             value <- get_show_previous(metadata)
           } else {
@@ -579,9 +788,13 @@ create_settings_yaml <- function(paths, metadata) {
             for (key in names(yaml_data$`theme-settings`)) {
               if (grepl("_", key)) {
                 warning(
-                  "Invalid key '", key, "' in theme-settings ignored. ",
+                  "Invalid key '",
+                  key,
+                  "' in theme-settings ignored. ",
                   "Only kebab-case keys are supported. ",
-                  "Did you mean '", gsub("_", "-", key), "'?"
+                  "Did you mean '",
+                  gsub("_", "-", key),
+                  "'?"
                 )
               }
             }
@@ -591,37 +804,15 @@ create_settings_yaml <- function(paths, metadata) {
             for (key in names(yaml_data$`survey-settings`)) {
               if (grepl("_", key)) {
                 warning(
-                  "Invalid key '", key, "' in survey-settings ignored. ",
+                  "Invalid key '",
+                  key,
+                  "' in survey-settings ignored. ",
                   "Only kebab-case keys are supported. ",
-                  "Did you mean '", gsub("_", "-", key), "'?"
+                  "Did you mean '",
+                  gsub("_", "-", key),
+                  "'?"
                 )
               }
-            }
-          }
-        }
-
-        # Apply sd_server() parameters detected earlier
-        # This prevents timing issues where settings.yml shows defaults before sd_server() updates it
-        if (length(sd_server_overrides) > 0) {
-          # Map snake_case sd_server() params to kebab-case settings keys
-          param_to_kebab <- list(
-            show_previous = "show-previous",
-            use_cookies = "use-cookies",
-            auto_scroll = "auto-scroll",
-            rate_survey = "rate-survey",
-            all_questions_required = "all-questions-required",
-            start_page = "start-page",
-            system_language = "system-language",
-            highlight_unanswered = "highlight-unanswered",
-            highlight_color = "highlight-color",
-            capture_metadata = "capture-metadata",
-            required_questions = "required-questions"
-          )
-
-          for (param in names(sd_server_overrides)) {
-            kebab_key <- param_to_kebab[[param]]
-            if (!is.null(kebab_key)) {
-              settings[[kebab_key]] <- sd_server_overrides[[param]]
             }
           }
         }
@@ -655,13 +846,15 @@ create_settings_yaml <- function(paths, metadata) {
           "use-cookies",
           "auto-scroll",
           "rate-survey",
-          "all-questions-required",
+          "all-required",
           "start-page",
           "system-language",
           "highlight-unanswered",
           "highlight-color",
           "capture-metadata",
-          "required-questions"
+          "required",
+          "shuffled",
+          "all-shuffled"
         )
         default_settings <- list(
           theme = "default",
@@ -674,13 +867,15 @@ create_settings_yaml <- function(paths, metadata) {
           `use-cookies` = TRUE,
           `auto-scroll` = FALSE,
           `rate-survey` = FALSE,
-          `all-questions-required` = FALSE,
+          `all-required` = FALSE,
           `start-page` = NULL,
           `system-language` = "en",
           `highlight-unanswered` = TRUE,
           `highlight-color` = "gray",
           `capture-metadata` = TRUE,
-          `required-questions` = NULL
+          `required` = NULL,
+          `shuffled` = NULL,
+          `all-shuffled` = FALSE
         )
         # Get default English messages
         default_msg <- get_messages_default()
@@ -718,13 +913,15 @@ create_settings_yaml <- function(paths, metadata) {
       "use-cookies",
       "auto-scroll",
       "rate-survey",
-      "all-questions-required",
+      "all-required",
       "start-page",
       "system-language",
       "highlight-unanswered",
       "highlight-color",
       "capture-metadata",
-      "required-questions"
+      "required",
+      "shuffled",
+      "all-shuffled"
     )
     default_settings <- list(
       theme = "default",
@@ -737,13 +934,15 @@ create_settings_yaml <- function(paths, metadata) {
       `use-cookies` = TRUE,
       `auto-scroll` = FALSE,
       `rate-survey` = FALSE,
-      `all-questions-required` = FALSE,
+      `all-required` = FALSE,
       `start-page` = NULL,
       `system-language` = "en",
       `highlight-unanswered` = TRUE,
       `highlight-color` = "gray",
       `capture-metadata` = TRUE,
-      `required-questions` = NULL
+      `required` = NULL,
+      `shuffled` = NULL,
+      `all-shuffled` = FALSE
     )
     # Get default English messages
     default_msg <- get_messages_default()
@@ -784,13 +983,15 @@ read_settings_yaml <- function() {
     `use-cookies` = TRUE,
     `auto-scroll` = FALSE,
     `rate-survey` = FALSE,
-    `all-questions-required` = FALSE,
+    `all-required` = FALSE,
     `start-page` = NULL,
     `system-language` = "en",
     `highlight-unanswered` = TRUE,
     `highlight-color` = "gray",
     `capture-metadata` = TRUE,
-    `required-questions` = NULL
+    `required` = NULL,
+    `shuffled` = NULL,
+    `all-shuffled` = FALSE
   )
 
   # Try multiple possible locations for the settings file
@@ -848,12 +1049,15 @@ read_settings_yaml <- function() {
     settings <- settings_raw
   }
 
-  # Process required-questions if it exists (convert list to character vector)
-  if (!is.null(settings$`required-questions`)) {
-    if (is.list(settings$`required-questions`)) {
-      settings$`required-questions` <- unlist(settings$`required-questions`)
+  # Process required if it exists (convert list to character vector)
+  if (!is.null(settings$`required`)) {
+    if (is.list(settings$`required`)) {
+      settings$`required` <- unlist(settings$`required`)
     }
   }
+
+  # Note: shuffled is kept as-is (not flattened) to preserve index specifications
+  # It will be parsed by parse_shuffled_yaml() in determine_shuffled_questions()
 
   return(settings)
 }
@@ -878,13 +1082,15 @@ update_settings_yaml <- function(resolved_params) {
     "use-cookies",
     "auto-scroll",
     "rate-survey",
-    "all-questions-required",
+    "all-required",
     "start-page",
     "system-language",
     "highlight-unanswered",
     "highlight-color",
     "capture-metadata",
-    "required-questions"
+    "required",
+    "shuffled",
+    "all-shuffled"
   )
 
   # Read existing settings to preserve Theme Settings
@@ -896,13 +1102,15 @@ update_settings_yaml <- function(resolved_params) {
     `use-cookies` = TRUE, # Note: this becomes TRUE when NULL is passed to sd_server
     `auto-scroll` = FALSE,
     `rate-survey` = FALSE,
-    `all-questions-required` = FALSE,
+    `all-required` = FALSE,
     `start-page` = NULL,
     `system-language` = "en",
     `highlight-unanswered` = TRUE,
     `highlight-color` = "gray",
     `capture-metadata` = TRUE,
-    `required-questions` = NULL
+    `required` = NULL,
+    `shuffled` = NULL,
+    `all-shuffled` = FALSE
   )
 
   # Filter out language parameter to avoid breaking Quarto
@@ -925,13 +1133,15 @@ update_settings_yaml <- function(resolved_params) {
     `use-cookies` = "use_cookies",
     `auto-scroll` = "auto_scroll",
     `rate-survey` = "rate_survey",
-    `all-questions-required` = "all_questions_required",
+    `all-required` = "all_required",
     `start-page` = "start_page",
     `system-language` = "system_language",
     `highlight-unanswered` = "highlight_unanswered",
     `highlight-color` = "highlight_color",
     `capture-metadata` = "capture_metadata",
-    `required-questions` = "required_questions"
+    `required` = "required_questions",
+    `shuffled` = "shuffled",
+    `all-shuffled` = "all_shuffled"
   )
 
   for (param in survey_params) {
@@ -960,10 +1170,14 @@ update_settings_yaml <- function(resolved_params) {
         # Look for the system-messages key (kebab-case) or old keys for backward compatibility
         if (!is.null(full_settings$`system-messages`)) {
           # New structure with system-messages (kebab-case)
-          existing_msg <- list(`system-messages` = full_settings$`system-messages`)
+          existing_msg <- list(
+            `system-messages` = full_settings$`system-messages`
+          )
         } else if (!is.null(full_settings$system_messages)) {
           # Old structure with system_messages (snake_case) - convert to kebab
-          existing_msg <- list(`system-messages` = full_settings$system_messages)
+          existing_msg <- list(
+            `system-messages` = full_settings$system_messages
+          )
         } else if (!is.null(full_settings$system_message)) {
           # Old structure with system_message (singular) - convert to kebab
           existing_msg <- list(`system-messages` = full_settings$system_message)
@@ -1010,112 +1224,14 @@ update_settings_yaml <- function(resolved_params) {
   writeLines(full_content, con = paths$target_settings)
 }
 
-# Function to detect sd_server() parameter overrides in app.R
-detect_sd_server_params <- function() {
-  if (!file.exists("app.R")) {
-    return(list())
-  }
-
-  tryCatch(
-    {
-      # Read app.R content as a single string to handle multiline sd_server() calls
-      app_content <- paste(readLines("app.R", warn = FALSE), collapse = "\n")
-
-      # Extract the sd_server() function call content (including multiline)
-      sd_server_pattern <- "sd_server\\s*\\(([^)]*(?:\\([^)]*\\)[^)]*)*)\\)"
-      sd_server_matches <- regmatches(
-        app_content,
-        gregexpr(sd_server_pattern, app_content)
-      )
-
-      if (length(sd_server_matches[[1]]) == 0) {
-        return(list())
-      }
-
-      # Get the parameters inside sd_server()
-      sd_server_text <- sd_server_matches[[1]][1]
-
-      # Extract parameters using regex
-      overrides <- list()
-
-      # Pattern to match parameter = value pairs
-      param_patterns <- c(
-        "show_previous\\s*=\\s*(TRUE|FALSE|T|F)",
-        "use_cookies\\s*=\\s*(TRUE|FALSE|T|F)",
-        "auto_scroll\\s*=\\s*(TRUE|FALSE|T|F)",
-        "rate_survey\\s*=\\s*(TRUE|FALSE|T|F)",
-        "all_questions_required\\s*=\\s*(TRUE|FALSE|T|F)",
-        "start_page\\s*=\\s*[\"']([^\"']+)[\"']",
-        "system_language\\s*=\\s*[\"']([^\"']+)[\"']",
-        "highlight_unanswered\\s*=\\s*(TRUE|FALSE|T|F)",
-        "highlight_color\\s*=\\s*[\"']([^\"']+)[\"']",
-        "capture_metadata\\s*=\\s*(TRUE|FALSE|T|F)",
-        "required_questions\\s*=\\s*c\\s*\\(([^)]+)\\)"
-      )
-
-      param_names <- c(
-        "show_previous",
-        "use_cookies",
-        "auto_scroll",
-        "rate_survey",
-        "all_questions_required",
-        "start_page",
-        "system_language",
-        "highlight_unanswered",
-        "highlight_color",
-        "capture_metadata",
-        "required_questions"
-      )
-
-      for (i in seq_along(param_patterns)) {
-        matches <- regmatches(
-          sd_server_text,
-          regexec(param_patterns[i], sd_server_text, ignore.case = TRUE)
-        )
-        if (length(matches[[1]]) > 1) {
-          param_name <- param_names[i]
-          value_str <- matches[[1]][2]
-
-          # Convert to appropriate R type
-          if (
-            param_name %in%
-              c(
-                "show_previous",
-                "use_cookies",
-                "auto_scroll",
-                "rate_survey",
-                "all_questions_required",
-                "highlight_unanswered",
-                "capture_metadata"
-              )
-          ) {
-            overrides[[param_name]] <- value_str %in% c("TRUE", "T")
-          } else if (param_name %in% c("start_page", "system_language", "highlight_color")) {
-            overrides[[param_name]] <- value_str
-          } else if (param_name == "required_questions") {
-            # Parse c("a", "b", "c") format
-            items <- strsplit(value_str, ",")[[1]]
-            items <- trimws(gsub("[\"']", "", items))
-            overrides[[param_name]] <- items
-          }
-        }
-      }
-
-      return(overrides)
-    },
-    error = function(e) {
-      # If parsing fails, return empty list
-      return(list())
-    }
-  )
-}
-
 extract_html_pages <- function(
   paths,
   html_content,
   required_questions,
-  all_questions_required,
-  show_if
+  all_required,
+  show_if,
+  question_shuffled = list(),
+  question_structure = NULL
 ) {
   # Check for both sd-page and sd_page classes
   pages_dash <- html_content |> rvest::html_elements(".sd-page")
@@ -1148,6 +1264,7 @@ extract_html_pages <- function(
     question_containers <- rvest::html_elements(x, ".question-container")
     question_ids <- character(0)
     required_question_ids <- character(0)
+    shuffled_question_ids <- character(0)
 
     for (i in seq_along(question_containers)) {
       container <- question_containers[[i]]
@@ -1160,8 +1277,8 @@ extract_html_pages <- function(
 
       # Determine if the question is required
       is_required <- if (is_matrix) {
-        all_questions_required || question_id %in% required_questions
-      } else if (all_questions_required) {
+        all_required || question_id %in% required_questions
+      } else if (all_required) {
         TRUE
       } else {
         question_id %in% required_questions
@@ -1191,6 +1308,44 @@ extract_html_pages <- function(
           xml2::xml_attr(container, "style") <- new_style
         }
       }
+
+      # Check if this question needs shuffling
+      # For MC questions: shuffled options (replace with placeholder)
+      # For matrix questions: shuffled rows via JavaScript (keep original HTML)
+      if (question_id %in% names(question_shuffled)) {
+        if (is_matrix) {
+          # For matrix questions, just mark for JS-based row shuffling
+          # Keep the original HTML intact to preserve Quarto styling
+          xml2::xml_attr(container, "data-shuffled-matrix") <- "true"
+          shuffled_question_ids <- c(shuffled_question_ids, question_id)
+        } else {
+          # For MC questions, add a placeholder for option shuffling
+          placeholder_html <- sprintf(
+            '<div id="%s_shuffled" class="sd-shuffled-placeholder" data-shuffled-type="mc"></div>',
+            question_id
+          )
+
+          # Get all children of the container
+          children <- xml2::xml_children(container)
+
+          # Remove all children except the hidden-asterisk (if present)
+          for (child in children) {
+            child_class <- xml2::xml_attr(child, "class")
+            if (is.na(child_class) || !grepl("hidden-asterisk", child_class)) {
+              xml2::xml_remove(child)
+            }
+          }
+
+          # Add the uiOutput placeholder as the first child (before any asterisk)
+          placeholder_node <- xml2::read_html(placeholder_html) |>
+            rvest::html_element("body > div")
+          xml2::xml_add_child(container, placeholder_node, .where = 0)
+
+          # Track this as a shuffled question
+          shuffled_question_ids <- c(shuffled_question_ids, question_id)
+        }
+      }
+
       question_containers[[i]] <- container
     }
 
@@ -1232,7 +1387,9 @@ extract_html_pages <- function(
     has_nav_marker <- !is.na(rvest::html_element(x, "#sd-nav-marker"))
 
     # Check if explicit navigation already exists
-    has_explicit_nav <- !is.na(next_button) || has_close_button || has_nav_marker
+    has_explicit_nav <- !is.na(next_button) ||
+      has_close_button ||
+      has_nav_marker
 
     # Auto-insert navigation if conditions are met
     if (!is_last_page && !has_explicit_nav) {
@@ -1328,6 +1485,7 @@ extract_html_pages <- function(
       id = page_id,
       questions = question_ids,
       required_questions = required_question_ids,
+      shuffled_questions = shuffled_question_ids,
       next_button_id = next_button_id,
       next_page_id = next_page_id,
       prev_button_id = prev_button_id,
@@ -1353,16 +1511,20 @@ extract_question_structure_html <- function(html_content) {
   # Loop through all question nodes and extract information
   for (question_node in question_nodes) {
     question_id <- rvest::html_attr(question_node, "data-question-id")
-    
+
     # Enhanced extraction that considers both class and tag name
-    target_element <- question_node |> rvest::html_nodes(glue::glue("#{question_id}"))
-    
+    target_element <- question_node |>
+      rvest::html_nodes(glue::glue("#{question_id}"))
+
     if (length(target_element) > 0) {
       tag_name <- rvest::html_name(target_element)
       class_attr <- rvest::html_attr(target_element, "class")
-      
+
       # For textarea elements, ensure we get the right type even if class is incomplete
-      if (tag_name == "textarea" && (is.na(class_attr) || class_attr == "form-control")) {
+      if (
+        tag_name == "textarea" &&
+          (is.na(class_attr) || class_attr == "form-control")
+      ) {
         type <- "shiny-input-textarea form-control"
       } else {
         type <- class_attr
@@ -1390,29 +1552,128 @@ extract_question_structure_html <- function(html_content) {
       rvest::html_nodes("p") |>
       rvest::html_text(trim = TRUE)
 
+    # Detect if this is a button-style question (mc_buttons or mc_multiple_buttons)
+    # Button-style questions have .btn-group class in their container
+    is_button_style <- length(rvest::html_nodes(question_node, ".btn-group")) >
+      0
+
     # Write main information to the question structure
     question_structure[[question_id]] <- list(
       type = type,
       is_matrix = is_matrix,
+      is_button_style = is_button_style,
       label = label
     )
 
+    # Extract rows for matrix questions (sub-questions that will be shuffled)
+    if (is_matrix) {
+      # Extract row information from the matrix table
+      # Each row is a tr element in the tbody, containing the row label and MC inputs
+      matrix_rows <- question_node |>
+        rvest::html_nodes(".matrix-question tbody tr")
+
+      if (length(matrix_rows) > 0) {
+        rows <- list()
+        for (row_node in matrix_rows) {
+          # Get the row label (first td)
+          row_label <- row_node |>
+            rvest::html_node("td:first-child") |>
+            rvest::html_text(trim = TRUE)
+
+          # Get the row ID from the input elements (extract sub-question ID)
+          # Input IDs are in format: {matrix_id}_{row_id}
+          input_node <- row_node |>
+            rvest::html_node("input[type='radio'], input[type='checkbox']")
+          if (!is.na(input_node)) {
+            input_name <- rvest::html_attr(input_node, "name")
+            # Extract row_id by removing the matrix_id prefix
+            if (
+              !is.null(input_name) &&
+                grepl(paste0("^", question_id, "_"), input_name)
+            ) {
+              row_id <- sub(paste0("^", question_id, "_"), "", input_name)
+              rows[[row_label]] <- row_id
+            }
+          }
+        }
+        question_structure[[question_id]]$row <- rows
+      }
+    }
+
     # Extract options for the question ( mc, *_multiple, *_buttons, and select)
     if (length(type) > 0 && grepl("radio|checkbox|select|matrix", type)) {
-      options <- question_node |>
-        rvest::html_nodes(
-          "input[type='radio'], input[type='checkbox'], option"
-        ) |>
-        rvest::html_attr("value")
-      label_options <- question_node |>
-        rvest::html_nodes("label>span, button, option") |>
-        rvest::html_text(trim = TRUE)
-      names(options) <- label_options
+      if (is_matrix) {
+        # For matrix questions, extract options from the table header
+        # Try multiple selectors to handle different HTML parsing behaviors
+        header_cells <- question_node |>
+          rvest::html_nodes(".matrix-question th")
 
-      # Handle empty names by setting them to their corresponding values
-      empty_name_indices <- which(names(options) == "" | is.na(names(options)))
-      if (length(empty_name_indices) > 0) {
-        names(options)[empty_name_indices] <- options[empty_name_indices]
+        # Fallback: try selecting from thead if present
+        if (length(header_cells) == 0) {
+          header_cells <- question_node |>
+            rvest::html_nodes(".matrix-question thead th")
+        }
+
+        # Another fallback: select all th descendants
+        if (length(header_cells) == 0) {
+          header_cells <- question_node |>
+            rvest::html_nodes("table.matrix-question th")
+        }
+
+        if (length(header_cells) > 1) {
+          # Skip the first th (empty cell for row labels)
+          option_headers <- header_cells[-1]
+          label_options <- rvest::html_text(option_headers, trim = TRUE)
+
+          # Get option values from any radio inputs in the matrix
+          # (all rows have the same options, so just get unique values)
+          all_inputs <- question_node |>
+            rvest::html_nodes(".matrix-question input[type='radio']")
+
+          # Fallback selector
+          if (length(all_inputs) == 0) {
+            all_inputs <- question_node |>
+              rvest::html_nodes("table.matrix-question input[type='radio']")
+          }
+
+          if (length(all_inputs) > 0) {
+            all_values <- rvest::html_attr(all_inputs, "value")
+            # Get unique values while preserving order
+            options <- all_values[!duplicated(all_values)]
+            # Make sure we have the same number of labels and options
+            if (length(options) == length(label_options)) {
+              names(options) <- label_options
+            } else {
+              # If mismatch, use values as names too
+              names(options) <- options
+            }
+          } else {
+            # Fallback: use labels as both names and values
+            options <- label_options
+            names(options) <- label_options
+          }
+        } else {
+          options <- character(0)
+        }
+      } else {
+        # For non-matrix MC questions
+        options <- question_node |>
+          rvest::html_nodes(
+            "input[type='radio'], input[type='checkbox'], option"
+          ) |>
+          rvest::html_attr("value")
+        label_options <- question_node |>
+          rvest::html_nodes("label>span, button, option") |>
+          rvest::html_text(trim = TRUE)
+        names(options) <- label_options
+
+        # Handle empty names by setting them to their corresponding values
+        empty_name_indices <- which(
+          names(options) == "" | is.na(names(options))
+        )
+        if (length(empty_name_indices) > 0) {
+          names(options)[empty_name_indices] <- options[empty_name_indices]
+        }
       }
 
       # Write options to the question structure
@@ -1512,7 +1773,10 @@ extract_question_structure_html <- function(html_content) {
         }
 
         # Fallback to snake_case conversion if extraction failed
-        if (is.null(options_values) || length(options_values) != length(options_labels)) {
+        if (
+          is.null(options_values) ||
+            length(options_values) != length(options_labels)
+        ) {
           options_values <- sapply(options_labels, function(label) {
             # Convert to lowercase
             value <- tolower(label)
@@ -1532,30 +1796,6 @@ extract_question_structure_html <- function(html_content) {
 
         question_structure[[question_id]]$options <- as.list(options)
       }
-    }
-
-    # Extract the rows and options for the matrix main question
-    if (is_matrix) {
-      rows <- question_node |>
-        rvest::html_nodes("div > div[id]") |>
-        rvest::html_attr("id")
-
-      # Remove the question ID prefix from the row names
-      rows <- gsub(glue::glue("{question_id}_"), "", rows)
-      label_rows <- question_node |>
-        rvest::html_nodes("td:nth-child(1)") |>
-        rvest::html_text(trim = TRUE)
-
-      # remove first empty row label (option header)
-      label_rows <- label_rows[label_rows != ""]
-      names(rows) <- label_rows
-
-      # Write rows to the question structure
-      question_structure[[question_id]]$row <- as.list(rows)
-
-      # Correct to unique options (first extraction multiplies by subquestions)
-      options <- options[1:(length(options) / length(rows))]
-      question_structure[[question_id]]$options <- as.list(options)
     }
   }
   return(question_structure)
@@ -1580,6 +1820,15 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
     'shiny-date-range-input form-group shiny-input-container' = 'daterange'
   )
 
+  # Add index to each question (1-based, for display order tracking)
+  # Index is added first, then reordered to appear at the top of each entry
+  question_ids <- names(question_structure)
+  for (i in seq_along(question_ids)) {
+    q <- question_structure[[question_ids[i]]]
+    # Create new list with index first, then all other fields
+    question_structure[[question_ids[i]]] <- c(list(index = i), q)
+  }
+
   # Loop through question structure and clean/prepare questions
   question_structure <- lapply(question_structure, function(question) {
     # Rename type to function option names using pattern matching
@@ -1591,7 +1840,7 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
         break
       }
     }
-    
+
     if (!is.null(matched_type)) {
       question$type <- matched_type
     } else if (question$is_matrix) {
@@ -1600,8 +1849,9 @@ write_question_structure_yaml <- function(question_structure, file_yaml) {
       question$type <- "unknown"
     }
 
-    # Remove indicator if is matrix (type is correctly set)
+    # Remove indicators (they are restored when loading from YAML based on type)
     question$is_matrix <- NULL
+    question$is_button_style <- NULL
 
     # Remove first option from select type question
     if (question$type == "select") {
@@ -1638,9 +1888,11 @@ load_question_structure_yaml <- function(file_yaml) {
   # Read question structure from YAML file
   question_structure <- yaml::read_yaml(file_yaml)
 
-  # Add matrix question indicator to all questions as FALSE (correct later)
+  # Add indicators to all questions (derived from type)
   question_structure <- lapply(question_structure, function(question) {
     question$is_matrix <- FALSE
+    question$is_button_style <- question$type %in%
+      c("mc_buttons", "mc_multiple_buttons")
     return(question)
   })
 
@@ -1653,6 +1905,7 @@ load_question_structure_yaml <- function(file_yaml) {
     # Get matrix question and subquestion (rows option) from question list
     matrix_question <- question_structure[[matrix_question_id]]
     rows <- matrix_question$row
+    parent_index <- matrix_question$index
 
     # Loop over subquestions and add to question structure (with label and options)
     for (row_number in seq_along(rows)) {
@@ -1660,7 +1913,11 @@ load_question_structure_yaml <- function(file_yaml) {
       subquestion_structure <- list(
         type = "mc",
         label = names(rows)[row_number],
-        options = matrix_question$options
+        options = matrix_question$options,
+        # Subquestion index: parent index + row position (e.g., 5.1, 5.2, 5.3)
+        index = parent_index + (row_number - 1) / length(rows),
+        parent_index = parent_index,
+        row_index = row_number
       )
       question_structure[[subquestion_id]] <- subquestion_structure
     }

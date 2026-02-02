@@ -26,8 +26,7 @@ sd_question(
   row = NULL,
   default = NULL,
   yml = "questions.yml",
-  matrix_question_width = "50\%",
-  matrix_option_width = NULL,
+  matrix_question_width = NULL,
   ...
 )
 }
@@ -49,9 +48,8 @@ question type. Can be provided in multiple formats:
 \itemize{
 \item Named vector: \code{c("Display A" = "value_a", "Display B" = "value_b")} -
 Names are shown in UI, values are stored in database
-\item Unnamed character vector: \code{c("Option 1", "Option 2")} - Values are shown in UI
-and automatically converted to snake_case for database storage
-(e.g., "option_1", "option_2")
+\item Unnamed character vector: \code{c("Option 1", "Option 2")} - Values are used as both
+display labels and stored values (e.g., "Option 1" is shown and stored as "Option 1")
 \item Unnamed numeric vector: \code{c(1, 2, 3)} - For non-slider questions, converted to
 \code{c("1" = "1", "2" = "2", "3" = "3")}. For \code{slider_numeric}, kept as numeric.
 }}
@@ -109,11 +107,13 @@ for the slider. Defaults to the median of values.}
 Defaults to \code{"questions.yml"}. Custom YAML files can be specified, either in
 the root directory or subdirectories (e.g., \code{"folder/custom.yml"}).}
 
-\item{matrix_question_width}{Character string. The width of the matrix question column.
-Defaults to \code{"50\%"}.}
-
-\item{matrix_option_width}{Character string. The width of the matrix option column.
-Defaults to \code{NULL}.}
+\item{matrix_question_width}{The width of the matrix question column. Accepts
+numeric (e.g., \code{40}), character without percent (e.g., \code{"40"}), or character
+with percent (e.g., \code{"40\%"}) - all are treated equivalently as percentages.
+Defaults to \code{NULL}, which auto-calculates the width based on the longest row
+label (using a heuristic of 20\% base + 0.5\% per character, bounded between
+30\% and 80\%). The remaining width is automatically distributed equally
+among the option columns.}
 
 \item{...}{Additional arguments, often specific to different input types.
 Examples include \code{pre}, \code{sep}, \code{step}, and \code{animate} for \code{"slider"} and

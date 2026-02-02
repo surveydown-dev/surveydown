@@ -6,56 +6,45 @@
 #' progress tracking, page navigation, database updates for survey responses,
 #' and exit survey functionality.
 #'
+#' All survey settings are configured in the `survey.qmd` YAML header under
+#' `survey-settings`. See the surveydown documentation for available options.
+#'
 #' @param db A list containing database connection information created using
 #'   `sd_database()` function. Defaults to `NULL`. If `NULL`, will be auto-detected
 #'   from the calling environment or remain `NULL` (ignore mode).
-#' @param required_questions Vector of character strings. The IDs of questions
-#'   that must be answered. Defaults to `NULL` (no required questions).
-#' @param all_questions_required Logical. If `TRUE`, all questions in the
-#'   survey will be required. Defaults to `FALSE`.
-#' @param start_page Character string. The ID of the page to start on.
-#'   Defaults to `NULL` (first page).
-#' @param show_previous Logical. If `TRUE`, shows the Previous button on survey
-#'   pages. Defaults to `FALSE`.
-#' @param auto_scroll Logical. Whether to enable auto-scrolling to the next
-#'   question after answering. Defaults to `FALSE`.
-#' @param rate_survey Logical. If `TRUE`, shows a rating question when exiting
-#'   the survey. If `FALSE`, shows a simple confirmation dialog.
-#'   Defaults to `FALSE`.
-#' @param system_language Set the language for the survey system messages. Include
-#'   your own in a `messages.yml` file, or choose a built in one from
-#'   the following list: English (`"en"`), German (`"de"`), Spanish (`"es"`),
-#'   French (`"fr"`), Italian (`"it"`), Simplified Chinese (`"zh-CN"`).
-#'   Defaults to `"en"`. Note: The deprecated `language` parameter is still
-#'   supported for backward compatibility.
-#' @param use_cookies Logical. If `TRUE`, enables cookie-based session management
-#'   for storing and restoring survey progress. Defaults to `TRUE`. Can be
-#'   overridden by `use_cookies` setting in the survey.qmd YAML header.
-#' @param highlight_unanswered Logical. If `TRUE`, enables highlighting
-#'   of all unanswered questions on page display. Defaults to `TRUE`.
-#' @param highlight_color Character string. Color for highlighting unanswered
-#'   questions. Options are "blue", "orange", "green", "purple", "gray", or "grey".
-#'   Defaults to "gray".
-#' @param capture_metadata Logical. If `TRUE`, automatically captures and stores
-#'   browser information (browser name, version, and OS), IP address, and
-#'   screen resolution.
-#'   Defaults to `TRUE`.
-#' @param language Deprecated as of v0.13.0. Use `system_language` instead.
-#' This parameter. is maintained for backward compatibility only.
 #'
 #' @details
 #' The function performs the following tasks:
 #' \itemize{
-#'   \item Initializes variables and reactive values.
+#'   \item Initializes variables and reactive values, including the `all_data`
+#'         reactive list for accessing question responses.
 #'   \item Implements conditional display logic for questions.
 #'   \item Tracks answered questions and updates the progress bar.
 #'   \item Handles page navigation and skip logic.
 #'   \item Manages required questions.
 #'   \item Performs database operation.
-#'   \item Controls auto-scrolling behavior based on the `auto_scroll` argument.
+#'   \item Controls auto-scrolling behavior based on survey settings.
 #'   \item Uses sweetalert for warning messages when required questions are not
 #'         answered.
-#'   \item Handles the exit survey process based on the `rate_survey` argument.
+#'   \item Handles the exit survey process based on survey settings.
+#' }
+#'
+#' All survey behavior is configured through the `survey-settings` section
+#' in the `survey.qmd` YAML header. Available settings include:
+#' \itemize{
+#'   \item `show-previous`: Show Previous button (default: FALSE)
+#'   \item `use-cookies`: Enable cookie-based session management (default: TRUE)
+#'   \item `auto-scroll`: Auto-scroll to next question (default: FALSE)
+#'   \item `rate-survey`: Show rating question on exit (default: FALSE)
+#'   \item `all-required`: Make all questions required (default: FALSE)
+#'   \item `start-page`: ID of the page to start on (default: first page)
+#'   \item `system-language`: Language for system messages (default: "en")
+#'   \item `highlight-unanswered`: Highlight unanswered questions (default: TRUE)
+#'   \item `highlight-color`: Color for highlighting (default: "gray")
+#'   \item `capture-metadata`: Capture browser/IP info (default: TRUE)
+#'   \item `required`: Vector of required question IDs
+#'   \item `shuffled`: Vector of question IDs to shuffle (MC options or matrix rows)
+#'   \item `all-shuffled`: Shuffle all MC options and matrix rows (default: FALSE)
 #' }
 #'
 #' @section Progress Bar:
@@ -70,19 +59,37 @@
 #' responses. If `db` is `NULL` (ignore mode), responses will be saved to a local
 #' CSV file.
 #'
-#' @section Auto-Scrolling:
-#' When `auto_scroll` is `TRUE`, the survey will automatically scroll to the
-#' next question after the current question is answered. This behavior can be
-#' disabled by setting `auto_scroll = FALSE`.
+#' @section Accessing Question Values:
+#' The `sd_server()` function exposes the `all_data` reactive values list
+#' that provides a reliable way to access question responses in your server logic.
+#' Unlike directly accessing `input$question_id`, which only works for questions
+#' on the current page, `all_data$question_id` works for all questions by
+#' automatically restoring values from the database when needed.
 #'
-#' @section Exit Survey:
-#' When `rate_survey = TRUE`, the function will show a rating question when
-#' the user attempts to exit the survey. When `FALSE`, it will show a simple
-#' confirmation dialog. The rating, if provided, is saved with the survey data.
+#' Use `all_data` in conditional logic:
+#' \preformatted{
+#'   sd_skip_if(
+#'     all_data$age < 18 ~ "parental_consent",
+#'     all_data$employed == "yes" ~ "employment_questions"
+#'   )
+#' }
+#'
+#' Or in custom reactive expressions:
+#' \preformatted{
+#'   output$custom_text <- renderText({
+#'     paste("You selected:", all_data$favorite_color)
+#'   })
+#' }
+#'
+#' The `all_data` list automatically stays synchronized with question responses
+#' and includes restored values from previous sessions (via cookies or page
+#' refreshes), making it safe to use even when navigating backward or refreshing
+#' the page.
 #'
 #' @return
 #' This function does not return a value; it sets up the server-side logic for
-#' the 'shiny' application.
+#' the 'shiny' application and exposes the `all_data` reactive list in the
+#' parent environment.
 #'
 #' @examples
 #' if (interactive()) {
@@ -100,12 +107,30 @@
 #'   # )
 #'   #
 #'   # server <- function(input, output, session) {
-#'   #   sd_server(
-#'   #     db = db
-#'   #   )
+#'   #   sd_server(db = db)
 #'   # }
 #'   #
 #'   # shiny::shinyApp(ui = sd_ui(), server = server)
+#'
+#'   # All settings are configured in survey.qmd YAML header:
+#'   # ---
+#'   # survey-settings:
+#'   #   show-previous: true
+#'   #   auto-scroll: true
+#'   #   required:
+#'   #     - age
+#'   #     - name
+#'   # ---
+#'
+#'   # Using all_data for conditional logic:
+#'   # server <- function(input, output, session) {
+#'   #   sd_skip_if(
+#'   #     all_data$age < 18 ~ "parental_consent",
+#'   #     all_data$country == "USA" ~ "usa_specific"
+#'   #   )
+#'   #
+#'   #   sd_server(db = db)
+#'   # }
 #'
 #'   # Find a working directory and start from a template:
 #'   sd_create_survey(template = "default")
@@ -117,21 +142,7 @@
 #'
 #' @importFrom utils head tail
 #' @export
-sd_server <- function(
-    db = NULL,
-    required_questions = NULL,
-    all_questions_required = FALSE,
-    start_page = NULL,
-    show_previous = FALSE,
-    auto_scroll = FALSE,
-    rate_survey = FALSE,
-    system_language = "en",
-    use_cookies = TRUE,
-    highlight_unanswered = TRUE,
-    highlight_color = "gray",
-    capture_metadata = TRUE,
-    language = NULL
-) {
+sd_server <- function(db = NULL) {
     # 1. Initialize local variables ----
 
     # Get input, output, and session from the parent environment
@@ -158,142 +169,109 @@ sd_server <- function(
     skip_if <- shiny::getDefaultReactiveDomain()$userData$skip_if
     stop_if <- shiny::getDefaultReactiveDomain()$userData$stop_if
 
-    # Handle backward compatibility for deprecated 'language' argument
-    if ("language" %in% names(match.call())) {
-        system_language <- language
-        warning(
-            "The 'language' argument is deprecated as of v0.13.0. Use 'system_language' instead."
-        )
-    }
-
-    # Track which parameters were explicitly provided
-    explicit_params <- list(
-        show_previous = !missing(show_previous),
-        use_cookies = !missing(use_cookies),
-        auto_scroll = !missing(auto_scroll),
-        rate_survey = !missing(rate_survey),
-        all_questions_required = !missing(all_questions_required),
-        start_page = !missing(start_page),
-        system_language = !missing(system_language),
-        highlight_unanswered = !missing(highlight_unanswered),
-        highlight_color = !missing(highlight_color),
-        capture_metadata = !missing(capture_metadata),
-        required_questions = !missing(required_questions),
-        language = !missing(language)
-    )
-
-    # Run the configuration settings
-    config <- run_config(
-        required_questions,
-        all_questions_required,
-        start_page,
-        skip_if,
-        show_if,
-        rate_survey,
-        system_language
-    )
-
-    # Now read settings from _survey/settings.yml (created in sd_ui)
-    # Priority: sd_server() parameters > YAML values > defaults
-    # Only use YAML values if sd_server() parameters were not explicitly provided
+    # Read all settings from _survey/settings.yml (created in sd_ui)
+    # All configuration now comes from the YAML header only
     settings <- read_settings_yaml()
 
-    # Apply YAML overrides for parameters that weren't explicitly provided
-    # Map snake_case parameter names to kebab-case settings keys
-    param_to_kebab <- list(
-        show_previous = "show-previous",
-        use_cookies = "use-cookies",
-        auto_scroll = "auto-scroll",
-        rate_survey = "rate-survey",
-        all_questions_required = "all-questions-required",
-        start_page = "start-page",
-        system_language = "system-language",
-        highlight_unanswered = "highlight-unanswered",
-        highlight_color = "highlight-color",
-        capture_metadata = "capture-metadata",
-        required_questions = "required-questions"
-    )
-
-    for (param in names(param_to_kebab)) {
-        kebab_key <- param_to_kebab[[param]]
-        if (!explicit_params[[param]] && !is.null(settings[[kebab_key]])) {
-            assign(param, settings[[kebab_key]])
-        }
-    }
+    # Assign all values from settings
+    show_previous <- settings$`show-previous`
+    use_cookies <- settings$`use-cookies`
+    auto_scroll <- settings$`auto-scroll`
+    rate_survey <- settings$`rate-survey`
+    all_required <- settings$`all-required`
+    start_page <- settings$`start-page`
+    system_language <- settings$`system-language`
+    highlight_unanswered <- settings$`highlight-unanswered`
+    highlight_color <- settings$`highlight-color`
+    capture_metadata <- settings$`capture-metadata`
+    required_questions <- settings$`required`
+    shuffled <- settings$`shuffled`
+    all_shuffled <- settings$`all-shuffled`
 
     # Normalize color spelling
-    if (highlight_color == "grey") {
+    if (!is.null(highlight_color) && highlight_color == "grey") {
         highlight_color <- "gray"
     }
 
-    # Update messages if system_language was resolved from YAML or differs from run_config()
-    # This ensures the message system uses the final resolved language
-    if (
-        (!explicit_params$system_language &&
-            !is.null(settings$`system-language`)) ||
-            (explicit_params$system_language && system_language != "en")
-    ) {
-        paths <- get_paths()
-        set_messages(paths, system_language)
-    }
+    # Run the configuration settings
+    config <- run_config()
 
     # Create local objects from config file
     pages <- config$pages
     page_ids <- config$page_ids
     question_ids <- config$question_ids
     question_structure <- config$question_structure
+    question_shuffled <- config$question_shuffled
 
-    # Don't overwrite start_page if it was resolved from YAML settings
-    # Only use config$start_page if start_page is still NULL
+    # Use config$start_page as fallback if start_page is NULL
     if (is.null(start_page)) {
         start_page <- config$start_page
     }
 
-    # Map skip_if conditions to applicable pages (page-aware skip logic)
-    # This ensures skip conditions only trigger when leaving pages that contain the relevant questions
-    if (!is.null(skip_if) && !is.null(skip_if$conditions)) {
-        # Helper to extract input IDs from condition expressions
-        extract_input_refs_local <- function(expr, calling_env = NULL) {
-            ids <- character(0)
-            if (is.call(expr)) {
-                if (
-                    length(expr) >= 3 &&
-                        as.character(expr[[1]]) == "$" &&
-                        as.character(expr[[2]]) == "input"
-                ) {
-                    var_name <- as.character(expr[[3]])
-                    ids <- c(ids, var_name)
+    # Helper to extract question IDs from condition expressions
+    # Handles input$xxx, all_data$xxx, sd_value(), and sd_values() patterns
+    extract_question_refs <- function(expr) {
+        ids <- character(0)
+        if (is.call(expr)) {
+            fn <- as.character(expr[[1]])
+            # input$xxx or all_data$xxx
+            if (length(expr) >= 3 && fn == "$") {
+                obj <- as.character(expr[[2]])
+                if (obj %in% c("input", "all_data")) {
+                    ids <- c(ids, as.character(expr[[3]]))
                 }
-                for (i in seq_along(expr)) {
-                    if (is.call(expr[[i]])) {
-                        ids <- c(
-                            ids,
-                            extract_input_refs_local(expr[[i]], calling_env)
-                        )
+            }
+            # sd_value() or sd_values()
+            if (fn %in% c("sd_value", "sd_values") && length(expr) >= 2) {
+                for (j in 2:length(expr)) {
+                    arg <- expr[[j]]
+                    if (is.character(arg)) {
+                        ids <- c(ids, arg)
+                    } else if (is.symbol(arg)) {
+                        ids <- c(ids, as.character(arg))
                     }
                 }
             }
-            return(ids)
-        }
-
-        # Add applicable_pages to each skip condition
-        for (i in seq_along(skip_if$conditions)) {
-            condition <- skip_if$conditions[[i]]
-            # Extract input IDs referenced in this condition
-            input_ids <- extract_input_refs_local(
-                condition$condition,
-                condition$calling_env
-            )
-            # Find which pages contain these questions
-            applicable_pages <- character(0)
-            for (page in pages) {
-                if (any(input_ids %in% page$questions)) {
-                    applicable_pages <- c(applicable_pages, page$id)
+            # Recurse
+            for (i in seq_along(expr)) {
+                if (is.call(expr[[i]])) {
+                    ids <- c(ids, extract_question_refs(expr[[i]]))
                 }
             }
-            # Store applicable pages for this condition
+        }
+        return(ids)
+    }
+
+    # Map skip_if conditions to applicable pages
+    if (!is.null(skip_if) && !is.null(skip_if$conditions)) {
+        for (i in seq_along(skip_if$conditions)) {
+            cond <- skip_if$conditions[[i]]
+            qids <- extract_question_refs(cond$condition)
+            applicable_pages <- character(0)
+            for (pg in pages) {
+                if (any(qids %in% pg$questions)) {
+                    applicable_pages <- c(applicable_pages, pg$id)
+                }
+            }
             skip_if$conditions[[i]]$applicable_pages <- applicable_pages
         }
+    }
+
+    # Map stop_if conditions to applicable pages
+    if (!is.null(stop_if) && !is.null(stop_if$conditions)) {
+        for (i in seq_along(stop_if$conditions)) {
+            cond <- stop_if$conditions[[i]]
+            qids <- extract_question_refs(cond$condition)
+            applicable_pages <- character(0)
+            for (pg in pages) {
+                if (any(qids %in% pg$questions)) {
+                    applicable_pages <- c(applicable_pages, pg$id)
+                }
+            }
+            stop_if$conditions[[i]]$applicable_pages <- applicable_pages
+        }
+        # Update session userData with the mapped conditions
+        session$userData$stop_if$conditions <- stop_if$conditions
     }
 
     # Helper function to extract question IDs from parsed condition expressions
@@ -415,66 +393,28 @@ sd_server <- function(
         stop_if
     )
 
-    # Handle all_questions_required and required_questions logic
-    # This mirrors the logic in run_config() but uses YAML-resolved values
-    # Priority: explicit sd_server() parameters > YAML values > config defaults
-    if (all_questions_required) {
+    # Handle all_required and required_questions logic
+    # All settings come from YAML, plus we add conditional question IDs
+    if (isTRUE(all_required)) {
         matrix_question_ids <- names(which(sapply(
             question_structure,
             `[[`,
             "is_matrix"
         )))
         question_required <- setdiff(question_ids, matrix_question_ids)
-    } else if (
-        explicit_params$required_questions && !is.null(required_questions)
-    ) {
-        # Use explicitly provided required_questions from sd_server(), plus conditional ones
-        question_required <- unique(c(
-            required_questions,
-            conditional_question_ids
-        ))
-    } else if (
-        !explicit_params$required_questions && !is.null(required_questions)
-    ) {
-        # Use YAML-resolved required_questions plus conditional ones
-        question_required <- unique(c(
-            required_questions,
-            conditional_question_ids
-        ))
     } else {
-        # Fall back to config-determined required questions plus conditional ones
+        # Use required_questions from YAML plus conditional question IDs
         question_required <- unique(c(
-            config$question_required,
+            required_questions,
             conditional_question_ids
         ))
     }
 
-    # Update settings.yml with final resolved parameters (including conditionally-detected questions)
-    resolved_params <- list(
-        show_previous = show_previous,
-        use_cookies = use_cookies,
-        auto_scroll = auto_scroll,
-        rate_survey = rate_survey,
-        all_questions_required = all_questions_required,
-        start_page = start_page,
-        system_language = system_language,
-        highlight_unanswered = highlight_unanswered,
-        highlight_color = highlight_color,
-        capture_metadata = capture_metadata,
-        required_questions = question_required # Use enhanced required questions
-    )
-    update_settings_yaml(resolved_params)
-
     # Update each page's required_questions to reflect final resolved settings
     # This is necessary because pages were created before final parameter resolution
-    # Apply this logic when we have any required questions different from config defaults
     if (
-        all_questions_required ||
-            (explicit_params$required_questions &&
-                !is.null(required_questions)) ||
-            (!explicit_params$required_questions &&
-                !is.null(required_questions) &&
-                length(required_questions) > 0) ||
+        isTRUE(all_required) ||
+            length(question_required) > 0 ||
             length(conditional_question_ids) > 0
     ) {
         for (i in seq_along(pages)) {
@@ -901,6 +841,10 @@ sd_server <- function(
     session$userData$all_data <- all_data
     session$userData$changed_fields <- changed_fields
 
+    # Make all_data available in the parent (user's server function) environment
+    # This allows users to reference all_data in conditional logic
+    assign("all_data", all_data, envir = parent_env)
+
     # Populate all_data with restored values from database (if session was resumed)
     # This ensures Previous button can restore values for all previously answered questions
     if (!is.null(session$userData$restore_data)) {
@@ -925,6 +869,251 @@ sd_server <- function(
     shiny::isolate({
         update_data()
     })
+
+    # 4b. Options randomization state ----
+
+    # Convert CSS class or simple type to sd_question type
+    css_to_question_type <- function(type_str, is_button_style = FALSE) {
+        if (is.null(type_str) || length(type_str) == 0) {
+            return("mc")
+        }
+        type_str <- tolower(type_str)
+
+        # Return if already a valid MC type
+        if (type_str %in% MC_TYPE_NAMES) {
+            return(type_str)
+        }
+
+        # Infer from CSS class patterns
+        is_checkbox <- grepl("checkbox", type_str)
+        if (is_checkbox) {
+            if (is_button_style) "mc_multiple_buttons" else "mc_multiple"
+        } else if (grepl("radio", type_str)) {
+            if (is_button_style) "mc_buttons" else "mc"
+        } else {
+            "mc"
+        }
+    }
+
+    # Generate shuffled MC question HTML (shuffle options)
+    # shuffle_indices: NULL = shuffle all, integer vector = only shuffle these positions
+    generate_shuffled_mc_html <- function(
+        q_id,
+        q_struct,
+        existing_order = NULL,
+        shuffle_indices = NULL
+    ) {
+        if (is.null(q_struct) || is.null(q_struct$options)) {
+            return(NULL)
+        }
+
+        n_opts <- length(q_struct$options)
+        original_options <- unlist(q_struct$options)
+
+        # Get or create shuffle order
+        if (n_opts < 2) {
+            order <- seq_len(n_opts)
+        } else if (!is.null(existing_order)) {
+            order <- existing_order
+        } else {
+            # Create shuffle order based on shuffle_indices
+            if (is.null(shuffle_indices)) {
+                # Shuffle all positions
+                order <- sample(seq_len(n_opts))
+            } else {
+                # Partial shuffle: only shuffle specified indices
+                # Validate indices are within range
+                valid_indices <- shuffle_indices[
+                    shuffle_indices >= 1 & shuffle_indices <= n_opts
+                ]
+                if (length(valid_indices) < 2) {
+                    # Not enough valid indices to shuffle
+                    order <- seq_len(n_opts)
+                } else {
+                    # Start with identity order
+                    order <- seq_len(n_opts)
+                    # Shuffle only the specified positions among themselves
+                    shuffled_positions <- sample(valid_indices)
+                    order[valid_indices] <- shuffled_positions
+                }
+            }
+        }
+
+        shuffled_options <- original_options[order]
+
+        # Get label (handle list format)
+        q_label <- q_struct$label
+        if (is.list(q_label)) {
+            q_label <- q_label[[1]]
+        }
+
+        # Convert type to sd_question type
+        q_type <- css_to_question_type(
+            q_struct$type,
+            isTRUE(q_struct$is_button_style)
+        )
+
+        # Create question HTML outside reactive context
+        question_html <- shiny::withReactiveDomain(NULL, {
+            sd_question(
+                id = q_id,
+                type = q_type,
+                label = q_label,
+                option = shuffled_options
+            )
+        })
+
+        list(
+            html = as.character(question_html),
+            order = order
+        )
+    }
+
+    # Generate shuffle order for matrix question rows
+    # Returns just the order - JavaScript will reorder the DOM
+    # shuffle_indices: NULL = shuffle all rows, integer vector = only shuffle these row positions
+    generate_matrix_shuffle_order <- function(
+        q_id,
+        q_struct,
+        existing_order = NULL,
+        shuffle_indices = NULL
+    ) {
+        if (is.null(q_struct) || is.null(q_struct$row)) {
+            return(NULL)
+        }
+
+        rows <- q_struct$row
+        n_rows <- length(rows)
+
+        # Get or create shuffle order for rows
+        if (n_rows < 2) {
+            order <- seq_len(n_rows)
+        } else if (!is.null(existing_order)) {
+            order <- existing_order
+        } else {
+            # Create shuffle order based on shuffle_indices
+            if (is.null(shuffle_indices)) {
+                # Shuffle all rows
+                order <- sample(seq_len(n_rows))
+            } else {
+                # Partial shuffle: only shuffle specified row indices
+                # Validate indices are within range
+                valid_indices <- shuffle_indices[
+                    shuffle_indices >= 1 & shuffle_indices <= n_rows
+                ]
+                if (length(valid_indices) < 2) {
+                    # Not enough valid indices to shuffle
+                    order <- seq_len(n_rows)
+                } else {
+                    # Start with identity order
+                    order <- seq_len(n_rows)
+                    # Shuffle only the specified positions among themselves
+                    shuffled_positions <- sample(valid_indices)
+                    order[valid_indices] <- shuffled_positions
+                }
+            }
+        }
+
+        list(order = order)
+    }
+
+    # Initialize shuffle state
+    shuffle_orders <- shiny::reactiveValues()
+    session$userData$shuffle_orders <- shuffle_orders
+
+    if (length(question_shuffled) > 0) {
+        # Restore orders from cookies if available
+        restored_orders <- session$userData$restored_randomization_orders
+        session$userData$restored_randomization_orders <- NULL
+
+        temp_orders <- list()
+        if (!is.null(restored_orders)) {
+            for (q_id in names(restored_orders)) {
+                order <- unlist(restored_orders[[q_id]])
+                if (is.numeric(order) && length(order) > 0) {
+                    temp_orders[[q_id]] <- as.integer(order)
+                }
+            }
+        }
+
+        # Process shuffled questions - separate MC (HTML replacement) from matrix (JS reorder)
+        # question_shuffled is a named list: names are question IDs, values are shuffle indices (or NULL for all)
+        shuffled_question_html <- list()
+        matrix_shuffle_orders <- list()
+
+        for (q_id in names(question_shuffled)) {
+            q_struct <- question_structure[[q_id]]
+            shuffle_indices <- question_shuffled[[q_id]] # NULL means shuffle all
+
+            if (isTRUE(q_struct$is_matrix)) {
+                # Matrix questions: just compute shuffle order for JS
+                result <- generate_matrix_shuffle_order(
+                    q_id,
+                    q_struct,
+                    temp_orders[[q_id]],
+                    shuffle_indices
+                )
+                if (!is.null(result)) {
+                    # Convert to 0-based index for JavaScript
+                    matrix_shuffle_orders[[q_id]] <- as.integer(
+                        result$order - 1
+                    )
+                    temp_orders[[q_id]] <- result$order
+                }
+            } else {
+                # MC questions: generate replacement HTML
+                result <- generate_shuffled_mc_html(
+                    q_id,
+                    q_struct,
+                    temp_orders[[q_id]],
+                    shuffle_indices
+                )
+                if (!is.null(result)) {
+                    shuffled_question_html[[q_id]] <- result$html
+                    temp_orders[[q_id]] <- result$order
+                }
+            }
+        }
+
+        # Store for later use
+        session$userData$shuffled_question_html <- shuffled_question_html
+        session$userData$matrix_shuffle_orders <- matrix_shuffle_orders
+        session$userData$shuffle_orders_list <- temp_orders
+
+        # Copy to reactiveValues for cookie persistence
+        for (q_id in names(temp_orders)) {
+            shuffle_orders[[q_id]] <- temp_orders[[q_id]]
+        }
+
+        # Reorder matrix subquestions in question_ids to match shuffled display order
+        # This ensures progress bar reflects the visual order, not the original order
+        if (length(matrix_shuffle_orders) > 0) {
+            for (matrix_id in names(matrix_shuffle_orders)) {
+                matrix_struct <- question_structure[[matrix_id]]
+                if (!is.null(matrix_struct$row)) {
+                    # Get subquestion IDs in original order
+                    row_values <- unname(matrix_struct$row)
+                    original_subq_ids <- paste0(matrix_id, "_", row_values)
+
+                    # Get shuffle order (0-based from JS, convert to 1-based)
+                    shuffle_order <- matrix_shuffle_orders[[matrix_id]] + 1
+
+                    # Reorder subquestion IDs according to shuffle
+                    shuffled_subq_ids <- original_subq_ids[shuffle_order]
+
+                    # Find positions of these subquestions in question_ids
+                    original_positions <- match(original_subq_ids, question_ids)
+
+                    # Replace with shuffled order
+                    if (!any(is.na(original_positions))) {
+                        question_ids[sort(
+                            original_positions
+                        )] <- shuffled_subq_ids
+                    }
+                }
+            }
+        }
+    }
 
     # 5. Main question observers ----
 
@@ -970,7 +1159,7 @@ sd_server <- function(
                     } else {
                         options[options %in% value] |>
                             names() |>
-                            paste(collapse = ", ")
+                            paste(collapse = "|")
                     }
 
                     # Store the values and labels in output
@@ -1042,7 +1231,7 @@ sd_server <- function(
                     } else {
                         options[options %in% value] |>
                             names() |>
-                            paste(collapse = ", ")
+                            paste(collapse = "|")
                     }
 
                     # Store the values and labels in output
@@ -1132,11 +1321,15 @@ sd_server <- function(
             # Update cookies in both database and local modes
             # Include page_history for Previous button functionality
             # Include question_history for highlighting restoration
+            # Include shuffle_orders for option/row shuffle persistence
             page_data <- list(
                 answers = answers,
                 last_timestamp = last_timestamp,
                 page_history = page_history(),
-                question_history = question_history()
+                question_history = question_history(),
+                randomization_orders = shiny::reactiveValuesToList(
+                    shuffle_orders
+                )
             )
             session$sendCustomMessage(
                 "setAnswerData",
@@ -1175,22 +1368,144 @@ sd_server <- function(
         pages[[which(sapply(pages, function(p) p$id == current_page_id()))]]
     })
 
-    # Render main page content when current page changes
-    output$main <- shiny::renderUI({
-        current_page <- get_current_page()
-        shiny::tagList(
+    # Create page content wrapper
+    create_page_content <- function(page_content) {
+        shiny::tags$div(
+            class = "content",
             shiny::tags$div(
-                class = "content",
+                class = "page-columns page-rows-contents page-layout-article",
                 shiny::tags$div(
-                    class = "page-columns page-rows-contents page-layout-article",
-                    shiny::tags$div(
-                        id = "quarto-content",
-                        role = "main",
-                        shiny::HTML(current_page$content)
-                    )
+                    id = "quarto-content",
+                    role = "main",
+                    shiny::HTML(page_content)
                 )
             )
         )
+    }
+
+    # Create script to replace shuffled question placeholders client-side
+    create_placeholder_replacement_script <- function(html_list) {
+        html_json <- jsonlite::toJSON(html_list, auto_unbox = TRUE)
+        shiny::tags$script(htmltools::HTML(sprintf(
+            "
+            (function() {
+                var questionHTML = %s;
+                var replacePlaceholders = function() {
+                    for (var qId in questionHTML) {
+                        var placeholder = document.getElementById(qId + '_shuffled');
+                        if (placeholder) {
+                            var temp = document.createElement('div');
+                            temp.innerHTML = questionHTML[qId];
+                            while (temp.firstChild) {
+                                placeholder.parentNode.insertBefore(temp.firstChild, placeholder);
+                            }
+                            placeholder.parentNode.removeChild(placeholder);
+                        }
+                    }
+                    var container = document.getElementById('quarto-content');
+                    if (container && typeof Shiny !== 'undefined' && Shiny.bindAll) {
+                        Shiny.bindAll(container);
+                    }
+                };
+                if (document.readyState === 'complete') {
+                    replacePlaceholders();
+                } else {
+                    document.addEventListener('DOMContentLoaded', replacePlaceholders);
+                }
+            })();
+        ",
+            html_json
+        )))
+    }
+
+    # Create script to shuffle matrix rows client-side (preserves original styling)
+    create_matrix_shuffle_script <- function(matrix_orders) {
+        orders_json <- jsonlite::toJSON(matrix_orders, auto_unbox = TRUE)
+        shiny::tags$script(htmltools::HTML(sprintf(
+            "
+            (function() {
+                var matrixOrders = %s;
+                var shuffleMatrixRows = function() {
+                    for (var qId in matrixOrders) {
+                        var order = matrixOrders[qId];
+                        var container = document.querySelector('[data-question-id=\"' + qId + '\"]');
+                        if (!container) continue;
+
+                        // Find the table with data rows (second tbody in Quarto tables)
+                        var table = container.querySelector('.matrix-question');
+                        if (!table) continue;
+
+                        // Get all tbody elements - in Quarto tables, first has header, second has data
+                        var tbodies = table.querySelectorAll('tbody');
+                        var dataBody = null;
+
+                        // Find the tbody with actual data rows (has td elements, not just th)
+                        for (var i = 0; i < tbodies.length; i++) {
+                            var firstRow = tbodies[i].querySelector('tr');
+                            if (firstRow && firstRow.querySelector('td')) {
+                                dataBody = tbodies[i];
+                                break;
+                            }
+                        }
+
+                        if (!dataBody) continue;
+
+                        // Get all data rows
+                        var rows = Array.from(dataBody.querySelectorAll('tr'));
+                        if (rows.length < 2) continue;
+
+                        // Reorder rows according to shuffle order
+                        var reorderedRows = order.map(function(idx) {
+                            return rows[idx];
+                        });
+
+                        // Remove all rows and re-add in new order
+                        rows.forEach(function(row) {
+                            dataBody.removeChild(row);
+                        });
+                        reorderedRows.forEach(function(row) {
+                            dataBody.appendChild(row);
+                        });
+                    }
+                };
+                if (document.readyState === 'complete') {
+                    shuffleMatrixRows();
+                } else {
+                    document.addEventListener('DOMContentLoaded', shuffleMatrixRows);
+                }
+            })();
+        ",
+            orders_json
+        )))
+    }
+
+    # Render main page content when current page changes
+    output$main <- shiny::renderUI({
+        current_page <- get_current_page()
+        html_list <- session$userData$shuffled_question_html
+        matrix_orders <- session$userData$matrix_shuffle_orders
+
+        content_tags <- shiny::tagList(create_page_content(
+            current_page$content
+        ))
+
+        # Add placeholder replacement script for MC questions
+        if (length(html_list) > 0) {
+            content_tags <- shiny::tagList(
+                content_tags,
+                create_placeholder_replacement_script(html_list)
+            )
+        }
+
+        # Add matrix row shuffle script
+        if (length(matrix_orders) > 0) {
+            content_tags <- shiny::tagList(
+                content_tags,
+                create_matrix_shuffle_script(matrix_orders)
+            )
+        }
+
+        content_tags
     })
 
     # Observer to trigger gray highlighting for unanswered questions when page changes
@@ -1297,7 +1612,7 @@ sd_server <- function(
         return(unanswered)
     }
 
-    # Helper function to check custom stop conditions for the current page
+    # Helper function to check custom stop conditions
     check_stop_conditions <- function(page, input, session) {
         # Get stop conditions from userData
         stop_if <- session$userData$stop_if
@@ -1313,64 +1628,38 @@ sd_server <- function(
             ))
         }
 
-        # Get current page questions to filter relevant stop conditions
-        current_page_questions <- page$questions
-        if (
-            is.null(current_page_questions) ||
-                length(current_page_questions) == 0
-        ) {
-            return(list(
-                passed = TRUE,
-                invalid_questions = character(0),
-                error_text = ""
-            ))
-        }
-
         triggered_stops <- list()
-        invalid_questions <- character(0)
+        current_page_id <- page$id
 
-        # Check each stop condition
         for (stop_condition in stop_if$conditions) {
-            # Check if this stop condition applies to questions on the current page
-            stop_questions <- stop_condition$question_ids
-            if (length(intersect(stop_questions, current_page_questions)) > 0) {
-                # This stop condition applies to the current page
-                tryCatch(
-                    {
-                        # Evaluate the condition in the calling environment
-                        calling_env <- stop_condition$calling_env
-                        condition_result <- eval(
-                            stop_condition$condition,
-                            envir = calling_env
-                        )
+            # Only check conditions applicable to current page
+            if (
+                !is.null(stop_condition$applicable_pages) &&
+                    length(stop_condition$applicable_pages) > 0 &&
+                    !(current_page_id %in% stop_condition$applicable_pages)
+            ) {
+                next
+            }
 
-                        # If condition is TRUE, stop condition is met (navigation should be stopped)
-                        # This is the logic for sd_stop_if()
-                        if (isTRUE(condition_result)) {
-                            triggered_stops <- c(
-                                triggered_stops,
-                                list(stop_condition)
-                            )
-                            invalid_questions <- c(
-                                invalid_questions,
-                                stop_questions
-                            )
-                        }
-                    },
-                    error = function(e) {
-                        # If condition evaluation fails, consider it a triggered stop
-                        warning("Error evaluating stop condition: ", e$message)
+            tryCatch(
+                {
+                    calling_env <- stop_condition$calling_env
+                    condition_result <- eval(
+                        stop_condition$condition,
+                        envir = calling_env
+                    )
+
+                    if (isTRUE(condition_result)) {
                         triggered_stops <- c(
                             triggered_stops,
                             list(stop_condition)
                         )
-                        invalid_questions <- c(
-                            invalid_questions,
-                            stop_questions
-                        )
                     }
-                )
-            }
+                },
+                error = function(e) {
+                    # If condition evaluation fails, skip it
+                }
+            )
         }
 
         # Format error messages
@@ -1388,7 +1677,7 @@ sd_server <- function(
 
         return(list(
             passed = FALSE,
-            invalid_questions = unique(invalid_questions),
+            invalid_questions = character(0),
             error_text = error_text
         ))
     }
@@ -2230,7 +2519,7 @@ sd_server <- function(
     shiny::observeEvent(input$submit_rating, {
         # Check if cookies should be cleared on exit
         clear_cookies_on_exit <- input$clear_cookies_on_exit
-        
+
         # Save the rating
         rating <- input$survey_rating
         all_data[['exit_survey_rating']] <- rating
@@ -2239,12 +2528,12 @@ sd_server <- function(
         shiny::isolate({
             update_data(time_last = TRUE)
         })
-        
+
         # Clear cookies if requested
         if (!is.null(clear_cookies_on_exit) && clear_cookies_on_exit) {
             session$sendCustomMessage("clearCookies", list())
         }
-        
+
         # Close the modal and the window
         shiny::removeModal()
         session$sendCustomMessage("closeWindow", list())
@@ -2253,17 +2542,17 @@ sd_server <- function(
     shiny::observeEvent(input$confirm_exit, {
         # Check if cookies should be cleared on exit
         clear_cookies_on_exit <- input$clear_cookies_on_exit
-        
+
         # Update checkpoint 4 - when exiting survey
         shiny::isolate({
             update_data(time_last = TRUE)
         })
-        
+
         # Clear cookies if requested
         if (!is.null(clear_cookies_on_exit) && clear_cookies_on_exit) {
             session$sendCustomMessage("clearCookies", list())
         }
-        
+
         # Close the modal and the window
         shiny::removeModal()
         session$sendCustomMessage("closeWindow", list())
@@ -2275,7 +2564,7 @@ sd_server <- function(
         shiny::isolate({
             update_data(time_last = TRUE)
         })
-        
+
         # Send force restart message to clear cookies and reload page
         session$sendCustomMessage("forceRestart", list())
     })
@@ -2527,26 +2816,9 @@ sd_stop_if <- function(...) {
 
     # Process each stop condition
     processed_conditions <- lapply(conditions, function(rule) {
-        tryCatch(
-            {
-                # Store the original condition and error message
-                rule$original_condition <- rule$condition
-                rule$calling_env <- calling_env
-                rule$error_message <- rule$target # The RHS is the error message
-
-                # Extract question IDs from the condition to determine page mapping
-                question_ids <- extract_question_ids_from_condition(
-                    rule$condition
-                )
-                rule$question_ids <- question_ids
-
-                return(rule)
-            },
-            error = function(e) {
-                warning("Error processing stop condition: ", e$message)
-                return(rule)
-            }
-        )
+        rule$calling_env <- calling_env
+        rule$error_message <- rule$target # The RHS is the error message
+        return(rule)
     })
 
     # Store in userData
@@ -2560,30 +2832,6 @@ sd_stop_if <- function(...) {
         }
         session$userData$stop_if$conditions <- processed_conditions
     })
-}
-
-
-# Helper function to extract question IDs from a stop condition
-extract_question_ids_from_condition <- function(expr) {
-    ids <- character(0)
-    if (is.call(expr)) {
-        # Check for input$xxx pattern
-        if (
-            length(expr) >= 3 &&
-                as.character(expr[[1]]) == "$" &&
-                as.character(expr[[2]]) == "input"
-        ) {
-            var_name <- as.character(expr[[3]])
-            ids <- c(ids, var_name)
-        }
-        # Recursively search in all parts of the expression
-        for (i in seq_along(expr)) {
-            if (is.call(expr[[i]]) || is.symbol(expr[[i]])) {
-                ids <- c(ids, extract_question_ids_from_condition(expr[[i]]))
-            }
-        }
-    }
-    return(unique(ids))
 }
 
 #' Set password for surveydown survey
@@ -3250,17 +3498,6 @@ get_initial_data <- function(
     return(data)
 }
 
-# Helper function to format a single question value
-format_question_value <- function(val) {
-    if (is.null(val) || identical(val, NA) || identical(val, "NA")) {
-        return("")
-    } else if (length(val) > 1) {
-        return(paste(val, collapse = ", "))
-    } else {
-        return(as.character(val))
-    }
-}
-
 get_default_next_page <- function(page, page_ids, page_id_to_index) {
     if (is.null(page$next_page_id)) {
         return(NULL)
@@ -3707,6 +3944,17 @@ handle_data_restoration <- function(
                     question_history(restored_q_history)
                 }
             }
+        }
+
+        # 6. Restore shuffle orders for options/row shuffle persistence
+        all_cookie_data <- session$input$stored_answer_data
+        if (
+            !is.null(all_cookie_data) &&
+                !is.null(all_cookie_data$randomization_orders)
+        ) {
+            # Store in session$userData for later restoration after shuffle_orders is created
+            # Note: keeping cookie key as 'randomization_orders' for backward compatibility
+            session$userData$restored_randomization_orders <- all_cookie_data$randomization_orders
         }
     })
 

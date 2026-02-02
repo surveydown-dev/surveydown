@@ -393,6 +393,310 @@ sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
     }
 }
 
+# Helper function to convert value to numeric if it looks like a number
+# Handles both single values and vectors
+try_numeric <- function(x) {
+    if (is.null(x) || length(x) == 0) {
+        return(x)
+    }
+    # Handle vectors element-wise
+    result <- sapply(
+        x,
+        function(val) {
+            if (is.na(val) || identical(val, "")) {
+                return(val)
+            }
+            # Try to convert to numeric
+            numeric_val <- suppressWarnings(as.numeric(val))
+            if (!is.na(numeric_val)) {
+                return(numeric_val)
+            }
+            return(val)
+        },
+        USE.NAMES = FALSE
+    )
+    return(result)
+}
+
+# Helper function to split pipe-separated string into vector
+# Used for mc_multiple and mc_multiple_buttons question types
+split_multi <- function(x) {
+    if (is.null(x) || length(x) == 0) {
+        return(x)
+    }
+    # Only split if it's a single string containing "|"
+    if (length(x) == 1 && is.character(x) && grepl("|", x, fixed = TRUE)) {
+        return(strsplit(x, "|", fixed = TRUE)[[1]])
+    }
+    return(x)
+}
+
+#' Access question values from survey responses
+#'
+#' This function provides a functional interface to access question values from
+#' the `all_data` reactive values list. It is equivalent to using `all_data$question_id`
+#' but allows programmatic access using a string variable or unquoted name.
+#' Multiple question IDs can be provided to retrieve multiple values at once.
+#'
+#' @param ... One or more question IDs to retrieve. Each can be provided as an
+#'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
+#' @param as_numeric Logical or NULL. Controls numeric type conversion:
+#'
+#' | Value | Behavior |
+#' |-------|----------|
+#' | `NULL` (default) | Auto-detect: checks if value looks numeric, converts if so. Non-numeric values stay as character. |
+#' | `TRUE` | Force convert: always calls `as.numeric()`. Non-convertible values become `NA`. |
+#' | `FALSE` | Never convert: returns value as-is, no detection. |
+#'
+#' @param as_vector Logical or NULL. Controls splitting of pipe-separated values:
+#'
+#' | Value | Behavior |
+#' |-------|----------|
+#' | `NULL` (default) | Auto-detect: checks if pipe symbol exists, splits if found. |
+#' | `TRUE` | Force split: always splits on pipe. |
+#' | `FALSE` | Never split: returns value as-is, no detection. |
+#'
+#' @return If a single question ID is provided, returns the value of that question.
+#'   If multiple question IDs are provided, returns an unnamed vector of values.
+#'   Returns `NULL` for any question ID that doesn't exist.
+#'
+#' @examples
+#' \dontrun{
+#'   library(surveydown)
+#'
+#'   server <- function(input, output, session) {
+#'     # Single value access - all equivalent:
+#'     age1 <- all_data$age
+#'     age2 <- sd_values(age)        # Unquoted (recommended)
+#'     age3 <- sd_values("age")      # Quoted (also works)
+#'
+#'     # Multiple values at once:
+#'     values <- sd_values(age, name, country)
+#'     # Returns values with auto-detection (numeric converted, pipes split)
+#'
+#'     # Default behavior (NULL) auto-detects and converts numeric values:
+#'     age <- sd_values(age)
+#'     # If age is "25", returns 25 (numeric)
+#'     # If age is "hello", returns "hello" (character, not convertible)
+#'
+#'     # Force numeric conversion (may produce NA):
+#'     val <- sd_values(some_field, as_numeric = TRUE)
+#'     # "123" becomes 123, "hello" becomes NA
+#'
+#'     # Never convert to numeric (e.g., ZIP codes with leading zeros):
+#'     zip <- sd_values(zip_code, as_numeric = FALSE)
+#'     # "01234" stays as "01234", not converted to 1234
+#'
+#'     # Default behavior (NULL) auto-detects pipe and splits:
+#'     fruits <- sd_values(fav_fruits)
+#'     # If value is "apple|banana|orange", returns c("apple", "banana", "orange")
+#'     # If value is "apple", returns "apple" (no pipe, no split)
+#'
+#'     # Force split (even if no pipe present):
+#'     vals <- sd_values(some_field, as_vector = TRUE)
+#'
+#'     # Never split (keep as single string):
+#'     raw <- sd_values(fav_fruits, as_vector = FALSE)
+#'     # "apple|banana|orange" stays as "apple|banana|orange"
+#'
+#'     # Check number of selections:
+#'     if (length(sd_values(fav_fruits)) > 3) {
+#'       # User selected more than 3 fruits
+#'     }
+#'
+#'     # Check if specific option was selected:
+#'     if ("apple" %in% sd_values(fav_fruits)) {
+#'       # User selected apple
+#'     }
+#'
+#'     sd_server(db = db)
+#'   }
+#' }
+#'
+#' @export
+sd_values <- function(..., as_numeric = NULL, as_vector = NULL) {
+    # Capture all arguments (excluding named params)
+    args <- substitute(list(...))[-1] # Remove 'list' from the beginning
+
+    # If no arguments, stop
+    if (length(args) == 0) {
+        stop("At least one question ID must be provided")
+    }
+
+    # Validate as_numeric parameter
+    if (!is.null(as_numeric) && !is.logical(as_numeric)) {
+        stop("as_numeric must be NULL, TRUE, or FALSE")
+    }
+
+    # Validate as_vector parameter
+    if (!is.null(as_vector) && !is.logical(as_vector)) {
+        stop("as_vector must be NULL, TRUE, or FALSE")
+    }
+
+    calling_env <- parent.frame()
+
+    # Check if all_data exists in the calling environment or parent environments
+    if (!exists("all_data", envir = calling_env, inherits = TRUE)) {
+        stop("all_data not found. Make sure sd_server() has been called.")
+    }
+
+    all_data <- get("all_data", envir = calling_env, inherits = TRUE)
+
+    # Convert each argument to a string
+    question_id_strs <- sapply(args, function(arg) {
+        if (is.character(arg)) {
+            # Already a string
+            arg
+        } else {
+            # Convert symbol to string
+            deparse(arg)
+        }
+    })
+
+    # Get all values and apply transformations
+    values <- lapply(question_id_strs, function(id) {
+        val <- all_data[[id]]
+
+        # Handle as_vector: splitting pipe-separated values
+        if (isTRUE(as_vector)) {
+            # Force split on pipe (no detection)
+            if (!is.null(val) && length(val) == 1 && is.character(val)) {
+                val <- strsplit(val, "|", fixed = TRUE)[[1]]
+            }
+        } else if (isFALSE(as_vector)) {
+            # Never split, return as-is (no detection)
+            # Do nothing, val stays as-is
+        } else {
+            # as_vector is NULL: auto-detect, split if pipe found
+            val <- split_multi(val)
+        }
+
+        # Handle as_numeric: type conversion
+        if (isTRUE(as_numeric)) {
+            # Force convert to numeric (no detection, may produce NA)
+            if (is.null(val)) val else as.numeric(val)
+        } else if (isFALSE(as_numeric)) {
+            # Never convert, return as-is (no detection)
+            val
+        } else {
+            # as_numeric is NULL: auto-detect, convert if looks numeric
+            try_numeric(val)
+        }
+    })
+
+    # If only one question ID was provided
+    if (length(question_id_strs) == 1) {
+        result <- values[[1]]
+        # For single question, return as-is (could be vector if as_vector = TRUE)
+        if (length(result) == 1) {
+            return(unname(result))
+        }
+        return(unname(result))
+    }
+
+    # For multiple question IDs, flatten to vector
+    values <- unlist(values)
+    return(unname(values))
+}
+
+#' Access question values from survey responses (alias)
+#'
+#' This is an alias for [sd_values()].
+#'
+#' This function provides a functional interface to access question values from
+#' the `all_data` reactive values list. It is equivalent to using `all_data$question_id`
+#' but allows programmatic access using a string variable or unquoted name.
+#' Multiple question IDs can be provided to retrieve multiple values at once.
+#'
+#' @param ... One or more question IDs to retrieve. Each can be provided as an
+#'   unquoted name (e.g., `age`) or a quoted string (e.g., `"age"`).
+#' @param as_numeric Logical or NULL. Controls numeric type conversion:
+#'
+#' | Value | Behavior |
+#' |-------|----------|
+#' | `NULL` (default) | Auto-detect: checks if value looks numeric, converts if so. Non-numeric values stay as character. |
+#' | `TRUE` | Force convert: always calls `as.numeric()`. Non-convertible values become `NA`. |
+#' | `FALSE` | Never convert: returns value as-is, no detection. |
+#'
+#' @param as_vector Logical or NULL. Controls splitting of pipe-separated values:
+#'
+#' | Value | Behavior |
+#' |-------|----------|
+#' | `NULL` (default) | Auto-detect: checks if pipe symbol exists, splits if found. |
+#' | `TRUE` | Force split: always splits on pipe. |
+#' | `FALSE` | Never split: returns value as-is, no detection. |
+#'
+#' @return If a single question ID is provided, returns the value of that question.
+#'   If multiple question IDs are provided, returns an unnamed vector of values.
+#'   Returns `NULL` for any question ID that doesn't exist.
+#'
+#' @examples
+#' \dontrun{
+#'   library(surveydown)
+#'
+#'   server <- function(input, output, session) {
+#'     # Single value access - all equivalent:
+#'     age1 <- all_data$age
+#'     age2 <- sd_value(age)        # Unquoted (recommended)
+#'     age3 <- sd_value("age")      # Quoted (also works)
+#'
+#'     # Multiple values at once:
+#'     values <- sd_value(age, name, country)
+#'     # Returns values with auto-detection (numeric converted, pipes split)
+#'
+#'     # Default behavior (NULL) auto-detects and converts numeric values:
+#'     age <- sd_value(age)
+#'     # If age is "25", returns 25 (numeric)
+#'     # If age is "hello", returns "hello" (character, not convertible)
+#'
+#'     # Force numeric conversion (may produce NA):
+#'     val <- sd_value(some_field, as_numeric = TRUE)
+#'     # "123" becomes 123, "hello" becomes NA
+#'
+#'     # Never convert to numeric (e.g., ZIP codes with leading zeros):
+#'     zip <- sd_value(zip_code, as_numeric = FALSE)
+#'     # "01234" stays as "01234", not converted to 1234
+#'
+#'     # Default behavior (NULL) auto-detects pipe and splits:
+#'     fruits <- sd_value(fav_fruits)
+#'     # If value is "apple|banana|orange", returns c("apple", "banana", "orange")
+#'     # If value is "apple", returns "apple" (no pipe, no split)
+#'
+#'     # Force split (even if no pipe present):
+#'     vals <- sd_value(some_field, as_vector = TRUE)
+#'
+#'     # Never split (keep as single string):
+#'     raw <- sd_value(fav_fruits, as_vector = FALSE)
+#'     # "apple|banana|orange" stays as "apple|banana|orange"
+#'
+#'     # Check number of selections:
+#'     if (length(sd_value(fav_fruits)) > 3) {
+#'       # User selected more than 3 fruits
+#'     }
+#'
+#'     # Check if specific option was selected:
+#'     if ("apple" %in% sd_value(fav_fruits)) {
+#'       # User selected apple
+#'     }
+#'
+#'     sd_server(db = db)
+#'   }
+#' }
+#'
+#' @seealso [sd_values()]
+#' @export
+sd_value <- function(..., as_numeric = NULL, as_vector = NULL) {
+    # Evaluate sd_values() in the parent environment to avoid extra frame
+    eval(
+        substitute(sd_values(
+            ...,
+            as_numeric = as_numeric,
+            as_vector = as_vector
+        )),
+        parent.frame()
+    )
+}
+
 # Convert to SQL
 r_to_sql_type <- function(r_type) {
     switch(
