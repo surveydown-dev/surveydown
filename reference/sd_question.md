@@ -28,8 +28,7 @@ sd_question(
   row = NULL,
   default = NULL,
   yml = "questions.yml",
-  matrix_question_width = "50%",
-  matrix_option_width = NULL,
+  matrix_question_width = NULL,
   ...
 )
 ```
@@ -64,8 +63,8 @@ sd_question(
     shown in UI, values are stored in database
 
   - Unnamed character vector: `c("Option 1", "Option 2")` - Values are
-    shown in UI and automatically converted to snake_case for database
-    storage (e.g., "option_1", "option_2")
+    used as both display labels and stored values (e.g., "Option 1" is
+    shown and stored as "Option 1")
 
   - Unnamed numeric vector: `c(1, 2, 3)` - For non-slider questions,
     converted to `c("1" = "1", "2" = "2", "3" = "3")`. For
@@ -158,13 +157,13 @@ sd_question(
 
 - matrix_question_width:
 
-  Character string. The width of the matrix question column. Defaults to
-  `"50%"`.
-
-- matrix_option_width:
-
-  Character string. The width of the matrix option column. Defaults to
-  `NULL`.
+  The width of the matrix question column. Accepts numeric (e.g., `40`),
+  character without percent (e.g., `"40"`), or character with percent
+  (e.g., `"40%"`) - all are treated equivalently as percentages.
+  Defaults to `NULL`, which auto-calculates the width based on the
+  longest row label (using a heuristic of 20% base + 0.5% per character,
+  bounded between 30% and 80%). The remaining width is automatically
+  distributed equally among the option columns.
 
 - ...:
 

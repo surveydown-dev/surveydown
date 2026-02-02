@@ -1,7 +1,8 @@
 # Create a messages template file
 
-This function creates a template messages.yml file in the project root
-directory that users can customize to modify system messages.
+This function is depreciated. Creates a template messages.yml file in
+the project root directory that users can customize to modify system
+messages.
 
 ## Usage
 

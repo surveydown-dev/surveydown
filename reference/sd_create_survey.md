@@ -59,6 +59,10 @@ sd_create_survey(template = "default", path = getwd(), ask = TRUE)
 
   :   Live polling template for real-time surveys
 
+  option_shuffling
+
+  :   Survey with shuffled question options
+
   question_types
 
   :   Showcases all available question types

@@ -3,6 +3,26 @@
 This file provides guidance to Claude Code (claude.ai/code) when working
 with code in this repository.
 
+## IMPORTANT: Before and After Editing Code
+
+**Before editing code**, terminate the Shiny session if there is one
+running.
+
+**After completing improvements**, do the following:
+
+1.  **Clean test artifacts**: If there is a `test_survey/` folder,
+    delete the `_survey/` folder and `preview_data.csv` file inside it:
+
+    ``` bash
+    rm -rf test_survey/_survey test_survey/preview_data.csv
+    ```
+
+2.  **Install the package**: run this R script:
+
+    ``` r
+    devtools::install(force = TRUE)
+    ```
+
 ## Overview
 
 **surveydown** is an R package for creating markdown-based programmable
@@ -42,6 +62,23 @@ pkgdown::build_site()
 ```
 
 ### Testing
+
+**Automated Tests:**
+
+``` r
+# Run all tests
+devtools::test()
+
+# Run a specific test file
+testthat::test_file("tests/testthat/test-reserved-ids.R")
+```
+
+Tests are located in `tests/testthat/` and use the `testthat` framework.
+Current test coverage includes: - `test-reserved-ids.R`: Validation of
+reserved IDs and ID checking logic - `test-all-data.R`: Testing for the
+`all_data` reactive values list functionality
+
+**Manual Testing:**
 
 Survey functionality is typically tested manually using the
 `test_survey/` directory, which contains a full survey example with
@@ -117,6 +154,12 @@ parsed survey content:
 This caching system prevents re-rendering on every app reload. Changes
 to `survey.qmd` or `app.R` trigger re-parsing.
 
+The `settings.yml` structure has 3 sections: - `theme-settings`: Visual
+configuration (barcolor, etc.) - `survey-settings`: Behavior
+(`required`, `all-required`, `shuffled`, `all-shuffled`, `start-page`,
+`rate-survey`, `show-previous`, etc.) - `system-messages`:
+Multi-language UI text
+
 ### Frontend Assets
 
 - **`inst/js/`**: JavaScript modules for:
@@ -138,8 +181,8 @@ to `survey.qmd` or `app.R` trigger re-parsing.
 - **`inst/template/`**: Default survey template with `survey.qmd` and
   `app.R`
 
-- **`inst/examples/`**: Example `.qmd` files demonstrating different
-  features
+- **`inst/lua/`**: Lua filter (`include-resources.lua`) for Quarto
+  rendering
 
 ### Question Types
 
@@ -147,9 +190,10 @@ The
 [`sd_question()`](https://pkg.surveydown.org/reference/sd_question.md)
 function supports multiple question types defined in `R/util.R`: - `mc`:
 Single choice (radio buttons) - `mc_multiple`: Multiple choice
-(checkboxes) - `mc_buttons`: Single choice as buttons - `select`:
-Dropdown select - `text`: Text input - `textarea`: Multi-line text -
-`numeric`: Number input - `slider`: Slider input - `date`: Date picker -
+(checkboxes) - `mc_buttons`: Single choice as buttons -
+`mc_multiple_buttons`: Multiple choice as buttons - `select`: Dropdown
+select - `text`: Text input - `textarea`: Multi-line text - `numeric`:
+Number input - `slider`: Slider input - `date`: Date picker -
 `daterange`: Date range picker
 
 Matrix questions and custom questions are also supported.
@@ -164,6 +208,157 @@ Skip to a page based on conditions -
 Show/hide questions based on conditions -
 [`sd_stop_if()`](https://pkg.surveydown.org/reference/sd_stop_if.md):
 Prevent navigation if conditions aren’t met
+
+### Option/Row Randomization (v1.0.3+)
+
+Questions can have their options or rows randomized: - **MC-type
+questions** (`mc`, `mc_buttons`, `mc_multiple`, `mc_multiple_buttons`):
+Options are shuffled - **Matrix-type questions**: Rows (sub-questions)
+are shuffled
+
+Configuration in `survey.qmd` YAML:
+
+``` yaml
+survey-settings:
+  shuffled: [question_id1, question_id2]  # Specific questions to shuffle
+  all-shuffled: yes  # Or shuffle all eligible questions
+```
+
+#### Partial Shuffling (v1.1.0+)
+
+You can specify which positions to shuffle, leaving the rest in their
+original order:
+
+``` yaml
+survey-settings:
+  shuffled:
+    - artist: 1-5              # Shuffle positions 1-5, leave 6-7 fixed
+    - fruit: [1, 2, 4, 7]      # Shuffle only these specific positions
+    - swift: [1-5, 8-10]       # Shuffle positions 1-5 and 8-10, leave 6-7 fixed
+    - michael_jackson          # No indices = shuffle all (original behavior)
+    - car_preference: [1, 3]   # For matrix: shuffle rows 1 and 3 only
+```
+
+Supported index formats: - Range string: `"1-5"` → positions 1, 2, 3, 4,
+5 - Integer vector: `[1, 2, 4, 7]` → those specific positions - Mixed:
+`[1-5, 8-10]` → combines both ranges - Omitted: shuffle all positions
+(backward compatible)
+
+Implementation in `R/config.R`: - `parse_shuffle_indices()`: Parses
+index specifications (ranges, arrays) - `parse_shuffled_yaml()`:
+Converts YAML to named list with indices -
+`determine_shuffled_questions()`: Returns named list where values are
+indices or NULL (all) - `get_mc_question_ids()` /
+`get_matrix_question_ids()`: Filter eligible questions
+
+### Accessing Question Values
+
+There are two primary ways to access question values in server logic:
+
+#### 1. Using `all_data` (direct access)
+
+The [`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md)
+function creates a reactive values list called `all_data` that provides
+reliable access to question responses.
+
+**Why use `all_data`?** - Works for all questions, not just those on the
+current page - Automatically includes restored values from
+database/cookies after page refresh - Handles navigation
+backward/forward correctly - More robust than direct `input$` access
+
+**Usage:**
+
+``` r
+# Direct access with $ notation
+age_value <- all_data$age
+
+# In conditional logic
+sd_skip_if(
+  all_data$age < 18 ~ "parental_consent",
+  all_data$employed == "yes" ~ "employment_questions"
+)
+
+sd_show_if(
+  all_data$has_children == "yes" ~ "num_children"
+)
+
+# In custom reactive expressions
+output$custom_message <- renderText({
+  paste("Hello", all_data$name, "from", all_data$country)
+})
+```
+
+**Implementation details:** - Created in
+[`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md) in
+`R/server.R` - Synced via a high-priority observer - Excludes timestamp
+fields and reserved IDs - Exposed to parent environment so it’s
+available before
+[`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md) is
+called
+
+#### 2. Using `sd_values()` and `sd_value()` (functional access)
+
+For functional/programmatic access to question values, use
+[`sd_values()`](https://pkg.surveydown.org/reference/sd_values.md) (or
+its alias
+[`sd_value()`](https://pkg.surveydown.org/reference/sd_value.md)). These
+functions are defined in `R/db.R`.
+
+**When to use
+[`sd_values()`](https://pkg.surveydown.org/reference/sd_values.md):** -
+When you need programmatic access using string variables - When
+retrieving multiple values at once - When you prefer function syntax
+over `$` notation
+
+**Usage:**
+
+``` r
+# Single value - all equivalent:
+age1 <- all_data$age
+age2 <- sd_values(age)        # Unquoted (recommended)
+age3 <- sd_values("age")      # Quoted (also works)
+age4 <- sd_value(age)         # Alias for sd_values()
+
+# Multiple values at once (returns unnamed vector):
+values <- sd_values(age, name, country)
+# Returns c("5", "Pinocchio", "UK")
+
+# Mixed quoted/unquoted:
+values <- sd_values(age, "name", country)
+
+# In conditional logic:
+if (sd_values(age) < 18) {
+  # Do something
+}
+
+# Check multiple values at once:
+if (all(sd_values(vehicle_complex, buy_vehicle) == c("no", "no"))) {
+  # Both are "no"
+}
+```
+
+**Key differences:** -
+[`sd_values()`](https://pkg.surveydown.org/reference/sd_values.md) with
+single argument returns a single value (for backward compatibility) -
+[`sd_values()`](https://pkg.surveydown.org/reference/sd_values.md) with
+multiple arguments returns an unnamed vector - Both access the same
+`all_data` reactive values list under the hood
+
+#### 3. Storing Custom Values with `sd_store_value()`
+
+Use
+[`sd_store_value()`](https://pkg.surveydown.org/reference/sd_store_value.md)
+to save computed values or URL parameters to the database:
+
+``` r
+# Store a computed value
+sd_store_value(calculated_score, "score")
+
+# Store URL parameters
+sd_store_value(sd_get_url_pars()$source, "referral_source")
+```
+
+Note: Cannot use reserved IDs (see Reserved IDs section below).
 
 ### Progress Tracking
 
@@ -206,7 +401,7 @@ later. This is intentional to avoid confusing respondents.
     [`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md)
     reactive observers
 3.  Update question structure parsing in `R/config.R` if needed
-4.  Add example in `inst/examples/`
+4.  Update template in `inst/template/` if needed
 
 ### Modifying Server Behavior
 
@@ -235,12 +430,40 @@ connection and ignore mode (local CSV).
 - **NAMESPACE is auto-generated**: Edit roxygen comments in R files,
   then run `devtools::document()`. Never edit NAMESPACE directly.
 
-- **Version 1.0.0 changes**: Recent major update introduced
-  [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md)
-  (replacing
-  [`sd_next()`](https://pkg.surveydown.org/reference/sd_next.md)),
-  previous button support, shorthand page syntax (`--- page_id`), and
-  auto-injection of navigation buttons.
+- **Breaking changes (v1.1.0)**:
+
+  - [`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md)
+    now **only accepts `db`** as its parameter; all other settings must
+    be in YAML header of `survey.qmd`
+  - YAML keys renamed: `required-questions` → `required`,
+    `all-questions-required` → `all-required`
+  - `matrix_option_width` parameter removed from
+    [`sd_question()`](https://pkg.surveydown.org/reference/sd_question.md)
+    (use `matrix_question_width` only)
+  - [`sd_create_messages()`](https://pkg.surveydown.org/reference/sd_create_messages.md)
+    function deprecated
+
+- **Version 1.0+ features**:
+
+  - [`sd_nav()`](https://pkg.surveydown.org/reference/sd_nav.md)
+    (replacing
+    [`sd_next()`](https://pkg.surveydown.org/reference/sd_next.md)) with
+    previous button support
+  - Shorthand page syntax (`--- page_id`)
+  - Auto-injection of navigation buttons
+  - Reserved IDs system to prevent conflicts with internal metadata
+    fields
+
+- **Reserved IDs**: The following IDs are reserved and cannot be used
+  for pages, questions, or in
+  [`sd_store_value()`](https://pkg.surveydown.org/reference/sd_store_value.md):
+
+  - `session_id`, `time_start`, `time_end`, `exit_survey_rating`,
+    `current_page`, `browser`, `ip_address`
+  - Use `get_reserved_ids()` (internal function) to get the complete
+    list
+  - The `check_ids()` function in `R/config.R` validates page and
+    question IDs during survey parsing
 
 - **Testing locally**: Use `db <- sd_db_connect(ignore = TRUE)` in
   `app.R` to test without database connection. Responses save to

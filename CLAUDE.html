@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,20 @@
 
 <p>This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.</p>
 <div class="section level2">
+<h2 id="important-before-and-after-editing-code">IMPORTANT: Before and After Editing Code<a class="anchor" aria-label="anchor" href="#important-before-and-after-editing-code"></a></h2>
+<p><strong>Before editing code</strong>, terminate the Shiny session if there is one running.</p>
+<p><strong>After completing improvements</strong>, do the following:</p>
+<ol style="list-style-type: decimal"><li>
+<p><strong>Clean test artifacts</strong>: If there is a <code>test_survey/</code> folder, delete the <code>_survey/</code> folder and <code>preview_data.csv</code> file inside it:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-rf</span> test_survey/_survey test_survey/preview_data.csv</span></code></pre></div>
+</li>
+<li>
+<p><strong>Install the package</strong>: run this R script:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span>force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</li>
+</ol></div>
+<div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a></h2>
 <p><strong>surveydown</strong> is an R package for creating markdown-based programmable surveys using Quarto, Shiny, and PostgreSQL databases. The package enables researchers to define surveys in plain text (<code>.qmd</code> and <code>.R</code> files), making them version-controllable, reproducible, and collaborative.</p>
 <p>The core workflow: 1. Users design surveys in <code>survey.qmd</code> (Quarto markdown with R code chunks) 2. Users configure app behavior in <code>app.R</code> (Shiny app with database settings) 3. Package renders the survey to a Shiny app that stores responses in PostgreSQL (Supabase recommended)</p>
@@ -42,7 +56,7 @@
 <h2 id="development-commands">Development Commands<a class="anchor" aria-label="anchor" href="#development-commands"></a></h2>
 <div class="section level3">
 <h3 id="package-development">Package Development<a class="anchor" aria-label="anchor" href="#package-development"></a></h3>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load package during development</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">load_all</span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
@@ -57,12 +71,21 @@
 </div>
 <div class="section level3">
 <h3 id="documentation">Documentation<a class="anchor" aria-label="anchor" href="#documentation"></a></h3>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Build pkgdown site</span></span>
 <span><span class="fu">pkgdown</span><span class="fu">::</span><span class="fu"><a href="https://pkgdown.r-lib.org/reference/build_site.html" class="external-link">build_site</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="testing">Testing<a class="anchor" aria-label="anchor" href="#testing"></a></h3>
+<p><strong>Automated Tests:</strong></p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Run all tests</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Run a specific test file</span></span>
+<span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_file.html" class="external-link">test_file</a></span><span class="op">(</span><span class="st">"tests/testthat/test-reserved-ids.R"</span><span class="op">)</span></span></code></pre></div>
+<p>Tests are located in <code>tests/testthat/</code> and use the <code>testthat</code> framework. Current test coverage includes: - <code>test-reserved-ids.R</code>: Validation of reserved IDs and ID checking logic - <code>test-all-data.R</code>: Testing for the <code>all_data</code> reactive values list functionality</p>
+<p><strong>Manual Testing:</strong></p>
 <p>Survey functionality is typically tested manually using the <code>test_survey/</code> directory, which contains a full survey example with <code>app.R</code> and <code>survey.qmd</code> files. To test changes:</p>
 <ol style="list-style-type: decimal"><li>Make changes to package source files in <code>R/</code>
 </li>
@@ -137,6 +160,7 @@
 <li>
 <code>settings.yml</code>: Complete configuration (theme-settings, survey-settings, system-messages)</li>
 </ul><p>This caching system prevents re-rendering on every app reload. Changes to <code>survey.qmd</code> or <code>app.R</code> trigger re-parsing.</p>
+<p>The <code>settings.yml</code> structure has 3 sections: - <code>theme-settings</code>: Visual configuration (barcolor, etc.) - <code>survey-settings</code>: Behavior (<code>required</code>, <code>all-required</code>, <code>shuffled</code>, <code>all-shuffled</code>, <code>start-page</code>, <code>rate-survey</code>, <code>show-previous</code>, etc.) - <code>system-messages</code>: Multi-language UI text</p>
 </div>
 <div class="section level3">
 <h3 id="frontend-assets">Frontend Assets<a class="anchor" aria-label="anchor" href="#frontend-assets"></a></h3>
@@ -167,16 +191,108 @@
 <code>default_theme.css</code>: Default theme</li>
 </ul></li>
 <li><p><strong><code>inst/template/</code></strong>: Default survey template with <code>survey.qmd</code> and <code>app.R</code></p></li>
-<li><p><strong><code>inst/examples/</code></strong>: Example <code>.qmd</code> files demonstrating different features</p></li>
+<li><p><strong><code>inst/lua/</code></strong>: Lua filter (<code>include-resources.lua</code>) for Quarto rendering</p></li>
 </ul></div>
 <div class="section level3">
 <h3 id="question-types">Question Types<a class="anchor" aria-label="anchor" href="#question-types"></a></h3>
-<p>The <code><a href="reference/sd_question.html">sd_question()</a></code> function supports multiple question types defined in <code>R/util.R</code>: - <code>mc</code>: Single choice (radio buttons) - <code>mc_multiple</code>: Multiple choice (checkboxes) - <code>mc_buttons</code>: Single choice as buttons - <code>select</code>: Dropdown select - <code>text</code>: Text input - <code>textarea</code>: Multi-line text - <code>numeric</code>: Number input - <code>slider</code>: Slider input - <code>date</code>: Date picker - <code>daterange</code>: Date range picker</p>
+<p>The <code><a href="reference/sd_question.html">sd_question()</a></code> function supports multiple question types defined in <code>R/util.R</code>: - <code>mc</code>: Single choice (radio buttons) - <code>mc_multiple</code>: Multiple choice (checkboxes) - <code>mc_buttons</code>: Single choice as buttons - <code>mc_multiple_buttons</code>: Multiple choice as buttons - <code>select</code>: Dropdown select - <code>text</code>: Text input - <code>textarea</code>: Multi-line text - <code>numeric</code>: Number input - <code>slider</code>: Slider input - <code>date</code>: Date picker - <code>daterange</code>: Date range picker</p>
 <p>Matrix questions and custom questions are also supported.</p>
 </div>
 <div class="section level3">
 <h3 id="conditional-logic">Conditional Logic<a class="anchor" aria-label="anchor" href="#conditional-logic"></a></h3>
 <p>Three main functions control survey flow (defined in <code>R/server.R</code> and implemented in <code>R/util.R</code>): - <code><a href="reference/sd_skip_if.html">sd_skip_if()</a></code>: Skip to a page based on conditions - <code><a href="reference/sd_show_if.html">sd_show_if()</a></code>: Show/hide questions based on conditions - <code><a href="reference/sd_stop_if.html">sd_stop_if()</a></code>: Prevent navigation if conditions aren’t met</p>
+</div>
+<div class="section level3">
+<h3 id="optionrow-randomization-v103">Option/Row Randomization (v1.0.3+)<a class="anchor" aria-label="anchor" href="#optionrow-randomization-v103"></a></h3>
+<p>Questions can have their options or rows randomized: - <strong>MC-type questions</strong> (<code>mc</code>, <code>mc_buttons</code>, <code>mc_multiple</code>, <code>mc_multiple_buttons</code>): Options are shuffled - <strong>Matrix-type questions</strong>: Rows (sub-questions) are shuffled</p>
+<p>Configuration in <code>survey.qmd</code> YAML:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">survey-settings</span><span class="kw">:</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="at">  </span><span class="fu">shuffled</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">question_id1</span><span class="kw">,</span><span class="at"> question_id2</span><span class="kw">]</span><span class="co">  # Specific questions to shuffle</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="at">  </span><span class="fu">all-shuffled</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span><span class="co">  # Or shuffle all eligible questions</span></span></code></pre></div>
+<div class="section level4">
+<h4 id="partial-shuffling-v110">Partial Shuffling (v1.1.0+)<a class="anchor" aria-label="anchor" href="#partial-shuffling-v110"></a></h4>
+<p>You can specify which positions to shuffle, leaving the rest in their original order:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">survey-settings</span><span class="kw">:</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="at">  </span><span class="fu">shuffled</span><span class="kw">:</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">artist</span><span class="kw">:</span><span class="at"> 1-5</span><span class="co">              # Shuffle positions 1-5, leave 6-7 fixed</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">fruit</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="dv">1</span><span class="kw">,</span><span class="at"> </span><span class="dv">2</span><span class="kw">,</span><span class="at"> </span><span class="dv">4</span><span class="kw">,</span><span class="at"> </span><span class="dv">7</span><span class="kw">]</span><span class="co">      # Shuffle only these specific positions</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">swift</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at">1</span><span class="dv">-5</span><span class="kw">,</span><span class="at"> 8</span><span class="dv">-10</span><span class="kw">]</span><span class="co">       # Shuffle positions 1-5 and 8-10, leave 6-7 fixed</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> michael_jackson</span><span class="co">          # No indices = shuffle all (original behavior)</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">car_preference</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="dv">1</span><span class="kw">,</span><span class="at"> </span><span class="dv">3</span><span class="kw">]</span><span class="co">   # For matrix: shuffle rows 1 and 3 only</span></span></code></pre></div>
+<p>Supported index formats: - Range string: <code>"1-5"</code> → positions 1, 2, 3, 4, 5 - Integer vector: <code>[1, 2, 4, 7]</code> → those specific positions - Mixed: <code>[1-5, 8-10]</code> → combines both ranges - Omitted: shuffle all positions (backward compatible)</p>
+<p>Implementation in <code>R/config.R</code>: - <code>parse_shuffle_indices()</code>: Parses index specifications (ranges, arrays) - <code>parse_shuffled_yaml()</code>: Converts YAML to named list with indices - <code>determine_shuffled_questions()</code>: Returns named list where values are indices or NULL (all) - <code>get_mc_question_ids()</code> / <code>get_matrix_question_ids()</code>: Filter eligible questions</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="accessing-question-values">Accessing Question Values<a class="anchor" aria-label="anchor" href="#accessing-question-values"></a></h3>
+<p>There are two primary ways to access question values in server logic:</p>
+<div class="section level4">
+<h4 id="id_1-using-all_data-direct-access">1. Using <code>all_data</code> (direct access)<a class="anchor" aria-label="anchor" href="#id_1-using-all_data-direct-access"></a></h4>
+<p>The <code><a href="reference/sd_server.html">sd_server()</a></code> function creates a reactive values list called <code>all_data</code> that provides reliable access to question responses.</p>
+<p><strong>Why use <code>all_data</code>?</strong> - Works for all questions, not just those on the current page - Automatically includes restored values from database/cookies after page refresh - Handles navigation backward/forward correctly - More robust than direct <code>input$</code> access</p>
+<p><strong>Usage:</strong></p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Direct access with $ notation</span></span>
+<span><span class="va">age_value</span> <span class="op">&lt;-</span> <span class="va">all_data</span><span class="op">$</span><span class="va">age</span></span>
+<span></span>
+<span><span class="co"># In conditional logic</span></span>
+<span><span class="fu"><a href="reference/sd_skip_if.html">sd_skip_if</a></span><span class="op">(</span></span>
+<span>  <span class="va">all_data</span><span class="op">$</span><span class="va">age</span> <span class="op">&lt;</span> <span class="fl">18</span> <span class="op">~</span> <span class="st">"parental_consent"</span>,</span>
+<span>  <span class="va">all_data</span><span class="op">$</span><span class="va">employed</span> <span class="op">==</span> <span class="st">"yes"</span> <span class="op">~</span> <span class="st">"employment_questions"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/sd_show_if.html">sd_show_if</a></span><span class="op">(</span></span>
+<span>  <span class="va">all_data</span><span class="op">$</span><span class="va">has_children</span> <span class="op">==</span> <span class="st">"yes"</span> <span class="op">~</span> <span class="st">"num_children"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># In custom reactive expressions</span></span>
+<span><span class="va">output</span><span class="op">$</span><span class="va">custom_message</span> <span class="op">&lt;-</span> <span class="fu">renderText</span><span class="op">(</span><span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Hello"</span>, <span class="va">all_data</span><span class="op">$</span><span class="va">name</span>, <span class="st">"from"</span>, <span class="va">all_data</span><span class="op">$</span><span class="va">country</span><span class="op">)</span></span>
+<span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Implementation details:</strong> - Created in <code><a href="reference/sd_server.html">sd_server()</a></code> in <code>R/server.R</code> - Synced via a high-priority observer - Excludes timestamp fields and reserved IDs - Exposed to parent environment so it’s available before <code><a href="reference/sd_server.html">sd_server()</a></code> is called</p>
+</div>
+<div class="section level4">
+<h4 id="id_2-using-sd_values-and-sd_value-functional-access">2. Using <code>sd_values()</code> and <code>sd_value()</code> (functional access)<a class="anchor" aria-label="anchor" href="#id_2-using-sd_values-and-sd_value-functional-access"></a></h4>
+<p>For functional/programmatic access to question values, use <code><a href="reference/sd_values.html">sd_values()</a></code> (or its alias <code><a href="reference/sd_value.html">sd_value()</a></code>). These functions are defined in <code>R/db.R</code>.</p>
+<p><strong>When to use <code><a href="reference/sd_values.html">sd_values()</a></code>:</strong> - When you need programmatic access using string variables - When retrieving multiple values at once - When you prefer function syntax over <code>$</code> notation</p>
+<p><strong>Usage:</strong></p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Single value - all equivalent:</span></span>
+<span><span class="va">age1</span> <span class="op">&lt;-</span> <span class="va">all_data</span><span class="op">$</span><span class="va">age</span></span>
+<span><span class="va">age2</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/sd_values.html">sd_values</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span>        <span class="co"># Unquoted (recommended)</span></span>
+<span><span class="va">age3</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/sd_values.html">sd_values</a></span><span class="op">(</span><span class="st">"age"</span><span class="op">)</span>      <span class="co"># Quoted (also works)</span></span>
+<span><span class="va">age4</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/sd_value.html">sd_value</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span>         <span class="co"># Alias for sd_values()</span></span>
+<span></span>
+<span><span class="co"># Multiple values at once (returns unnamed vector):</span></span>
+<span><span class="va">values</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/sd_values.html">sd_values</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">name</span>, <span class="va">country</span><span class="op">)</span></span>
+<span><span class="co"># Returns c("5", "Pinocchio", "UK")</span></span>
+<span></span>
+<span><span class="co"># Mixed quoted/unquoted:</span></span>
+<span><span class="va">values</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/sd_values.html">sd_values</a></span><span class="op">(</span><span class="va">age</span>, <span class="st">"name"</span>, <span class="va">country</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># In conditional logic:</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="reference/sd_values.html">sd_values</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">18</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Do something</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># Check multiple values at once:</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="reference/sd_values.html">sd_values</a></span><span class="op">(</span><span class="va">vehicle_complex</span>, <span class="va">buy_vehicle</span><span class="op">)</span> <span class="op">==</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"no"</span>, <span class="st">"no"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># Both are "no"</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p><strong>Key differences:</strong> - <code><a href="reference/sd_values.html">sd_values()</a></code> with single argument returns a single value (for backward compatibility) - <code><a href="reference/sd_values.html">sd_values()</a></code> with multiple arguments returns an unnamed vector - Both access the same <code>all_data</code> reactive values list under the hood</p>
+</div>
+<div class="section level4">
+<h4 id="id_3-storing-custom-values-with-sd_store_value">3. Storing Custom Values with <code>sd_store_value()</code>
+<a class="anchor" aria-label="anchor" href="#id_3-storing-custom-values-with-sd_store_value"></a></h4>
+<p>Use <code><a href="reference/sd_store_value.html">sd_store_value()</a></code> to save computed values or URL parameters to the database:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Store a computed value</span></span>
+<span><span class="fu"><a href="reference/sd_store_value.html">sd_store_value</a></span><span class="op">(</span><span class="va">calculated_score</span>, <span class="st">"score"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Store URL parameters</span></span>
+<span><span class="fu"><a href="reference/sd_store_value.html">sd_store_value</a></span><span class="op">(</span><span class="fu"><a href="reference/sd_get_url_pars.html">sd_get_url_pars</a></span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">source</span>, <span class="st">"referral_source"</span><span class="op">)</span></span></code></pre></div>
+<p>Note: Cannot use reserved IDs (see Reserved IDs section below).</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="progress-tracking">Progress Tracking<a class="anchor" aria-label="anchor" href="#progress-tracking"></a></h3>
@@ -205,8 +321,7 @@
 </li>
 <li>Handle the input in <code><a href="reference/sd_server.html">sd_server()</a></code> reactive observers</li>
 <li>Update question structure parsing in <code>R/config.R</code> if needed</li>
-<li>Add example in <code>inst/examples/</code>
-</li>
+<li>Update template in <code>inst/template/</code> if needed</li>
 </ol></div>
 <div class="section level3">
 <h3 id="modifying-server-behavior">Modifying Server Behavior<a class="anchor" aria-label="anchor" href="#modifying-server-behavior"></a></h3>
@@ -228,7 +343,34 @@
 <div class="section level2">
 <h2 id="important-notes">Important Notes<a class="anchor" aria-label="anchor" href="#important-notes"></a></h2>
 <ul><li><p><strong>NAMESPACE is auto-generated</strong>: Edit roxygen comments in R files, then run <code>devtools::document()</code>. Never edit NAMESPACE directly.</p></li>
-<li><p><strong>Version 1.0.0 changes</strong>: Recent major update introduced <code><a href="reference/sd_nav.html">sd_nav()</a></code> (replacing <code><a href="reference/sd_next.html">sd_next()</a></code>), previous button support, shorthand page syntax (<code>--- page_id</code>), and auto-injection of navigation buttons.</p></li>
+<li>
+<p><strong>Breaking changes (v1.1.0)</strong>:</p>
+<ul><li>
+<code><a href="reference/sd_server.html">sd_server()</a></code> now <strong>only accepts <code>db</code></strong> as its parameter; all other settings must be in YAML header of <code>survey.qmd</code>
+</li>
+<li>YAML keys renamed: <code>required-questions</code> → <code>required</code>, <code>all-questions-required</code> → <code>all-required</code>
+</li>
+<li>
+<code>matrix_option_width</code> parameter removed from <code><a href="reference/sd_question.html">sd_question()</a></code> (use <code>matrix_question_width</code> only)</li>
+<li>
+<code><a href="reference/sd_create_messages.html">sd_create_messages()</a></code> function deprecated</li>
+</ul></li>
+<li>
+<p><strong>Version 1.0+ features</strong>:</p>
+<ul><li>
+<code><a href="reference/sd_nav.html">sd_nav()</a></code> (replacing <code><a href="reference/sd_next.html">sd_next()</a></code>) with previous button support</li>
+<li>Shorthand page syntax (<code>--- page_id</code>)</li>
+<li>Auto-injection of navigation buttons</li>
+<li>Reserved IDs system to prevent conflicts with internal metadata fields</li>
+</ul></li>
+<li>
+<p><strong>Reserved IDs</strong>: The following IDs are reserved and cannot be used for pages, questions, or in <code><a href="reference/sd_store_value.html">sd_store_value()</a></code>:</p>
+<ul><li>
+<code>session_id</code>, <code>time_start</code>, <code>time_end</code>, <code>exit_survey_rating</code>, <code>current_page</code>, <code>browser</code>, <code>ip_address</code>
+</li>
+<li>Use <code>get_reserved_ids()</code> (internal function) to get the complete list</li>
+<li>The <code>check_ids()</code> function in <code>R/config.R</code> validates page and question IDs during survey parsing</li>
+</ul></li>
 <li><p><strong>Testing locally</strong>: Use <code>db &lt;- sd_db_connect(ignore = TRUE)</code> in <code>app.R</code> to test without database connection. Responses save to <code>preview_data.csv</code>.</p></li>
 <li><p><strong>Multi-language support</strong>: System messages support English, German, Spanish, French, Italian, and Simplified Chinese via the <code>system_language</code> parameter.</p></li>
 <li><p><strong>Resource paths</strong>: The <code>.onAttach()</code> function in <code>R/util.R</code> registers resource paths for <code>_survey</code>, <code>images</code>, <code>css</code>, <code>js</code>, and <code>www</code> folders using <code><a href="https://rdrr.io/pkg/shiny/man/resourcePaths.html" class="external-link">shiny::addResourcePath()</a></code>.</p></li>

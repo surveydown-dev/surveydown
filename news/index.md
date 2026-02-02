@@ -1,5 +1,77 @@
 # Changelog
 
+## surveydown 1.1.0
+
+- Bug fix
+  ([\#246](https://github.com/surveydown-dev/surveydown/issues/246)):
+  Added a helper function that provides a vector of all preserved words
+  that cannot be used as IDs and use it to prevent preserved IDs in
+  [`sd_store_value()`](https://pkg.surveydown.org/reference/sd_store_value.md).
+- New feature
+  ([\#247](https://github.com/surveydown-dev/surveydown/issues/247)):
+  [`sd_values()`](https://pkg.surveydown.org/reference/sd_values.md) and
+  [`sd_value()`](https://pkg.surveydown.org/reference/sd_value.md) as
+  new approach of accessing question values, replacing the Shiny default
+  `input$`.
+  [`sd_values()`](https://pkg.surveydown.org/reference/sd_values.md) and
+  [`sd_value()`](https://pkg.surveydown.org/reference/sd_value.md) are
+  able to restore user inputs from db after refreshing the page. They
+  also accept either quoted question IDs or unquoted, so that either
+  `sd_value(fruit)` or `sd_value("fruit")` is fine. They also support
+  multiple parameters, which return into a vector of values. For
+  example, `sd_value(fruit, vegetable)` returns `c("apple", "lettuce")`.
+  sd_value()`is the alias of`sd_values()\`, so they function the same.
+- New feature
+  ([\#248](https://github.com/surveydown-dev/surveydown/issues/248)):
+  Option shuffling supported for `mc`, `mc_buttons`, `mc_multiple`, and
+  `mc_multiple_buttons`. Subquestion shuffling supported for `matrix`.
+  In YAML of `survey.qmd`, 2 new keys are available: `shuffled` and
+  `all-shuffled`. `shuffled` is used to list the question IDs of these 5
+  question types to have their options/subquestions randomly shuffled.
+  `all-shuffled` is by default `false` and can be set to `true` to apply
+  shuffling to all questions.
+- New feature
+  ([\#248](https://github.com/surveydown-dev/surveydown/issues/248),
+  continued): Indexed option shuffling. Use indexing to define what
+  positions of options/subquestions you want to shuffle. For example,
+  `question_id: 1-5` means to shuffle the first 5 options of the
+  question, or the first 5 subquestions if it’s a matrix question. Other
+  supported syntax: `question_id: [1, 2, 4, 7]`,
+  `question_id: [1-5, 8-10]`. No indexing means to shuffle all
+  options/subquestions.
+- Breaking change: The `required-questions` and `all-questions-required`
+  YAML keys are renamed as `required` and `all-required`, respectively.
+- Therefore, for YAML keys, we have `required` and `shuffled` both
+  accepting question IDs, and `all-required` and `all-shuffled` both
+  accepting `true` and `false`.
+- Breaking change: All survey setting parameters are removed from
+  [`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md),
+  which only supports `db` as its only parameter. To define survey
+  settings, please only use the YAML header in `survey.qmd`.
+- Breaking change: The
+  [`sd_question()`](https://pkg.surveydown.org/reference/sd_question.md)
+  function no longer has the `matrix_option_width` parameter. Since the
+  matrix question type only has a question column and an option column,
+  we chose to only keep `matrix_question_width` to control the question
+  column width. The option column width is defined automatically
+  according to whatever is left. Also, now `matrix_question_width` is
+  default to `NULL`, in which case the width is auto-defined according
+  to the length of the longest question. Users can overwrite it by
+  defining `matrix_question_width` to a specific value, and we support
+  numeric, string, or string with %. For example, it’s valid to define
+  `matrix_question_width = "40%"`, `= "40"`, and `= 40`, all of which
+  result in 40% of width.
+- Enhancement
+  ([\#261](https://github.com/surveydown-dev/surveydown/issues/261),
+  [\#262](https://github.com/surveydown-dev/surveydown/issues/262)): Now
+  the short-hand format of options in
+  [`sd_question()`](https://pkg.surveydown.org/reference/sd_question.md),
+  for example `c("Label 1", "Label 2")`, will be stored as they are.
+  This is for compatibility with special characters.
+- Depreciated the
+  [`sd_create_messages()`](https://pkg.surveydown.org/reference/sd_create_messages.md)
+  function.
+
 ## surveydown 1.0.2
 
 - Bug fix (PR

@@ -5,24 +5,14 @@ used in surveydown. It handles various operations such as conditional
 display, progress tracking, page navigation, database updates for survey
 responses, and exit survey functionality.
 
+All survey settings are configured in the `survey.qmd` YAML header under
+`survey-settings`. See the surveydown documentation for available
+options.
+
 ## Usage
 
 ``` r
-sd_server(
-  db = NULL,
-  required_questions = NULL,
-  all_questions_required = FALSE,
-  start_page = NULL,
-  show_previous = FALSE,
-  auto_scroll = FALSE,
-  rate_survey = FALSE,
-  system_language = "en",
-  use_cookies = TRUE,
-  highlight_unanswered = TRUE,
-  highlight_color = "gray",
-  capture_metadata = TRUE,
-  language = NULL
-)
+sd_server(db = NULL)
 ```
 
 ## Arguments
@@ -34,83 +24,18 @@ sd_server(
   function. Defaults to `NULL`. If `NULL`, will be auto-detected from
   the calling environment or remain `NULL` (ignore mode).
 
-- required_questions:
-
-  Vector of character strings. The IDs of questions that must be
-  answered. Defaults to `NULL` (no required questions).
-
-- all_questions_required:
-
-  Logical. If `TRUE`, all questions in the survey will be required.
-  Defaults to `FALSE`.
-
-- start_page:
-
-  Character string. The ID of the page to start on. Defaults to `NULL`
-  (first page).
-
-- show_previous:
-
-  Logical. If `TRUE`, shows the Previous button on survey pages.
-  Defaults to `FALSE`.
-
-- auto_scroll:
-
-  Logical. Whether to enable auto-scrolling to the next question after
-  answering. Defaults to `FALSE`.
-
-- rate_survey:
-
-  Logical. If `TRUE`, shows a rating question when exiting the survey.
-  If `FALSE`, shows a simple confirmation dialog. Defaults to `FALSE`.
-
-- system_language:
-
-  Set the language for the survey system messages. Include your own in a
-  `messages.yml` file, or choose a built in one from the following list:
-  English (`"en"`), German (`"de"`), Spanish (`"es"`), French (`"fr"`),
-  Italian (`"it"`), Simplified Chinese (`"zh-CN"`). Defaults to `"en"`.
-  Note: The deprecated `language` parameter is still supported for
-  backward compatibility.
-
-- use_cookies:
-
-  Logical. If `TRUE`, enables cookie-based session management for
-  storing and restoring survey progress. Defaults to `TRUE`. Can be
-  overridden by `use_cookies` setting in the survey.qmd YAML header.
-
-- highlight_unanswered:
-
-  Logical. If `TRUE`, enables highlighting of all unanswered questions
-  on page display. Defaults to `TRUE`.
-
-- highlight_color:
-
-  Character string. Color for highlighting unanswered questions. Options
-  are "blue", "orange", "green", "purple", "gray", or "grey". Defaults
-  to "gray".
-
-- capture_metadata:
-
-  Logical. If `TRUE`, automatically captures and stores browser
-  information (browser name, version, and OS), IP address, and screen
-  resolution. Defaults to `TRUE`.
-
-- language:
-
-  Deprecated as of v0.13.0. Use `system_language` instead. This
-  parameter. is maintained for backward compatibility only.
-
 ## Value
 
 This function does not return a value; it sets up the server-side logic
-for the 'shiny' application.
+for the 'shiny' application and exposes the `all_data` reactive list in
+the parent environment.
 
 ## Details
 
 The function performs the following tasks:
 
-- Initializes variables and reactive values.
+- Initializes variables and reactive values, including the `all_data`
+  reactive list for accessing question responses.
 
 - Implements conditional display logic for questions.
 
@@ -122,12 +47,43 @@ The function performs the following tasks:
 
 - Performs database operation.
 
-- Controls auto-scrolling behavior based on the `auto_scroll` argument.
+- Controls auto-scrolling behavior based on survey settings.
 
 - Uses sweetalert for warning messages when required questions are not
   answered.
 
-- Handles the exit survey process based on the `rate_survey` argument.
+- Handles the exit survey process based on survey settings.
+
+All survey behavior is configured through the `survey-settings` section
+in the `survey.qmd` YAML header. Available settings include:
+
+- `show-previous`: Show Previous button (default: FALSE)
+
+- `use-cookies`: Enable cookie-based session management (default: TRUE)
+
+- `auto-scroll`: Auto-scroll to next question (default: FALSE)
+
+- `rate-survey`: Show rating question on exit (default: FALSE)
+
+- `all-required`: Make all questions required (default: FALSE)
+
+- `start-page`: ID of the page to start on (default: first page)
+
+- `system-language`: Language for system messages (default: "en")
+
+- `highlight-unanswered`: Highlight unanswered questions (default: TRUE)
+
+- `highlight-color`: Color for highlighting (default: "gray")
+
+- `capture-metadata`: Capture browser/IP info (default: TRUE)
+
+- `required`: Vector of required question IDs
+
+- `shuffled`: Vector of question IDs to shuffle (MC options or matrix
+  rows)
+
+- `all-shuffled`: Shuffle all MC options and matrix rows (default:
+  FALSE)
 
 ## Progress Bar
 
@@ -143,18 +99,32 @@ If `db` is provided, the function will update the database with survey
 responses. If `db` is `NULL` (ignore mode), responses will be saved to a
 local CSV file.
 
-## Auto-Scrolling
+## Accessing Question Values
 
-When `auto_scroll` is `TRUE`, the survey will automatically scroll to
-the next question after the current question is answered. This behavior
-can be disabled by setting `auto_scroll = FALSE`.
+The `sd_server()` function exposes the `all_data` reactive values list
+that provides a reliable way to access question responses in your server
+logic. Unlike directly accessing `input$question_id`, which only works
+for questions on the current page, `all_data$question_id` works for all
+questions by automatically restoring values from the database when
+needed.
 
-## Exit Survey
+Use `all_data` in conditional logic:
 
-When `rate_survey = TRUE`, the function will show a rating question when
-the user attempts to exit the survey. When `FALSE`, it will show a
-simple confirmation dialog. The rating, if provided, is saved with the
-survey data.
+      sd_skip_if(
+        all_data$age < 18 ~ "parental_consent",
+        all_data$employed == "yes" ~ "employment_questions"
+      )
+
+Or in custom reactive expressions:
+
+      output$custom_text <- renderText({
+        paste("You selected:", all_data$favorite_color)
+      })
+
+The `all_data` list automatically stays synchronized with question
+responses and includes restored values from previous sessions (via
+cookies or page refreshes), making it safe to use even when navigating
+backward or refreshing the page.
 
 ## See also
 
@@ -179,12 +149,30 @@ if (interactive()) {
   # )
   #
   # server <- function(input, output, session) {
-  #   sd_server(
-  #     db = db
-  #   )
+  #   sd_server(db = db)
   # }
   #
   # shiny::shinyApp(ui = sd_ui(), server = server)
+
+  # All settings are configured in survey.qmd YAML header:
+  # ---
+  # survey-settings:
+  #   show-previous: true
+  #   auto-scroll: true
+  #   required:
+  #     - age
+  #     - name
+  # ---
+
+  # Using all_data for conditional logic:
+  # server <- function(input, output, session) {
+  #   sd_skip_if(
+  #     all_data$age < 18 ~ "parental_consent",
+  #     all_data$country == "USA" ~ "usa_specific"
+  #   )
+  #
+  #   sd_server(db = db)
+  # }
 
   # Find a working directory and start from a template:
   sd_create_survey(template = "default")

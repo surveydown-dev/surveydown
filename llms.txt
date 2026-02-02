@@ -223,12 +223,8 @@ to PI John Paul Helveston.
 
 - [`sd_create_survey()`](https://pkg.surveydown.org/reference/sd_create_survey.md)
   : Create a new survey template
-- [`sd_create_messages()`](https://pkg.surveydown.org/reference/sd_create_messages.md)
-  : Create a messages template file
 - [`sd_include_folder()`](https://pkg.surveydown.org/reference/sd_include_folder.md)
   : Include a folder to the 'shiny' resource path
-- [`sd_setup()`](https://pkg.surveydown.org/reference/sd_setup.md) :
-  Required Set Up Function
 - [`sd_add_page()`](https://pkg.surveydown.org/reference/sd_add_page.md)
   : Add a Page Template to the Current Document
 - [`sd_add_question()`](https://pkg.surveydown.org/reference/sd_add_question.md)
@@ -237,6 +233,10 @@ to PI John Paul Helveston.
   : Show a Shiny gadget for entering a page ID
 - [`sd_question_gadget()`](https://pkg.surveydown.org/reference/sd_question_gadget.md)
   : Show a Shiny gadget for selecting a question type
+- [`sd_values()`](https://pkg.surveydown.org/reference/sd_values.md) :
+  Access question values from survey responses
+- [`sd_value()`](https://pkg.surveydown.org/reference/sd_value.md) :
+  Access question values from survey responses (alias)
 
 ## Version Control
 
@@ -249,6 +249,10 @@ to PI John Paul Helveston.
   : Depreciated Survey Dashboard
 - [`sd_database()`](https://pkg.surveydown.org/reference/sd_database.md)
   : Connect to a 'PostgreSQL' Database with Automatic Cleanup
+- [`sd_setup()`](https://pkg.surveydown.org/reference/sd_setup.md) :
+  Required Set Up Function
+- [`sd_create_messages()`](https://pkg.surveydown.org/reference/sd_create_messages.md)
+  : Create a messages template file
 - [`sd_set_password()`](https://pkg.surveydown.org/reference/sd_set_password.md)
   : Set password for surveydown survey
 - [`sd_skip_forward()`](https://pkg.surveydown.org/reference/sd_skip_forward.md)
