@@ -413,6 +413,7 @@ tibble_to_list_of_lists <- function(tbl) {
 #'     \item{custom_plotly_chart}{Survey with Plotly visualizations}
 #'     \item{external_redirect}{Template with external site redirects}
 #'     \item{live_polling}{Live polling template for real-time surveys}
+#'     \item{option_shuffling}{Survey with shuffled question options}
 #'     \item{question_types}{Showcases all available question types}
 #'     \item{questions_yml}{Survey with questions defined in a YAML file}
 #'     \item{random_options}{Survey with randomized question options}
@@ -468,6 +469,7 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
     "custom_plotly_chart",
     "external_redirect",
     "live_polling",
+    "option_shuffling",
     "question_types",
     "questions_yml",
     "random_options",
