@@ -48,9 +48,8 @@ question type. Can be provided in multiple formats:
 \itemize{
 \item Named vector: \code{c("Display A" = "value_a", "Display B" = "value_b")} -
 Names are shown in UI, values are stored in database
-\item Unnamed character vector: \code{c("Option 1", "Option 2")} - Values are shown in UI
-and automatically converted to snake_case for database storage
-(e.g., "option_1", "option_2")
+\item Unnamed character vector: \code{c("Option 1", "Option 2")} - Values are used as both
+display labels and stored values (e.g., "Option 1" is shown and stored as "Option 1")
 \item Unnamed numeric vector: \code{c(1, 2, 3)} - For non-slider questions, converted to
 \code{c("1" = "1", "2" = "2", "3" = "3")}. For \code{slider_numeric}, kept as numeric.
 }}

@@ -573,19 +573,6 @@ extract_head_content <- function(html_content) {
   return(head_content)
 }
 
-# Helper function to convert text to snake_case
-to_snake_case <- function(text) {
-  # Convert to lowercase
-  text <- tolower(text)
-  # Replace spaces, hyphens, and other non-alphanumeric characters with underscores
-  text <- gsub("[^a-z0-9]+", "_", text)
-  # Remove leading/trailing underscores
-  text <- gsub("^_+|_+$", "", text)
-  # Replace multiple consecutive underscores with single underscore
-  text <- gsub("_+", "_", text)
-  return(text)
-}
-
 #' Create a survey question
 #'
 #' This function creates various types of survey questions for use in a Surveydown survey.
@@ -625,9 +612,8 @@ to_snake_case <- function(text) {
 #' \itemize{
 #'   \item Named vector: `c("Display A" = "value_a", "Display B" = "value_b")` -
 #'     Names are shown in UI, values are stored in database
-#'   \item Unnamed character vector: `c("Option 1", "Option 2")` - Values are shown in UI
-#'     and automatically converted to snake_case for database storage
-#'     (e.g., "option_1", "option_2")
+#'   \item Unnamed character vector: `c("Option 1", "Option 2")` - Values are used as both
+#'     display labels and stored values (e.g., "Option 1" is shown and stored as "Option 1")
 #'   \item Unnamed numeric vector: `c(1, 2, 3)` - For non-slider questions, converted to
 #'     `c("1" = "1", "2" = "2", "3" = "3")`. For `slider_numeric`, kept as numeric.
 #' }
@@ -756,11 +742,9 @@ sd_question <- function(
     !is.null(option) && (is.null(names(option)) || all(names(option) == ""))
   ) {
     if (is.character(option)) {
-      # For character vectors: convert to snake_case
-      option_labels <- option
-      option_values <- sapply(option, to_snake_case)
-      option <- option_values
-      names(option) <- option_labels
+      # For character vectors: use original values as both names and values
+      # e.g., c("Option 1", "Option 2") becomes c("Option 1" = "Option 1", ...)
+      names(option) <- option
     } else if (
       is.numeric(option) && !is.null(type) && !(type %in% numeric_option_types)
     ) {
