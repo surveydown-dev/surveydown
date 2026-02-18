@@ -442,6 +442,28 @@ get_shuffled <- function(metadata) {
   if (is.null(shuffled)) {
     return(NULL)
   }
+
+  # quarto::quarto_inspect() converts a YAML list of single-key maps into a
+
+  # data.frame when ALL items are key-value pairs (e.g., all questions have
+  # index specifications). Convert it back to the expected list-of-named-lists.
+  if (is.data.frame(shuffled)) {
+    result <- list()
+    for (col_name in names(shuffled)) {
+      col_values <- shuffled[[col_name]]
+      # Find the non-NULL value (data.frame pads other positions with NULL)
+      value <- NULL
+      for (v in col_values) {
+        if (!is.null(v) && !all(is.na(v))) {
+          value <- v
+          break
+        }
+      }
+      result <- c(result, list(stats::setNames(list(value), col_name)))
+    }
+    return(result)
+  }
+
   # Return the raw structure - will be parsed by parse_shuffled_yaml() in config.R
   # This preserves index specifications like "1-5" or [1, 2, 4]
   return(shuffled)

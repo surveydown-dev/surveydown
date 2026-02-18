@@ -1,3 +1,7 @@
+# surveydown 1.1.1
+
+- Bug fix (#250): Indexed option shuffling (e.g., `question_id: [1, 2, 3]`) failed silently when all `shuffled` items used indices with no plain question IDs mixed in. Options now shuffle correctly regardless of format.
+
 # surveydown 1.1.0
 
 - Bug fix (#246): Added a helper function that provides a vector of all preserved words that cannot be used as IDs and use it to prevent preserved IDs in `sd_store_value()`.
