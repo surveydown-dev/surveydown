@@ -31,6 +31,10 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.1.1" id="surveydown-111">surveydown 1.1.1<a class="anchor" aria-label="anchor" href="#surveydown-111"></a></h2>
+<ul><li>Bug fix (<a href="https://github.com/surveydown-dev/surveydown/issues/250" class="external-link">#250</a>): Indexed option shuffling (e.g., <code>question_id: [1, 2, 3]</code>) failed silently when all <code>shuffled</code> items used indices with no plain question IDs mixed in. Options now shuffle correctly regardless of format.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.0" id="surveydown-110">surveydown 1.1.0<a class="anchor" aria-label="anchor" href="#surveydown-110"></a></h2>
 <ul><li>Bug fix (<a href="https://github.com/surveydown-dev/surveydown/issues/246" class="external-link">#246</a>): Added a helper function that provides a vector of all preserved words that cannot be used as IDs and use it to prevent preserved IDs in <code><a href="../reference/sd_store_value.html">sd_store_value()</a></code>.</li>
 <li>New feature (<a href="https://github.com/surveydown-dev/surveydown/issues/247" class="external-link">#247</a>): <code><a href="../reference/sd_values.html">sd_values()</a></code> and <code><a href="../reference/sd_value.html">sd_value()</a></code> as new approach of accessing question values, replacing the Shiny default <code>input$</code>. <code><a href="../reference/sd_values.html">sd_values()</a></code> and <code><a href="../reference/sd_value.html">sd_value()</a></code> are able to restore user inputs from db after refreshing the page. They also accept either quoted question IDs or unquoted, so that either <code>sd_value(fruit)</code> or <code>sd_value("fruit")</code> is fine. They also support multiple parameters, which return into a vector of values. For example, <code>sd_value(fruit, vegetable)</code> returns <code>c("apple", "lettuce")</code>. sd_value()<code>is the alias of</code>sd_values()`, so they function the same.</li>

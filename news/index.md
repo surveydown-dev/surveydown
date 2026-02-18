@@ -1,5 +1,13 @@
 # Changelog
 
+## surveydown 1.1.1
+
+- Bug fix
+  ([\#250](https://github.com/surveydown-dev/surveydown/issues/250)):
+  Indexed option shuffling (e.g., `question_id: [1, 2, 3]`) failed
+  silently when all `shuffled` items used indices with no plain question
+  IDs mixed in. Options now shuffle correctly regardless of format.
+
 ## surveydown 1.1.0
 
 - Bug fix
