@@ -1439,10 +1439,17 @@ sd_server <- function(db = NULL) {
                         var tbodies = table.querySelectorAll('tbody');
                         var dataBody = null;
 
-                        // Find the tbody with actual data rows (has td elements, not just th)
+                        // Find the tbody with actual data rows, skipping header tbodies.
+                        // Quarto >= 1.7 uses <td data-quarto-table-cell-role='th'> instead of <th>,
+                        // so we must check for both formats to correctly skip the header tbody.
                         for (var i = 0; i < tbodies.length; i++) {
                             var firstRow = tbodies[i].querySelector('tr');
-                            if (firstRow && firstRow.querySelector('td')) {
+                            if (!firstRow) continue;
+                            var cells = firstRow.querySelectorAll('td, th');
+                            var thCount = firstRow.querySelectorAll('th').length;
+                            var quartoThCount = firstRow.querySelectorAll('[data-quarto-table-cell-role=\"th\"]').length;
+                            if (cells.length > 0 && (thCount === cells.length || quartoThCount === cells.length)) continue;
+                            if (firstRow.querySelector('td')) {
                                 dataBody = tbodies[i];
                                 break;
                             }
