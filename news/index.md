@@ -1,5 +1,11 @@
 # Changelog
 
+## surveydown 1.1.2
+
+- Bug fix
+  ([\#266](https://github.com/surveydown-dev/surveydown/issues/266)):
+  Matrix row shuffling now works correctly with Quarto \>= 1.7.
+
 ## surveydown 1.1.1
 
 - Bug fix
