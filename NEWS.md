@@ -1,3 +1,7 @@
+# surveydown 1.1.2
+
+- Bug fix (#266): Matrix row shuffling now works correctly with Quarto >= 1.7.
+
 # surveydown 1.1.1
 
 - Bug fix (#250): Indexed option shuffling (e.g., `question_id: [1, 2, 3]`) failed silently when all `shuffled` items used indices with no plain question IDs mixed in. Options now shuffle correctly regardless of format.
