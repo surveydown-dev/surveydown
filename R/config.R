@@ -1662,9 +1662,13 @@ extract_question_structure_html <- function(html_content) {
             "input[type='radio'], input[type='checkbox'], option"
           ) |>
           rvest::html_attr("value")
-        label_options <- question_node |>
-          rvest::html_nodes("label>span, button, option") |>
-          rvest::html_text(trim = TRUE)
+        label_nodes <- question_node |>
+          rvest::html_nodes("label>span, button:not(.sd-attr-btn), option")
+        label_options <- vapply(label_nodes, function(node) {
+          inner <- rvest::html_nodes(node, ".sd-option-label")
+          if (length(inner) > 0) return(rvest::html_text(inner[[1]], trim = TRUE))
+          rvest::html_text(node, trim = TRUE)
+        }, character(1))
         names(options) <- label_options
 
         # Handle empty names by setting them to their corresponding values

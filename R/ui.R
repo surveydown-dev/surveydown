@@ -575,7 +575,8 @@ render_survey_qmd <- function(paths, default_theme = TRUE, theme = NULL) {
       "--embed-resources",
       "--lua-filter=surveydown.lua"
     ),
-    quiet = TRUE
+    # Turn off quiet mode to capture output
+    quiet = FALSE
   )
 
   # Delete lua file from root folder
@@ -962,7 +963,7 @@ sd_question <- function(
     output <- shinyWidgets::radioGroupButtons(
       inputId = id,
       label = label,
-      choices = choice_html(option, option_attr),
+      choices = choice_html(option),
       direction = direction,
       selected = character(0),
       ...
@@ -996,7 +997,7 @@ sd_question <- function(
     output <- shinyWidgets::checkboxGroupButtons(
       inputId = id,
       label = label,
-      choices = choice_html(option, option_attr),
+      choices = choice_html(option),
       direction = direction,
       individual = individual,
       justified = FALSE,
