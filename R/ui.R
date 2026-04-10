@@ -730,6 +730,7 @@ sd_question <- function(
   label = NULL,
   option = NULL,
   options = NULL,
+  option_attr = NULL,
   cols = "80",
   direction = "horizontal",
   status = "default",
@@ -939,7 +940,7 @@ sd_question <- function(
       ...
     )
   } else if (type == "mc") {
-    choices <- choice_list_html(option)
+    choices <- choice_list_html(option, option_attr)
     output <- shiny::radioButtons(
       inputId = id,
       label = label,
@@ -949,7 +950,7 @@ sd_question <- function(
       ...
     )
   } else if (type == "mc_multiple") {
-    choices <- choice_list_html(option)
+    choices <- choice_list_html(option, option_attr)
     output <- shiny::checkboxGroupInput(
       inputId = id,
       label = label,

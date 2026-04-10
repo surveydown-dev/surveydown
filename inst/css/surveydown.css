@@ -687,3 +687,73 @@ div:where(.swal2-container) .swal2-html-container {
     font-size: 0.9rem;
   }
 }
+
+/* Option attribute popup */
+.sd-has-attr {
+  display: flex;
+  align-items: center;
+}
+
+.sd-option-label {
+  margin-left: 0 !important;
+}
+
+.sd-attr-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-bottom: 2px;
+  margin-left: 0 !important;
+}
+
+.sd-attr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 5px;
+  border-radius: 50%;
+  border: 1.5px solid #888;
+  background: transparent;
+  color: #888;
+  font-size: 0.7em;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.sd-attr-btn:hover,
+.sd-attr-btn.sd-attr-active {
+  background: #888;
+  color: #fff;
+}
+
+.sd-attr-btn:active {
+  background: #555;
+  color: #fff;
+  transform: scale(0.88);
+}
+
+.sd-attr-popup {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.82);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-size: 0.82em;
+  white-space: nowrap;
+  z-index: 1001;
+}
+
+.sd-attr-wrap:hover .sd-attr-popup,
+.sd-attr-popup.sd-attr-open {
+  display: block;
+}

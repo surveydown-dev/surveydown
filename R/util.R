@@ -11,19 +11,42 @@ choice_html <- function(option) {
   choice_names_md <- names(option)
   choice_names_html <- lapply(choice_names_md, function(name) {
     html_name <- markdown_to_html(name)
-    clean_name <- gsub("<[/]?p>|\\n", "", html_name)
-    return(clean_name)
+    gsub("<[/]?p>|\\n", "", html_name)
   })
   names(option) <- unlist(choice_names_html)
   return(option)
 }
 
 # Convert option list to choiceNames and choiceValues with HTML support
-choice_list_html <- function(option) {
-  choice_names <- lapply(names(option), function(name) {
-    html_name <- markdown_to_html(name)
+choice_list_html <- function(option, option_attr = NULL) {
+  n <- length(option)
+  attrs <- rep(NA_character_, n)
+  if (!is.null(option_attr)) {
+    m <- min(length(option_attr), n)
+    attrs[seq_len(m)] <- option_attr[seq_len(m)]
+  }
+  choice_names <- lapply(seq_along(names(option)), function(i) {
+    html_name <- markdown_to_html(names(option)[[i]])
     # Remove paragraph tags but keep other HTML formatting
     clean_name <- gsub("<[/]?p>|\\n", "", html_name)
+    if (!is.na(attrs[[i]]) && nzchar(attrs[[i]])) {
+      return(shiny::tagList(
+        shiny::tags$span(class = "sd-option-label", shiny::HTML(clean_name)),
+        shiny::tags$span(
+          class = "sd-attr-wrap",
+          shiny::tags$button(
+            class = "sd-attr-btn",
+            type = "button",
+            onclick = "sdAttrToggle(this, event)",
+            "?"
+          ),
+          shiny::tags$div(
+            class = "sd-attr-popup",
+            attrs[[i]]
+          )
+        )
+      ))
+    }
     return(shiny::HTML(clean_name))
   })
   choice_values <- as.list(unname(option))

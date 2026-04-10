@@ -24,6 +24,7 @@ function Meta(meta)
         "highlighting.js",
         "interaction.js",
         "keep_alive.js",
+        "option_attr.js",
         "progressbar.js"
     }
 

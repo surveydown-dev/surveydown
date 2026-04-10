@@ -27,3 +27,4 @@ preview_data.csv
 test_survey/
 /.luarc.json
 **/*.quarto_ipynb
+test-survey/
