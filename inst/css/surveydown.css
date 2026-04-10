@@ -694,12 +694,17 @@ div:where(.swal2-container) .swal2-html-container {
   align-items: center;
 }
 
+.sd-option-label {
+  margin-left: 0 !important;
+}
+
 .sd-attr-wrap {
   position: relative;
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
   margin-bottom: 2px;
+  margin-left: 0 !important;
 }
 
 .sd-attr-btn {
@@ -718,12 +723,19 @@ div:where(.swal2-container) .swal2-html-container {
   cursor: pointer;
   padding: 0;
   line-height: 1;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
 
 .sd-attr-btn:hover,
 .sd-attr-btn.sd-attr-active {
   background: #888;
   color: #fff;
+}
+
+.sd-attr-btn:active {
+  background: #555;
+  color: #fff;
+  transform: scale(0.88);
 }
 
 .sd-attr-popup {

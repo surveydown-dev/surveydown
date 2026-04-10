@@ -10,6 +10,7 @@ sd_question(
   label = NULL,
   option = NULL,
   options = NULL,
+  option_attr = NULL,
   cols = "80",
   direction = "horizontal",
   status = "default",
