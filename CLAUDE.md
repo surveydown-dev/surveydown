@@ -209,7 +209,7 @@ Show/hide questions based on conditions -
 [`sd_stop_if()`](https://pkg.surveydown.org/reference/sd_stop_if.md):
 Prevent navigation if conditions aren’t met
 
-### Option/Row Randomization (v1.0.3+)
+### Option/Row Randomization (v1.1.0+)
 
 Questions can have their options or rows randomized: - **MC-type
 questions** (`mc`, `mc_buttons`, `mc_multiple`, `mc_multiple_buttons`):

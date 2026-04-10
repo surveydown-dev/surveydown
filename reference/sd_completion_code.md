@@ -26,11 +26,11 @@ A character string representing the random completion code.
 library(surveydown)
 
 sd_completion_code()  # generates a 6-digit code
-#> [1] "258447"
+#> [1] "545358"
 sd_completion_code(digits = 8)  # generates an 8-digit code
-#> [1] "94415312"
+#> [1] "47164415"
 sd_completion_code(digits = 4)  # generates a 4-digit code
-#> [1] "9645"
+#> [1] "7285"
 sd_completion_code(digits = 10)  # generates a 10-digit code
-#> [1] "2941037505"
+#> [1] "6585941037"
 ```
