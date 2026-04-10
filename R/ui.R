@@ -575,8 +575,7 @@ render_survey_qmd <- function(paths, default_theme = TRUE, theme = NULL) {
       "--embed-resources",
       "--lua-filter=surveydown.lua"
     ),
-    # Turn off quiet mode to capture output
-    quiet = FALSE
+    quiet = TRUE
   )
 
   # Delete lua file from root folder
@@ -730,6 +729,7 @@ sd_question <- function(
   label = NULL,
   option = NULL,
   options = NULL,
+  option_attr = NULL,
   cols = "80",
   direction = "horizontal",
   status = "default",
@@ -939,7 +939,7 @@ sd_question <- function(
       ...
     )
   } else if (type == "mc") {
-    choices <- choice_list_html(option)
+    choices <- choice_list_html(option, option_attr)
     output <- shiny::radioButtons(
       inputId = id,
       label = label,
@@ -949,7 +949,7 @@ sd_question <- function(
       ...
     )
   } else if (type == "mc_multiple") {
-    choices <- choice_list_html(option)
+    choices <- choice_list_html(option, option_attr)
     output <- shiny::checkboxGroupInput(
       inputId = id,
       label = label,
@@ -962,7 +962,7 @@ sd_question <- function(
     output <- shinyWidgets::radioGroupButtons(
       inputId = id,
       label = label,
-      choices = choice_html(option),
+      choices = choice_html(option, option_attr),
       direction = direction,
       selected = character(0),
       ...
@@ -996,7 +996,7 @@ sd_question <- function(
     output <- shinyWidgets::checkboxGroupButtons(
       inputId = id,
       label = label,
-      choices = choice_html(option),
+      choices = choice_html(option, option_attr),
       direction = direction,
       individual = individual,
       justified = FALSE,

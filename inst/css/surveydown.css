@@ -687,3 +687,31 @@ div:where(.swal2-container) .swal2-html-container {
     font-size: 0.9rem;
   }
 }
+
+/* Option attribute tooltips */
+[data-sd-tooltip] {
+  position: relative;
+  cursor: help;
+}
+
+[data-sd-tooltip]::after {
+  content: attr(data-sd-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.78em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  z-index: 1000;
+}
+
+[data-sd-tooltip]:hover::after {
+  opacity: 1;
+}

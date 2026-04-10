@@ -7,11 +7,26 @@ markdown_to_html <- function(text) {
 }
 
 # Convert List Names from Markdown to HTML
-choice_html <- function(option) {
+choice_html <- function(option, option_attr = NULL) {
+  n <- length(option)
+  attrs <- rep(NA_character_, n)
+  if (!is.null(option_attr)) {
+    m <- min(length(option_attr), n)
+    attrs[seq_len(m)] <- option_attr[seq_len(m)]
+  }
   choice_names_md <- names(option)
-  choice_names_html <- lapply(choice_names_md, function(name) {
-    html_name <- markdown_to_html(name)
+  choice_names_html <- lapply(seq_along(choice_names_md), function(i) {
+    html_name <- markdown_to_html(choice_names_md[[i]])
     clean_name <- gsub("<[/]?p>|\\n", "", html_name)
+    if (!is.na(attrs[[i]]) && nzchar(attrs[[i]])) {
+      return(paste0(
+        '<span data-sd-tooltip="',
+        attrs[[i]],
+        '">',
+        clean_name,
+        '</span>'
+      ))
+    }
     return(clean_name)
   })
   names(option) <- unlist(choice_names_html)
@@ -19,11 +34,23 @@ choice_html <- function(option) {
 }
 
 # Convert option list to choiceNames and choiceValues with HTML support
-choice_list_html <- function(option) {
-  choice_names <- lapply(names(option), function(name) {
-    html_name <- markdown_to_html(name)
+choice_list_html <- function(option, option_attr = NULL) {
+  n <- length(option)
+  attrs <- rep(NA_character_, n)
+  if (!is.null(option_attr)) {
+    m <- min(length(option_attr), n)
+    attrs[seq_len(m)] <- option_attr[seq_len(m)]
+  }
+  choice_names <- lapply(seq_along(names(option)), function(i) {
+    html_name <- markdown_to_html(names(option)[[i]])
     # Remove paragraph tags but keep other HTML formatting
     clean_name <- gsub("<[/]?p>|\\n", "", html_name)
+    if (!is.na(attrs[[i]]) && nzchar(attrs[[i]])) {
+      return(shiny::tags$span(
+        `data-sd-tooltip` = attrs[[i]],
+        shiny::HTML(clean_name)
+      ))
+    }
     return(shiny::HTML(clean_name))
   })
   choice_values <- as.list(unname(option))
