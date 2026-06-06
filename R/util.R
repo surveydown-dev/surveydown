@@ -1975,12 +1975,13 @@ get_settings_yml <- function() {
 
 # Main function to get session data from any available source (database or local CSV)
 get_session_data <- function(db, search_session_id) {
-  if (!is.null(db)) {
+  if (!is.null(db) && !is.null(db$db)) {
     # Database mode
     return(get_db_data(db, search_session_id))
   } else {
-    # Local CSV mode
-    all_local_data <- get_local_data()
+    # Local CSV mode - derive filename from mode
+    csv_file <- if (!is.null(db) && identical(db$mode, "local")) "local_data.csv" else "preview_data.csv"
+    all_local_data <- get_local_data(csv_file)
     if (!is.null(all_local_data)) {
       return(all_local_data[all_local_data$session_id == search_session_id, ])
     } else {
@@ -1990,17 +1991,17 @@ get_session_data <- function(db, search_session_id) {
 }
 
 # Helper function to get local CSV data
-get_local_data <- function() {
-  if (file.exists("preview_data.csv")) {
+get_local_data <- function(csv_file = "preview_data.csv") {
+  if (file.exists(csv_file)) {
     tryCatch(
       {
         return(utils::read.csv(
-          "preview_data.csv",
+          csv_file,
           stringsAsFactors = FALSE
         ))
       },
       error = function(e) {
-        warning("Error reading preview_data.csv: ", e$message)
+        warning("Error reading ", csv_file, ": ", e$message)
         return(NULL)
       }
     )
@@ -2010,7 +2011,7 @@ get_local_data <- function() {
 
 # Internal function to get data from database for a specific session only
 get_db_data <- function(db, session_id) {
-  if (is.null(db)) {
+  if (is.null(db) || is.null(db$db)) {
     return(NULL)
   }
 
