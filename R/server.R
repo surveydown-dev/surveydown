@@ -605,7 +605,7 @@ sd_server <- function(db = NULL) {
     # Check if db has no active connection (preview, local, or unset)
     ignore_mode <- is.null(db) || is.null(db$db)
 
-    # Extract survey mode, set local CSV filename, and show preview banner if applicable
+    # Extract survey mode, set local CSV filename, and show footer banner if applicable
     survey_mode <- if (!is.null(db) && !is.null(db$mode)) db$mode else "database"
     local_csv_file <- if (identical(survey_mode, "local")) "local_data.csv" else "preview_data.csv"
     if (identical(survey_mode, "preview")) {
@@ -616,11 +616,26 @@ sd_server <- function(db = NULL) {
                 id = "sd-preview-banner",
                 style = paste(
                     "position:fixed;bottom:0;left:0;right:0;",
-                    "z-index:9999;background-color:#cc0000;color:white;",
+                    "z-index:9999;background-color:#e6a817;color:white;",
                     "text-align:center;padding:10px 16px;",
                     "font-weight:bold;font-size:14px;"
                 ),
                 "\u26a0 PREVIEW MODE \u2014 Responses are not saved to the database. Do not share this survey link."
+            )
+        )
+    } else if (ignore_mode && identical(survey_mode, "database")) {
+        shiny::insertUI(
+            selector = "body",
+            where = "beforeEnd",
+            ui = shiny::tags$div(
+                id = "sd-no-db-banner",
+                style = paste(
+                    "position:fixed;bottom:0;left:0;right:0;",
+                    "z-index:9999;background-color:#cc0000;color:white;",
+                    "text-align:center;padding:10px 16px;",
+                    "font-weight:bold;font-size:14px;"
+                ),
+                "\u26a0 DATABASE NOT CONNECTED \u2014 Responses are not being saved. Check your database configuration."
             )
         )
     }
