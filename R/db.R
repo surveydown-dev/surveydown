@@ -171,28 +171,17 @@ sd_db_config <- function(
     invisible(current)
 }
 
-#' Configure how the survey stores data
+#' Connect to a PostgreSQL database for storing survey responses
 #'
-#' Set up the data storage configuration for your survey. This function
-#' determines where survey responses are saved and controls the operating
-#' mode of the survey. In `"database"` mode (the default), responses are
-#' stored in a PostgreSQL database. In `"preview"` or `"local"` mode,
-#' responses are saved to a local CSV file (`preview_data.csv` in preview mode,
-#' `local_data.csv` in local mode).
+#' Establishes a connection pool to a PostgreSQL database (e.g. Supabase) using
+#' credentials from a `.env` file. The survey operating mode (`"database"`,
+#' `"preview"`, or `"local"`) is controlled via the `mode` key under
+#' `survey-settings` in `survey.qmd`, not by this function.
 #'
 #' @param env_file Character string. Path to the env file. Defaults to `".env"`.
-#' @param mode Character string. The operating mode of the survey. One of:
-#'   - `"database"` (default): Connects to a PostgreSQL database and stores
-#'     responses there. Use this for live survey deployment.
-#'   - `"preview"`: Stores responses to a local `preview_data.csv` file and
-#'     displays a prominent banner at the bottom of every survey page indicating
-#'     that the survey is in preview mode. Use this when testing before
-#'     deployment.
-#'   - `"local"`: Stores responses to a local `local_data.csv` file without
-#'     any banner. Use this for intentional offline data collection when no
-#'     internet connection is available.
-#' @param ignore Logical. Deprecated. Use `mode = "preview"` instead. If
-#'   `TRUE`, behaves as `mode = "preview"`. Defaults to `NULL`.
+#' @param ignore Logical. Deprecated. Use `mode: preview` in `survey.qmd` YAML
+#'   instead. If `TRUE`, returns `NULL` with a deprecation warning. Defaults to
+#'   `NULL`.
 #' @param gssencmode Character string. The GSS encryption mode for the database
 #'   connection. Defaults to `"auto"`. Options are:
 #'   - `"auto"`: Tries `"prefer"` first, then falls back to `"disable"` if
@@ -204,24 +193,16 @@ sd_db_config <- function(
 #'   cannot access the database, try setting this to `"disable"`.
 #'
 #' @return A list containing:
-#'   - `db`: The database connection pool, or `NULL` in `"preview"`/`"local"` modes
-#'   - `table`: The database table name, or `NULL` in `"preview"`/`"local"` modes
-#'   - `mode`: The operating mode (`"database"`, `"preview"`, or `"local"`)
+#'   - `db`: The database connection pool
+#'   - `table`: The database table name
 #'
-#'   Returns `NULL` if the database connection fails.
+#'   Returns `NULL` if the database connection fails or `ignore = TRUE`.
 #'
 #' @examples
 #' if (interactive()) {
-#'   # Connect to database using settings from .env (live deployment)
 #'   db <- sd_db_connect()
 #'
-#'   # Preview mode: test locally before deployment (shows banner in UI)
-#'   db <- sd_db_connect(mode = "preview")
-#'
-#'   # Local mode: run offline without a database connection (no banner)
-#'   db <- sd_db_connect(mode = "local")
-#'
-#'   # Close connection when done (database mode only)
+#'   # Close connection when done
 #'   if (!is.null(db$db)) {
 #'     pool::poolClose(db$db)
 #'   }
@@ -230,38 +211,16 @@ sd_db_config <- function(
 #' @export
 sd_db_connect <- function(
     env_file = ".env",
-    mode = "database",
     ignore = NULL,
     gssencmode = "auto"
 ) {
     # Handle deprecated ignore argument
     if (!is.null(ignore)) {
         warning(
-            '`ignore` is deprecated. Use `mode = "preview"` instead.',
+            '`ignore` is deprecated. Use `mode: preview` in your survey.qmd YAML instead.',
             call. = FALSE
         )
-        if (isTRUE(ignore)) mode <- "preview"
-    }
-
-    # Validate mode
-    valid_modes <- c("database", "preview", "local")
-    if (!mode %in% valid_modes) {
-        stop('`mode` must be one of: "database", "preview", or "local".')
-    }
-
-    # Handle non-database modes
-    if (mode == "preview") {
-        cli::cli_alert_warning(
-            "Running in {.strong preview} mode. Responses will be saved to {.file preview_data.csv}, not the database."
-        )
-        return(list(db = NULL, table = NULL, mode = "preview"))
-    }
-
-    if (mode == "local") {
-        cli::cli_alert_info(
-            "Running in {.strong local} mode. Responses will be saved to {.file local_data.csv}."
-        )
-        return(list(db = NULL, table = NULL, mode = "local"))
+        if (isTRUE(ignore)) return(NULL)
     }
 
     # Load environment variables
@@ -308,7 +267,7 @@ sd_db_connect <- function(
             cli::cli_alert_success(
                 "Running in {.strong database} mode. Successfully connected to the database."
             )
-            return(list(db = pool, table = params$table, mode = "database"))
+            return(list(db = pool, table = params$table))
         },
         error = function(e) {
             # Try fallback if we're in "auto" mode
@@ -323,7 +282,7 @@ sd_db_connect <- function(
                         cli::cli_alert_success(
                             "Running in {.strong database} mode. Successfully connected to the database with gssencmode='disable'."
                         )
-                        return(list(db = pool, table = params$table, mode = "database"))
+                        return(list(db = pool, table = params$table))
                     },
                     error = function(e2) {
                         # Both attempts failed

@@ -297,6 +297,7 @@ get_yaml_value <- function(metadata, key) {
     "footer-right"
   )
   survey_params <- c(
+    "mode",
     "show-previous",
     "use-cookies",
     "auto-scroll",
@@ -385,6 +386,14 @@ get_start_page <- function(metadata) {
     return(NULL)
   }
   return(as.character(start_page))
+}
+
+get_mode <- function(metadata) {
+  mode <- get_yaml_value(metadata, "mode")
+  if (is.null(mode)) {
+    return(NULL)
+  }
+  return(as.character(mode))
 }
 
 get_system_language <- function(metadata) {

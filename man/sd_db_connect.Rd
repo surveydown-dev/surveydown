@@ -2,33 +2,16 @@
 % Please edit documentation in R/db.R
 \name{sd_db_connect}
 \alias{sd_db_connect}
-\title{Configure how the survey stores data}
+\title{Connect to a PostgreSQL database for storing survey responses}
 \usage{
-sd_db_connect(
-  env_file = ".env",
-  mode = "database",
-  ignore = NULL,
-  gssencmode = "auto"
-)
+sd_db_connect(env_file = ".env", ignore = NULL, gssencmode = "auto")
 }
 \arguments{
 \item{env_file}{Character string. Path to the env file. Defaults to \code{".env"}.}
 
-\item{mode}{Character string. The operating mode of the survey. One of:
-\itemize{
-\item \code{"database"} (default): Connects to a PostgreSQL database and stores
-responses there. Use this for live survey deployment.
-\item \code{"preview"}: Stores responses to a local \code{preview_data.csv} file and
-displays a prominent banner at the bottom of every survey page indicating
-that the survey is in preview mode. Use this when testing before
-deployment.
-\item \code{"local"}: Stores responses to a local \code{local_data.csv} file without
-any banner. Use this for intentional offline data collection when no
-internet connection is available.
-}}
-
-\item{ignore}{Logical. Deprecated. Use \code{mode = "preview"} instead. If
-\code{TRUE}, behaves as \code{mode = "preview"}. Defaults to \code{NULL}.}
+\item{ignore}{Logical. Deprecated. Use \code{mode: preview} in \code{survey.qmd} YAML
+instead. If \code{TRUE}, returns \code{NULL} with a deprecation warning. Defaults to
+\code{NULL}.}
 
 \item{gssencmode}{Character string. The GSS encryption mode for the database
 connection. Defaults to \code{"auto"}. Options are:
@@ -45,33 +28,23 @@ cannot access the database, try setting this to \code{"disable"}.
 \value{
 A list containing:
 \itemize{
-\item \code{db}: The database connection pool, or \code{NULL} in \code{"preview"}/\code{"local"} modes
-\item \code{table}: The database table name, or \code{NULL} in \code{"preview"}/\code{"local"} modes
-\item \code{mode}: The operating mode (\code{"database"}, \code{"preview"}, or \code{"local"})
+\item \code{db}: The database connection pool
+\item \code{table}: The database table name
 }
 
-Returns \code{NULL} if the database connection fails.
+Returns \code{NULL} if the database connection fails or \code{ignore = TRUE}.
 }
 \description{
-Set up the data storage configuration for your survey. This function
-determines where survey responses are saved and controls the operating
-mode of the survey. In \code{"database"} mode (the default), responses are
-stored in a PostgreSQL database. In \code{"preview"} or \code{"local"} mode,
-responses are saved to a local CSV file (\code{preview_data.csv} in preview mode,
-\code{local_data.csv} in local mode).
+Establishes a connection pool to a PostgreSQL database (e.g. Supabase) using
+credentials from a \code{.env} file. The survey operating mode (\code{"database"},
+\code{"preview"}, or \code{"local"}) is controlled via the \code{mode} key under
+\code{survey-settings} in \code{survey.qmd}, not by this function.
 }
 \examples{
 if (interactive()) {
-  # Connect to database using settings from .env (live deployment)
   db <- sd_db_connect()
 
-  # Preview mode: test locally before deployment (shows banner in UI)
-  db <- sd_db_connect(mode = "preview")
-
-  # Local mode: run offline without a database connection (no banner)
-  db <- sd_db_connect(mode = "local")
-
-  # Close connection when done (database mode only)
+  # Close connection when done
   if (!is.null(db$db)) {
     pool::poolClose(db$db)
   }

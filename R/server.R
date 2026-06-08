@@ -185,6 +185,7 @@ sd_server <- function(db = NULL) {
     highlight_color <- settings$`highlight-color`
     capture_metadata <- settings$`capture-metadata`
     required_questions <- settings$`required`
+    mode_yaml <- if (!is.null(settings$mode)) settings$mode else "database"
     shuffled <- settings$`shuffled`
     all_shuffled <- settings$`all-shuffled`
 
@@ -606,8 +607,9 @@ sd_server <- function(db = NULL) {
     ignore_mode <- is.null(db) || is.null(db$db)
 
     # Extract survey mode, set local CSV filename, and show footer banner if applicable
-    survey_mode <- if (!is.null(db) && !is.null(db$mode)) db$mode else "database"
+    survey_mode <- mode_yaml
     local_csv_file <- if (identical(survey_mode, "local")) "local_data.csv" else "preview_data.csv"
+    session$userData$local_csv_file <- local_csv_file
     if (identical(survey_mode, "preview")) {
         shiny::insertUI(
             selector = "body",
