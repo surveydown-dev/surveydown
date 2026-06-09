@@ -519,14 +519,7 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
 
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
 
-  # Determine where to get template files from
-  if (template == "default") {
-    # Use built-in template
-    template_path <- system.file("template", package = "surveydown")
-  } else {
-    # Download from GitHub
-    template_path <- download_template_from_github(template)
-  }
+  template_path <- download_template_from_github(template)
 
   if (!dir.exists(template_path)) {
     stop("Template directory does not exist.")
@@ -644,21 +637,13 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
     message("Done!")
   }
 
-  # Create success message that includes the template
   if (any(files_copied)) {
-    if (template == "default") {
-      cli::cli_alert_success(paste("Template created at", path))
-    } else {
-      cli::cli_alert_success(paste("Template of", template, "created at", path))
-    }
+    cli::cli_alert_success(paste("Template of", template, "created at", path))
   } else {
     cli::cli_alert_success("Since all files exist, no file was added.")
   }
 
-  # Clean up temp directory if needed
-  if (template != "default") {
-    unlink(dirname(template_path), recursive = TRUE)
-  }
+  unlink(dirname(template_path), recursive = TRUE)
 
   invisible(NULL)
 }
