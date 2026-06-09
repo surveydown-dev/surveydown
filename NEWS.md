@@ -1,3 +1,9 @@
+# surveydown 1.2.0
+
+- New feature: Survey operating mode is now controlled via a `mode` key under `survey-settings` in `survey.qmd`. Supported values are `"database"` (default), `"preview"` (saves responses to `preview_data.csv`), and `"local"` (saves responses to `local_data.csv`). The `mode` parameter replaces the deprecated `ignore = TRUE` argument in `sd_db_connect()`.
+- Breaking change: The `ignore` argument in `sd_db_connect()` is now deprecated. Use `mode: preview` in `survey.qmd` YAML instead. Setting `ignore = TRUE` still works but emits a deprecation warning.
+- Enhancement: A visible banner is now displayed at the bottom of the survey when running in `preview` mode (yellow) or when the database is not connected while in `database` mode (red), alerting developers that responses are not being saved to the database.
+
 # surveydown 1.1.3
 
 - New feature: A new `option_attr` parameter for `sd_question()`, limited to the `mc` and `mc_multiple` types. It can be used to define the extra attributes for the designated options with a question mark icon to the right which can be triggered either with hovering or clicking. For example, an `mc` question might have `option = c("option_1, "option_2", "option_3", "option_4")`. Then we can give `option_attr = c("Attribute 1", NA, "Attribute 3")` to define attributes for the 1st and 3rd options.

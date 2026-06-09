@@ -623,7 +623,7 @@ sd_server <- function(db = NULL) {
                     "text-align:center;padding:10px 16px;",
                     "font-weight:bold;font-size:14px;"
                 ),
-                "\u26a0 PREVIEW MODE \u2014 Responses are not saved to the database. Do not share this survey link."
+                "PREVIEW MODE \u2014 Responses are saved in preview_data.csv, not the database."
             )
         )
     } else if (ignore_mode && identical(survey_mode, "database")) {
@@ -638,7 +638,7 @@ sd_server <- function(db = NULL) {
                     "text-align:center;padding:10px 16px;",
                     "font-weight:bold;font-size:14px;"
                 ),
-                "\u26a0 DATABASE NOT CONNECTED \u2014 Responses are not being saved. Check your database configuration."
+                "DATABASE NOT CONNECTED \u2014 Responses are not being saved. Check your database configuration."
             )
         )
     }
