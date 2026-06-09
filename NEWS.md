@@ -1,3 +1,7 @@
+# surveydown (development version)
+
+- Bug fix: Markdown/HTML formatting in `mc` and `mc_multiple` question labels (e.g. `**bold**`) is now preserved when option shuffling is enabled. Previously, shuffled choice questions were re-rendered on the client from a plain-text copy of the label, which stripped bold, italics, and links from the question text. The parsed question structure now carries the label's inline HTML (`label_html`) alongside the existing plain-text `label`.
+
 # surveydown 1.1.3
 
 - New feature: A new `option_attr` parameter for `sd_question()`, limited to the `mc` and `mc_multiple` types. It can be used to define the extra attributes for the designated options with a question mark icon to the right which can be triggered either with hovering or clicking. For example, an `mc` question might have `option = c("option_1, "option_2", "option_3", "option_4")`. Then we can give `option_attr = c("Attribute 1", NA, "Attribute 3")` to define attributes for the 1st and 3rd options.
