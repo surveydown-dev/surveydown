@@ -59,6 +59,10 @@ display labels and stored values (e.g., "Option 1" is shown and stored as "Optio
 If both are provided, \code{option} takes precedence. Supports the same formats
 as \code{option}.}
 
+\item{option_attr}{Character vector. Optional HTML attributes to apply to
+individual options for \code{"mc"} and \code{"mc_multiple"} question types. Each
+element corresponds to an option in the same position. Defaults to \code{NULL}.}
+
 \item{cols}{Integer. Number of columns for the \code{"textarea"} question type.
 Defaults to \code{80}.}
 

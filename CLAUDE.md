@@ -68,6 +68,7 @@ testthat::test_file("tests/testthat/test-reserved-ids.R")
 Tests are located in `tests/testthat/` and use the `testthat` framework. Current test coverage includes:
 - `test-reserved-ids.R`: Validation of reserved IDs and ID checking logic
 - `test-all-data.R`: Testing for the `all_data` reactive values list functionality
+- `test-db-modes.R`: `sd_db_connect()` signature, deprecated `ignore` argument, and `get_session_data()` CSV routing
 
 **Manual Testing:**
 
@@ -107,8 +108,8 @@ The package has a clear separation of concerns across several R files:
 
 - **`R/db.R`**: Database functions including:
   - `sd_db_config()`: Interactive database configuration setup
-  - `sd_db_connect()`: PostgreSQL connection management (Supabase support)
-  - `sd_database()`: Database object creation
+  - `sd_db_connect()`: PostgreSQL connection management (Supabase support). Accepts `env_file`, `ignore` (deprecated), and `gssencmode`. The survey mode (`database`/`preview`/`local`) is controlled via `survey-settings` in `survey.qmd` YAML, not by this function.
+  - `sd_database()`: Database object creation (deprecated, use `sd_db_connect()`)
   - Functions for storing and retrieving survey responses
 
 - **`R/util.R`**: Utility functions for:
@@ -329,7 +330,7 @@ Progress calculation is based on the last answered question index. The progress 
 
 3. **Reactive Shiny integration**: Since surveys are Shiny apps, designers can leverage Shiny's reactive programming for dynamic content.
 
-4. **Database-first with CSV fallback**: Primary mode uses PostgreSQL (Supabase), but `ignore = TRUE` mode saves to local CSV for testing.
+4. **Database-first with CSV fallback**: Primary mode uses PostgreSQL (Supabase). Set `mode: preview` or `mode: local` in the `survey.qmd` YAML to save responses to a local CSV instead.
 
 5. **YAML-driven configuration**: Most `sd_server()` parameters can be set in the `survey.qmd` YAML header. Function arguments override YAML settings.
 
@@ -358,7 +359,7 @@ Database functions in `R/db.R` use the `pool` package for connection pooling and
 
 ## Important Notes
 
-- **NAMESPACE is auto-generated**: Edit roxygen comments in R files, then run `devtools::document()`. Never edit NAMESPACE directly.
+- **NAMESPACE and `man/` are auto-generated**: Edit roxygen comments in R files, then run `devtools::document()`. Never edit NAMESPACE or any file in `man/` directly.
 
 - **Breaking changes (v1.1.0)**:
   - `sd_server()` now **only accepts `db`** as its parameter; all other settings must be in YAML header of `survey.qmd`
@@ -377,7 +378,7 @@ Database functions in `R/db.R` use the `pool` package for connection pooling and
   - Use `get_reserved_ids()` (internal function) to get the complete list
   - The `check_ids()` function in `R/config.R` validates page and question IDs during survey parsing
 
-- **Testing locally**: Use `db <- sd_db_connect(ignore = TRUE)` in `app.R` to test without database connection. Responses save to `preview_data.csv`.
+- **Testing locally**: Set `mode: preview` under `survey-settings` in `survey.qmd` to test without a database connection. Responses save to `preview_data.csv`. The deprecated `ignore = TRUE` argument in `sd_db_connect()` still works but emits a warning.
 
 - **Multi-language support**: System messages support English, German, Spanish, French, Italian, and Simplified Chinese via the `system_language` parameter.
 

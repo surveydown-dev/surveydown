@@ -651,6 +651,9 @@ extract_head_content <- function(html_content) {
 #' @param options Alias for `option`. Either `option` or `options` can be used.
 #' If both are provided, `option` takes precedence. Supports the same formats
 #' as `option`.
+#' @param option_attr Character vector. Optional HTML attributes to apply to
+#' individual options for `"mc"` and `"mc_multiple"` question types. Each
+#' element corresponds to an option in the same position. Defaults to `NULL`.
 #' @param placeholder Character string. Placeholder text for `"text"` and
 #' `"textarea"` question types.
 #' @param resize Character string. Resize option for textarea input.

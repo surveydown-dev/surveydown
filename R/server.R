@@ -595,7 +595,8 @@ sd_server <- function(db = NULL) {
         update_progress_bar,
         use_cookies,
         page_history,
-        question_history
+        question_history,
+        local_csv_file
     )
     # Auto scroll
     session$sendCustomMessage(
@@ -848,7 +849,8 @@ sd_server <- function(db = NULL) {
         session_id,
         time_start,
         all_ids,
-        start_page_ts_id
+        start_page_ts_id,
+        local_csv_file
     )
     all_data <- do.call(shiny::reactiveValues, initial_data)
 
@@ -3433,7 +3435,8 @@ get_initial_data <- function(
     session_id,
     time_start,
     all_ids,
-    start_page_ts_id
+    start_page_ts_id,
+    local_csv_file = "preview_data.csv"
 ) {
     # Initialize with static data
     data <- c(
@@ -3829,7 +3832,8 @@ handle_data_restoration <- function(
     question_ts_ids,
     progress_updater,
     page_history = NULL,
-    question_history = NULL
+    question_history = NULL,
+    local_csv_file = "preview_data.csv"
 ) {
     if (is.null(session_id)) {
         return(NULL)
@@ -4024,7 +4028,8 @@ handle_sessions <- function(
     progress_updater,
     use_cookies = TRUE,
     page_history = NULL,
-    question_history = NULL
+    question_history = NULL,
+    local_csv_file = "preview_data.csv"
 ) {
     # Note: Cookies can work in both database and local modes
     # No need to disable cookies when db is NULL
@@ -4060,7 +4065,8 @@ handle_sessions <- function(
                 question_ts_ids,
                 progress_updater,
                 page_history,
-                question_history
+                question_history,
+                local_csv_file
             )
 
             if (!is.null(restore_data)) {
