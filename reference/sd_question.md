@@ -77,6 +77,12 @@ sd_question(
   are provided, `option` takes precedence. Supports the same formats as
   `option`.
 
+- option_attr:
+
+  Character vector. Optional HTML attributes to apply to individual
+  options for `"mc"` and `"mc_multiple"` question types. Each element
+  corresponds to an option in the same position. Defaults to `NULL`.
+
 - cols:
 
   Integer. Number of columns for the `"textarea"` question type.

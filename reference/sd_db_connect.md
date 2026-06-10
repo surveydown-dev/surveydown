@@ -1,25 +1,27 @@
-# Connect to database
+# Connect to a PostgreSQL database for storing survey responses
 
-Establish a connection to the database using settings from .env file.
-This function creates a connection pool for efficient database access
-and provides options for local data storage when needed.
+Establishes a connection pool to a PostgreSQL database (e.g. Supabase)
+using credentials from a `.env` file. The survey operating mode
+(`"database"`, `"preview"`, or `"local"`) is controlled via the `mode`
+key under `survey-settings` in `survey.qmd`, not by this function.
 
 ## Usage
 
 ``` r
-sd_db_connect(env_file = ".env", ignore = FALSE, gssencmode = "auto")
+sd_db_connect(env_file = ".env", ignore = NULL, gssencmode = "auto")
 ```
 
 ## Arguments
 
 - env_file:
 
-  Character string. Path to the env file. Defaults to ".env"
+  Character string. Path to the env file. Defaults to `".env"`.
 
 - ignore:
 
-  Logical. If `TRUE`, data will be saved to a local CSV file instead of
-  the database. Defaults to `FALSE`.
+  Logical. Deprecated. Use `mode: preview` in `survey.qmd` YAML instead.
+  If `TRUE`, returns `NULL` with a deprecation warning. Defaults to
+  `NULL`.
 
 - gssencmode:
 
@@ -38,21 +40,22 @@ sd_db_connect(env_file = ".env", ignore = FALSE, gssencmode = "auto")
 
 ## Value
 
-A list containing the database connection pool (`db`) and table name
-(`table`), or `NULL` if ignore is `TRUE` or if connection fails
+A list containing:
+
+- `db`: The database connection pool
+
+- `table`: The database table name
+
+Returns `NULL` if the database connection fails or `ignore = TRUE`.
 
 ## Examples
 
 ``` r
 if (interactive()) {
-  # Connect using settings from .env
   db <- sd_db_connect()
 
-  # Use local storage instead of database
-  db <- sd_db_connect(ignore = TRUE)
-
   # Close connection when done
-  if (!is.null(db)) {
+  if (!is.null(db$db)) {
     pool::poolClose(db$db)
   }
 }

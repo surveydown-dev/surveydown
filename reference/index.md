@@ -5,7 +5,7 @@
 - [`sd_db_config()`](https://pkg.surveydown.org/reference/sd_db_config.md)
   : Configure database settings
 - [`sd_db_connect()`](https://pkg.surveydown.org/reference/sd_db_connect.md)
-  : Connect to database
+  : Connect to a PostgreSQL database for storing survey responses
 - [`sd_get_data()`](https://pkg.surveydown.org/reference/sd_get_data.md)
   : Fetch data from a database table with automatic reactivity detection
 

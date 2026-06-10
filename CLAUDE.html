@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -84,7 +84,7 @@
 <span></span>
 <span><span class="co"># Run a specific test file</span></span>
 <span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_file.html" class="external-link">test_file</a></span><span class="op">(</span><span class="st">"tests/testthat/test-reserved-ids.R"</span><span class="op">)</span></span></code></pre></div>
-<p>Tests are located in <code>tests/testthat/</code> and use the <code>testthat</code> framework. Current test coverage includes: - <code>test-reserved-ids.R</code>: Validation of reserved IDs and ID checking logic - <code>test-all-data.R</code>: Testing for the <code>all_data</code> reactive values list functionality</p>
+<p>Tests are located in <code>tests/testthat/</code> and use the <code>testthat</code> framework. Current test coverage includes: - <code>test-reserved-ids.R</code>: Validation of reserved IDs and ID checking logic - <code>test-all-data.R</code>: Testing for the <code>all_data</code> reactive values list functionality - <code>test-db-modes.R</code>: <code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code> signature, deprecated <code>ignore</code> argument, and <code>get_session_data()</code> CSV routing</p>
 <p><strong>Manual Testing:</strong></p>
 <p>Survey functionality is typically tested manually using the <code>test_survey/</code> directory, which contains a full survey example with <code>app.R</code> and <code>survey.qmd</code> files. To test changes:</p>
 <ol style="list-style-type: decimal"><li>Make changes to package source files in <code>R/</code>
@@ -129,9 +129,9 @@
 <ul><li>
 <code><a href="reference/sd_db_config.html">sd_db_config()</a></code>: Interactive database configuration setup</li>
 <li>
-<code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code>: PostgreSQL connection management (Supabase support)</li>
+<code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code>: PostgreSQL connection management (Supabase support). Accepts <code>env_file</code>, <code>ignore</code> (deprecated), and <code>gssencmode</code>. The survey mode (<code>database</code>/<code>preview</code>/<code>local</code>) is controlled via <code>survey-settings</code> in <code>survey.qmd</code> YAML, not by this function.</li>
 <li>
-<code><a href="reference/sd_database.html">sd_database()</a></code>: Database object creation</li>
+<code><a href="reference/sd_database.html">sd_database()</a></code>: Database object creation (deprecated, use <code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code>)</li>
 <li>Functions for storing and retrieving survey responses</li>
 </ul></li>
 <li>
@@ -310,7 +310,7 @@
 </ul></li>
 <li><p><strong>Parse-once, cache-always</strong>: Survey content is parsed from rendered HTML once, then cached in <code>_survey/</code> folder. Subsequent runs load from cache unless files change.</p></li>
 <li><p><strong>Reactive Shiny integration</strong>: Since surveys are Shiny apps, designers can leverage Shiny’s reactive programming for dynamic content.</p></li>
-<li><p><strong>Database-first with CSV fallback</strong>: Primary mode uses PostgreSQL (Supabase), but <code>ignore = TRUE</code> mode saves to local CSV for testing.</p></li>
+<li><p><strong>Database-first with CSV fallback</strong>: Primary mode uses PostgreSQL (Supabase). Set <code>mode: preview</code> or <code>mode: local</code> in the <code>survey.qmd</code> YAML to save responses to a local CSV instead.</p></li>
 <li><p><strong>YAML-driven configuration</strong>: Most <code><a href="reference/sd_server.html">sd_server()</a></code> parameters can be set in the <code>survey.qmd</code> YAML header. Function arguments override YAML settings.</p></li>
 </ol></div>
 <div class="section level2">
@@ -342,7 +342,7 @@
 </div>
 <div class="section level2">
 <h2 id="important-notes">Important Notes<a class="anchor" aria-label="anchor" href="#important-notes"></a></h2>
-<ul><li><p><strong>NAMESPACE is auto-generated</strong>: Edit roxygen comments in R files, then run <code>devtools::document()</code>. Never edit NAMESPACE directly.</p></li>
+<ul><li><p><strong>NAMESPACE and <code>man/</code> are auto-generated</strong>: Edit roxygen comments in R files, then run <code>devtools::document()</code>. Never edit NAMESPACE or any file in <code>man/</code> directly.</p></li>
 <li>
 <p><strong>Breaking changes (v1.1.0)</strong>:</p>
 <ul><li>
@@ -371,7 +371,7 @@
 <li>Use <code>get_reserved_ids()</code> (internal function) to get the complete list</li>
 <li>The <code>check_ids()</code> function in <code>R/config.R</code> validates page and question IDs during survey parsing</li>
 </ul></li>
-<li><p><strong>Testing locally</strong>: Use <code>db &lt;- sd_db_connect(ignore = TRUE)</code> in <code>app.R</code> to test without database connection. Responses save to <code>preview_data.csv</code>.</p></li>
+<li><p><strong>Testing locally</strong>: Set <code>mode: preview</code> under <code>survey-settings</code> in <code>survey.qmd</code> to test without a database connection. Responses save to <code>preview_data.csv</code>. The deprecated <code>ignore = TRUE</code> argument in <code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code> still works but emits a warning.</p></li>
 <li><p><strong>Multi-language support</strong>: System messages support English, German, Spanish, French, Italian, and Simplified Chinese via the <code>system_language</code> parameter.</p></li>
 <li><p><strong>Resource paths</strong>: The <code>.onAttach()</code> function in <code>R/util.R</code> registers resource paths for <code>_survey</code>, <code>images</code>, <code>css</code>, <code>js</code>, and <code>www</code> folders using <code><a href="https://rdrr.io/pkg/shiny/man/resourcePaths.html" class="external-link">shiny::addResourcePath()</a></code>.</p></li>
 </ul></div>

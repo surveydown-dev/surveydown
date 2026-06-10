@@ -80,7 +80,10 @@ testthat::test_file("tests/testthat/test-reserved-ids.R")
 Tests are located in `tests/testthat/` and use the `testthat` framework.
 Current test coverage includes: - `test-reserved-ids.R`: Validation of
 reserved IDs and ID checking logic - `test-all-data.R`: Testing for the
-`all_data` reactive values list functionality
+`all_data` reactive values list functionality - `test-db-modes.R`:
+[`sd_db_connect()`](https://pkg.surveydown.org/reference/sd_db_connect.md)
+signature, deprecated `ignore` argument, and `get_session_data()` CSV
+routing
 
 **Manual Testing:**
 
@@ -128,9 +131,13 @@ The package has a clear separation of concerns across several R files:
   - [`sd_db_config()`](https://pkg.surveydown.org/reference/sd_db_config.md):
     Interactive database configuration setup
   - [`sd_db_connect()`](https://pkg.surveydown.org/reference/sd_db_connect.md):
-    PostgreSQL connection management (Supabase support)
+    PostgreSQL connection management (Supabase support). Accepts
+    `env_file`, `ignore` (deprecated), and `gssencmode`. The survey mode
+    (`database`/`preview`/`local`) is controlled via `survey-settings`
+    in `survey.qmd` YAML, not by this function.
   - [`sd_database()`](https://pkg.surveydown.org/reference/sd_database.md):
-    Database object creation
+    Database object creation (deprecated, use
+    [`sd_db_connect()`](https://pkg.surveydown.org/reference/sd_db_connect.md))
   - Functions for storing and retrieving survey responses
 - **`R/util.R`**: Utility functions for:
   - Question type implementations
@@ -390,7 +397,8 @@ later. This is intentional to avoid confusing respondents.
     content.
 
 4.  **Database-first with CSV fallback**: Primary mode uses PostgreSQL
-    (Supabase), but `ignore = TRUE` mode saves to local CSV for testing.
+    (Supabase). Set `mode: preview` or `mode: local` in the `survey.qmd`
+    YAML to save responses to a local CSV instead.
 
 5.  **YAML-driven configuration**: Most
     [`sd_server()`](https://pkg.surveydown.org/reference/sd_server.md)
@@ -434,8 +442,9 @@ connection and ignore mode (local CSV).
 
 ## Important Notes
 
-- **NAMESPACE is auto-generated**: Edit roxygen comments in R files,
-  then run `devtools::document()`. Never edit NAMESPACE directly.
+- **NAMESPACE and `man/` are auto-generated**: Edit roxygen comments in
+  R files, then run `devtools::document()`. Never edit NAMESPACE or any
+  file in `man/` directly.
 
 - **Breaking changes (v1.1.0)**:
 
@@ -472,9 +481,11 @@ connection and ignore mode (local CSV).
   - The `check_ids()` function in `R/config.R` validates page and
     question IDs during survey parsing
 
-- **Testing locally**: Use `db <- sd_db_connect(ignore = TRUE)` in
-  `app.R` to test without database connection. Responses save to
-  `preview_data.csv`.
+- **Testing locally**: Set `mode: preview` under `survey-settings` in
+  `survey.qmd` to test without a database connection. Responses save to
+  `preview_data.csv`. The deprecated `ignore = TRUE` argument in
+  [`sd_db_connect()`](https://pkg.surveydown.org/reference/sd_db_connect.md)
+  still works but emits a warning.
 
 - **Multi-language support**: System messages support English, German,
   Spanish, French, Italian, and Simplified Chinese via the

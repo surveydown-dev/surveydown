@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,16 @@
       <small>Source: <a href="https://github.com/surveydown-dev/surveydown/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.0" id="surveydown-120">surveydown 1.2.0<a class="anchor" aria-label="anchor" href="#surveydown-120"></a></h2>
+<ul><li>New feature: Survey operating mode is now controlled via a <code>mode</code> key under <code>survey-settings</code> in <code>survey.qmd</code>. Supported values are <code>"database"</code> (default), <code>"preview"</code> (saves responses to <code>preview_data.csv</code>), and <code>"local"</code> (saves responses to <code>local_data.csv</code>). The <code>mode</code> parameter replaces the deprecated <code>ignore = TRUE</code> argument in <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code>.</li>
+<li>Breaking change: The <code>ignore</code> argument in <code><a href="../reference/sd_db_connect.html">sd_db_connect()</a></code> is now deprecated. Use <code>mode: preview</code> in <code>survey.qmd</code> YAML instead. Setting <code>ignore = TRUE</code> still works but emits a deprecation warning.</li>
+<li>Enhancement: A visible banner is now displayed at the bottom of the survey when running in <code>preview</code> mode (yellow) or when the database is not connected while in <code>database</code> mode (red), alerting developers that responses are not being saved to the database.</li>
+<li>Bug fix: Markdown/HTML formatting in <code>mc</code> and <code>mc_multiple</code> question labels (e.g. <code>**bold**</code>) is now preserved when option shuffling is enabled. Previously, shuffled choice questions were re-rendered on the client from a plain-text copy of the label, which stripped bold, italics, and links from the question text. The parsed question structure now carries the label’s inline HTML (<code>label_html</code>) alongside the existing plain-text <code>label</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.3" id="surveydown-113">surveydown 1.1.3<a class="anchor" aria-label="anchor" href="#surveydown-113"></a></h2>
 <ul><li>New feature: A new <code>option_attr</code> parameter for <code><a href="../reference/sd_question.html">sd_question()</a></code>, limited to the <code>mc</code> and <code>mc_multiple</code> types. It can be used to define the extra attributes for the designated options with a question mark icon to the right which can be triggered either with hovering or clicking. For example, an <code>mc</code> question might have <code>option = c("option_1, "option_2", "option_3", "option_4")</code>. Then we can give <code>option_attr = c("Attribute 1", NA, "Attribute 3")</code> to define attributes for the 1st and 3rd options.</li>

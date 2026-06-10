@@ -20,8 +20,8 @@ update status to the console).
 
 ``` r
 surveydown::sd_version()
-#> surveydown (local): 1.1.3
-#> surveydown (latest): 1.1.3
+#> surveydown (local): 1.2.0
+#> surveydown (latest): 1.2.0
 #> 
 #> surveydown is up to date.
 ```
