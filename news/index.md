@@ -1,15 +1,5 @@
 # Changelog
 
-## surveydown (development version)
-
-- Bug fix: Markdown/HTML formatting in `mc` and `mc_multiple` question
-  labels (e.g. `**bold**`) is now preserved when option shuffling is
-  enabled. Previously, shuffled choice questions were re-rendered on the
-  client from a plain-text copy of the label, which stripped bold,
-  italics, and links from the question text. The parsed question
-  structure now carries the label’s inline HTML (`label_html`) alongside
-  the existing plain-text `label`.
-
 ## surveydown 1.1.3
 
 - New feature: A new `option_attr` parameter for
