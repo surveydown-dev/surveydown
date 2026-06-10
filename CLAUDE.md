@@ -20,6 +20,7 @@ running.
 2.  **Install the package**: run this R script:
 
     ``` r
+
     devtools::install(force = TRUE)
     ```
 
@@ -41,6 +42,7 @@ Shiny app that stores responses in PostgreSQL (Supabase recommended)
 ### Package Development
 
 ``` r
+
 # Load package during development
 devtools::load_all()
 
@@ -57,6 +59,7 @@ devtools::check()
 ### Documentation
 
 ``` r
+
 # Build pkgdown site
 pkgdown::build_site()
 ```
@@ -66,6 +69,7 @@ pkgdown::build_site()
 **Automated Tests:**
 
 ``` r
+
 # Run all tests
 devtools::test()
 
@@ -269,6 +273,7 @@ backward/forward correctly - More robust than direct `input$` access
 **Usage:**
 
 ``` r
+
 # Direct access with $ notation
 age_value <- all_data$age
 
@@ -313,6 +318,7 @@ over `$` notation
 **Usage:**
 
 ``` r
+
 # Single value - all equivalent:
 age1 <- all_data$age
 age2 <- sd_values(age)        # Unquoted (recommended)
@@ -351,6 +357,7 @@ Use
 to save computed values or URL parameters to the database:
 
 ``` r
+
 # Store a computed value
 sd_store_value(calculated_score, "score")
 

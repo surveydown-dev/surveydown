@@ -88,6 +88,7 @@ we also like [VSCode](https://github.com/microsoft/vscode) and
 You can install {surveydown} from CRAN in your R console:
 
 ``` r
+
 install.packages("surveydown")
 ```
 
@@ -95,6 +96,7 @@ or you can install the development version from
 [GitHub](https://github.com/surveydown-dev/surveydown):
 
 ``` r
+
 # install.packages("pak")
 pak::pak('surveydown-dev/surveydown')
 ```
@@ -102,12 +104,14 @@ pak::pak('surveydown-dev/surveydown')
 Load the package with:
 
 ``` r
+
 library(surveydown)
 ```
 
 You can also check which version you have installed:
 
 ``` r
+
 surveydown::sd_version()
 ```
 
@@ -134,6 +138,7 @@ article associated with it! You can get the citation by typing
 `citation("surveydown")` into R:
 
 ``` r
+
 citation("surveydown")
 #> To cite surveydown in publications use:
 #> 

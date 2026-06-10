@@ -110,12 +110,14 @@ needed.
 
 Use `all_data` in conditional logic:
 
+
       sd_skip_if(
         all_data$age < 18 ~ "parental_consent",
         all_data$employed == "yes" ~ "employment_questions"
       )
 
 Or in custom reactive expressions:
+
 
       output$custom_text <- renderText({
         paste("You selected:", all_data$favorite_color)

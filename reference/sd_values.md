@@ -23,23 +23,23 @@ sd_values(..., as_numeric = NULL, as_vector = NULL)
 
   Logical or NULL. Controls numeric type conversion:
 
-  |                  |                                                                                                                        |
-  |------------------|------------------------------------------------------------------------------------------------------------------------|
-  | Value            | Behavior                                                                                                               |
-  | `NULL` (default) | Auto-detect: checks if value looks numeric, converts if so. Non-numeric values stay as character.                      |
-  | `TRUE`           | Force convert: always calls [`as.numeric()`](https://rdrr.io/r/base/numeric.html). Non-convertible values become `NA`. |
-  | `FALSE`          | Never convert: returns value as-is, no detection.                                                                      |
+  |  |  |
+  |----|----|
+  | Value | Behavior |
+  | `NULL` (default) | Auto-detect: checks if value looks numeric, converts if so. Non-numeric values stay as character. |
+  | `TRUE` | Force convert: always calls [`as.numeric()`](https://rdrr.io/r/base/numeric.html). Non-convertible values become `NA`. |
+  | `FALSE` | Never convert: returns value as-is, no detection. |
 
 - as_vector:
 
   Logical or NULL. Controls splitting of pipe-separated values:
 
-  |                  |                                                             |
-  |------------------|-------------------------------------------------------------|
-  | Value            | Behavior                                                    |
+  |  |  |
+  |----|----|
+  | Value | Behavior |
   | `NULL` (default) | Auto-detect: checks if pipe symbol exists, splits if found. |
-  | `TRUE`           | Force split: always splits on pipe.                         |
-  | `FALSE`          | Never split: returns value as-is, no detection.             |
+  | `TRUE` | Force split: always splits on pipe. |
+  | `FALSE` | Never split: returns value as-is, no detection. |
 
 ## Value
 
