@@ -352,12 +352,15 @@ survey_files_need_updating <- function(paths) {
     return(TRUE)
   }
 
-  # Re-parse if the target pages file is out of date with 'survey.qmd', 'app.R'
+  # Re-parse if the target pages file is out of date with 'survey.qmd', 'app.R',
+  # or 'settings.yml' (which contains system-messages used for nav button labels)
   time_qmd <- file.info(paths$qmd)$mtime
   time_app <- file.info(paths$app)$mtime
+  time_settings <- file.info(paths$target_settings)$mtime
   time_pages <- file.info(paths$target_pages)$mtime
 
-  if ((time_qmd > time_pages) || (time_app > time_pages)) {
+  if ((time_qmd > time_pages) || (time_app > time_pages) ||
+      (time_settings > time_pages)) {
     return(TRUE)
   }
 
@@ -1409,8 +1412,8 @@ extract_html_pages <- function(
             }
 
             # Get translated messages
-            if (!is.null(settings_yaml$system_messages)) {
-              messages <- settings_yaml$system_messages
+            if (!is.null(settings_yaml$`system-messages`)) {
+              messages <- settings_yaml$`system-messages`
             }
           },
           error = function(e) {
