@@ -24,3 +24,4 @@ CLAUDE.md
 ^app.R$
 ^test_survey$
 ^\.luarc\.json$
+^tools$

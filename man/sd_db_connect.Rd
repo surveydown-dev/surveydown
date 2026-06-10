@@ -2,45 +2,50 @@
 % Please edit documentation in R/db.R
 \name{sd_db_connect}
 \alias{sd_db_connect}
-\title{Connect to database}
+\title{Connect to a PostgreSQL database for storing survey responses}
 \usage{
-sd_db_connect(env_file = ".env", ignore = FALSE, gssencmode = "auto")
+sd_db_connect(env_file = ".env", ignore = NULL, gssencmode = "auto")
 }
 \arguments{
-\item{env_file}{Character string. Path to the env file. Defaults to ".env"}
+\item{env_file}{Character string. Path to the env file. Defaults to \code{".env"}.}
 
-\item{ignore}{Logical. If \code{TRUE}, data will be saved to a local CSV file
-instead of the database. Defaults to \code{FALSE}.}
+\item{ignore}{Logical. Deprecated. Use \code{mode: preview} in \code{survey.qmd} YAML
+instead. If \code{TRUE}, returns \code{NULL} with a deprecation warning. Defaults to
+\code{NULL}.}
 
 \item{gssencmode}{Character string. The GSS encryption mode for the database
 connection. Defaults to \code{"auto"}. Options are:
 \itemize{
-\item \code{"auto"}: Tries \code{"prefer"} first, then falls back to \code{"disable"} if GSSAPI negotiation fails
-\item \code{"prefer"}: Uses GSSAPI encryption if available, plain connection otherwise
+\item \code{"auto"}: Tries \code{"prefer"} first, then falls back to \code{"disable"} if
+GSSAPI negotiation fails
+\item \code{"prefer"}: Uses GSSAPI encryption if available, plain connection
+otherwise
 \item \code{"disable"}: Disables GSSAPI encryption entirely
-NOTE: If you have verified all connection details are correct but still cannot
-access the database, try setting this to \code{"disable"}.
+NOTE: If you have verified all connection details are correct but still
+cannot access the database, try setting this to \code{"disable"}.
 }}
 }
 \value{
-A list containing the database connection pool (\code{db}) and table name (\code{table}),
-or \code{NULL} if ignore is \code{TRUE} or if connection fails
+A list containing:
+\itemize{
+\item \code{db}: The database connection pool
+\item \code{table}: The database table name
+}
+
+Returns \code{NULL} if the database connection fails or \code{ignore = TRUE}.
 }
 \description{
-Establish a connection to the database using settings from .env file. This function
-creates a connection pool for efficient database access and provides options for
-local data storage when needed.
+Establishes a connection pool to a PostgreSQL database (e.g. Supabase) using
+credentials from a \code{.env} file. The survey operating mode (\code{"database"},
+\code{"preview"}, or \code{"local"}) is controlled via the \code{mode} key under
+\code{survey-settings} in \code{survey.qmd}, not by this function.
 }
 \examples{
 if (interactive()) {
-  # Connect using settings from .env
   db <- sd_db_connect()
 
-  # Use local storage instead of database
-  db <- sd_db_connect(ignore = TRUE)
-
   # Close connection when done
-  if (!is.null(db)) {
+  if (!is.null(db$db)) {
     pool::poolClose(db$db)
   }
 }

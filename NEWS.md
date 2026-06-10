@@ -1,5 +1,10 @@
 # surveydown (development version)
 
+# surveydown 1.2.0
+
+- New feature: Survey operating mode is now controlled via a `mode` key under `survey-settings` in `survey.qmd`. Supported values are `"database"` (default), `"preview"` (saves responses to `preview_data.csv`), and `"local"` (saves responses to `local_data.csv`). The `mode` parameter replaces the deprecated `ignore = TRUE` argument in `sd_db_connect()`.
+- Breaking change: The `ignore` argument in `sd_db_connect()` is now deprecated. Use `mode: preview` in `survey.qmd` YAML instead. Setting `ignore = TRUE` still works but emits a deprecation warning.
+- Enhancement: A visible banner is now displayed at the bottom of the survey when running in `preview` mode (yellow) or when the database is not connected while in `database` mode (red), alerting developers that responses are not being saved to the database.
 - Bug fix: Markdown/HTML formatting in `mc` and `mc_multiple` question labels (e.g. `**bold**`) is now preserved when option shuffling is enabled. Previously, shuffled choice questions were re-rendered on the client from a plain-text copy of the label, which stripped bold, italics, and links from the question text. The parsed question structure now carries the label's inline HTML (`label_html`) alongside the existing plain-text `label`.
 
 # surveydown 1.1.3

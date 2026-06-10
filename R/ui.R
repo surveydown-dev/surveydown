@@ -297,6 +297,7 @@ get_yaml_value <- function(metadata, key) {
     "footer-right"
   )
   survey_params <- c(
+    "mode",
     "show-previous",
     "use-cookies",
     "auto-scroll",
@@ -385,6 +386,14 @@ get_start_page <- function(metadata) {
     return(NULL)
   }
   return(as.character(start_page))
+}
+
+get_mode <- function(metadata) {
+  mode <- get_yaml_value(metadata, "mode")
+  if (is.null(mode)) {
+    return(NULL)
+  }
+  return(as.character(mode))
 }
 
 get_system_language <- function(metadata) {
@@ -642,6 +651,9 @@ extract_head_content <- function(html_content) {
 #' @param options Alias for `option`. Either `option` or `options` can be used.
 #' If both are provided, `option` takes precedence. Supports the same formats
 #' as `option`.
+#' @param option_attr Character vector. Optional HTML attributes to apply to
+#' individual options for `"mc"` and `"mc_multiple"` question types. Each
+#' element corresponds to an option in the same position. Defaults to `NULL`.
 #' @param placeholder Character string. Placeholder text for `"text"` and
 #' `"textarea"` question types.
 #' @param resize Character string. Resize option for textarea input.

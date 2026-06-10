@@ -519,14 +519,7 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
 
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
 
-  # Determine where to get template files from
-  if (template == "default") {
-    # Use built-in template
-    template_path <- system.file("template", package = "surveydown")
-  } else {
-    # Download from GitHub
-    template_path <- download_template_from_github(template)
-  }
+  template_path <- download_template_from_github(template)
 
   if (!dir.exists(template_path)) {
     stop("Template directory does not exist.")
@@ -644,21 +637,13 @@ sd_create_survey <- function(template = "default", path = getwd(), ask = TRUE) {
     message("Done!")
   }
 
-  # Create success message that includes the template
   if (any(files_copied)) {
-    if (template == "default") {
-      cli::cli_alert_success(paste("Template created at", path))
-    } else {
-      cli::cli_alert_success(paste("Template of", template, "created at", path))
-    }
+    cli::cli_alert_success(paste("Template of", template, "created at", path))
   } else {
     cli::cli_alert_success("Since all files exist, no file was added.")
   }
 
-  # Clean up temp directory if needed
-  if (template != "default") {
-    unlink(dirname(template_path), recursive = TRUE)
-  }
+  unlink(dirname(template_path), recursive = TRUE)
 
   invisible(NULL)
 }
@@ -1763,7 +1748,8 @@ sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
       search_session_id <- get_session_id(session, db)
 
       # Check if this value already exists for this session
-      existing_data <- get_session_data(db, search_session_id)
+      local_csv <- if (!is.null(session$userData$local_csv_file)) session$userData$local_csv_file else "preview_data.csv"
+      existing_data <- get_session_data(db, search_session_id, local_csv)
 
       if (!is.null(existing_data) && nrow(existing_data) > 0) {
         if (
@@ -1817,7 +1803,8 @@ sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
       search_session_id <- get_session_id(session, db)
 
       # Check for existing value in either database or local CSV
-      existing_data <- get_session_data(db, search_session_id)
+      local_csv <- if (!is.null(session$userData$local_csv_file)) session$userData$local_csv_file else "preview_data.csv"
+      existing_data <- get_session_data(db, search_session_id, local_csv)
 
       should_store_new_value <- TRUE
       if (!is.null(existing_data) && nrow(existing_data) > 0) {
@@ -1974,13 +1961,13 @@ get_settings_yml <- function() {
 }
 
 # Main function to get session data from any available source (database or local CSV)
-get_session_data <- function(db, search_session_id) {
-  if (!is.null(db)) {
+get_session_data <- function(db, search_session_id, csv_file = "preview_data.csv") {
+  if (!is.null(db) && !is.null(db$db)) {
     # Database mode
     return(get_db_data(db, search_session_id))
   } else {
     # Local CSV mode
-    all_local_data <- get_local_data()
+    all_local_data <- get_local_data(csv_file)
     if (!is.null(all_local_data)) {
       return(all_local_data[all_local_data$session_id == search_session_id, ])
     } else {
@@ -1990,17 +1977,17 @@ get_session_data <- function(db, search_session_id) {
 }
 
 # Helper function to get local CSV data
-get_local_data <- function() {
-  if (file.exists("preview_data.csv")) {
+get_local_data <- function(csv_file = "preview_data.csv") {
+  if (file.exists(csv_file)) {
     tryCatch(
       {
         return(utils::read.csv(
-          "preview_data.csv",
+          csv_file,
           stringsAsFactors = FALSE
         ))
       },
       error = function(e) {
-        warning("Error reading preview_data.csv: ", e$message)
+        warning("Error reading ", csv_file, ": ", e$message)
         return(NULL)
       }
     )
@@ -2010,7 +1997,7 @@ get_local_data <- function() {
 
 # Internal function to get data from database for a specific session only
 get_db_data <- function(db, session_id) {
-  if (is.null(db)) {
+  if (is.null(db) || is.null(db$db)) {
     return(NULL)
   }
 

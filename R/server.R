@@ -185,6 +185,7 @@ sd_server <- function(db = NULL) {
     highlight_color <- settings$`highlight-color`
     capture_metadata <- settings$`capture-metadata`
     required_questions <- settings$`required`
+    mode_yaml <- if (!is.null(settings$mode)) settings$mode else "database"
     shuffled <- settings$`shuffled`
     all_shuffled <- settings$`all-shuffled`
 
@@ -594,7 +595,8 @@ sd_server <- function(db = NULL) {
         update_progress_bar,
         use_cookies,
         page_history,
-        question_history
+        question_history,
+        local_csv_file
     )
     # Auto scroll
     session$sendCustomMessage(
@@ -602,8 +604,44 @@ sd_server <- function(db = NULL) {
         list(autoScrollEnabled = auto_scroll)
     )
 
-    # Check if db is NULL (either blank or specified with ignore = TRUE)
-    ignore_mode <- is.null(db)
+    # Check if db has no active connection (preview, local, or unset)
+    ignore_mode <- is.null(db) || is.null(db$db)
+
+    # Extract survey mode, set local CSV filename, and show footer banner if applicable
+    survey_mode <- mode_yaml
+    local_csv_file <- if (identical(survey_mode, "local")) "local_data.csv" else "preview_data.csv"
+    session$userData$local_csv_file <- local_csv_file
+    if (identical(survey_mode, "preview")) {
+        shiny::insertUI(
+            selector = "body",
+            where = "beforeEnd",
+            ui = shiny::tags$div(
+                id = "sd-preview-banner",
+                style = paste(
+                    "position:fixed;bottom:0;left:0;right:0;",
+                    "z-index:9999;background-color:#e6a817;color:white;",
+                    "text-align:center;padding:10px 16px;",
+                    "font-weight:bold;font-size:14px;"
+                ),
+                "PREVIEW MODE \u2014 Responses are saved in preview_data.csv, not the database."
+            )
+        )
+    } else if (ignore_mode && identical(survey_mode, "database")) {
+        shiny::insertUI(
+            selector = "body",
+            where = "beforeEnd",
+            ui = shiny::tags$div(
+                id = "sd-no-db-banner",
+                style = paste(
+                    "position:fixed;bottom:0;left:0;right:0;",
+                    "z-index:9999;background-color:#cc0000;color:white;",
+                    "text-align:center;padding:10px 16px;",
+                    "font-weight:bold;font-size:14px;"
+                ),
+                "DATABASE NOT CONNECTED \u2014 Responses are not being saved. Check your database configuration."
+            )
+        )
+    }
 
     # Initialize messages list (from '_survey/settings.yml' file)
     messages <- get_messages()$messages
@@ -691,9 +729,9 @@ sd_server <- function(db = NULL) {
                 tryCatch(
                     {
                         # Read existing data
-                        existing_data <- if (file.exists("preview_data.csv")) {
+                        existing_data <- if (file.exists(local_csv_file)) {
                             utils::read.csv(
-                                "preview_data.csv",
+                                local_csv_file,
                                 stringsAsFactors = FALSE
                             )
                         } else {
@@ -762,14 +800,14 @@ sd_server <- function(db = NULL) {
                         # Write updated data back to file
                         utils::write.csv(
                             updated_data,
-                            "preview_data.csv",
+                            local_csv_file,
                             row.names = FALSE,
                             na = ""
                         )
                     },
                     error = function(e) {
                         warning(
-                            "Unable to write to preview_data.csv: ",
+                            "Unable to write to ", local_csv_file, ": ",
                             e$message
                         )
                         message("Error details: ", e$message)
@@ -811,7 +849,8 @@ sd_server <- function(db = NULL) {
         session_id,
         time_start,
         all_ids,
-        start_page_ts_id
+        start_page_ts_id,
+        local_csv_file
     )
     all_data <- do.call(shiny::reactiveValues, initial_data)
 
@@ -3402,7 +3441,8 @@ get_initial_data <- function(
     session_id,
     time_start,
     all_ids,
-    start_page_ts_id
+    start_page_ts_id,
+    local_csv_file = "preview_data.csv"
 ) {
     # Initialize with static data
     data <- c(
@@ -3415,7 +3455,7 @@ get_initial_data <- function(
         db <- session$userData$db
 
         # If we have a database connection, check for existing values
-        if (!is.null(db)) {
+        if (!is.null(db) && !is.null(db$db)) {
             # Get current session ID for persistence check
             current_session_id <- session$token
             persistent_session_id <- shiny::isolate(
@@ -3458,11 +3498,11 @@ get_initial_data <- function(
                 data[[id]] <- session$userData$deferred_values[[id]]
             }
         } else {
-            # Local CSV mode - check for existing values in preview_data.csv
+            # Local CSV mode - check for existing values in local CSV file
             search_session_id <- get_session_id(session, NULL)
 
             # Get existing data from local CSV
-            all_local_data <- get_local_data()
+            all_local_data <- get_local_data(local_csv_file)
             existing_data <- if (!is.null(all_local_data)) {
                 all_local_data[all_local_data$session_id == search_session_id, ]
             } else {
@@ -3731,17 +3771,17 @@ check_answer_for_highlighting <- function(q, input, question_structure = NULL) {
     return(FALSE)
 }
 
-get_local_data <- function() {
-    if (file.exists("preview_data.csv")) {
+get_local_data <- function(csv_file = "preview_data.csv") {
+    if (file.exists(csv_file)) {
         tryCatch(
             {
                 return(utils::read.csv(
-                    "preview_data.csv",
+                    csv_file,
                     stringsAsFactors = FALSE
                 ))
             },
             error = function(e) {
-                warning("Error reading preview_data.csv: ", e$message)
+                warning("Error reading ", csv_file, ": ", e$message)
                 return(NULL)
             }
         )
@@ -3798,17 +3838,18 @@ handle_data_restoration <- function(
     question_ts_ids,
     progress_updater,
     page_history = NULL,
-    question_history = NULL
+    question_history = NULL,
+    local_csv_file = "preview_data.csv"
 ) {
     if (is.null(session_id)) {
         return(NULL)
     }
 
     # Get data based on source
-    if (!is.null(db)) {
+    if (!is.null(db) && !is.null(db$db)) {
         all_data <- sd_get_data(db)
     } else {
-        all_data <- get_local_data()
+        all_data <- get_local_data(local_csv_file)
     }
 
     # If no data available, return NULL
@@ -3841,14 +3882,14 @@ handle_data_restoration <- function(
 
         # Get cookie data after page state is set
         answer_data <- NULL
-        if (!is.null(db)) {
+        if (!is.null(db) && !is.null(db$db)) {
             answer_data <- get_cookie_data(session, current_page_id())
         }
 
         # 2. Find the last answered question for progress bar
         last_index <- 0
         if (
-            !is.null(db) &&
+            !is.null(db) && !is.null(db$db) &&
                 !is.null(answer_data) &&
                 !is.null(answer_data$last_timestamp)
         ) {
@@ -3881,7 +3922,7 @@ handle_data_restoration <- function(
 
         # 3. Restore question values
         if (
-            !is.null(db) &&
+            !is.null(db) && !is.null(db$db) &&
                 !is.null(answer_data) &&
                 !is.null(answer_data$answers)
         ) {
@@ -3925,7 +3966,7 @@ handle_data_restoration <- function(
                     }
                     page_history(restored_history)
                 }
-            } else if (is.null(db)) {
+            } else if (is.null(db) || is.null(db$db)) {
                 # Local CSV mode: reconstruct minimal history from current page
                 # Note: Full history is not available in local mode without cookies
                 current_pg <- current_page_id()
@@ -3993,7 +4034,8 @@ handle_sessions <- function(
     progress_updater,
     use_cookies = TRUE,
     page_history = NULL,
-    question_history = NULL
+    question_history = NULL,
+    local_csv_file = "preview_data.csv"
 ) {
     # Note: Cookies can work in both database and local modes
     # No need to disable cookies when db is NULL
@@ -4013,10 +4055,10 @@ handle_sessions <- function(
         if (
             !is.null(stored_id) &&
                 nchar(stored_id) > 0 &&
-                # Check 4: Either DB connection exists or preview_data.csv is writable
-                (!is.null(db) ||
-                    (file.exists("preview_data.csv") &&
-                        file.access("preview_data.csv", 2) == 0))
+                # Check 4: Either DB connection exists or local CSV is writable
+                (!is.null(db) && !is.null(db$db) ||
+                    (file.exists(local_csv_file) &&
+                        file.access(local_csv_file, 2) == 0))
         ) {
             # Check 5: Session exists in DB or preview data?
             restore_data <- handle_data_restoration(
@@ -4029,7 +4071,8 @@ handle_sessions <- function(
                 question_ts_ids,
                 progress_updater,
                 page_history,
-                question_history
+                question_history,
+                local_csv_file
             )
 
             if (!is.null(restore_data)) {

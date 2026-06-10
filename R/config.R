@@ -686,6 +686,7 @@ create_settings_yaml <- function(paths, metadata) {
           "footer-right"
         )
         survey_params <- c(
+          "mode",
           "show-previous",
           "use-cookies",
           "auto-scroll",
@@ -714,6 +715,7 @@ create_settings_yaml <- function(paths, metadata) {
           `footer-center` = "",
           `footer-right` = "",
           # Survey Settings
+          mode = "database",
           `show-previous` = FALSE,
           `use-cookies` = TRUE,
           `auto-scroll` = FALSE,
@@ -771,6 +773,8 @@ create_settings_yaml <- function(paths, metadata) {
             value <- get_all_shuffled(metadata)
           } else if (param == "show-previous") {
             value <- get_show_previous(metadata)
+          } else if (param == "mode") {
+            value <- get_mode(metadata)
           } else {
             value <- NULL
           }
@@ -845,6 +849,7 @@ create_settings_yaml <- function(paths, metadata) {
           "footer-right"
         )
         survey_params <- c(
+          "mode",
           "show-previous",
           "use-cookies",
           "auto-scroll",
@@ -866,6 +871,7 @@ create_settings_yaml <- function(paths, metadata) {
           `footer-left` = "",
           `footer-center` = "",
           `footer-right` = "",
+          mode = "database",
           `show-previous` = FALSE,
           `use-cookies` = TRUE,
           `auto-scroll` = FALSE,
@@ -983,6 +989,7 @@ read_settings_yaml <- function() {
     `footer-center` = "",
     `footer-right` = "",
     # Survey Settings
+    mode = "database",
     `use-cookies` = TRUE,
     `auto-scroll` = FALSE,
     `rate-survey` = FALSE,

@@ -171,36 +171,39 @@ sd_db_config <- function(
     invisible(current)
 }
 
-#' Connect to database
+#' Connect to a PostgreSQL database for storing survey responses
 #'
-#' Establish a connection to the database using settings from .env file. This function
-#' creates a connection pool for efficient database access and provides options for
-#' local data storage when needed.
+#' Establishes a connection pool to a PostgreSQL database (e.g. Supabase) using
+#' credentials from a `.env` file. The survey operating mode (`"database"`,
+#' `"preview"`, or `"local"`) is controlled via the `mode` key under
+#' `survey-settings` in `survey.qmd`, not by this function.
 #'
-#' @param env_file Character string. Path to the env file. Defaults to ".env"
-#' @param ignore Logical. If `TRUE`, data will be saved to a local CSV file
-#' instead of the database. Defaults to `FALSE`.
+#' @param env_file Character string. Path to the env file. Defaults to `".env"`.
+#' @param ignore Logical. Deprecated. Use `mode: preview` in `survey.qmd` YAML
+#'   instead. If `TRUE`, returns `NULL` with a deprecation warning. Defaults to
+#'   `NULL`.
 #' @param gssencmode Character string. The GSS encryption mode for the database
 #'   connection. Defaults to `"auto"`. Options are:
-#'   - `"auto"`: Tries `"prefer"` first, then falls back to `"disable"` if GSSAPI negotiation fails
-#'   - `"prefer"`: Uses GSSAPI encryption if available, plain connection otherwise
+#'   - `"auto"`: Tries `"prefer"` first, then falls back to `"disable"` if
+#'     GSSAPI negotiation fails
+#'   - `"prefer"`: Uses GSSAPI encryption if available, plain connection
+#'     otherwise
 #'   - `"disable"`: Disables GSSAPI encryption entirely
-#'   NOTE: If you have verified all connection details are correct but still cannot
-#'   access the database, try setting this to `"disable"`.
+#'   NOTE: If you have verified all connection details are correct but still
+#'   cannot access the database, try setting this to `"disable"`.
 #'
-#' @return A list containing the database connection pool (`db`) and table name (`table`),
-#'   or `NULL` if ignore is `TRUE` or if connection fails
+#' @return A list containing:
+#'   - `db`: The database connection pool
+#'   - `table`: The database table name
+#'
+#'   Returns `NULL` if the database connection fails or `ignore = TRUE`.
 #'
 #' @examples
 #' if (interactive()) {
-#'   # Connect using settings from .env
 #'   db <- sd_db_connect()
 #'
-#'   # Use local storage instead of database
-#'   db <- sd_db_connect(ignore = TRUE)
-#'
 #'   # Close connection when done
-#'   if (!is.null(db)) {
+#'   if (!is.null(db$db)) {
 #'     pool::poolClose(db$db)
 #'   }
 #' }
@@ -208,14 +211,16 @@ sd_db_config <- function(
 #' @export
 sd_db_connect <- function(
     env_file = ".env",
-    ignore = FALSE,
+    ignore = NULL,
     gssencmode = "auto"
 ) {
-    if (ignore) {
-        cli::cli_alert_info(
-            "Database connection ignored. Saving data to local CSV file."
+    # Handle deprecated ignore argument
+    if (!is.null(ignore)) {
+        warning(
+            '`ignore` is deprecated. Use `mode: preview` in your survey.qmd YAML instead.',
+            call. = FALSE
         )
-        return(NULL)
+        if (isTRUE(ignore)) return(NULL)
     }
 
     # Load environment variables
@@ -259,7 +264,9 @@ sd_db_connect <- function(
     tryCatch(
         {
             pool <- try_db_connection(params, gssencmode)
-            cli::cli_alert_success("Successfully connected to the database.")
+            cli::cli_alert_success(
+                "Running in {.strong database} mode. Successfully connected to the database."
+            )
             return(list(db = pool, table = params$table))
         },
         error = function(e) {
@@ -273,7 +280,7 @@ sd_db_connect <- function(
                     {
                         pool <- try_db_connection(params, "disable")
                         cli::cli_alert_success(
-                            "Successfully connected to the database with gssencmode='disable'."
+                            "Running in {.strong database} mode. Successfully connected to the database with gssencmode='disable'."
                         )
                         return(list(db = pool, table = params$table))
                     },
@@ -346,8 +353,8 @@ sd_db_connect <- function(
 #' }
 #' @export
 sd_get_data <- function(db, table = NULL, refresh_interval = NULL) {
-    if (is.null(db)) {
-        warning("Database is not connected, db is NULL")
+    if (is.null(db) || is.null(db$db)) {
+        warning("Database is not connected")
         return(NULL)
     }
 

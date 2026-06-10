@@ -97,7 +97,7 @@ You need both:
 We also recommend working with an IDE that has good support for R,
 Quarto, and Shiny.
 
-[RStudio](https://posit.co/products/open-source/rstudio/) is great, and
+[RStudio](https://posit.co/products/open-source/rstudio) is great, and
 we also like [VSCode](https://github.com/microsoft/vscode) and
 [Positron](https://github.com/posit-dev/positron).
 
