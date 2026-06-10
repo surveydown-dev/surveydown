@@ -102,7 +102,7 @@ def insert_mode(m):
     block_header = m.group(0)
     return block_header + "\n  mode: preview"
 
-result = re.sub(r'^survey-settings:', insert_mode, content, flags=re.MULTILINE)
+result = re.sub(r'^survey-settings:', insert_mode, content, flags=re.MULTILINE, count=1)
 print(result, end="")
 PYEOF
 }
