@@ -1550,10 +1550,33 @@ extract_question_structure_html <- function(html_content) {
       type <- "matrix"
     }
 
-    # Extract the question text (label)
+    # Extract the question text (label) as plain text. This is what most
+    # consumers display (e.g. the `<id>_label_question` text output).
     label <- question_node |>
       rvest::html_nodes("p") |>
       rvest::html_text(trim = TRUE)
+
+    # Also capture the label paragraph(s) as inner HTML, preserving inline
+    # markdown formatting (e.g. **bold** -> <strong>, italics, links). Option-
+    # shuffled mc/mc_multiple questions are re-rendered from this structure on
+    # the client, so without this their formatting would be lost (only plain
+    # text survives `html_text()` above).
+    label_nodes <- rvest::html_nodes(question_node, "p")
+    label_html <- if (length(label_nodes) == 0) {
+      label
+    } else {
+      inner_html <- vapply(
+        seq_along(label_nodes),
+        function(i) {
+          paste(
+            as.character(xml2::xml_contents(label_nodes[[i]])),
+            collapse = ""
+          )
+        },
+        character(1)
+      )
+      trimws(paste(inner_html, collapse = " "))
+    }
 
     # Detect if this is a button-style question (mc_buttons or mc_multiple_buttons)
     # Button-style questions have .btn-group class in their container
@@ -1565,7 +1588,8 @@ extract_question_structure_html <- function(html_content) {
       type = type,
       is_matrix = is_matrix,
       is_button_style = is_button_style,
-      label = label
+      label = label,
+      label_html = label_html
     )
 
     # Extract rows for matrix questions (sub-questions that will be shuffled)
