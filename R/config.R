@@ -352,12 +352,15 @@ survey_files_need_updating <- function(paths) {
     return(TRUE)
   }
 
-  # Re-parse if the target pages file is out of date with 'survey.qmd', 'app.R'
+  # Re-parse if the target pages file is out of date with 'survey.qmd', 'app.R',
+  # or 'settings.yml' (which contains system-messages used for nav button labels)
   time_qmd <- file.info(paths$qmd)$mtime
   time_app <- file.info(paths$app)$mtime
+  time_settings <- file.info(paths$target_settings)$mtime
   time_pages <- file.info(paths$target_pages)$mtime
 
-  if ((time_qmd > time_pages) || (time_app > time_pages)) {
+  if ((time_qmd > time_pages) || (time_app > time_pages) ||
+      (time_settings > time_pages)) {
     return(TRUE)
   }
 
@@ -1416,8 +1419,8 @@ extract_html_pages <- function(
             }
 
             # Get translated messages
-            if (!is.null(settings_yaml$system_messages)) {
-              messages <- settings_yaml$system_messages
+            if (!is.null(settings_yaml$`system-messages`)) {
+              messages <- settings_yaml$`system-messages`
             }
           },
           error = function(e) {
@@ -1554,10 +1557,33 @@ extract_question_structure_html <- function(html_content) {
       type <- "matrix"
     }
 
-    # Extract the question text (label)
+    # Extract the question text (label) as plain text. This is what most
+    # consumers display (e.g. the `<id>_label_question` text output).
     label <- question_node |>
       rvest::html_nodes("p") |>
       rvest::html_text(trim = TRUE)
+
+    # Also capture the label paragraph(s) as inner HTML, preserving inline
+    # markdown formatting (e.g. **bold** -> <strong>, italics, links). Option-
+    # shuffled mc/mc_multiple questions are re-rendered from this structure on
+    # the client, so without this their formatting would be lost (only plain
+    # text survives `html_text()` above).
+    label_nodes <- rvest::html_nodes(question_node, "p")
+    label_html <- if (length(label_nodes) == 0) {
+      label
+    } else {
+      inner_html <- vapply(
+        seq_along(label_nodes),
+        function(i) {
+          paste(
+            as.character(xml2::xml_contents(label_nodes[[i]])),
+            collapse = ""
+          )
+        },
+        character(1)
+      )
+      trimws(paste(inner_html, collapse = " "))
+    }
 
     # Detect if this is a button-style question (mc_buttons or mc_multiple_buttons)
     # Button-style questions have .btn-group class in their container
@@ -1569,7 +1595,8 @@ extract_question_structure_html <- function(html_content) {
       type = type,
       is_matrix = is_matrix,
       is_button_style = is_button_style,
-      label = label
+      label = label,
+      label_html = label_html
     )
 
     # Extract rows for matrix questions (sub-questions that will be shuffled)

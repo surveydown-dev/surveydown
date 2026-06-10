@@ -980,8 +980,14 @@ sd_server <- function(db = NULL) {
 
         shuffled_options <- original_options[order]
 
-        # Get label (handle list format)
-        q_label <- q_struct$label
+        # Get label (handle list format). Prefer label_html, which preserves
+        # inline markdown formatting (e.g. **bold** -> <strong>); fall back to
+        # the plain-text label for structures written before label_html existed.
+        q_label <- if (!is.null(q_struct$label_html)) {
+            q_struct$label_html
+        } else {
+            q_struct$label
+        }
         if (is.list(q_label)) {
             q_label <- q_label[[1]]
         }
