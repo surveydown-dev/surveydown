@@ -7,6 +7,7 @@ library(chromote)
 
 n_fail <- 0
 b <- NULL
+browser_proc <- NULL
 
 shot_dir <- if (dir.exists(file.path("tests", "manual"))) {
   file.path("tests", "manual", "screenshots")
@@ -26,6 +27,12 @@ launch_app <- function(app_dir, port) {
       app_dir, ")"
     )
   }
+  # Kill any stale app process holding this test port (e.g., left behind
+  # by an earlier crashed run), otherwise the new app fails to bind and we
+  # silently talk to the zombie process
+  system(sprintf("pkill -f 'shiny::runApp.*%d'", port), ignore.stderr = TRUE)
+  Sys.sleep(1)
+
   cat("Launching app from", app_dir, "...\n")
   system(sprintf(
     "Rscript -e 'shiny::runApp(\"%s\", port = %d)' > /tmp/sd_browser_test_app.log 2>&1 &",
@@ -49,13 +56,28 @@ launch_app <- function(app_dir, port) {
   cat("App is up.\n")
 }
 
-# Open a fresh browser session on the app (a new Shiny session each call)
-new_session <- function(port, wait = 6) {
+# Open a fresh browser session on the app (a new Shiny session each call).
+# With fresh_browser = TRUE, a brand-new browser process is started, which
+# has an empty cookie jar -- this simulates closing and reopening the
+# browser. The default reuses the same browser, so cookies persist across
+# sessions (like opening a new tab).
+new_session <- function(port, wait = 6, fresh_browser = FALSE) {
   if (!is.null(b)) {
     try(b$close(), silent = TRUE)
   }
-  b <<- ChromoteSession$new()
+  if (fresh_browser) {
+    browser_proc <<- chromote::Chromote$new()
+    b <<- browser_proc$new_session()
+  } else {
+    b <<- ChromoteSession$new()
+  }
   b$Page$navigate(app_url(port))
+  Sys.sleep(wait)
+}
+
+# Reload the current page (cookies persist; simulates a page refresh)
+reload <- function(wait = 8) {
+  b$Page$reload()
   Sys.sleep(wait)
 }
 
@@ -90,6 +112,92 @@ set_text <- function(id, value, wait = 1.2) {
     id, value
   ))
   Sys.sleep(wait)
+}
+
+# Set a select question (handles both selectize and plain select inputs)
+set_select <- function(id, value, wait = 1.2) {
+  wait_for(paste0("#", id))
+  js(sprintf(
+    "var el = $('#%s')[0];
+     if (el.selectize) { el.selectize.setValue('%s'); }
+     else { $(el).val('%s').trigger('change'); }
+     true",
+    id, value, value
+  ))
+  Sys.sleep(wait)
+}
+
+# Set a text slider (type = 'slider') to the 1-based position among its options
+set_slider <- function(id, position, wait = 1.2) {
+  wait_for(paste0("#", id))
+  js(sprintf(
+    "var $el = $('#%s');
+     $el.data('ionRangeSlider').update({from: %d});
+     $el.trigger('change');
+     true",
+    id, position - 1
+  ))
+  Sys.sleep(wait)
+}
+
+# Set a numeric slider (type = 'slider_numeric') to the given value
+set_slider_numeric <- function(id, value, wait = 1.2) {
+  wait_for(paste0("#", id))
+  js(sprintf(
+    "var $el = $('#%s');
+     $el.data('ionRangeSlider').update({from: %s});
+     $el.trigger('change');
+     true",
+    id, value
+  ))
+  Sys.sleep(wait)
+}
+
+# Set a date question (type = 'date') to 'yyyy-mm-dd'.
+# Shiny renames the bootstrap datepicker plugin to bsDatepicker, and its
+# input binding listens for the 'changeDate' event (not 'change').
+set_date <- function(id, value, wait = 1.2) {
+  wait_for(paste0("#", id, " input"))
+  js(sprintf(
+    "var $inp = $('#%s input').first();
+     if ($inp.bsDatepicker) { $inp.bsDatepicker('update', '%s'); }
+     else { $inp.val('%s'); }
+     $inp.trigger('changeDate');
+     true",
+    id, value, value
+  ))
+  Sys.sleep(wait)
+}
+
+# Set a date range question (type = 'daterange') to 'yyyy-mm-dd' start/end
+set_daterange <- function(id, start, end, wait = 1.2) {
+  wait_for(paste0("#", id, " input"))
+  js(sprintf(
+    "var inps = $('#%s input');
+     var vals = ['%s', '%s'];
+     inps.each(function(i) {
+       var $inp = $(this);
+       if ($inp.bsDatepicker) { $inp.bsDatepicker('update', vals[i]); }
+       else { $inp.val(vals[i]); }
+       $inp.trigger('changeDate');
+     });
+     true",
+    id, start, end
+  ))
+  Sys.sleep(wait)
+}
+
+# Returns the current value of the first element matching the selector
+input_val <- function(sel) {
+  wait_for(sel)
+  js(sprintf("document.querySelector('%s').value", sel))
+}
+
+# Returns TRUE if the first element matching the selector is checked
+is_checked <- function(sel) {
+  isTRUE(js(sprintf(
+    "var el = document.querySelector('%s'); el !== null && el.checked", sel
+  )))
 }
 
 # Returns TRUE if the question container is visible

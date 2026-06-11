@@ -1,0 +1,49 @@
+---
+theme-settings:
+  theme: default
+  barposition: top
+
+survey-settings:
+  mode: preview
+  show-previous: false
+  use-cookies: false
+  auto-scroll: false
+  rate-survey: false
+  system-language: en
+  highlight-unanswered: true
+  highlight-color: blue
+  capture-metadata: true
+  all-required: false
+---
+
+```{r}
+library(surveydown)
+```
+
+--- page1
+
+# Preview Mode With Database Connection
+
+This app passes a (fake) database connection object to `sd_server()` while
+`mode: preview` is set. All responses must go to `preview_data.csv` and the
+connection must never be used.
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'fruit',
+  label = "Favorite fruit?",
+  option = c(
+    'Apple'  = 'apple',
+    'Banana' = 'banana'
+  )
+)
+```
+
+--- end
+
+## End of the preview-with-db test survey.
+
+```{r}
+sd_close()
+```

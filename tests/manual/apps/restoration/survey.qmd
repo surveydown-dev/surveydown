@@ -1,0 +1,64 @@
+---
+theme-settings:
+  theme: default
+  barposition: top
+
+survey-settings:
+  mode: preview
+  show-previous: true
+  use-cookies: true
+  auto-scroll: false
+  rate-survey: false
+  system-language: en
+  highlight-unanswered: true
+  highlight-color: blue
+  capture-metadata: true
+  all-required: false
+---
+
+```{r}
+library(surveydown)
+```
+
+--- page1
+
+# Restoration Test - Page 1
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'fruit',
+  label = "Favorite fruit?",
+  option = c(
+    'Apple'  = 'apple',
+    'Banana' = 'banana',
+    'Cherry' = 'cherry'
+  )
+)
+
+sd_question(
+  type  = 'text',
+  id    = 'name',
+  label = "Your name?"
+)
+```
+
+--- page2
+
+# Restoration Test - Page 2
+
+```{r}
+sd_question(
+  type  = 'numeric',
+  id    = 'age',
+  label = "Your age?"
+)
+```
+
+--- end
+
+## End of the restoration test survey.
+
+```{r}
+sd_close()
+```

@@ -1739,6 +1739,12 @@ sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
       }
     }
 
+    # Preview/local mode never uses the database, even if a live connection
+    # object exists in the calling environment
+    if (!is.null(db) && is_csv_mode()) {
+      db <- NULL
+    }
+
     # Check if value already exists (session persistence logic)
     # Works for both database and local CSV modes
     # But only if all_data is available - otherwise we need to defer this check
@@ -1908,6 +1914,21 @@ get_session_id <- function(session, db) {
   }
 
   return(search_session_id)
+}
+
+# Returns TRUE when the survey runs in preview or local mode, where
+# responses go to a local CSV file and the database (even if connected)
+# must not be used
+is_csv_mode <- function() {
+  settings <- get_settings_yml()
+  if (is.null(settings)) {
+    return(FALSE)
+  }
+  mode <- settings$`survey-settings`$mode
+  if (is.null(mode)) {
+    mode <- settings$mode
+  }
+  isTRUE(mode %in% c("preview", "local"))
 }
 
 # Helper function to get settings.yml file (kebab-case only)

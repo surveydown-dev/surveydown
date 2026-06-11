@@ -47,8 +47,22 @@ tracked in git), and shuts the app down when finished.
   two-question skip conditions, required-question blocking.
 - `browser-test-conditional-stopping.R` — `sd_stop_if()`: stop messages,
   priority over required-question warnings, per-page applicability.
+- `browser-test-data-storage.R` — preview-mode data storage: answers
+  every question type, then verifies every value in `preview_data.csv`
+  (pipe-joined multi-selects, slider label-to-value mapping, matrix
+  sub-columns, `sd_store_value()`, session metadata, one row per session).
+- `browser-test-restoration.R` — cookies and state restoration: page
+  refresh returns to the same page with answers restored, sessions resume
+  with the same `session_id` (single CSV row), and a fresh browser starts
+  a new session with a distinct `session_id`.
+- `browser-test-preview-db.R` — `mode: preview` with a (fake) database
+  connection: the connection must never be used, responses go to
+  `preview_data.csv`, and the banner says the database is connected but
+  not used.
 - `apps/` — bundled survey apps the tests run against.
 
 IMPORTANT: every test script must use a unique port in the 8120-8129
-range (currently 8123-8125), so `run-all.R` can run the apps in parallel
-without conflicts.
+range (currently 8123-8128), so `run-all.R` can run the apps in parallel
+without conflicts. Cookie-enabled apps share the browser-wide localhost
+cookie jar, which is fine here because `run-all.R` gives each script its
+own R process (and therefore its own headless browser).

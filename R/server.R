@@ -194,6 +194,30 @@ sd_server <- function(db = NULL) {
         highlight_color <- "gray"
     }
 
+    # In preview/local mode, never use the database, even if a valid
+    # connection was provided (mode: preview replaces the deprecated
+    # ignore = TRUE). The connection is still created and tested by
+    # sd_db_connect(), so credentials are verified, but no data is read
+    # from or written to the database.
+    db_connected_but_ignored <- FALSE
+    if (
+        mode_yaml %in% c("preview", "local") &&
+            !is.null(db) &&
+            !is.null(db$db)
+    ) {
+        db_connected_but_ignored <- TRUE
+        cli::cli_alert_info(
+            paste0(
+                "Survey mode is '", mode_yaml, "': the database connection ",
+                "is not used. Responses are saved to a local CSV file. Set ",
+                "'mode: database' in survey.qmd to store responses in the ",
+                "database."
+            )
+        )
+        db <- NULL
+        session$userData$db <- NULL
+    }
+
     # Run the configuration settings
     config <- run_config()
 
@@ -580,6 +604,13 @@ sd_server <- function(db = NULL) {
         # Screen resolution will be requested after all_data is initialized
     }
 
+    # Extract survey mode and set local CSV filename BEFORE handle_sessions,
+    # which needs local_csv_file to restore a cookied session in
+    # preview/local mode
+    survey_mode <- mode_yaml
+    local_csv_file <- if (identical(survey_mode, "local")) "local_data.csv" else "preview_data.csv"
+    session$userData$local_csv_file <- local_csv_file
+
     # Initialize session handling and session_id
     session_id <- session$token
     session_id <- handle_sessions(
@@ -607,18 +638,20 @@ sd_server <- function(db = NULL) {
     # Check if db has no active connection (preview, local, or unset)
     ignore_mode <- is.null(db) || is.null(db$db)
 
-    # Extract survey mode, set local CSV filename, and show footer banner if applicable
-    survey_mode <- mode_yaml
-    local_csv_file <- if (identical(survey_mode, "local")) "local_data.csv" else "preview_data.csv"
-    session$userData$local_csv_file <- local_csv_file
+    # Show footer banner if applicable
     if (identical(survey_mode, "preview")) {
+        banner_text <- if (db_connected_but_ignored) {
+            "PREVIEW MODE \u2014 Database connected but not used. Responses are saved in preview_data.csv."
+        } else {
+            "PREVIEW MODE \u2014 Responses are saved in preview_data.csv, not the database."
+        }
         shiny::insertUI(
             selector = "body",
             where = "beforeEnd",
             ui = shiny::tags$div(
                 id = "sd-preview-banner",
                 class = "sd-mode-banner",
-                "PREVIEW MODE \u2014 Responses are saved in preview_data.csv, not the database."
+                banner_text
             )
         )
     } else if (ignore_mode && identical(survey_mode, "database")) {
