@@ -8,7 +8,8 @@
   --progressbar-position: top;
   --progress-bar-height: 10px;
   --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
-  --footer-height: calc(1rem * 2 + 1.5em);
+  --footer-height: calc(0.5rem * 2 + 1.5em);
+  --banner-height: calc(6px * 2 + 21px);
 }
 
 /* Styles for container and wrapper */
@@ -194,6 +195,16 @@ p, .form-group, .control-label {
   bottom: var(--footer-height);
 }
 
+/* When a mode banner exists, raise the bottom progress bar above it */
+:has(.sd-mode-banner) #progressbar.bottom {
+  bottom: var(--banner-height);
+}
+
+/* When both footer and mode banner exist, stack above both */
+:has(.footer):has(.sd-mode-banner) #progressbar.bottom {
+  bottom: calc(var(--footer-height) + var(--banner-height));
+}
+
 #progressbar > div {
   width: 0%;
   height: 100%;
@@ -241,7 +252,7 @@ a:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 1rem;
+    padding: 0.5rem 1rem;
     height: var(--footer-height);
     background-color: color-mix(in srgb, var(--body-background-color) 90%, black);
     border-top: 1px solid #eee;
@@ -285,6 +296,38 @@ a:hover {
 .footer a:hover {
     text-decoration: underline;
     color: color-mix(in srgb, var(--theme-color) 80%, black);
+}
+
+/* Survey mode banner (preview mode / database not connected) */
+.sd-mode-banner {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--banner-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 21px;
+    z-index: 9999;
+}
+
+#sd-preview-banner {
+    background-color: #e6a817;
+}
+
+#sd-no-db-banner {
+    background-color: #cc0000;
+}
+
+/* When a mode banner exists, raise the footer so it sits on top of the banner */
+:has(.sd-mode-banner) .footer {
+    bottom: var(--banner-height);
 }
 
 /* Matrix question styling */
@@ -592,6 +635,7 @@ div:where(.swal2-container) .swal2-html-container {
 
 .numeric-input-with-spinner[type=number] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .native-spinner {
