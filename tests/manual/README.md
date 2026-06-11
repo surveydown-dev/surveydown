@@ -49,7 +49,6 @@ tracked in git), and shuts the app down when finished.
   priority over required-question warnings, per-page applicability.
 - `apps/` — bundled survey apps the tests run against.
 
-back-to-back without conflicts.
 IMPORTANT: every test script must use a unique port in the 8120-8129
 range (currently 8123-8125), so `run-all.R` can run the apps in parallel
 without conflicts.
