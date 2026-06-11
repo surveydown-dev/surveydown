@@ -2013,23 +2013,53 @@ get_session_data <- function(db, search_session_id, csv_file = "preview_data.csv
   }
 }
 
-# Helper function to get local CSV data
+# In-memory cache of local CSV response data for preview/local modes.
+# These modes run in a single R process on one machine, so all Shiny
+# sessions in the app share this copy. Entries are keyed by absolute file
+# path (multiple surveys in one R session stay isolated) and invalidated
+# whenever the file's mtime changes (external edits or deletion are picked
+# up). write_local_data() refreshes the entry on every save, so reads
+# after a save are served from memory instead of re-reading the file.
+.local_data_cache <- new.env(parent = emptyenv())
+
+local_data_key <- function(csv_file) {
+  normalizePath(csv_file, winslash = "/", mustWork = FALSE)
+}
+
+# Helper function to get local CSV data (served from the in-process cache
+# when the file is unchanged since the last read or write)
 get_local_data <- function(csv_file = "preview_data.csv") {
-  if (file.exists(csv_file)) {
-    tryCatch(
-      {
-        return(utils::read.csv(
-          csv_file,
-          stringsAsFactors = FALSE
-        ))
-      },
-      error = function(e) {
-        warning("Error reading ", csv_file, ": ", e$message)
-        return(NULL)
-      }
-    )
+  if (!file.exists(csv_file)) {
+    return(NULL)
   }
-  return(NULL)
+  key <- local_data_key(csv_file)
+  mtime <- file.info(csv_file)$mtime
+  entry <- get0(key, envir = .local_data_cache, inherits = FALSE)
+  if (!is.null(entry) && identical(entry$mtime, mtime)) {
+    return(entry$data)
+  }
+  data <- tryCatch(
+    utils::read.csv(csv_file, stringsAsFactors = FALSE),
+    error = function(e) {
+      warning("Error reading ", csv_file, ": ", e$message)
+      NULL
+    }
+  )
+  if (!is.null(data)) {
+    assign(key, list(mtime = mtime, data = data), envir = .local_data_cache)
+  }
+  return(data)
+}
+
+# Write local CSV data to disk and refresh the in-memory cache
+write_local_data <- function(data, csv_file) {
+  utils::write.csv(data, csv_file, row.names = FALSE, na = "")
+  assign(
+    local_data_key(csv_file),
+    list(mtime = file.info(csv_file)$mtime, data = data),
+    envir = .local_data_cache
+  )
+  invisible(data)
 }
 
 # Internal function to get data from database for a specific session only

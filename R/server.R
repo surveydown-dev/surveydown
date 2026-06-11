@@ -796,14 +796,12 @@ sd_server <- function(db = NULL) {
             if (file.access('.', 2) == 0) {
                 tryCatch(
                     {
-                        # Read existing data
-                        existing_data <- if (file.exists(local_csv_file)) {
-                            utils::read.csv(
-                                local_csv_file,
-                                stringsAsFactors = FALSE
-                            )
-                        } else {
-                            data.frame()
+                        # Get existing data, served from the in-process
+                        # cache after the first read (local modes run in a
+                        # single R process, so all sessions share it)
+                        existing_data <- get_local_data(local_csv_file)
+                        if (is.null(existing_data)) {
+                            existing_data <- data.frame()
                         }
 
                         # Convert current data_list to data frame
@@ -865,13 +863,9 @@ sd_server <- function(db = NULL) {
                             updated_data <- new_data
                         }
 
-                        # Write updated data back to file
-                        utils::write.csv(
-                            updated_data,
-                            local_csv_file,
-                            row.names = FALSE,
-                            na = ""
-                        )
+                        # Write updated data back to file and refresh the
+                        # in-process cache
+                        write_local_data(updated_data, local_csv_file)
                     },
                     error = function(e) {
                         warning(
@@ -3734,24 +3728,6 @@ check_answer_for_highlighting <- function(q, input, question_structure = NULL) {
 
     # For all question types, if no interaction flag, show as unanswered for highlighting
     return(FALSE)
-}
-
-get_local_data <- function(csv_file = "preview_data.csv") {
-    if (file.exists(csv_file)) {
-        tryCatch(
-            {
-                return(utils::read.csv(
-                    csv_file,
-                    stringsAsFactors = FALSE
-                ))
-            },
-            error = function(e) {
-                warning("Error reading ", csv_file, ": ", e$message)
-                return(NULL)
-            }
-        )
-    }
-    return(NULL)
 }
 
 get_cookie_data <- function(session, current_page_id) {
