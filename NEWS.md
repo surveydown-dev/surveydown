@@ -1,5 +1,8 @@
 # surveydown (development version)
 
+- Efficiency: Parsed `_survey/settings.yml` content (settings and system messages) is now cached per Shiny session in `session$userData`, so repeated calls (e.g., per reactive question or per `sd_store_value()`) no longer re-read and re-parse the file from disk. Calls made outside a Shiny session (e.g., during Quarto rendering of `survey.qmd`) still read directly from disk.
+- Efficiency: The `show_if` observer no longer depends on every input via `reactiveValuesToList(input)`, which re-evaluated all `show_if` conditions on every keystroke of any input. It now depends only on the question values actually referenced in the conditions (extracted statically, plus dependencies registered dynamically during condition evaluation).
+
 # surveydown 1.2.0
 
 - New feature: Survey operating mode is now controlled via a `mode` key under `survey-settings` in `survey.qmd`. Supported values are `"database"` (default), `"preview"` (saves responses to `preview_data.csv`), and `"local"` (saves responses to `local_data.csv`). The `mode` parameter replaces the deprecated `ignore = TRUE` argument in `sd_db_connect()`.

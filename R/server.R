@@ -679,9 +679,28 @@ sd_server <- function(db = NULL) {
         # Create a modified show_if object with only question conditions
         question_show_if <- list(conditions = question_conditions)
 
+        # Create the results reactive once (not per observer run). Condition
+        # evaluation registers reactive dependencies dynamically on whatever
+        # input$/all_data$ values it reads.
+        show_if_results_reactive <- set_show_if_conditions(question_show_if)
+
+        # Statically extracted question IDs referenced in the conditions,
+        # touched explicitly below as a safety net so the observer re-runs
+        # when they change even if a condition short-circuits before reading
+        # them. This replaces depending on every input via
+        # reactiveValuesToList(input), which re-ran all conditions on every
+        # keystroke of any input.
+        show_if_dep_ids <- unique(unlist(
+            lapply(question_conditions, function(cond) {
+                extract_question_refs(cond$condition)
+            })
+        ))
+
         shiny::observe({
-            shiny::reactiveValuesToList(input)
-            show_if_results <- set_show_if_conditions(question_show_if)()
+            for (dep_id in show_if_dep_ids) {
+                input[[dep_id]]
+            }
+            show_if_results <- show_if_results_reactive()
             current_visibility <- question_visibility()
             for (target in names(show_if_results)) {
                 current_visibility[target] <- show_if_results[[target]]
