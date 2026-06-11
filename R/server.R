@@ -617,12 +617,7 @@ sd_server <- function(db = NULL) {
             where = "beforeEnd",
             ui = shiny::tags$div(
                 id = "sd-preview-banner",
-                style = paste(
-                    "position:fixed;bottom:0;left:0;right:0;",
-                    "z-index:9999;background-color:#e6a817;color:white;",
-                    "text-align:center;padding:10px 16px;",
-                    "font-weight:bold;font-size:14px;"
-                ),
+                class = "sd-mode-banner",
                 "PREVIEW MODE \u2014 Responses are saved in preview_data.csv, not the database."
             )
         )
@@ -632,12 +627,7 @@ sd_server <- function(db = NULL) {
             where = "beforeEnd",
             ui = shiny::tags$div(
                 id = "sd-no-db-banner",
-                style = paste(
-                    "position:fixed;bottom:0;left:0;right:0;",
-                    "z-index:9999;background-color:#cc0000;color:white;",
-                    "text-align:center;padding:10px 16px;",
-                    "font-weight:bold;font-size:14px;"
-                ),
+                class = "sd-mode-banner",
                 "DATABASE NOT CONNECTED \u2014 Responses are not being saved. Check your database configuration."
             )
         )
