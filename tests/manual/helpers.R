@@ -162,6 +162,20 @@ set_slider_numeric <- function(id, value, wait = 1.2) {
   Sys.sleep(wait)
 }
 
+# Set a numeric range slider (type = 'slider_numeric' with a length-2
+# default) to the given from/to values
+set_slider_range <- function(id, from, to, wait = 1.2) {
+  wait_for(paste0("#", id))
+  js(sprintf(
+    "var $el = $('#%s');
+     $el.data('ionRangeSlider').update({from: %s, to: %s});
+     $el.trigger('change');
+     true",
+    id, from, to
+  ))
+  Sys.sleep(wait)
+}
+
 # Set a date question (type = 'date') to 'yyyy-mm-dd'.
 # Shiny renames the bootstrap datepicker plugin to bsDatepicker, and its
 # input binding listens for the 'changeDate' event (not 'change').

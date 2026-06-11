@@ -1230,10 +1230,36 @@ sd_server <- function(db = NULL) {
 
     # 5. Main question observers ----
 
+    # One observer per question keeps all_data, timestamps, progress, and
+    # the changed-fields tracker in sync with the input. The *_value,
+    # *_label_option, and *_label_question outputs are registered once here
+    # (reading reactively from all_data) instead of being re-registered on
+    # every input event. Reading from all_data also means they reflect
+    # values restored from a resumed session before any interaction.
     lapply(seq_along(question_ids), function(index) {
         local({
             local_id <- question_ids[index]
             local_ts_id <- question_ts_ids[index]
+            question_info <- question_structure[[local_id]]
+
+            output[[paste0(local_id, "_label_question")]] <- shiny::renderText(
+                {
+                    question_info$label
+                }
+            )
+            output[[paste0(local_id, "_value")]] <- shiny::renderText({
+                all_data[[local_id]]
+            })
+            output[[paste0(local_id, "_label_option")]] <- shiny::renderText({
+                value <- all_data[[local_id]]
+                if (is.null(value) || length(value) == 0 || value == "") {
+                    return("")
+                }
+                options <- question_info$options
+                # Stored values are pipe-joined for multi-select questions
+                vals <- strsplit(as.character(value), "|", fixed = TRUE)[[1]]
+                paste(names(options)[options %in% vals], collapse = "|")
+            })
 
             shiny::observeEvent(
                 input[[local_id]],
@@ -1241,8 +1267,7 @@ sd_server <- function(db = NULL) {
                     # Tag event time and update value
                     timestamp <- get_utc_timestamp()
                     value <- input[[local_id]]
-                    formatted_value <- format_question_value(value)
-                    all_data[[local_id]] <- formatted_value
+                    all_data[[local_id]] <- format_question_value(value)
 
                     # Update timestamp and progress if interacted
                     changed <- local_id
@@ -1256,140 +1281,8 @@ sd_server <- function(db = NULL) {
 
                     # Update tracker of which fields changed
                     changed_fields(c(changed_fields(), changed))
-
-                    # Get question labels and values from question structure
-                    question_info <- question_structure[[local_id]]
-                    label_question <- question_info$label
-                    options <- question_info$options
-                    label_options <- names(options)
-
-                    # For the selected value(s), get the corresponding label(s)
-                    if (length(options) == length(label_options)) {
-                        names(options) <- label_options
-                    }
-                    label_option <- if (is.null(value) || length(value) == 0) {
-                        ""
-                    } else {
-                        options[options %in% value] |>
-                            names() |>
-                            paste(collapse = "|")
-                    }
-
-                    # Store the values and labels in output
-                    output[[paste0(local_id, "_value")]] <- shiny::renderText({
-                        formatted_value
-                    })
-                    output[[paste0(
-                        local_id,
-                        "_label_option"
-                    )]] <- shiny::renderText({
-                        label_option
-                    })
-                    output[[paste0(
-                        local_id,
-                        "_label_question"
-                    )]] <- shiny::renderText({
-                        label_question
-                    })
                 },
                 ignoreNULL = FALSE,
-                ignoreInit = TRUE
-            )
-        })
-    })
-
-    # Manual range observers for range sliders auto-save
-    lapply(seq_along(question_ids), function(index) {
-        local({
-            local_id <- question_ids[index]
-            local_ts_id <- question_ts_ids[index]
-            manual_id <- paste0(local_id, "_manual_range")
-
-            shiny::observeEvent(
-                input[[manual_id]],
-                {
-                    # Tag event time and update value
-                    timestamp <- get_utc_timestamp()
-                    value <- input[[manual_id]]
-                    formatted_value <- format_question_value(value)
-                    all_data[[local_id]] <- formatted_value
-
-                    # Always update timestamp for manual range (auto-save scenario)
-                    changed <- local_id
-                    all_data[[local_ts_id]] <- timestamp
-                    changed <- c(changed, local_ts_id)
-
-                    # Update progress if interacted
-                    if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                        update_progress_bar(index)
-                        # Track this question as interacted for highlighting restoration
-                        track_question_interaction(local_id)
-                    }
-
-                    # Update tracker of which fields changed
-                    changed_fields(c(changed_fields(), changed))
-
-                    # Get question labels and values from question structure
-                    question_info <- question_structure[[local_id]]
-                    label_question <- question_info$label
-                    options <- question_info$options
-                    label_options <- names(options)
-
-                    # For the selected value(s), get the corresponding label(s)
-                    if (length(options) == length(label_options)) {
-                        names(options) <- label_options
-                    }
-                    label_option <- if (is.null(value) || length(value) == 0) {
-                        ""
-                    } else {
-                        options[options %in% value] |>
-                            names() |>
-                            paste(collapse = "|")
-                    }
-
-                    # Store the values and labels in output
-                    output[[paste0(local_id, "_value")]] <- shiny::renderText({
-                        formatted_value
-                    })
-                    output[[paste0(
-                        local_id,
-                        "_label_option"
-                    )]] <- shiny::renderText({
-                        label_option
-                    })
-                    output[[paste0(
-                        local_id,
-                        "_label_question"
-                    )]] <- shiny::renderText({
-                        label_question
-                    })
-                },
-                ignoreNULL = FALSE,
-                ignoreInit = TRUE
-            )
-        })
-    })
-
-    # Auto-save timestamp observers
-    lapply(seq_along(question_ids), function(index) {
-        local({
-            local_id <- question_ids[index]
-            local_ts_id <- question_ts_ids[index]
-            autosave_ts_id <- paste0(local_id, "_autosave_timestamp")
-
-            shiny::observeEvent(
-                input[[autosave_ts_id]],
-                {
-                    # Force timestamp update for auto-saved questions
-                    if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                        timestamp <- get_utc_timestamp()
-                        all_data[[local_ts_id]] <- timestamp
-                        changed_fields(c(changed_fields(), local_ts_id))
-                        # Track this question as interacted for highlighting restoration
-                        track_question_interaction(local_id)
-                    }
-                },
-                ignoreNULL = TRUE,
                 ignoreInit = TRUE
             )
         })
@@ -3722,12 +3615,6 @@ check_answer <- function(q, input, question_structure = NULL) {
     # For question types that have default values, check if user has actually interacted
     # These types often have default values that shouldn't count as "answered"
     interacted <- input[[paste0(q, "_interacted")]]
-
-    # Also check for auto-save timestamp (indicates auto-save occurred)
-    autosave_timestamp <- input[[paste0(q, "_autosave_timestamp")]]
-    if (is.null(interacted) && !is.null(autosave_timestamp)) {
-        interacted <- TRUE
-    }
 
     # Smart auto-save detection: ONLY apply if normal answer checking would fail
     # This ensures we don't interfere with normal user interaction tracking

@@ -48,7 +48,8 @@ tracked in git), and shuts the app down when finished.
 - `browser-test-conditional-stopping.R` — `sd_stop_if()`: stop messages,
   priority over required-question warnings, per-page applicability.
 - `browser-test-data-storage.R` — preview-mode data storage: answers
-  every question type, then verifies every value in `preview_data.csv`
+  every question type (including the `slider_numeric` two-handle range
+  variant), then verifies every value in `preview_data.csv`
   (pipe-joined multi-selects, slider label-to-value mapping, matrix
   sub-columns, `sd_store_value()`, session metadata, one row per session).
 - `browser-test-restoration.R` — cookies and state restoration: page

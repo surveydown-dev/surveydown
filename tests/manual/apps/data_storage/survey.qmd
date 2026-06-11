@@ -122,6 +122,14 @@ sd_question(
   label = "Rate from 0 to 10:",
   option = seq(0, 10, 1)
 )
+
+sd_question(
+  type    = 'slider_numeric',
+  id      = 'rating_range',
+  label   = "Pick a range from 0 to 10:",
+  option  = seq(0, 10, 1),
+  default = c(3, 7)
+)
 ```
 
 --- page3
