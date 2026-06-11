@@ -690,6 +690,10 @@ sd_server <- function(db = NULL) {
             for (dep_id in show_if_dep_ids) {
                 input[[dep_id]]
             }
+            # Re-run after each page render: target containers are baked into
+            # the page HTML with display:none (see run_config), so visibility
+            # must be re-applied to the freshly inserted DOM
+            input$sd_page_rendered
             show_if_results <- show_if_results_reactive()
             current_visibility <- question_visibility()
             for (target in names(show_if_results)) {
@@ -1565,6 +1569,16 @@ sd_server <- function(db = NULL) {
                 create_matrix_shuffle_script(matrix_orders)
             )
         }
+
+        # Notify the server once this page's DOM is inserted, so observers
+        # that mutate page elements (e.g., show_if visibility) can re-apply
+        # their state to the freshly rendered page
+        content_tags <- shiny::tagList(
+            content_tags,
+            shiny::tags$script(shiny::HTML(
+                "Shiny.setInputValue('sd_page_rendered', Date.now(), {priority: 'event'});"
+            ))
+        )
 
         content_tags
     })

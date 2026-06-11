@@ -1,7 +1,8 @@
 # surveydown (development version)
 
 - Efficiency: Parsed `_survey/settings.yml` content (settings and system messages) is now cached per Shiny session in `session$userData`, so repeated calls (e.g., per reactive question or per `sd_store_value()`) no longer re-read and re-parse the file from disk. Calls made outside a Shiny session (e.g., during Quarto rendering of `survey.qmd`) still read directly from disk.
-- Efficiency: The `show_if` observer no longer depends on every input via `reactiveValuesToList(input)`, which re-evaluated all `show_if` conditions on every keystroke of any input. It now depends only on the question values actually referenced in the conditions (extracted statically, plus dependencies registered dynamically during condition evaluation).
+- Efficiency: The `show_if` observer no longer depends on every input via `reactiveValuesToList(input)`, which re-evaluated all `show_if` conditions on every keystroke of any input. It now depends only on the question values actually referenced in the conditions (extracted statically, plus dependencies registered dynamically during condition evaluation). Since `show_if` target containers are baked into each page's HTML as hidden, the rendered page now signals the server when its DOM is inserted (`sd_page_rendered`) so question visibility is re-applied on every page render.
+- Testing: Added `tests/manual/` with chromote-based headless browser tests covering `sd_show_if()` (all condition styles, including cross-page `input$`/`all_data$` conditions), `sd_skip_if()` (simple and two-question skips, required-question blocking), and `sd_stop_if()` (stop messages, priority over required warnings, per-page applicability). The tests run against bundled copies of the conditional templates in `tests/manual/apps/`, so they are self-contained and machine-independent. Not run by `devtools::test()` or R CMD check.
 
 # surveydown 1.2.0
 
