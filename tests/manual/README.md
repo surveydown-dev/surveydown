@@ -15,7 +15,13 @@ tests are self-contained and run on any machine.
 
 ## Usage
 
-Run a script from the package root, e.g.:
+With the working directory set to the package root, run all tests at once:
+
+```r
+source("tests/manual/run-all.R")
+```
+
+Or run a single test:
 
 ```r
 source("tests/manual/browser-test-conditional-showing.R")
@@ -28,6 +34,9 @@ tracked in git), and shuts the app down when finished.
 
 ## Contents
 
+- `run-all.R` — runs every `browser-test-*.R` script (each in its own R
+  process) and prints an aggregate summary. Runs the scripts in parallel
+  if the `mirai` package is installed, sequentially otherwise.
 - `helpers.R` — shared helpers (app launch, browser session, click/type,
   visibility and text checks, SweetAlert dismissal, teardown). Sourced by
   every test script.
@@ -40,5 +49,7 @@ tracked in git), and shuts the app down when finished.
   priority over required-question warnings, per-page applicability.
 - `apps/` — bundled survey apps the tests run against.
 
-The scripts use different ports (8123-8125), so they can be run
 back-to-back without conflicts.
+IMPORTANT: every test script must use a unique port in the 8120-8129
+range (currently 8123-8125), so `run-all.R` can run the apps in parallel
+without conflicts.
