@@ -33,6 +33,15 @@ launch_app <- function(app_dir, port) {
   system(sprintf("pkill -f 'shiny::runApp.*%d'", port), ignore.stderr = TRUE)
   Sys.sleep(1)
 
+  # Start from a clean slate: remove artifacts a previous (interrupted or
+  # manual) run may have left behind. Stale response CSVs contaminate row
+  # counts, and a stale _survey/ cache can carry parsed content from an
+  # older package version.
+  unlink(file.path(app_dir, "_survey"), recursive = TRUE)
+  unlink(file.path(app_dir, "preview_data.csv"))
+  unlink(file.path(app_dir, "local_data.csv"))
+  unlink(file.path(app_dir, "survey_files"), recursive = TRUE)
+
   cat("Launching app from", app_dir, "...\n")
   system(sprintf(
     "Rscript -e 'shiny::runApp(\"%s\", port = %d)' > /tmp/sd_browser_test_app.log 2>&1 &",
