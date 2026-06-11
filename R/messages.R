@@ -1,21 +1,34 @@
 get_messages <- function() {
+    # Inside a Shiny session, reuse the messages parsed on first call so
+    # repeated calls (e.g., per reactive question) don't re-read settings.yml.
+    # Outside a session (e.g., during Quarto rendering), read directly.
+    session <- shiny::getDefaultReactiveDomain()
+    if (!is.null(session) && !is.null(session$userData$sd_messages)) {
+        return(session$userData$sd_messages)
+    }
+
     # Initialize messages list from '_survey/settings.yml' file
     result <- get_messages_yml()
 
     if (is.null(result)) {
         # '_survey/settings.yml' file missing, so just load English
         messages <- get_messages_default()
-        language <- 'en'
-        return(list(
+        result <- list(
             messages = messages[["en"]],
-            language = language
-        ))
+            language = 'en'
+        )
+    } else {
+        result <- list(
+            messages = result$messages,
+            language = result$language
+        )
     }
 
-    return(list(
-        messages = result$messages,
-        language = result$language
-    ))
+    if (!is.null(session)) {
+        session$userData$sd_messages <- result
+    }
+
+    return(result)
 }
 
 get_messages_yml <- function() {

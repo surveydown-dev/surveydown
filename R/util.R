@@ -1911,10 +1911,23 @@ get_session_id <- function(session, db) {
 }
 
 # Helper function to get settings.yml file (kebab-case only)
+# Inside a Shiny session, the parsed settings are cached in session$userData
+# so repeated calls (e.g., per question or per sd_store_value) don't re-read
+# the file from disk. Outside a session (e.g., during Quarto rendering of
+# survey.qmd), the file is read directly each time.
 get_settings_yml <- function() {
+  session <- shiny::getDefaultReactiveDomain()
+  if (!is.null(session) && !is.null(session$userData$sd_settings)) {
+    return(session$userData$sd_settings)
+  }
+
   path <- file.path("_survey", "settings.yml")
   if (fs::file_exists(path)) {
-    return(yaml::read_yaml("_survey/settings.yml"))
+    settings <- yaml::read_yaml(path)
+    if (!is.null(session) && !is.null(settings)) {
+      session$userData$sd_settings <- settings
+    }
+    return(settings)
   }
 
   # Fallback: if settings.yml doesn't exist, read directly from survey.qmd YAML header
@@ -1948,6 +1961,9 @@ get_settings_yml <- function() {
         }
 
         if (length(settings) > 0) {
+          if (!is.null(session)) {
+            session$userData$sd_settings <- settings
+          }
           return(settings)
         }
       },
