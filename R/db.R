@@ -265,7 +265,7 @@ sd_db_connect <- function(
         {
             pool <- try_db_connection(params, gssencmode)
             cli::cli_alert_success(
-                "Running in {.strong database} mode. Successfully connected to the database."
+                "Successfully connected to the database."
             )
             return(list(db = pool, table = params$table))
         },
@@ -280,7 +280,7 @@ sd_db_connect <- function(
                     {
                         pool <- try_db_connection(params, "disable")
                         cli::cli_alert_success(
-                            "Running in {.strong database} mode. Successfully connected to the database with gssencmode='disable'."
+                            "Successfully connected to the database with gssencmode='disable'."
                         )
                         return(list(db = pool, table = params$table))
                     },
