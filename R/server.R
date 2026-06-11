@@ -194,28 +194,50 @@ sd_server <- function(db = NULL) {
         highlight_color <- "gray"
     }
 
-    # In preview/local mode, never use the database, even if a valid
-    # connection was provided (mode: preview replaces the deprecated
-    # ignore = TRUE). The connection is still created and tested by
-    # sd_db_connect(), so credentials are verified, but no data is read
-    # from or written to the database.
+    # Report the operating mode on the console for every session, and in
+    # preview/local mode never use the database, even if a valid connection
+    # was provided (mode: preview replaces the deprecated ignore = TRUE).
+    # The connection is still created and tested by sd_db_connect(), so
+    # credentials are verified, but no data is read from or written to the
+    # database.
     db_connected_but_ignored <- FALSE
-    if (
-        mode_yaml %in% c("preview", "local") &&
-            !is.null(db) &&
-            !is.null(db$db)
-    ) {
-        db_connected_but_ignored <- TRUE
+    if (mode_yaml %in% c("preview", "local")) {
+        csv_name <- if (identical(mode_yaml, "local")) {
+            "local_data.csv"
+        } else {
+            "preview_data.csv"
+        }
+        if (!is.null(db) && !is.null(db$db)) {
+            db_connected_but_ignored <- TRUE
+            cli::cli_alert_info(
+                paste0(
+                    "Survey mode is '", mode_yaml, "': the database ",
+                    "connection is not used. Responses are saved to ",
+                    csv_name, ". Set 'mode: database' in survey.qmd to ",
+                    "store responses in the database."
+                )
+            )
+            db <- NULL
+            session$userData$db <- NULL
+        } else {
+            cli::cli_alert_info(
+                paste0(
+                    "Survey mode is '", mode_yaml, "': responses are ",
+                    "saved to ", csv_name, "."
+                )
+            )
+        }
+    } else if (!is.null(db) && !is.null(db$db)) {
         cli::cli_alert_info(
+            "Survey mode is 'database': responses are stored in the database."
+        )
+    } else {
+        cli::cli_alert_warning(
             paste0(
-                "Survey mode is '", mode_yaml, "': the database connection ",
-                "is not used. Responses are saved to a local CSV file. Set ",
-                "'mode: database' in survey.qmd to store responses in the ",
-                "database."
+                "Survey mode is 'database' but no database connection is ",
+                "available: responses are NOT being saved."
             )
         )
-        db <- NULL
-        session$userData$db <- NULL
     }
 
     # Run the configuration settings
