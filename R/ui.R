@@ -686,7 +686,7 @@ extract_head_content <- function(html_content) {
 #' @param type Specifies the type of question. Possible values are `"select"`,
 #' `"mc"`, `"mc_multiple"`, `"mc_buttons"`, `"mc_multiple_buttons"`, `"text"`,
 #' `"textarea"`, `"numeric"`, `"slider"`, `"slider_numeric"`, `"date"`,
-#' `"daterange"`, and `"matrix"`. Defaults to `NULL`.
+#' `"daterange"`, `"matrix"`, and `"matrix_multiple"`. Defaults to `NULL`.
 #' @param label Character string. The label for the UI element, which can be
 #' formatted with markdown. Defaults to `NULL`
 #' @param cols Integer. Number of columns for the `"textarea"` question type.
@@ -731,8 +731,8 @@ extract_head_content <- function(html_content) {
 #' `"textarea"` question types.
 #' @param resize Character string. Resize option for textarea input.
 #' Defaults to `NULL`.
-#' @param row List. Used for `"matrix"` type questions. Contains the row labels
-#' and their corresponding IDs.
+#' @param row List. Used for `"matrix"` and `"matrix_multiple"` type
+#' questions. Contains the row labels and their corresponding IDs.
 #' @param default Numeric, length 1 (for a single sided slider), or 2 for a
 #' two sided (range based) slider. Values to be used as the starting default
 #' for the slider. Defaults to the median of values.
@@ -763,11 +763,16 @@ extract_head_content <- function(html_content) {
 #' - `"slider_numeric"`: Extended numeric slider question
 #' - `"date"`: Date question
 #' - `"daterange"`: Date range question
-#' - `"matrix"`: Matrix-style question with rows and columns
+#' - `"matrix"`: Matrix-style question with rows and columns (single
+#'   selection per row, radio buttons)
+#' - `"matrix_multiple"`: Matrix-style question where each row allows
+#'   multiple selections (checkboxes)
 #'
-#' For `"matrix"` type questions, use the `row` parameter to define the rows of
-#' the matrix. Each element in the `row` list should have a name (used as the
-#' row ID) and a value (used as the row label).
+#' For `"matrix"` and `"matrix_multiple"` type questions, use the `row`
+#' parameter to define the rows of the matrix. Each element in the `row`
+#' list should have a name (used as the row ID) and a value (used as the
+#' row label). Each row becomes its own sub-question with the ID
+#' `<question_id>_<row_id>`, stored as a separate column in the data.
 #'
 #' @return A 'shiny' UI element wrapped in a div with a data attribute for
 #' question ID.
@@ -878,7 +883,8 @@ sd_question <- function(
     "slider_numeric",
     "date",
     "daterange",
-    "matrix"
+    "matrix",
+    "matrix_multiple"
   )
 
   # Define types that require options
@@ -890,7 +896,8 @@ sd_question <- function(
     "mc_multiple_buttons",
     "slider",
     "slider_numeric",
-    "matrix"
+    "matrix",
+    "matrix_multiple"
   )
 
   # First check for missing arguments and try to load from local yml file
@@ -1283,7 +1290,12 @@ sd_question <- function(
       output,
       shiny::tags$script(htmltools::HTML(js_init))
     )
-  } else if (type == "matrix") {
+  } else if (type %in% c("matrix", "matrix_multiple")) {
+    # Each row is rendered as its own sub-question: radio buttons for
+    # "matrix" (single selection) or checkboxes for "matrix_multiple"
+    # (multiple selections per row)
+    sub_type <- if (type == "matrix_multiple") "mc_multiple" else "mc"
+
     # Auto-calculate question column width if not provided
     if (is.null(matrix_question_width)) {
       # Find the longest row label by character count
@@ -1326,7 +1338,7 @@ sd_question <- function(
         shiny::tags$td(
           colspan = length(option),
           sd_question(
-            type = "mc",
+            type = sub_type,
             id = full_id,
             label = "",
             option = option,

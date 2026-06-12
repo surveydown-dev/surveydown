@@ -390,30 +390,35 @@ a:hover {
     width: 100%;
 }
 
-.matrix-question .shiny-options-group .radio {
+.matrix-question .shiny-options-group .radio,
+.matrix-question .shiny-options-group .checkbox {
     margin: 0;
     flex: 1;
     text-align: center;
 }
 
-.matrix-question .shiny-options-group .radio label {
+.matrix-question .shiny-options-group .radio label,
+.matrix-question .shiny-options-group .checkbox label {
     padding-left: 0;
     display: inline-block;
 }
 
-.matrix-question .shiny-options-group .radio input {
+.matrix-question .shiny-options-group .radio input,
+.matrix-question .shiny-options-group .checkbox input {
     margin: 0;
     position: relative;
-    top: 0.5rem; /* radio button position */
+    top: 0.5rem; /* radio/checkbox position */
 }
 
-/* Hide radio button labels */
-.matrix-question .shiny-options-group .radio span {
+/* Hide radio/checkbox option labels (column headers show the options) */
+.matrix-question .shiny-options-group .radio span,
+.matrix-question .shiny-options-group .checkbox span {
     display: none;
 }
 
-/* Hide control-label in matrix question radio groups (avoid duplicate labels when highlighted) */
-.matrix-question .shiny-input-radiogroup > .control-label {
+/* Hide control-label in matrix question radio/checkbox groups (avoid duplicate labels when highlighted) */
+.matrix-question .shiny-input-radiogroup > .control-label,
+.matrix-question .shiny-input-checkboxgroup > .control-label {
     display: none;
 }
 

@@ -162,6 +162,21 @@ sd_question(
     'Bad'  = 'bad'
   )
 )
+
+sd_question(
+  type  = 'matrix_multiple',
+  id    = 'features',
+  label = "Which features apply? (select all)",
+  row = c(
+    'Website' = 'website',
+    'App'     = 'app'
+  ),
+  option = c(
+    'Fast'   = 'fast',
+    'Simple' = 'simple',
+    'Cheap'  = 'cheap'
+  )
+)
 ```
 
 --- end

@@ -74,12 +74,19 @@ Also done along the way (already on the branch):
 
 ## Widget improvements (approved earlier, after tasks 6-7)
 
-8. Matrix with checkboxes: add `matrix_multiple` type (matrix builder
-   calls sd_question(type="mc_multiple") per row + server restoration
-   branch).
+8. [done] `matrix_multiple` question type (checkbox matrix). Renders via
+   the matrix builder with mc_multiple sub-questions; downstream machinery
+   (is_matrix detection, required, shuffling, restoration) worked
+   automatically because it keys off the .matrix-question HTML class.
+   CSS .checkbox parallels added. Data-storage app/test extended (2 new
+   checks). NEEDS: manual test run + commit.
 9. Slider restyle (cheap): default `grid = FALSE` for `slider` type and
    style `.irs-*` classes in surveydown.css. (Alternative considered:
    noUiSlider via shinyWidgets - bigger change, pick one.)
+   NOTE: the website repo keeps its own trimmed copy of surveydown.css
+   (website/css/surveydown.css) used by docs pages that live-render
+   questions (e.g., question-types.qmd) - mirror any question styling
+   changes there (matrix checkbox rules were synced 2026-06-12).
 11. Clean numeric input: replace per-question spinner/validation JS with a
     shared component (pairs with task 6).
 13. Rating / NPS question types (stars; 0-10 scale styled like mc_buttons).

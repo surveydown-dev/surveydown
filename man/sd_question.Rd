@@ -38,7 +38,7 @@ variable name in the resulting survey data.}
 \item{type}{Specifies the type of question. Possible values are \code{"select"},
 \code{"mc"}, \code{"mc_multiple"}, \code{"mc_buttons"}, \code{"mc_multiple_buttons"}, \code{"text"},
 \code{"textarea"}, \code{"numeric"}, \code{"slider"}, \code{"slider_numeric"}, \code{"date"},
-\code{"daterange"}, and \code{"matrix"}. Defaults to \code{NULL}.}
+\code{"daterange"}, \code{"matrix"}, and \code{"matrix_multiple"}. Defaults to \code{NULL}.}
 
 \item{label}{Character string. The label for the UI element, which can be
 formatted with markdown. Defaults to \code{NULL}}
@@ -101,8 +101,8 @@ Defaults to \code{TRUE}.}
 \item{resize}{Character string. Resize option for textarea input.
 Defaults to \code{NULL}.}
 
-\item{row}{List. Used for \code{"matrix"} type questions. Contains the row labels
-and their corresponding IDs.}
+\item{row}{List. Used for \code{"matrix"} and \code{"matrix_multiple"} type
+questions. Contains the row labels and their corresponding IDs.}
 
 \item{default}{Numeric, length 1 (for a single sided slider), or 2 for a
 two sided (range based) slider. Values to be used as the starting default
@@ -146,12 +146,17 @@ The function supports various question types:
 \item \code{"slider_numeric"}: Extended numeric slider question
 \item \code{"date"}: Date question
 \item \code{"daterange"}: Date range question
-\item \code{"matrix"}: Matrix-style question with rows and columns
+\item \code{"matrix"}: Matrix-style question with rows and columns (single
+selection per row, radio buttons)
+\item \code{"matrix_multiple"}: Matrix-style question where each row allows
+multiple selections (checkboxes)
 }
 
-For \code{"matrix"} type questions, use the \code{row} parameter to define the rows of
-the matrix. Each element in the \code{row} list should have a name (used as the
-row ID) and a value (used as the row label).
+For \code{"matrix"} and \code{"matrix_multiple"} type questions, use the \code{row}
+parameter to define the rows of the matrix. Each element in the \code{row}
+list should have a name (used as the row ID) and a value (used as the
+row label). Each row becomes its own sub-question with the ID
+\verb{<question_id>_<row_id>}, stored as a separate column in the data.
 }
 \examples{
 if (interactive()) {
