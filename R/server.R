@@ -1,3 +1,40 @@
+# Extract question IDs referenced in an expression.
+# Handles input$xxx, all_data$xxx, sd_value(), and sd_values() patterns.
+# Used to map skip_if/stop_if conditions to pages, to set show_if observer
+# dependencies, and by sd_reactive() to tell "inputs not answered yet"
+# apart from genuine errors.
+extract_question_refs <- function(expr) {
+    ids <- character(0)
+    if (is.call(expr)) {
+        fn <- as.character(expr[[1]])
+        # input$xxx or all_data$xxx
+        if (length(expr) >= 3 && fn == "$") {
+            obj <- as.character(expr[[2]])
+            if (obj %in% c("input", "all_data")) {
+                ids <- c(ids, as.character(expr[[3]]))
+            }
+        }
+        # sd_value() or sd_values()
+        if (fn %in% c("sd_value", "sd_values") && length(expr) >= 2) {
+            for (j in 2:length(expr)) {
+                arg <- expr[[j]]
+                if (is.character(arg)) {
+                    ids <- c(ids, arg)
+                } else if (is.symbol(arg)) {
+                    ids <- c(ids, as.character(arg))
+                }
+            }
+        }
+        # Recurse
+        for (i in seq_along(expr)) {
+            if (is.call(expr[[i]])) {
+                ids <- c(ids, extract_question_refs(expr[[i]]))
+            }
+        }
+    }
+    return(ids)
+}
+
 #' Server logic for a surveydown survey
 #'
 #' @description
@@ -253,40 +290,6 @@ sd_server <- function(db = NULL) {
     # Use config$start_page as fallback if start_page is NULL
     if (is.null(start_page)) {
         start_page <- config$start_page
-    }
-
-    # Helper to extract question IDs from condition expressions
-    # Handles input$xxx, all_data$xxx, sd_value(), and sd_values() patterns
-    extract_question_refs <- function(expr) {
-        ids <- character(0)
-        if (is.call(expr)) {
-            fn <- as.character(expr[[1]])
-            # input$xxx or all_data$xxx
-            if (length(expr) >= 3 && fn == "$") {
-                obj <- as.character(expr[[2]])
-                if (obj %in% c("input", "all_data")) {
-                    ids <- c(ids, as.character(expr[[3]]))
-                }
-            }
-            # sd_value() or sd_values()
-            if (fn %in% c("sd_value", "sd_values") && length(expr) >= 2) {
-                for (j in 2:length(expr)) {
-                    arg <- expr[[j]]
-                    if (is.character(arg)) {
-                        ids <- c(ids, arg)
-                    } else if (is.symbol(arg)) {
-                        ids <- c(ids, as.character(arg))
-                    }
-                }
-            }
-            # Recurse
-            for (i in seq_along(expr)) {
-                if (is.call(expr[[i]])) {
-                    ids <- c(ids, extract_question_refs(expr[[i]]))
-                }
-            }
-        }
-        return(ids)
     }
 
     # Map skip_if conditions to applicable pages
@@ -3011,7 +3014,32 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
                 }
             },
             error = function(e) {
-                warning("Error in sd_reactive for ", id, ": ", e$message)
+                # Don't warn when the failure is just "inputs not answered
+                # yet": if any question referenced in the expression is
+                # still blank, errors (e.g., arithmetic on "") are an
+                # expected state while the respondent works through the
+                # survey. If all referenced values are filled in, or no
+                # references can be detected in the expression, the error
+                # is treated as genuine and a warning is raised.
+                all_data <- session$userData$all_data
+                ref_ids <- extract_question_refs(expr_call)
+                any_unanswered <- FALSE
+                if (!is.null(all_data) && length(ref_ids) > 0) {
+                    any_unanswered <- any(vapply(
+                        ref_ids,
+                        function(q) {
+                            val <- shiny::isolate(all_data[[q]])
+                            is.null(val) ||
+                                length(val) == 0 ||
+                                all(is.na(val)) ||
+                                all(as.character(val) == "")
+                        },
+                        logical(1)
+                    ))
+                }
+                if (!any_unanswered) {
+                    warning("Error in sd_reactive for ", id, ": ", e$message)
+                }
                 sd_store_value("", id)
                 return(if (blank_na) "" else NULL)
             }
