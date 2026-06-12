@@ -1285,8 +1285,11 @@ sd_server <- function(db = NULL) {
         })
     })
 
-    # Observer to update cookies with answers and page_history
-    shiny::observe({
+    # Update cookies with answers and page_history. The payload is built in
+    # a reactive that is debounced, so rapid input changes (e.g., keystrokes
+    # in a text question) result in one cookie update shortly after the
+    # respondent pauses, instead of serializing all answers on every change.
+    cookie_answer_data <- shiny::reactive({
         # Get current page ID
         page_id <- current_page_id()
 
@@ -1319,25 +1322,31 @@ sd_server <- function(db = NULL) {
             }
         }
 
-        # Send to client to update cookie
-        if (length(answers) > 0) {
-            # Update cookies in both database and local modes
-            # Include page_history for Previous button functionality
-            # Include question_history for highlighting restoration
-            # Include shuffle_orders for option/row shuffle persistence
-            page_data <- list(
-                answers = answers,
-                last_timestamp = last_timestamp,
-                page_history = page_history(),
-                question_history = question_history(),
-                randomization_orders = shiny::reactiveValuesToList(
-                    shuffle_orders
-                )
+        if (length(answers) == 0) {
+            return(NULL)
+        }
+
+        # Update cookies in both database and local modes
+        # Include page_history for Previous button functionality
+        # Include question_history for highlighting restoration
+        # Include shuffle_orders for option/row shuffle persistence
+        page_data <- list(
+            answers = answers,
+            last_timestamp = last_timestamp,
+            page_history = page_history(),
+            question_history = question_history(),
+            randomization_orders = shiny::reactiveValuesToList(
+                shuffle_orders
             )
-            session$sendCustomMessage(
-                "setAnswerData",
-                list(pageId = page_id, pageData = page_data)
-            )
+        )
+        list(pageId = page_id, pageData = page_data)
+    })
+    cookie_answer_data_debounced <- shiny::debounce(cookie_answer_data, 500)
+
+    shiny::observe({
+        message_data <- cookie_answer_data_debounced()
+        if (!is.null(message_data)) {
+            session$sendCustomMessage("setAnswerData", message_data)
         }
     })
 
