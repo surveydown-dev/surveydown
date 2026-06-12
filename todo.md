@@ -80,13 +80,20 @@ Also done along the way (already on the branch):
    automatically because it keys off the .matrix-question HTML class.
    CSS .checkbox parallels added. Data-storage app/test extended (2 new
    checks). NEEDS: manual test run + commit.
-9. Slider restyle (cheap): default `grid = FALSE` for `slider` type and
-   style `.irs-*` classes in surveydown.css. (Alternative considered:
-   noUiSlider via shinyWidgets - bigger change, pick one.)
+9. [done] Slider restyle: .irs--shiny styling in surveydown.css (slim
+   theme-colored track, circular handle, value bubble). Minor tick marks
+   hidden via CSS; labeled MAJOR ticks at main breaks kept (grid/ticks
+   defaults unchanged after iteration with John). Min/max labels hidden
+   when a labeled grid is shown (redundant). CSS mirrored to
+   website/css/surveydown.css. Website slider screenshots regenerated
+   via new website/make-screenshots.R (rerun it whenever question
+   styling changes); slider.png example changed to a neutral question
+   with the handle at the middle. noUiSlider alternative (#10) not
+   needed. NEEDS: commit (package + website repos).
    NOTE: the website repo keeps its own trimmed copy of surveydown.css
    (website/css/surveydown.css) used by docs pages that live-render
    questions (e.g., question-types.qmd) - mirror any question styling
-   changes there (matrix checkbox rules were synced 2026-06-12).
+   changes there (matrix checkbox + slider rules synced 2026-06-12).
 11. Clean numeric input: replace per-question spinner/validation JS with a
     shared component (pairs with task 6).
 13. Rating / NPS question types (stars; 0-10 scale styled like mc_buttons).

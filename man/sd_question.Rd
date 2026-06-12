@@ -83,8 +83,10 @@ Defaults to \code{"100\%"}.}
 \item{label_select}{Character string. The label for the select input.
 Defaults to \code{"Choose an option..."}.}
 
-\item{grid}{Logical. Whether to show a grid for slider input.
-Defaults to \code{TRUE}.}
+\item{grid}{Logical. Whether to show tick marks and labels under each
+position of a \code{"slider"} question. Defaults to \code{TRUE}. Only the major
+(labeled) tick marks are shown; the small minor tick marks between
+positions are hidden by surveydown's styling.}
 
 \item{individual}{Logical. Whether buttons in a group should be individually
 styled. Defaults to \code{TRUE}.}

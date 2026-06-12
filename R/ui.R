@@ -702,8 +702,10 @@ extract_head_content <- function(html_content) {
 #' @param selected Value. The selected value(s) for certain input elements.
 #' @param label_select Character string. The label for the select input.
 #' Defaults to `"Choose an option..."`.
-#' @param grid Logical. Whether to show a grid for slider input.
-#' Defaults to `TRUE`.
+#' @param grid Logical. Whether to show tick marks and labels under each
+#' position of a `"slider"` question. Defaults to `TRUE`. Only the major
+#' (labeled) tick marks are shown; the small minor tick marks between
+#' positions are hidden by surveydown's styling.
 #' @param individual Logical. Whether buttons in a group should be individually
 #'  styled. Defaults to `TRUE`.
 #' @param justified Logical. Whether buttons in a group should fill the width
@@ -1216,6 +1218,9 @@ sd_question <- function(
       default <- (slider_min + slider_max) / 2
     }
 
+    # Note: the small minor tick marks between the labeled major ticks are
+    # hidden by surveydown's styling (see .irs-grid-pol.small in
+    # surveydown.css)
     output <- shiny::sliderInput(
       inputId = id,
       label = label,
