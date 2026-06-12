@@ -1,0 +1,51 @@
+---
+theme-settings:
+  theme: default
+  barposition: top
+  barcolor: "#FF0000"
+  footer-left: "Warm start test footer"
+
+survey-settings:
+  mode: preview
+  show-previous: false
+  use-cookies: false
+  auto-scroll: false
+  rate-survey: false
+  system-language: en
+  highlight-unanswered: true
+  highlight-color: blue
+  capture-metadata: true
+  all-required: false
+---
+
+```{r}
+library(surveydown)
+```
+
+--- page1
+
+# Warm Start Test
+
+This app is launched twice by the test: once cold (full render) and once
+with a warm `_survey/` cache, verifying that the cached startup path
+serves the same progress bar color, footer, and a working survey.
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'fruit',
+  label = "Favorite fruit?",
+  option = c(
+    'Apple'  = 'apple',
+    'Banana' = 'banana'
+  )
+)
+```
+
+--- end
+
+## End of the warm start test survey.
+
+```{r}
+sd_close()
+```

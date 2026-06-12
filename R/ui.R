@@ -44,40 +44,60 @@ sd_ui <- function() {
   # Throw error if 'survey.qmd' or 'app.R' files are missing
   check_files_missing()
 
-  # Get metadata from the 'survey.qmd' file
-  metadata <- quarto::quarto_inspect("survey.qmd")
-
-  theme <- get_theme(metadata)
-  default_theme <- FALSE
-  if ("default" %in% theme) {
-    default_theme <- TRUE
-  }
-  barcolor <- get_barcolor(metadata)
-  barposition <- get_barposition(metadata)
-  footer <- get_footer(metadata)
-
   # Get paths to files and create '_survey' folder if necessary
   paths <- get_paths()
 
-  # Create settings YAML file from survey.qmd YAML metadata BEFORE rendering
-  # This ensures custom messages are available when sd_nav() is called during rendering
-  create_settings_yaml(paths, metadata)
+  needs_updating <- survey_needs_updating(paths)
 
-  # Render the 'survey.qmd' file if changes detected
-  if (survey_needs_updating(paths)) {
-    message("Changes detected...rendering survey files...")
-    render_survey_qmd(paths, default_theme, theme)
+  # When nothing changed, read the display settings from the cached
+  # '_survey/settings.yml' instead of running quarto_inspect() (a 1-3s
+  # subprocess) and rewriting settings.yml (which would bump its mtime and
+  # force run_config() to re-parse all pages). This makes app startup with
+  # a warm cache near-instant. Falls back to the full inspect path if the
+  # cached settings are missing or unreadable.
+  cached <- NULL
+  if (!needs_updating) {
+    cached <- read_cached_theme_settings(paths)
+  }
 
-    # Move rendered file
-    fs::file_move(paths$root_html, paths$target_html)
-
-    # Extract head content and save
-    html_content <- rvest::read_html(paths$target_html)
-    head_content <- extract_head_content(html_content)
-    saveRDS(head_content, paths$target_head)
-  } else {
-    # If no changes, just load head content from '_survey/head.rds'
+  if (!is.null(cached)) {
+    barcolor <- cached$barcolor
+    barposition <- cached$barposition
+    footer <- cached$footer
     head_content <- readRDS(paths$target_head)
+  } else {
+    # Get metadata from the 'survey.qmd' file
+    metadata <- quarto::quarto_inspect("survey.qmd")
+
+    theme <- get_theme(metadata)
+    default_theme <- FALSE
+    if ("default" %in% theme) {
+      default_theme <- TRUE
+    }
+    barcolor <- get_barcolor(metadata)
+    barposition <- get_barposition(metadata)
+    footer <- get_footer(metadata)
+
+    # Create settings YAML file from survey.qmd YAML metadata BEFORE rendering
+    # This ensures custom messages are available when sd_nav() is called during rendering
+    create_settings_yaml(paths, metadata)
+
+    # Render the 'survey.qmd' file if changes detected
+    if (needs_updating) {
+      message("Changes detected...rendering survey files...")
+      render_survey_qmd(paths, default_theme, theme)
+
+      # Move rendered file
+      fs::file_move(paths$root_html, paths$target_html)
+
+      # Extract head content and save
+      html_content <- rvest::read_html(paths$target_html)
+      head_content <- extract_head_content(html_content)
+      saveRDS(head_content, paths$target_head)
+    } else {
+      # If no changes, just load head content from '_survey/head.rds'
+      head_content <- readRDS(paths$target_head)
+    }
   }
 
   # Create the UI
@@ -232,12 +252,12 @@ get_footer <- function(metadata) {
     footer_center <- plain_footer
   }
 
-  # If all are NULL, return empty string
-  if (is.null(footer_center) && is.null(footer_left) && is.null(footer_right)) {
-    return("")
-  }
+  return(build_footer_html(footer_left, footer_center, footer_right))
+}
 
-  # Process each section if it exists
+# Build the footer HTML from the three footer text sections. Returns ""
+# when all sections are empty or NULL.
+build_footer_html <- function(footer_left, footer_center, footer_right) {
   footer_html <- c()
 
   if (!is.null(footer_left) && nchar(footer_left) > 0) {
@@ -264,12 +284,51 @@ get_footer <- function(metadata) {
     )
   }
 
+  if (length(footer_html) == 0) {
+    return("")
+  }
+
   # Return the final HTML
   return(paste0(
     '<div class="footer-content">',
     paste(footer_html, collapse = ""),
     '</div>'
   ))
+}
+
+# Read the display settings sd_ui() needs from the cached
+# '_survey/settings.yml' (written by create_settings_yaml on the last full
+# startup). Returns NULL if the file is missing, unreadable, or lacks the
+# theme-settings section, in which case the caller falls back to running
+# quarto_inspect() on survey.qmd.
+read_cached_theme_settings <- function(paths) {
+  if (!fs::file_exists(paths$target_settings)) {
+    return(NULL)
+  }
+
+  settings <- tryCatch(
+    yaml::read_yaml(paths$target_settings),
+    error = function(e) NULL
+  )
+  theme_settings <- settings$`theme-settings`
+  if (is.null(theme_settings)) {
+    return(NULL)
+  }
+
+  barposition <- theme_settings$barposition
+  if (is.null(barposition)) {
+    barposition <- "top"
+  }
+
+  list(
+    barcolor = theme_settings$barcolor,
+    barposition = barposition,
+    footer = build_footer_html(
+      theme_settings$`footer-left`,
+      theme_settings$`footer-center`,
+      theme_settings$`footer-right`
+    )
+  )
 }
 
 # Helper function to get YAML values (kebab-case only)
@@ -505,6 +564,8 @@ find_all_yaml_files <- function() {
 
 survey_needs_updating <- function(paths) {
   # Re-render if any of the target files are missing
+  # (a missing settings.yml alone doesn't require a re-render: the
+  # quarto_inspect fallback path in sd_ui() recreates it)
   targets <- c(paths$target_html, paths$target_head)
   if (any(!fs::file_exists(targets))) {
     return(TRUE)
@@ -516,6 +577,18 @@ survey_needs_updating <- function(paths) {
 
   if (time_qmd > time_html) {
     return(TRUE)
+  }
+
+  # Re-render if the installed surveydown package is newer than the cached
+  # render: the package's JS/CSS are embedded in the rendered output and
+  # the settings.yml format may have changed, so a stale cache would keep
+  # serving assets from the old package version
+  pkg_desc <- system.file("DESCRIPTION", package = "surveydown")
+  if (nzchar(pkg_desc)) {
+    time_pkg <- file.info(pkg_desc)$mtime
+    if (!is.na(time_pkg) && time_pkg > time_html) {
+      return(TRUE)
+    }
   }
 
   # Find all YAML files

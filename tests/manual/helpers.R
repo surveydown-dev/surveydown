@@ -19,8 +19,9 @@ dir.create(shot_dir, showWarnings = FALSE, recursive = TRUE)
 app_url <- function(port) sprintf("http://127.0.0.1:%d/", port)
 
 # Launch a survey app in a background R process and wait until it responds
-# (the first run renders survey.qmd, which can take ~60s)
-launch_app <- function(app_dir, port) {
+# (the first run renders survey.qmd, which can take ~60s). Set clean =
+# FALSE to keep existing artifacts (e.g., to test a warm _survey/ cache).
+launch_app <- function(app_dir, port, clean = TRUE) {
   if (!dir.exists(app_dir)) {
     stop(
       "Run this script from the package root (app not found at ",
@@ -33,14 +34,16 @@ launch_app <- function(app_dir, port) {
   system(sprintf("pkill -f 'shiny::runApp.*%d'", port), ignore.stderr = TRUE)
   Sys.sleep(1)
 
-  # Start from a clean slate: remove artifacts a previous (interrupted or
-  # manual) run may have left behind. Stale response CSVs contaminate row
-  # counts, and a stale _survey/ cache can carry parsed content from an
-  # older package version.
-  unlink(file.path(app_dir, "_survey"), recursive = TRUE)
-  unlink(file.path(app_dir, "preview_data.csv"))
-  unlink(file.path(app_dir, "local_data.csv"))
-  unlink(file.path(app_dir, "survey_files"), recursive = TRUE)
+  if (clean) {
+    # Start from a clean slate: remove artifacts a previous (interrupted
+    # or manual) run may have left behind. Stale response CSVs contaminate
+    # row counts, and a stale _survey/ cache can carry parsed content from
+    # an older package version.
+    unlink(file.path(app_dir, "_survey"), recursive = TRUE)
+    unlink(file.path(app_dir, "preview_data.csv"))
+    unlink(file.path(app_dir, "local_data.csv"))
+    unlink(file.path(app_dir, "survey_files"), recursive = TRUE)
+  }
 
   cat("Launching app from", app_dir, "...\n")
   system(sprintf(
@@ -63,6 +66,17 @@ launch_app <- function(app_dir, port) {
     stop("App did not start. See /tmp/sd_browser_test_app.log")
   }
   cat("App is up.\n")
+}
+
+# Stop the app process WITHOUT cleaning artifacts (for warm-restart tests)
+stop_app <- function(port, wait = 1) {
+  system(sprintf("pkill -f 'shiny::runApp.*%d'", port), ignore.stderr = TRUE)
+  Sys.sleep(wait)
+}
+
+# Read the current app process log (one shared log per test script)
+app_log <- function() {
+  readLines("/tmp/sd_browser_test_app.log", warn = FALSE)
 }
 
 # Open a fresh browser session on the app (a new Shiny session each call).

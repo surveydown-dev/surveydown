@@ -57,17 +57,20 @@ Also done along the way (already on the branch):
   (all 13 question types + range slider), cookies/restoration,
   preview-with-db.
 
+7. [done] Skip `quarto_inspect()` when `_survey/` cache is fresh.
+   sd_ui() reads barcolor/barposition/footer from cached settings.yml via
+   read_cached_theme_settings() (falls back to full inspect path);
+   settings.yml no longer rewritten on warm starts, so run_config() stops
+   re-parsing pages every startup. BONUS bug fix: survey_needs_updating()
+   now also re-renders when the installed package is newer than the cached
+   render (stale embedded JS/CSS). New warm-start browser test (port 8129,
+   apps/warm_start) launches the app cold then warm and asserts no
+   re-render/re-parse plus correct barcolor/footer from cache.
+   NEEDS: manual test run + commit.
+
 ## Remaining tasks
 
-7. [next] Skip `quarto_inspect()` when `_survey/` cache is fresh
-   - `sd_ui()` (R/ui.R ~48) runs `quarto::quarto_inspect()` (1-3s
-     subprocess) on every app start even when nothing changed.
-   - When `survey_needs_updating()` is FALSE, read theme/barcolor/
-     barposition/footers from cached `_survey/settings.yml` instead, and
-     skip `create_settings_yaml()` (which currently rewrites settings.yml
-     every startup and forces `run_config()` to re-parse pages).
-   - Fall back to the full inspect path if settings.yml is missing or
-     unreadable.
+(efficiency tasks 1-7 all complete)
 
 ## Widget improvements (approved earlier, after tasks 6-7)
 

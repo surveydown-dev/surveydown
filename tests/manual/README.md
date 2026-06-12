@@ -60,10 +60,14 @@ tracked in git), and shuts the app down when finished.
   connection: the connection must never be used, responses go to
   `preview_data.csv`, and the banner says the database is connected but
   not used.
+- `browser-test-warm-start.R` — launches the same app twice: cold (full
+  render) and warm (`_survey/` cache intact), verifying the warm start
+  skips `quarto_inspect()`/rendering/re-parsing while serving the same
+  progress bar color, footer, and a working survey.
 - `apps/` — bundled survey apps the tests run against.
 
 IMPORTANT: every test script must use a unique port in the 8120-8129
-range (currently 8123-8128), so `run-all.R` can run the apps in parallel
+range (currently 8123-8129), so `run-all.R` can run the apps in parallel
 without conflicts. Cookie-enabled apps share the browser-wide localhost
 cookie jar, which is fine here because `run-all.R` gives each script its
 own R process (and therefore its own headless browser).
