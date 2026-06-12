@@ -31,7 +31,13 @@ package build via .Rbuildignore.
    + `write_local_data()`); no read-modify-write from disk per save;
    removed duplicate `get_local_data()` definition.
 5. [done] Debounced the cookie-sync observer (500ms; was firing per
-   keystroke). NEWS entry added. NEEDS: manual test run + commit.
+   keystroke).
+6. [done] Inline per-question JS for mc_buttons / mc_multiple_buttons /
+   numeric replaced with delegated handlers in interaction.js (one
+   registration per page load; numeric spinner injected on shiny:bound;
+   input carries class "sd-numeric" added via htmltools::tagQuery).
+   Data-storage test extended with a spinner-click check (new mousedown()
+   helper). NEEDS: manual test run + commit.
 
 Also done along the way (already on the branch):
 - Bug fix: `mode: preview`/`local` never use the database even with a
@@ -53,20 +59,7 @@ Also done along the way (already on the branch):
 
 ## Remaining tasks
 
-6. [next] Move inline per-question JS to delegated handlers
-   - `mc_buttons` / `mc_multiple_buttons` inline scripts (R/ui.R ~984-1042)
-     attach a new `$(document).on('click', ...)` handler per question and
-     PER RE-RENDER of reactive questions (handlers accumulate - latent
-     bug); they also use 50ms setTimeout races.
-   - The ~70-line numeric spinner/validation script is duplicated inline
-     per numeric question (R/ui.R ~1071-1158).
-   - Plan: one delegated handler set in `inst/js/interaction.js` (or a new
-     js file included by sd_ui), keyed off data attributes on the question
-     containers. Verify with browser tests: data-storage covers
-     mc_buttons/mc_multiple_buttons/numeric; consider adding a reactive-
-     question re-render test for handler accumulation.
-
-7. Skip `quarto_inspect()` when `_survey/` cache is fresh
+7. [next] Skip `quarto_inspect()` when `_survey/` cache is fresh
    - `sd_ui()` (R/ui.R ~48) runs `quarto::quarto_inspect()` (1-3s
      subprocess) on every app start even when nothing changed.
    - When `survey_needs_updating()` is FALSE, read theme/barcolor/

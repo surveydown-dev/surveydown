@@ -927,12 +927,6 @@ sd_question <- function(
   language <- messages$language
   messages <- messages$messages
 
-  # Check if question if answered
-  js_interaction <- sprintf(
-    "Shiny.setInputValue('%s_interacted', true, {priority: 'event'});",
-    id
-  )
-
   # Create label with hidden asterisk
   label <- markdown_to_html(label)
 
@@ -972,6 +966,8 @@ sd_question <- function(
       ...
     )
   } else if (type == "mc_buttons") {
+    # Value reporting and interaction tracking are handled by delegated
+    # handlers in interaction.js (keyed off the .radio-group-buttons class)
     output <- shinyWidgets::radioGroupButtons(
       inputId = id,
       label = label,
@@ -980,32 +976,9 @@ sd_question <- function(
       selected = character(0),
       ...
     )
-
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(sprintf(
-        "
-            $(document).on('click', '#%s .btn', function() {
-                %s
-                // Small delay to allow button state to update
-                setTimeout(function() {
-                    var selectedValue = '';
-                    // Look for checked radio input within the container
-                    var checkedInput = $('#%s input[type=\"radio\"]:checked');
-                    if (checkedInput.length > 0) {
-                        selectedValue = checkedInput.val();
-                    }
-                    Shiny.setInputValue('%s', selectedValue, {priority: 'event'});
-                }, 50);
-            });
-        ",
-        id,
-        js_interaction,
-        id,
-        id
-      )))
-    )
   } else if (type == "mc_multiple_buttons") {
+    # Value reporting and interaction tracking are handled by delegated
+    # handlers in interaction.js (keyed off the .checkbox-group-buttons class)
     output <- shinyWidgets::checkboxGroupButtons(
       inputId = id,
       label = label,
@@ -1015,30 +988,6 @@ sd_question <- function(
       justified = FALSE,
       selected = character(0),
       ...
-    )
-
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(sprintf(
-        "
-            $(document).on('click', '#%s .btn', function() {
-                %s
-                // Small delay to allow button state to update
-                setTimeout(function() {
-                    var selectedValues = [];
-                    // Look for checked checkbox inputs within the container
-                    $('#%s input[type=\"checkbox\"]:checked').each(function() {
-                        selectedValues.push($(this).val());
-                    });
-                    Shiny.setInputValue('%s', selectedValues, {priority: 'event'});
-                }, 50);
-            });
-        ",
-        id,
-        js_interaction,
-        id,
-        id
-      )))
     )
   } else if (type == "text") {
     output <- shiny::textInput(
@@ -1067,95 +1016,12 @@ sd_question <- function(
       ...
     )
 
-    # Add interaction tracking, custom numeric validation, and native-style spinner
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(sprintf(
-        "
-        $(document).ready(function() {
-            $('#%s').on('focus input change', function() {
-                Shiny.setInputValue('%s_interacted', true, {priority: 'event'});
-            });
-
-
-            // Transform the input to look like a number input
-            var inputElement = $('#%s');
-            inputElement.attr('type', 'text'); // Keep as text for our validation
-            inputElement.addClass('numeric-input-with-spinner');
-            inputElement.wrap('<div class=\"numeric-input-container\"></div>');
-
-            // Add native-style spinner
-            inputElement.after(`
-                <div class=\"native-spinner\">
-                    <button type=\"button\" class=\"native-spinner-button spinner-up\" tabindex=\"-1\"></button>
-                    <button type=\"button\" class=\"native-spinner-button spinner-down\" tabindex=\"-1\"></button>
-                </div>
-            `);
-
-            var container = inputElement.parent();
-
-            // Spinner functionality
-            container.find('.spinner-up').on('mousedown', function(e) {
-                e.preventDefault();
-                var currentVal = parseFloat(inputElement.val()) || 0;
-                var newVal = currentVal + 1;
-                inputElement.val(newVal).trigger('input');
-            });
-
-            container.find('.spinner-down').on('mousedown', function(e) {
-                e.preventDefault();
-                var currentVal = parseFloat(inputElement.val()) || 0;
-                var newVal = currentVal - 1;
-                inputElement.val(newVal).trigger('input');
-            });
-
-            // Custom numeric validation
-            $('#%s').on('input', function(e) {
-                var val = $(this).val();
-                var filtered = '';
-                var hasDecimal = false;
-                var hasSign = false;
-
-                for (var i = 0; i < val.length; i++) {
-                    var char = val[i];
-
-                    // Allow +/- only at the beginning and only one
-                    if ((char === '+' || char === '-') && i === 0 && !hasSign) {
-                        filtered += char;
-                        hasSign = true;
-                    }
-                    // Allow digits
-                    else if (/[0-9]/.test(char)) {
-                        filtered += char;
-                    }
-                    // Allow decimal point only once
-                    else if (char === '.' && !hasDecimal) {
-                        filtered += char;
-                        hasDecimal = true;
-                    }
-                }
-
-                if (val !== filtered) {
-                    $(this).val(filtered);
-                }
-            });
-
-            // Handle paste events
-            $('#%s').on('paste', function(e) {
-                setTimeout(function() {
-                    $('#%s').trigger('input');
-                }, 1);
-            });
-        });
-    ",
-        id,
-        id,
-        id,
-        id,
-        id,
-        id
-      )))
-    )
+    # Mark the input so the delegated handlers in interaction.js apply
+    # numeric validation, interaction tracking, and the spinner UI
+    output <- htmltools::tagQuery(output)$
+      find("input")$
+      addClass("sd-numeric")$
+      allTags()
   } else if (type == "slider") {
     # Extract display labels and values
     display_labels <- names(option)

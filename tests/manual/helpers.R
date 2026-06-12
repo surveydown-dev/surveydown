@@ -110,6 +110,20 @@ click <- function(sel, wait = 1.2) {
   Sys.sleep(wait)
 }
 
+# Dispatch a real mousedown event (for handlers bound to mousedown rather
+# than click, e.g. the numeric input's spinner buttons)
+mousedown <- function(sel, wait = 1.2) {
+  wait_for(sel)
+  js(sprintf(
+    "document.querySelector('%s').dispatchEvent(
+       new MouseEvent('mousedown', {bubbles: true})
+     );
+     true",
+    sel
+  ))
+  Sys.sleep(wait)
+}
+
 set_text <- function(id, value, wait = 1.2) {
   wait_for(paste0("#", id))
   js(sprintf(
