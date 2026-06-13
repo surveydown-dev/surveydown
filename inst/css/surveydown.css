@@ -366,6 +366,71 @@ a:hover {
     display: none;
 }
 
+/* Image choice (mc_image / mc_multiple_image) */
+.sd-image-choice .shiny-options-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 0.5rem;
+}
+
+.sd-image-choice .radio,
+.sd-image-choice .checkbox {
+    margin: 0;
+}
+
+.sd-image-choice .radio label,
+.sd-image-choice .checkbox label {
+    cursor: pointer;
+    padding: 0;
+    font-weight: normal;
+}
+
+/* Hide the native control but keep it accessible (still keyboard/focusable) */
+.sd-image-choice input[type="radio"],
+.sd-image-choice input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.sd-image-card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sd-image-card-img {
+    display: block;
+    max-width: 160px;
+    max-height: 160px;
+    border-radius: 4px;
+    margin: 0 auto;
+}
+
+.sd-image-card-caption {
+    display: block;
+    margin-top: 6px;
+}
+
+.sd-image-choice label:hover .sd-image-card {
+    border-color: color-mix(in srgb, var(--theme-color) 50%, white);
+}
+
+/* Selected state: highlight the card whose input is checked */
+.sd-image-choice label:has(input:checked) .sd-image-card {
+    border-color: var(--theme-color);
+    box-shadow: 0 0 0 1px var(--theme-color);
+}
+
+/* Keyboard focus visibility (the native control is visually hidden) */
+.sd-image-choice label:has(input:focus-visible) .sd-image-card {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color) 35%, transparent);
+}
+
 /* Survey mode banner (preview mode / database not connected) */
 .sd-mode-banner {
     position: fixed;

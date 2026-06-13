@@ -29,6 +29,20 @@ set_text("age", "29")
 mousedown("#container-age .native-spinner-button.spinner-up")
 check("numeric spinner increments the value", input_val("#age") == "30")
 set_select("size", "m")
+# Image choice (renders as radio/checkbox under image cards)
+click("input[name=\"shape\"][value=\"blue\"]")
+# Named image options render captions; unnamed ones do not
+check(
+  "mc_image (named) shows captions",
+  js("document.querySelectorAll('#container-shape .sd-image-card-caption').length") > 0
+)
+click("input[name=\"shape_plain\"][value=\"red\"]")
+check(
+  "mc_image (unnamed) shows NO captions",
+  js("document.querySelectorAll('#container-shape_plain .sd-image-card-caption').length") == 0
+)
+click("input[name=\"shapes\"][value=\"red\"]")
+click("input[name=\"shapes\"][value=\"blue\"]")
 shot("storage_page1.png")
 click("#page1_next", wait = 2)
 
@@ -73,6 +87,9 @@ check("mc_multiple stored pipe-joined", val("colors") == "red|blue")
 check("text stored", val("name") == "Alice")
 check("numeric stored", val("age") == "30")
 check("select stored", val("size") == "m")
+check("mc_image stored", val("shape") == "blue")
+check("mc_image (unnamed) stored", val("shape_plain") == "red")
+check("mc_multiple_image stored pipe-joined", val("shapes") == "red|blue")
 check("mc_buttons stored", val("pet") == "dog")
 check("mc_multiple_buttons stored pipe-joined", val("drinks") == "coffee|tea")
 check("textarea stored", val("comments") == "hello world")

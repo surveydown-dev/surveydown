@@ -684,9 +684,10 @@ extract_head_content <- function(html_content) {
 #' @param id A unique identifier for the question, which will be used as the
 #' variable name in the resulting survey data.
 #' @param type Specifies the type of question. Possible values are `"select"`,
-#' `"mc"`, `"mc_multiple"`, `"mc_buttons"`, `"mc_multiple_buttons"`, `"text"`,
-#' `"textarea"`, `"numeric"`, `"slider"`, `"slider_numeric"`, `"date"`,
-#' `"daterange"`, `"matrix"`, and `"matrix_multiple"`. Defaults to `NULL`.
+#' `"mc"`, `"mc_multiple"`, `"mc_buttons"`, `"mc_multiple_buttons"`,
+#' `"mc_image"`, `"mc_multiple_image"`, `"text"`, `"textarea"`, `"numeric"`,
+#' `"slider"`, `"slider_numeric"`, `"date"`, `"daterange"`, `"matrix"`, and
+#' `"matrix_multiple"`. Defaults to `NULL`.
 #' @param label Character string. The label for the UI element, which can be
 #' formatted with markdown. Defaults to `NULL`
 #' @param cols Integer. Number of columns for the `"textarea"` question type.
@@ -735,6 +736,23 @@ extract_head_content <- function(html_content) {
 #' Defaults to `NULL`.
 #' @param row List. Used for `"matrix"` and `"matrix_multiple"` type
 #' questions. Contains the row labels and their corresponding IDs.
+#' @param image Character vector. Required for `"mc_image"` and
+#' `"mc_multiple_image"` question types: image paths or URLs, one per
+#' option, in the same order as `option`. Paths are used as-is in the
+#' image `src`, so they should resolve against the survey's `images` or
+#' `www` folder (e.g. `"images/cat.png"`) or be full URLs.
+#'
+#' For image-choice questions, the `option` names control captions:
+#' \itemize{
+#'   \item Named options (e.g. `c("Cat" = "cat", "Dog" = "dog")`) show the
+#'     names as text captions beneath each image.
+#'   \item An unnamed option vector (e.g. `c("cat", "dog")`) shows the
+#'     images only, with no captions. The values are still stored in the
+#'     data as usual.
+#' }
+#' This differs from the other multiple-choice types, where an unnamed
+#' option vector uses the values as both the displayed labels and the
+#' stored values.
 #' @param default Numeric, length 1 (for a single sided slider), or 2 for a
 #' two sided (range based) slider. Values to be used as the starting default
 #' for the slider. Defaults to the median of values.
@@ -758,6 +776,8 @@ extract_head_content <- function(html_content) {
 #' - `"mc_multiple"`: Multiple choice (multiple selections allowed)
 #' - `"mc_buttons"`: Multiple choice with button-style options (single selection)
 #' - `"mc_multiple_buttons"`: Multiple choice with button-style options (multiple selections allowed)
+#' - `"mc_image"`: Multiple choice where each option is an image card (single selection)
+#' - `"mc_multiple_image"`: Multiple choice where each option is an image card (multiple selections allowed)
 #' - `"text"`: Single-line text question
 #' - `"textarea"`: Multi-line text question
 #' - `"numeric"`: Numeric question
@@ -838,6 +858,7 @@ sd_question <- function(
   resize = NULL,
   row = NULL,
   default = NULL,
+  image = NULL,
   yml = "questions.yml",
   matrix_question_width = NULL,
   ...
@@ -852,9 +873,16 @@ sd_question <- function(
   # Define types that need numeric options (don't convert to character)
   numeric_option_types <- c("slider_numeric")
 
+  # Image-choice types treat the option NAMES as optional captions, so an
+  # unnamed (or blank-named) option vector means "images only, no caption".
+  # Skip the auto-naming below for them so that intent is preserved.
+  image_types <- c("mc_image", "mc_multiple_image")
+
   # Auto-generate names/values for unnamed options
   if (
-    !is.null(option) && (is.null(names(option)) || all(names(option) == ""))
+    !is.null(option) &&
+      (is.null(names(option)) || all(names(option) == "")) &&
+      !(!is.null(type) && type %in% image_types)
   ) {
     if (is.character(option)) {
       # For character vectors: use original values as both names and values
@@ -978,6 +1006,22 @@ sd_question <- function(
     )
   }
 
+  # Image-choice types require an 'image' vector matching the options
+  if (type %in% c("mc_image", "mc_multiple_image")) {
+    if (is.null(image)) {
+      stop(
+        "Question '", id, "' (type '", type, "') requires an 'image' ",
+        "argument: a vector of image paths or URLs, one per option."
+      )
+    }
+    if (length(image) != length(option)) {
+      stop(
+        "Question '", id, "': 'image' has ", length(image), " element(s) ",
+        "but 'option' has ", length(option), ". They must match in length."
+      )
+    }
+  }
+
   # Load messages for selected label and date language option
   messages <- get_messages()
   language <- messages$language
@@ -1009,6 +1053,7 @@ sd_question <- function(
     resize = resize,
     row = row,
     default = default,
+    image = image,
     matrix_question_width = matrix_question_width
   )
   output <- question_type_registry[[type]]$render(args, ...)

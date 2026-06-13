@@ -26,6 +26,7 @@ sd_question(
   resize = NULL,
   row = NULL,
   default = NULL,
+  image = NULL,
   yml = "questions.yml",
   matrix_question_width = NULL,
   ...
@@ -36,9 +37,10 @@ sd_question(
 variable name in the resulting survey data.}
 
 \item{type}{Specifies the type of question. Possible values are \code{"select"},
-\code{"mc"}, \code{"mc_multiple"}, \code{"mc_buttons"}, \code{"mc_multiple_buttons"}, \code{"text"},
-\code{"textarea"}, \code{"numeric"}, \code{"slider"}, \code{"slider_numeric"}, \code{"date"},
-\code{"daterange"}, \code{"matrix"}, and \code{"matrix_multiple"}. Defaults to \code{NULL}.}
+\code{"mc"}, \code{"mc_multiple"}, \code{"mc_buttons"}, \code{"mc_multiple_buttons"},
+\code{"mc_image"}, \code{"mc_multiple_image"}, \code{"text"}, \code{"textarea"}, \code{"numeric"},
+\code{"slider"}, \code{"slider_numeric"}, \code{"date"}, \code{"daterange"}, \code{"matrix"}, and
+\code{"matrix_multiple"}. Defaults to \code{NULL}.}
 
 \item{label}{Character string. The label for the UI element, which can be
 formatted with markdown. Defaults to \code{NULL}}
@@ -110,6 +112,24 @@ questions. Contains the row labels and their corresponding IDs.}
 two sided (range based) slider. Values to be used as the starting default
 for the slider. Defaults to the median of values.}
 
+\item{image}{Character vector. Required for \code{"mc_image"} and
+\code{"mc_multiple_image"} question types: image paths or URLs, one per
+option, in the same order as \code{option}. Paths are used as-is in the
+image \code{src}, so they should resolve against the survey's \code{images} or
+\code{www} folder (e.g. \code{"images/cat.png"}) or be full URLs.
+
+For image-choice questions, the \code{option} names control captions:
+\itemize{
+\item Named options (e.g. \code{c("Cat" = "cat", "Dog" = "dog")}) show the
+names as text captions beneath each image.
+\item An unnamed option vector (e.g. \code{c("cat", "dog")}) shows the
+images only, with no captions. The values are still stored in the
+data as usual.
+}
+This differs from the other multiple-choice types, where an unnamed
+option vector uses the values as both the displayed labels and the
+stored values.}
+
 \item{yml}{Character string. The name of the YAML file to load question configurations from.
 Defaults to \code{"questions.yml"}. Custom YAML files can be specified, either in
 the root directory or subdirectories (e.g., \code{"folder/custom.yml"}).}
@@ -141,6 +161,8 @@ The function supports various question types:
 \item \code{"mc_multiple"}: Multiple choice (multiple selections allowed)
 \item \code{"mc_buttons"}: Multiple choice with button-style options (single selection)
 \item \code{"mc_multiple_buttons"}: Multiple choice with button-style options (multiple selections allowed)
+\item \code{"mc_image"}: Multiple choice where each option is an image card (single selection)
+\item \code{"mc_multiple_image"}: Multiple choice where each option is an image card (multiple selections allowed)
 \item \code{"text"}: Single-line text question
 \item \code{"textarea"}: Multi-line text question
 \item \code{"numeric"}: Numeric question

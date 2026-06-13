@@ -116,6 +116,38 @@ qt_render_mc_multiple_buttons <- function(a, ...) {
   })
 }
 
+qt_render_mc_image <- function(a, ...) {
+  with(a, {
+    choices <- choice_image_html(option, image)
+    output <- shiny::radioButtons(
+      inputId = id,
+      label = label,
+      choiceNames = choices$names,
+      choiceValues = choices$values,
+      selected = FALSE,
+      ...
+    )
+    # Wrapper class drives the card-grid layout (see surveydown.css)
+    shiny::div(class = "sd-image-choice", output)
+  })
+}
+
+qt_render_mc_multiple_image <- function(a, ...) {
+  with(a, {
+    choices <- choice_image_html(option, image)
+    output <- shiny::checkboxGroupInput(
+      inputId = id,
+      label = label,
+      choiceNames = choices$names,
+      choiceValues = choices$values,
+      selected = FALSE,
+      ...
+    )
+    # Wrapper class drives the card-grid layout (see surveydown.css)
+    shiny::div(class = "sd-image-choice", output)
+  })
+}
+
 qt_render_text <- function(a, ...) {
   with(a, {
     shiny::textInput(
@@ -583,6 +615,18 @@ question_type_registry <- list(
   mc_multiple_buttons = list(
     render = qt_render_mc_multiple_buttons,
     restore = qt_restore_mc_multiple_buttons,
+    requires_option = TRUE
+  ),
+  mc_image = list(
+    # Renders as a radio group, so it restores like mc
+    render = qt_render_mc_image,
+    restore = qt_restore_mc,
+    requires_option = TRUE
+  ),
+  mc_multiple_image = list(
+    # Renders as a checkbox group, so it restores like mc_multiple
+    render = qt_render_mc_multiple_image,
+    restore = qt_restore_mc_multiple,
     requires_option = TRUE
   ),
   text = list(

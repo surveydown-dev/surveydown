@@ -69,6 +69,42 @@ sd_question(
     'Large'  = 'l'
   )
 )
+
+# Self-contained data-URI images (a red and a blue square) so the test
+# needs no image files
+sd_question(
+  type   = 'mc_image',
+  id     = 'shape',
+  label  = "Pick a color:",
+  option = c('Red' = 'red', 'Blue' = 'blue'),
+  image  = c(
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJyZWQiLz48L3N2Zz4=",
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJibHVlIi8+PC9zdmc+"
+  )
+)
+
+# Unnamed option vector -> images only, no captions (still stores values)
+sd_question(
+  type   = 'mc_image',
+  id     = 'shape_plain',
+  label  = "Pick a color (no caption):",
+  option = c('red', 'blue'),
+  image  = c(
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJyZWQiLz48L3N2Zz4=",
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJibHVlIi8+PC9zdmc+"
+  )
+)
+
+sd_question(
+  type   = 'mc_multiple_image',
+  id     = 'shapes',
+  label  = "Pick colors:",
+  option = c('Red' = 'red', 'Blue' = 'blue'),
+  image  = c(
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJyZWQiLz48L3N2Zz4=",
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJibHVlIi8+PC9zdmc+"
+  )
+)
 ```
 
 --- page2

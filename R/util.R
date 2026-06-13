@@ -53,6 +53,41 @@ choice_list_html <- function(option, option_attr = NULL) {
   return(list(names = choice_names, values = choice_values))
 }
 
+# Build choiceNames/choiceValues for image-choice questions. Each choice
+# name is an image card (the image plus an optional text caption taken from
+# the option name). `option` is a named vector (names = captions, values =
+# stored values); `image` is a parallel vector of image src strings (paths
+# resolved against the survey's images/www folders, or full URLs).
+choice_image_html <- function(option, image) {
+  n <- length(option)
+  captions <- names(option)
+  if (is.null(captions)) {
+    captions <- rep("", n)
+  }
+  choice_names <- lapply(seq_len(n), function(i) {
+    card <- list(
+      shiny::tags$img(
+        src = image[[i]],
+        class = "sd-image-card-img",
+        alt = captions[[i]]
+      )
+    )
+    # Show a caption only when the option name carries text
+    if (!is.na(captions[[i]]) && nzchar(captions[[i]])) {
+      clean <- gsub("<[/]?p>|\\n", "", markdown_to_html(captions[[i]]))
+      card <- c(
+        card,
+        list(shiny::tags$span(
+          class = "sd-image-card-caption",
+          shiny::HTML(clean)
+        ))
+      )
+    }
+    shiny::tags$div(class = "sd-image-card", card)
+  })
+  list(names = choice_names, values = as.list(unname(option)))
+}
+
 # Get reserved column names that cannot be used for page IDs, question IDs, or stored values
 get_reserved_ids <- function() {
   c(
