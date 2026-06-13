@@ -98,8 +98,24 @@ Also done along the way (already on the branch):
     shared component (pairs with task 6).
 13. Rating / NPS question types (stars; 0-10 scale styled like mc_buttons).
 14. Image-choice question type (mc with CSS card layout).
-15. Per-type question registry refactor (one place per type defining
-    render/restore/format) - do before adding several new types.
+15. [done] Per-type question registry (R/question_types.R): each type has
+    render() + restore() + requires_option; sd_question() and sd_server()
+    restoration dispatch through it. Strictly behavior-preserving (faithful
+    extraction); navigation/restoration trigger/get_question_structure/
+    guard/class-maps all left untouched. Full suite 91/91. NEEDS: commit.
+16. [done] Fixed multi-value restoration: mc_multiple, mc_multiple_buttons,
+    daterange, and slider-range restorers now split stored values on the
+    pipe (matching format_question_value's pipe-join) instead of comma, via
+    a shared split_stored_value() helper in question_types.R. Restoration
+    test extended with 4 multi-value checks (now 19). Full suite 95/95.
+    NEEDS: commit.
+
+17. [done] Matrix-parent NA navigation crash (PRE-EXISTING in HEAD): the
+    restoration guard in sd_server() is now NA-safe (matrix parents have no
+    input, so their all_data entry can be NA). Regression test: restoration
+    app gained a matrix on page2, and the test asserts page2 still renders +
+    matrix restores on the second forward visit (2 new checks). Full suite
+    97/97. NEEDS: commit.
 
 ## Deferred / parked
 

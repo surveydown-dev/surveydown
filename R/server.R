@@ -1956,11 +1956,17 @@ sd_server <- function(db = NULL) {
                                 # Get the stored value from all_data
                                 stored_value <- all_data[[q_id]]
 
-                                # Skip if no value was stored
+                                # Skip if no value was stored. NA-safe:
+                                # matrix parent questions have no input of
+                                # their own (only their rows do), so their
+                                # all_data entry can be NA - an un-guarded
+                                # `NA == ""` would error and break navigation.
                                 if (
                                     is.null(stored_value) ||
+                                        length(stored_value) == 0 ||
                                         (length(stored_value) == 1 &&
-                                            stored_value == "")
+                                            (is.na(stored_value) ||
+                                                stored_value == ""))
                                 ) {
                                     next
                                 }
@@ -1989,279 +1995,41 @@ sd_server <- function(db = NULL) {
                                     FALSE
                                 }
 
-                                # Update the input based on question type
-                                tryCatch(
-                                    {
-                                        if (q_type == "mc") {
-                                            shiny::updateRadioButtons(
-                                                session,
-                                                q_id,
-                                                selected = stored_value
-                                            )
-                                        } else if (q_type == "mc_buttons") {
-                                            # Use shinyWidgets update function for button-style radio groups
-                                            shinyWidgets::updateRadioGroupButtons(
-                                                session,
-                                                q_id,
-                                                selected = stored_value
-                                            )
-                                            # Also send custom message to trigger JavaScript update
-                                            session$sendCustomMessage(
-                                                "restoreButtonValue",
-                                                list(
-                                                    id = q_id,
-                                                    value = stored_value,
-                                                    type = "radio"
-                                                )
-                                            )
-                                        } else if (q_type == "mc_multiple") {
-                                            # For multiple choice, stored_value might be a vector or comma-separated
-                                            if (
-                                                is.character(stored_value) &&
-                                                    length(stored_value) == 1
-                                            ) {
-                                                # If it's a single string, try splitting by comma
-                                                values <- if (
-                                                    grepl(",", stored_value)
-                                                ) {
-                                                    strsplit(
-                                                        stored_value,
-                                                        ",\\s*"
-                                                    )[[1]]
-                                                } else {
-                                                    stored_value
-                                                }
-                                            } else {
-                                                values <- stored_value
-                                            }
-                                            shiny::updateCheckboxGroupInput(
-                                                session,
-                                                q_id,
-                                                selected = values
-                                            )
-                                        } else if (
-                                            q_type == "mc_multiple_buttons"
-                                        ) {
-                                            # For multiple choice buttons, stored_value might be a vector or comma-separated
-                                            if (
-                                                is.character(stored_value) &&
-                                                    length(stored_value) == 1
-                                            ) {
-                                                # If it's a single string, try splitting by comma
-                                                values <- if (
-                                                    grepl(",", stored_value)
-                                                ) {
-                                                    strsplit(
-                                                        stored_value,
-                                                        ",\\s*"
-                                                    )[[1]]
-                                                } else {
-                                                    stored_value
-                                                }
-                                            } else {
-                                                values <- stored_value
-                                            }
-                                            # Use shinyWidgets update function for button-style checkbox groups
-                                            shinyWidgets::updateCheckboxGroupButtons(
-                                                session,
-                                                q_id,
-                                                selected = values
-                                            )
-                                            # Also send custom message to trigger JavaScript update
-                                            session$sendCustomMessage(
-                                                "restoreButtonValue",
-                                                list(
-                                                    id = q_id,
-                                                    value = values,
-                                                    type = "checkbox"
-                                                )
-                                            )
-                                        } else if (q_type == "select") {
-                                            shiny::updateSelectInput(
-                                                session,
-                                                q_id,
-                                                selected = stored_value
-                                            )
-                                        } else if (q_type == "text") {
-                                            shiny::updateTextInput(
-                                                session,
-                                                q_id,
-                                                value = stored_value
-                                            )
-                                        } else if (q_type == "textarea") {
-                                            shiny::updateTextAreaInput(
-                                                session,
-                                                q_id,
-                                                value = stored_value
-                                            )
-                                        } else if (q_type == "numeric") {
-                                            shiny::updateNumericInput(
-                                                session,
-                                                q_id,
-                                                value = as.numeric(stored_value)
-                                            )
-                                        } else if (
-                                            q_type %in%
-                                                c("slider", "slider_numeric")
-                                        ) {
-                                            # Check if it's a range slider (using unified is_range variable)
-                                            if (is_range) {
-                                                # For range sliders, stored_value should be a vector of two values
-                                                if (
-                                                    is.character(
-                                                        stored_value
-                                                    ) &&
-                                                        length(stored_value) ==
-                                                            1
-                                                ) {
-                                                    values <- as.numeric(strsplit(
-                                                        stored_value,
-                                                        ",\\s*"
-                                                    )[[1]])
-                                                } else {
-                                                    values <- as.numeric(
-                                                        stored_value
-                                                    )
-                                                }
-                                                if (length(values) == 2) {
-                                                    if (
-                                                        q_type ==
-                                                            "slider_numeric"
-                                                    ) {
-                                                        # Use updateSliderInput for numeric sliders
-                                                        shiny::updateSliderInput(
-                                                            session,
-                                                            q_id,
-                                                            value = values
-                                                        )
-                                                    } else {
-                                                        # Use updateSliderTextInput for text sliders
-                                                        shinyWidgets::updateSliderTextInput(
-                                                            session,
-                                                            q_id,
-                                                            selected = values
-                                                        )
-                                                        # Also send custom message to trigger JavaScript update
-                                                        session$sendCustomMessage(
-                                                            "restoreSliderValue",
-                                                            list(
-                                                                id = q_id,
-                                                                selected = values
-                                                            )
-                                                        )
-                                                    }
-                                                }
-                                            } else {
-                                                # Single value slider
-                                                if (
-                                                    q_type == "slider_numeric"
-                                                ) {
-                                                    shiny::updateSliderInput(
-                                                        session,
-                                                        q_id,
-                                                        value = as.numeric(
-                                                            stored_value
-                                                        )
-                                                    )
-                                                } else {
-                                                    # For text sliders, need to convert value to display label
-                                                    # Try session userData first, then fall back to question_structure
-                                                    value_map <- session$userData[[paste0(
-                                                        q_id,
-                                                        "_values"
-                                                    )]]
-                                                    if (
-                                                        is.null(value_map) &&
-                                                            q_id %in%
-                                                                names(
-                                                                    question_structure
-                                                                )
-                                                    ) {
-                                                        # Use options from question_structure as fallback
-                                                        value_map <- question_structure[[
-                                                            q_id
-                                                        ]]$options
-                                                    }
-                                                    if (!is.null(value_map)) {
-                                                        # Find the display label for this value
-                                                        label_idx <- which(
-                                                            value_map ==
-                                                                stored_value
-                                                        )
-                                                        if (
-                                                            length(label_idx) >
-                                                                0
-                                                        ) {
-                                                            display_label <- names(
-                                                                value_map
-                                                            )[label_idx[1]]
-                                                            shinyWidgets::updateSliderTextInput(
-                                                                session,
-                                                                q_id,
-                                                                selected = display_label
-                                                            )
-                                                            # Also send custom message to trigger JavaScript update
-                                                            session$sendCustomMessage(
-                                                                "restoreSliderValue",
-                                                                list(
-                                                                    id = q_id,
-                                                                    selected = display_label
-                                                                )
-                                                            )
-                                                        }
-                                                    } else {
-                                                        # Fallback if value map not available
-                                                        shinyWidgets::updateSliderTextInput(
-                                                            session,
-                                                            q_id,
-                                                            selected = stored_value
-                                                        )
-                                                        # Also send custom message to trigger JavaScript update
-                                                        session$sendCustomMessage(
-                                                            "restoreSliderValue",
-                                                            list(
-                                                                id = q_id,
-                                                                selected = stored_value
-                                                            )
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        } else if (q_type == "date") {
-                                            shiny::updateDateInput(
-                                                session,
-                                                q_id,
-                                                value = stored_value
-                                            )
-                                        } else if (q_type == "daterange") {
-                                            # For date range, stored_value should be a vector of two dates
-                                            if (
-                                                is.character(stored_value) &&
-                                                    length(stored_value) == 1
-                                            ) {
-                                                dates <- strsplit(
-                                                    stored_value,
-                                                    ",\\s*"
-                                                )[[1]]
-                                            } else {
-                                                dates <- stored_value
-                                            }
-                                            if (length(dates) == 2) {
-                                                shiny::updateDateRangeInput(
-                                                    session,
-                                                    q_id,
-                                                    start = dates[1],
-                                                    end = dates[2]
-                                                )
-                                            }
-                                        }
-                                        # Note: Reactive questions defined with sd_question() in the server are now supported
-                                        # Custom reactive questions using sd_question_custom() may need their own restoration logic
-                                    },
-                                    error = function(e) {
-                                        # Silently skip if update fails
+                                # Restore the input via the type's restorer
+                                # (see the question type registry in
+                                # R/question_types.R). Types with no restorer
+                                # (e.g. the matrix parent, whose rows restore
+                                # individually) and unknown types are skipped,
+                                # matching the original fall-through behavior.
+                                info <- list(
+                                    is_range = is_range,
+                                    options = if (
+                                        !is_reactive &&
+                                            q_id %in% names(question_structure)
+                                    ) {
+                                        question_structure[[q_id]]$options
+                                    } else {
+                                        NULL
                                     }
                                 )
+                                restorer <- question_type_registry[[
+                                    q_type
+                                ]]$restore
+                                if (!is.null(restorer)) {
+                                    tryCatch(
+                                        {
+                                            restorer(
+                                                session,
+                                                q_id,
+                                                stored_value,
+                                                info
+                                            )
+                                        },
+                                        error = function(e) {
+                                            # Silently skip if update fails
+                                        }
+                                    )
+                                }
                             }
                         })
                     }

@@ -244,6 +244,13 @@ input_val <- function(sel) {
   js(sprintf("document.querySelector('%s').value", sel))
 }
 
+# Current state of an ionRangeSlider: 'from'/'to' are numeric positions,
+# 'from_value'/'to_value' are the display labels for text sliders
+slider_state <- function(id, field = "from") {
+  wait_for(paste0("#", id))
+  js(sprintf("$('#%s').data('ionRangeSlider').result.%s", id, field))
+}
+
 # Returns TRUE if the first element matching the selector is checked
 is_checked <- function(sel) {
   isTRUE(js(sprintf(

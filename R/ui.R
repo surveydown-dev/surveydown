@@ -871,36 +871,12 @@ sd_question <- function(
     }
   }
 
-  # Define valid question types
-  valid_types <- c(
-    "select",
-    "mc",
-    "mc_multiple",
-    "mc_buttons",
-    "mc_multiple_buttons",
-    "text",
-    "textarea",
-    "numeric",
-    "slider",
-    "slider_numeric",
-    "date",
-    "daterange",
-    "matrix",
-    "matrix_multiple"
-  )
-
-  # Define types that require options
-  types_requiring_options <- c(
-    "select",
-    "mc",
-    "mc_multiple",
-    "mc_buttons",
-    "mc_multiple_buttons",
-    "slider",
-    "slider_numeric",
-    "matrix",
-    "matrix_multiple"
-  )
+  # Valid question types and those requiring options, derived from the
+  # question type registry (see R/question_types.R)
+  valid_types <- names(question_type_registry)
+  types_requiring_options <- valid_types[
+    vapply(question_type_registry, `[[`, logical(1), "requires_option")
+  ]
 
   # First check for missing arguments and try to load from local yml file
   missing_option <- is.null(option) &&
@@ -1002,8 +978,6 @@ sd_question <- function(
     )
   }
 
-  output <- NULL
-
   # Load messages for selected label and date language option
   messages <- get_messages()
   language <- messages$language
@@ -1012,359 +986,32 @@ sd_question <- function(
   # Create label with hidden asterisk
   label <- markdown_to_html(label)
 
-  if (type == "select") {
-    label_select <- messages[['choose-option']]
-
-    # Add blank option for visible selected option
-    option <- c("", option)
-    names(option)[1] <- label_select
-
-    output <- shiny::selectInput(
-      inputId = id,
-      label = label,
-      choices = option,
-      multiple = FALSE,
-      selected = FALSE,
-      ...
-    )
-  } else if (type == "mc") {
-    choices <- choice_list_html(option, option_attr)
-    output <- shiny::radioButtons(
-      inputId = id,
-      label = label,
-      choiceNames = choices$names,
-      choiceValues = choices$values,
-      selected = FALSE,
-      ...
-    )
-  } else if (type == "mc_multiple") {
-    choices <- choice_list_html(option, option_attr)
-    output <- shiny::checkboxGroupInput(
-      inputId = id,
-      label = label,
-      choiceNames = choices$names,
-      choiceValues = choices$values,
-      selected = FALSE,
-      ...
-    )
-  } else if (type == "mc_buttons") {
-    # Value reporting and interaction tracking are handled by delegated
-    # handlers in interaction.js (keyed off the .radio-group-buttons class)
-    output <- shinyWidgets::radioGroupButtons(
-      inputId = id,
-      label = label,
-      choices = choice_html(option),
-      direction = direction,
-      selected = character(0),
-      ...
-    )
-  } else if (type == "mc_multiple_buttons") {
-    # Value reporting and interaction tracking are handled by delegated
-    # handlers in interaction.js (keyed off the .checkbox-group-buttons class)
-    output <- shinyWidgets::checkboxGroupButtons(
-      inputId = id,
-      label = label,
-      choices = choice_html(option),
-      direction = direction,
-      individual = individual,
-      justified = FALSE,
-      selected = character(0),
-      ...
-    )
-  } else if (type == "text") {
-    output <- shiny::textInput(
-      inputId = id,
-      label = label,
-      placeholder = option,
-      ...
-    )
-  } else if (type == "textarea") {
-    output <- shiny::textAreaInput(
-      inputId = id,
-      label = label,
-      height = "100px",
-      cols = cols,
-      value = NULL,
-      rows = "6",
-      placeholder = placeholder,
-      resize = resize,
-      ...
-    )
-  } else if (type == "numeric") {
-    output <- shiny::textInput(
-      inputId = id,
-      label = label,
-      value = "",
-      ...
-    )
-
-    # Mark the input so the delegated handlers in interaction.js apply
-    # numeric validation, interaction tracking, and the spinner UI
-    output <- htmltools::tagQuery(output)$
-      find("input")$
-      addClass("sd-numeric")$
-      allTags()
-  } else if (type == "slider") {
-    # Extract display labels and values
-    display_labels <- names(option)
-    values <- unname(option)
-
-    # Value to display mapping (for finding the display label from a selected value)
-    value_to_label <- display_labels
-    names(value_to_label) <- values
-
-    # Create a choices vector that sliderTextInput will use
-    slider_choices <- display_labels
-
-    # Determine the selected display label based on the selected value
-    selected_label <- NULL
-    if (!is.null(selected) && selected != "") {
-      selected_label <- value_to_label[selected]
-    }
-
-    # If no valid selection, default to first choice
-    if (is.null(selected_label) || is.na(selected_label)) {
-      selected_label <- slider_choices[1]
-    }
-
-    # Store the mapping for later use in JavaScript
-    value_map <- option
-
-    if (!is.null(shiny::getDefaultReactiveDomain())) {
-      session <- shiny::getDefaultReactiveDomain()
-      session$userData[[paste0(id, "_values")]] <- value_map
-    }
-
-    # Create the slider with display labels
-    output <- shinyWidgets::sliderTextInput(
-      inputId = id,
-      label = label,
-      choices = slider_choices, # These are the display labels
-      selected = selected_label, # Must be a display label, not a value
-      force_edges = force_edges,
-      grid = grid,
-      ...
-    )
-
-    # Store the values in a data attribute for extraction
-    values_json <- jsonlite::toJSON(values)
-
-    # Add a data-values attribute to the input element for extraction
-    # The input element has the id directly, so we use #id not #id input
-    js_add_values <- sprintf(
-      '
-        $(document).ready(function() {
-          $("#%s").attr("data-values", %s);
-        });
-      ',
-      id,
-      values_json
-    )
-
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(js_add_values))
-    )
-
-    # JavaScript to map the display label back to the stored value
-    # (slider uses display labels but stores internal values)
-    js_value_mapping <- sprintf(
-      "
-      $(document).ready(function() {
-        var sliderId = '%s';
-        var valueMap = %s;
-
-        // Track value changes and map display label to internal value
-        $('#' + sliderId).on('change', function(e) {
-          var currentLabel = $(this).val();
-          Shiny.setInputValue(sliderId, valueMap[currentLabel]);
-        });
-
-        // On page load, ensure the current value is mapped (for cookie restoration)
-        // Use a short delay to ensure the slider is fully initialized
-        setTimeout(function() {
-          var currentLabel = $('#' + sliderId).val();
-          if (currentLabel && valueMap[currentLabel]) {
-            Shiny.setInputValue(sliderId, valueMap[currentLabel]);
-          }
-        }, 100);
-
-        // Initialize interaction tracking (from interaction.js)
-        initInteractionTracking(sliderId, 'slider');
-      });
-    ",
-      id,
-      jsonlite::toJSON(as.list(value_map))
-    )
-
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(js_value_mapping))
-    )
-  } else if (type == "slider_numeric") {
-    # Extract min, max, and step from option
-    slider_min <- min(option)
-    slider_max <- max(option)
-
-    # Calculate step from the option sequence
-    if (length(option) > 1) {
-      slider_step <- option[2] - option[1]
-    } else {
-      slider_step <- 1
-    }
-
-    # Set default value if not provided (use midpoint)
-    if (is.null(default)) {
-      default <- (slider_min + slider_max) / 2
-    }
-
-    # Note: the small minor tick marks between the labeled major ticks are
-    # hidden by surveydown's styling (see .irs-grid-pol.small in
-    # surveydown.css)
-    output <- shiny::sliderInput(
-      inputId = id,
-      label = label,
-      min = slider_min,
-      max = slider_max,
-      value = default,
-      step = slider_step,
-      ...
-    )
-
-    # Initialize interaction tracking (from interaction.js)
-    js_init <- sprintf(
-      "$(document).ready(function() { initInteractionTracking('%s', 'slider_numeric'); });",
-      id
-    )
-
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(js_init))
-    )
-  } else if (type == "date") {
-    output <- shiny::dateInput(
-      inputId = id,
-      label = label,
-      value = NULL,
-      min = NULL,
-      max = NULL,
-      format = "yyyy-mm-dd",
-      startview = "month",
-      weekstart = 0,
-      language = language,
-      autoclose = TRUE,
-      datesdisabled = NULL,
-      daysofweekdisabled = NULL,
-      ...
-    )
-
-    # Initialize interaction tracking (from interaction.js)
-    js_init <- sprintf(
-      "$(document).ready(function() { initInteractionTracking('%s', 'date'); });",
-      id
-    )
-
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(js_init))
-    )
-  } else if (type == "daterange") {
-    output <- shiny::dateRangeInput(
-      inputId = id,
-      label = label,
-      start = NULL,
-      end = NULL,
-      min = NULL,
-      max = NULL,
-      format = "yyyy-mm-dd",
-      startview = "month",
-      weekstart = 0,
-      language = language,
-      separator = "-",
-      autoclose = TRUE,
-      ...
-    )
-
-    # Initialize interaction tracking (from interaction.js)
-    js_init <- sprintf(
-      "$(document).ready(function() { initInteractionTracking('%s', 'daterange'); });",
-      id
-    )
-
-    output <- shiny::tagAppendChild(
-      output,
-      shiny::tags$script(htmltools::HTML(js_init))
-    )
-  } else if (type %in% c("matrix", "matrix_multiple")) {
-    # Each row is rendered as its own sub-question: radio buttons for
-    # "matrix" (single selection) or checkboxes for "matrix_multiple"
-    # (multiple selections per row)
-    sub_type <- if (type == "matrix_multiple") "mc_multiple" else "mc"
-
-    # Auto-calculate question column width if not provided
-    if (is.null(matrix_question_width)) {
-      # Find the longest row label by character count
-      row_labels <- names(row)
-      max_chars <- max(nchar(row_labels))
-      # Estimate width: base 20% + 0.5% per character, bounded between 30% and 80%
-      estimated_width <- min(80, max(30, 20 + max_chars * 0.5))
-      matrix_question_width <- paste0(estimated_width, "%")
-    } else {
-      # Normalize matrix_question_width to always have "%" suffix
-      # Accepts: 40, "40", or "40%" - all become "40%"
-      if (is.numeric(matrix_question_width)) {
-        matrix_question_width <- paste0(matrix_question_width, "%")
-      } else if (!grepl("%$", matrix_question_width)) {
-        matrix_question_width <- paste0(matrix_question_width, "%")
-      }
-    }
-
-    # Calculate option column widths from remaining space after question column
-    remaining_width <- 100 - as.numeric(gsub("%", "", matrix_question_width))
-    matrix_option_width <- paste0(remaining_width / length(option), "%")
-
-    # Create colgroup element
-    colgroup <- shiny::tags$colgroup(
-      # First column for questions
-      shiny::tags$col(style = paste0("width: ", matrix_question_width, ";")),
-      # Remaining columns for options (auto-distributed)
-      lapply(seq_along(option), function(i) {
-        shiny::tags$col(style = paste0("width: ", matrix_option_width, ";"))
-      })
-    )
-    header <- shiny::tags$tr(
-      shiny::tags$th(""),
-      lapply(names(option), function(opt) shiny::tags$th(opt))
-    )
-    rows <- lapply(row, function(q_id) {
-      full_id <- paste(id, q_id, sep = "_")
-      shiny::tags$tr(
-        shiny::tags$td(names(row)[row == q_id]),
-        shiny::tags$td(
-          colspan = length(option),
-          sd_question(
-            type = sub_type,
-            id = full_id,
-            label = "",
-            option = option,
-            direction = "horizontal",
-            ...
-          )
-        )
-      )
-    })
-
-    output <- shiny::div(
-      class = "matrix-question-container",
-      shiny::tags$label(class = "control-label", label),
-      shiny::tags$table(
-        class = "matrix-question",
-        colgroup,
-        header,
-        shiny::tags$tbody(rows)
-      )
-    )
-  }
+  # Dispatch to the question type's renderer (see R/question_types.R)
+  args <- list(
+    type = type,
+    id = id,
+    label = label,
+    option = option,
+    option_attr = option_attr,
+    messages = messages,
+    language = language,
+    cols = cols,
+    direction = direction,
+    status = status,
+    height = height,
+    selected = selected,
+    label_select = label_select,
+    grid = grid,
+    individual = individual,
+    justified = justified,
+    force_edges = force_edges,
+    placeholder = placeholder,
+    resize = resize,
+    row = row,
+    default = default,
+    matrix_question_width = matrix_question_width
+  )
+  output <- question_type_registry[[type]]$render(args, ...)
 
   # Create wrapper div
   # Disable auto-interaction for types with default values to prevent false triggers

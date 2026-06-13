@@ -34,8 +34,18 @@ read_data <- function() {
 new_session(port)
 click("input[name=\"fruit\"][value=\"banana\"]")
 set_text("name", "Alice")
+# Multi-value answers (stored pipe-joined) to exercise pipe-split restoration
+click("input[name=\"colors\"][value=\"red\"]")
+click("input[name=\"colors\"][value=\"green\"]")
+click("#drinks input[value=\"coffee\"]")
+click("#drinks input[value=\"juice\"]")
+set_daterange("trip", "2024-07-01", "2024-07-15")
+set_slider_range("budget", 2, 8)
 click("#page1_next", wait = 2)
 set_text("age", "30")
+# Answer the matrix on page2 (its parent question is NA in all_data)
+click("input[name=\"rating_speed\"][value=\"high\"]")
+click("input[name=\"rating_price\"][value=\"low\"]")
 
 reload() # refresh the page; cookies persist
 
@@ -46,6 +56,28 @@ shot("restore_A_page2.png")
 click("#page2_prev", wait = 2)
 check("A. previous page mc answer restored", is_checked("input[name=\"fruit\"][value=\"banana\"]"))
 check("A. previous page text answer restored", input_val("#name") == "Alice")
+# Multi-value restorations (these all failed before the comma->pipe fix)
+check(
+  "A. mc_multiple restored (pipe-split)",
+  is_checked("input[name=\"colors\"][value=\"red\"]") &&
+    is_checked("input[name=\"colors\"][value=\"green\"]") &&
+    !is_checked("input[name=\"colors\"][value=\"blue\"]")
+)
+check(
+  "A. mc_multiple_buttons restored (pipe-split)",
+  is_checked("#drinks input[value=\"coffee\"]") &&
+    is_checked("#drinks input[value=\"juice\"]") &&
+    !is_checked("#drinks input[value=\"tea\"]")
+)
+check(
+  "A. daterange restored (pipe-split)",
+  input_val("#trip input") == "2024-07-01" &&
+    js("$('#trip input').last().val()") == "2024-07-15"
+)
+check(
+  "A. slider range restored (pipe-split)",
+  slider_state("budget", "from") == 2 && slider_state("budget", "to") == 8
+)
 shot("restore_A_page1.png")
 
 d <- read_data()
@@ -53,9 +85,17 @@ check("A. still a single CSV row after refresh (session resumed)", nrow(d) == 1)
 check("A. CSV kept page-1 answers", d$fruit[1] == "banana" && d$name[1] == "Alice")
 session_a <- d$session_id[1]
 
-# Finish the survey so page-2 data is saved
+# Finish the survey so page-2 data is saved. Navigating forward to page2 a
+# SECOND time re-restores its inputs, including the matrix parent (NA in
+# all_data) - this used to crash navigation before the NA-safe guard fix.
 click("#page1_next", wait = 2)
+check("A. page2 still renders on second forward visit (matrix NA guard)", present("#container-age"))
 check("A. page-2 answer still present after navigating forward", input_val("#age") == "30")
+check(
+  "A. matrix restored on revisit",
+  is_checked("input[name=\"rating_speed\"][value=\"high\"]") &&
+    is_checked("input[name=\"rating_price\"][value=\"low\"]")
+)
 click("#page2_next", wait = 2)
 check("A. reached end page", body_has("End of the restoration test survey"))
 
