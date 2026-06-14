@@ -1,0 +1,111 @@
+---
+# The YAML header specifies several settings for the survey but is not required.
+# A full list of settings can be found under _survey/settings.yml directory.
+
+theme-settings:
+  theme: default
+  barposition: top
+  footer-left: "Made with [surveydown](https://surveydown.org)"
+  footer-right: '[<i class="bi bi-github"></i> Source Code](https://github.com/surveydown-dev/template_conditional_skipping)'
+
+survey-settings:
+  mode: preview
+  show-previous: false
+  use-cookies: false
+  auto-scroll: false
+  rate-survey: false
+  system-language: en
+  highlight-unanswered: true
+  highlight-color: blue
+  capture-metadata: true
+  all-required: false
+  required:
+    - vehicle_simple
+    - vehicle_complex
+    - buy_vehicle
+---
+
+```{r}
+library(surveydown)
+```
+
+--- welcome
+
+# Template - Conditional Skipping
+
+Hi! This is a showcase of the conditional skipping feature that surveydown supports.
+
+It consists of:
+
+1. Simple skipping
+2. Complex skipping
+
+Please proceed to the next page.
+
+--- basic_skipping
+
+## 1. Simple skipping
+ 
+If the "**No**" option is chosen, you will be sent to the screenout page.
+
+This is done by using the `sd_skip_if()` function in the `server` of `app.R`.
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'vehicle_simple',
+  label = "Do you own your vehicle?",
+  option = c(
+    'Yes' = 'yes',
+    'No'  = 'no'
+  )
+)
+```
+
+--- complex_skipping
+
+## 2. Complex skipping
+ 
+Say that we want to have a more complicated condition for screening out respondents. Now there are 2 questions. If the user chooses "**No**" for both questions, they'll be sent to the screenout page. This is also done by using the `sd_skip_if()` function in the `server` of `app.R`.
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'vehicle_complex',
+  label = "Do you own your vehicle?",
+  option = c(
+    'Yes' = 'yes',
+    'No'  = 'no'
+  )
+)
+
+sd_question(
+  type  = 'mc',
+  id    = 'buy_vehicle',
+  label = "Are you looking to buy a vehicle soon?",
+  option = c(
+    'Yes' = 'yes',
+    'No'  = 'no'
+  )
+)
+```
+
+--- end
+
+## End page
+
+This is the normal end page for respondents who **do not** get screened out.
+
+```{r}
+sd_close()
+```
+
+--- screenout
+
+## Screenout page
+
+This is the **screenout page** for respondents who were sent to the screenout page.
+
+```{r}
+sd_close()
+```

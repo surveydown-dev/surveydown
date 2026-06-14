@@ -1,3 +1,40 @@
+# Extract question IDs referenced in an expression.
+# Handles input$xxx, all_data$xxx, sd_value(), and sd_values() patterns.
+# Used to map skip_if/stop_if conditions to pages, to set show_if observer
+# dependencies, and by sd_reactive() to tell "inputs not answered yet"
+# apart from genuine errors.
+extract_question_refs <- function(expr) {
+    ids <- character(0)
+    if (is.call(expr)) {
+        fn <- as.character(expr[[1]])
+        # input$xxx or all_data$xxx
+        if (length(expr) >= 3 && fn == "$") {
+            obj <- as.character(expr[[2]])
+            if (obj %in% c("input", "all_data")) {
+                ids <- c(ids, as.character(expr[[3]]))
+            }
+        }
+        # sd_value() or sd_values()
+        if (fn %in% c("sd_value", "sd_values") && length(expr) >= 2) {
+            for (j in 2:length(expr)) {
+                arg <- expr[[j]]
+                if (is.character(arg)) {
+                    ids <- c(ids, arg)
+                } else if (is.symbol(arg)) {
+                    ids <- c(ids, as.character(arg))
+                }
+            }
+        }
+        # Recurse
+        for (i in seq_along(expr)) {
+            if (is.call(expr[[i]])) {
+                ids <- c(ids, extract_question_refs(expr[[i]]))
+            }
+        }
+    }
+    return(ids)
+}
+
 #' Server logic for a surveydown survey
 #'
 #' @description
@@ -194,6 +231,52 @@ sd_server <- function(db = NULL) {
         highlight_color <- "gray"
     }
 
+    # Report the operating mode on the console for every session, and in
+    # preview/local mode never use the database, even if a valid connection
+    # was provided (mode: preview replaces the deprecated ignore = TRUE).
+    # The connection is still created and tested by sd_db_connect(), so
+    # credentials are verified, but no data is read from or written to the
+    # database.
+    db_connected_but_ignored <- FALSE
+    if (mode_yaml %in% c("preview", "local")) {
+        csv_name <- if (identical(mode_yaml, "local")) {
+            "local_data.csv"
+        } else {
+            "preview_data.csv"
+        }
+        if (!is.null(db) && !is.null(db$db)) {
+            db_connected_but_ignored <- TRUE
+            cli::cli_alert_info(
+                paste0(
+                    "Survey mode is '", mode_yaml, "': the database ",
+                    "connection is not used. Responses are saved to ",
+                    csv_name, ". Set 'mode: database' in survey.qmd to ",
+                    "store responses in the database."
+                )
+            )
+            db <- NULL
+            session$userData$db <- NULL
+        } else {
+            cli::cli_alert_info(
+                paste0(
+                    "Survey mode is '", mode_yaml, "': responses are ",
+                    "saved to ", csv_name, "."
+                )
+            )
+        }
+    } else if (!is.null(db) && !is.null(db$db)) {
+        cli::cli_alert_info(
+            "Survey mode is 'database': responses are stored in the database."
+        )
+    } else {
+        cli::cli_alert_warning(
+            paste0(
+                "Survey mode is 'database' but no database connection is ",
+                "available: responses are NOT being saved."
+            )
+        )
+    }
+
     # Run the configuration settings
     config <- run_config()
 
@@ -207,40 +290,6 @@ sd_server <- function(db = NULL) {
     # Use config$start_page as fallback if start_page is NULL
     if (is.null(start_page)) {
         start_page <- config$start_page
-    }
-
-    # Helper to extract question IDs from condition expressions
-    # Handles input$xxx, all_data$xxx, sd_value(), and sd_values() patterns
-    extract_question_refs <- function(expr) {
-        ids <- character(0)
-        if (is.call(expr)) {
-            fn <- as.character(expr[[1]])
-            # input$xxx or all_data$xxx
-            if (length(expr) >= 3 && fn == "$") {
-                obj <- as.character(expr[[2]])
-                if (obj %in% c("input", "all_data")) {
-                    ids <- c(ids, as.character(expr[[3]]))
-                }
-            }
-            # sd_value() or sd_values()
-            if (fn %in% c("sd_value", "sd_values") && length(expr) >= 2) {
-                for (j in 2:length(expr)) {
-                    arg <- expr[[j]]
-                    if (is.character(arg)) {
-                        ids <- c(ids, arg)
-                    } else if (is.symbol(arg)) {
-                        ids <- c(ids, as.character(arg))
-                    }
-                }
-            }
-            # Recurse
-            for (i in seq_along(expr)) {
-                if (is.call(expr[[i]])) {
-                    ids <- c(ids, extract_question_refs(expr[[i]]))
-                }
-            }
-        }
-        return(ids)
     }
 
     # Map skip_if conditions to applicable pages
@@ -580,6 +629,13 @@ sd_server <- function(db = NULL) {
         # Screen resolution will be requested after all_data is initialized
     }
 
+    # Extract survey mode and set local CSV filename BEFORE handle_sessions,
+    # which needs local_csv_file to restore a cookied session in
+    # preview/local mode
+    survey_mode <- mode_yaml
+    local_csv_file <- if (identical(survey_mode, "local")) "local_data.csv" else "preview_data.csv"
+    session$userData$local_csv_file <- local_csv_file
+
     # Initialize session handling and session_id
     session_id <- session$token
     session_id <- handle_sessions(
@@ -607,23 +663,20 @@ sd_server <- function(db = NULL) {
     # Check if db has no active connection (preview, local, or unset)
     ignore_mode <- is.null(db) || is.null(db$db)
 
-    # Extract survey mode, set local CSV filename, and show footer banner if applicable
-    survey_mode <- mode_yaml
-    local_csv_file <- if (identical(survey_mode, "local")) "local_data.csv" else "preview_data.csv"
-    session$userData$local_csv_file <- local_csv_file
+    # Show footer banner if applicable
     if (identical(survey_mode, "preview")) {
+        banner_text <- if (db_connected_but_ignored) {
+            "PREVIEW MODE \u2014 Database connected but not used. Responses are saved in preview_data.csv."
+        } else {
+            "PREVIEW MODE \u2014 Responses are saved in preview_data.csv, not the database."
+        }
         shiny::insertUI(
             selector = "body",
             where = "beforeEnd",
             ui = shiny::tags$div(
                 id = "sd-preview-banner",
-                style = paste(
-                    "position:fixed;bottom:0;left:0;right:0;",
-                    "z-index:9999;background-color:#e6a817;color:white;",
-                    "text-align:center;padding:10px 16px;",
-                    "font-weight:bold;font-size:14px;"
-                ),
-                "PREVIEW MODE \u2014 Responses are saved in preview_data.csv, not the database."
+                class = "sd-mode-banner",
+                banner_text
             )
         )
     } else if (ignore_mode && identical(survey_mode, "database")) {
@@ -632,12 +685,7 @@ sd_server <- function(db = NULL) {
             where = "beforeEnd",
             ui = shiny::tags$div(
                 id = "sd-no-db-banner",
-                style = paste(
-                    "position:fixed;bottom:0;left:0;right:0;",
-                    "z-index:9999;background-color:#cc0000;color:white;",
-                    "text-align:center;padding:10px 16px;",
-                    "font-weight:bold;font-size:14px;"
-                ),
+                class = "sd-mode-banner",
                 "DATABASE NOT CONNECTED \u2014 Responses are not being saved. Check your database configuration."
             )
         )
@@ -679,9 +727,32 @@ sd_server <- function(db = NULL) {
         # Create a modified show_if object with only question conditions
         question_show_if <- list(conditions = question_conditions)
 
+        # Create the results reactive once (not per observer run). Condition
+        # evaluation registers reactive dependencies dynamically on whatever
+        # input$/all_data$ values it reads.
+        show_if_results_reactive <- set_show_if_conditions(question_show_if)
+
+        # Statically extracted question IDs referenced in the conditions,
+        # touched explicitly below as a safety net so the observer re-runs
+        # when they change even if a condition short-circuits before reading
+        # them. This replaces depending on every input via
+        # reactiveValuesToList(input), which re-ran all conditions on every
+        # keystroke of any input.
+        show_if_dep_ids <- unique(unlist(
+            lapply(question_conditions, function(cond) {
+                extract_question_refs(cond$condition)
+            })
+        ))
+
         shiny::observe({
-            shiny::reactiveValuesToList(input)
-            show_if_results <- set_show_if_conditions(question_show_if)()
+            for (dep_id in show_if_dep_ids) {
+                input[[dep_id]]
+            }
+            # Re-run after each page render: target containers are baked into
+            # the page HTML with display:none (see run_config), so visibility
+            # must be re-applied to the freshly inserted DOM
+            input$sd_page_rendered
+            show_if_results <- show_if_results_reactive()
             current_visibility <- question_visibility()
             for (target in names(show_if_results)) {
                 current_visibility[target] <- show_if_results[[target]]
@@ -728,14 +799,12 @@ sd_server <- function(db = NULL) {
             if (file.access('.', 2) == 0) {
                 tryCatch(
                     {
-                        # Read existing data
-                        existing_data <- if (file.exists(local_csv_file)) {
-                            utils::read.csv(
-                                local_csv_file,
-                                stringsAsFactors = FALSE
-                            )
-                        } else {
-                            data.frame()
+                        # Get existing data, served from the in-process
+                        # cache after the first read (local modes run in a
+                        # single R process, so all sessions share it)
+                        existing_data <- get_local_data(local_csv_file)
+                        if (is.null(existing_data)) {
+                            existing_data <- data.frame()
                         }
 
                         # Convert current data_list to data frame
@@ -797,13 +866,9 @@ sd_server <- function(db = NULL) {
                             updated_data <- new_data
                         }
 
-                        # Write updated data back to file
-                        utils::write.csv(
-                            updated_data,
-                            local_csv_file,
-                            row.names = FALSE,
-                            na = ""
-                        )
+                        # Write updated data back to file and refresh the
+                        # in-process cache
+                        write_local_data(updated_data, local_csv_file)
                     },
                     error = function(e) {
                         warning(
@@ -1162,10 +1227,36 @@ sd_server <- function(db = NULL) {
 
     # 5. Main question observers ----
 
+    # One observer per question keeps all_data, timestamps, progress, and
+    # the changed-fields tracker in sync with the input. The *_value,
+    # *_label_option, and *_label_question outputs are registered once here
+    # (reading reactively from all_data) instead of being re-registered on
+    # every input event. Reading from all_data also means they reflect
+    # values restored from a resumed session before any interaction.
     lapply(seq_along(question_ids), function(index) {
         local({
             local_id <- question_ids[index]
             local_ts_id <- question_ts_ids[index]
+            question_info <- question_structure[[local_id]]
+
+            output[[paste0(local_id, "_label_question")]] <- shiny::renderText(
+                {
+                    question_info$label
+                }
+            )
+            output[[paste0(local_id, "_value")]] <- shiny::renderText({
+                all_data[[local_id]]
+            })
+            output[[paste0(local_id, "_label_option")]] <- shiny::renderText({
+                value <- all_data[[local_id]]
+                if (is.null(value) || length(value) == 0 || value == "") {
+                    return("")
+                }
+                options <- question_info$options
+                # Stored values are pipe-joined for multi-select questions
+                vals <- strsplit(as.character(value), "|", fixed = TRUE)[[1]]
+                paste(names(options)[options %in% vals], collapse = "|")
+            })
 
             shiny::observeEvent(
                 input[[local_id]],
@@ -1173,8 +1264,7 @@ sd_server <- function(db = NULL) {
                     # Tag event time and update value
                     timestamp <- get_utc_timestamp()
                     value <- input[[local_id]]
-                    formatted_value <- format_question_value(value)
-                    all_data[[local_id]] <- formatted_value
+                    all_data[[local_id]] <- format_question_value(value)
 
                     # Update timestamp and progress if interacted
                     changed <- local_id
@@ -1188,41 +1278,6 @@ sd_server <- function(db = NULL) {
 
                     # Update tracker of which fields changed
                     changed_fields(c(changed_fields(), changed))
-
-                    # Get question labels and values from question structure
-                    question_info <- question_structure[[local_id]]
-                    label_question <- question_info$label
-                    options <- question_info$options
-                    label_options <- names(options)
-
-                    # For the selected value(s), get the corresponding label(s)
-                    if (length(options) == length(label_options)) {
-                        names(options) <- label_options
-                    }
-                    label_option <- if (is.null(value) || length(value) == 0) {
-                        ""
-                    } else {
-                        options[options %in% value] |>
-                            names() |>
-                            paste(collapse = "|")
-                    }
-
-                    # Store the values and labels in output
-                    output[[paste0(local_id, "_value")]] <- shiny::renderText({
-                        formatted_value
-                    })
-                    output[[paste0(
-                        local_id,
-                        "_label_option"
-                    )]] <- shiny::renderText({
-                        label_option
-                    })
-                    output[[paste0(
-                        local_id,
-                        "_label_question"
-                    )]] <- shiny::renderText({
-                        label_question
-                    })
                 },
                 ignoreNULL = FALSE,
                 ignoreInit = TRUE
@@ -1230,105 +1285,11 @@ sd_server <- function(db = NULL) {
         })
     })
 
-    # Manual range observers for range sliders auto-save
-    lapply(seq_along(question_ids), function(index) {
-        local({
-            local_id <- question_ids[index]
-            local_ts_id <- question_ts_ids[index]
-            manual_id <- paste0(local_id, "_manual_range")
-
-            shiny::observeEvent(
-                input[[manual_id]],
-                {
-                    # Tag event time and update value
-                    timestamp <- get_utc_timestamp()
-                    value <- input[[manual_id]]
-                    formatted_value <- format_question_value(value)
-                    all_data[[local_id]] <- formatted_value
-
-                    # Always update timestamp for manual range (auto-save scenario)
-                    changed <- local_id
-                    all_data[[local_ts_id]] <- timestamp
-                    changed <- c(changed, local_ts_id)
-
-                    # Update progress if interacted
-                    if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                        update_progress_bar(index)
-                        # Track this question as interacted for highlighting restoration
-                        track_question_interaction(local_id)
-                    }
-
-                    # Update tracker of which fields changed
-                    changed_fields(c(changed_fields(), changed))
-
-                    # Get question labels and values from question structure
-                    question_info <- question_structure[[local_id]]
-                    label_question <- question_info$label
-                    options <- question_info$options
-                    label_options <- names(options)
-
-                    # For the selected value(s), get the corresponding label(s)
-                    if (length(options) == length(label_options)) {
-                        names(options) <- label_options
-                    }
-                    label_option <- if (is.null(value) || length(value) == 0) {
-                        ""
-                    } else {
-                        options[options %in% value] |>
-                            names() |>
-                            paste(collapse = "|")
-                    }
-
-                    # Store the values and labels in output
-                    output[[paste0(local_id, "_value")]] <- shiny::renderText({
-                        formatted_value
-                    })
-                    output[[paste0(
-                        local_id,
-                        "_label_option"
-                    )]] <- shiny::renderText({
-                        label_option
-                    })
-                    output[[paste0(
-                        local_id,
-                        "_label_question"
-                    )]] <- shiny::renderText({
-                        label_question
-                    })
-                },
-                ignoreNULL = FALSE,
-                ignoreInit = TRUE
-            )
-        })
-    })
-
-    # Auto-save timestamp observers
-    lapply(seq_along(question_ids), function(index) {
-        local({
-            local_id <- question_ids[index]
-            local_ts_id <- question_ts_ids[index]
-            autosave_ts_id <- paste0(local_id, "_autosave_timestamp")
-
-            shiny::observeEvent(
-                input[[autosave_ts_id]],
-                {
-                    # Force timestamp update for auto-saved questions
-                    if (!is.null(input[[paste0(local_id, "_interacted")]])) {
-                        timestamp <- get_utc_timestamp()
-                        all_data[[local_ts_id]] <- timestamp
-                        changed_fields(c(changed_fields(), local_ts_id))
-                        # Track this question as interacted for highlighting restoration
-                        track_question_interaction(local_id)
-                    }
-                },
-                ignoreNULL = TRUE,
-                ignoreInit = TRUE
-            )
-        })
-    })
-
-    # Observer to update cookies with answers and page_history
-    shiny::observe({
+    # Update cookies with answers and page_history. The payload is built in
+    # a reactive that is debounced, so rapid input changes (e.g., keystrokes
+    # in a text question) result in one cookie update shortly after the
+    # respondent pauses, instead of serializing all answers on every change.
+    cookie_answer_data <- shiny::reactive({
         # Get current page ID
         page_id <- current_page_id()
 
@@ -1361,25 +1322,31 @@ sd_server <- function(db = NULL) {
             }
         }
 
-        # Send to client to update cookie
-        if (length(answers) > 0) {
-            # Update cookies in both database and local modes
-            # Include page_history for Previous button functionality
-            # Include question_history for highlighting restoration
-            # Include shuffle_orders for option/row shuffle persistence
-            page_data <- list(
-                answers = answers,
-                last_timestamp = last_timestamp,
-                page_history = page_history(),
-                question_history = question_history(),
-                randomization_orders = shiny::reactiveValuesToList(
-                    shuffle_orders
-                )
+        if (length(answers) == 0) {
+            return(NULL)
+        }
+
+        # Update cookies in both database and local modes
+        # Include page_history for Previous button functionality
+        # Include question_history for highlighting restoration
+        # Include shuffle_orders for option/row shuffle persistence
+        page_data <- list(
+            answers = answers,
+            last_timestamp = last_timestamp,
+            page_history = page_history(),
+            question_history = question_history(),
+            randomization_orders = shiny::reactiveValuesToList(
+                shuffle_orders
             )
-            session$sendCustomMessage(
-                "setAnswerData",
-                list(pageId = page_id, pageData = page_data)
-            )
+        )
+        list(pageId = page_id, pageData = page_data)
+    })
+    cookie_answer_data_debounced <- shiny::debounce(cookie_answer_data, 500)
+
+    shiny::observe({
+        message_data <- cookie_answer_data_debounced()
+        if (!is.null(message_data)) {
+            session$sendCustomMessage("setAnswerData", message_data)
         }
     })
 
@@ -1556,6 +1523,16 @@ sd_server <- function(db = NULL) {
                 create_matrix_shuffle_script(matrix_orders)
             )
         }
+
+        # Notify the server once this page's DOM is inserted, so observers
+        # that mutate page elements (e.g., show_if visibility) can re-apply
+        # their state to the freshly rendered page
+        content_tags <- shiny::tagList(
+            content_tags,
+            shiny::tags$script(shiny::HTML(
+                "Shiny.setInputValue('sd_page_rendered', Date.now(), {priority: 'event'});"
+            ))
+        )
 
         content_tags
     })
@@ -1979,11 +1956,17 @@ sd_server <- function(db = NULL) {
                                 # Get the stored value from all_data
                                 stored_value <- all_data[[q_id]]
 
-                                # Skip if no value was stored
+                                # Skip if no value was stored. NA-safe:
+                                # matrix parent questions have no input of
+                                # their own (only their rows do), so their
+                                # all_data entry can be NA - an un-guarded
+                                # `NA == ""` would error and break navigation.
                                 if (
                                     is.null(stored_value) ||
+                                        length(stored_value) == 0 ||
                                         (length(stored_value) == 1 &&
-                                            stored_value == "")
+                                            (is.na(stored_value) ||
+                                                stored_value == ""))
                                 ) {
                                     next
                                 }
@@ -2012,279 +1995,41 @@ sd_server <- function(db = NULL) {
                                     FALSE
                                 }
 
-                                # Update the input based on question type
-                                tryCatch(
-                                    {
-                                        if (q_type == "mc") {
-                                            shiny::updateRadioButtons(
-                                                session,
-                                                q_id,
-                                                selected = stored_value
-                                            )
-                                        } else if (q_type == "mc_buttons") {
-                                            # Use shinyWidgets update function for button-style radio groups
-                                            shinyWidgets::updateRadioGroupButtons(
-                                                session,
-                                                q_id,
-                                                selected = stored_value
-                                            )
-                                            # Also send custom message to trigger JavaScript update
-                                            session$sendCustomMessage(
-                                                "restoreButtonValue",
-                                                list(
-                                                    id = q_id,
-                                                    value = stored_value,
-                                                    type = "radio"
-                                                )
-                                            )
-                                        } else if (q_type == "mc_multiple") {
-                                            # For multiple choice, stored_value might be a vector or comma-separated
-                                            if (
-                                                is.character(stored_value) &&
-                                                    length(stored_value) == 1
-                                            ) {
-                                                # If it's a single string, try splitting by comma
-                                                values <- if (
-                                                    grepl(",", stored_value)
-                                                ) {
-                                                    strsplit(
-                                                        stored_value,
-                                                        ",\\s*"
-                                                    )[[1]]
-                                                } else {
-                                                    stored_value
-                                                }
-                                            } else {
-                                                values <- stored_value
-                                            }
-                                            shiny::updateCheckboxGroupInput(
-                                                session,
-                                                q_id,
-                                                selected = values
-                                            )
-                                        } else if (
-                                            q_type == "mc_multiple_buttons"
-                                        ) {
-                                            # For multiple choice buttons, stored_value might be a vector or comma-separated
-                                            if (
-                                                is.character(stored_value) &&
-                                                    length(stored_value) == 1
-                                            ) {
-                                                # If it's a single string, try splitting by comma
-                                                values <- if (
-                                                    grepl(",", stored_value)
-                                                ) {
-                                                    strsplit(
-                                                        stored_value,
-                                                        ",\\s*"
-                                                    )[[1]]
-                                                } else {
-                                                    stored_value
-                                                }
-                                            } else {
-                                                values <- stored_value
-                                            }
-                                            # Use shinyWidgets update function for button-style checkbox groups
-                                            shinyWidgets::updateCheckboxGroupButtons(
-                                                session,
-                                                q_id,
-                                                selected = values
-                                            )
-                                            # Also send custom message to trigger JavaScript update
-                                            session$sendCustomMessage(
-                                                "restoreButtonValue",
-                                                list(
-                                                    id = q_id,
-                                                    value = values,
-                                                    type = "checkbox"
-                                                )
-                                            )
-                                        } else if (q_type == "select") {
-                                            shiny::updateSelectInput(
-                                                session,
-                                                q_id,
-                                                selected = stored_value
-                                            )
-                                        } else if (q_type == "text") {
-                                            shiny::updateTextInput(
-                                                session,
-                                                q_id,
-                                                value = stored_value
-                                            )
-                                        } else if (q_type == "textarea") {
-                                            shiny::updateTextAreaInput(
-                                                session,
-                                                q_id,
-                                                value = stored_value
-                                            )
-                                        } else if (q_type == "numeric") {
-                                            shiny::updateNumericInput(
-                                                session,
-                                                q_id,
-                                                value = as.numeric(stored_value)
-                                            )
-                                        } else if (
-                                            q_type %in%
-                                                c("slider", "slider_numeric")
-                                        ) {
-                                            # Check if it's a range slider (using unified is_range variable)
-                                            if (is_range) {
-                                                # For range sliders, stored_value should be a vector of two values
-                                                if (
-                                                    is.character(
-                                                        stored_value
-                                                    ) &&
-                                                        length(stored_value) ==
-                                                            1
-                                                ) {
-                                                    values <- as.numeric(strsplit(
-                                                        stored_value,
-                                                        ",\\s*"
-                                                    )[[1]])
-                                                } else {
-                                                    values <- as.numeric(
-                                                        stored_value
-                                                    )
-                                                }
-                                                if (length(values) == 2) {
-                                                    if (
-                                                        q_type ==
-                                                            "slider_numeric"
-                                                    ) {
-                                                        # Use updateSliderInput for numeric sliders
-                                                        shiny::updateSliderInput(
-                                                            session,
-                                                            q_id,
-                                                            value = values
-                                                        )
-                                                    } else {
-                                                        # Use updateSliderTextInput for text sliders
-                                                        shinyWidgets::updateSliderTextInput(
-                                                            session,
-                                                            q_id,
-                                                            selected = values
-                                                        )
-                                                        # Also send custom message to trigger JavaScript update
-                                                        session$sendCustomMessage(
-                                                            "restoreSliderValue",
-                                                            list(
-                                                                id = q_id,
-                                                                selected = values
-                                                            )
-                                                        )
-                                                    }
-                                                }
-                                            } else {
-                                                # Single value slider
-                                                if (
-                                                    q_type == "slider_numeric"
-                                                ) {
-                                                    shiny::updateSliderInput(
-                                                        session,
-                                                        q_id,
-                                                        value = as.numeric(
-                                                            stored_value
-                                                        )
-                                                    )
-                                                } else {
-                                                    # For text sliders, need to convert value to display label
-                                                    # Try session userData first, then fall back to question_structure
-                                                    value_map <- session$userData[[paste0(
-                                                        q_id,
-                                                        "_values"
-                                                    )]]
-                                                    if (
-                                                        is.null(value_map) &&
-                                                            q_id %in%
-                                                                names(
-                                                                    question_structure
-                                                                )
-                                                    ) {
-                                                        # Use options from question_structure as fallback
-                                                        value_map <- question_structure[[
-                                                            q_id
-                                                        ]]$options
-                                                    }
-                                                    if (!is.null(value_map)) {
-                                                        # Find the display label for this value
-                                                        label_idx <- which(
-                                                            value_map ==
-                                                                stored_value
-                                                        )
-                                                        if (
-                                                            length(label_idx) >
-                                                                0
-                                                        ) {
-                                                            display_label <- names(
-                                                                value_map
-                                                            )[label_idx[1]]
-                                                            shinyWidgets::updateSliderTextInput(
-                                                                session,
-                                                                q_id,
-                                                                selected = display_label
-                                                            )
-                                                            # Also send custom message to trigger JavaScript update
-                                                            session$sendCustomMessage(
-                                                                "restoreSliderValue",
-                                                                list(
-                                                                    id = q_id,
-                                                                    selected = display_label
-                                                                )
-                                                            )
-                                                        }
-                                                    } else {
-                                                        # Fallback if value map not available
-                                                        shinyWidgets::updateSliderTextInput(
-                                                            session,
-                                                            q_id,
-                                                            selected = stored_value
-                                                        )
-                                                        # Also send custom message to trigger JavaScript update
-                                                        session$sendCustomMessage(
-                                                            "restoreSliderValue",
-                                                            list(
-                                                                id = q_id,
-                                                                selected = stored_value
-                                                            )
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        } else if (q_type == "date") {
-                                            shiny::updateDateInput(
-                                                session,
-                                                q_id,
-                                                value = stored_value
-                                            )
-                                        } else if (q_type == "daterange") {
-                                            # For date range, stored_value should be a vector of two dates
-                                            if (
-                                                is.character(stored_value) &&
-                                                    length(stored_value) == 1
-                                            ) {
-                                                dates <- strsplit(
-                                                    stored_value,
-                                                    ",\\s*"
-                                                )[[1]]
-                                            } else {
-                                                dates <- stored_value
-                                            }
-                                            if (length(dates) == 2) {
-                                                shiny::updateDateRangeInput(
-                                                    session,
-                                                    q_id,
-                                                    start = dates[1],
-                                                    end = dates[2]
-                                                )
-                                            }
-                                        }
-                                        # Note: Reactive questions defined with sd_question() in the server are now supported
-                                        # Custom reactive questions using sd_question_custom() may need their own restoration logic
-                                    },
-                                    error = function(e) {
-                                        # Silently skip if update fails
+                                # Restore the input via the type's restorer
+                                # (see the question type registry in
+                                # R/question_types.R). Types with no restorer
+                                # (e.g. the matrix parent, whose rows restore
+                                # individually) and unknown types are skipped,
+                                # matching the original fall-through behavior.
+                                info <- list(
+                                    is_range = is_range,
+                                    options = if (
+                                        !is_reactive &&
+                                            q_id %in% names(question_structure)
+                                    ) {
+                                        question_structure[[q_id]]$options
+                                    } else {
+                                        NULL
                                     }
                                 )
+                                restorer <- question_type_registry[[
+                                    q_type
+                                ]]$restore
+                                if (!is.null(restorer)) {
+                                    tryCatch(
+                                        {
+                                            restorer(
+                                                session,
+                                                q_id,
+                                                stored_value,
+                                                info
+                                            )
+                                        },
+                                        error = function(e) {
+                                            # Silently skip if update fails
+                                        }
+                                    )
+                                }
                             }
                         })
                     }
@@ -3046,7 +2791,32 @@ sd_reactive <- function(id, expr, blank_na = TRUE) {
                 }
             },
             error = function(e) {
-                warning("Error in sd_reactive for ", id, ": ", e$message)
+                # Don't warn when the failure is just "inputs not answered
+                # yet": if any question referenced in the expression is
+                # still blank, errors (e.g., arithmetic on "") are an
+                # expected state while the respondent works through the
+                # survey. If all referenced values are filled in, or no
+                # references can be detected in the expression, the error
+                # is treated as genuine and a warning is raised.
+                all_data <- session$userData$all_data
+                ref_ids <- extract_question_refs(expr_call)
+                any_unanswered <- FALSE
+                if (!is.null(all_data) && length(ref_ids) > 0) {
+                    any_unanswered <- any(vapply(
+                        ref_ids,
+                        function(q) {
+                            val <- shiny::isolate(all_data[[q]])
+                            is.null(val) ||
+                                length(val) == 0 ||
+                                all(is.na(val)) ||
+                                all(as.character(val) == "")
+                        },
+                        logical(1)
+                    ))
+                }
+                if (!any_unanswered) {
+                    warning("Error in sd_reactive for ", id, ": ", e$message)
+                }
                 sd_store_value("", id)
                 return(if (blank_na) "" else NULL)
             }
@@ -3645,12 +3415,6 @@ check_answer <- function(q, input, question_structure = NULL) {
     # These types often have default values that shouldn't count as "answered"
     interacted <- input[[paste0(q, "_interacted")]]
 
-    # Also check for auto-save timestamp (indicates auto-save occurred)
-    autosave_timestamp <- input[[paste0(q, "_autosave_timestamp")]]
-    if (is.null(interacted) && !is.null(autosave_timestamp)) {
-        interacted <- TRUE
-    }
-
     # Smart auto-save detection: ONLY apply if normal answer checking would fail
     # This ensures we don't interfere with normal user interaction tracking
     if (is.null(interacted) && !is.null(answer)) {
@@ -3769,24 +3533,6 @@ check_answer_for_highlighting <- function(q, input, question_structure = NULL) {
 
     # For all question types, if no interaction flag, show as unanswered for highlighting
     return(FALSE)
-}
-
-get_local_data <- function(csv_file = "preview_data.csv") {
-    if (file.exists(csv_file)) {
-        tryCatch(
-            {
-                return(utils::read.csv(
-                    csv_file,
-                    stringsAsFactors = FALSE
-                ))
-            },
-            error = function(e) {
-                warning("Error reading ", csv_file, ": ", e$message)
-                return(NULL)
-            }
-        )
-    }
-    return(NULL)
 }
 
 get_cookie_data <- function(session, current_page_id) {

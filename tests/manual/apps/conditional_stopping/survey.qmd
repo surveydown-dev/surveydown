@@ -1,0 +1,93 @@
+---
+# The YAML header specifies several settings for the survey but is not required.
+# A full list of settings can be found under _survey/settings.yml directory.
+
+theme-settings:
+  theme: default
+  barposition: top
+  footer-left: "Made with [surveydown](https://surveydown.org)"
+  footer-right: '[<i class="bi bi-github"></i> Source Code](https://github.com/surveydown-dev/template_conditional_stopping)'
+
+survey-settings:
+  mode: preview
+  show-previous: false
+  use-cookies: false
+  auto-scroll: false
+  rate-survey: false
+  system-language: en
+  highlight-unanswered: true
+  highlight-color: blue
+  capture-metadata: true
+  all-required: false
+  required: pet_preference
+---
+
+```{r}
+library(surveydown)
+```
+
+--- page1
+
+# Template - Conditional Stopping
+
+::: {.callout-tip}
+1. The `zip` and `yob` questions are not defined as required in YAML, but they are auto-marked as required because the `sd_stop_if()` function call in **app.R** mentions them as judgements.
+2. The `pet_preference` question is explicitly defined as required in YAML.
+3. The `sd_stop_if()` logic has higher priority than the required question logic. As you click on the "Next" button, the system checks the `sd_stop_if()` conditions first, then checks if the required questions are answered.
+:::
+
+Hi! This is a showcase of the "conditional stopping" feature that surveydown supports.
+
+The ZIP code question only allows **5 digits**.
+
+```{r}
+sd_question(
+  type  = "numeric",
+  id    = "zip",
+  label = "What's your zip code?"
+)
+```
+
+The year of birth question only allows values **greater than 1900**.
+
+```{r}
+sd_question(
+  type  = "numeric",
+  id    = "yob",
+  label = "What's your year of birth?"
+)
+```
+
+A dummy **required** question to showcase the priority of the system prompt.
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'pet_preference',
+  label = "Which pet do you prefer, cat or dog?",
+  option = c(
+    'Cat' = 'cat',
+    'Dog' = 'dog'
+  )
+)
+```
+
+--- page2
+
+The phone number question only allows **10 digits**.
+
+```{r}
+sd_question(
+  type  = "text",
+  id    = "phone",
+  label = "What's your phone number?"
+)
+```
+
+--- end
+
+## This is the end of the survey template of the conditional stopping feature.
+
+```{r}
+sd_close()
+```

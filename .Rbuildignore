@@ -23,5 +23,6 @@ CLAUDE.md
 ^.vscode$
 ^app.R$
 ^test_survey$
+^tests/manual$
 ^\.luarc\.json$
 ^tools$

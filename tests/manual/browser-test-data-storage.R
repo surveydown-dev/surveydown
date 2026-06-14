@@ -1,0 +1,113 @@
+# Browser test for data storage (preview mode / local CSV) using chromote.
+#
+# Walks the bundled data_storage app, answering every supported question
+# type, then reads preview_data.csv and verifies that every value was
+# stored correctly: raw values, pipe-joined multi-selects, slider
+# label-to-value mapping, matrix sub-question columns, sd_store_value(),
+# session metadata, and one-row-per-session.
+#
+# Run from the package root:
+#   source("tests/manual/browser-test-data-storage.R")
+# See tests/manual/README.md for requirements.
+
+source(file.path("tests", "manual", "helpers.R"))
+
+app_dir <- file.path("tests", "manual", "apps", "data_storage")
+port <- 8126
+
+launch_app(app_dir, port)
+new_session(port)
+
+# Page 1: mc, mc_multiple, text, numeric, select
+click("input[name=\"fruit\"][value=\"banana\"]")
+click("input[name=\"colors\"][value=\"red\"]")
+click("input[name=\"colors\"][value=\"blue\"]")
+set_text("name", "Alice")
+# Type 29, then click the numeric input's spinner-up button to reach 30
+# (also verifies the spinner UI was injected and its handler works)
+set_text("age", "29")
+mousedown("#container-age .native-spinner-button.spinner-up")
+check("numeric spinner increments the value", input_val("#age") == "30")
+set_select("size", "m")
+# Image choice (renders as radio/checkbox under image cards)
+click("input[name=\"shape\"][value=\"blue\"]")
+# Named image options render captions; unnamed ones do not
+check(
+  "mc_image (named) shows captions",
+  js("document.querySelectorAll('#container-shape .sd-image-card-caption').length") > 0
+)
+click("input[name=\"shape_plain\"][value=\"red\"]")
+check(
+  "mc_image (unnamed) shows NO captions",
+  js("document.querySelectorAll('#container-shape_plain .sd-image-card-caption').length") == 0
+)
+click("input[name=\"shapes\"][value=\"red\"]")
+click("input[name=\"shapes\"][value=\"blue\"]")
+shot("storage_page1.png")
+click("#page1_next", wait = 2)
+
+# Page 2: mc_buttons, mc_multiple_buttons, textarea, slider, slider_numeric
+click("#pet input[value=\"dog\"]")
+click("#drinks input[value=\"coffee\"]")
+click("#drinks input[value=\"tea\"]")
+set_text("comments", "hello world")
+set_slider("satisfaction", 4) # 4th option = 'satisfied'
+set_slider_numeric("rating", 7)
+set_slider_range("rating_range", 2, 8)
+shot("storage_page2.png")
+click("#page2_next", wait = 2)
+
+# Page 3: date, daterange, matrix
+set_date("birthday", "2024-06-15")
+set_daterange("trip", "2024-06-01", "2024-06-30")
+click("input[name=\"quality_speed\"][value=\"good\"]")
+click("input[name=\"quality_support\"][value=\"bad\"]")
+click("input[name=\"features_website\"][value=\"fast\"]")
+click("input[name=\"features_website\"][value=\"cheap\"]")
+click("input[name=\"features_app\"][value=\"simple\"]")
+shot("storage_page3.png")
+click("#page3_next", wait = 2)
+
+check("reached end page", body_has("End of the data storage test survey"))
+
+# -- Verify the stored CSV -----------------------------------------------
+
+csv_file <- file.path(app_dir, "preview_data.csv")
+check("preview_data.csv exists", file.exists(csv_file))
+
+d <- utils::read.csv(csv_file, stringsAsFactors = FALSE)
+val <- function(col) {
+  if (!col %in% names(d)) return(NA_character_)
+  as.character(d[[col]][1])
+}
+
+check("exactly one row stored for the session", nrow(d) == 1)
+check("mc stored", val("fruit") == "banana")
+check("mc_multiple stored pipe-joined", val("colors") == "red|blue")
+check("text stored", val("name") == "Alice")
+check("numeric stored", val("age") == "30")
+check("select stored", val("size") == "m")
+check("mc_image stored", val("shape") == "blue")
+check("mc_image (unnamed) stored", val("shape_plain") == "red")
+check("mc_multiple_image stored pipe-joined", val("shapes") == "red|blue")
+check("mc_buttons stored", val("pet") == "dog")
+check("mc_multiple_buttons stored pipe-joined", val("drinks") == "coffee|tea")
+check("textarea stored", val("comments") == "hello world")
+check("slider stored mapped value (label -> value)", val("satisfaction") == "satisfied")
+check("slider_numeric stored", val("rating") == "7")
+check("slider_numeric range stored pipe-joined", val("rating_range") == "2|8")
+check("date stored", val("birthday") == "2024-06-15")
+check("daterange stored pipe-joined", val("trip") == "2024-06-01|2024-06-30")
+check("matrix row 1 stored", val("quality_speed") == "good")
+check("matrix row 2 stored", val("quality_support") == "bad")
+check("matrix_multiple row 1 stored pipe-joined", val("features_website") == "fast|cheap")
+check("matrix_multiple row 2 stored", val("features_app") == "simple")
+check("sd_store_value stored", val("stored_test") == "abc123")
+check("session_id present", !is.na(val("session_id")) && nzchar(val("session_id")))
+check("time_start present", !is.na(val("time_start")) && nzchar(val("time_start")))
+check(
+  "question timestamp present (time_q_fruit)",
+  !is.na(val("time_q_fruit")) && nzchar(val("time_q_fruit"))
+)
+
+teardown(app_dir, port)

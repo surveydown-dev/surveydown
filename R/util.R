@@ -53,6 +53,41 @@ choice_list_html <- function(option, option_attr = NULL) {
   return(list(names = choice_names, values = choice_values))
 }
 
+# Build choiceNames/choiceValues for image-choice questions. Each choice
+# name is an image card (the image plus an optional text caption taken from
+# the option name). `option` is a named vector (names = captions, values =
+# stored values); `image` is a parallel vector of image src strings (paths
+# resolved against the survey's images/www folders, or full URLs).
+choice_image_html <- function(option, image) {
+  n <- length(option)
+  captions <- names(option)
+  if (is.null(captions)) {
+    captions <- rep("", n)
+  }
+  choice_names <- lapply(seq_len(n), function(i) {
+    card <- list(
+      shiny::tags$img(
+        src = image[[i]],
+        class = "sd-image-card-img",
+        alt = captions[[i]]
+      )
+    )
+    # Show a caption only when the option name carries text
+    if (!is.na(captions[[i]]) && nzchar(captions[[i]])) {
+      clean <- gsub("<[/]?p>|\\n", "", markdown_to_html(captions[[i]]))
+      card <- c(
+        card,
+        list(shiny::tags$span(
+          class = "sd-image-card-caption",
+          shiny::HTML(clean)
+        ))
+      )
+    }
+    shiny::tags$div(class = "sd-image-card", card)
+  })
+  list(names = choice_names, values = as.list(unname(option)))
+}
+
 # Get reserved column names that cannot be used for page IDs, question IDs, or stored values
 get_reserved_ids <- function() {
   c(
@@ -1739,6 +1774,12 @@ sd_store_value <- function(value, id = NULL, db = NULL, auto_assign = TRUE) {
       }
     }
 
+    # Preview/local mode never uses the database, even if a live connection
+    # object exists in the calling environment
+    if (!is.null(db) && is_csv_mode()) {
+      db <- NULL
+    }
+
     # Check if value already exists (session persistence logic)
     # Works for both database and local CSV modes
     # But only if all_data is available - otherwise we need to defer this check
@@ -1910,11 +1951,39 @@ get_session_id <- function(session, db) {
   return(search_session_id)
 }
 
+# Returns TRUE when the survey runs in preview or local mode, where
+# responses go to a local CSV file and the database (even if connected)
+# must not be used
+is_csv_mode <- function() {
+  settings <- get_settings_yml()
+  if (is.null(settings)) {
+    return(FALSE)
+  }
+  mode <- settings$`survey-settings`$mode
+  if (is.null(mode)) {
+    mode <- settings$mode
+  }
+  isTRUE(mode %in% c("preview", "local"))
+}
+
 # Helper function to get settings.yml file (kebab-case only)
+# Inside a Shiny session, the parsed settings are cached in session$userData
+# so repeated calls (e.g., per question or per sd_store_value) don't re-read
+# the file from disk. Outside a session (e.g., during Quarto rendering of
+# survey.qmd), the file is read directly each time.
 get_settings_yml <- function() {
+  session <- shiny::getDefaultReactiveDomain()
+  if (!is.null(session) && !is.null(session$userData$sd_settings)) {
+    return(session$userData$sd_settings)
+  }
+
   path <- file.path("_survey", "settings.yml")
   if (fs::file_exists(path)) {
-    return(yaml::read_yaml("_survey/settings.yml"))
+    settings <- yaml::read_yaml(path)
+    if (!is.null(session) && !is.null(settings)) {
+      session$userData$sd_settings <- settings
+    }
+    return(settings)
   }
 
   # Fallback: if settings.yml doesn't exist, read directly from survey.qmd YAML header
@@ -1948,6 +2017,9 @@ get_settings_yml <- function() {
         }
 
         if (length(settings) > 0) {
+          if (!is.null(session)) {
+            session$userData$sd_settings <- settings
+          }
           return(settings)
         }
       },
@@ -1976,23 +2048,53 @@ get_session_data <- function(db, search_session_id, csv_file = "preview_data.csv
   }
 }
 
-# Helper function to get local CSV data
+# In-memory cache of local CSV response data for preview/local modes.
+# These modes run in a single R process on one machine, so all Shiny
+# sessions in the app share this copy. Entries are keyed by absolute file
+# path (multiple surveys in one R session stay isolated) and invalidated
+# whenever the file's mtime changes (external edits or deletion are picked
+# up). write_local_data() refreshes the entry on every save, so reads
+# after a save are served from memory instead of re-reading the file.
+.local_data_cache <- new.env(parent = emptyenv())
+
+local_data_key <- function(csv_file) {
+  normalizePath(csv_file, winslash = "/", mustWork = FALSE)
+}
+
+# Helper function to get local CSV data (served from the in-process cache
+# when the file is unchanged since the last read or write)
 get_local_data <- function(csv_file = "preview_data.csv") {
-  if (file.exists(csv_file)) {
-    tryCatch(
-      {
-        return(utils::read.csv(
-          csv_file,
-          stringsAsFactors = FALSE
-        ))
-      },
-      error = function(e) {
-        warning("Error reading ", csv_file, ": ", e$message)
-        return(NULL)
-      }
-    )
+  if (!file.exists(csv_file)) {
+    return(NULL)
   }
-  return(NULL)
+  key <- local_data_key(csv_file)
+  mtime <- file.info(csv_file)$mtime
+  entry <- get0(key, envir = .local_data_cache, inherits = FALSE)
+  if (!is.null(entry) && identical(entry$mtime, mtime)) {
+    return(entry$data)
+  }
+  data <- tryCatch(
+    utils::read.csv(csv_file, stringsAsFactors = FALSE),
+    error = function(e) {
+      warning("Error reading ", csv_file, ": ", e$message)
+      NULL
+    }
+  )
+  if (!is.null(data)) {
+    assign(key, list(mtime = mtime, data = data), envir = .local_data_cache)
+  }
+  return(data)
+}
+
+# Write local CSV data to disk and refresh the in-memory cache
+write_local_data <- function(data, csv_file) {
+  utils::write.csv(data, csv_file, row.names = FALSE, na = "")
+  assign(
+    local_data_key(csv_file),
+    list(mtime = file.info(csv_file)$mtime, data = data),
+    envir = .local_data_cache
+  )
+  invisible(data)
 }
 
 # Internal function to get data from database for a specific session only

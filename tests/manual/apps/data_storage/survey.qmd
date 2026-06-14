@@ -1,0 +1,224 @@
+---
+theme-settings:
+  theme: default
+  barposition: top
+
+survey-settings:
+  mode: preview
+  show-previous: false
+  use-cookies: false
+  auto-scroll: false
+  rate-survey: false
+  system-language: en
+  highlight-unanswered: true
+  highlight-color: blue
+  capture-metadata: true
+  all-required: false
+---
+
+```{r}
+library(surveydown)
+```
+
+--- page1
+
+# Data Storage Test - Page 1
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'fruit',
+  label = "Favorite fruit?",
+  option = c(
+    'Apple'  = 'apple',
+    'Banana' = 'banana',
+    'Cherry' = 'cherry'
+  )
+)
+
+sd_question(
+  type  = 'mc_multiple',
+  id    = 'colors',
+  label = "Favorite colors?",
+  option = c(
+    'Red'   = 'red',
+    'Blue'  = 'blue',
+    'Green' = 'green'
+  )
+)
+
+sd_question(
+  type  = 'text',
+  id    = 'name',
+  label = "Your name?"
+)
+
+sd_question(
+  type  = 'numeric',
+  id    = 'age',
+  label = "Your age?"
+)
+
+sd_question(
+  type  = 'select',
+  id    = 'size',
+  label = "T-shirt size?",
+  option = c(
+    'Small'  = 's',
+    'Medium' = 'm',
+    'Large'  = 'l'
+  )
+)
+
+# Self-contained data-URI images (a red and a blue square) so the test
+# needs no image files
+sd_question(
+  type   = 'mc_image',
+  id     = 'shape',
+  label  = "Pick a color:",
+  option = c('Red' = 'red', 'Blue' = 'blue'),
+  image  = c(
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJyZWQiLz48L3N2Zz4=",
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJibHVlIi8+PC9zdmc+"
+  )
+)
+
+# Unnamed option vector -> images only, no captions (still stores values)
+sd_question(
+  type   = 'mc_image',
+  id     = 'shape_plain',
+  label  = "Pick a color (no caption):",
+  option = c('red', 'blue'),
+  image  = c(
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJyZWQiLz48L3N2Zz4=",
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJibHVlIi8+PC9zdmc+"
+  )
+)
+
+sd_question(
+  type   = 'mc_multiple_image',
+  id     = 'shapes',
+  label  = "Pick colors:",
+  option = c('Red' = 'red', 'Blue' = 'blue'),
+  image  = c(
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJyZWQiLz48L3N2Zz4=",
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSJibHVlIi8+PC9zdmc+"
+  )
+)
+```
+
+--- page2
+
+# Data Storage Test - Page 2
+
+```{r}
+sd_question(
+  type  = 'mc_buttons',
+  id    = 'pet',
+  label = "Favorite pet?",
+  option = c(
+    'Cat' = 'cat',
+    'Dog' = 'dog'
+  )
+)
+
+sd_question(
+  type  = 'mc_multiple_buttons',
+  id    = 'drinks',
+  label = "Favorite drinks?",
+  option = c(
+    'Coffee' = 'coffee',
+    'Tea'    = 'tea',
+    'Juice'  = 'juice'
+  )
+)
+
+sd_question(
+  type  = 'textarea',
+  id    = 'comments',
+  label = "Any comments?"
+)
+
+sd_question(
+  type  = 'slider',
+  id    = 'satisfaction',
+  label = "How satisfied are you?",
+  option = c(
+    'Very unsatisfied' = 'very_unsatisfied',
+    'Unsatisfied'      = 'unsatisfied',
+    'Neutral'          = 'neutral',
+    'Satisfied'        = 'satisfied',
+    'Very satisfied'   = 'very_satisfied'
+  )
+)
+
+sd_question(
+  type  = 'slider_numeric',
+  id    = 'rating',
+  label = "Rate from 0 to 10:",
+  option = seq(0, 10, 1)
+)
+
+sd_question(
+  type    = 'slider_numeric',
+  id      = 'rating_range',
+  label   = "Pick a range from 0 to 10:",
+  option  = seq(0, 10, 1),
+  default = c(3, 7)
+)
+```
+
+--- page3
+
+# Data Storage Test - Page 3
+
+```{r}
+sd_question(
+  type  = 'date',
+  id    = 'birthday',
+  label = "Pick a date:"
+)
+
+sd_question(
+  type  = 'daterange',
+  id    = 'trip',
+  label = "Pick a date range:"
+)
+
+sd_question(
+  type  = 'matrix',
+  id    = 'quality',
+  label = "Rate our service:",
+  row = c(
+    'Speed'   = 'speed',
+    'Support' = 'support'
+  ),
+  option = c(
+    'Good' = 'good',
+    'Bad'  = 'bad'
+  )
+)
+
+sd_question(
+  type  = 'matrix_multiple',
+  id    = 'features',
+  label = "Which features apply? (select all)",
+  row = c(
+    'Website' = 'website',
+    'App'     = 'app'
+  ),
+  option = c(
+    'Fast'   = 'fast',
+    'Simple' = 'simple',
+    'Cheap'  = 'cheap'
+  )
+)
+```
+
+--- end
+
+## End of the data storage test survey.
+
+```{r}
+sd_close()
+```

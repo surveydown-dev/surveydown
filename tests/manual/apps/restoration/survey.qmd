@@ -1,0 +1,105 @@
+---
+theme-settings:
+  theme: default
+  barposition: top
+
+survey-settings:
+  mode: preview
+  show-previous: true
+  use-cookies: true
+  auto-scroll: false
+  rate-survey: false
+  system-language: en
+  highlight-unanswered: true
+  highlight-color: blue
+  capture-metadata: true
+  all-required: false
+---
+
+```{r}
+library(surveydown)
+```
+
+--- page1
+
+# Restoration Test - Page 1
+
+```{r}
+sd_question(
+  type  = 'mc',
+  id    = 'fruit',
+  label = "Favorite fruit?",
+  option = c(
+    'Apple'  = 'apple',
+    'Banana' = 'banana',
+    'Cherry' = 'cherry'
+  )
+)
+
+sd_question(
+  type  = 'text',
+  id    = 'name',
+  label = "Your name?"
+)
+
+# Multi-value questions: their answers are stored pipe-joined, so this
+# exercises that restoration re-splits on the pipe (not the comma)
+sd_question(
+  type  = 'mc_multiple',
+  id    = 'colors',
+  label = "Favorite colors?",
+  option = c('Red' = 'red', 'Blue' = 'blue', 'Green' = 'green')
+)
+
+sd_question(
+  type  = 'mc_multiple_buttons',
+  id    = 'drinks',
+  label = "Favorite drinks?",
+  option = c('Coffee' = 'coffee', 'Tea' = 'tea', 'Juice' = 'juice')
+)
+
+sd_question(
+  type  = 'daterange',
+  id    = 'trip',
+  label = "Trip dates?"
+)
+
+sd_question(
+  type    = 'slider_numeric',
+  id      = 'budget',
+  label   = "Budget range (0-10)?",
+  option  = seq(0, 10, 1),
+  default = c(3, 7)
+)
+```
+
+--- page2
+
+# Restoration Test - Page 2
+
+```{r}
+sd_question(
+  type  = 'numeric',
+  id    = 'age',
+  label = "Your age?"
+)
+
+# A matrix question on a page we navigate to twice. Matrix parent questions
+# have no input of their own (NA in all_data), so revisiting this page used
+# to crash navigation via a non-NA-safe restoration guard.
+sd_question(
+  type  = 'matrix',
+  id    = 'rating',
+  label = "Rate these:",
+  row   = c('Speed' = 'speed', 'Price' = 'price'),
+  option = c('Low' = 'low', 'High' = 'high')
+)
+```
+
+--- end
+
+## End of the restoration test survey.
+
+```{r}
+sd_close()
+```

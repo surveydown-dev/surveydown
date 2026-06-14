@@ -8,7 +8,8 @@
   --progressbar-position: top;
   --progress-bar-height: 10px;
   --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
-  --footer-height: calc(1rem * 2 + 1.5em);
+  --footer-height: calc(0.5rem * 2 + 1.5em);
+  --banner-height: calc(6px * 2 + 21px);
 }
 
 /* Styles for container and wrapper */
@@ -194,6 +195,16 @@ p, .form-group, .control-label {
   bottom: var(--footer-height);
 }
 
+/* When a mode banner exists, raise the bottom progress bar above it */
+:has(.sd-mode-banner) #progressbar.bottom {
+  bottom: var(--banner-height);
+}
+
+/* When both footer and mode banner exist, stack above both */
+:has(.footer):has(.sd-mode-banner) #progressbar.bottom {
+  bottom: calc(var(--footer-height) + var(--banner-height));
+}
+
 #progressbar > div {
   width: 0%;
   height: 100%;
@@ -241,7 +252,7 @@ a:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 1rem;
+    padding: 0.5rem 1rem;
     height: var(--footer-height);
     background-color: color-mix(in srgb, var(--body-background-color) 90%, black);
     border-top: 1px solid #eee;
@@ -285,6 +296,171 @@ a:hover {
 .footer a:hover {
     text-decoration: underline;
     color: color-mix(in srgb, var(--theme-color) 80%, black);
+}
+
+/* Slider styling (ionRangeSlider, used by slider and slider_numeric) */
+.irs--shiny .irs-line {
+    height: 6px;
+    border: none;
+    border-radius: 3px;
+    background: #e3e6ea;
+    top: 27px;
+}
+
+.irs--shiny .irs-bar {
+    height: 6px;
+    border: none;
+    background: var(--theme-color);
+    top: 27px;
+}
+
+.irs--shiny .irs-handle {
+    width: 22px;
+    height: 22px;
+    top: 19px;
+    border: 2px solid var(--theme-color);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.irs--shiny .irs-handle.state_hover,
+.irs--shiny .irs-handle:hover {
+    background: color-mix(in srgb, var(--theme-color) 10%, white);
+}
+
+.irs--shiny .irs-single,
+.irs--shiny .irs-from,
+.irs--shiny .irs-to {
+    background: var(--theme-color);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.irs--shiny .irs-min,
+.irs--shiny .irs-max {
+    background: transparent;
+    color: #8a8a8a;
+    font-size: 11px;
+}
+
+/* Hide the small minor tick marks; keep only the labeled major ticks */
+.irs--shiny .irs-grid-pol.small {
+    display: none;
+}
+
+.irs--shiny .irs-grid-pol {
+    width: 2px;
+    background: #a8adb3;
+}
+
+.irs--shiny .irs-grid-text {
+    color: #8a8a8a;
+    font-size: 11px;
+}
+
+/* When a labeled grid is shown, the min/max labels above the track are
+   redundant with the grid's end labels */
+.irs--shiny:has(.irs-grid) .irs-min,
+.irs--shiny:has(.irs-grid) .irs-max {
+    display: none;
+}
+
+/* Image choice (mc_image / mc_multiple_image) */
+.sd-image-choice .shiny-options-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 0.5rem;
+}
+
+.sd-image-choice .radio,
+.sd-image-choice .checkbox {
+    margin: 0;
+}
+
+.sd-image-choice .radio label,
+.sd-image-choice .checkbox label {
+    cursor: pointer;
+    padding: 0;
+    font-weight: normal;
+}
+
+/* Hide the native control but keep it accessible (still keyboard/focusable) */
+.sd-image-choice input[type="radio"],
+.sd-image-choice input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.sd-image-card {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sd-image-card-img {
+    display: block;
+    max-width: 160px;
+    max-height: 160px;
+    border-radius: 4px;
+    margin: 0 auto;
+}
+
+.sd-image-card-caption {
+    display: block;
+    margin-top: 6px;
+}
+
+.sd-image-choice label:hover .sd-image-card {
+    border-color: color-mix(in srgb, var(--theme-color) 50%, white);
+}
+
+/* Selected state: highlight the card whose input is checked */
+.sd-image-choice label:has(input:checked) .sd-image-card {
+    border-color: var(--theme-color);
+    box-shadow: 0 0 0 1px var(--theme-color);
+}
+
+/* Keyboard focus visibility (the native control is visually hidden) */
+.sd-image-choice label:has(input:focus-visible) .sd-image-card {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color) 35%, transparent);
+}
+
+/* Survey mode banner (preview mode / database not connected) */
+.sd-mode-banner {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: var(--banner-height);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 21px;
+    z-index: 9999;
+}
+
+#sd-preview-banner {
+    background-color: #e6a817;
+}
+
+#sd-no-db-banner {
+    background-color: #cc0000;
+}
+
+/* When a mode banner exists, raise the footer so it sits on top of the banner */
+:has(.sd-mode-banner) .footer {
+    bottom: var(--banner-height);
 }
 
 /* Matrix question styling */
@@ -347,30 +523,35 @@ a:hover {
     width: 100%;
 }
 
-.matrix-question .shiny-options-group .radio {
+.matrix-question .shiny-options-group .radio,
+.matrix-question .shiny-options-group .checkbox {
     margin: 0;
     flex: 1;
     text-align: center;
 }
 
-.matrix-question .shiny-options-group .radio label {
+.matrix-question .shiny-options-group .radio label,
+.matrix-question .shiny-options-group .checkbox label {
     padding-left: 0;
     display: inline-block;
 }
 
-.matrix-question .shiny-options-group .radio input {
+.matrix-question .shiny-options-group .radio input,
+.matrix-question .shiny-options-group .checkbox input {
     margin: 0;
     position: relative;
-    top: 0.5rem; /* radio button position */
+    top: 0.5rem; /* radio/checkbox position */
 }
 
-/* Hide radio button labels */
-.matrix-question .shiny-options-group .radio span {
+/* Hide radio/checkbox option labels (column headers show the options) */
+.matrix-question .shiny-options-group .radio span,
+.matrix-question .shiny-options-group .checkbox span {
     display: none;
 }
 
-/* Hide control-label in matrix question radio groups (avoid duplicate labels when highlighted) */
-.matrix-question .shiny-input-radiogroup > .control-label {
+/* Hide control-label in matrix question radio/checkbox groups (avoid duplicate labels when highlighted) */
+.matrix-question .shiny-input-radiogroup > .control-label,
+.matrix-question .shiny-input-checkboxgroup > .control-label {
     display: none;
 }
 
@@ -592,6 +773,7 @@ div:where(.swal2-container) .swal2-html-container {
 
 .numeric-input-with-spinner[type=number] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .native-spinner {
