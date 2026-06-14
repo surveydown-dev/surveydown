@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,6 +59,7 @@
 <span>  resize <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  row <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  default <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  image <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  yml <span class="op">=</span> <span class="st">"questions.yml"</span>,</span>
 <span>  matrix_question_width <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -76,9 +77,10 @@ variable name in the resulting survey data.</p></dd>
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>Specifies the type of question. Possible values are <code>"select"</code>,
-<code>"mc"</code>, <code>"mc_multiple"</code>, <code>"mc_buttons"</code>, <code>"mc_multiple_buttons"</code>, <code>"text"</code>,
-<code>"textarea"</code>, <code>"numeric"</code>, <code>"slider"</code>, <code>"slider_numeric"</code>, <code>"date"</code>,
-<code>"daterange"</code>, and <code>"matrix"</code>. Defaults to <code>NULL</code>.</p></dd>
+<code>"mc"</code>, <code>"mc_multiple"</code>, <code>"mc_buttons"</code>, <code>"mc_multiple_buttons"</code>,
+<code>"mc_image"</code>, <code>"mc_multiple_image"</code>, <code>"text"</code>, <code>"textarea"</code>, <code>"numeric"</code>,
+<code>"slider"</code>, <code>"slider_numeric"</code>, <code>"date"</code>, <code>"daterange"</code>, <code>"matrix"</code>, and
+<code>"matrix_multiple"</code>. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
@@ -145,8 +147,10 @@ Defaults to <code>"Choose an option..."</code>.</p></dd>
 
 
 <dt id="arg-grid">grid<a class="anchor" aria-label="anchor" href="#arg-grid"></a></dt>
-<dd><p>Logical. Whether to show a grid for slider input.
-Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>Logical. Whether to show tick marks and labels under each
+position of a <code>"slider"</code> question. Defaults to <code>TRUE</code>. Only the major
+(labeled) tick marks are shown; the small minor tick marks between
+positions are hidden by surveydown's styling.</p></dd>
 
 
 <dt id="arg-individual">individual<a class="anchor" aria-label="anchor" href="#arg-individual"></a></dt>
@@ -175,14 +179,30 @@ Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-row">row<a class="anchor" aria-label="anchor" href="#arg-row"></a></dt>
-<dd><p>List. Used for <code>"matrix"</code> type questions. Contains the row labels
-and their corresponding IDs.</p></dd>
+<dd><p>List. Used for <code>"matrix"</code> and <code>"matrix_multiple"</code> type
+questions. Contains the row labels and their corresponding IDs.</p></dd>
 
 
 <dt id="arg-default">default<a class="anchor" aria-label="anchor" href="#arg-default"></a></dt>
 <dd><p>Numeric, length 1 (for a single sided slider), or 2 for a
 two sided (range based) slider. Values to be used as the starting default
 for the slider. Defaults to the median of values.</p></dd>
+
+
+<dt id="arg-image">image<a class="anchor" aria-label="anchor" href="#arg-image"></a></dt>
+<dd><p>Character vector. Required for <code>"mc_image"</code> and
+<code>"mc_multiple_image"</code> question types: image paths or URLs, one per
+option, in the same order as <code>option</code>. Paths are used as-is in the
+image <code>src</code>, so they should resolve against the survey's <code>images</code> or
+<code>www</code> folder (e.g. <code>"images/cat.png"</code>) or be full URLs.</p>
+<p>For image-choice questions, the <code>option</code> names control captions:</p><ul><li><p>Named options (e.g. <code>c("Cat" = "cat", "Dog" = "dog")</code>) show the
+names as text captions beneath each image.</p></li>
+<li><p>An unnamed option vector (e.g. <code>c("cat", "dog")</code>) shows the
+images only, with no captions. The values are still stored in the
+data as usual.</p></li>
+</ul><p>This differs from the other multiple-choice types, where an unnamed
+option vector uses the values as both the displayed labels and the
+stored values.</p></dd>
 
 
 <dt id="arg-yml">yml<a class="anchor" aria-label="anchor" href="#arg-yml"></a></dt>
@@ -219,6 +239,8 @@ question ID.</p>
 <li><p><code>"mc_multiple"</code>: Multiple choice (multiple selections allowed)</p></li>
 <li><p><code>"mc_buttons"</code>: Multiple choice with button-style options (single selection)</p></li>
 <li><p><code>"mc_multiple_buttons"</code>: Multiple choice with button-style options (multiple selections allowed)</p></li>
+<li><p><code>"mc_image"</code>: Multiple choice where each option is an image card (single selection)</p></li>
+<li><p><code>"mc_multiple_image"</code>: Multiple choice where each option is an image card (multiple selections allowed)</p></li>
 <li><p><code>"text"</code>: Single-line text question</p></li>
 <li><p><code>"textarea"</code>: Multi-line text question</p></li>
 <li><p><code>"numeric"</code>: Numeric question</p></li>
@@ -226,10 +248,15 @@ question ID.</p>
 <li><p><code>"slider_numeric"</code>: Extended numeric slider question</p></li>
 <li><p><code>"date"</code>: Date question</p></li>
 <li><p><code>"daterange"</code>: Date range question</p></li>
-<li><p><code>"matrix"</code>: Matrix-style question with rows and columns</p></li>
-</ul><p>For <code>"matrix"</code> type questions, use the <code>row</code> parameter to define the rows of
-the matrix. Each element in the <code>row</code> list should have a name (used as the
-row ID) and a value (used as the row label).</p>
+<li><p><code>"matrix"</code>: Matrix-style question with rows and columns (single
+selection per row, radio buttons)</p></li>
+<li><p><code>"matrix_multiple"</code>: Matrix-style question where each row allows
+multiple selections (checkboxes)</p></li>
+</ul><p>For <code>"matrix"</code> and <code>"matrix_multiple"</code> type questions, use the <code>row</code>
+parameter to define the rows of the matrix. Each element in the <code>row</code>
+list should have a name (used as the row ID) and a value (used as the
+row label). Each row becomes its own sub-question with the ID
+<code>&lt;question_id&gt;_&lt;row_id&gt;</code>, stored as a separate column in the data.</p>
     </div>
 
     <div class="section level2">

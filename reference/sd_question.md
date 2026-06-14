@@ -28,6 +28,7 @@ sd_question(
   resize = NULL,
   row = NULL,
   default = NULL,
+  image = NULL,
   yml = "questions.yml",
   matrix_question_width = NULL,
   ...
@@ -45,8 +46,9 @@ sd_question(
 
   Specifies the type of question. Possible values are `"select"`,
   `"mc"`, `"mc_multiple"`, `"mc_buttons"`, `"mc_multiple_buttons"`,
-  `"text"`, `"textarea"`, `"numeric"`, `"slider"`, `"slider_numeric"`,
-  `"date"`, `"daterange"`, and `"matrix"`. Defaults to `NULL`.
+  `"mc_image"`, `"mc_multiple_image"`, `"text"`, `"textarea"`,
+  `"numeric"`, `"slider"`, `"slider_numeric"`, `"date"`, `"daterange"`,
+  `"matrix"`, and `"matrix_multiple"`. Defaults to `NULL`.
 
 - label:
 
@@ -118,7 +120,10 @@ sd_question(
 
 - grid:
 
-  Logical. Whether to show a grid for slider input. Defaults to `TRUE`.
+  Logical. Whether to show tick marks and labels under each position of
+  a `"slider"` question. Defaults to `TRUE`. Only the major (labeled)
+  tick marks are shown; the small minor tick marks between positions are
+  hidden by surveydown's styling.
 
 - individual:
 
@@ -146,14 +151,35 @@ sd_question(
 
 - row:
 
-  List. Used for `"matrix"` type questions. Contains the row labels and
-  their corresponding IDs.
+  List. Used for `"matrix"` and `"matrix_multiple"` type questions.
+  Contains the row labels and their corresponding IDs.
 
 - default:
 
   Numeric, length 1 (for a single sided slider), or 2 for a two sided
   (range based) slider. Values to be used as the starting default for
   the slider. Defaults to the median of values.
+
+- image:
+
+  Character vector. Required for `"mc_image"` and `"mc_multiple_image"`
+  question types: image paths or URLs, one per option, in the same order
+  as `option`. Paths are used as-is in the image `src`, so they should
+  resolve against the survey's `images` or `www` folder (e.g.
+  `"images/cat.png"`) or be full URLs.
+
+  For image-choice questions, the `option` names control captions:
+
+  - Named options (e.g. `c("Cat" = "cat", "Dog" = "dog")`) show the
+    names as text captions beneath each image.
+
+  - An unnamed option vector (e.g. `c("cat", "dog")`) shows the images
+    only, with no captions. The values are still stored in the data as
+    usual.
+
+  This differs from the other multiple-choice types, where an unnamed
+  option vector uses the values as both the displayed labels and the
+  stored values.
 
 - yml:
 
@@ -199,6 +225,12 @@ The function supports various question types:
 - `"mc_multiple_buttons"`: Multiple choice with button-style options
   (multiple selections allowed)
 
+- `"mc_image"`: Multiple choice where each option is an image card
+  (single selection)
+
+- `"mc_multiple_image"`: Multiple choice where each option is an image
+  card (multiple selections allowed)
+
 - `"text"`: Single-line text question
 
 - `"textarea"`: Multi-line text question
@@ -213,11 +245,17 @@ The function supports various question types:
 
 - `"daterange"`: Date range question
 
-- `"matrix"`: Matrix-style question with rows and columns
+- `"matrix"`: Matrix-style question with rows and columns (single
+  selection per row, radio buttons)
 
-For `"matrix"` type questions, use the `row` parameter to define the
-rows of the matrix. Each element in the `row` list should have a name
-(used as the row ID) and a value (used as the row label).
+- `"matrix_multiple"`: Matrix-style question where each row allows
+  multiple selections (checkboxes)
+
+For `"matrix"` and `"matrix_multiple"` type questions, use the `row`
+parameter to define the rows of the matrix. Each element in the `row`
+list should have a name (used as the row ID) and a value (used as the
+row label). Each row becomes its own sub-question with the ID
+`<question_id>_<row_id>`, stored as a separate column in the data.
 
 ## Examples
 
