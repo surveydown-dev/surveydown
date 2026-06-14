@@ -370,6 +370,7 @@ a:hover {
 .sd-image-choice .shiny-options-group {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 12px;
     margin-top: 0.5rem;
 }
@@ -396,6 +397,7 @@ a:hover {
 }
 
 .sd-image-card {
+    position: relative;
     border: 2px solid #ddd;
     border-radius: 8px;
     padding: 8px;
@@ -416,6 +418,38 @@ a:hover {
     margin-top: 6px;
 }
 
+/*
+ * Selection indicator in the top-right corner of each card. Its shape
+ * signals the selection mode so single- and multiple-choice image
+ * questions are visually distinct: a circle for single choice
+ * (mc_image, radio) and a square for multiple choice
+ * (mc_multiple_image, checkbox).
+ */
+.sd-image-choice .sd-image-card::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    background-color: #fff;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.sd-image-choice .radio .sd-image-card::after {
+    border-radius: 50%;
+}
+
+/* Match the rounded-square corners of surveydown's regular checkboxes */
+.sd-image-choice .checkbox .sd-image-card::after {
+    border-radius: 0.25em;
+}
+
 .sd-image-choice label:hover .sd-image-card {
     border-color: color-mix(in srgb, var(--theme-color) 50%, white);
 }
@@ -424,6 +458,26 @@ a:hover {
 .sd-image-choice label:has(input:checked) .sd-image-card {
     border-color: var(--theme-color);
     box-shadow: 0 0 0 1px var(--theme-color);
+}
+
+/* Selected indicator fills with the theme color */
+.sd-image-choice label:has(input:checked) .sd-image-card::after {
+    border-color: var(--theme-color);
+    background-color: var(--theme-color);
+}
+
+/* Single choice: filled center dot inside the circle (radio convention) */
+.sd-image-choice .radio label:has(input:checked) .sd-image-card::after {
+    box-shadow: inset 0 0 0 3px #fff;
+}
+
+/*
+ * Multiple choice: white checkmark inside the square. This is the same
+ * SVG checkmark Bootstrap uses for its native checkboxes, so the image
+ * cards match surveydown's regular checkbox UI.
+ */
+.sd-image-choice .checkbox label:has(input:checked) .sd-image-card::after {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
 }
 
 /* Keyboard focus visibility (the native control is visually hidden) */
