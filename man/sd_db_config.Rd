@@ -5,6 +5,7 @@
 \title{Configure database settings}
 \usage{
 sd_db_config(
+  url = NULL,
   host = NULL,
   dbname = NULL,
   port = NULL,
@@ -15,6 +16,13 @@ sd_db_config(
 )
 }
 \arguments{
+\item{url}{Character string. A full PostgreSQL connection URL, e.g.
+\code{"postgresql://user:password@host:port/dbname"}. If provided, the URL is
+parsed to extract \code{host}, \code{port}, \code{dbname}, \code{user}, and \code{password}. If the
+password portion is a placeholder (e.g. \verb{[YOUR-PASSWORD]}), you will be
+prompted to enter it. Individual parameters override values parsed from the
+URL.}
+
 \item{host}{Character string. Database host}
 
 \item{dbname}{Character string. Database name}
@@ -40,6 +48,9 @@ are used to establish database connections for storing survey responses.
 if (interactive()) {
   # Interactive setup
   sd_db_config()
+
+  # Quick setup from Supabase connection URL
+  sd_db_config(url = "postgresql://postgres.ref:password@host:6543/postgres")
 
   # Update specific settings
   sd_db_config(table = "new_table")

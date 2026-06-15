@@ -1,3 +1,7 @@
+# surveydown (development version)
+
+- New feature: `sd_db_config()` now accepts a `url` parameter for quick setup from a Supabase (or any PostgreSQL) connection URL, e.g. `sd_db_config(url = "postgresql://user:[YOUR-PASSWORD]@host:6543/postgres")`. The URL is parsed to extract `host`, `port`, `dbname`, and `user` automatically. If the password is a placeholder (e.g. `[YOUR-PASSWORD]`), the user is prompted to enter it. The table name is always prompted (defaulting to `"responses"`). Individual parameters still override URL-parsed values.
+
 # surveydown 1.3.0
 
 - New feature: `mc_image` and `mc_multiple_image` question types — multiple choice where each option is a clickable image card (single selection with `mc_image`, multiple with `mc_multiple_image`). Pass a new `image` argument to `sd_question()`: a vector of image paths or URLs, one per option, in the same order as `option` (paths resolve against the survey's `images`/`www` folder, e.g. `"images/cat.png"`, or use full URLs). Captions are optional and controlled by the `option` names: named options (e.g. `c('Cat' = 'cat')`) show the names as text captions beneath each image, while an unnamed option vector (e.g. `c('cat', 'dog')`) shows the images only with no captions. (This differs from the other multiple-choice types, where an unnamed vector uses the values as visible labels.) Values are stored exactly like `mc`/`mc_multiple` (single value, or pipe-joined for multiple), so storage, restoration, and required-question logic all work the same.

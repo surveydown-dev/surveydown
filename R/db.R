@@ -1,8 +1,41 @@
+# Parse a PostgreSQL connection URL into components.
+# Returns a list with host, port, dbname, user, and password.
+# If the password is a placeholder (e.g. [YOUR-PASSWORD]), returns NULL for password.
+parse_db_url <- function(url) {
+    # Expected format: postgresql://user:password@host:port/dbname
+    pattern <- "^postgres(?:ql)?://([^:]+):(.+)@([^:]+):(\\d+)/(.+)$"
+    if (!grepl(pattern, url)) {
+        cli::cli_abort(c(
+            "Invalid database URL format.",
+            "i" = "Expected: {.val postgresql://user:password@host:port/dbname}"
+        ))
+    }
+    matches <- regmatches(url, regexec(pattern, url))[[1]]
+    pw <- matches[3]
+    # Return NULL for placeholder passwords (e.g. [YOUR-PASSWORD])
+    if (grepl("^\\[.*\\]$", pw)) {
+        pw <- NULL
+    }
+    list(
+        user = matches[2],
+        password = pw,
+        host = matches[4],
+        port = matches[5],
+        dbname = matches[6]
+    )
+}
+
 #' Configure database settings
 #'
 #' Set up or modify database configuration settings in a .env file. These settings
 #' are used to establish database connections for storing survey responses.
 #'
+#' @param url Character string. A full PostgreSQL connection URL, e.g.
+#'   `"postgresql://user:password@host:port/dbname"`. If provided, the URL is
+#'   parsed to extract `host`, `port`, `dbname`, `user`, and `password`. If the
+#'   password portion is a placeholder (e.g. `[YOUR-PASSWORD]`), you will be
+#'   prompted to enter it. Individual parameters override values parsed from the
+#'   URL.
 #' @param host Character string. Database host
 #' @param dbname Character string. Database name
 #' @param port Character string. Database port
@@ -17,6 +50,9 @@
 #' if (interactive()) {
 #'   # Interactive setup
 #'   sd_db_config()
+#'
+#'   # Quick setup from Supabase connection URL
+#'   sd_db_config(url = "postgresql://postgres.ref:password@host:6543/postgres")
 #'
 #'   # Update specific settings
 #'   sd_db_config(table = "new_table")
@@ -36,6 +72,7 @@
 #'
 #' @export
 sd_db_config <- function(
+    url = NULL,
     host = NULL,
     dbname = NULL,
     port = NULL,
@@ -68,9 +105,40 @@ sd_db_config <- function(
         current$table <- Sys.getenv("SD_TABLE", current$table)
     }
 
+    # Parse URL if provided
+    if (!is.null(url)) {
+        parsed <- parse_db_url(url)
+        if (is.null(host)) host <- parsed$host
+        if (is.null(port)) port <- parsed$port
+        if (is.null(dbname)) dbname <- parsed$dbname
+        if (is.null(user)) user <- parsed$user
+        if (is.null(password) && !is.null(parsed$password)) {
+            password <- parsed$password
+        }
+        # Prompt for password if not resolved
+        if (is.null(password)) {
+            if (!base::interactive()) {
+                cli::cli_abort("Password is required but session is not interactive.")
+            }
+            password <- readline("Enter database password: ")
+        }
+        # Prompt for table name if not provided
+        if (is.null(table)) {
+            if (base::interactive()) {
+                input <- readline(sprintf(
+                    "Table name [%s]: ", current$table
+                ))
+                table <- if (input == "") current$table else input
+            } else {
+                table <- current$table
+            }
+        }
+    }
+
     # If no parameters provided and interactive not set, default to interactive
     if (
         is.null(interactive) &&
+            is.null(url) &&
             all(sapply(
                 list(host, dbname, port, user, table, password),
                 is.null
