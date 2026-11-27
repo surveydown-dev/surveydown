@@ -15,6 +15,8 @@
 
 ## surveydown 1.3.0
 
+CRAN release: 2026-06-23
+
 - New feature: `mc_image` and `mc_multiple_image` question types —
   multiple choice where each option is a clickable image card (single
   selection with `mc_image`, multiple with `mc_multiple_image`). Pass a
