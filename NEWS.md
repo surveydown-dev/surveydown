@@ -1,6 +1,8 @@
-# surveydown (development version)
+# surveydown 1.3.1
 
 - New feature: `sd_db_config()` now accepts a `url` parameter for quick setup from a Supabase (or any PostgreSQL) connection URL, e.g. `sd_db_config(url = "postgresql://user:[YOUR-PASSWORD]@host:6543/postgres")`. The URL is parsed to extract `host`, `port`, `dbname`, and `user` automatically. If the password is a placeholder (e.g. `[YOUR-PASSWORD]`), the user is prompted to enter it. The table name is always prompted (defaulting to `"responses"`). Individual parameters still override URL-parsed values.
+
+- Enhancement: `mc` and `mc_multiple` options are now full-width rows. Clicking anywhere on a row selects it, not only the button or its text, and the selected rows are highlighted with a tinted, outlined background in the theme color. Wrapped option text now lines up with its first line.
 
 # surveydown 1.3.0
 

@@ -112,6 +112,57 @@ p, .form-group, .control-label {
   margin-left: 0.5rem;
 }
 
+/* Option rows (mc, mc_multiple): the whole row is clickable and the selected
+   row is highlighted. Matrix and image-choice questions keep their own layout. */
+.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio),
+.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox) {
+  margin: 0 0 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio) label,
+.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox) label {
+  display: block;
+  flex: 1;
+  margin: 0;
+  padding: 6px 10px 6px 40px;
+  cursor: pointer;
+}
+
+/* Text starts at the label's padding so wrapped lines align with the first line */
+.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio) label span,
+.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox) label span {
+  margin-left: 0;
+}
+
+.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio) input,
+.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox) input {
+  margin-left: -28px;
+}
+
+.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio):hover,
+.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox):hover {
+  background-color: color-mix(in srgb, var(--theme-color) 6%, transparent);
+}
+
+.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio):has(input:checked),
+.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox):has(input:checked) {
+  background-color: color-mix(in srgb, var(--theme-color) 12%, white);
+  border-color: color-mix(in srgb, var(--theme-color) 50%, transparent);
+}
+
+.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio):has(input:focus-visible),
+.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox):has(input:focus-visible) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color) 35%, transparent);
+}
+
+.question-container input[type="radio"],
+.question-container input[type="checkbox"] {
+  accent-color: var(--theme-color);
+}
+
 .radio-group-buttons .btn-group-container-sw,
 .checkbox-group-buttons .btn-group-container-sw {
   display: flex;
