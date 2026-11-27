@@ -15,7 +15,7 @@
 ^doc$
 ^Meta$
 build.R
-CLAUDE.md
+^AGENTS\.md$
 ^cran-comments\.md$
 ^\.travis\.yml$
 ^CRAN-RELEASE$

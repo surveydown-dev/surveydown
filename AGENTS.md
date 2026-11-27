@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents working in this repository.
 
 ## IMPORTANT: Before and After Editing Code
 
@@ -18,6 +18,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    ```r
    devtools::install(force = TRUE)
    ```
+
+## Branches and Releases
+
+- **Branch names**: `vX.Y.Z-job`, where `X.Y.Z` is the version the branch will release and `job` is a short kebab-case description of the work (e.g. `v1.3.1-efficiency-improvements`). Cut new branches from an up-to-date `main`, and set `Version` in `DESCRIPTION` to `X.Y.Z` on the branch.
+- **A bare `vX.Y.Z` is a tag name, never a branch name.** A branch always carries the `-job` suffix, so branch and tag names never collide.
+- **Existing branches keep their names.** Do not rename or delete branches on GitHub. The old branches `v0.8.1`, `v0.8.2`, `v0.8.3`, `v0.8.4` and `v1.0.1` predate the suffix rule, so those five versions have no tags.
+- **Tags**: every version that lands on `main` gets a tag `vX.Y.Z` and a GitHub release (`gh release create`) titled `vX.Y.Z`, with that version's section of `NEWS.md` as notes. A version submitted to CRAN is tagged at the commit recorded in `CRAN-SUBMISSION` once CRAN accepts it, and its title is `vX.Y.Z (CRAN)`. Any other version is tagged at the last commit on `main` that carries it.
+- **Never move or delete a tag after it is pushed.**
 
 ## Overview
 
