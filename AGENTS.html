@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -96,7 +96,7 @@
 <span></span>
 <span><span class="co"># Run a specific test file</span></span>
 <span><span class="fu">testthat</span><span class="fu">::</span><span class="fu"><a href="https://testthat.r-lib.org/reference/test_file.html" class="external-link">test_file</a></span><span class="op">(</span><span class="st">"tests/testthat/test-reserved-ids.R"</span><span class="op">)</span></span></code></pre></div>
-<p>Tests are located in <code>tests/testthat/</code> and use the <code>testthat</code> framework. Current test coverage includes: - <code>test-reserved-ids.R</code>: Validation of reserved IDs and ID checking logic - <code>test-all-data.R</code>: Testing for the <code>all_data</code> reactive values list functionality - <code>test-db-modes.R</code>: <code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code> signature, deprecated <code>ignore</code> argument, and <code>get_session_data()</code> CSV routing</p>
+<p>Tests are located in <code>tests/testthat/</code> and use the <code>testthat</code> framework. Current test coverage includes: - <code>test-reserved-ids.R</code>: Validation of reserved IDs and ID checking logic - <code>test-all-data.R</code>: Testing for the <code>all_data</code> reactive values list functionality - <code>test-db-modes.R</code>: <code><a href="reference/sd_db_connect.html">sd_db_connect()</a></code> signature, deprecated <code>ignore</code> argument, and <code>get_session_data()</code> CSV routing - <code>test-blank-value.R</code>: <code>is_blank_value()</code>, the check for an empty stored answer, with answers that are not strings (a <code>date</code> question stores a <code>Date</code>)</p>
 <p><strong>Manual Testing:</strong></p>
 <p>Survey functionality is typically tested manually using the <code>test_survey/</code> directory, which contains a full survey example with <code>app.R</code> and <code>survey.qmd</code> files. To test changes:</p>
 <ol style="list-style-type: decimal"><li>Make changes to package source files in <code>R/</code>
@@ -164,7 +164,9 @@
 <code>survey.html</code>: Rendered HTML from <code>survey.qmd</code>
 </li>
 <li>
-<code>head.rds</code>: Extracted HTML head content</li>
+<code>head.rds</code>: Extracted HTML head content, with its fonts taken out (see <code>fonts/</code>)</li>
+<li>
+<code>fonts/</code>: The fonts the render embedded (the theme’s typeface, Quarto’s and Font Awesome’s icon fonts), one file per font, named by its content. <code>move_fonts_out()</code> in <code>R/ui.R</code> writes them and points the head to them; <code><a href="reference/sd_ui.html">sd_ui()</a></code> serves the folder at <code>sd-fonts/</code>. A browser fetches a font only when the page draws with it.</li>
 <li>
 <code>pages.rds</code>: Structured page data</li>
 <li>
@@ -179,6 +181,8 @@
 <ul><li>
 <p><strong><code>inst/js/</code></strong>: JavaScript modules for:</p>
 <ul><li>
+<code>accent.js</code>: Mixes the accent toward the text color on a theme whose accent can hardly be told from its page (slate), so selections stay visible</li>
+<li>
 <code>auto_scroll.js</code>: Auto-scroll to next question</li>
 <li>
 <code>cookies.js</code>: Cookie-based session management</li>
@@ -194,13 +198,19 @@
 <code>countdown.js</code>: Countdown timers</li>
 <li>
 <code>keep_alive.js</code>: Session persistence</li>
+<li>
+<code>layout.js</code>: Layout that depends on measured widths: even lines of choice buttons, navigation buttons that shrink to icons when their labels do not fit, the matrix’s sideways scroll and the mark on its column headers while they are stuck to the top of the window, and the footer’s slots and height, and marks choice buttons with pictures or several lines as cards. It sets classes (<code>sd-rows</code>, <code>sd-nav-tight</code>, <code>sd-fits</code>, <code>sd-stuck</code>, <code>sd-footer-stack</code>, <code>sd-cards</code>, …) that <code>surveydown.css</code> styles.</li>
 </ul></li>
 <li>
 <p><strong><code>inst/css/</code></strong>: Stylesheet files:</p>
 <ul><li>
-<code>surveydown.css</code>: Main package styles</li>
+<code>surveydown.css</code>: Structural styles for every theme. All colors come from the tokens at the top of the file (<code>--sd-paper</code>, <code>--sd-ink</code>, <code>--sd-accent</code>, …), which derive from the Quarto theme’s <code>--bs-body-bg</code>, <code>--bs-body-color</code> and <code>--bs-primary</code>. Use the tokens; do not hard-code colors, or dark bootswatch themes break. The survey designer sets one color, the accent; the link color (<code>--sd-link</code>) and the code color (<code>--sd-code</code>) are derived from it by turning its hue.</li>
+<li>Do not write a <code>:has()</code> on the root or with nothing before it, or one followed by a combinator (<code>A:has(B) C</code>): Chrome then restyles elements across the page at every answer. What the page knows when it is built goes in a class (<code>sd-required</code> on a required card or matrix row, <code>sd-over-footer</code> on a bottom progress bar, <code>sd-banner</code> on the body while a mode banner shows), and a sibling selector (<code>input:checked + span</code>) serves where the markup allows. See <code>optimize.md</code>.</li>
 <li>
-<code>default_theme.css</code>: Default theme</li>
+<code>default_theme.css</code>: Loaded only with <code>theme: default</code>. Holds the typeface.</li>
+<li>The Lua filter embeds the CSS from the <strong>installed</strong> package when <code>survey.qmd</code> renders, so a CSS change shows up only after <code>devtools::install()</code> and a fresh render (delete <code>_survey/</code>).</li>
+<li>The page carries both Bootstrap 3 (from Shiny) and Bootstrap 5 (from Quarto). Rules for tables, buttons and form controls must outrank both.</li>
+<li>Check every style change at phone width (575px and below has its own rules) and with a dark theme (<code>theme: darkly</code>).</li>
 </ul></li>
 <li><p><strong><code>inst/template/</code></strong>: Default survey template with <code>survey.qmd</code> and <code>app.R</code></p></li>
 <li><p><strong><code>inst/lua/</code></strong>: Lua filter (<code>include-resources.lua</code>) for Quarto rendering</p></li>
@@ -343,14 +353,17 @@
 <h3 id="adding-javascript-functionality">Adding JavaScript Functionality<a class="anchor" aria-label="anchor" href="#adding-javascript-functionality"></a></h3>
 <ol style="list-style-type: decimal"><li>Create a new <code>.js</code> file in <code>inst/js/</code>
 </li>
-<li>Include it in the UI via <code><a href="reference/sd_ui.html">sd_ui()</a></code> in <code>R/ui.R</code>
-</li>
+<li>Add it to the <code>js_files</code> list in <code>inst/lua/include-resources.lua</code>, which embeds it when <code>survey.qmd</code> renders</li>
 <li>Communicate between R and JS using Shiny’s session messaging</li>
 </ol></div>
 <div class="section level3">
 <h3 id="working-with-database">Working with Database<a class="anchor" aria-label="anchor" href="#working-with-database"></a></h3>
 <p>Database functions in <code>R/db.R</code> use the <code>pool</code> package for connection pooling and <code>RPostgres</code> for PostgreSQL. The package supports both direct connection and ignore mode (local CSV).</p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="optimization">Optimization<a class="anchor" aria-label="anchor" href="#optimization"></a></h2>
+<p><code>optimize.md</code> holds how an optimization pass is done (best speed, least work for the respondent’s browser and the server, nothing lost), the rules passes have left, and a log of every pass. A pass starts from the log’s last entry and looks only at what changed since. Read it before changing anything that runs on every page load, every answer, or on a timer.</p>
 </div>
 <div class="section level2">
 <h2 id="important-notes">Important Notes<a class="anchor" aria-label="anchor" href="#important-notes"></a></h2>

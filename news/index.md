@@ -1,6 +1,6 @@
 # Changelog
 
-## surveydown (development version)
+## surveydown 1.4.0
 
 - New feature:
   [`sd_db_config()`](https://pkg.surveydown.org/reference/sd_db_config.md)
@@ -12,6 +12,100 @@
   (e.g. `[YOUR-PASSWORD]`), the user is prompted to enter it. The table
   name is always prompted (defaulting to `"responses"`). Individual
   parameters still override URL-parsed values.
+
+- Enhancement: The default look of surveys has been redesigned. The page
+  is a white sheet with quiet text, and the theme color is used for the
+  respondent’s own marks: the selected option, the focused field,
+  progress, and the main button. Every color now derives from the Quarto
+  theme (`--bs-body-bg`, `--bs-body-color`, `--bs-primary`), so all 25
+  bootswatch themes, the dark ones included, restyle the whole survey.
+  What changed:
+
+  - One color drives the palette. Links and code take two colors derived
+    from the theme color: the link’s hue sits a sixth of the color wheel
+    before it and the code’s a little over a quarter after it, so the
+    three never look alike (with the default blue, links are teal and
+    code is rose). Changing the theme color changes all three. On a
+    theme whose primary color is almost its page color (slate), the
+    accent is mixed toward the text color so that selections stay
+    visible.
+  - Questions are cards with a hairline border. An unanswered question
+    (`highlight-unanswered`) is lightly tinted in the `highlight-color`,
+    and the tint clears once it is answered; required and invalid
+    questions are tinted red.
+  - `mc` and `mc_multiple` options are full-width rows. Clicking
+    anywhere on a row selects it, and the selected row is tinted and
+    outlined in the theme color. Radio buttons and check boxes are drawn
+    the same in every browser.
+  - `mc_buttons` options are one joined block and `mc_multiple_buttons`
+    options are separate buttons, so single choice and multiple choice
+    look different. Both are centered. When the options need more than
+    one line, they are spread evenly over the lines and every line has
+    the same width, whatever the options are.
+  - `mc_image` and `mc_multiple_image` cards are centered and show a
+    check mark when selected.
+  - Text, numeric, dropdown and date fields share one style, with a
+    matching dropdown list and calendar.
+  - Sliders: the value label sits clear of the handle.
+  - Matrix questions reach the card’s edges. A line under the question
+    sets it apart from the grid, and the column headers stay in view
+    while a long matrix scrolls. An untouched matrix is tinted like any
+    other unanswered question, and each row turns white as it is
+    answered. On phones a matrix stays a matrix, but each row can be
+    read on its own: its label sits above its options, and every option
+    shows its own name under it, so there is no header row to look up
+    to. A matrix with more columns than fit scrolls sideways, with the
+    row labels held in place.
+  - The Next button is solid and the Previous button is outlined. On the
+    closing page the Previous button is on the left, Exit in the middle
+    and Restart on the right. When the labels do not fit on one line (on
+    a phone, or with long labels), Previous and Restart shrink to square
+    icon buttons, and the full buttons come back when there is room.
+  - The required mark is a drawn asterisk in the top right corner of the
+    card, and on phones in the top right corner of each matrix row.
+  - The progress bar is 6px tall (was 10px), and the preview-mode and
+    no-database banners are readable strips that no longer wrap over the
+    footer on phones. The preview banner is shorter: “Preview Mode —
+    Responses NOT saved to the database.”
+  - The footer has its own background shade and is lower. Long footer
+    text now wraps instead of being cut off: a short slot keeps its line
+    and the long ones wrap, the center slot sits in the middle of the
+    page when there is room, and the slots stack when that makes the
+    footer shorter.
+  - The exit and warning dialogs match the rest of the survey.
+  - Headings, lists, tables, block quotes and inline code in survey text
+    have consistent spacing. The content column is now 720px wide (was
+    800px) for a more readable line length; set `--sd-content-width` in
+    your own CSS to change it.
+  - The default theme keeps the Raleway typeface but now uses lining
+    numerals, so numbers sit on the baseline. The font is only loaded
+    when `theme: default` is used.
+  - A new page fades in, and all motion is turned off for respondents
+    who ask their system to reduce motion.
+  - If you have your own CSS: the question card is now the
+    `.question-container` element (it was the `.form-group` inside it),
+    and the page background follows the theme’s `--bs-body-bg` (set
+    `--body-background-color` to override it).
+
+- Enhancement: Surveys load faster and do less work in the respondent’s
+  browser. Fonts are no longer embedded in every page; they are files in
+  `_survey/fonts`, fetched only when used. Font Awesome’s redundant
+  script is dropped (its icons still show), answering a question
+  restyles far less of the page, and rendering a survey starts R once
+  instead of once per file.
+
+- Enhancement: The Restart button from `sd_close(show_restart = TRUE)`
+  now asks for confirmation before it restarts the survey, as the Exit
+  button does. The dialog’s text can be changed with the new
+  `confirm-restart` and `sure-restart` keys under `system-messages` (the
+  `restart` key is now accepted there too).
+
+- Bug fix: A survey with a `date` question stopped with
+  `missing value where TRUE/FALSE needed` when the respondent came back
+  to the page holding it (for example Next, Previous, then Next again).
+
+- Bug fix: The rating label in the exit dialog showed two colons
+  (`Rate your survey experience::`).
 
 ## surveydown 1.3.0
 

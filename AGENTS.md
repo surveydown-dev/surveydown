@@ -104,7 +104,9 @@ reserved IDs and ID checking logic - `test-all-data.R`: Testing for the
 `all_data` reactive values list functionality - `test-db-modes.R`:
 [`sd_db_connect()`](https://pkg.surveydown.org/reference/sd_db_connect.md)
 signature, deprecated `ignore` argument, and `get_session_data()` CSV
-routing
+routing - `test-blank-value.R`: `is_blank_value()`, the check for an
+empty stored answer, with answers that are not strings (a `date`
+question stores a `Date`)
 
 **Manual Testing:**
 
@@ -177,7 +179,15 @@ When a survey runs, the package creates a `_survey/` folder that caches
 parsed survey content:
 
 - `survey.html`: Rendered HTML from `survey.qmd`
-- `head.rds`: Extracted HTML head content
+- `head.rds`: Extracted HTML head content, with its fonts taken out (see
+  `fonts/`)
+- `fonts/`: The fonts the render embedded (the theme’s typeface,
+  Quarto’s and Font Awesome’s icon fonts), one file per font, named by
+  its content. `move_fonts_out()` in `R/ui.R` writes them and points the
+  head to them;
+  [`sd_ui()`](https://pkg.surveydown.org/reference/sd_ui.md) serves the
+  folder at `sd-fonts/`. A browser fetches a font only when the page
+  draws with it.
 - `pages.rds`: Structured page data
 - `questions.yml`: Question metadata and structure
 - `settings.yml`: Complete configuration (theme-settings,
@@ -196,6 +206,9 @@ Multi-language UI text
 
 - **`inst/js/`**: JavaScript modules for:
 
+  - `accent.js`: Mixes the accent toward the text color on a theme whose
+    accent can hardly be told from its page (slate), so selections stay
+    visible
   - `auto_scroll.js`: Auto-scroll to next question
   - `cookies.js`: Cookie-based session management
   - `highlighting.js`: Unanswered question highlighting
@@ -204,11 +217,43 @@ Multi-language UI text
   - `clipboard.js`: Copy functionality
   - `countdown.js`: Countdown timers
   - `keep_alive.js`: Session persistence
+  - `layout.js`: Layout that depends on measured widths: even lines of
+    choice buttons, navigation buttons that shrink to icons when their
+    labels do not fit, the matrix’s sideways scroll and the mark on its
+    column headers while they are stuck to the top of the window, and
+    the footer’s slots and height, and marks choice buttons with
+    pictures or several lines as cards. It sets classes (`sd-rows`,
+    `sd-nav-tight`, `sd-fits`, `sd-stuck`, `sd-footer-stack`,
+    `sd-cards`, …) that `surveydown.css` styles.
 
 - **`inst/css/`**: Stylesheet files:
 
-  - `surveydown.css`: Main package styles
-  - `default_theme.css`: Default theme
+  - `surveydown.css`: Structural styles for every theme. All colors come
+    from the tokens at the top of the file (`--sd-paper`, `--sd-ink`,
+    `--sd-accent`, …), which derive from the Quarto theme’s
+    `--bs-body-bg`, `--bs-body-color` and `--bs-primary`. Use the
+    tokens; do not hard-code colors, or dark bootswatch themes break.
+    The survey designer sets one color, the accent; the link color
+    (`--sd-link`) and the code color (`--sd-code`) are derived from it
+    by turning its hue.
+  - Do not write a `:has()` on the root or with nothing before it, or
+    one followed by a combinator (`A:has(B) C`): Chrome then restyles
+    elements across the page at every answer. What the page knows when
+    it is built goes in a class (`sd-required` on a required card or
+    matrix row, `sd-over-footer` on a bottom progress bar, `sd-banner`
+    on the body while a mode banner shows), and a sibling selector
+    (`input:checked + span`) serves where the markup allows. See
+    `optimize.md`.
+  - `default_theme.css`: Loaded only with `theme: default`. Holds the
+    typeface.
+  - The Lua filter embeds the CSS from the **installed** package when
+    `survey.qmd` renders, so a CSS change shows up only after
+    `devtools::install()` and a fresh render (delete `_survey/`).
+  - The page carries both Bootstrap 3 (from Shiny) and Bootstrap 5 (from
+    Quarto). Rules for tables, buttons and form controls must outrank
+    both.
+  - Check every style change at phone width (575px and below has its own
+    rules) and with a dark theme (`theme: darkly`).
 
 - **`inst/template/`**: Default survey template with `survey.qmd` and
   `app.R`
@@ -450,9 +495,8 @@ input.
 ### Adding JavaScript Functionality
 
 1.  Create a new `.js` file in `inst/js/`
-2.  Include it in the UI via
-    [`sd_ui()`](https://pkg.surveydown.org/reference/sd_ui.md) in
-    `R/ui.R`
+2.  Add it to the `js_files` list in `inst/lua/include-resources.lua`,
+    which embeds it when `survey.qmd` renders
 3.  Communicate between R and JS using Shiny’s session messaging
 
 ### Working with Database
@@ -460,6 +504,15 @@ input.
 Database functions in `R/db.R` use the `pool` package for connection
 pooling and `RPostgres` for PostgreSQL. The package supports both direct
 connection and ignore mode (local CSV).
+
+## Optimization
+
+`optimize.md` holds how an optimization pass is done (best speed, least
+work for the respondent’s browser and the server, nothing lost), the
+rules passes have left, and a log of every pass. A pass starts from the
+log’s last entry and looks only at what changed since. Read it before
+changing anything that runs on every page load, every answer, or on a
+timer.
 
 ## Important Notes
 

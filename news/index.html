@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">surveydown</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,8 +31,35 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="surveydown-development-version">surveydown (development version)<a class="anchor" aria-label="anchor" href="#surveydown-development-version"></a></h2>
-<ul><li>New feature: <code><a href="../reference/sd_db_config.html">sd_db_config()</a></code> now accepts a <code>url</code> parameter for quick setup from a Supabase (or any PostgreSQL) connection URL, e.g. <code>sd_db_config(url = "postgresql://user:[YOUR-PASSWORD]@host:6543/postgres")</code>. The URL is parsed to extract <code>host</code>, <code>port</code>, <code>dbname</code>, and <code>user</code> automatically. If the password is a placeholder (e.g. <code>[YOUR-PASSWORD]</code>), the user is prompted to enter it. The table name is always prompted (defaulting to <code>"responses"</code>). Individual parameters still override URL-parsed values.</li>
+<h2 class="pkg-version" data-toc-text="1.4.0" id="surveydown-140">surveydown 1.4.0<a class="anchor" aria-label="anchor" href="#surveydown-140"></a></h2>
+<ul><li><p>New feature: <code><a href="../reference/sd_db_config.html">sd_db_config()</a></code> now accepts a <code>url</code> parameter for quick setup from a Supabase (or any PostgreSQL) connection URL, e.g. <code>sd_db_config(url = "postgresql://user:[YOUR-PASSWORD]@host:6543/postgres")</code>. The URL is parsed to extract <code>host</code>, <code>port</code>, <code>dbname</code>, and <code>user</code> automatically. If the password is a placeholder (e.g. <code>[YOUR-PASSWORD]</code>), the user is prompted to enter it. The table name is always prompted (defaulting to <code>"responses"</code>). Individual parameters still override URL-parsed values.</p></li>
+<li>
+<p>Enhancement: The default look of surveys has been redesigned. The page is a white sheet with quiet text, and the theme color is used for the respondent’s own marks: the selected option, the focused field, progress, and the main button. Every color now derives from the Quarto theme (<code>--bs-body-bg</code>, <code>--bs-body-color</code>, <code>--bs-primary</code>), so all 25 bootswatch themes, the dark ones included, restyle the whole survey. What changed:</p>
+<ul><li>One color drives the palette. Links and code take two colors derived from the theme color: the link’s hue sits a sixth of the color wheel before it and the code’s a little over a quarter after it, so the three never look alike (with the default blue, links are teal and code is rose). Changing the theme color changes all three. On a theme whose primary color is almost its page color (slate), the accent is mixed toward the text color so that selections stay visible.</li>
+<li>Questions are cards with a hairline border. An unanswered question (<code>highlight-unanswered</code>) is lightly tinted in the <code>highlight-color</code>, and the tint clears once it is answered; required and invalid questions are tinted red.</li>
+<li>
+<code>mc</code> and <code>mc_multiple</code> options are full-width rows. Clicking anywhere on a row selects it, and the selected row is tinted and outlined in the theme color. Radio buttons and check boxes are drawn the same in every browser.</li>
+<li>
+<code>mc_buttons</code> options are one joined block and <code>mc_multiple_buttons</code> options are separate buttons, so single choice and multiple choice look different. Both are centered. When the options need more than one line, they are spread evenly over the lines and every line has the same width, whatever the options are.</li>
+<li>
+<code>mc_image</code> and <code>mc_multiple_image</code> cards are centered and show a check mark when selected.</li>
+<li>Text, numeric, dropdown and date fields share one style, with a matching dropdown list and calendar.</li>
+<li>Sliders: the value label sits clear of the handle.</li>
+<li>Matrix questions reach the card’s edges. A line under the question sets it apart from the grid, and the column headers stay in view while a long matrix scrolls. An untouched matrix is tinted like any other unanswered question, and each row turns white as it is answered. On phones a matrix stays a matrix, but each row can be read on its own: its label sits above its options, and every option shows its own name under it, so there is no header row to look up to. A matrix with more columns than fit scrolls sideways, with the row labels held in place.</li>
+<li>The Next button is solid and the Previous button is outlined. On the closing page the Previous button is on the left, Exit in the middle and Restart on the right. When the labels do not fit on one line (on a phone, or with long labels), Previous and Restart shrink to square icon buttons, and the full buttons come back when there is room.</li>
+<li>The required mark is a drawn asterisk in the top right corner of the card, and on phones in the top right corner of each matrix row.</li>
+<li>The progress bar is 6px tall (was 10px), and the preview-mode and no-database banners are readable strips that no longer wrap over the footer on phones. The preview banner is shorter: “Preview Mode — Responses NOT saved to the database.”</li>
+<li>The footer has its own background shade and is lower. Long footer text now wraps instead of being cut off: a short slot keeps its line and the long ones wrap, the center slot sits in the middle of the page when there is room, and the slots stack when that makes the footer shorter.</li>
+<li>The exit and warning dialogs match the rest of the survey.</li>
+<li>Headings, lists, tables, block quotes and inline code in survey text have consistent spacing. The content column is now 720px wide (was 800px) for a more readable line length; set <code>--sd-content-width</code> in your own CSS to change it.</li>
+<li>The default theme keeps the Raleway typeface but now uses lining numerals, so numbers sit on the baseline. The font is only loaded when <code>theme: default</code> is used.</li>
+<li>A new page fades in, and all motion is turned off for respondents who ask their system to reduce motion.</li>
+<li>If you have your own CSS: the question card is now the <code>.question-container</code> element (it was the <code>.form-group</code> inside it), and the page background follows the theme’s <code>--bs-body-bg</code> (set <code>--body-background-color</code> to override it).</li>
+</ul></li>
+<li><p>Enhancement: Surveys load faster and do less work in the respondent’s browser. Fonts are no longer embedded in every page; they are files in <code>_survey/fonts</code>, fetched only when used. Font Awesome’s redundant script is dropped (its icons still show), answering a question restyles far less of the page, and rendering a survey starts R once instead of once per file.</p></li>
+<li><p>Enhancement: The Restart button from <code>sd_close(show_restart = TRUE)</code> now asks for confirmation before it restarts the survey, as the Exit button does. The dialog’s text can be changed with the new <code>confirm-restart</code> and <code>sure-restart</code> keys under <code>system-messages</code> (the <code>restart</code> key is now accepted there too).</p></li>
+<li><p>Bug fix: A survey with a <code>date</code> question stopped with <code>missing value where TRUE/FALSE needed</code> when the respondent came back to the page holding it (for example Next, Previous, then Next again).</p></li>
+<li><p>Bug fix: The rating label in the exit dialog showed two colons (<code>Rate your survey experience::</code>).</p></li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.3.0" id="surveydown-130">surveydown 1.3.0<a class="anchor" aria-label="anchor" href="#surveydown-130"></a></h2><p class="text-muted">CRAN release: 2026-06-23</p>

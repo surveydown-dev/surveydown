@@ -40,9 +40,9 @@ sd_close(
 
 - show_restart:
 
-  Logical. Whether to show a 'Restart Survey' button alongside the Close
-  button. When `TRUE`, displays two side-by-side buttons. Defaults to
-  `FALSE`.
+  Logical. Whether to show a 'Restart Survey' button to the right of the
+  Close button. The respondent is asked to confirm before the survey
+  restarts. Defaults to `FALSE`.
 
 - label_restart:
 
