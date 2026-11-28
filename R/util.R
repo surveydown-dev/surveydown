@@ -1903,6 +1903,20 @@ format_question_value <- function(val) {
   }
 }
 
+# Shows a required question's mark, and puts the class sd-required on what
+# holds it: the question's card, or the matrix row. The stylesheet makes room
+# for the mark by that class. Asking instead whether a card holds a shown mark
+# (:has()) made the browser restyle much of the page at every answer.
+show_required_mark <- function(asterisk, holder) {
+  xml2::xml_attr(asterisk, "style") <- "display: inline;"
+  classes <- xml2::xml_attr(holder, "class")
+  classes <- if (is.na(classes)) character(0) else strsplit(classes, "\\s+")[[1]]
+  xml2::xml_attr(holder, "class") <- paste(
+    union(classes[nzchar(classes)], "sd-required"),
+    collapse = " "
+  )
+}
+
 # TRUE when a stored answer holds nothing: NULL, empty, NA or "". The value is
 # read as text, because an answer is not always a string: a date question
 # stores a Date, and `Date == ""` is NA, which stops an `if`.

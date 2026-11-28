@@ -372,8 +372,11 @@ p, .form-group, .control-label {
   mask: var(--sd-asterisk) center / contain no-repeat;
 }
 
-.question-container:has(> .hidden-asterisk[style*="inline"]) > .form-group > .control-label,
-.question-container:has(> .hidden-asterisk[style*="inline"]) > .sd-image-choice .control-label {
+/* Room for the mark. A required card has the class sd-required: the rules
+   here ask about classes and siblings, not :has(), where a :has() would
+   restyle the elements it names across the page at every answer. */
+.question-container.sd-required > .form-group > .control-label,
+.question-container.sd-required > .sd-image-choice .control-label {
   padding-right: 1rem;
 }
 
@@ -831,13 +834,13 @@ p, .form-group, .control-label {
 }
 
 /* Options with pictures or several lines (a conjoint choice set) are cards
-   that share the row equally */
-.radio-group-buttons .btn-group-container-sw:has(img, br),
-.checkbox-group-buttons .btn-group-container-sw:has(img, br) {
+   that share the row equally. layout.js gives their group the class sd-cards. */
+.radio-group-buttons .btn-group-container-sw.sd-cards,
+.checkbox-group-buttons .btn-group-container-sw.sd-cards {
   width: 100%;
 }
 
-.btn-group-container-sw:has(img, br):not(.btn-group-vertical) > .btn-group {
+.btn-group-container-sw.sd-cards:not(.btn-group-vertical) > .btn-group {
   flex: 1 1 0;
 }
 
@@ -904,12 +907,12 @@ p, .form-group, .control-label {
 
 /* Single choice: joined. Neighbors share one border, and only the outer
    corners of the block are round. */
-.radio-group-buttons .btn-group-container-sw:not(:has(img, br)) {
+.radio-group-buttons .btn-group-container-sw:not(.sd-cards) {
   gap: 0;
   padding: 0 1px 1px 0;
 }
 
-.radio-group-buttons .btn-group-container-sw:not(:has(img, br)) > .btn-group {
+.radio-group-buttons .btn-group-container-sw:not(.sd-cards) > .btn-group {
   margin: 0 -1px -1px 0;
   --sd-tl: 0px;
   --sd-tr: 0px;
@@ -917,11 +920,11 @@ p, .form-group, .control-label {
   --sd-bl: 0px;
 }
 
-.radio-group-buttons .btn-group-vertical:not(:has(img, br)) {
+.radio-group-buttons .btn-group-vertical:not(.sd-cards) {
   padding: 0 0 1px;
 }
 
-.radio-group-buttons .btn-group-vertical:not(:has(img, br)) > .btn-group {
+.radio-group-buttons .btn-group-vertical:not(.sd-cards) > .btn-group {
   margin: 0 0 -1px;
 }
 
@@ -1037,13 +1040,13 @@ p, .form-group, .control-label {
 }
 
 /* Selected state: outline the card and stamp a check in its corner */
-.sd-image-choice label:has(input:checked) .sd-image-card {
+.sd-image-choice input:checked + span .sd-image-card {
   border-color: var(--sd-accent);
   background-color: var(--sd-accent-soft);
   box-shadow: 0 0 0 1px var(--sd-accent);
 }
 
-.sd-image-choice label:has(input:checked) .sd-image-card::after {
+.sd-image-choice input:checked + span .sd-image-card::after {
   content: "";
   position: absolute;
   top: -0.5rem;
@@ -1056,7 +1059,7 @@ p, .form-group, .control-label {
 }
 
 /* Keyboard focus visibility (the native control is visually hidden) */
-.sd-image-choice label:has(input:focus-visible) .sd-image-card {
+.sd-image-choice input:focus-visible + span .sd-image-card {
   box-shadow: 0 0 0 3px var(--sd-focus);
 }
 
@@ -1144,8 +1147,8 @@ p, .form-group, .control-label {
 
 /* When a labeled grid is shown, the min/max labels above the track are
    redundant with the grid's end labels */
-.irs--shiny:has(.irs-grid) .irs-min,
-.irs--shiny:has(.irs-grid) .irs-max {
+.irs--shiny.irs-with-grid .irs-min,
+.irs--shiny.irs-with-grid .irs-max {
   display: none;
 }
 
@@ -1258,7 +1261,10 @@ table.matrix-question > tbody:has(> tr > th) {
   z-index: 2;
 }
 
-:root:has(#progressbar.top) {
+/* Below a progress bar at the top. The rule is on the page's content, the
+   bar's sibling: a :has() on the root would be checked again at every change
+   anywhere in the page, and the variable would restyle every element. */
+#progressbar.top ~ .content {
   --sd-sticky-top: var(--progress-bar-height);
 }
 
@@ -1678,18 +1684,18 @@ table.matrix-question > * > tr:has(:is(.question-container, .form-group)[class*=
   bottom: 0; /* Default position at very bottom when no footer */
 }
 
-/* When the footer exists, adjust bottom progress bar position */
-:has(.footer) #progressbar.bottom {
+/* A bottom progress bar sits above the footer (the bar has the class
+   sd-over-footer when there is one) and the mode banner (the body has the
+   class sd-banner while one is shown) */
+#progressbar.bottom.sd-over-footer {
   bottom: var(--sd-footer-height);
 }
 
-/* When a mode banner exists, raise the bottom progress bar above it */
-:has(.sd-mode-banner) #progressbar.bottom {
+.sd-banner #progressbar.bottom {
   bottom: var(--banner-height);
 }
 
-/* When both footer and mode banner exist, stack above both */
-:has(.footer):has(.sd-mode-banner) #progressbar.bottom {
+.sd-banner #progressbar.bottom.sd-over-footer {
   bottom: calc(var(--sd-footer-height) + var(--banner-height));
 }
 
@@ -1830,7 +1836,7 @@ table.matrix-question > * > tr:has(:is(.question-container, .form-group)[class*=
 }
 
 /* When a mode banner exists, raise the footer so it sits on top of the banner */
-:has(.sd-mode-banner) .footer {
+.sd-banner .footer {
   bottom: var(--banner-height);
 }
 
@@ -2097,7 +2103,7 @@ div:where(.swal2-container) button.swal2-styled:focus-visible {
     width: 100%;
   }
 
-  .btn-group-container-sw:has(img, br) {
+  .btn-group-container-sw.sd-cards {
     flex-direction: column;
   }
 
@@ -2175,7 +2181,7 @@ div:where(.swal2-container) button.swal2-styled:focus-visible {
     transition: color 0.12s ease;
   }
 
-  .matrix-question .shiny-options-group label:has(input:checked) span {
+  .matrix-question .shiny-options-group input:checked + span {
     color: var(--sd-ink);
     font-weight: 700;
   }
@@ -2186,11 +2192,11 @@ div:where(.swal2-container) button.swal2-styled:focus-visible {
     display: none !important;
   }
 
-  table.matrix-question > * > tr:has(.hidden-asterisk[style*="inline"]) > td:first-child {
+  table.matrix-question > * > tr.sd-required > td:first-child {
     padding-right: 1.9rem;
   }
 
-  table.matrix-question > * > tr:has(.hidden-asterisk[style*="inline"]) > td:first-child::after {
+  table.matrix-question > * > tr.sd-required > td:first-child::after {
     content: "";
     position: absolute;
     top: 0.6rem;
@@ -2262,7 +2268,7 @@ div:where(.swal2-container) button.swal2-styled:focus-visible {
 
   .question-container :is(.radio, .checkbox):has(input:checked),
   .btn-group-container-sw .btn.active,
-  .sd-image-choice label:has(input:checked) .sd-image-card {
+  .sd-image-choice input:checked + span .sd-image-card {
     outline: 2px solid Highlight;
   }
 }

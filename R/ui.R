@@ -60,6 +60,12 @@ sd_ui <- function() {
     cached <- read_cached_theme_settings(paths)
   }
 
+  # The head's fonts are files in '_survey/fonts', served at FONTS_PREFIX
+  # (see move_fonts_out())
+  if (fs::dir_exists(paths$target_fonts)) {
+    shiny::addResourcePath(FONTS_PREFIX, paths$target_fonts)
+  }
+
   if (!is.null(cached)) {
     barcolor <- cached$barcolor
     barposition <- cached$barposition
@@ -92,8 +98,9 @@ sd_ui <- function() {
 
       # Extract head content and save
       html_content <- rvest::read_html(paths$target_html)
-      head_content <- extract_head_content(html_content)
+      head_content <- extract_head_content(html_content, paths$target_fonts)
       saveRDS(head_content, paths$target_head)
+      shiny::addResourcePath(FONTS_PREFIX, paths$target_fonts)
     } else {
       # If no changes, just load head content from '_survey/head.rds'
       head_content <- readRDS(paths$target_head)
@@ -124,7 +131,8 @@ sd_ui <- function() {
       if (barposition != "none") {
         shiny::tags$div(
           id = "progressbar",
-          class = barposition,
+          # A bottom bar sits above the footer
+          class = paste(barposition, if (nchar(footer) > 0) "sd-over-footer"),
           shiny::tags$div(id = "progress")
         )
       },
@@ -566,7 +574,7 @@ survey_needs_updating <- function(paths) {
   # Re-render if any of the target files are missing
   # (a missing settings.yml alone doesn't require a re-render: the
   # quarto_inspect fallback path in sd_ui() recreates it)
-  targets <- c(paths$target_html, paths$target_head)
+  targets <- c(paths$target_html, paths$target_head, paths$target_fonts)
   if (any(!fs::file_exists(targets))) {
     return(TRUE)
   }
@@ -667,14 +675,71 @@ render_survey_qmd <- function(paths, default_theme = TRUE, theme = NULL) {
   }
 }
 
-extract_head_content <- function(html_content) {
+extract_head_content <- function(html_content, fonts_dir) {
   # Head content from the rendered 'survey.html' file
   head_content <- html_content |>
     rvest::html_element("head") |>
     rvest::html_children() |>
     sapply(as.character) |>
     paste(collapse = "\n")
-  return(head_content)
+  move_fonts_out(head_content, fonts_dir)
+}
+
+# Where the browser finds the files move_fonts_out() writes
+FONTS_PREFIX <- "sd-fonts"
+
+# The render embeds every font the page names (the theme's typeface, Quarto's
+# and Font Awesome's icon fonts), and the head went out with every page load:
+# megabytes, most of it never drawn. Each embedded font is written to a file
+# in `dir` instead, and the head points to it, so a browser fetches a font
+# only when the page draws with it, and keeps it. A file is named by its
+# content: a font embedded several times is one file.
+move_fonts_out <- function(head, dir) {
+  if (fs::dir_exists(dir)) {
+    fs::dir_delete(dir)
+  }
+  fs::dir_create(dir)
+  uri <- "url\\(([\"']?)data:[^;,)]*(?:;[^;,)]*)*;base64,([A-Za-z0-9+/=]+)\\1\\)"
+  to_file <- function(u) {
+    bytes <- jsonlite::base64_dec(sub(uri, "\\2", u, perl = TRUE))
+    tmp <- file.path(dir, "font.tmp")
+    writeBin(bytes, tmp)
+    name <- paste0(substr(unname(tools::md5sum(tmp)), 1, 16), ".", font_extension(bytes))
+    if (fs::file_exists(file.path(dir, name))) {
+      fs::file_delete(tmp)
+    } else {
+      fs::file_move(tmp, file.path(dir, name))
+    }
+    sprintf('url("%s/%s")', FONTS_PREFIX, name)
+  }
+  # Only the sources of @font-face rules; a block holds no braces
+  faces <- gregexpr("@font-face\\s*\\{[^}]*\\}", head, perl = TRUE)
+  regmatches(head, faces) <- list(vapply(
+    regmatches(head, faces)[[1]],
+    function(face) {
+      found <- gregexpr(uri, face, perl = TRUE)
+      regmatches(face, found) <- list(vapply(
+        regmatches(face, found)[[1]],
+        to_file,
+        character(1)
+      ))
+      face
+    },
+    character(1)
+  ))
+  head
+}
+
+# A font file's kind, from its first bytes
+font_extension <- function(bytes) {
+  magic <- rawToChar(bytes[1:4][bytes[1:4] != as.raw(0)])
+  switch(
+    magic,
+    wOF2 = "woff2",
+    wOFF = "woff",
+    OTTO = "otf",
+    "ttf"
+  )
 }
 
 #' Create a survey question

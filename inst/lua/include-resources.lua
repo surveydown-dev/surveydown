@@ -5,11 +5,30 @@
 -- RESOURCE INCLUSION FUNCTIONS
 -- ============================================================================
 
--- Function to get file paths using system.file from R
+-- The installed package's folder, asked of R once: starting R takes a
+-- tenth of a second or more, so a call for each file slowed every render
+local package_dir = nil
+
+local function get_package_dir()
+    if package_dir == nil then
+        local handle = io.popen('Rscript -e "cat(system.file(package = \'surveydown\'))"')
+        package_dir = handle:read("*a")
+        handle:close()
+    end
+    return package_dir
+end
+
+-- A file of the installed package, or "" when it is not there
 function get_package_file(file, type)
-    local cmd = string.format('Rscript -e "cat(system.file(\'%s/%s\', package = \'surveydown\'))"', type, file)
-    local handle = io.popen(cmd)
-    local path = handle:read("*a")
+    local dir = get_package_dir()
+    if dir == "" then
+        return ""
+    end
+    local path = dir .. "/" .. type .. "/" .. file
+    local handle = io.open(path, "r")
+    if handle == nil then
+        return ""
+    end
     handle:close()
     return path
 end
@@ -42,11 +61,11 @@ function Meta(meta)
     -- Initialize header-includes if it doesn't exist
     meta['header-includes'] = meta['header-includes'] or pandoc.MetaList{}
 
-    -- Add Font Awesome from cdnjs
+    -- Add Font Awesome from cdnjs. Its stylesheet draws the icons; its script,
+    -- which drew them a second way, was a megabyte and a half more in every
+    -- page and watched every change to the page.
     meta['header-includes'][#meta['header-includes'] + 1] =
         pandoc.RawBlock('html', '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">')
-    meta['header-includes'][#meta['header-includes'] + 1] =
-        pandoc.RawBlock('html', '<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"></script>')
 
     -- Add JavaScript files
     for _, file in ipairs(js_files) do

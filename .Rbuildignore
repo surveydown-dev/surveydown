@@ -26,3 +26,4 @@ build.R
 ^tests/manual$
 ^\.luarc\.json$
 ^tools$
+^optimize\.md$

@@ -5,9 +5,6 @@ $(document).ready(function() {
         // Clear any existing highlights
         clearRequiredHighlights();
         
-        // Debug logging (can be removed in production)
-        console.log("Highlighting required questions:", data.questions);
-        
         // Handle different data formats that R might send
         var questions = [];
         
@@ -46,9 +43,6 @@ $(document).ready(function() {
     
     // Custom message handler for highlighting unanswered questions
     Shiny.addCustomMessageHandler("highlightUnansweredQuestions", function(data) {
-        // Debug logging
-        console.log("Highlighting unanswered questions:", data.questions, "color:", data.color);
-        
         // Handle different data formats that R might send
         var questions = [];
         var color = data.color || 'gray'; // Default to gray if no color specified
@@ -86,9 +80,6 @@ $(document).ready(function() {
     Shiny.addCustomMessageHandler("highlightValidationQuestions", function(data) {
         // Clear any existing highlights first
         clearValidationHighlights();
-        
-        // Debug logging (can be removed in production)
-        console.log("Highlighting validation questions:", data.questions);
         
         // Handle different data formats that R might send
         var questions = [];
@@ -239,8 +230,6 @@ function highlightQuestion(questionId, type, color) {
 
 // Function to highlight a specific matrix subquestion
 function highlightMatrixSubquestion(subquestionId, type, color) {
-    console.log("Highlighting matrix subquestion:", subquestionId, "type:", type);
-    
     // Find the specific radio group for this subquestion
     var radioGroup = $('[name="' + subquestionId + '"]').closest('.shiny-input-radiogroup');
     
@@ -251,8 +240,6 @@ function highlightMatrixSubquestion(subquestionId, type, color) {
             radioGroup = input.closest('.shiny-input-radiogroup');
         }
     }
-    
-    console.log("Found radio group for", subquestionId, ":", radioGroup.length > 0);
     
     if (radioGroup.length > 0) {
         var highlightClass;

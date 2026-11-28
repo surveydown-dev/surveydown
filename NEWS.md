@@ -1,4 +1,4 @@
-# surveydown 1.3.1
+# surveydown 1.4.0
 
 - New feature: `sd_db_config()` now accepts a `url` parameter for quick setup from a Supabase (or any PostgreSQL) connection URL, e.g. `sd_db_config(url = "postgresql://user:[YOUR-PASSWORD]@host:6543/postgres")`. The URL is parsed to extract `host`, `port`, `dbname`, and `user` automatically. If the password is a placeholder (e.g. `[YOUR-PASSWORD]`), the user is prompted to enter it. The table name is always prompted (defaulting to `"responses"`). Individual parameters still override URL-parsed values.
 
@@ -20,6 +20,7 @@
     - The default theme keeps the Raleway typeface but now uses lining numerals, so numbers sit on the baseline. The font is only loaded when `theme: default` is used.
     - A new page fades in, and all motion is turned off for respondents who ask their system to reduce motion.
     - If you have your own CSS: the question card is now the `.question-container` element (it was the `.form-group` inside it), and the page background follows the theme's `--bs-body-bg` (set `--body-background-color` to override it).
+- Enhancement: Surveys load faster and do less work in the respondent's browser. Fonts are no longer embedded in every page; they are files in `_survey/fonts`, fetched only when used. Font Awesome's redundant script is dropped (its icons still show), answering a question restyles far less of the page, and rendering a survey starts R once instead of once per file.
 - Enhancement: The Restart button from `sd_close(show_restart = TRUE)` now asks for confirmation before it restarts the survey, as the Exit button does. The dialog's text can be changed with the new `confirm-restart` and `sure-restart` keys under `system-messages` (the `restart` key is now accepted there too).
 - Bug fix: A survey with a `date` question stopped with `missing value where TRUE/FALSE needed` when the respondent came back to the page holding it (for example Next, Previous, then Next again).
 - Bug fix: The rating label in the exit dialog showed two colons (`Rate your survey experience::`).

@@ -78,11 +78,16 @@
       CORNERS.forEach(function(c) { item.classList.remove(c); });
     });
 
+    // Options with pictures or several lines are cards (sd-cards), which
+    // share the row equally instead
+    var cards = !!box.querySelector('img, br');
+    box.classList.toggle('sd-cards', cards);
+
     var host = box.parentElement;
     var style = getComputedStyle(box);
     if (items.length < 2 || !host.clientWidth ||
         style.flexWrap === 'nowrap' || style.flexDirection.indexOf('column') === 0 ||
-        box.querySelector('img, br')) return;
+        cards) return;
 
     // Natural widths, margins included
     box.classList.add('sd-measure');

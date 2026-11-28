@@ -335,6 +335,7 @@ get_paths <- function() {
     target_html = file.path(target_folder, "survey.html"),
     target_pages = file.path(target_folder, "pages.rds"),
     target_head = file.path(target_folder, "head.rds"),
+    target_fonts = file.path(target_folder, "fonts"),
     target_questions = file.path(target_folder, "questions.yml"),
     target_settings = file.path(target_folder, "settings.yml") # Contains merged messages
   )
@@ -1306,11 +1307,14 @@ extract_html_pages <- function(
             ".matrix-question td .hidden-asterisk"
           )
           for (asterisk in sub_asterisks) {
-            xml2::xml_attr(asterisk, "style") <- "display: inline;"
+            show_required_mark(
+              asterisk,
+              xml2::xml_find_first(asterisk, "ancestor::tr[1]")
+            )
           }
         } else {
           asterisk <- rvest::html_element(container, ".hidden-asterisk")
-          xml2::xml_attr(asterisk, "style") <- "display: inline;"
+          show_required_mark(asterisk, container)
         }
         required_question_ids <- c(required_question_ids, question_id)
       }

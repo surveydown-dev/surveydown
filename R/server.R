@@ -505,10 +505,13 @@ sd_server <- function(db = NULL) {
                                 ".matrix-question td .hidden-asterisk"
                             )
                             for (asterisk in sub_asterisks) {
-                                xml2::xml_attr(
+                                show_required_mark(
                                     asterisk,
-                                    "style"
-                                ) <- "display: inline;"
+                                    xml2::xml_find_first(
+                                        asterisk,
+                                        "ancestor::tr[1]"
+                                    )
+                                )
                             }
                         } else {
                             # Show asterisk for regular questions
@@ -517,10 +520,7 @@ sd_server <- function(db = NULL) {
                                 ".hidden-asterisk"
                             )
                             if (!is.na(asterisk)) {
-                                xml2::xml_attr(
-                                    asterisk,
-                                    "style"
-                                ) <- "display: inline;"
+                                show_required_mark(asterisk, container)
                             }
                         }
                     }
@@ -663,7 +663,14 @@ sd_server <- function(db = NULL) {
     # Check if db has no active connection (preview, local, or unset)
     ignore_mode <- is.null(db) || is.null(db$db)
 
-    # Show footer banner if applicable
+    # Show footer banner if applicable. The body takes the class sd-banner,
+    # which raises the footer and a bottom progress bar above the banner.
+    if (
+        identical(survey_mode, "preview") ||
+            (ignore_mode && identical(survey_mode, "database"))
+    ) {
+        shinyjs::addClass(selector = "body", class = "sd-banner")
+    }
     if (identical(survey_mode, "preview")) {
         banner_text <- if (db_connected_but_ignored) {
             "Preview Mode \u2014 Database connected but not used. Responses NOT saved to the database."
