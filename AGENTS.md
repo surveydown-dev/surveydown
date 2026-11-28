@@ -77,6 +77,7 @@ Tests are located in `tests/testthat/` and use the `testthat` framework. Current
 - `test-reserved-ids.R`: Validation of reserved IDs and ID checking logic
 - `test-all-data.R`: Testing for the `all_data` reactive values list functionality
 - `test-db-modes.R`: `sd_db_connect()` signature, deprecated `ignore` argument, and `get_session_data()` CSV routing
+- `test-blank-value.R`: `is_blank_value()`, the check for an empty stored answer, with answers that are not strings (a `date` question stores a `Date`)
 
 **Manual Testing:**
 
@@ -149,6 +150,7 @@ The `settings.yml` structure has 3 sections:
 ### Frontend Assets
 
 - **`inst/js/`**: JavaScript modules for:
+  - `accent.js`: Mixes the accent toward the text color on a theme whose accent can hardly be told from its page (slate), so selections stay visible
   - `auto_scroll.js`: Auto-scroll to next question
   - `cookies.js`: Cookie-based session management
   - `highlighting.js`: Unanswered question highlighting
@@ -157,10 +159,14 @@ The `settings.yml` structure has 3 sections:
   - `clipboard.js`: Copy functionality
   - `countdown.js`: Countdown timers
   - `keep_alive.js`: Session persistence
+  - `layout.js`: Layout that depends on measured widths: even lines of choice buttons, navigation buttons that shrink to icons when their labels do not fit, the matrix's sideways scroll and the mark on its column headers while they are stuck to the top of the window, and the footer's slots and height. It sets classes (`sd-rows`, `sd-nav-tight`, `sd-fits`, `sd-stuck`, `sd-footer-stack`, …) that `surveydown.css` styles.
 
 - **`inst/css/`**: Stylesheet files:
-  - `surveydown.css`: Main package styles
-  - `default_theme.css`: Default theme
+  - `surveydown.css`: Structural styles for every theme. All colors come from the tokens at the top of the file (`--sd-paper`, `--sd-ink`, `--sd-accent`, …), which derive from the Quarto theme's `--bs-body-bg`, `--bs-body-color` and `--bs-primary`. Use the tokens; do not hard-code colors, or dark bootswatch themes break. The survey designer sets one color, the accent; the link color (`--sd-link`) and the code color (`--sd-code`) are derived from it by turning its hue.
+  - `default_theme.css`: Loaded only with `theme: default`. Holds the typeface.
+  - The Lua filter embeds the CSS from the **installed** package when `survey.qmd` renders, so a CSS change shows up only after `devtools::install()` and a fresh render (delete `_survey/`).
+  - The page carries both Bootstrap 3 (from Shiny) and Bootstrap 5 (from Quarto). Rules for tables, buttons and form controls must outrank both.
+  - Check every style change at phone width (575px and below has its own rules) and with a dark theme (`theme: darkly`).
 
 - **`inst/template/`**: Default survey template with `survey.qmd` and `app.R`
 
@@ -358,7 +364,7 @@ Server-side logic lives in `R/server.R`. The `sd_server()` function is called wi
 ### Adding JavaScript Functionality
 
 1. Create a new `.js` file in `inst/js/`
-2. Include it in the UI via `sd_ui()` in `R/ui.R`
+2. Add it to the `js_files` list in `inst/lua/include-resources.lua`, which embeds it when `survey.qmd` renders
 3. Communicate between R and JS using Shiny's session messaging
 
 ### Working with Database

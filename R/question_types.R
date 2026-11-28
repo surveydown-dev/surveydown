@@ -463,11 +463,21 @@ qt_render_matrix <- function(a, ...) {
     shiny::div(
       class = "matrix-question-container",
       shiny::tags$label(class = "control-label", label),
-      shiny::tags$table(
-        class = "matrix-question",
-        colgroup,
-        header,
-        shiny::tags$tbody(rows)
+      # The wrapper scrolls sideways when the columns do not fit.
+      # surveydown.css lays the rows out from these two values: the column
+      # count (the table's minimum width) and the label column's width.
+      shiny::div(
+        class = "matrix-question-scroll",
+        style = paste0(
+          "--sd-matrix-cols: ", length(option), "; ",
+          "--sd-matrix-label: ", matrix_question_width, ";"
+        ),
+        shiny::tags$table(
+          class = "matrix-question",
+          colgroup,
+          header,
+          shiny::tags$tbody(rows)
+        )
       )
     )
   })

@@ -1903,6 +1903,16 @@ format_question_value <- function(val) {
   }
 }
 
+# TRUE when a stored answer holds nothing: NULL, empty, NA or "". The value is
+# read as text, because an answer is not always a string: a date question
+# stores a Date, and `Date == ""` is NA, which stops an `if`.
+is_blank_value <- function(val) {
+  if (is.null(val) || length(val) == 0) {
+    return(TRUE)
+  }
+  length(val) == 1 && (is.na(val) || !nzchar(as.character(val)))
+}
+
 # Helper function to determine session ID based on use-cookies setting (kebab-case)
 get_session_id <- function(session, db) {
   current_session_id <- session$token

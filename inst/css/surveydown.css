@@ -1,819 +1,491 @@
-/* Import Raleway font */
-@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,800;1,400;1,800&display=swap');
+/* surveydown.css
+   Structural styles for every surveydown survey, whatever the Quarto theme.
 
-/* Root variables */
+   Design: a paper questionnaire. One sheet, quiet ink, and a single accent
+   color that is used for the respondent's own marks (the selected option,
+   the focused field, progress, the primary button). Links and inline code
+   take two quieter colors derived from that accent.
+
+   Every color is derived from three Bootstrap variables that the Quarto
+   theme sets (--bs-body-bg, --bs-body-color, --bs-primary), so bootswatch
+   themes, dark ones included, restyle the survey without extra work.
+
+   layout.js sets the classes that depend on measurement: sd-rows,
+   sd-tl/tr/bl/br, sd-nav-tight, sd-nav-tighter, sd-fits, sd-stuck,
+   sd-footer-even, sd-footer-stack and sd-measure. */
+
+/* ---------------------------------------------------------------------------
+   1. Tokens
+   ------------------------------------------------------------------------ */
+
 :root {
+  /* Hooks a survey designer can override */
   --theme-color: var(--bs-primary, #2780E3);
-  --body-background-color: #f2f6f9;
+  --body-background-color: var(--sd-paper);
   --progressbar-position: top;
-  --progress-bar-height: 10px;
-  --progress-color: color-mix(in srgb, var(--theme-color) 80%, transparent);
-  --footer-height: calc(0.5rem * 2 + 1.5em);
-  --banner-height: calc(6px * 2 + 21px);
+  --progress-bar-height: 6px;
+  --progress-color: var(--theme-color);
+  --sd-content-width: 720px;
+
+  /* Paper and ink */
+  --sd-paper: var(--bs-body-bg, #ffffff);
+  --sd-ink: var(--bs-body-color, #212529);
+  --sd-ink-soft: color-mix(in srgb, var(--sd-ink) 66%, var(--sd-paper));
+  --sd-ink-faint: color-mix(in srgb, var(--sd-ink) 55%, var(--sd-paper));
+  --sd-line: color-mix(in srgb, var(--sd-ink) 13%, var(--sd-paper));
+  --sd-line-strong: color-mix(in srgb, var(--sd-ink) 28%, var(--sd-paper));
+  --sd-control: color-mix(in srgb, var(--sd-ink) 48%, var(--sd-paper));
+  --sd-wash: color-mix(in srgb, var(--sd-ink) 5%, transparent);
+  --sd-card: var(--sd-paper);
+
+  /* The accent: the respondent's marks */
+  --sd-accent: var(--theme-color);
+  --sd-accent-soft: color-mix(in srgb, var(--sd-accent) 9%, var(--sd-paper));
+  --sd-accent-line: color-mix(in srgb, var(--sd-accent) 50%, white);
+  --sd-accent-strong: color-mix(in srgb, var(--sd-accent) 86%, var(--sd-ink));
+  --sd-focus: color-mix(in srgb, var(--sd-accent) 28%, transparent);
+  --sd-on-accent: #ffffff;
+  --sd-danger: #dc3545;
+  /* The required mark is thin, so it leans toward the ink to hold on any paper */
+  --sd-required: color-mix(in oklab, var(--sd-danger) 65%, var(--sd-ink));
+
+  /* Links and code: the accent's hue, turned. These two lines are the
+     fallback; the rule below turns the hue for browsers that can. */
+  --sd-link: color-mix(in srgb, var(--sd-accent) 72%, var(--sd-ink));
+  --sd-code: color-mix(in srgb, var(--sd-accent) 58%, var(--sd-ink));
+  --sd-code-bg: color-mix(in srgb, var(--sd-code) 9%, var(--sd-paper));
+  --sd-asterisk: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M12 3v18M4 7.5l16 9M20 7.5l-16 9'/%3E%3C/svg%3E");
+
+  /* Shape */
+  --sd-radius: 12px;
+  --sd-radius-sm: 8px;
+  --sd-card-pad-x: 1.15rem;
+  --sd-card-pad-y: 1rem;
+
+  /* Fixed bars */
+  --footer-height: 2.1rem;
+  --banner-height: 1.75rem;
+  /* The footer grows when its text wraps; layout.js keeps this at its real height */
+  --sd-footer-height: var(--footer-height);
 }
 
-/* Styles for container and wrapper */
-.sd-container {
-    display: inline-block;
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 0.5rem;
-    background-color: #f9f9f9;
-    margin: 0.5rem;
+/* Three colors from one. The accent sets a hue; a link takes the hue a sixth
+   of the color wheel before it and code the hue a little over a quarter after
+   it, so the three never read as the same color. With a blue accent the link
+   is teal and code is rose. Each is then mixed two fifths of the way to the
+   ink, which is what makes it readable on the theme's paper, light or dark;
+   the strength is raised first so the hue survives the mix. */
+@supports (color: oklch(from red l c h)) {
+  :root {
+    --sd-link: color-mix(in oklab, oklch(from var(--sd-accent) 0.6 min(calc(c * 1.6), 0.2) calc(h - 60)) 60%, var(--sd-ink));
+    --sd-code: color-mix(in oklab, oklch(from var(--sd-accent) 0.6 min(calc(c * 1.6), 0.25) calc(h + 105)) 60%, var(--sd-ink));
+  }
 }
 
-.sd-wrapper {
-    text-align: center;
-    margin: 0.5rem;
-}
+/* ---------------------------------------------------------------------------
+   2. Page
+   ------------------------------------------------------------------------ */
 
-/* Layout */
 body {
   background-color: var(--body-background-color);
+  color: var(--sd-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--sd-accent) 22%, transparent);
+}
+
+.container-fluid {
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  padding-bottom: calc(4.75rem + var(--sd-footer-height));
 }
 
 .container-fluid .content {
-  max-width: 800px;
+  max-width: var(--sd-content-width);
   margin: 0 auto !important;
   padding: 0 0 5px !important;
 }
 
-.container-fluid {
-  padding-bottom: 7rem;
+.container-fluid > .content {
+  padding-top: clamp(1.75rem, 6vw, 3.75rem) !important;
 }
 
-/* Typography */
+/* Quarto's article grid has a minimum body width; a survey page is one column */
+#main .page-columns {
+  display: block;
+}
+
+/* Quarto makes every code chunk's output a scrolling box, which would stop a
+   matrix's column headers from sticking to the top of the window */
+.cell-output-display:has(.question-container) {
+  overflow: visible;
+}
+
+/* A table drawn by the server scrolls inside its own box when it is too wide */
+.shiny-html-output:has(> table) {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* A new page fades in */
+#main > .content {
+  animation: sd-page-in 0.24s ease-out both;
+}
+
+@keyframes sd-page-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------------------------------------------------------------------------
+   3. Survey text
+   ------------------------------------------------------------------------ */
+
+#quarto-content {
+  line-height: 1.55;
+}
+
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
-  margin-top: 0.5rem !important;
-  margin-bottom: 0.5rem !important;
+  margin-top: 2rem !important;
+  margin-bottom: 0.6rem !important;
+  line-height: 1.25;
+  color: var(--sd-ink);
+}
+
+h1, .h1 { font-size: 2rem; letter-spacing: -0.015em; line-height: 1.15; margin-bottom: 0.9rem !important; text-wrap: balance; }
+h2, .h2 { font-size: 1.55rem; letter-spacing: -0.01em; border-bottom: 0; padding-bottom: 0; text-wrap: balance; }
+h3, .h3 { font-size: 1.3rem; }
+h4, .h4 { font-size: 1.15rem; }
+h5, .h5, h6, .h6 { font-size: 1rem; }
+
+/* No gap above a heading that opens a page or a dialog */
+.sd_page > :first-child,
+.sd_page > section:first-child > :first-child,
+.sd_page > section:first-child > section:first-child > :first-child,
+.modal-title,
+.swal2-title {
+  margin-top: 0 !important;
 }
 
 p, .form-group, .control-label {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
 }
 
-.control-label, .radio label, .checkbox label {
-  font-weight: normal;
-  font-size: 1.1em;
+#quarto-content p {
+  text-wrap: pretty;
 }
 
-/* Form elements */
-.form-group {
-  border: 1px solid #ddd;
+#quarto-content a:not(.btn),
+.footer a {
+  color: var(--sd-link);
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  transition: color 0.12s ease, text-decoration-color 0.12s ease;
+}
+
+#quarto-content a:not(.btn):hover,
+.footer a:hover {
+  color: color-mix(in oklab, var(--sd-link) 72%, var(--sd-ink));
+  text-decoration-color: currentColor;
+}
+
+#quarto-content ul,
+#quarto-content ol {
+  padding-left: 1.4rem;
+  margin-bottom: 0.9rem;
+}
+
+#quarto-content li + li,
+#quarto-content li > ul,
+#quarto-content li > ol {
+  margin-top: 0.3rem;
+}
+
+#quarto-content li > ul,
+#quarto-content li > ol {
+  margin-bottom: 0;
+}
+
+#quarto-content :not(pre) > code {
+  padding: 0.12em 0.36em;
   border-radius: 5px;
-  padding: 1rem;
-  background-color: #f9f9f9;
-  margin-bottom: 1rem;
+  background-color: var(--sd-code-bg);
+  color: var(--sd-code);
+  font-size: 0.86em;
+  /* Long code wraps like text, and each line keeps its padding */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
-.form-group > label.control-label {
-  margin-top: 0;
-  margin-bottom: 0.3rem;
+/* A code block without syntax highlighting */
+#quarto-content pre > code:not(.sourceCode) {
+  color: var(--sd-code);
 }
 
-.form-control:focus {
-  border-color: var(--theme-color);
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-color) 25%, transparent);
+#quarto-content blockquote {
+  margin: 1.1rem 0;
+  padding: 0.1rem 0 0.1rem 1.1rem;
+  border-left: 3px solid var(--sd-line-strong);
+  color: var(--sd-ink-soft);
+  font-size: 1rem;
 }
+
+#quarto-content blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+#quarto-content hr {
+  margin: 2rem 0;
+  border: 0;
+  border-top: 1px solid var(--sd-line);
+  opacity: 1;
+}
+
+#quarto-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Plain markdown tables */
+#quarto-content table:not(.matrix-question):not([class*="datepicker"]) {
+  margin: 1.1rem 0;
+  font-size: 0.95rem;
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: transparent;
+  --bs-table-color: var(--sd-ink);
+  --bs-table-border-color: var(--sd-line);
+}
+
+.table > tbody > tr > td,
+.table > tbody > tr > th,
+.table > tfoot > tr > td,
+.table > tfoot > tr > th,
+.table > thead > tr > td,
+.table > thead > tr > th {
+  vertical-align: middle;
+  padding: 0.55rem 0.75rem;
+}
+
+/* ---------------------------------------------------------------------------
+   4. Question card
+   ------------------------------------------------------------------------ */
 
 .question-container {
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: auto;
   position: relative;
+  box-sizing: border-box;
+  max-width: 100%;
+  margin: 0 auto 1rem;
+  padding: var(--sd-card-pad-y) var(--sd-card-pad-x) calc(var(--sd-card-pad-y) + 0.1rem);
+  --sd-card-bg: var(--sd-card);
+  --sd-card-line: var(--sd-line);
+  background-color: var(--sd-card-bg);
+  border: 1px solid var(--sd-card-line);
+  border-radius: var(--sd-radius);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* A question inside a question (a matrix row, or a custom question inside its
+   placeholder) lies flat: the outer card is the card */
+.question-container .question-container {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.question-container .question-container:not(.matrix-question *) > .hidden-asterisk {
+  display: none !important;
+}
+
+/* A reactive question that has not rendered yet takes no room */
+.question-container:has(> .shiny-html-output:empty) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.question-container .form-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
 }
 
 .shiny-input-container:not(.shiny-input-container-inline) {
   width: 100%;
 }
 
-/* Hidden Asterisk */
+/* Question label */
+.question-container .control-label {
+  display: block;
+  margin: 0 0 0.7rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--sd-ink);
+  text-wrap: pretty;
+}
+
+.control-label > p {
+  margin-bottom: 0.4rem;
+}
+
+.control-label > p:last-child {
+  margin-bottom: 0;
+}
+
+.control-label small {
+  font-weight: 400;
+  color: var(--sd-ink-soft);
+}
+
+/* shinyWidgets puts a line break between the label and its buttons */
+.form-group > .control-label + br {
+  display: none;
+}
+
+/* Required mark, in the card's top right corner, as far from the top as from
+   the side. The element holds a "*"; the mark itself is drawn. */
 .hidden-asterisk {
   display: none;
-  color: red;
-  font-size: 1.5em;
   position: absolute;
-  top: 0;
-  right: 0.5em;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  overflow: hidden;
+  background-color: var(--sd-required);
+  font-size: 0;
+  line-height: 0;
+  -webkit-mask: var(--sd-asterisk) center / contain no-repeat;
+  mask: var(--sd-asterisk) center / contain no-repeat;
 }
 
-/* Radio and Checkbox styling */
-.radio-inline,
-.checkbox-inline,
-.radio label,
-.checkbox label {
-  padding-bottom: 0.25rem;
+.question-container:has(> .hidden-asterisk[style*="inline"]) > .form-group > .control-label,
+.question-container:has(> .hidden-asterisk[style*="inline"]) > .sd-image-choice .control-label {
+  padding-right: 1rem;
 }
 
-.radio label span,
-.checkbox label span {
-  margin-left: 0.5rem;
+/* ---------------------------------------------------------------------------
+   5. Text fields: text, textarea, numeric, select, date
+   ------------------------------------------------------------------------ */
+
+.question-container .form-control,
+.question-container .selectize-input {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--sd-line-strong);
+  border-radius: var(--sd-radius-sm);
+  background-color: var(--sd-paper);
+  color: var(--sd-ink);
+  font-size: 1rem;
+  line-height: 1.45;
+  box-shadow: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Option rows (mc, mc_multiple): the whole row is clickable and the selected
-   row is highlighted. Matrix and image-choice questions keep their own layout. */
-.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio),
-.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox) {
-  margin: 0 0 4px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+.question-container .form-control:hover,
+.question-container .selectize-input:hover {
+  border-color: var(--sd-control);
 }
 
-.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio) label,
-.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox) label {
-  display: block;
-  flex: 1;
-  margin: 0;
-  padding: 6px 10px 6px 40px;
-  cursor: pointer;
+.question-container .form-control:focus,
+.question-container .selectize-input.focus {
+  border-color: var(--sd-accent);
+  box-shadow: 0 0 0 3px var(--sd-focus);
+  outline: 0;
 }
 
-/* Text starts at the label's padding so wrapped lines align with the first line */
-.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio) label span,
-.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox) label span {
-  margin-left: 0;
+.question-container .form-control::placeholder,
+.question-container .selectize-input input::placeholder {
+  color: var(--sd-ink-faint);
+  opacity: 1;
 }
 
-.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio) input,
-.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox) input {
-  margin-left: -28px;
+.question-container textarea.form-control {
+  min-height: 7rem;
+  resize: vertical;
 }
 
-.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio):hover,
-.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox):hover {
-  background-color: color-mix(in srgb, var(--theme-color) 6%, transparent);
+/* Dropdown (selectize) */
+.question-container .selectize-control {
+  margin-bottom: 0;
 }
 
-.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio):has(input:checked),
-.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox):has(input:checked) {
-  background-color: color-mix(in srgb, var(--theme-color) 12%, white);
-  border-color: color-mix(in srgb, var(--theme-color) 50%, transparent);
-}
-
-.question-container .radio:not(.matrix-question .radio, .sd-image-choice .radio):has(input:focus-visible),
-.question-container .checkbox:not(.matrix-question .checkbox, .sd-image-choice .checkbox):has(input:focus-visible) {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color) 35%, transparent);
-}
-
-.question-container input[type="radio"],
-.question-container input[type="checkbox"] {
-  accent-color: var(--theme-color);
-}
-
-.radio-group-buttons .btn-group-container-sw,
-.checkbox-group-buttons .btn-group-container-sw {
+.question-container .selectize-input {
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  row-gap: 5px;
+  align-items: center;
+  padding-right: 2.4rem;
 }
 
-.checkbox-group-buttons .btn-group-container-sw {
-  column-gap: 5px;
+.question-container .selectize-input > input {
+  font-size: 1rem;
+  color: var(--sd-ink);
 }
 
-.radio-group-buttons .btn,
-.checkbox-group-buttons .btn,
-.btn-group-container-sw .btn {
-  border: 1px solid var(--theme-color);
-  background-color: color-mix(in srgb, var(--theme-color) 10%, white);
-  color: var(--theme-color);
-  transition: all 0.3s ease;
-  white-space: normal;
-  word-wrap: break-word;
+.question-container .selectize-input.full,
+.question-container .selectize-input.input-active {
+  background-color: var(--sd-paper);
 }
 
-.radio-group-buttons .btn:hover,
-.checkbox-group-buttons .btn:hover,
-.btn-group-container-sw .btn:hover {
-  z-index: 1;
-  background-color: color-mix(in srgb, var(--theme-color) 20%, white);
+.question-container .selectize-control.single .selectize-input::after {
+  right: 1rem;
+  border-width: 5px 4.5px 0;
+  border-color: var(--sd-ink-soft) transparent transparent;
 }
 
-.radio-group-buttons .btn:first-child,
-.checkbox-group-buttons .btn:first-child,
-.btn-group-container-sw .btn:first-child {
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
+.question-container .selectize-control.single .selectize-input.dropdown-active::after {
+  border-width: 0 4.5px 5px;
+  border-color: transparent transparent var(--sd-ink-soft);
 }
 
-.radio-group-buttons .btn:last-child,
-.checkbox-group-buttons .btn:last-child,
-.btn-group-container-sw .btn:last-child {
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  margin-right: 0;
+.selectize-dropdown {
+  margin-top: 6px;
+  padding: 0.3rem;
+  border: 1px solid var(--sd-line);
+  border-radius: var(--sd-radius-sm);
+  background-color: var(--sd-paper);
+  color: var(--sd-ink);
+  font-size: 1rem;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-.radio-group-buttons .btn.active,
-.checkbox-group-buttons .btn.active,
-.btn-group-container-sw .btn.active {
-  background-color: color-mix(in srgb, var(--theme-color) 80%, white);
-  color: white;
-  z-index: 2;
+.selectize-dropdown .option {
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
 }
 
-/* Date range styling */
-.shiny-date-range-input .input-group-addon {
-  background: none;
-  border: none;
-  padding: 0 10px 0 5px;
+.selectize-dropdown .active:not(.selected) {
+  background-color: var(--sd-wash);
+  color: var(--sd-ink);
 }
 
-/* Progress bar */
-#progressbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  height: var(--progress-bar-height);
-  z-index: 1000;
-  background-color: #ECE8DF;
+.selectize-dropdown .selected,
+.selectize-dropdown .active.selected {
+  background-color: var(--sd-accent-soft);
+  color: var(--sd-ink);
 }
 
-#progressbar.top {
-  top: 0;
-}
-
-#progressbar.bottom {
-  bottom: 0; /* Default position at very bottom when no footer */
-}
-
-/* When the footer exists, adjust bottom progress bar position */
-:has(.footer) #progressbar.bottom {
-  bottom: var(--footer-height);
-}
-
-/* When a mode banner exists, raise the bottom progress bar above it */
-:has(.sd-mode-banner) #progressbar.bottom {
-  bottom: var(--banner-height);
-}
-
-/* When both footer and mode banner exist, stack above both */
-:has(.footer):has(.sd-mode-banner) #progressbar.bottom {
-  bottom: calc(var(--footer-height) + var(--banner-height));
-}
-
-#progressbar > div {
-  width: 0%;
-  height: 100%;
-  background-color: var(--progress-color);
-  transition: width 0.4s ease;
-}
-
-/* Buttons */
-.btn-primary,
-.btn-primary:hover,
-.btn-primary:active,
-.btn-primary:focus,
-.action-button {
-  background-color: var(--theme-color);
-  border-color: var(--theme-color);
-  color: #ffffff;
-}
-
-.action-button {
-  background-color: color-mix(in srgb, var(--theme-color) 70%, transparent);
-  transition: background-color 0.3s ease;
-}
-
-.action-button:hover,
-.action-button:focus {
-  background-color: var(--theme-color);
-}
-
-/* Links */
-a:hover {
-  color: color-mix(in srgb, var(--theme-color) 80%, black);
-}
-
-/* Media Queries */
-@media screen and (max-width: 767px) {
-  .radio-group-buttons .btn-group-container-sw,
-  .checkbox-group-buttons .btn-group-container-sw {
-    flex-direction: column;
-  }
-}
-
-/* Footer styling */
-.footer {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 0.5rem 1rem;
-    height: var(--footer-height);
-    background-color: color-mix(in srgb, var(--body-background-color) 90%, black);
-    border-top: 1px solid #eee;
-    color: #666;
-    z-index: 999;
-}
-
-.footer-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 800px;
-    margin: 0 auto;
-    height: 100%;
-}
-
-.footer-content.center {
-    justify-content: center;
-}
-
-.footer-left {
-    text-align: left;
-    margin-right: auto;
-}
-
-.footer-center {
-    text-align: center;
-    flex: 1;
-}
-
-.footer-right {
-    text-align: right;
-    margin-left: auto;
-}
-
-.footer a {
-    color: var(--theme-color);
-    text-decoration: none;
-}
-
-.footer a:hover {
-    text-decoration: underline;
-    color: color-mix(in srgb, var(--theme-color) 80%, black);
-}
-
-/* Slider styling (ionRangeSlider, used by slider and slider_numeric) */
-.irs--shiny .irs-line {
-    height: 6px;
-    border: none;
-    border-radius: 3px;
-    background: #e3e6ea;
-    top: 27px;
-}
-
-.irs--shiny .irs-bar {
-    height: 6px;
-    border: none;
-    background: var(--theme-color);
-    top: 27px;
-}
-
-.irs--shiny .irs-handle {
-    width: 22px;
-    height: 22px;
-    top: 19px;
-    border: 2px solid var(--theme-color);
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-}
-
-.irs--shiny .irs-handle.state_hover,
-.irs--shiny .irs-handle:hover {
-    background: color-mix(in srgb, var(--theme-color) 10%, white);
-}
-
-.irs--shiny .irs-single,
-.irs--shiny .irs-from,
-.irs--shiny .irs-to {
-    background: var(--theme-color);
-    border-radius: 4px;
-    font-size: 12px;
-}
-
-.irs--shiny .irs-min,
-.irs--shiny .irs-max {
-    background: transparent;
-    color: #8a8a8a;
-    font-size: 11px;
-}
-
-/* Hide the small minor tick marks; keep only the labeled major ticks */
-.irs--shiny .irs-grid-pol.small {
-    display: none;
-}
-
-.irs--shiny .irs-grid-pol {
-    width: 2px;
-    background: #a8adb3;
-}
-
-.irs--shiny .irs-grid-text {
-    color: #8a8a8a;
-    font-size: 11px;
-}
-
-/* When a labeled grid is shown, the min/max labels above the track are
-   redundant with the grid's end labels */
-.irs--shiny:has(.irs-grid) .irs-min,
-.irs--shiny:has(.irs-grid) .irs-max {
-    display: none;
-}
-
-/* Image choice (mc_image / mc_multiple_image) */
-.sd-image-choice .shiny-options-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 0.5rem;
-}
-
-.sd-image-choice .radio,
-.sd-image-choice .checkbox {
-    margin: 0;
-}
-
-.sd-image-choice .radio label,
-.sd-image-choice .checkbox label {
-    cursor: pointer;
-    padding: 0;
-    font-weight: normal;
-}
-
-/* Hide the native control but keep it accessible (still keyboard/focusable) */
-.sd-image-choice input[type="radio"],
-.sd-image-choice input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 1px;
-    height: 1px;
-}
-
-.sd-image-card {
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 8px;
-    text-align: center;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.sd-image-card-img {
-    display: block;
-    max-width: 160px;
-    max-height: 160px;
-    border-radius: 4px;
-    margin: 0 auto;
-}
-
-.sd-image-card-caption {
-    display: block;
-    margin-top: 6px;
-}
-
-.sd-image-choice label:hover .sd-image-card {
-    border-color: color-mix(in srgb, var(--theme-color) 50%, white);
-}
-
-/* Selected state: highlight the card whose input is checked */
-.sd-image-choice label:has(input:checked) .sd-image-card {
-    border-color: var(--theme-color);
-    box-shadow: 0 0 0 1px var(--theme-color);
-}
-
-/* Keyboard focus visibility (the native control is visually hidden) */
-.sd-image-choice label:has(input:focus-visible) .sd-image-card {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-color) 35%, transparent);
-}
-
-/* Survey mode banner (preview mode / database not connected) */
-.sd-mode-banner {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    min-height: var(--banner-height);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 16px;
-    color: white;
-    text-align: center;
-    font-weight: bold;
-    font-size: 14px;
-    line-height: 21px;
-    z-index: 9999;
-}
-
-#sd-preview-banner {
-    background-color: #e6a817;
-}
-
-#sd-no-db-banner {
-    background-color: #cc0000;
-}
-
-/* When a mode banner exists, raise the footer so it sits on top of the banner */
-:has(.sd-mode-banner) .footer {
-    bottom: var(--banner-height);
-}
-
-/* Matrix question styling */
-.matrix-question-container {
-    width: 100%;
-    max-height: 70vh;
-    overflow-x: auto;
-    overflow-y: auto;
-    margin-bottom: 2rem;
-}
-
-.matrix-question-container .form-group {
-    margin-bottom: 0;
-}
-
-.matrix-question {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 18px;
-}
-
-.matrix-question th, .matrix-question td {
-    padding: 0;
-    text-align: center;
-    border: none;
-    height: 10px;
-    vertical-align: middle;
-}
-
-.table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th {
-  vertical-align: middle;
-  padding: 4px;
-}
-
-.matrix-question th {
-    background-color: #f9f9f9;
-    font-weight: bold;
-    font-size: 18px;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
-}
-
-.table {
-  --bs-table-striped-bg: #f9f9f9;
-}
-
-.matrix-question tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.matrix-question tr:nth-child(odd) {
-    background-color: #f9f9f9;
-}
-
-.matrix-question .shiny-options-group {
-    display: flex;
-    justify-content: center; /* Center the radio buttons */
-    width: 100%;
-}
-
-.matrix-question .shiny-options-group .radio,
-.matrix-question .shiny-options-group .checkbox {
-    margin: 0;
-    flex: 1;
-    text-align: center;
-}
-
-.matrix-question .shiny-options-group .radio label,
-.matrix-question .shiny-options-group .checkbox label {
-    padding-left: 0;
-    display: inline-block;
-}
-
-.matrix-question .shiny-options-group .radio input,
-.matrix-question .shiny-options-group .checkbox input {
-    margin: 0;
-    position: relative;
-    top: 0.5rem; /* radio/checkbox position */
-}
-
-/* Hide radio/checkbox option labels (column headers show the options) */
-.matrix-question .shiny-options-group .radio span,
-.matrix-question .shiny-options-group .checkbox span {
-    display: none;
-}
-
-/* Hide control-label in matrix question radio/checkbox groups (avoid duplicate labels when highlighted) */
-.matrix-question .shiny-input-radiogroup > .control-label,
-.matrix-question .shiny-input-checkboxgroup > .control-label {
-    display: none;
-}
-
-/* Style for the sub-question labels */
-.matrix-question td:first-child {
-    text-align: left;
-    font-weight: normal;
-    padding-left: 15px; /* Add some left padding */
-}
-
-/* Container Borders */
-.question-container[data-question-id] input[type="text"],
-.question-container[data-question-id] input[type="number"],
-.question-container[data-question-id] textarea,
-.question-container[data-question-id] select {
-  border: 1px solid #ddd;
-}
-
-.question-container[data-question-id] input[type="radio"],
-.question-container[data-question-id] input[type="checkbox"] {
-  border-color: #ddd;
-}
-
-/* SweetAlert custom styling */
-div:where(.swal2-container) .swal2-popup {
-  font-size: 1rem !important;
-}
-
-div:where(.swal2-container) .swal2-html-container {
-  padding: 0 2em;
-}
-
-/* Exit pop-up */
-.modal {
-  display: block !important;
-  opacity: 1 !important;
-}
-
-.modal-backdrop {
-  opacity: 0.5 !important;
-}
-
-.modal-dialog {
-  z-index: 1050 !important;
-}
-
-.modal-body .shiny-input-container .control-label {
-  text-align: center;
-  width: 100%;
-}
-
-/* Required question highlighting */
-
-.required-question-highlight .form-group,
-.required-question-highlight.form-group {
-  border-color: #dc3545 !important;
-  background-color: rgba(220, 53, 69, 0.1) !important;
-}
-
-.required-question-highlight .form-control {
-  border-color: #dc3545 !important;
-}
-
-.required-question-highlight .form-control:focus {
-  border-color: #dc3545 !important;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-
-/* Validation question highlighting (red, highest priority) */
-
-.validation-question-highlight .form-group,
-.validation-question-highlight.form-group {
-  border-color: #dc3545 !important;
-  background-color: rgba(220, 53, 69, 0.1) !important;
-}
-
-.validation-question-highlight .form-control {
-  border-color: #dc3545 !important;
-}
-
-.validation-question-highlight .form-control:focus {
-  border-color: #dc3545 !important;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-
-/* Unanswered question highlighting (blue) */
-
-.unanswered-question-highlight .form-group,
-.unanswered-question-highlight.form-group {
-  border-color: #007bff !important;
-  background-color: rgba(0, 123, 255, 0.1) !important;
-}
-
-.unanswered-question-highlight .form-control {
-  border-color: #007bff !important;
-}
-
-.unanswered-question-highlight .form-control:focus {
-  border-color: #007bff !important;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
-}
-
-/* Unanswered question highlighting (orange) */
-
-.unanswered-question-highlight-orange .form-group,
-.unanswered-question-highlight-orange.form-group {
-  border-color: #fd7e14 !important;
-  background-color: rgba(253, 126, 20, 0.1) !important;
-}
-
-.unanswered-question-highlight-orange .form-control {
-  border-color: #fd7e14 !important;
-}
-
-.unanswered-question-highlight-orange .form-control:focus {
-  border-color: #fd7e14 !important;
-  box-shadow: 0 0 0 0.2rem rgba(253, 126, 20, 0.25) !important;
-}
-
-/* Unanswered question highlighting (green) */
-
-.unanswered-question-highlight-green .form-group,
-.unanswered-question-highlight-green.form-group {
-  border-color: #28a745 !important;
-  background-color: rgba(40, 167, 69, 0.1) !important;
-}
-
-.unanswered-question-highlight-green .form-control {
-  border-color: #28a745 !important;
-}
-
-.unanswered-question-highlight-green .form-control:focus {
-  border-color: #28a745 !important;
-  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
-}
-
-/* Unanswered question highlighting (purple) */
-
-.unanswered-question-highlight-purple .form-group,
-.unanswered-question-highlight-purple.form-group {
-  border-color: #6f42c1 !important;
-  background-color: rgba(111, 66, 193, 0.1) !important;
-}
-
-.unanswered-question-highlight-purple .form-control {
-  border-color: #6f42c1 !important;
-}
-
-.unanswered-question-highlight-purple .form-control:focus {
-  border-color: #6f42c1 !important;
-  box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25) !important;
-}
-
-/* Unanswered question highlighting (gray) */
-
-.unanswered-question-highlight-gray .form-group,
-.unanswered-question-highlight-gray.form-group {
-  border-color: #6c757d !important;
-  background-color: rgba(108, 117, 125, 0.1) !important;
-}
-
-.unanswered-question-highlight-gray .form-control {
-  border-color: #6c757d !important;
-}
-
-.unanswered-question-highlight-gray .form-control:focus {
-  border-color: #6c757d !important;
-  box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
-}
-
-/* Priority system: red highlighting overrides all unanswered colors */
-.required-question-highlight.unanswered-question-highlight .form-group,
-.required-question-highlight.unanswered-question-highlight.form-group,
-.required-question-highlight.unanswered-question-highlight-orange .form-group,
-.required-question-highlight.unanswered-question-highlight-orange.form-group,
-.required-question-highlight.unanswered-question-highlight-green .form-group,
-.required-question-highlight.unanswered-question-highlight-green.form-group,
-.required-question-highlight.unanswered-question-highlight-purple .form-group,
-.required-question-highlight.unanswered-question-highlight-purple.form-group,
-.required-question-highlight.unanswered-question-highlight-gray .form-group,
-.required-question-highlight.unanswered-question-highlight-gray.form-group {
-  border-color: #dc3545 !important;
-  background-color: rgba(220, 53, 69, 0.1) !important;
-}
-
-.required-question-highlight.unanswered-question-highlight .form-control,
-.required-question-highlight.unanswered-question-highlight-orange .form-control,
-.required-question-highlight.unanswered-question-highlight-green .form-control,
-.required-question-highlight.unanswered-question-highlight-purple .form-control,
-.required-question-highlight.unanswered-question-highlight-gray .form-control {
-  border-color: #dc3545 !important;
-}
-
-.required-question-highlight.unanswered-question-highlight .form-control:focus,
-.required-question-highlight.unanswered-question-highlight-orange .form-control:focus,
-.required-question-highlight.unanswered-question-highlight-green .form-control:focus,
-.required-question-highlight.unanswered-question-highlight-purple .form-control:focus,
-.required-question-highlight.unanswered-question-highlight-gray .form-control:focus {
-  border-color: #dc3545 !important;
-  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
-}
-
-/* Numeric input spinner styling */
+/* Numeric field with its stepper */
 .numeric-input-container {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
 }
 
 .numeric-input-with-spinner {
-  padding-right: 0 !important;
+  padding-right: 2.6rem !important;
 }
 
 .numeric-input-with-spinner::-webkit-outer-spin-button,
@@ -829,35 +501,39 @@ div:where(.swal2-container) .swal2-html-container {
 
 .native-spinner {
   position: absolute;
-  right: 2px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: calc(100% - 4px);
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 2.1rem;
   display: flex;
   flex-direction: column;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: linear-gradient(to bottom, #f9f9f9 0%, #f0f0f0 100%);
+  border-left: 1px solid var(--sd-line);
+  border-radius: 0 calc(var(--sd-radius-sm) - 1px) calc(var(--sd-radius-sm) - 1px) 0;
   overflow: hidden;
 }
 
 .native-spinner-button {
   flex: 1;
-  border: none;
+  position: relative;
+  padding: 0;
+  border: 0;
   background: transparent;
   cursor: pointer;
-  position: relative;
   font-size: 0;
   outline: none;
+  transition: background-color 0.12s ease;
+}
+
+.native-spinner-button:not(:last-child) {
+  border-bottom: 1px solid var(--sd-line);
 }
 
 .native-spinner-button:hover {
-  background: rgba(0,0,0,0.05);
+  background-color: var(--sd-wash);
 }
 
 .native-spinner-button:active {
-  background: rgba(0,0,0,0.1);
+  background-color: color-mix(in srgb, var(--sd-ink) 10%, transparent);
 }
 
 .native-spinner-button::before {
@@ -865,43 +541,987 @@ div:where(.swal2-container) .swal2-html-container {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
-  width: 0;
-  height: 0;
+  width: 6px;
+  height: 6px;
+  border: solid var(--sd-ink-soft);
+  border-width: 1.5px 1.5px 0 0;
 }
 
 .spinner-up::before {
-  border-left: 3px solid transparent;
-  border-right: 3px solid transparent;
-  border-bottom: 4px solid #666;
+  transform: translate(-50%, -25%) rotate(-45deg);
 }
 
 .spinner-down::before {
-  border-left: 3px solid transparent;
-  border-right: 3px solid transparent;
-  border-top: 4px solid #666;
+  transform: translate(-50%, -75%) rotate(135deg);
 }
 
-.native-spinner-button:not(:last-child) {
-  border-bottom: 1px solid #ccc;
+/* Date range: two fields with a quiet separator */
+.question-container .input-daterange {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
 }
 
-/* Navigation buttons styling */
+.question-container .input-daterange .form-control {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  border-radius: var(--sd-radius-sm) !important;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.shiny-date-range-input .input-group-addon {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.shiny-date-range-input .input-group-text {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sd-ink-faint);
+  font-size: 0;
+}
+
+.shiny-date-range-input .input-group-text::before {
+  content: "\2013";
+  font-size: 1rem;
+}
+
+/* Calendar popup */
+.datepicker.dropdown-menu {
+  padding: 0.6rem;
+  border: 1px solid var(--sd-line);
+  border-radius: var(--sd-radius);
+  background-color: var(--sd-paper);
+  color: var(--sd-ink);
+  font-size: 0.9rem;
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.datepicker.dropdown-menu::before,
+.datepicker.dropdown-menu::after {
+  display: none;
+}
+
+.datepicker table tr td,
+.datepicker table tr th {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 6px;
+  color: inherit;
+}
+
+.datepicker table tr th.dow {
+  color: var(--sd-ink-faint);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.datepicker table tr td.old,
+.datepicker table tr td.new {
+  color: var(--sd-ink-faint);
+}
+
+.datepicker table tr td.day:hover,
+.datepicker table tr td span:hover,
+.datepicker .datepicker-switch:hover,
+.datepicker .prev:hover,
+.datepicker .next:hover {
+  background: var(--sd-wash);
+}
+
+.datepicker table tr td.today,
+.datepicker table tr td.today:hover {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--sd-line-strong);
+  color: inherit;
+}
+
+.datepicker table tr td.active,
+.datepicker table tr td.active:hover,
+.datepicker table tr td.active.active,
+.datepicker table tr td span.active,
+.datepicker table tr td span.active:hover,
+.datepicker table tr td span.active.active {
+  background: var(--sd-accent);
+  border-color: var(--sd-accent);
+  box-shadow: none;
+  color: var(--sd-on-accent);
+  text-shadow: none;
+}
+
+/* ---------------------------------------------------------------------------
+   6. Choice controls: radio buttons and check boxes, drawn the same in
+      every browser
+   ------------------------------------------------------------------------ */
+
+.question-container :is(.radio, .checkbox):not(.sd-image-choice *) input {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0;
+  border: 1.5px solid var(--sd-control);
+  background-color: var(--sd-paper);
+  background-image: none;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.question-container :is(.radio, .checkbox) input[type="radio"] {
+  border-radius: 50%;
+}
+
+.question-container :is(.radio, .checkbox) input[type="checkbox"] {
+  border-radius: 5px;
+}
+
+.question-container :is(.radio, .checkbox):not(.sd-image-choice *) label:hover input {
+  border-color: var(--sd-accent);
+}
+
+.question-container :is(.radio, .checkbox):not(.sd-image-choice *) input[type="radio"]:checked {
+  border-color: var(--sd-accent);
+  background-color: var(--sd-accent);
+  box-shadow: inset 0 0 0 3.5px var(--sd-paper);
+}
+
+.question-container :is(.radio, .checkbox):not(.sd-image-choice *) input[type="checkbox"]:checked {
+  border-color: var(--sd-accent);
+  background-color: var(--sd-accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M3.9 8.4l2.6 2.6 5.6-5.8'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+
+.question-container :is(.radio, .checkbox) input:focus {
+  outline: 0;
+}
+
+/* Option rows (mc, mc_multiple): the whole row selects the option, and the
+   selected row is marked in the accent color */
+/* Shiny pulls every option group 10px up under its label; spacing is set here instead */
+.question-container .form-group .shiny-options-group {
+  margin-top: 0;
+}
+
+/* Rows reach into the card's padding, so the controls line up with the label.
+   The first and last rows bring their own padding, so the group is pulled in at
+   the top and bottom to keep the card's spacing even. */
+.question-container .form-group .shiny-options-group:not(.matrix-question *, .sd-image-choice *) {
+  margin: -0.15rem -0.6rem -0.2rem;
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *) {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--sd-radius-sm);
+  transition: background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *) + :is(.radio, .checkbox) {
+  margin-top: 2px;
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *) label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0.18rem 0.6rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+/* The label covers the row, so a click anywhere on the row lands on it */
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *) label::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *) label > span {
+  margin: 0;
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *) input {
+  margin-top: 0.125rem;
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *):hover {
+  background-color: var(--sd-wash);
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *):has(input:checked) {
+  background-color: var(--sd-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--sd-accent-line);
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *):has(input:focus-visible) {
+  box-shadow: 0 0 0 3px var(--sd-focus);
+}
+
+.question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *):has(input:checked:focus-visible) {
+  box-shadow: inset 0 0 0 1px var(--sd-accent-line), 0 0 0 3px var(--sd-focus);
+}
+
+/* In a matrix there is no row to ring, so keyboard focus rings the control */
+.matrix-question :is(.radio, .checkbox) input:focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   7. Choice buttons (mc_buttons, mc_multiple_buttons)
+
+   Single choice is one joined block (pick one of these); multiple choice is
+   a set of separate buttons (switch any of them on). Both sit centered at
+   their natural width while they fit on one line. When they need more lines,
+   every line has the same width, and layout.js spreads the options evenly
+   over the lines: it sets .sd-rows, the block's width and each button's share
+   of its line.
+   ------------------------------------------------------------------------ */
+
+.radio-group-buttons,
+.checkbox-group-buttons {
+  width: 100%;
+}
+
+.radio-group-buttons .btn-group-container-sw,
+.checkbox-group-buttons .btn-group-container-sw {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.btn-group-container-sw,
+.btn-group-container-sw > .btn-group {
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.btn-group-container-sw > .btn-group {
+  display: flex;
+  flex: 1 1 auto;
+  float: none;
+  margin: 0;
+}
+
+.btn-group-container-sw.btn-group-vertical {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Options with pictures or several lines (a conjoint choice set) are cards
+   that share the row equally */
+.radio-group-buttons .btn-group-container-sw:has(img, br),
+.checkbox-group-buttons .btn-group-container-sw:has(img, br) {
+  width: 100%;
+}
+
+.btn-group-container-sw:has(img, br):not(.btn-group-vertical) > .btn-group {
+  flex: 1 1 0;
+}
+
+.radio-group-buttons .btn,
+.checkbox-group-buttons .btn,
+.btn-group-container-sw .btn {
+  flex: 1 1 auto;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--sd-line-strong);
+  border-radius:
+    var(--sd-tl, var(--sd-radius-sm)) var(--sd-tr, var(--sd-radius-sm))
+    var(--sd-br, var(--sd-radius-sm)) var(--sd-bl, var(--sd-radius-sm)) !important;
+  background-color: var(--sd-paper);
+  background-image: none;
+  color: var(--sd-ink);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-shadow: none;
+  text-transform: none;
+  white-space: normal;
+  word-wrap: break-word;
+  box-shadow: none;
+  transition: border-color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.radio-group-buttons .btn:hover,
+.checkbox-group-buttons .btn:hover,
+.btn-group-container-sw .btn:hover {
+  z-index: 1;
+  border-color: var(--sd-control);
+  background-color: color-mix(in srgb, var(--sd-ink) 4%, var(--sd-paper));
+  color: var(--sd-ink);
+}
+
+/* The :not()s add weight: some themes (slate) style a pressed button with
+   .btn:not([disabled]):not(.disabled).active, which would win otherwise */
+.radio-group-buttons .btn.active:not([disabled]):not(.disabled),
+.checkbox-group-buttons .btn.active:not([disabled]):not(.disabled),
+.btn-group-container-sw .btn.active:not([disabled]):not(.disabled) {
+  z-index: 2;
+  border-color: var(--sd-accent);
+  background-color: var(--sd-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--sd-accent);
+  color: var(--sd-ink);
+}
+
+.btn-group-container-sw .btn:focus-visible,
+.btn-group-container-sw .btn:has(input:focus-visible) {
+  z-index: 3;
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--sd-focus);
+}
+
+.btn-group-container-sw .btn img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Single choice: joined. Neighbors share one border, and only the outer
+   corners of the block are round. */
+.radio-group-buttons .btn-group-container-sw:not(:has(img, br)) {
+  gap: 0;
+  padding: 0 1px 1px 0;
+}
+
+.radio-group-buttons .btn-group-container-sw:not(:has(img, br)) > .btn-group {
+  margin: 0 -1px -1px 0;
+  --sd-tl: 0px;
+  --sd-tr: 0px;
+  --sd-br: 0px;
+  --sd-bl: 0px;
+}
+
+.radio-group-buttons .btn-group-vertical:not(:has(img, br)) {
+  padding: 0 0 1px;
+}
+
+.radio-group-buttons .btn-group-vertical:not(:has(img, br)) > .btn-group {
+  margin: 0 0 -1px;
+}
+
+/* One line, or a column */
+.radio-group-buttons .btn-group-container-sw:not(.sd-rows, .btn-group-vertical) > .btn-group:first-child {
+  --sd-tl: var(--sd-radius-sm);
+  --sd-bl: var(--sd-radius-sm);
+}
+
+.radio-group-buttons .btn-group-container-sw:not(.sd-rows, .btn-group-vertical) > .btn-group:last-child {
+  --sd-tr: var(--sd-radius-sm);
+  --sd-br: var(--sd-radius-sm);
+}
+
+.radio-group-buttons .btn-group-vertical > .btn-group:first-child {
+  --sd-tl: var(--sd-radius-sm);
+  --sd-tr: var(--sd-radius-sm);
+}
+
+.radio-group-buttons .btn-group-vertical > .btn-group:last-child {
+  --sd-bl: var(--sd-radius-sm);
+  --sd-br: var(--sd-radius-sm);
+}
+
+/* Several lines: layout.js names the four corner buttons */
+.radio-group-buttons .sd-rows > .btn-group.sd-tl { --sd-tl: var(--sd-radius-sm); }
+.radio-group-buttons .sd-rows > .btn-group.sd-tr { --sd-tr: var(--sd-radius-sm); }
+.radio-group-buttons .sd-rows > .btn-group.sd-br { --sd-br: var(--sd-radius-sm); }
+.radio-group-buttons .sd-rows > .btn-group.sd-bl { --sd-bl: var(--sd-radius-sm); }
+
+/* While layout.js measures: every button at its natural width, on one line */
+.btn-group-container-sw.sd-measure {
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  max-width: none !important;
+}
+
+.btn-group-container-sw.sd-measure > .btn-group {
+  flex: none !important;
+}
+
+.btn-group-container-sw.sd-measure .btn {
+  white-space: nowrap !important;
+}
+
+/* ---------------------------------------------------------------------------
+   8. Image choice (mc_image, mc_multiple_image)
+   ------------------------------------------------------------------------ */
+
+.sd-image-choice .form-group .shiny-options-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.3rem;
+}
+
+.sd-image-choice .radio,
+.sd-image-choice .checkbox {
+  position: relative;
+  margin: 0;
+}
+
+.sd-image-choice .radio label,
+.sd-image-choice .checkbox label {
+  display: block;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.sd-image-choice label > span {
+  margin: 0;
+}
+
+/* Hide the native control but keep it accessible (still keyboard/focusable) */
+.sd-image-choice input[type="radio"],
+.sd-image-choice input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.sd-image-card {
+  position: relative;
+  padding: 0.5rem;
+  border: 1px solid var(--sd-line-strong);
+  border-radius: 10px;
+  background-color: var(--sd-paper);
+  text-align: center;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.sd-image-card-img {
+  display: block;
+  max-width: 160px;
+  max-height: 160px;
+  margin: 0 auto;
+  border-radius: 6px;
+}
+
+.sd-image-card-caption {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.sd-image-choice label:hover .sd-image-card {
+  border-color: var(--sd-control);
+}
+
+/* Selected state: outline the card and stamp a check in its corner */
+.sd-image-choice label:has(input:checked) .sd-image-card {
+  border-color: var(--sd-accent);
+  background-color: var(--sd-accent-soft);
+  box-shadow: 0 0 0 1px var(--sd-accent);
+}
+
+.sd-image-choice label:has(input:checked) .sd-image-card::after {
+  content: "";
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 2px solid var(--sd-paper);
+  border-radius: 50%;
+  background: var(--sd-accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M4.2 8.4l2.4 2.4 5.2-5.4'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+/* Keyboard focus visibility (the native control is visually hidden) */
+.sd-image-choice label:has(input:focus-visible) .sd-image-card {
+  box-shadow: 0 0 0 3px var(--sd-focus);
+}
+
+/* ---------------------------------------------------------------------------
+   9. Sliders (ionRangeSlider, used by slider and slider_numeric)
+   ------------------------------------------------------------------------ */
+
+/* From the top: the value label, a gap, then the handle on its track */
+.irs--shiny {
+  height: 52px;
+}
+
+.irs--shiny.irs-with-grid {
+  height: 68px;
+}
+
+.irs--shiny .irs-line {
+  top: 35px;
+  height: 6px;
+  border: none;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--sd-ink) 14%, transparent);
+}
+
+.irs--shiny .irs-bar {
+  top: 35px;
+  height: 6px;
+  border: none;
+  background: var(--sd-accent);
+}
+
+.irs--shiny .irs-handle {
+  top: 27px;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--sd-accent);
+  border-radius: 50%;
+  background: var(--sd-paper);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  cursor: grab;
+}
+
+.irs--shiny .irs-handle.state_hover,
+.irs--shiny .irs-handle:hover {
+  background: var(--sd-accent-soft);
+}
+
+.irs--shiny .irs-handle:active {
+  cursor: grabbing;
+}
+
+.irs--shiny .irs-single,
+.irs--shiny .irs-from,
+.irs--shiny .irs-to {
+  top: 0;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: var(--sd-accent);
+  color: var(--sd-on-accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.irs--shiny .irs-min,
+.irs--shiny .irs-max {
+  background: transparent;
+  color: var(--sd-ink-faint);
+  font-size: 0.72rem;
+}
+
+/* Hide the small minor tick marks; keep only the labeled major ticks */
+.irs--shiny .irs-grid-pol.small {
+  display: none;
+}
+
+.irs--shiny .irs-grid-pol {
+  width: 1px;
+  background: var(--sd-line-strong);
+}
+
+.irs--shiny .irs-grid-text {
+  color: var(--sd-ink-soft);
+  font-size: 0.72rem;
+}
+
+/* When a labeled grid is shown, the min/max labels above the track are
+   redundant with the grid's end labels */
+.irs--shiny:has(.irs-grid) .irs-min,
+.irs--shiny:has(.irs-grid) .irs-max {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   10. Matrix questions
+
+   The question has the top of the card to itself, with a line under it from
+   edge to edge. Below it, a table that reaches the card's edges: the row
+   labels, then one column per option. The column headers have no line under
+   them, so they read as part of the rows. Each row is a question of its own,
+   so the rows carry the unanswered tint one by one, and an answered row turns
+   back to paper.
+
+   Quarto tags the table as a striped Bootstrap table, which both Bootstrap 3
+   (from Shiny) and Bootstrap 5 (from Quarto) style. The selectors here start
+   at `table.matrix-question` and step through `> * > tr` to outrank both.
+   ------------------------------------------------------------------------ */
+
+.matrix-question-container {
+  width: 100%;
+}
+
+/* The line is part of the card's frame, so it takes the frame's color */
+.matrix-question-container > .control-label {
+  max-width: none;
+  margin: 0 calc(-1 * var(--sd-card-pad-x));
+  padding: 0 var(--sd-card-pad-x) var(--sd-card-pad-y);
+  border-bottom: 1px solid var(--sd-card-line);
+  transition: border-color 0.2s ease;
+}
+
+/* The table's last row closes the card */
+.question-container:has(.matrix-question-container) {
+  padding-bottom: 0;
+}
+
+/* Scrolls sideways when the columns do not fit. layout.js adds .sd-fits when
+   they do, which frees the column headers to stick to the top of the window. */
+.matrix-question-scroll {
+  margin: 0 calc(-1 * var(--sd-card-pad-x));
+  overflow-x: auto;
+  border-radius: 0 0 calc(var(--sd-radius) - 1px) calc(var(--sd-radius) - 1px);
+}
+
+.matrix-question-scroll.sd-fits {
+  overflow: visible;
+}
+
+/* Every row, the header included, is a flex line: the label at a set width,
+   then the options sharing the rest. That keeps the column headers exactly
+   over their controls, and lets a phone put the label above the options. */
+table.matrix-question,
+table.matrix-question > tbody {
+  display: block;
+}
+
+table.matrix-question {
+  width: 100%;
+  min-width: calc(10rem + var(--sd-matrix-cols, 3) * 3.75rem);
+  margin: 0;
+  border: 0;
+  background: none;
+  font-size: 1rem;
+  --bs-table-bg: transparent;
+  --bs-table-accent-bg: transparent;
+  --bs-table-striped-bg: transparent;
+  --bs-table-color: var(--sd-ink);
+}
+
+table.matrix-question > colgroup {
+  display: none;
+}
+
+table.matrix-question > tbody:nth-child(n) {
+  border: 0;
+  background: none;
+}
+
+table.matrix-question > * > tr:nth-of-type(n) {
+  display: flex;
+  padding-right: calc(var(--sd-card-pad-x) * 0.5);
+  border: 0;
+  border-bottom: 1px solid var(--sd-line);
+  background-color: var(--sd-paper);
+  transition: background-color 0.2s ease;
+}
+
+table.matrix-question > :last-child > tr:last-child {
+  border-bottom: 0;
+  border-radius: 0 0 calc(var(--sd-radius) - 1px) calc(var(--sd-radius) - 1px);
+}
+
+table.matrix-question > * > tr > th,
+table.matrix-question > * > tr > td {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: inherit;
+  text-align: center;
+}
+
+/* Column headers stay in view while a long matrix scrolls past */
+table.matrix-question > tbody:has(> tr > th) {
+  position: sticky;
+  top: var(--sd-sticky-top, 0px);
+  z-index: 2;
+}
+
+:root:has(#progressbar.top) {
+  --sd-sticky-top: var(--progress-bar-height);
+}
+
+table.matrix-question > * > tr:has(> th):nth-of-type(n) {
+  align-items: flex-end;
+  border-bottom: 0;
+  background-color: var(--sd-card-bg);
+}
+
+/* While they are stuck there (layout.js adds .sd-stuck), a line shows where
+   the rows pass under them */
+table.matrix-question > tbody.sd-stuck > tr:nth-of-type(n) {
+  box-shadow: 0 1px 0 var(--sd-line);
+}
+
+table.matrix-question > * > tr > th {
+  padding: 0.75rem 0.2rem 0.2rem;
+  color: var(--sd-ink-soft);
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* Row labels */
+table.matrix-question > * > tr > :first-child {
+  box-sizing: border-box;
+  flex: 0 0 var(--sd-matrix-label, 35%);
+}
+
+table.matrix-question > * > tr > td:first-child {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0.75rem 0.6rem var(--sd-card-pad-x);
+  border-bottom-left-radius: inherit;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* They stay in view while a wide matrix scrolls sideways */
+.matrix-question-scroll:not(.sd-fits) table.matrix-question > * > tr > :first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: inherit;
+}
+
+.matrix-question .shiny-input-radiogroup > .control-label,
+.matrix-question .shiny-input-checkboxgroup > .control-label {
+  display: none;
+}
+
+.matrix-question .shiny-options-group {
+  display: flex;
+  width: 100%;
+}
+
+.matrix-question .shiny-options-group .radio,
+.matrix-question .shiny-options-group .checkbox {
+  flex: 1 1 0;
+  margin: 0;
+  text-align: center;
+}
+
+.matrix-question .shiny-options-group .radio label,
+.matrix-question .shiny-options-group .checkbox label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.85rem;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Hide radio/checkbox option labels (column headers show the options) */
+.matrix-question .shiny-options-group .radio span,
+.matrix-question .shiny-options-group .checkbox span {
+  display: none;
+}
+
+@media (hover: hover) {
+  table.matrix-question > * > tr:has(> td):hover {
+    box-shadow: inset 0 0 0 100vmax var(--sd-wash);
+  }
+}
+
+/* Required mark of a matrix row, at the end of the row */
+.matrix-question td .hidden-asterisk {
+  top: 50%;
+  right: -0.15rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  transform: translateY(-50%);
+}
+
+/* ---------------------------------------------------------------------------
+   11. Question states: unanswered, required, failed validation
+
+   highlighting.js puts a state class on the question card, on the option
+   group inside it, or on a matrix row's option group. The class names the
+   color; the card shows it. In a matrix the rows that are in a state show it
+   too, and the rows that are not stay paper.
+   ------------------------------------------------------------------------ */
+
+.question-container.unanswered-question-highlight-gray,
+.question-container:has(:is(.question-container, .form-group).unanswered-question-highlight-gray),
+.matrix-question tr:has(:is(.question-container, .form-group).unanswered-question-highlight-gray) {
+  --sd-state: #6c757d;
+}
+
+.question-container.unanswered-question-highlight,
+.question-container:has(:is(.question-container, .form-group).unanswered-question-highlight),
+.matrix-question tr:has(:is(.question-container, .form-group).unanswered-question-highlight) {
+  --sd-state: #0d6efd;
+}
+
+.question-container.unanswered-question-highlight-orange,
+.question-container:has(:is(.question-container, .form-group).unanswered-question-highlight-orange),
+.matrix-question tr:has(:is(.question-container, .form-group).unanswered-question-highlight-orange) {
+  --sd-state: #fd7e14;
+}
+
+.question-container.unanswered-question-highlight-green,
+.question-container:has(:is(.question-container, .form-group).unanswered-question-highlight-green),
+.matrix-question tr:has(:is(.question-container, .form-group).unanswered-question-highlight-green) {
+  --sd-state: #28a745;
+}
+
+.question-container.unanswered-question-highlight-purple,
+.question-container:has(:is(.question-container, .form-group).unanswered-question-highlight-purple),
+.matrix-question tr:has(:is(.question-container, .form-group).unanswered-question-highlight-purple) {
+  --sd-state: #6f42c1;
+}
+
+/* Red wins over every unanswered color */
+.question-container:is(.required-question-highlight, .validation-question-highlight),
+.question-container:has(:is(.question-container, .form-group):is(.required-question-highlight, .validation-question-highlight)),
+.matrix-question tr:has(:is(.question-container, .form-group):is(.required-question-highlight, .validation-question-highlight)) {
+  --sd-state: var(--sd-danger);
+  --sd-state-fill: 7%;
+  --sd-state-line: 55%;
+}
+
+/* A card in a state */
+.question-container:not(.question-container *):is(
+  [class*="question-highlight"],
+  :has(:is(.question-container, .form-group)[class*="question-highlight"])
+) {
+  --sd-card-bg: color-mix(in srgb, var(--sd-state) var(--sd-state-fill, 5%), var(--sd-paper));
+  --sd-card-line: color-mix(in srgb, var(--sd-state) var(--sd-state-line, 30%), var(--sd-paper));
+}
+
+/* A matrix row in a state */
+table.matrix-question > * > tr:has(:is(.question-container, .form-group)[class*="question-highlight"]) {
+  background-color: color-mix(in srgb, var(--sd-state) var(--sd-state-fill, 5%), var(--sd-paper));
+}
+
+/* Fields of a required or invalid question */
+:is(.required-question-highlight, .validation-question-highlight) .form-control,
+:is(.required-question-highlight, .validation-question-highlight) .selectize-input,
+.form-control:is(.required-question-highlight, .validation-question-highlight) {
+  border-color: color-mix(in srgb, var(--sd-danger) 60%, var(--sd-paper));
+}
+
+:is(.required-question-highlight, .validation-question-highlight) .form-control:focus,
+.form-control:is(.required-question-highlight, .validation-question-highlight):focus {
+  border-color: var(--sd-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sd-danger) 25%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   12. Buttons and page navigation
+   ------------------------------------------------------------------------ */
+
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:focus {
+  background-color: var(--sd-accent);
+  border-color: var(--sd-accent);
+  color: var(--sd-on-accent);
+}
+
+.action-button,
+.modal-footer .btn {
+  min-height: 2.85rem;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid var(--sd-accent);
+  border-radius: var(--sd-radius-sm);
+  background-color: var(--sd-accent);
+  background-image: none;
+  color: var(--sd-on-accent);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-shadow: none;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
+}
+
+.action-button:hover,
+.action-button:focus,
+.modal-footer .btn:hover,
+.modal-footer .btn:focus {
+  border-color: var(--sd-accent-strong);
+  background-color: var(--sd-accent-strong);
+  color: var(--sd-on-accent);
+}
+
+.action-button:active,
+.modal-footer .btn:active {
+  transform: translateY(1px);
+}
+
+.action-button:focus-visible,
+.modal-footer .btn:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--sd-focus);
+}
+
+/* The quieter button: going back, restarting, cancelling */
+.sd-nav-prev,
+.sd-nav-restart,
+.modal-footer .btn[data-dismiss],
+.modal-footer .btn[data-bs-dismiss] {
+  border-color: var(--sd-line-strong);
+  background-color: transparent;
+  color: var(--sd-ink);
+  font-weight: 500;
+}
+
+.sd-nav-prev:hover,
+.sd-nav-prev:focus,
+.sd-nav-restart:hover,
+.sd-nav-restart:focus,
+.modal-footer .btn[data-dismiss]:hover,
+.modal-footer .btn[data-dismiss]:focus,
+.modal-footer .btn[data-bs-dismiss]:hover,
+.modal-footer .btn[data-bs-dismiss]:focus {
+  border-color: var(--sd-control);
+  background-color: var(--sd-wash);
+  color: var(--sd-ink);
+}
+
 .sd-nav-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+  gap: 0.75rem;
   width: 100%;
+  margin-top: 1.75rem !important;
+  margin-bottom: 0.5rem;
   clear: both;
 }
 
+.sd-nav-container > div:empty {
+  display: none;
+}
+
 .sd-nav-button {
-  min-width: 100px;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  flex: none;
+  min-width: 7rem;
 }
 
 .sd-nav-prev {
@@ -912,19 +1532,470 @@ div:where(.swal2-container) .swal2-html-container {
   margin-left: auto;
 }
 
-/* Ensure navigation buttons work well on mobile */
-@media screen and (max-width: 767px) {
-  .sd-nav-button {
-    min-width: 80px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.9rem;
+/* Closing page: Previous at the left edge, Exit in the middle, Restart at
+   the right edge */
+.sd-nav-closing {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.sd-nav-closing > .sd-nav-prev {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.sd-nav-closing > .sd-nav-exit {
+  grid-column: 2;
+}
+
+.sd-nav-closing > .sd-nav-restart {
+  grid-column: 3;
+  justify-self: end;
+}
+
+/* When the labels do not fit on one line, layout.js adds .sd-nav-tight:
+   Previous and Restart shrink to square icon buttons and the main button
+   takes the room. If the main button is Next and it is still too wide,
+   .sd-nav-tighter shrinks it the same way. */
+.sd-nav-tight {
+  display: flex;
+}
+
+.sd-nav-tight > .sd-nav-button {
+  min-width: 0;
+  margin: 0 !important;
+}
+
+.sd-nav-tight > :is(.sd-nav-next, .sd-nav-exit) {
+  flex: 1 1 auto;
+  white-space: normal;
+}
+
+.sd-nav-tight > :is(.sd-nav-prev, .sd-nav-restart),
+.sd-nav-tighter > .sd-nav-next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.85rem;
+  height: 2.85rem;
+  min-height: 0;
+  padding: 0;
+  font-size: 0; /* hides the label, which stays the button's name */
+}
+
+.sd-nav-tighter > .sd-nav-next {
+  margin-left: auto !important;
+}
+
+.sd-nav-tight > :is(.sd-nav-prev, .sd-nav-restart)::before,
+.sd-nav-tighter > .sd-nav-next::before {
+  content: "";
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: currentColor;
+  -webkit-mask: var(--sd-icon) center / contain no-repeat;
+  mask: var(--sd-icon) center / contain no-repeat;
+}
+
+.sd-nav-prev {
+  --sd-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M11 6l-6 6 6 6'/%3E%3C/svg%3E");
+}
+
+.sd-nav-next {
+  --sd-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E");
+}
+
+.sd-nav-restart {
+  --sd-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3.2-6.9L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3C/svg%3E");
+}
+
+/* While layout.js measures: every button at its full width, on one line */
+.sd-nav-container.sd-measure {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important;
+}
+
+.sd-nav-container.sd-measure > .btn {
+  flex: none !important;
+  white-space: nowrap !important;
+}
+
+/* Redirect block */
+.sd-wrapper {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.sd-container {
+  display: inline-block;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--sd-line);
+  border-radius: var(--sd-radius);
+  background-color: var(--sd-card);
+  color: var(--sd-ink-soft);
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.sd-container:not(:has(p)) {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+/* A long redirect label wraps inside its block; it does not run off a phone */
+.sd-container {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.sd-container .btn {
+  max-width: 100%;
+  white-space: normal;
+}
+
+/* ---------------------------------------------------------------------------
+   13. Progress bar, footer, mode banner
+   ------------------------------------------------------------------------ */
+
+#progressbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: var(--progress-bar-height);
+  background-color: color-mix(in srgb, var(--sd-ink) 8%, var(--body-background-color));
+}
+
+#progressbar.top {
+  top: 0;
+}
+
+#progressbar.bottom {
+  bottom: 0; /* Default position at very bottom when no footer */
+}
+
+/* When the footer exists, adjust bottom progress bar position */
+:has(.footer) #progressbar.bottom {
+  bottom: var(--sd-footer-height);
+}
+
+/* When a mode banner exists, raise the bottom progress bar above it */
+:has(.sd-mode-banner) #progressbar.bottom {
+  bottom: var(--banner-height);
+}
+
+/* When both footer and mode banner exist, stack above both */
+:has(.footer):has(.sd-mode-banner) #progressbar.bottom {
+  bottom: calc(var(--sd-footer-height) + var(--banner-height));
+}
+
+#progressbar > div {
+  width: 0%;
+  height: 100%;
+  border-radius: 0 999px 999px 0;
+  background-color: var(--progress-color);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  min-height: var(--footer-height);
+  padding: 0.45rem 1.25rem;
+  border-top: 1px solid var(--sd-line);
+  background-color: color-mix(in srgb, color-mix(in srgb, var(--sd-ink) 4.5%, var(--body-background-color)) 88%, transparent);
+  -webkit-backdrop-filter: saturate(1.6) blur(12px);
+  backdrop-filter: saturate(1.6) blur(12px);
+  color: var(--sd-ink-soft);
+  font-size: 0.8125rem;
+  line-height: 1.3;
+}
+
+/* Three slots: left, center, right. Each takes the width of its text while
+   the three fit on a line. When they do not, a short slot keeps its line and
+   the room that is left goes to the long ones, which wrap. */
+.footer-content {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: 1.25rem;
+  min-width: 0;
+  max-width: var(--sd-content-width);
+  margin: 0 auto;
+}
+
+/* The outer slots get equal shares when there is room for that, which puts
+   the center slot in the middle of the page (layout.js measures) */
+.footer-content.sd-footer-even {
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.footer-content > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.footer-left {
+  grid-column: 1;
+  text-align: left;
+}
+
+.footer-center {
+  grid-column: 2;
+  text-align: center;
+}
+
+.footer-right {
+  grid-column: 3;
+  text-align: right;
+}
+
+/* One above the other, when that makes the shorter footer (layout.js measures) */
+.footer-content.sd-footer-stack {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 0.8rem;
+}
+
+.footer-content.sd-footer-stack > div {
+  grid-column: 1;
+  text-align: center;
+}
+
+.footer-content.sd-measure > div {
+  min-width: max-content;
+  white-space: nowrap;
+}
+
+/* Center the letters, not the line box, which has more room below the
+   baseline than above the capitals */
+@supports (text-box: trim-both cap alphabetic) {
+  .footer {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .footer-content > div {
+    text-box: trim-both cap alphabetic;
   }
 }
 
-/* Option attribute popup */
+.footer a {
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* Survey mode banner (preview mode / database not connected) */
+.sd-mode-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1030;
+  height: var(--banner-height);
+  padding: 0 1rem;
+  overflow: hidden;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: var(--banner-height);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#sd-preview-banner {
+  border-top: 1px solid #ecd58f;
+  background-color: #fdf1c7;
+  color: #6b4700;
+}
+
+#sd-no-db-banner {
+  background-color: #b42318;
+  color: #ffffff;
+}
+
+/* When a mode banner exists, raise the footer so it sits on top of the banner */
+:has(.sd-mode-banner) .footer {
+  bottom: var(--banner-height);
+}
+
+/* ---------------------------------------------------------------------------
+   14. Dialogs
+   ------------------------------------------------------------------------ */
+
+/* Exit pop-up (Bootstrap 3 script, Bootstrap 5 styles) */
+.modal {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.modal-backdrop {
+  opacity: 0.45 !important;
+  background-color: #000;
+}
+
+.modal-dialog {
+  z-index: 1050 !important;
+  display: flex;
+  align-items: center;
+  max-width: 30rem;
+  min-height: calc(100% - 3.5rem);
+  margin: 1.75rem auto;
+  padding: 0 1rem;
+}
+
+.modal-content {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  background-color: var(--sd-paper);
+  color: var(--sd-ink);
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.35);
+}
+
+.modal-header {
+  justify-content: flex-start;
+  padding: 1.5rem 1.5rem 0;
+  border-bottom: 0;
+}
+
+.modal-title {
+  width: 100%;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.modal-body {
+  padding: 0.75rem 1.5rem 0.5rem;
+  color: var(--sd-ink-soft);
+}
+
+.modal-footer {
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 0;
+}
+
+.modal-footer > * {
+  margin: 0;
+}
+
+.modal-body .question-container {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.modal-body .question-container .control-label,
+.modal-body .shiny-input-container .control-label {
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--sd-ink);
+  text-align: left;
+}
+
+.modal-body .btn-group-container-sw {
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.modal-body .btn-group-container-sw > .btn-group {
+  flex: 1 1 0;
+}
+
+.modal-body .btn-group-container-sw .btn {
+  min-width: 0;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+/* SweetAlert */
+div:where(.swal2-container) .swal2-popup {
+  padding: 1.75rem 1.5rem 1.5rem;
+  border-radius: 16px;
+  background-color: var(--sd-paper);
+  color: var(--sd-ink);
+  font-size: 1rem !important;
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.35);
+}
+
+div:where(.swal2-container) .swal2-icon {
+  margin: 0.25rem auto 0.75rem;
+  transform: scale(0.72);
+}
+
+div:where(.swal2-container) .swal2-title {
+  margin: 0 !important;
+  padding: 0;
+  font-size: 1.25rem;
+  color: var(--sd-ink);
+}
+
+div:where(.swal2-container) .swal2-html-container {
+  margin: 0.5rem 0 0 !important;
+  padding: 0 0.5rem;
+  color: var(--sd-ink-soft);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+div:where(.swal2-container) .swal2-actions {
+  margin-top: 1.25rem;
+}
+
+div:where(.swal2-container) button.swal2-styled {
+  min-width: 6rem;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0.55rem 1.4rem;
+  border-radius: var(--sd-radius-sm);
+  background-color: var(--sd-accent) !important;
+  color: var(--sd-on-accent);
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+div:where(.swal2-container) button.swal2-styled:hover {
+  background-color: var(--sd-accent-strong) !important;
+  background-image: none;
+}
+
+div:where(.swal2-container) button.swal2-styled:focus,
+div:where(.swal2-container) button.swal2-styled:focus-visible {
+  box-shadow: 0 0 0 3px var(--sd-focus);
+}
+
+/* ---------------------------------------------------------------------------
+   15. Option attribute popup
+   ------------------------------------------------------------------------ */
+
 .sd-has-attr {
   display: flex;
   align-items: center;
+}
+
+.question-container :is(.radio, .checkbox).sd-has-attr:not(.matrix-question *, .sd-image-choice *) label {
+  flex: 0 1 auto;
+  padding-right: 0.3rem;
 }
 
 .sd-option-label {
@@ -933,10 +2004,10 @@ div:where(.swal2-container) .swal2-html-container {
 
 .sd-attr-wrap {
   position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   vertical-align: middle;
-  margin-bottom: 2px;
   margin-left: 0 !important;
 }
 
@@ -944,49 +2015,254 @@ div:where(.swal2-container) .swal2-html-container {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-left: 5px;
-  border-radius: 50%;
-  border: 1.5px solid #888;
-  background: transparent;
-  color: #888;
-  font-size: 0.7em;
-  font-weight: bold;
-  cursor: pointer;
+  width: 1.15rem;
+  height: 1.15rem;
+  margin-left: 0.15rem;
   padding: 0;
+  border: 1.5px solid var(--sd-ink-faint);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sd-ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
   line-height: 1;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
 .sd-attr-btn:hover,
 .sd-attr-btn.sd-attr-active {
-  background: #888;
-  color: #fff;
+  border-color: var(--sd-ink);
+  background: var(--sd-ink);
+  color: var(--sd-paper);
 }
 
 .sd-attr-btn:active {
-  background: #555;
-  color: #fff;
-  transform: scale(0.88);
+  transform: scale(0.9);
 }
 
 .sd-attr-popup {
   display: none;
   position: absolute;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.82);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 5px;
-  font-size: 0.82em;
-  white-space: nowrap;
   z-index: 1001;
+  transform: translateX(-50%);
+  padding: 0.4rem 0.65rem;
+  border-radius: 6px;
+  background: var(--sd-ink);
+  color: var(--sd-paper);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  white-space: nowrap;
 }
 
 .sd-attr-wrap:hover .sd-attr-popup,
 .sd-attr-popup.sd-attr-open {
   display: block;
+}
+
+/* ---------------------------------------------------------------------------
+   16. Small screens
+   ------------------------------------------------------------------------ */
+
+@media screen and (max-width: 575px) {
+  :root {
+    --sd-card-pad-x: 0.9rem;
+    --sd-card-pad-y: 0.85rem;
+  }
+
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  h1, .h1 { font-size: 1.65rem; }
+  h2, .h2 { font-size: 1.4rem; }
+  h3, .h3 { font-size: 1.22rem; }
+  h4, .h4 { font-size: 1.1rem; }
+
+  /* Option rows: a little taller, for fingers */
+  .question-container .form-group .shiny-options-group:not(.matrix-question *, .sd-image-choice *) {
+    margin: -0.3rem -0.5rem -0.35rem;
+  }
+
+  .question-container :is(.radio, .checkbox):not(.matrix-question *, .sd-image-choice *) label {
+    padding: 0.38rem 0.5rem;
+  }
+
+  /* Choice buttons take the full width; ones with pictures or line breaks stack */
+  .radio-group-buttons .btn-group-container-sw,
+  .checkbox-group-buttons .btn-group-container-sw {
+    width: 100%;
+  }
+
+  .btn-group-container-sw:has(img, br) {
+    flex-direction: column;
+  }
+
+  /* Image cards share the width two by two */
+  .sd-image-choice .form-group .shiny-options-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sd-image-card-img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Tables in survey text: tighter cells, so more of them fit the screen */
+  #quarto-content table:not(.matrix-question):not([class*="datepicker"]) {
+    font-size: 0.9rem;
+  }
+
+  #quarto-content table:not(.matrix-question):not([class*="datepicker"]) > :is(thead, tbody, tfoot) > tr > :is(td, th) {
+    padding: 0.5rem;
+  }
+
+  /* Matrix: still a grid, with the option columns lined up from row to row,
+     but each row can be read alone. Its label sits above its options and every
+     option carries its own name, so there is no header to look up to. */
+  table.matrix-question {
+    min-width: calc(var(--sd-matrix-cols, 3) * 3.2rem);
+  }
+
+  table.matrix-question > tbody:has(> tr > th) {
+    display: none;
+  }
+
+  table.matrix-question > * > tr:nth-of-type(n) {
+    padding-right: 0;
+  }
+
+  table.matrix-question > * > tr:has(> td) {
+    flex-direction: column;
+  }
+
+  table.matrix-question > * > tr > td {
+    flex: none;
+  }
+
+  /* The label keeps to the visible width when the options scroll sideways
+     (layout.js measures that width) */
+  table.matrix-question > * > tr > td:first-child {
+    position: relative;
+    flex: none;
+    max-width: var(--sd-matrix-view, 100%);
+    padding: 0.7rem var(--sd-card-pad-x) 0.1rem;
+    font-weight: 500;
+  }
+
+  .matrix-question .shiny-options-group .radio label,
+  .matrix-question .shiny-options-group .checkbox label {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0.3rem;
+    min-height: 0;
+    padding: 0.5rem 0.1rem 0.7rem;
+  }
+
+  .matrix-question .shiny-options-group .radio span,
+  .matrix-question .shiny-options-group .checkbox span {
+    display: block;
+    max-width: 100%;
+    color: var(--sd-ink-soft);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.2;
+    overflow-wrap: break-word;
+    transition: color 0.12s ease;
+  }
+
+  .matrix-question .shiny-options-group label:has(input:checked) span {
+    color: var(--sd-ink);
+    font-weight: 700;
+  }
+
+  /* The required mark sits in the top right corner of its row, as it does on
+     a card. It is drawn on the label, which stays put when the options scroll. */
+  .matrix-question td .hidden-asterisk {
+    display: none !important;
+  }
+
+  table.matrix-question > * > tr:has(.hidden-asterisk[style*="inline"]) > td:first-child {
+    padding-right: 1.9rem;
+  }
+
+  table.matrix-question > * > tr:has(.hidden-asterisk[style*="inline"]) > td:first-child::after {
+    content: "";
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    background-color: var(--sd-required);
+    -webkit-mask: var(--sd-asterisk) center / contain no-repeat;
+    mask: var(--sd-asterisk) center / contain no-repeat;
+  }
+
+  /* Navigation: the main button takes the room */
+  .sd-nav-container {
+    display: flex;
+  }
+
+  .sd-nav-button {
+    min-width: 0;
+  }
+
+  .sd-nav-container > :is(.sd-nav-next, .sd-nav-exit) {
+    flex: 1 1 auto;
+  }
+
+  .footer {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 0.75rem;
+  }
+
+  .footer-content {
+    column-gap: 0.9rem;
+  }
+
+  .sd-mode-banner {
+    font-size: 0.6875rem;
+  }
+
+  .modal-footer .btn {
+    flex: 1 1 auto;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   17. Reduced motion
+   ------------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   18. Forced colors (Windows high contrast)
+
+   The system repaints backgrounds there, which would erase the drawn
+   controls' checked state, so they fall back to the native controls.
+   ------------------------------------------------------------------------ */
+
+@media (forced-colors: active) {
+  .question-container :is(.radio, .checkbox):not(.sd-image-choice *) input {
+    -webkit-appearance: auto;
+    appearance: auto;
+  }
+
+  .question-container :is(.radio, .checkbox):has(input:checked),
+  .btn-group-container-sw .btn.active,
+  .sd-image-choice label:has(input:checked) .sd-image-card {
+    outline: 2px solid Highlight;
+  }
 }

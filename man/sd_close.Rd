@@ -24,8 +24,9 @@ sd_close(
 Set to \code{TRUE} to allow users to go back before closing. Defaults to \code{FALSE}. Note: Unlike
 \code{sd_nav()}, this parameter does NOT read from the \code{show-previous} YAML setting.}
 
-\item{show_restart}{Logical. Whether to show a 'Restart Survey' button alongside the
-Close button. When \code{TRUE}, displays two side-by-side buttons. Defaults to \code{FALSE}.}
+\item{show_restart}{Logical. Whether to show a 'Restart Survey' button to the right
+of the Close button. The respondent is asked to confirm before the survey
+restarts. Defaults to \code{FALSE}.}
 
 \item{label_restart}{Character string. The label for the 'Restart Survey' button.
 Defaults to \code{NULL}, which uses "Restart Survey" (or the translated equivalent).}

@@ -17,6 +17,7 @@ end
 function Meta(meta)
     -- Define standard resources
     local js_files = {
+        "accent.js",
         "auto_scroll.js",
         "clipboard.js",
         "cookies.js",
@@ -24,6 +25,7 @@ function Meta(meta)
         "highlighting.js",
         "interaction.js",
         "keep_alive.js",
+        "layout.js",
         "option_attr.js",
         "progressbar.js"
     }

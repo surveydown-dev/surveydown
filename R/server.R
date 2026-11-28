@@ -666,9 +666,9 @@ sd_server <- function(db = NULL) {
     # Show footer banner if applicable
     if (identical(survey_mode, "preview")) {
         banner_text <- if (db_connected_but_ignored) {
-            "PREVIEW MODE \u2014 Database connected but not used. Responses are saved in preview_data.csv."
+            "Preview Mode \u2014 Database connected but not used. Responses NOT saved to the database."
         } else {
-            "PREVIEW MODE \u2014 Responses are saved in preview_data.csv, not the database."
+            "Preview Mode \u2014 Responses NOT saved to the database."
         }
         shiny::insertUI(
             selector = "body",
@@ -1249,7 +1249,7 @@ sd_server <- function(db = NULL) {
             })
             output[[paste0(local_id, "_label_option")]] <- shiny::renderText({
                 value <- all_data[[local_id]]
-                if (is.null(value) || length(value) == 0 || value == "") {
+                if (is_blank_value(value)) {
                     return("")
                 }
                 options <- question_info$options
@@ -1956,18 +1956,10 @@ sd_server <- function(db = NULL) {
                                 # Get the stored value from all_data
                                 stored_value <- all_data[[q_id]]
 
-                                # Skip if no value was stored. NA-safe:
-                                # matrix parent questions have no input of
-                                # their own (only their rows do), so their
-                                # all_data entry can be NA - an un-guarded
-                                # `NA == ""` would error and break navigation.
-                                if (
-                                    is.null(stored_value) ||
-                                        length(stored_value) == 0 ||
-                                        (length(stored_value) == 1 &&
-                                            (is.na(stored_value) ||
-                                                stored_value == ""))
-                                ) {
+                                # Skip if no value was stored (matrix parent
+                                # questions have no input of their own, so
+                                # their all_data entry can be NA)
+                                if (is_blank_value(stored_value)) {
                                     next
                                 }
 
@@ -2236,7 +2228,7 @@ sd_server <- function(db = NULL) {
                         type = 'mc_buttons',
                         id = 'survey_rating',
                         label = glue::glue(
-                            "{messages[['rating-text']]}:<br><small>({messages[['rating-scale']]})</small>"
+                            "{messages[['rating-text']]}<br><small>({messages[['rating-scale']]})</small>"
                         ),
                         option = c(
                             "1" = "1",
@@ -2355,8 +2347,31 @@ sd_server <- function(db = NULL) {
         session$sendCustomMessage("closeWindow", list())
     })
 
+    # Ask before restarting. A settings.yml written by an earlier version has
+    # no text for this dialog, so the English text stands in.
+    restart_text <- function(key, fallback) {
+        if (is.null(messages[[key]])) fallback else messages[[key]]
+    }
+    shiny::observeEvent(input$show_restart_modal, {
+        shiny::showModal(shiny::modalDialog(
+            title = restart_text("confirm-restart", "Confirm Restart"),
+            restart_text(
+                "sure-restart",
+                "Are you sure you want to restart the survey?"
+            ),
+            footer = shiny::tagList(
+                shiny::modalButton(messages[["cancel"]]),
+                shiny::actionButton(
+                    "restart_survey",
+                    messages[["restart"]]
+                )
+            )
+        ))
+    })
+
     # Observer for restart survey functionality
     shiny::observeEvent(input$restart_survey, {
+        shiny::removeModal()
         # Update checkpoint 4 - when restarting survey
         shiny::isolate({
             update_data(time_last = TRUE)

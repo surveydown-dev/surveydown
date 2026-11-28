@@ -68,6 +68,8 @@ get_messages_default <- function() {
             "cancel" = "Cancel",
             "confirm-exit" = "Confirm Exit",
             "sure-exit" = "Are you sure you want to exit the survey?",
+            "confirm-restart" = "Confirm Restart",
+            "sure-restart" = "Are you sure you want to restart the survey?",
             "submit-exit" = "Submit and Exit",
             "warning" = "Warning",
             "required" = "Please answer all required questions before proceeding.",
@@ -92,6 +94,8 @@ get_messages_default <- function() {
             "cancel" = "Abbrechen",
             "confirm-exit" = "Beenden best\u00e4tigen",
             "sure-exit" = "Sind Sie sicher, dass Sie die Umfrage beenden m\u00f6chten?",
+            "confirm-restart" = "Neustart best\u00e4tigen",
+            "sure-restart" = "Sind Sie sicher, dass Sie die Umfrage neu starten m\u00f6chten?",
             "submit-exit" = "Absenden und beenden",
             "warning" = "Warnung",
             "required" = "Bitte beantworten Sie alle erforderlichen Fragen, bevor Sie fortfahren.",
@@ -116,6 +120,8 @@ get_messages_default <- function() {
             "cancel" = "Cancelar",
             "confirm-exit" = "Confirmar Salida",
             "sure-exit" = "\u00bfEst\u00e1 seguro de que desea salir de la encuesta?",
+            "confirm-restart" = "Confirmar Reinicio",
+            "sure-restart" = "\u00bfEst\u00e1 seguro de que desea reiniciar la encuesta?",
             "submit-exit" = "Enviar y Salir",
             "warning" = "Advertencia",
             "required" = "Por favor, responda todas las preguntas obligatorias antes de continuar.",
@@ -140,6 +146,8 @@ get_messages_default <- function() {
             "cancel" = "Annuler",
             "confirm-exit" = "Confirmer la sortie",
             "sure-exit" = "\u00cates-vous s\u00fbr de vouloir quitter le sondage?",
+            "confirm-restart" = "Confirmer le red\u00e9marrage",
+            "sure-restart" = "\u00cates-vous s\u00fbr de vouloir red\u00e9marrer le sondage?",
             "submit-exit" = "Soumettre et quitter",
             "warning" = "Avertissement",
             "required" = "Veuillez r\u00e9pondre \u00e0 toutes les questions obligatoires avant de continuer.",
@@ -164,6 +172,8 @@ get_messages_default <- function() {
             "cancel" = "Annulla",
             "confirm-exit" = "Conferma Uscita",
             "sure-exit" = "Sei sicuro di voler uscire dal sondaggio?",
+            "confirm-restart" = "Conferma Riavvio",
+            "sure-restart" = "Sei sicuro di voler riavviare il sondaggio?",
             "submit-exit" = "Invia ed Esci",
             "warning" = "Avviso",
             "required" = "Per favore, rispondi a tutte le domande obbligatorie prima di procedere.",
@@ -188,6 +198,8 @@ get_messages_default <- function() {
             "cancel" = "\u53d6\u6d88", # \u53d6\u6d88
             "confirm-exit" = "\u786e\u8ba4\u9000\u51fa", # \u786e\u8ba4\u9000\u51fa
             "sure-exit" = "\u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f", # \u60a8\u786e\u8ba4\u8981\u9000\u51fa\u5417\uff1f
+            "confirm-restart" = "\u786e\u8ba4\u91cd\u65b0\u5f00\u59cb",
+            "sure-restart" = "\u60a8\u786e\u8ba4\u8981\u91cd\u65b0\u5f00\u59cb\u5417\uff1f",
             "submit-exit" = "\u63d0\u4ea4\u5e76\u9000\u51fa", # \u63d0\u4ea4\u5e76\u9000\u51fa
             "warning" = "\u8b66\u544a", # \u8b66\u544a
             "required" = "\u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002", # \u8bf7\u56de\u7b54\u6240\u6709\u5fc5\u586b\u95ee\u9898\u3002
